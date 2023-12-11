@@ -29,7 +29,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ComparatorCombinatorsInspection.class);
 
 

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

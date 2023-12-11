@@ -28,7 +28,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class NonShortCircuitBooleanInspection extends BaseInspection {
+public final class NonShortCircuitBooleanInspection extends BaseInspection {
 
   @Override
   @NotNull

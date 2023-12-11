@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreSubclassing;
 

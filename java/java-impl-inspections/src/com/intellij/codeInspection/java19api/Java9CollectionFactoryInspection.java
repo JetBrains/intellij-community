@@ -36,7 +36,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_MAP = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_LIST = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);

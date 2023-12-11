@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author okli
  */
-public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
+public final class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
   @NotNull
   @Override

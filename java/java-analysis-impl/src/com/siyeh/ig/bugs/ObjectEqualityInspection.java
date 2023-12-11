@@ -43,7 +43,7 @@ import java.util.Collection;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ObjectEqualityInspection extends BaseInspection {
+public final class ObjectEqualityInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

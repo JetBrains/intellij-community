@@ -21,7 +21,7 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 
-public class ChangeUIDAction extends PsiUpdateModCommandAction<PsiField> {
+public final class ChangeUIDAction extends PsiUpdateModCommandAction<PsiField> {
   public ChangeUIDAction() {
     super(PsiField.class);
   }

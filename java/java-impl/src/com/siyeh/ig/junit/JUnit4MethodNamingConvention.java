@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit4MethodNamingConvention extends NamingConvention<PsiMethod> {
+public final class JUnit4MethodNamingConvention extends NamingConvention<PsiMethod> {
   @Override
   public String getElementDescription() {
     return InspectionGadgetsBundle.message("junit4.method.naming.convention.element.description");

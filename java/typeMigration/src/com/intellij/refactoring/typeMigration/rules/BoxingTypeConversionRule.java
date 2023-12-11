@@ -8,7 +8,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 
-public class BoxingTypeConversionRule extends TypeConversionRule {
+public final class BoxingTypeConversionRule extends TypeConversionRule {
 
   @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,

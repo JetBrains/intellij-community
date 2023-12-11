@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OverriddenMethodCallDuringObjectConstructionInspection extends BaseInspection {
+public final class OverriddenMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
   @NotNull

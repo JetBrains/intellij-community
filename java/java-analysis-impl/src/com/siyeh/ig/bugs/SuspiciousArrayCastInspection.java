@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousArrayCastInspection extends BaseInspection {
+public final class SuspiciousArrayCastInspection extends BaseInspection {
 
   @NotNull
   @Override

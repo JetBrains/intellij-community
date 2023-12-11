@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
+final class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {

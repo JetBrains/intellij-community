@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
 
-public class DocTagSelectioner extends WordSelectioner {
+public final class DocTagSelectioner extends WordSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);

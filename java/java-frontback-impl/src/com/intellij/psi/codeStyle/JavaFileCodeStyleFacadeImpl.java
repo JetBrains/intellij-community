@@ -46,7 +46,7 @@ public class JavaFileCodeStyleFacadeImpl extends DefaultCodeStyleSettingsFacade 
     return myJavaSettings.GENERATE_FINAL_LOCALS;
   }
 
-  public static class Factory implements JavaFileCodeStyleFacadeFactory {
+  public static final class Factory implements JavaFileCodeStyleFacadeFactory {
 
     @Override
     public @NotNull JavaFileCodeStyleFacade createFacade(@NotNull PsiFile psiFile) {

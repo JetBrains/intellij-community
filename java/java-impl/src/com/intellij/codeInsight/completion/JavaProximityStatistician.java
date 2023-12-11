@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaProximityStatistician extends ProximityStatistician{
+public final class JavaProximityStatistician extends ProximityStatistician{
   @Override
   public StatisticsInfo serialize(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     return element instanceof PsiMember ? JavaStatisticsManager.createInfo(null, (PsiMember)element) : null;

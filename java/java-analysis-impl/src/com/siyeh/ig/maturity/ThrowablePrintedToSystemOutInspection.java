@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintedToSystemOutInspection extends BaseInspection {
+public final class ThrowablePrintedToSystemOutInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class BusyWaitInspection extends BaseInspection {
+public final class BusyWaitInspection extends BaseInspection {
 
   @Override
   @NotNull

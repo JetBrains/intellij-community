@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
   
   public AddOnDemandStaticImportAction() {

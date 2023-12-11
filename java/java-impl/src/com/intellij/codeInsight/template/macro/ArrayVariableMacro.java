@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 
 import java.util.ArrayList;
 
-public class ArrayVariableMacro extends VariableTypeMacroBase {
+public final class ArrayVariableMacro extends VariableTypeMacroBase {
   @Override
   public String getName() {
     return "arrayVariable";

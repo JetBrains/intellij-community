@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class FindBugsAnnotationSupport implements AnnotationPackageSupport {
+final class FindBugsAnnotationSupport implements AnnotationPackageSupport {
   private static final String NON_NULL = "edu.umd.cs.findbugs.annotations.NonNull";
   private static final String NULLABLE = "edu.umd.cs.findbugs.annotations.Nullable";
   private static final String DEFAULT_ANNOTATION_FOR_PARAMETERS = "edu.umd.cs.findbugs.annotations.DefaultAnnotationForParameters";

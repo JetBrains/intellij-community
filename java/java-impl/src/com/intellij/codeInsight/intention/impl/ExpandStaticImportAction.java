@@ -15,7 +15,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.util.ImportsUtil.*;
 
-public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
+public final class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
   private final @NotNull ThreeState myExpandAll;
   
   public ExpandStaticImportAction() {

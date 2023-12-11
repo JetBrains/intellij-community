@@ -20,7 +20,7 @@ import static com.intellij.psi.PsiNameHelper.getShortClassName;
 /**
  * @author gregsh
  */
-public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
+public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   private static final Language[] ourLanguages = {JavaLanguage.INSTANCE};
   @Override
   public Language[] getLanguages() {

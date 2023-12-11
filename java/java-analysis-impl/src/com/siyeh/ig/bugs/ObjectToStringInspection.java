@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ObjectToStringInspection extends BaseInspection {
+public final class ObjectToStringInspection extends BaseInspection {
   public boolean IGNORE_NONNLS = false;
   public boolean IGNORE_EXCEPTION = false;
   public boolean IGNORE_ASSERT = false;

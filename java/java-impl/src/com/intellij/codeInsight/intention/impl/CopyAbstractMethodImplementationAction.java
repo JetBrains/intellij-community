@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 
-public class CopyAbstractMethodImplementationAction extends ImplementAbstractMethodAction {
+public final class CopyAbstractMethodImplementationAction extends ImplementAbstractMethodAction {
   @Override
   @NotNull
   public String getFamilyName() {

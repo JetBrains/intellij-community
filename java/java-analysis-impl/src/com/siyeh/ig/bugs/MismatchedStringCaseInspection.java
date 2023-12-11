@@ -19,7 +19,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STRING_COMPARISON_METHODS = CallMatcher.exactInstanceCall(
     CommonClassNames.JAVA_LANG_STRING, "equals", "startsWith", "endsWith", "contains", "indexOf", "lastIndexOf");
 

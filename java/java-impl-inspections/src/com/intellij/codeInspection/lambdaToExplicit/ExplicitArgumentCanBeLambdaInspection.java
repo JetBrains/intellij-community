@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

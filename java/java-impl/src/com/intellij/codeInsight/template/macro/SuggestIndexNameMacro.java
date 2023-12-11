@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class SuggestIndexNameMacro extends Macro {
+public final class SuggestIndexNameMacro extends Macro {
   @Override
   public String getName() {
     return "suggestIndexName";

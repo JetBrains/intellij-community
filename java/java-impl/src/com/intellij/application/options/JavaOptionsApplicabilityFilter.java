@@ -2,7 +2,7 @@
 package com.intellij.application.options;
 
 
-public class JavaOptionsApplicabilityFilter extends OptionsApplicabilityFilter {
+public final class JavaOptionsApplicabilityFilter extends OptionsApplicabilityFilter {
   @Override
   public boolean isOptionApplicable(final OptionId optionId) {
     // all options are applicable for Java

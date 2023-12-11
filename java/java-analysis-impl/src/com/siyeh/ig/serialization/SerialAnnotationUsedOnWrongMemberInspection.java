@@ -13,7 +13,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection {
+public final class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection {
 
   @Override
   public @NotNull String getID() {

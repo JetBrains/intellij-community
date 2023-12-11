@@ -11,7 +11,7 @@ import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 
-public class JavaBasicWordSelectionFilter implements Condition<PsiElement> {
+public final class JavaBasicWordSelectionFilter implements Condition<PsiElement> {
 
   public JavaBasicWordSelectionFilter() {
   }

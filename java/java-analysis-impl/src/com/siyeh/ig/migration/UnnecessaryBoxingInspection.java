@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryBoxingInspection extends BaseInspection {
+public final class UnnecessaryBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyBoxed = false;

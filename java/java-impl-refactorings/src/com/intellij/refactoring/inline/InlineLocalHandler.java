@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InlineLocalHandler extends JavaInlineActionHandler {
+public final class InlineLocalHandler extends JavaInlineActionHandler {
   private enum InlineMode {
     CHECK_CONFLICTS,
     ASK,

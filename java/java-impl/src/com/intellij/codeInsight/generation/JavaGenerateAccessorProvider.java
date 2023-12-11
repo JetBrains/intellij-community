@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaGenerateAccessorProvider implements NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> {
+public final class JavaGenerateAccessorProvider implements NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> {
   @NotNull
   @Override
   public Collection<EncapsulatableClassMember> fun(PsiClass psiClass) {

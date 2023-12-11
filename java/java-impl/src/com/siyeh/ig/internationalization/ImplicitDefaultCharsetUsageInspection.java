@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 /**
  * @author Bas Leijdekkers
  */
-public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");

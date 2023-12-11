@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class LambdaParameterHidingMemberVariableInspection extends BaseInspection {
+public final class LambdaParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
 

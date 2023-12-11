@@ -29,7 +29,7 @@ import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInspection {
+public final class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInspection {
 
   @Override
   @NotNull

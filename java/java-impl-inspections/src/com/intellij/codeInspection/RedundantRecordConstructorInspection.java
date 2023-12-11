@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
-public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.RECORDS.isAvailable(holder.getFile())) {

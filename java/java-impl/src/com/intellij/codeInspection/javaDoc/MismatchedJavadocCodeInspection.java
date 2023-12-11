@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public static final Pattern
     RETURN_LINE_START = Pattern.compile("@return\\s+(\\S+) (iff?|when|in case of|in the case of) ");

@@ -18,7 +18,7 @@ package com.intellij.spi;
 import com.intellij.lang.Commenter;
 import org.jetbrains.annotations.Nullable;
 
-public class SPICommenter implements Commenter {
+public final class SPICommenter implements Commenter {
   @Nullable
   @Override
   public String getLineCommentPrefix() {

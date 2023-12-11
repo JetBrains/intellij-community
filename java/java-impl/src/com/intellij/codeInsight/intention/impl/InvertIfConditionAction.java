@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class InvertIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class InvertIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
   private static final Logger LOG = Logger.getInstance(InvertIfConditionAction.class);
 
   public InvertIfConditionAction() {

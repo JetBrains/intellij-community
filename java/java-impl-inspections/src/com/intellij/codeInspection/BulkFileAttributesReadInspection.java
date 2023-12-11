@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Map<String, String> ATTR_REPLACEMENTS = Map.of(
     "lastModified", "lastModifiedTime().toMillis",
     "isFile", "isRegularFile",

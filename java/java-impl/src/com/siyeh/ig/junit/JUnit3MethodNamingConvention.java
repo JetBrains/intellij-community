@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.TestUtils;
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit3MethodNamingConvention extends NamingConvention<PsiMethod> {
+public final class JUnit3MethodNamingConvention extends NamingConvention<PsiMethod> {
 
   @Override
   public String getElementDescription() {

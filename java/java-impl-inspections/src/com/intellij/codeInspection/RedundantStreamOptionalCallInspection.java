@@ -33,7 +33,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final CallMatcher NATURAL_OR_REVERSED_COMPARATOR = anyOf(
     staticCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "naturalOrder", "reverseOrder").parameterCount(0),

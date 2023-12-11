@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReflectionForUnavailableAnnotationInspection extends BaseInspection {
+public final class ReflectionForUnavailableAnnotationInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
 
-public class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
+public final class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
   private static final Logger LOG = Logger.getInstance(GotoBreakContinueHandler.class);
 
   @Override

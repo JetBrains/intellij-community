@@ -38,7 +38,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
+public final class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final @NonNls String SHORT_NAME = "EmptyMethod";
 
   private static final ExtensionPointName<Condition<RefMethod>> CAN_BE_EMPTY_EP = new ExtensionPointName<>("com.intellij.canBeEmpty");

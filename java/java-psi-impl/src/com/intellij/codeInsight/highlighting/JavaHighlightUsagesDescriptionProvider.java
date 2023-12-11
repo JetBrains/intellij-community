@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaHighlightUsagesDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaHighlightUsagesDescriptionProvider implements ElementDescriptionProvider {
   private static final int METHOD_FLAGS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
   private static final int VARIABLE_FLAGS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
 

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaPrevParameterHandler extends EditorActionHandler {
+public final class JavaPrevParameterHandler extends EditorActionHandler {
   private final EditorActionHandler myDelegate;
 
   public JavaPrevParameterHandler(EditorActionHandler delegate) {

@@ -38,10 +38,10 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Gr
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.*;
 
-public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
-                                       ArrangementSectionRuleAwareSettings,
-                                       ArrangementStandardSettingsAware,
-                                       ArrangementColorsAware {
+public final class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
+                                             ArrangementSectionRuleAwareSettings,
+                                             ArrangementStandardSettingsAware,
+                                             ArrangementColorsAware {
 
   // Type
   @NotNull private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES =

@@ -29,7 +29,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

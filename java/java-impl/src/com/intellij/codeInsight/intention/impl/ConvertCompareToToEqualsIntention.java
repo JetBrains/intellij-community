@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
+public final class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
   public ConvertCompareToToEqualsIntention() {
     super(PsiBinaryExpression.class);
   }

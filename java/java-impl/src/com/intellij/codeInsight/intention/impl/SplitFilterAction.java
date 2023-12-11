@@ -22,7 +22,7 @@ import java.util.List;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
 
-public class SplitFilterAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+public final class SplitFilterAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   private static final Logger LOG = Logger.getInstance(SplitFilterAction.class.getName());
 
   public SplitFilterAction() {

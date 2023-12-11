@@ -27,7 +27,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MisspelledEqualsInspection extends BaseInspection {
+public final class MisspelledEqualsInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

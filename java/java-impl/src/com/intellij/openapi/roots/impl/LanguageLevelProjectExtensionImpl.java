@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * @author anna
  */
-public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   private static final String LANGUAGE_LEVEL = "languageLevel";
   private static final String DEFAULT_ATTRIBUTE = "default";
 

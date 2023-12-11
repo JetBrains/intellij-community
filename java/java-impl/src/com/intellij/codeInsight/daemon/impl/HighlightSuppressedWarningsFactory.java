@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-class HighlightSuppressedWarningsFactory extends HighlightUsagesHandlerFactoryBase {
+final class HighlightSuppressedWarningsFactory extends HighlightUsagesHandlerFactoryBase {
 
   @Nullable
   @Override

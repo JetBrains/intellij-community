@@ -8,7 +8,7 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class GotoVarTypeHandler extends GotoDeclarationHandlerBase {
+public final class GotoVarTypeHandler extends GotoDeclarationHandlerBase {
   @Override
   @Nullable
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement elementAt, Editor editor) {

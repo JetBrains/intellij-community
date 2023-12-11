@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * @author Maxim.Mossienko
  */
-public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
+public final class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
 
   @Override
   public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {

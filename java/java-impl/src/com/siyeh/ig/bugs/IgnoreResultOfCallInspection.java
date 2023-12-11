@@ -48,7 +48,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
-public class IgnoreResultOfCallInspection extends BaseInspection {
+public final class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =

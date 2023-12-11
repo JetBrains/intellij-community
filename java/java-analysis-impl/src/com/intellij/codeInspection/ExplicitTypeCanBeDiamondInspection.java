@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(ExplicitTypeCanBeDiamondInspection.class);
 
   @Nls

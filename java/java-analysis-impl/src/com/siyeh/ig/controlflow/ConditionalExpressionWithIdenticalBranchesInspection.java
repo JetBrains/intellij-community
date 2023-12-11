@@ -31,7 +31,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
-public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConditionalExpressionWithIdenticalBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

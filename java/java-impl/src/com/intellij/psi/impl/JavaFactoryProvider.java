@@ -23,7 +23,7 @@ import com.intellij.psi.JavaPsiFacade;
 /**
 * @author Medvedev Max
 */
-public class JavaFactoryProvider implements JVMElementFactoryProvider {
+public final class JavaFactoryProvider implements JVMElementFactoryProvider {
   @Override
   public JVMElementFactory getFactory(Project project) {
     return JavaPsiFacade.getElementFactory(project);

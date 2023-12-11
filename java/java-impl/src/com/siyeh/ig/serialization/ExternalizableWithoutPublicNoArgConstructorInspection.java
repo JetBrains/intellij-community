@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseInspection {
+public final class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

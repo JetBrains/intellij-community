@@ -23,7 +23,7 @@ import com.intellij.psi.impl.ExpressionConverter;
 /**
  * @author Maxim.Medvedev
  */
-public class JavaExpressionConverter extends ExpressionConverter {
+public final class JavaExpressionConverter extends ExpressionConverter {
   @Override
   protected PsiElement convert(PsiElement expression, Project project) {
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(expression.getText(), expression);

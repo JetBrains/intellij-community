@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class LocalVariableHidingMemberVariableInspection extends BaseInspection {
+public final class LocalVariableHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
   @SuppressWarnings("PublicField")

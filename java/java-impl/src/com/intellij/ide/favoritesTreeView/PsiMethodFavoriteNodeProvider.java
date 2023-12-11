@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
+public final class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);

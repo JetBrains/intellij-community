@@ -30,7 +30,7 @@ import java.util.Objects;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
 
   private static final CallMatcher ITERABLE_FOREACH =

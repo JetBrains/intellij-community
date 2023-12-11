@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JShellCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet resultSet) {
     resultSet.runRemainingContributors(parameters, r -> {

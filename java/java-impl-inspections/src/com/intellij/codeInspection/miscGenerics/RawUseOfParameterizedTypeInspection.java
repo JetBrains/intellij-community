@@ -34,7 +34,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RawUseOfParameterizedTypeInspection extends BaseInspection {
+public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
 

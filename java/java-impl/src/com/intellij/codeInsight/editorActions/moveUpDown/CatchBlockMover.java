@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class CatchBlockMover extends LineMover {
+public final class CatchBlockMover extends LineMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

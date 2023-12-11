@@ -36,7 +36,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TypeParameterExtendsFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class TypeParameterExtendsFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

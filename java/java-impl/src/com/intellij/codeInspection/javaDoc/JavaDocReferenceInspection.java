@@ -35,7 +35,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class JavaDocReferenceInspection extends LocalInspectionTool {
+public final class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
 
   @SuppressWarnings("WeakerAccess")

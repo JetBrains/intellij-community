@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * check locks according to http://www.javaconcurrencyinpractice.com/annotations/doc/net/jcip/annotations/GuardedBy.html
  */
-public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull

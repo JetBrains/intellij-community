@@ -24,7 +24,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInspection {
+public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInspection {
 
   public static final String[] MUTABLE_TYPES = {
     CommonClassNames.JAVA_UTIL_DATE,

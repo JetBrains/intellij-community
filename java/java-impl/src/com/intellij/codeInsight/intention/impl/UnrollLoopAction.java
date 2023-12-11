@@ -31,7 +31,7 @@ import java.util.function.IntFunction;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement> {
+public final class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement> {
   private static class Holder {
     private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
                                                               staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));

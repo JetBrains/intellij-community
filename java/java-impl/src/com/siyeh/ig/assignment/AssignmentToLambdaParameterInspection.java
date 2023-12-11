@@ -18,7 +18,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToLambdaParameterInspection extends BaseAssignmentToParameterInspection {
+public final class AssignmentToLambdaParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

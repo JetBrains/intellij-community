@@ -35,7 +35,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class PublicMethodWithoutLoggingInspection extends BaseInspection {
+public final class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
   final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")

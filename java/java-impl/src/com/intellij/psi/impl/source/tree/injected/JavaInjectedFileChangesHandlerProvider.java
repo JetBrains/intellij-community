@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
+public final class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
   @Override
   public InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,

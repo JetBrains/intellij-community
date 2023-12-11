@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsWithItselfInspection extends BaseInspection {
+public final class EqualsWithItselfInspection extends BaseInspection {
 
   private static final CallMatcher TWO_ARGUMENT_COMPARISON = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "equals", "deepEquals"),

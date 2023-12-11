@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectEqualityInspectionMerger extends InspectionElementsMerger {
+public final class ObjectEqualityInspectionMerger extends InspectionElementsMerger {
   @NotNull
   @Override
   public String getMergedToolName() {

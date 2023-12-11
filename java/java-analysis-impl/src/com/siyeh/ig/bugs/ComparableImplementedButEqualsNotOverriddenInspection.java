@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
+public final class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
 
   @Override
   @NotNull

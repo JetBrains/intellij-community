@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean mySuggestLiteralReplacement = false;
 

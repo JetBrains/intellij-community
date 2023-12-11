@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CastToLeftSideTypeMacro extends Macro {
+public final class CastToLeftSideTypeMacro extends Macro {
   @Override
   public String getName() {
     return "castToLeftSideType";

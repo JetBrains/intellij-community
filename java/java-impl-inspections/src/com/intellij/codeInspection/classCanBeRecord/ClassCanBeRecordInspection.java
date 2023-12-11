@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ClassCanBeRecordInspection extends BaseInspection {
+public final class ClassCanBeRecordInspection extends BaseInspection {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
   public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.DO_NOT_SUGGEST;

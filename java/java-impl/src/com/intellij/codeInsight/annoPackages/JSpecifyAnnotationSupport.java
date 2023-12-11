@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
+public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final String NULLABLE = PACKAGE_NAME + "." + "Nullable";
   private static final String NOT_NULL = PACKAGE_NAME + "." + "NonNull";

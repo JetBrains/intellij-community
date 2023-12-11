@@ -38,7 +38,7 @@ import java.util.function.BiPredicate;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TryWithIdenticalCatchesInspection extends BaseInspection {
+public final class TryWithIdenticalCatchesInspection extends BaseInspection {
   public boolean ignoreBlocksWithDifferentComments = true;
 
   @Override

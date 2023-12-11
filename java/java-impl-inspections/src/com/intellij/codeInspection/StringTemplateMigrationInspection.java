@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

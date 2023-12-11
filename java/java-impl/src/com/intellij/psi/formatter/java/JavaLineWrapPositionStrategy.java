@@ -30,7 +30,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
+public final class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 
   private final static IElementType[] ALLOWED_TYPES = {
     JavaTokenType.C_STYLE_COMMENT,

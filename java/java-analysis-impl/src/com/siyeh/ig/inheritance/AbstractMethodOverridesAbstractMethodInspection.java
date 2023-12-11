@@ -42,7 +42,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
+public final class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreJavaDoc = false;

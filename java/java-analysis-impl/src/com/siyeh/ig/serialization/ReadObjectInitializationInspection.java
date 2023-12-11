@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReadObjectInitializationInspection extends BaseInspection {
+public final class ReadObjectInitializationInspection extends BaseInspection {
 
   @Override
   @NotNull

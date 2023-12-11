@@ -34,7 +34,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RedundantMethodOverrideInspection extends BaseInspection {
+public final class RedundantMethodOverrideInspection extends BaseInspection {
 
   public boolean checkLibraryMethods = true;
   public boolean ignoreDelegates = true;

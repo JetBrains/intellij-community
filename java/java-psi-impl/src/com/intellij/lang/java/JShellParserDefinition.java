@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellParserDefinition extends JavaParserDefinition {
+public final class JShellParserDefinition extends JavaParserDefinition {
   public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
 
   private static final PsiParser PARSER = new PsiParser() {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_REMOVE = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "remove").parameterTypes("int");
   private static final CallMatcher LIST_SIZE = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "size").parameterCount(0);
 

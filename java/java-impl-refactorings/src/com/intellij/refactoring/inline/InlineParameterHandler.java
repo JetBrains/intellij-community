@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class InlineParameterHandler extends JavaInlineActionHandler {
+public final class InlineParameterHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_ID = "refactoring.inline.parameter";
 
   @Override

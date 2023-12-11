@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractMethodCallInConstructorInspection extends BaseInspection {
+public final class AbstractMethodCallInConstructorInspection extends BaseInspection {
 
   @Override
   @NotNull

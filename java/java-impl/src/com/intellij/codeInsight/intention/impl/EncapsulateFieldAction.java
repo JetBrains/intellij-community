@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
+public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {

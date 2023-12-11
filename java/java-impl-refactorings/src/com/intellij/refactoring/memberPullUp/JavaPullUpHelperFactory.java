@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
-public class JavaPullUpHelperFactory implements PullUpHelperFactory {
+public final class JavaPullUpHelperFactory implements PullUpHelperFactory {
   @Override
   public PullUpHelper createPullUpHelper(PullUpData data) {
     return new JavaPullUpHelper(data);

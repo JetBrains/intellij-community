@@ -69,7 +69,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
   
-  public static class Generic extends JavaCodeContextType {
+  public static final class Generic extends JavaCodeContextType {
     public Generic() {
       super(JavaLanguage.INSTANCE.getDisplayName());
     }
@@ -80,7 +80,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class ConsumerFunction extends JavaCodeContextType {
+  public static final class ConsumerFunction extends JavaCodeContextType {
     protected ConsumerFunction() {
       super(JavaBundle.message("live.template.context.consumer.function"));
     }
@@ -98,7 +98,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class Statement extends JavaCodeContextType {
+  public static final class Statement extends JavaCodeContextType {
     public Statement() {
       super(JavaBundle.message("live.template.context.statement"));
     }
@@ -125,7 +125,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class ElsePlace extends JavaCodeContextType {
+  public static final class ElsePlace extends JavaCodeContextType {
     public ElsePlace() {
       super(JavaBundle.message("live.template.context.else"));
     }
@@ -146,7 +146,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class Expression extends JavaCodeContextType {
+  public static final class Expression extends JavaCodeContextType {
     public Expression() {
       super(JavaBundle.message("live.template.context.expression"));
     }
@@ -200,7 +200,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     return false;
   }
 
-  public static class Declaration extends JavaCodeContextType {
+  public static final class Declaration extends JavaCodeContextType {
     public Declaration() {
       super(JavaBundle.message("live.template.context.declaration"));
     }

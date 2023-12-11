@@ -34,7 +34,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
 
   public boolean reportNotAnnotatedInterfaces = true;

@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "JavaCodeFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
-public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettingsBase implements PersistentStateComponent<JavaCodeFoldingSettingsImpl> {
+public final class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettingsBase implements PersistentStateComponent<JavaCodeFoldingSettingsImpl> {
   @Override
   public JavaCodeFoldingSettingsImpl getState() {
     return this;

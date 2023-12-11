@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 
-public class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
+public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
 
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,

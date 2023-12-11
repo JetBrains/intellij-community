@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
+public final class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance(RedundantTypeArgsInspection.class);
 
   private static final LocalQuickFix ourQuickFixAction = new MyQuickFixAction();

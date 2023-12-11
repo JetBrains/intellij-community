@@ -25,7 +25,7 @@ import static java.util.Collections.singletonList;
  * But we must implement createConfigurable as part of XDebuggerSettings otherwise java general settings will be before xdebugger general setting,
  * because JavaDebuggerSettingsPanelProvider has higher priority than XDebuggerSettingsPanelProviderImpl.
  */
-public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
+public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   protected JavaDebuggerSettings() {
     super("java");
   }

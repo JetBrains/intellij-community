@@ -14,7 +14,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameWrongRefHandler implements RenameHandler {
+public final class RenameWrongRefHandler implements RenameHandler {
 
 
   @Override

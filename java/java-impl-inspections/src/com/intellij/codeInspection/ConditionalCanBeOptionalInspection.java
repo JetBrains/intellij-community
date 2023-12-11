@@ -28,7 +28,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

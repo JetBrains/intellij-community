@@ -27,7 +27,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
+public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
   public JavaFieldBreakpointType() {
     super("java-field", JavaDebuggerBundle.message("field.watchpoints.tab.title"));
   }

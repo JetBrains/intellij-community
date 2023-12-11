@@ -15,7 +15,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
-public class StatementGroupSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class StatementGroupSelectioner extends AbstractBasicBackBasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), STATEMENT_SET);

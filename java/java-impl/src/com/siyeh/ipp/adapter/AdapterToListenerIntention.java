@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdapterToListenerIntention extends MCIntention {
+public final class AdapterToListenerIntention extends MCIntention {
 
   @NotNull
   @Override

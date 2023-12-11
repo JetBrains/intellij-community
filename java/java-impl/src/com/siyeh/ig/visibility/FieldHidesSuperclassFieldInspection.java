@@ -38,7 +38,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldHidesSuperclassFieldInspection extends BaseInspection {
+public final class FieldHidesSuperclassFieldInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
   @SuppressWarnings("PublicField")

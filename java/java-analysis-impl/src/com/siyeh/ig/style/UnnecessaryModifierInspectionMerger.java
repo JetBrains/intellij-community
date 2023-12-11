@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryModifierInspectionMerger extends InspectionElementsMerger {
+public final class UnnecessaryModifierInspectionMerger extends InspectionElementsMerger {
   @Override
   public @NotNull String getMergedToolName() {
     return "UnnecessaryModifier";

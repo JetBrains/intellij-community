@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
+public final class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
   private static final char OPTION_VALUE_SEPRATOR = '=';

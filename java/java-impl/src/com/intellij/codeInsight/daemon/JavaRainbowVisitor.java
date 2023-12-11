@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaRainbowVisitor extends RainbowVisitor {
+public final class JavaRainbowVisitor extends RainbowVisitor {
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
     return file instanceof PsiJavaFile;

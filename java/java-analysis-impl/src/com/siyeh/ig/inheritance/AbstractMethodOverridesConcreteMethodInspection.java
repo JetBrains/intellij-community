@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractMethodOverridesConcreteMethodInspection
+public final class AbstractMethodOverridesConcreteMethodInspection
   extends BaseInspection {
 
   @Override

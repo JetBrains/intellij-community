@@ -224,7 +224,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
   }
 
   @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-  public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
+  public static final class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
     private final PsiElement myContext;
 
     public ConvertNonFinalLocalToAtomicFix(PsiElement context) {

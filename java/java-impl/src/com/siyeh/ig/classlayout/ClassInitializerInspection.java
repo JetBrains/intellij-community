@@ -39,7 +39,7 @@ import java.util.Collection;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassInitializerInspection extends BaseInspection {
+public final class ClassInitializerInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenConstructor = false;

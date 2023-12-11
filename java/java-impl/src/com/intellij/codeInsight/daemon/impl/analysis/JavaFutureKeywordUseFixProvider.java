@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
+public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     PsiTypeElement typeElement = ObjectUtils.tryCast(ref.getParent(), PsiTypeElement.class);

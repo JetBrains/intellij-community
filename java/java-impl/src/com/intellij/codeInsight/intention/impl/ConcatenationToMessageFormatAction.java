@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConcatenationToMessageFormatAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ConcatenationToMessageFormatAction extends PsiUpdateModCommandAction<PsiElement> {
   public ConcatenationToMessageFormatAction() {
     super(PsiElement.class);
   }

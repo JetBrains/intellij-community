@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class JavaQualifiedNameProvider implements QualifiedNameProvider {
+public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
   private static final Logger LOG = Logger.getInstance(JavaQualifiedNameProvider.class);
 
   @Override

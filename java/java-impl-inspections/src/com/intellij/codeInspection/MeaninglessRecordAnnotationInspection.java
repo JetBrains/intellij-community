@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class MeaninglessRecordAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class MeaninglessRecordAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<TargetType> RECORD_TARGETS =
     EnumSet.of(TargetType.RECORD_COMPONENT, TargetType.FIELD, TargetType.METHOD,
                TargetType.PARAMETER, TargetType.TYPE_USE);

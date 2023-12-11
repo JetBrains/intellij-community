@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
+public final class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
 
   private static final @NonNls Map<String, String> gridbagConstants = new HashMap<>();
   static {

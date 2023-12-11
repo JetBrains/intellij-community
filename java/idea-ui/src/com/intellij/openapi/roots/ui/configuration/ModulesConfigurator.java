@@ -589,7 +589,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @ApiStatus.Internal
-  public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
+  public static final class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
 
     @Override
     public @NotNull NewProjectWizard create(@Nullable Project project,

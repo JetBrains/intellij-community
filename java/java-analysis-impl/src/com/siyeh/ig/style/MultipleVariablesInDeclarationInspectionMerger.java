@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleVariablesInDeclarationInspectionMerger extends InspectionElementsMergerBase {
+public final class MultipleVariablesInDeclarationInspectionMerger extends InspectionElementsMergerBase {
 
   @NonNls private static final String MULTIPLE_DECLARATION = "MultipleDeclaration";
   @NonNls private static final String MULTIPLE_TYPED_DECLARATION = "MultipleTypedDeclaration";

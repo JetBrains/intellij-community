@@ -9,7 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodNameMacro extends Macro {
+public final class MethodNameMacro extends Macro {
 
   @Override
   public String getName() {

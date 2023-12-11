@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (location instanceof DeleteTypeDescriptionLocation && ((DeleteTypeDescriptionLocation) location).isPlural()) {

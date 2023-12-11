@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NoExplicitFinalizeCallsInspection extends BaseInspection {
+public final class NoExplicitFinalizeCallsInspection extends BaseInspection {
 
   @Override
   @NotNull

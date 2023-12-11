@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher ARRAY_METHODS = staticCall(
     JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "setAll", "sort", "spliterator", "stream");
   private static final CallMatcher COLLECTION_METHODS = anyOf(

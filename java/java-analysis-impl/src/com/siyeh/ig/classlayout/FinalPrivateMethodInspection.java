@@ -30,7 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalPrivateMethodInspection extends BaseInspection {
+public final class FinalPrivateMethodInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -36,7 +36,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class NonStaticFinalLoggerInspection extends BaseInspection {
+public final class NonStaticFinalLoggerInspection extends BaseInspection {
 
   protected final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")

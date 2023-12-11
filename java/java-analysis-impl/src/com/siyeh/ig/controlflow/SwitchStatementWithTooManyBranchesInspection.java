@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection {
+public final class SwitchStatementWithTooManyBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 10;
 

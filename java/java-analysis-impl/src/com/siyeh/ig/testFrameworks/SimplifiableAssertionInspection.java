@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-public class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {

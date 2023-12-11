@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnicodeUnescapeIntention extends MCIntention {
+public final class UnicodeUnescapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

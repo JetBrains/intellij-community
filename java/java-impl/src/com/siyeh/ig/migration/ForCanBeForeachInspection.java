@@ -36,7 +36,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
 
-public class ForCanBeForeachInspection extends BaseInspection {
+public final class ForCanBeForeachInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean REPORT_INDEXED_LOOP = true;
   @SuppressWarnings("PublicField")

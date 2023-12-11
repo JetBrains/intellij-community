@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassInheritanceDepthInspection
+public final class ClassInheritanceDepthInspection
   extends ClassMetricInspection {
 
   @Override

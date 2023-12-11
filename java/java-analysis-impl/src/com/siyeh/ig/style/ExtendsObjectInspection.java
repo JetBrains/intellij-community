@@ -26,7 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsObjectInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ExtendsObjectInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

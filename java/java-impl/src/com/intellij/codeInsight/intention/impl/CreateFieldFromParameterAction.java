@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Max Medvedev
  */
-public class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
+public final class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
   private final boolean myIsFix;
 
   /** intention entry point, see /META-INF/JavaPlugin.xml */

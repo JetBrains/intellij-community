@@ -58,7 +58,7 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 /**
  * @author Maxim.Medvedev
  */
-public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
+public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
   private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageProcessor.class);
 
   private static boolean isJavaUsage(UsageInfo info) {

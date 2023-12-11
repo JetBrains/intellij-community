@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ClassCouplingInspection
+public final class ClassCouplingInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_COUPLING_LIMIT = 15;

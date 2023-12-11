@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceFormatStringWithConcatenationIntention extends MCIntention {
+public final class ReplaceFormatStringWithConcatenationIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

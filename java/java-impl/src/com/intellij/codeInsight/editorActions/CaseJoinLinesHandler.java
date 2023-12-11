@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CaseJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class CaseJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
     if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(psiFile)) return -1;

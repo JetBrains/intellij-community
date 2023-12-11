@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   @NonNls private static final String ID = "unchecked";
   private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);

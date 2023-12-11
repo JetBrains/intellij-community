@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
+public final class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
 
   @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {

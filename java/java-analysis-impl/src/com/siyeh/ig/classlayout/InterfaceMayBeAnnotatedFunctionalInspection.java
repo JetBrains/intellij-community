@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection {
+public final class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection {
 
   @NotNull
   @Override

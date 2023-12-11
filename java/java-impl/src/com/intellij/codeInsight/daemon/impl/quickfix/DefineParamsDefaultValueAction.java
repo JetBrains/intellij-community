@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> {
+public final class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
   public DefineParamsDefaultValueAction() {

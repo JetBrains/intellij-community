@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryConstantArrayCreationExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

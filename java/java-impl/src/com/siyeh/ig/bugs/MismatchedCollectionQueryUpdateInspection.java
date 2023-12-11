@@ -49,7 +49,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
-public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
+public final class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
 
   private static final CallMatcher TRANSFORMED = CallMatcher.staticCall(
     CommonClassNames.JAVA_UTIL_COLLECTIONS, "asLifoQueue", "checkedCollection", "checkedList", "checkedMap", "checkedNavigableMap",

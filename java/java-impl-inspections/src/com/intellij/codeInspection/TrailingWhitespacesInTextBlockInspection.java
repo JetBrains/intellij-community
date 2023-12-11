@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 
-public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;

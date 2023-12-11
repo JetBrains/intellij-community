@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

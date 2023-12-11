@@ -14,7 +14,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public class AnalysisScopeRule implements GetDataRule {
+public final class AnalysisScopeRule implements GetDataRule {
   @Override
   public Object getData(@NotNull final DataProvider dataProvider) {
     if (dataProvider.getData(CommonDataKeys.PSI_FILE.getName()) instanceof PsiJavaFile javaFile) {

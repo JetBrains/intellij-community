@@ -19,7 +19,7 @@ import java.util.List;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

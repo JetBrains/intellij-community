@@ -7,7 +7,7 @@ import com.intellij.psi.PsiField;
 import org.jetbrains.annotations.NotNull;
 
 
-public class FieldPresentationProvider implements ItemPresentationProvider<PsiField> {
+public final class FieldPresentationProvider implements ItemPresentationProvider<PsiField> {
   @Override
   public ItemPresentation getPresentation(@NotNull PsiField item) {
     return JavaPresentationUtil.getFieldPresentation(item);

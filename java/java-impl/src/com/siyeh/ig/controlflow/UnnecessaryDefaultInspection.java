@@ -47,7 +47,7 @@ import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryDefaultInspection extends BaseInspection {
+public final class UnnecessaryDefaultInspection extends BaseInspection {
 
   public boolean onlyReportSwitchExpressions = true;
 

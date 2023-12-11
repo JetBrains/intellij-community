@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class SuggestVariableNameMacro extends Macro {
+public final class SuggestVariableNameMacro extends Macro {
 
   @Override
   public String getName() {

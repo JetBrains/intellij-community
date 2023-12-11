@@ -8,7 +8,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-public class NotNullAnnotationProvider implements AnnotationProvider {
+public final class NotNullAnnotationProvider implements AnnotationProvider {
   @NotNull
   @Override
   public String getName(Project project) {

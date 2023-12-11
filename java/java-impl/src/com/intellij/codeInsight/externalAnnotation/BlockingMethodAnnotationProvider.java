@@ -6,7 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 
-public class BlockingMethodAnnotationProvider implements AnnotationProvider {
+public final class BlockingMethodAnnotationProvider implements AnnotationProvider {
 
   static final String DEFAULT_NONBLOCKING_ANNOTATION = "org.jetbrains.annotations.NonBlocking";
   static final String DEFAULT_BLOCKING_ANNOTATION = "org.jetbrains.annotations.Blocking";

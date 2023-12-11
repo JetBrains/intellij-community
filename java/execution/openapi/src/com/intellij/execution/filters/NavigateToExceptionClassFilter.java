@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class NavigateToExceptionClassFilter implements JvmExceptionOccurrenceFilter {
+public final class NavigateToExceptionClassFilter implements JvmExceptionOccurrenceFilter {
   @Override
   public @Nullable ResultItem applyFilter(@NotNull String exceptionClassName,
                                                  @NotNull List<PsiClass> classes,

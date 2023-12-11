@@ -32,7 +32,7 @@ import static com.intellij.codeInsight.intention.impl.StreamRefactoringUtil.getM
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

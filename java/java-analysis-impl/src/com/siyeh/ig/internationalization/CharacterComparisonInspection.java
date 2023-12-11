@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CharacterComparisonInspection extends BaseInspection {
+public final class CharacterComparisonInspection extends BaseInspection {
 
   @Override
   @NotNull

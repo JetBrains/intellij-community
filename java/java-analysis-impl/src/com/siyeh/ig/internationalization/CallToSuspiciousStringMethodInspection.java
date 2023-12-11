@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class CallToSuspiciousStringMethodInspection extends BaseInspection {
+public final class CallToSuspiciousStringMethodInspection extends BaseInspection {
 
   @NotNull
   @Override

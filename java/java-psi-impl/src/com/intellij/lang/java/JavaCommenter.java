@@ -12,7 +12,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaCommenter implements CodeDocumentationAwareCommenterEx {
+public final class JavaCommenter implements CodeDocumentationAwareCommenterEx {
 
   @Override
   public String getLineCommentPrefix() {

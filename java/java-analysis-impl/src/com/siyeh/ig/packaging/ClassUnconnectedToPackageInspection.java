@@ -24,7 +24,7 @@ import org.jetbrains.uast.UDeclarationKt;
 
 import java.util.Set;
 
-public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
+public final class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class BindFieldsFromParametersAction implements ModCommandAction {
+public final class BindFieldsFromParametersAction implements ModCommandAction {
   private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
 
   @Override

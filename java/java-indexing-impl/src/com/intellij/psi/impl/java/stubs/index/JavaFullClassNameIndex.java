@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
+public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
 
   public static JavaFullClassNameIndex getInstance() {

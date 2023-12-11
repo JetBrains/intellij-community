@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import org.jetbrains.annotations.NotNull;
 
-public class ProtectedFieldInspection extends BaseInspection {
+public final class ProtectedFieldInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
+public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
   @NotNull

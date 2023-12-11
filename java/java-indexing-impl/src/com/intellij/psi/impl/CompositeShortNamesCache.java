@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CompositeShortNamesCache extends PsiShortNamesCache {
+public final class CompositeShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
 
   public CompositeShortNamesCache(Project project) {

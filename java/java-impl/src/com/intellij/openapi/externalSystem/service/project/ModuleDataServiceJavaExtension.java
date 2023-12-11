@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated(forRemoval = true)
 @SuppressWarnings("DeprecatedIsStillUsed")
-public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtension {
+public final class ModuleDataServiceJavaExtension implements ModuleDataServiceExtension {
   private static final Logger LOG = Logger.getInstance(ModuleDataServiceJavaExtension.class);
 
   @Override

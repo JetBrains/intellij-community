@@ -11,7 +11,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalAnnotationsRefactoringListenerProvider implements RefactoringElementListenerProvider {
+public final class ExternalAnnotationsRefactoringListenerProvider implements RefactoringElementListenerProvider {
   @Nullable
   @Override
   public RefactoringElementListener getListener(PsiElement element) {

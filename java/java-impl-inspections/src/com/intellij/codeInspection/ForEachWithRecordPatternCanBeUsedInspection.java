@@ -30,7 +30,7 @@ import java.util.function.BiConsumer;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   private static final int MAX_LEVEL = 5;
   private static final int MAX_COMPONENT_COUNTS = 10;

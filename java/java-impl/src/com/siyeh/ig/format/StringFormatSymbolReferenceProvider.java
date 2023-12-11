@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class StringFormatSymbolReferenceProvider implements PsiSymbolReferenceProvider {
+public final class StringFormatSymbolReferenceProvider implements PsiSymbolReferenceProvider {
   @Override
   public @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
                                                                                   @NotNull PsiSymbolReferenceHints hints) {

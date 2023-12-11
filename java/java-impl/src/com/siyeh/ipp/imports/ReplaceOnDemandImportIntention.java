@@ -17,7 +17,7 @@ import java.util.function.Function;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOnDemandImportIntention extends MCIntention {
+public final class ReplaceOnDemandImportIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

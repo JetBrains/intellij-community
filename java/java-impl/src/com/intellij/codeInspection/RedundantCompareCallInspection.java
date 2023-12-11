@@ -19,7 +19,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CallMatcher COMPARE_METHODS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "compare").parameterTypes("int", "int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "compare").parameterTypes("long", "long"),

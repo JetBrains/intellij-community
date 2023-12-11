@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class MultiCatchCanBeSplitInspection extends BaseInspection {
+public final class MultiCatchCanBeSplitInspection extends BaseInspection {
 
   @NotNull
   @Override

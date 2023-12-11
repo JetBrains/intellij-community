@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ExceptionPackageInspection extends PackageGlobalInspection {
+public final class ExceptionPackageInspection extends PackageGlobalInspection {
   @Override
   public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
                                                            @NotNull AnalysisScope analysisScope,

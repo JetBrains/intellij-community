@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

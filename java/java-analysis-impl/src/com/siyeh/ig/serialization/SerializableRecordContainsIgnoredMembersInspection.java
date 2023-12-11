@@ -10,7 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableRecordContainsIgnoredMembersInspection extends BaseInspection {
+public final class SerializableRecordContainsIgnoredMembersInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {

@@ -25,7 +25,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ShowDateTimeExampleOutputIntention extends PsiBasedModCommandAction<PsiExpression> {
+public final class ShowDateTimeExampleOutputIntention extends PsiBasedModCommandAction<PsiExpression> {
   
   public ShowDateTimeExampleOutputIntention() {
     super(PsiExpression.class);

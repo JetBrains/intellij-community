@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaHighlightErrorFilter extends HighlightErrorFilter {
+public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     String description = element.getErrorDescription();

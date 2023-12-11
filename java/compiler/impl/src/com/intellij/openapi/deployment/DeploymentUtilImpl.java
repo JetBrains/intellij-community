@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class DeploymentUtilImpl extends DeploymentUtil {
+public final class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance(DeploymentUtilImpl.class);
 
   // OS X is sensitive for that

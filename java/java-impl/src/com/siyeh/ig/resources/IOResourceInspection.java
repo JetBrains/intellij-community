@@ -30,7 +30,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class IOResourceInspection extends ResourceInspection {
+public final class IOResourceInspection extends ResourceInspection {
   final List<String> ignoredTypes = new ArrayList<>();
   @SuppressWarnings("PublicField")
   public String ignoredTypesString = "java.io.ByteArrayOutputStream" +

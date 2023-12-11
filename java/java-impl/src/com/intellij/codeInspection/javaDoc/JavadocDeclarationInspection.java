@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.javaDoc.MissingJavadocInspection.isDeprecated;
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class JavadocDeclarationInspection extends LocalInspectionTool {
+public final class JavadocDeclarationInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavadocDeclaration";
 
   public String ADDITIONAL_TAGS = "";

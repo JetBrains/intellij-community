@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
-public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean tryToPreserveUnusedVariables = true;

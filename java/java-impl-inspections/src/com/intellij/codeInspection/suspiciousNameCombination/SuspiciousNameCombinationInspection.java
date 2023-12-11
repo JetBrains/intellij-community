@@ -29,7 +29,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
 
-public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
   @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";

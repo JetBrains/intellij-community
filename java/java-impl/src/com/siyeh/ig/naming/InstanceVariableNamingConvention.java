@@ -21,7 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class InstanceVariableNamingConvention extends NamingConvention<PsiField> {
+public final class InstanceVariableNamingConvention extends NamingConvention<PsiField> {
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;

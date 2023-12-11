@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodMayBeStaticInspection extends BaseInspection {
+public final class MethodMayBeStaticInspection extends BaseInspection {
   @NonNls protected static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
   @NonNls protected static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
   @NonNls protected static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";

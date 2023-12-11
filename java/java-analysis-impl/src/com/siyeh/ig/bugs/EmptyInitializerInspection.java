@@ -28,7 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class EmptyInitializerInspection extends BaseInspection {
+public final class EmptyInitializerInspection extends BaseInspection {
 
   @Override
   @NotNull

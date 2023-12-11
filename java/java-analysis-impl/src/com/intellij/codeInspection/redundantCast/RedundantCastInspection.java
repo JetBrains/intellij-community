@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private final LocalQuickFix myQuickFixAction;
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 

@@ -40,7 +40,7 @@ import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class NumberEqualityInspection extends BaseInspection {
+public final class NumberEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

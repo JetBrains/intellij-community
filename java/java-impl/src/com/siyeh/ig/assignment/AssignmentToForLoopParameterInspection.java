@@ -20,7 +20,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToForLoopParameterInspection extends BaseInspection {
+public final class AssignmentToForLoopParameterInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization purposes

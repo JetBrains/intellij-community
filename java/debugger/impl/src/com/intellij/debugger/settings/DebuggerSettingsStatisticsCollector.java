@@ -13,7 +13,7 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 
-public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
+public final class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 4);
   private static final VarargEventId DISABLE_JIT = GROUP.registerVarargEvent("disableJit", EventFields.Enabled);
   private static final VarargEventId SHOW_ALTERNATIVE_SOURCE = GROUP.registerVarargEvent("showAlternativeSource", EventFields.Enabled);

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PlainArtifactType extends ArtifactType {
+public final class PlainArtifactType extends ArtifactType {
   @NonNls public static final String ID = "plain";
 
   public static PlainArtifactType getInstance() {

@@ -37,7 +37,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 
-public class GeneralModuleTypeForIdea extends GeneralModuleType {
+public final class GeneralModuleTypeForIdea extends GeneralModuleType {
   @Override
   public @NotNull ModuleBuilder createModuleBuilder() {
     return new GeneralModuleBuilder() {

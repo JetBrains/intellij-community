@@ -29,7 +29,7 @@ import java.awt.*;
 /**
  * @author anna
  */
-public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new JavadocPathsEditor(sdk, FileChooserDescriptorFactory.createMultipleJavaPathDescriptor());

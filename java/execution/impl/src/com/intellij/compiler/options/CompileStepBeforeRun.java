@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
+public final class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
 

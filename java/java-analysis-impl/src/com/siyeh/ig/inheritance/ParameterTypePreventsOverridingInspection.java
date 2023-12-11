@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author Bas Leijdekkers
  */
-public class ParameterTypePreventsOverridingInspection extends BaseInspection {
+public final class ParameterTypePreventsOverridingInspection extends BaseInspection {
 
   @NotNull
   @Override

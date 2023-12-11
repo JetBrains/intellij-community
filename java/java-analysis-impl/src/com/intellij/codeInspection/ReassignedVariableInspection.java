@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,

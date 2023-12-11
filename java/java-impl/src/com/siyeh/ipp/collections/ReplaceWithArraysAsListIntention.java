@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntention extends MCIntention {
+public final class ReplaceWithArraysAsListIntention extends MCIntention {
   private String replacementText = null;
 
   @Override

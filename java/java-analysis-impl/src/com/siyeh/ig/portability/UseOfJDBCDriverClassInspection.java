@@ -20,7 +20,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfJDBCDriverClassInspection extends BaseInspection {
+public final class UseOfJDBCDriverClassInspection extends BaseInspection {
 
   @Override
   @NotNull

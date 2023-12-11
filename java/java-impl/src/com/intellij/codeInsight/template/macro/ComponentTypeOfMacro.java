@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComponentTypeOfMacro extends Macro {
+public final class ComponentTypeOfMacro extends Macro {
   @Override
   public String getName() {
     return "componentTypeOf";

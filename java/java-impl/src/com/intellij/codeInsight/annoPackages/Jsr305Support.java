@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class Jsr305Support implements AnnotationPackageSupport {
+public final class Jsr305Support implements AnnotationPackageSupport {
   public static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   public static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";

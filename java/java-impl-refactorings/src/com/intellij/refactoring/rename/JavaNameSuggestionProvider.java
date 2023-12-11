@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JavaNameSuggestionProvider implements NameSuggestionProvider {
+public final class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {

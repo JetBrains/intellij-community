@@ -15,7 +15,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class ListArrayConversionRule extends TypeConversionRule {
+public final class ListArrayConversionRule extends TypeConversionRule {
   @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from,
                                                      final PsiType to,

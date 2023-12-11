@@ -48,7 +48,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbAware {
+public final class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CopyClassesHandler.class);
 
   @Override

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MoveMembersHandler extends MoveHandlerDelegate {
+public final class MoveMembersHandler extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for(PsiElement element: elements) {

@@ -30,7 +30,7 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaStructureViewBuilderFactory implements PsiStructureViewFactory {
+public final class JavaStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Override
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {

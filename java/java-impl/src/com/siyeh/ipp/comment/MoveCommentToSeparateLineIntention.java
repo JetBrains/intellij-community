@@ -29,7 +29,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveCommentToSeparateLineIntention extends MCIntention {
+public final class MoveCommentToSeparateLineIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

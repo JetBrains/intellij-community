@@ -10,7 +10,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaCollapseBlockHandler extends CollapseBlockHandlerImpl {
+public final class JavaCollapseBlockHandler extends CollapseBlockHandlerImpl {
   @Nullable
   @Override
   protected PsiElement findParentBlock(@Nullable PsiElement element) {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CharUsedInArithmeticContextInspection extends BaseInspection {
+public final class CharUsedInArithmeticContextInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ErrorRethrownInspection extends BaseInspection {
+public final class ErrorRethrownInspection extends BaseInspection {
 
   @Override
   @NotNull

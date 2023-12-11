@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 
-public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     TextRange range = e.getTextRange();

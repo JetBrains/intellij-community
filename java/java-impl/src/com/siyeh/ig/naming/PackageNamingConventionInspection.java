@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class PackageNamingConventionInspection extends PackageGlobalInspection {
+public final class PackageNamingConventionInspection extends PackageGlobalInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 3;
   private static final int DEFAULT_MAX_LENGTH = 16;

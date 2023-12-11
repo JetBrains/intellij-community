@@ -26,7 +26,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher APPEND = CallMatcher.instanceCall("java.lang.AbstractStringBuilder", "append").parameterCount(1);
 
   public boolean ADD_MATH_MAX = true;

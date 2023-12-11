@@ -30,7 +30,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention {
+public final class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

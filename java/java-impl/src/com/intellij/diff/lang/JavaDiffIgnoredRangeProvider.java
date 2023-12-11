@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaDiffIgnoredRangeProvider extends LangDiffIgnoredRangeProvider {
+public final class JavaDiffIgnoredRangeProvider extends LangDiffIgnoredRangeProvider {
   @NotNull
   @Override
   public String getDescription() {

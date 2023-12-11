@@ -15,7 +15,7 @@ import java.util.List;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_FOREACH_STATEMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_FOR_STATEMENT;
 
-public class ForStatementHeaderSelectioner implements ExtendWordSelectionHandler {
+public final class ForStatementHeaderSelectioner implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaDefinitionService extends AbstractBasicJavaDefinitionService {
+public final class JavaDefinitionService extends AbstractBasicJavaDefinitionService {
 
   @Override
   public @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement psiElement) {

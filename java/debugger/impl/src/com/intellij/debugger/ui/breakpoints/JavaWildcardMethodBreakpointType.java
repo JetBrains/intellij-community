@@ -18,7 +18,7 @@ import javax.swing.*;
 /**
  * @author Egor
  */
-public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> {
+public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> {
   public JavaWildcardMethodBreakpointType() {
     super("java-wildcard-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }

@@ -31,7 +31,7 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayEqualityInspection extends BaseInspection {
+public final class ArrayEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

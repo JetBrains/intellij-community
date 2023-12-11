@@ -21,7 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class StaticMethodNamingConvention extends NamingConvention<PsiMethod> {
+public final class StaticMethodNamingConvention extends NamingConvention<PsiMethod> {
 
 
 

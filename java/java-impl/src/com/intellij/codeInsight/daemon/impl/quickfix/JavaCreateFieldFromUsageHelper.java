@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Max Medvedev
  */
-public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
+public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
 
   @Override
   public Template setupTemplateImpl(PsiField field,

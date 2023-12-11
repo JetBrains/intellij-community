@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellPsiAugmentProvider extends PsiAugmentProvider{
+public final class JShellPsiAugmentProvider extends PsiAugmentProvider{
   private static final Set<String> JSHELL_FIELD_MODIFIERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC)));
   @NotNull
   @Override

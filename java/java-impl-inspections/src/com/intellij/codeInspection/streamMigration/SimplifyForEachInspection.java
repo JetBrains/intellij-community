@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher.Simple ITERABLE_FOREACH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "forEach").parameterCount(1);
   private static final CallMatcher.Simple STREAM_FOREACH_ORDERED =
@@ -230,7 +230,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
+  public static final class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
     private final @Nullable PsiElement myContext;
     private final @Nls String myMessage;
 

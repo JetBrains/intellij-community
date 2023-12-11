@@ -44,7 +44,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TooBroadCatchInspection extends BaseInspection {
+public final class TooBroadCatchInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;

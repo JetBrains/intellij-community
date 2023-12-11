@@ -31,7 +31,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher TO_STRING = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "toString");
   private static final CallMatcher HASH_CODE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
   private static final CallMatcher VALUE_OF = getValueOfMatcher();

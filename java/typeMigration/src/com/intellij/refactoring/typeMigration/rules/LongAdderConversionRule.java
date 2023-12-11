@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Dmitry Batkovich
  */
-public class LongAdderConversionRule extends TypeConversionRule {
+public final class LongAdderConversionRule extends TypeConversionRule {
   public static final String JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER = "java.util.concurrent.atomic.LongAdder";
 
   private static final Set<String> IDENTICAL_METHODS

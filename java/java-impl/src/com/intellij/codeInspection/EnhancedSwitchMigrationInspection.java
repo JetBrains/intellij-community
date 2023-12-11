@@ -31,7 +31,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion = true;
   @SuppressWarnings("WeakerAccess") public int myMaxNumberStatementsForBranch = 2;
 

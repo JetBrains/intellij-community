@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Tagir Valeev
  */
-public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

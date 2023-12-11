@@ -13,7 +13,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.AddThisQualifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UnqualifiedMethodAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnqualifiedMethodAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {

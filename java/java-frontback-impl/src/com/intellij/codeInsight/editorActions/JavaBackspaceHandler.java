@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
+public final class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
   @Override

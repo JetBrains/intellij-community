@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MakeAnnotationExternal extends BaseIntentionAction {
+public final class MakeAnnotationExternal extends BaseIntentionAction {
 
   @Nls
   @NotNull

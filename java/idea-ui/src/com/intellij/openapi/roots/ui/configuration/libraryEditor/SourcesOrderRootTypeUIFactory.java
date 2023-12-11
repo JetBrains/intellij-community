@@ -32,7 +32,7 @@ import java.awt.*;
 /**
  * @author anna
  */
-public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public SdkPathEditor createPathEditor(final Sdk sdk) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true);

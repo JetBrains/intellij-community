@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
+public final class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   private static final Logger LOG = Logger.getInstance(DownloadableLibraryServiceImpl.class);
 
   @NotNull

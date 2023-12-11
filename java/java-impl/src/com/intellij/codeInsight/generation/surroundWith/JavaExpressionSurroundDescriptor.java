@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
+public final class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
 
   private static final Surrounder[] SURROUNDERS = {
     new JavaWithParenthesesSurrounder(),

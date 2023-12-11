@@ -30,7 +30,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ThrowCaughtLocallyInspection extends BaseInspection {
+public final class ThrowCaughtLocallyInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

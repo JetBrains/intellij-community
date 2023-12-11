@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OnlyOneElementUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class OnlyOneElementUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new RedundantElementAccessVisitor(holder);

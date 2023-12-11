@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AlternativeSdkRootsProviderForJdkUpdate implements JdkUpdateCheckContributor {
+public final class AlternativeSdkRootsProviderForJdkUpdate implements JdkUpdateCheckContributor {
   @NotNull
   @Override
   public List<Sdk> contributeJdks(@NotNull Project project) {

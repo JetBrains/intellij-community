@@ -19,7 +19,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ReturnOfInnerClassInspection extends BaseInspection {
+public final class ReturnOfInnerClassInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreNonPublic = false;
 

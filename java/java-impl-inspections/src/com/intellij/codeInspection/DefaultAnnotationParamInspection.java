@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
 
   /**
    * Allows skipping DefaultAnnotationParamInspection for specific annotations parameters

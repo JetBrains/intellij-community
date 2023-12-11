@@ -18,7 +18,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassInitializerMayBeStaticInspection extends BaseInspection {
+public final class ClassInitializerMayBeStaticInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;

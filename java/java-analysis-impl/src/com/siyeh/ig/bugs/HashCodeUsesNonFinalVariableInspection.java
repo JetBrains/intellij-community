@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class HashCodeUsesNonFinalVariableInspection
+public final class HashCodeUsesNonFinalVariableInspection
   extends BaseInspection {
 
   @Override

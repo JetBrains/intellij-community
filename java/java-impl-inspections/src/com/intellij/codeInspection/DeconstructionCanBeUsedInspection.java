@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

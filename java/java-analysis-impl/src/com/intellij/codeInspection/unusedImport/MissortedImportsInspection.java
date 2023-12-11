@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MissortedImportsInspection extends GlobalSimpleInspectionTool {
+public final class MissortedImportsInspection extends GlobalSimpleInspectionTool {
   @NonNls
   public static final String SHORT_NAME = "MISSORTED_IMPORTS";
 

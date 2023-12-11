@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
-public class JavaDebuggerAutoAttach extends RunConfigurationExtension {
+public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
   @Override
   public <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
                                                                        @NotNull JavaParameters params,

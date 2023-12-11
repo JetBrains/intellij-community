@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
+public final class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @NotNull
   @Override

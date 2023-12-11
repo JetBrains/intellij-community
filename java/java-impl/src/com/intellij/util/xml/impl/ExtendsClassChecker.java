@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass> {
+public final class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass> {
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 
   @Override

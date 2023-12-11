@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
+public final class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor[] checkElement(

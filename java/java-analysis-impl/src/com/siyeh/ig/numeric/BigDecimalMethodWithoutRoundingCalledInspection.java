@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class BigDecimalMethodWithoutRoundingCalledInspection extends BaseInspection {
+public final class BigDecimalMethodWithoutRoundingCalledInspection extends BaseInspection {
 
   static final CallMatcher JAVA_MATH_BIG_DECIMAL =
     CallMatcher.instanceCall("java.math.BigDecimal", "setScale", "divide").parameterCount(1);

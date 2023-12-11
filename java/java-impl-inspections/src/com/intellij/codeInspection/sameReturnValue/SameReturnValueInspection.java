@@ -19,7 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.List;
 
-public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
+public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
                                                            @NotNull AnalysisScope scope,

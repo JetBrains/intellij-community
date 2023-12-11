@@ -19,7 +19,7 @@ import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
-public class MethodOrClassSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class MethodOrClassSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

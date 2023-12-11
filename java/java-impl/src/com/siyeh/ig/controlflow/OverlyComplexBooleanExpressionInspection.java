@@ -31,7 +31,7 @@ import java.util.Arrays;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
+public final class OverlyComplexBooleanExpressionInspection extends BaseInspection {
   private static final TokenSet s_booleanOperators =
     TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR);
 

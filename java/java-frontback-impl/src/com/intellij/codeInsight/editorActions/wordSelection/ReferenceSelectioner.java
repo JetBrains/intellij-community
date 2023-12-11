@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
-public class ReferenceSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class ReferenceSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

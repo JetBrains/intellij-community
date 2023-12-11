@@ -33,7 +33,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UseOfObsoleteAssertInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UseOfObsoleteAssertInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

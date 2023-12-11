@@ -8,7 +8,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodDiffViewerCustomizer extends DiffExtension {
+public final class ExtractMethodDiffViewerCustomizer extends DiffExtension {
   @RequiresEdt
   @Override
   public void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer, @NotNull DiffContext context, @NotNull DiffRequest request) {

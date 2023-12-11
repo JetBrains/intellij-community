@@ -18,7 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaOverrideMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
+public final class JavaOverrideMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile) && !(file instanceof PsiCodeFragment)) {

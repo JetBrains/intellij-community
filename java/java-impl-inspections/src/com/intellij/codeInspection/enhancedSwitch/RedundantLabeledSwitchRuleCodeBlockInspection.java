@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.java.JavaBundle.message;
 
-public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
+public final class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> INTERESTING_NAMES = Set.of("fill", "binarySearch", "equals", "mismatch");
 
   @NotNull

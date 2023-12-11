@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_EXPRESSION_LIST_STATEMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.EXPRESSION_SET;
 
-public class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBraceHandler {
+public final class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBraceHandler {
 
   protected JavaEnterAfterUnmatchedBraceHandler() {
   }

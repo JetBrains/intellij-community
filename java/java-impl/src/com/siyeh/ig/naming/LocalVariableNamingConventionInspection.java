@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class LocalVariableNamingConventionInspection extends ConventionInspection {
+public final class LocalVariableNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 1;
   private static final int DEFAULT_MAX_LENGTH = 20;

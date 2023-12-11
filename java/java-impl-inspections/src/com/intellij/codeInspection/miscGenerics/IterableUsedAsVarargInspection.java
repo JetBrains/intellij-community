@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

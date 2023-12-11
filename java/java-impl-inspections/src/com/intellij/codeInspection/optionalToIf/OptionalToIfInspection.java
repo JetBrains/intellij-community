@@ -26,7 +26,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> SUPPORTED_TERMINALS = Set.of(
     "get", "orElse", "ifPresent", "orElseGet", "ifPresentOrElse", "isPresent", "isEmpty", "stream", "orElseThrow");

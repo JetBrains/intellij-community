@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIAL;
 import static com.intellij.psi.PsiModifier.PRIVATE;
 
-public class MissingSerialAnnotationInspection extends BaseInspection {
+public final class MissingSerialAnnotationInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {

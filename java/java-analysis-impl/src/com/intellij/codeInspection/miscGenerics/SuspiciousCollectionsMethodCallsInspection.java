@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 
   @Override

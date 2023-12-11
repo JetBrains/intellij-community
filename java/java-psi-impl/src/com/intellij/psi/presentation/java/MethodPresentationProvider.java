@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 
-public class MethodPresentationProvider implements ItemPresentationProvider<PsiMethod> {
+public final class MethodPresentationProvider implements ItemPresentationProvider<PsiMethod> {
   @Override
   public ItemPresentation getPresentation(@NotNull PsiMethod item) {
     return JavaPresentationUtil.getMethodPresentation(item);

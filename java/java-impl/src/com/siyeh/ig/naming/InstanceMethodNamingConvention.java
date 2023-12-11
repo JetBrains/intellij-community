@@ -22,7 +22,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
-public class InstanceMethodNamingConvention extends NamingConvention<PsiMethod> {
+public final class InstanceMethodNamingConvention extends NamingConvention<PsiMethod> {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;

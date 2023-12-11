@@ -34,7 +34,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SetReplaceableByEnumSetInspection extends BaseInspection {
+public final class SetReplaceableByEnumSetInspection extends BaseInspection {
 
   @Override
   @NotNull

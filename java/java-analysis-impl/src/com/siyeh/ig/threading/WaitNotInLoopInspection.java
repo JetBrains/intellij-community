@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class WaitNotInLoopInspection extends BaseInspection {
+public final class WaitNotInLoopInspection extends BaseInspection {
 
   @Override
   @NotNull

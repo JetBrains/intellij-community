@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class MethodDoesntCallSuperMethodInspectionMerger extends InspectionElementsMerger {
+public final class MethodDoesntCallSuperMethodInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

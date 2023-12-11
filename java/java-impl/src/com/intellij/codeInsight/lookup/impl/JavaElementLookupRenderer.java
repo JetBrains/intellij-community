@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class JavaElementLookupRenderer implements ElementLookupRenderer {
+public final class JavaElementLookupRenderer implements ElementLookupRenderer {
   @Override
   public boolean handlesItem(final Object element) {
     return element instanceof BeanPropertyElement;

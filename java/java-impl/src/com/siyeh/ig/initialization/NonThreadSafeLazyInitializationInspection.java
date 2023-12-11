@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
+public final class NonThreadSafeLazyInitializationInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

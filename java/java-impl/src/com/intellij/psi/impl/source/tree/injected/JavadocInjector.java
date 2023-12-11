@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavadocInjector implements MultiHostInjector {
+public final class JavadocInjector implements MultiHostInjector {
 
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar,

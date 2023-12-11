@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ConstantOnWrongSideOfComparisonInspectionMerger extends InspectionElementsMergerBase {
+public final class ConstantOnWrongSideOfComparisonInspectionMerger extends InspectionElementsMergerBase {
 
   @NonNls private static final String CONSTANT_ON_LHS = "ConstantOnLHSOfComparison";
   @NonNls private static final String CONSTANT_ON_RHS = "ConstantOnRHSOfComparison";

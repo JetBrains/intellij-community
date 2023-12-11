@@ -27,7 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
+public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @NotNull
   @Override

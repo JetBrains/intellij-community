@@ -17,7 +17,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class MultipleExceptionsDeclaredOnTestMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class MultipleExceptionsDeclaredOnTestMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

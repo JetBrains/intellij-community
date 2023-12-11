@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class InstanceVariableInitializationInspection extends BaseInspection {
+public final class InstanceVariableInitializationInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

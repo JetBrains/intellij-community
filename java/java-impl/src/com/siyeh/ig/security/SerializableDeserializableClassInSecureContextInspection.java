@@ -22,7 +22,7 @@ import java.util.Arrays;
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableDeserializableClassInSecureContextInspection extends SerializableInspectionBase {
+public final class SerializableDeserializableClassInSecureContextInspection extends SerializableInspectionBase {
 
   public SerializableDeserializableClassInSecureContextInspection() {
     superClassString = "java.awt.Component,java.lang.Throwable,java.lang.Enum";

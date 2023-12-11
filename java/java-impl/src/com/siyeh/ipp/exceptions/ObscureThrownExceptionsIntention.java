@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class ObscureThrownExceptionsIntention extends MCIntention {
+public final class ObscureThrownExceptionsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WhileCanBeForeachInspection extends BaseInspection {
+public final class WhileCanBeForeachInspection extends BaseInspection {
 
   @Override
   public LocalQuickFix buildFix(Object... infos) {

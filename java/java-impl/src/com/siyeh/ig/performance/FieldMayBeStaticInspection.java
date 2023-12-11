@@ -39,7 +39,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldMayBeStaticInspection extends BaseInspection {
+public final class FieldMayBeStaticInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {

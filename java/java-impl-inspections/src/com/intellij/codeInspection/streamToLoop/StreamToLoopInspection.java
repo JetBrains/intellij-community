@@ -37,7 +37,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 
-public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls

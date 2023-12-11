@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
+public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @NotNull

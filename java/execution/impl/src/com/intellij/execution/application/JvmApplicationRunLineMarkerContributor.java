@@ -20,7 +20,7 @@ import java.util.function.Function;
 import static com.intellij.lang.jvm.util.JvmMainMethodUtil.hasMainMethodInHierarchy;
 import static com.intellij.lang.jvm.util.JvmMainMethodUtil.isMainMethod;
 
-public class JvmApplicationRunLineMarkerContributor extends JvmRunLineMarkerContributor {
+public final class JvmApplicationRunLineMarkerContributor extends JvmRunLineMarkerContributor {
   @Override
   protected @Nullable Info getInfo(@NotNull PsiElement psiElement, @NotNull JvmElement element) {
     return showMarker(element) ? info(psiElement) : null;

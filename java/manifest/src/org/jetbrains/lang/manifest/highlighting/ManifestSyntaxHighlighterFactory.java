@@ -31,7 +31,7 @@ import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+public final class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   public static final SyntaxHighlighter HIGHLIGHTER = new SyntaxHighlighterBase() {
     private final Map<IElementType, TextAttributesKey> myAttributes;
     {

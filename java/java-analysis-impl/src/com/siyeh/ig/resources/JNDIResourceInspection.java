@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JNDIResourceInspection extends ResourceInspection {
+public final class JNDIResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

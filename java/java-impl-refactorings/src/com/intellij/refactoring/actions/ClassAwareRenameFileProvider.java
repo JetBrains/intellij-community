@@ -19,7 +19,7 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassAwareRenameFileProvider implements RenameFileActionProvider {
+public final class ClassAwareRenameFileProvider implements RenameFileActionProvider {
   @Override
   public boolean enabledInProjectView(@NotNull PsiFile file) {
     return file instanceof PsiClassOwner;

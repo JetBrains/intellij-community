@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
+public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
   @NonNls
   static final Map<BuilderType, Set<String>> returnSelfNames =

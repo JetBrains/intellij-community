@@ -20,7 +20,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Batkovich
  */
-public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;

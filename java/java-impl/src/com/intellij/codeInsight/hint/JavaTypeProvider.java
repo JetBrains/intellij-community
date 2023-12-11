@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author gregsh
  */
-public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
+public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   @NotNull
   @Override
   public String getInformationHint(@NotNull PsiElement element) {

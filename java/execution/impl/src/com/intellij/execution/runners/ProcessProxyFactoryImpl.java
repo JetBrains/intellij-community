@@ -18,7 +18,7 @@ import com.intellij.rt.execution.application.AppMainV2;
 
 import java.io.File;
 
-public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
+public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
 
   @Override

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class OptionalContainsCollectionInspection extends BaseInspection {
+public final class OptionalContainsCollectionInspection extends BaseInspection {
 
   @NotNull
   @Override

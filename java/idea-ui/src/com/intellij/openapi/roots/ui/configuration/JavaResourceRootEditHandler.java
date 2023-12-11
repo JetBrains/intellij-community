@@ -24,7 +24,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
-public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase {
+public final class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase {
   public JavaResourceRootEditHandler() {
     super(JavaResourceRootType.RESOURCE);
   }

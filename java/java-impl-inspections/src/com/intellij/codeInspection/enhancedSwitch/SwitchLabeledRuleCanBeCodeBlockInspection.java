@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.java.JavaBundle.message;
 
-public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTool {
+public final class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

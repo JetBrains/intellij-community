@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
+public final class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
   private static final Logger LOG = Logger.getInstance(JavaMoveClassToInnerHandler.class);
 
   @Override

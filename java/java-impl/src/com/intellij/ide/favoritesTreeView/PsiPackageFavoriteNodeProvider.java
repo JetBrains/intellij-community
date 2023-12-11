@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
+public final class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);

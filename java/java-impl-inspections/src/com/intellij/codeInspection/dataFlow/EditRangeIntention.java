@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
+public final class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
   private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
 
   @NotNull

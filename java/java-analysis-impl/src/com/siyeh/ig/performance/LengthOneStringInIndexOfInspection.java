@@ -18,7 +18,7 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LengthOneStringInIndexOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class LengthOneStringInIndexOfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Pattern(VALID_ID_PATTERN)
   @Override

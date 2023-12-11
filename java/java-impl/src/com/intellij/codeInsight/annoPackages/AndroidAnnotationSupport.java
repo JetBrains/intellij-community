@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class AndroidAnnotationSupport implements AnnotationPackageSupport {
+final class AndroidAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {

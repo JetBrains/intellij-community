@@ -34,7 +34,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class PublicFieldInspection extends BaseInspection {
+public final class PublicFieldInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;

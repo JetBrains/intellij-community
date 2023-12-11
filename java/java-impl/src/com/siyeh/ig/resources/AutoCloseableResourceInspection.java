@@ -39,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class AutoCloseableResourceInspection extends ResourceInspection {
+public final class AutoCloseableResourceInspection extends ResourceInspection {
 
 
   private static final CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close");

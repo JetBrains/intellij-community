@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
+public final class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
 
   @SuppressWarnings({"PublicField"})
   public int limit = 100;

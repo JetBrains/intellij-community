@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
+public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   @NotNull
   @Override
   public final String getFamilyName() {

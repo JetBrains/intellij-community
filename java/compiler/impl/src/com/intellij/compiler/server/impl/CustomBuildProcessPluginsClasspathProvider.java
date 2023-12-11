@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Adds custom plugins configured in {@link BuildProcessCustomPluginsConfiguration} to the build process' classpath.
  */
-public class CustomBuildProcessPluginsClasspathProvider extends BuildProcessParametersProvider {
+public final class CustomBuildProcessPluginsClasspathProvider extends BuildProcessParametersProvider {
   private final Project myProject;
 
   public CustomBuildProcessPluginsClasspathProvider(Project project) {

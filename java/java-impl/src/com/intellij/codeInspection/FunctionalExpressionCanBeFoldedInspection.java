@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

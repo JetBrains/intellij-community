@@ -45,7 +45,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
+public final class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();

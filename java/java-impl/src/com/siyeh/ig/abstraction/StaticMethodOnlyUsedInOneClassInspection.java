@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspection {
+public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreTestClasses = false;

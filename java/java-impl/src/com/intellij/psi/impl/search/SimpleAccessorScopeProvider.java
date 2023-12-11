@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleAccessorScopeProvider implements CustomPropertyScopeProvider {
+public final class SimpleAccessorScopeProvider implements CustomPropertyScopeProvider {
   @Override
   @NotNull
   public SearchScope getScope(@NotNull final Project project) {

@@ -29,7 +29,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfusingMainMethodInspection extends BaseInspection {
+public final class ConfusingMainMethodInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

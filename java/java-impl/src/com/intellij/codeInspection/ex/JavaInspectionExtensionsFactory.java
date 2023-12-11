@@ -30,7 +30,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory {
+public final class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory {
 
   @Override
   public GlobalInspectionContextExtension createGlobalInspectionContextExtension() {

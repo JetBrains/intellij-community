@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfProcessBuilderInspection extends BaseInspection {
+public final class UseOfProcessBuilderInspection extends BaseInspection {
 
   @Override
   @NotNull

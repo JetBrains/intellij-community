@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class AlternativeSdkRootsProvider extends AdditionalLibraryRootsProvider {
+public final class AlternativeSdkRootsProvider extends AdditionalLibraryRootsProvider {
   private static final Key<Collection<SyntheticLibrary>> ALTERNATIVE_SDK_LIBS_KEY = Key.create("ALTERNATIVE_SDK_LIBS_KEY");
 
   @Override

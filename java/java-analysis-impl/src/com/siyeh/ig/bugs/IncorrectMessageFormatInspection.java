@@ -23,7 +23,7 @@ import java.util.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher PATTERN_METHODS = anyOf(
     staticCall("java.text.MessageFormat", "format").parameterCount(2)

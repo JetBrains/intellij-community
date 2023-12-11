@@ -29,7 +29,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
+public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
-public class CodeBlockOrInitializerSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class CodeBlockOrInitializerSelectioner extends AbstractBasicBackBasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);

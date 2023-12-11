@@ -41,7 +41,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final String STRING_JOINER = "java.util.StringJoiner";
   private static final CallMatcher STRING_JOINER_ADD = CallMatcher.instanceCall(STRING_JOINER, "add").parameterCount(1);

@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaPairedBraceMatcher extends PairedBraceAndAnglesMatcher {
+public final class JavaPairedBraceMatcher extends PairedBraceAndAnglesMatcher {
 
   private static class Holder {
     private static final ParentAwareTokenSet TYPE_TOKENS =

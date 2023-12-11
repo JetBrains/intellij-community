@@ -38,7 +38,7 @@ import java.util.TreeSet;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
-public class CollectionsMustHaveInitialCapacityInspection
+public final class CollectionsMustHaveInitialCapacityInspection
   extends BaseInspection {
 
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {

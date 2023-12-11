@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class StringFormatUsageSearcher implements UsageSearcher {
+public final class StringFormatUsageSearcher implements UsageSearcher {
   @NotNull
   @Override
   public Collection<? extends Usage> collectImmediateResults(@NotNull UsageSearchParameters parameters) {

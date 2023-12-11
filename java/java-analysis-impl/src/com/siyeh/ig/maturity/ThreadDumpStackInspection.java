@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadDumpStackInspection extends BaseInspection {
+public final class ThreadDumpStackInspection extends BaseInspection {
 
   @Override
   @NotNull

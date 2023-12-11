@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModCommandAction<PsiElement> {
+public final class CopyConcatenatedStringToClipboardIntention extends PsiBasedModCommandAction<PsiElement> {
   public CopyConcatenatedStringToClipboardIntention() {
     super(PsiElement.class);
   }

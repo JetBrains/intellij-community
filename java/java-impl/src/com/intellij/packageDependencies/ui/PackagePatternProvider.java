@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-public class PackagePatternProvider extends PatternDialectProvider {
+public final class PackagePatternProvider extends PatternDialectProvider {
   @NonNls public static final String PACKAGES = "package";
   private static final Logger LOG = Logger.getInstance(PackagePatternProvider.class);
 

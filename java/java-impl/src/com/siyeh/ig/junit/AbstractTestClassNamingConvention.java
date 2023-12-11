@@ -24,7 +24,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
-public class AbstractTestClassNamingConvention extends NamingConvention<PsiClass> {
+public final class AbstractTestClassNamingConvention extends NamingConvention<PsiClass> {
 
   private static final int DEFAULT_MIN_LENGTH = 12;
   private static final int DEFAULT_MAX_LENGTH = 64;

@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassReferencesSubclassInspection extends BaseInspection {
+public final class ClassReferencesSubclassInspection extends BaseInspection {
 
   @Override
   @NotNull

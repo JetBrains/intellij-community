@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
-public class StringConcatenationInLoopsInspection extends BaseInspection {
+public final class StringConcatenationInLoopsInspection extends BaseInspection {
 
   @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
   @NotNull

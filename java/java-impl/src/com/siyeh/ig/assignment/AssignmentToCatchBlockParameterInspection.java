@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
+public final class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

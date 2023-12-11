@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-public class JavaDebuggerActionsCollector extends CounterUsagesCollector {
+public final class JavaDebuggerActionsCollector extends CounterUsagesCollector {
   private static final EventLogGroup group = new EventLogGroup("java.debugger.actions", 2);
   public static final EventId attachFromConsoleInlay = group.registerEvent("attach.inlay");
   public static final EventId attachFromConsoleInlayShown = group.registerEvent("attach.inlay.shown");

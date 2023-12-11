@@ -35,7 +35,7 @@ import java.util.Map;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MisspelledMethodNameInspection extends BaseInspection {
+public final class MisspelledMethodNameInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreIfMethodIsOverride = true;

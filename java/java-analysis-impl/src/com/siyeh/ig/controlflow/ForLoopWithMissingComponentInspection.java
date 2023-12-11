@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ForLoopWithMissingComponentInspection extends BaseInspection {
+public final class ForLoopWithMissingComponentInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreCollectionLoops = false;

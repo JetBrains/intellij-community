@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-public class AutoFormatTypedHandler extends TypedHandlerDelegate {
+public final class AutoFormatTypedHandler extends TypedHandlerDelegate {
   private static boolean myIsEnabledInTests;
 
   private static final char[] NO_SPACE_AFTER = {

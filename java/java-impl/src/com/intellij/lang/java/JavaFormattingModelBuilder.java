@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFormattingModelBuilder implements FormattingModelBuilder {
+public final class JavaFormattingModelBuilder implements FormattingModelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaFormattingModelBuilder.class);
 
   @Override

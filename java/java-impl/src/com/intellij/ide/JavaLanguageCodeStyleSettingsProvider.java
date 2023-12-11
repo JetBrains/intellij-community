@@ -27,7 +27,7 @@ import java.util.List;
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {

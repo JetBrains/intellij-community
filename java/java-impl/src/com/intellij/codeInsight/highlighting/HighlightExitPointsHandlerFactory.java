@@ -8,7 +8,7 @@ import com.intellij.psi.PsiKeyword;
 import org.jetbrains.annotations.NotNull;
 
 
-public class HighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class HighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {

@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ReplaceImplementsWithStaticImportAction implements ModCommandAction {
+public final class ReplaceImplementsWithStaticImportAction implements ModCommandAction {
   @Override
   @NotNull
   public String getFamilyName() {

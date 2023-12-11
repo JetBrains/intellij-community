@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
+public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
   private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP = new HashMap<>();
 

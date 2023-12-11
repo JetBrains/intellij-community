@@ -20,7 +20,7 @@ import java.util.List;
  * @author mike
  * @see <a href="https://docs.oracle.com/javase/9/docs/specs/doc-comment-spec.html">Documentation Comment Specification</a>
  */
-public class JavadocManagerImpl implements JavadocManager {
+public final class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
 
   public JavadocManagerImpl(Project project) {

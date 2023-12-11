@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemRunFinalizersOnExitInspection extends BaseInspection {
+public final class SystemRunFinalizersOnExitInspection extends BaseInspection {
   @Override
   @NotNull
   public String getID() {

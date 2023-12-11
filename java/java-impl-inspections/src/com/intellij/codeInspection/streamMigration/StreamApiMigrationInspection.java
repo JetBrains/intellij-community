@@ -44,7 +44,7 @@ import static com.intellij.codeInspection.streamMigration.OperationReductionMigr
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
-public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 
   @SuppressWarnings("PublicField")

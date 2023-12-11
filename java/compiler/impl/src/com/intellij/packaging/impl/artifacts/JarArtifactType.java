@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-public class JarArtifactType extends ArtifactType {
+public final class JarArtifactType extends ArtifactType {
   public JarArtifactType() {
     super("jar", JavaCompilerBundle.messagePointer("jar.text"));
   }

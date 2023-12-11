@@ -20,7 +20,7 @@ import java.util.StringJoiner;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

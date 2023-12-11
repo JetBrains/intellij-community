@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class PointlessNullCheckInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class PointlessNullCheckInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

@@ -25,7 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsThreadInspection extends BaseInspection {
+public final class ExtendsThreadInspection extends BaseInspection {
 
   /**
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(Object...)

@@ -38,7 +38,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class ClassWithMultipleLoggersInspection extends BaseInspection {
+public final class ClassWithMultipleLoggersInspection extends BaseInspection {
 
   protected final List<String> loggerNames = new ArrayList<>();
   /**

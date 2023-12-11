@@ -26,7 +26,7 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class MagicCharacterInspection extends BaseInspection {
+public final class MagicCharacterInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

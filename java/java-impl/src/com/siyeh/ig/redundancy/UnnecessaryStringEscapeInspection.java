@@ -31,7 +31,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryStringEscapeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryStringEscapeInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean reportChars = false;
 

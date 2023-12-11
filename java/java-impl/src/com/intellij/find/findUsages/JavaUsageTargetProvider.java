@@ -12,7 +12,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaUsageTargetProvider implements UsageTargetProvider {
+public final class JavaUsageTargetProvider implements UsageTargetProvider {
   @Override
   public UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class AbstractMethodWithMissingImplementationsInspection
+public final class AbstractMethodWithMissingImplementationsInspection
   extends BaseInspection {
 
   @Override

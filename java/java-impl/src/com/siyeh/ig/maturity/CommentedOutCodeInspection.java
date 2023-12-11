@@ -37,7 +37,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class CommentedOutCodeInspection extends BaseInspection {
+public final class CommentedOutCodeInspection extends BaseInspection {
 
   public int minLines = 2;
 

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBreakpointClassGroup> {
+final class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBreakpointClassGroup> {
   XBreakpointGroupingByClassRule() {
     super("XBreakpointGroupingByClassRule", JavaDebuggerBundle.message("rule.name.group.by.class"));
   }

@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ExplicitArrayFillingInspectionMerger extends InspectionElementsMergerBase {
+public final class ExplicitArrayFillingInspectionMerger extends InspectionElementsMergerBase {
 
   @NotNull
   @Override

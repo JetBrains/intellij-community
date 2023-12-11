@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
+public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(JavaEncapsulateFieldHelper.class);
 
   @Override

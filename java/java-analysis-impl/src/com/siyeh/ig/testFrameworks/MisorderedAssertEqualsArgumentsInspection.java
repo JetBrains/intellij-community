@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
+public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
 
   @NonNls
   private static final Set<String> methodNames =

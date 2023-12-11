@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 
-class ColorObjectRenderer extends CompoundRendererProvider {
+final class ColorObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(ColorObjectRenderer.class);
 
   @Override

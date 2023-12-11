@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MergeElseIfIntention extends MCIntention {
+public final class MergeElseIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

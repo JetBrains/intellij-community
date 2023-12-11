@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
+public final class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

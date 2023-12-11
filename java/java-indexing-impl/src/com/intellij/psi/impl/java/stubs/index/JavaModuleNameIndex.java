@@ -27,7 +27,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
-public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
+public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
   private static final JavaModuleNameIndex ourInstance = new JavaModuleNameIndex();
 
   public static JavaModuleNameIndex getInstance() {

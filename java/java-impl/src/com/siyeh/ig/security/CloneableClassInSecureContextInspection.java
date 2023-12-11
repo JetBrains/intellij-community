@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CloneableClassInSecureContextInspection extends BaseInspection {
+public final class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @Override
   @NotNull

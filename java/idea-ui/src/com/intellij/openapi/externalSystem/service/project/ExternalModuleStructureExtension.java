@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalModuleStructureExtension extends ModuleStructureExtension {
+public final class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   private static final Logger LOG = Logger.getInstance(ExternalModuleStructureExtension.class);
   @Nullable

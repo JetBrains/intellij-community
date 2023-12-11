@@ -28,7 +28,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
   private static final CallMatcher COLLECT_TO_COLLECTION =

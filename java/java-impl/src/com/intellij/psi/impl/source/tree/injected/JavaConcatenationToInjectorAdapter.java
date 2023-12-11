@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
+public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
   public JavaConcatenationToInjectorAdapter(@NotNull Project project) {
     super(project);
   }

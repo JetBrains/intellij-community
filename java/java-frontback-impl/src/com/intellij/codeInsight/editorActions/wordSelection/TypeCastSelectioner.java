@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_TYPE_CAST_EXPRESSION;
 
-public class TypeCastSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class TypeCastSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

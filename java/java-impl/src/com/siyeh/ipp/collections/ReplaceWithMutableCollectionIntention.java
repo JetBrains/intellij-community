@@ -15,7 +15,7 @@ import com.siyeh.ipp.collections.ImmutableCollectionModelUtils.ImmutableCollecti
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceWithMutableCollectionIntention extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
+public final class ReplaceWithMutableCollectionIntention extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   
   public ReplaceWithMutableCollectionIntention() {
     super(PsiMethodCallExpression.class);

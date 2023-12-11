@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsConcreteCollectionInspection extends BaseInspection {
+public final class ExtendsConcreteCollectionInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

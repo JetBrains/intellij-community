@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedImportInspection extends GlobalSimpleInspectionTool {
+public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
   @NonNls
   public static final String SHORT_NAME = "UNUSED_IMPORT";
 

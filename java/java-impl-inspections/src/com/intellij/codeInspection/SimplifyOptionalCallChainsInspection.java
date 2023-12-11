@@ -40,7 +40,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
   private static final CallMatcher OPTIONAL_GET =

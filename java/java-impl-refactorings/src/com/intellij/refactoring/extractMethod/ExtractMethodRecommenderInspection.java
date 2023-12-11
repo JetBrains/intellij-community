@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalInspectionTool {
   public int minLength = 500;
   public int maxParameters = 3;
 

@@ -32,7 +32,7 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MismatchedArrayReadWriteInspection extends BaseInspection {
+public final class MismatchedArrayReadWriteInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override

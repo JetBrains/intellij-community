@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction<PsiSwitchBlock> {
+public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommandAction<PsiSwitchBlock> {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
   private List<Value> myAllValues;
 

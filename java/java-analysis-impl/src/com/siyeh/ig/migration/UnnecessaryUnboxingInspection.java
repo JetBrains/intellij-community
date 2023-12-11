@@ -40,7 +40,7 @@ import java.util.Map;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryUnboxingInspection extends BaseInspection {
+public final class UnnecessaryUnboxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyUnboxed = false;

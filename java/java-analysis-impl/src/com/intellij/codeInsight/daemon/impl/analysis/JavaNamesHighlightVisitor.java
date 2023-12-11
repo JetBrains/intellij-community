@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * NO COMPILATION ERRORS
  * for other highlighting errors see {@link HighlightVisitorImpl}
  */
-class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor, DumbAware {
+final class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
   private LanguageLevel myLanguageLevel;

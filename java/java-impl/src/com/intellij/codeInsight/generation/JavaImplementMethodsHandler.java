@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaImplementMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
+public final class JavaImplementMethodsHandler implements ContextAwareActionHandler, LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile) && !(file instanceof PsiCodeFragment)) {

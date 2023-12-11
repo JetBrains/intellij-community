@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfusingOctalEscapeInspection extends BaseInspection {
+public final class ConfusingOctalEscapeInspection extends BaseInspection {
 
   @Override
   @NotNull

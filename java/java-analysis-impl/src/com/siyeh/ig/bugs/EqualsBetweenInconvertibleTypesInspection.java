@@ -33,7 +33,7 @@ import java.util.Objects;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+public final class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;

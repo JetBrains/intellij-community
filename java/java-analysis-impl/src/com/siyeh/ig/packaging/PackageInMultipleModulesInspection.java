@@ -38,7 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PackageInMultipleModulesInspection extends PackageGlobalInspection {
+public final class PackageInMultipleModulesInspection extends PackageGlobalInspection {
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,

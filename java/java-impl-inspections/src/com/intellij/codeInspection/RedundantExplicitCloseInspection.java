@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspectionTool {
   CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close").parameterCount(0);
 
   @NotNull

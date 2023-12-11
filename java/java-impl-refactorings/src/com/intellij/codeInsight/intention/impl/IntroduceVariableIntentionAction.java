@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
+public final class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {

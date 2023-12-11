@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ArtifactDeploymentSourceType extends DeploymentSourceType<ArtifactDeploymentSource> {
+public final class ArtifactDeploymentSourceType extends DeploymentSourceType<ArtifactDeploymentSource> {
   private static final String NAME_ATTRIBUTE = "name";
 
   public ArtifactDeploymentSourceType() {

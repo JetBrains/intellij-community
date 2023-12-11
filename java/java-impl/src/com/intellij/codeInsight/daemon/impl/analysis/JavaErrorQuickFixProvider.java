@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
+public final class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
   @Override
   public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo.Builder info) {
     PsiElement parent = errorElement.getParent();

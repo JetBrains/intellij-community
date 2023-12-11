@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaOverrideMethodsProcessor implements OverrideMethodsProcessor {
+public final class JavaOverrideMethodsProcessor implements OverrideMethodsProcessor {
   @Override
   public boolean removeOverrideAttribute(@NotNull PsiElement element) {
     if (element instanceof PsiMethod) {

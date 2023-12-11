@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
+public final class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(@NotNull Project project) {

@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryModifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryModifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {

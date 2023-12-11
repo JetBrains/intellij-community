@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractClassWithOnlyOneDirectInheritorInspection extends BaseInspection {
+public final class AbstractClassWithOnlyOneDirectInheritorInspection extends BaseInspection {
 
   @Override
   @NotNull

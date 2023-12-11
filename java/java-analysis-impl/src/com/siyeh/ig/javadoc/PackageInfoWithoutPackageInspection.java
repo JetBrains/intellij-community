@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class PackageInfoWithoutPackageInspection extends BaseInspection {
+public final class PackageInfoWithoutPackageInspection extends BaseInspection {
 
   @NotNull
   @Override

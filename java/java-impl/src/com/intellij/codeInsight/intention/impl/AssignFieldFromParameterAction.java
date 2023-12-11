@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
+public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {

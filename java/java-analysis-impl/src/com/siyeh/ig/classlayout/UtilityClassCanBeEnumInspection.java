@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

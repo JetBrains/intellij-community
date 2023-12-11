@@ -18,7 +18,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
+public final class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {

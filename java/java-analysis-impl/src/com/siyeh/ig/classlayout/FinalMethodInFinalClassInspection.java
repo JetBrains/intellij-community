@@ -26,7 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalMethodInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class FinalMethodInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {

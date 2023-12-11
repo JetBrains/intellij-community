@@ -48,7 +48,7 @@ import javax.swing.*;
 import java.util.*;
 
 @State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
+public final class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
   private static final int WAIT_KILL_TIMEOUT = 10000;

@@ -53,7 +53,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final CallMatcher JUNIT4_ASSERT_EQUALS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes("long", "long"),

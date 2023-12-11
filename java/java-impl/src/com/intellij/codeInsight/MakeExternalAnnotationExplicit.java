@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class MakeExternalAnnotationExplicit implements ModCommandAction {
+public final class MakeExternalAnnotationExplicit implements ModCommandAction {
 
   @Nls
   @NotNull

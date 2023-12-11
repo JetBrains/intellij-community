@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
+public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreMethodsAccessedFromAnonymousClass = false;

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class InterfaceNeverImplementedInspection extends BaseInspection {
+public final class InterfaceNeverImplementedInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInterfacesThatOnlyDeclareConstants = false;

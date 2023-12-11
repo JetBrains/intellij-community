@@ -25,7 +25,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
+public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
   public JavaExceptionBreakpointType() {
     super("java-exception", JavaDebuggerBundle.message("exception.breakpoints.tab.title"));
   }

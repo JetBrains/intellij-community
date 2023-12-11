@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * see https://bugs.openjdk.org/browse/JDK-8037567
  */
-public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StaticInitializerReferencesSubClassInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

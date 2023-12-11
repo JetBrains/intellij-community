@@ -33,7 +33,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class BadExceptionThrownInspection extends BaseInspection {
+public final class BadExceptionThrownInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public String exceptionsString = "";
 

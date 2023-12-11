@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-public class OptionalChainCallExtractor implements ChainCallExtractor {
+public final class OptionalChainCallExtractor implements ChainCallExtractor {
   private static final CallMatcher NEXT_CALL =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ifPresent", "map", "flatMap").parameterCount(1);
 

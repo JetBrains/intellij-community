@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation> {
+public final class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation> {
   private static final JavaAnnotationIndex ourInstance = new JavaAnnotationIndex();
 
   public static JavaAnnotationIndex getInstance() {

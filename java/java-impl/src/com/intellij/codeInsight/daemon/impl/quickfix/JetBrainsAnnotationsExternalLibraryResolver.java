@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
+public final class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
   /**
    * Specifies version of jetbrains-annotations library which will be selected by default when user applies a quick fix on an unresolved annotation reference.
    * It must be equal to version of jetbrains-annotations library which is bundled with the IDE, the both should refer to version of the library

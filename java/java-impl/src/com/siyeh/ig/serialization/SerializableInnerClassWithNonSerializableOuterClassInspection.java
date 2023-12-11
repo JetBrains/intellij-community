@@ -19,7 +19,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableInnerClassWithNonSerializableOuterClassInspection extends SerializableInspectionBase {
+public final class SerializableInnerClassWithNonSerializableOuterClassInspection extends SerializableInspectionBase {
 
   @Override
   @NotNull

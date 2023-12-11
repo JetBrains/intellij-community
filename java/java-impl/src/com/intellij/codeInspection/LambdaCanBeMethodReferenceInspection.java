@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
 
 

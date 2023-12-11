@@ -33,7 +33,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class InfiniteLoopStatementInspection extends BaseInspection {
+public final class InfiniteLoopStatementInspection extends BaseInspection {
   public boolean myIgnoreInThreadTopLevel = true;
 
   @Override

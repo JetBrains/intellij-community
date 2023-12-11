@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableStoresNonSerializableInspection extends BaseInspection {
+public final class SerializableStoresNonSerializableInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {

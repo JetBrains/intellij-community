@@ -23,7 +23,7 @@ import java.util.*;
 
 import static com.intellij.modcommand.ModCommand.*;
 
-public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
+public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
   private final boolean myCheckStartPosition;
 
   public ConvertInterfaceToClassIntention(@NotNull PsiClass aClass) {

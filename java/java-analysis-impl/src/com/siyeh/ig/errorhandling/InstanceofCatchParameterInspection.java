@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceofCatchParameterInspection extends BaseInspection {
+public final class InstanceofCatchParameterInspection extends BaseInspection {
 
   @Override
   @NotNull

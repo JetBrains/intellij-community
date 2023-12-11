@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.SWITCH_EXPRESSION.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;

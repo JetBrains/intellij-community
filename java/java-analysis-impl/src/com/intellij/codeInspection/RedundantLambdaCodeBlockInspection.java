@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaCodeBlockInspection.class);
   private static final @NonNls String SHORT_NAME = "CodeBlock2Expr";
 

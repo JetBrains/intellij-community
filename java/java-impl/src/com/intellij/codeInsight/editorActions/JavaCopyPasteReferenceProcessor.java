@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
-public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
+public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
   private static final Logger LOG = Logger.getInstance(JavaCopyPasteReferenceProcessor.class);
 
   @Override

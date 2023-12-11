@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

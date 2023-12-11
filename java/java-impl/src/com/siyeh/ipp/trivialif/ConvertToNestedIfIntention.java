@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class ConvertToNestedIfIntention extends MCIntention {
+public final class ConvertToNestedIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

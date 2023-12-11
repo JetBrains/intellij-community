@@ -45,7 +45,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassMayBeInterfaceInspection extends BaseInspection {
+public final class ClassMayBeInterfaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean reportClassesWithNonAbstractMethods = false;

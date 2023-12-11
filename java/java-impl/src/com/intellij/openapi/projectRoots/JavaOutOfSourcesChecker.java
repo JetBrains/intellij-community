@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-public class JavaOutOfSourcesChecker implements OutOfSourcesChecker {
+public final class JavaOutOfSourcesChecker implements OutOfSourcesChecker {
 
   @Override
   @NotNull

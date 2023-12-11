@@ -12,7 +12,7 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SimplifyBooleanExpressionAction extends PsiUpdateModCommandAction<PsiExpression> {
+public final class SimplifyBooleanExpressionAction extends PsiUpdateModCommandAction<PsiExpression> {
   public SimplifyBooleanExpressionAction() {
     super(PsiExpression.class);
   }

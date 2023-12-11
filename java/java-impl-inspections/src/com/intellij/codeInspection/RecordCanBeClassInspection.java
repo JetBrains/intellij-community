@@ -8,7 +8,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.RECORDS.isAvailable(holder.getFile())) {

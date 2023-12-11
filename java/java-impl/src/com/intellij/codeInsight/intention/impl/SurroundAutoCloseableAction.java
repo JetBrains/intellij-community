@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiElement> {
   public SurroundAutoCloseableAction() {
     super(PsiElement.class);
   }
@@ -259,7 +259,7 @@ public class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiEl
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  public static class Template implements SurroundDescriptor, Surrounder {
+  public static final class Template implements SurroundDescriptor, Surrounder {
     private final Surrounder[] mySurrounders = {this};
 
     @Override

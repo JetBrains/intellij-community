@@ -21,7 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
+public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

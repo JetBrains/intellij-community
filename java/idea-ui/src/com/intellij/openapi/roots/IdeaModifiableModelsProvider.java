@@ -23,7 +23,7 @@ import java.lang.reflect.Proxy;
 /**
  * @author Dennis.Ushakov
  */
-public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
+public final class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
   @Nullable
   public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {

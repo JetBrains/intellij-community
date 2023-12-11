@@ -4,7 +4,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableConditionalExpressionInspectionMerger extends InspectionElementsMerger {
+public final class SimplifiableConditionalExpressionInspectionMerger extends InspectionElementsMerger {
   @Override
   public @NotNull String getMergedToolName() {
     return "SimplifiableConditionalExpression";

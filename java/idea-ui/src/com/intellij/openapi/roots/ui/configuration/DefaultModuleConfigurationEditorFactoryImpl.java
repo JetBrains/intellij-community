@@ -21,7 +21,7 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 /**
  * @author Eugene Zhuravlev
  */
-public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleConfigurationEditorFactory {
+public final class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleConfigurationEditorFactory {
   @Override
   public ModuleConfigurationEditor createModuleContentRootsEditor(ModuleConfigurationState state) {
     final Module module = state.getCurrentRootModel().getModule();

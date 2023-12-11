@@ -7,7 +7,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantValueInspectionMerger extends InspectionElementsMergerBase {
+public final class ConstantValueInspectionMerger extends InspectionElementsMergerBase {
   @Override
   public @NotNull String getMergedToolName() {
     return "ConstantValue";

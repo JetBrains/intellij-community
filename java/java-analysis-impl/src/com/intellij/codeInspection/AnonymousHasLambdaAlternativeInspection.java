@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.function.UnaryOperator;
 
-public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousHasLambdaAlternativeInspection.class);
 
   static final class AnonymousLambdaAlternative {

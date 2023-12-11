@@ -10,7 +10,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String SCHEDULED_THREAD_POOL_EXECUTOR_CLASS_NAME = "java.util.concurrent.ScheduledThreadPoolExecutor";
   private static final String SET_CORE_POOL_SIZE_METHOD_NAME = "setCorePoolSize";

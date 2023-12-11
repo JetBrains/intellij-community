@@ -32,7 +32,7 @@ import java.util.function.Function;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class MissingJavadocInspection extends LocalInspectionTool {
+public final class MissingJavadocInspection extends LocalInspectionTool {
   private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;

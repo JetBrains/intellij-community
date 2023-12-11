@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaStringContextType extends TemplateContextType {
+public final class JavaStringContextType extends TemplateContextType {
   public JavaStringContextType() {
     super(JavaPsiBundle.message("context.type.string"));
   }

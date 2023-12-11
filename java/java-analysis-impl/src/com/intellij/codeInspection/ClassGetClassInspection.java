@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECT_GET_CLASS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
 

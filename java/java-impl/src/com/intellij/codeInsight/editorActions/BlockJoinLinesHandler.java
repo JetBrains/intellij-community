@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(BlockJoinLinesHandler.class);
 
   @Override

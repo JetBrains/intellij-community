@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+public final class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   public BreakStringOnLineBreaksIntentionAction() {
     super(PsiJavaToken.class);
   }

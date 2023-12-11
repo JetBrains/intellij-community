@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.RecursionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InfiniteRecursionInspection extends BaseInspection {
+public final class InfiniteRecursionInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 // packages: jakarta.annotation:jakarta.annotation-api
-class JakartaAnnotationSupport implements AnnotationPackageSupport {
+final class JakartaAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {

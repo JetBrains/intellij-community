@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SleepWhileHoldingLockInspection extends BaseInspection {
+public final class SleepWhileHoldingLockInspection extends BaseInspection {
 
   @Override
   @NotNull

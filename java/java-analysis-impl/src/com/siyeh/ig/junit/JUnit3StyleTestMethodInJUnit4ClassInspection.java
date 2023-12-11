@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection {
+public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection {
 
   @NotNull
   @Override

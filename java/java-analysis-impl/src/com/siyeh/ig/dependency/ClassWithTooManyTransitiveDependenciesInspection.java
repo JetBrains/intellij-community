@@ -33,7 +33,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassWithTooManyTransitiveDependenciesInspection extends BaseGlobalInspection {
+public final class ClassWithTooManyTransitiveDependenciesInspection extends BaseGlobalInspection {
 
   @SuppressWarnings("PublicField")
   public int limit = 35;

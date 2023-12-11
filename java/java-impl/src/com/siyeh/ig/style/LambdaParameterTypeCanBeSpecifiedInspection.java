@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
+public final class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {

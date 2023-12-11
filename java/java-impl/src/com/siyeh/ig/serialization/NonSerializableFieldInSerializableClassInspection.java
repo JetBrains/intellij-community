@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
+public final class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 

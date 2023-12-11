@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
+public final class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
   private static final Logger LOG = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @Override

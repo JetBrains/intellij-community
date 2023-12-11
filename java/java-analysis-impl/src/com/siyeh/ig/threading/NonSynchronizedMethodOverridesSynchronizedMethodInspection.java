@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
+public final class NonSynchronizedMethodOverridesSynchronizedMethodInspection
   extends BaseInspection {
 
   @Override

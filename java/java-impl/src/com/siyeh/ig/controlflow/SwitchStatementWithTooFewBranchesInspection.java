@@ -40,7 +40,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
+public final class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 

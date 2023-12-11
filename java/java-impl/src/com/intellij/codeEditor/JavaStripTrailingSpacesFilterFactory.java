@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
+public final class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
 
   @Override
   protected @NotNull PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document) {

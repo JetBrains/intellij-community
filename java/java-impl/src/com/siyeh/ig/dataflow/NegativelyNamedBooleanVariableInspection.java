@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class NegativelyNamedBooleanVariableInspection extends BaseInspection {
+public final class NegativelyNamedBooleanVariableInspection extends BaseInspection {
 
   @NonNls
   private static final String[] NEGATIVE_NAMES = {"non", "not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "canNot",

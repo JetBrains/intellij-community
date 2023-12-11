@@ -40,7 +40,7 @@ import java.util.Map;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AutoBoxingInspection extends BaseInspection {
+public final class AutoBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAddedToCollection = false;

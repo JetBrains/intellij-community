@@ -28,7 +28,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsReplaceableByObjectsCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class EqualsReplaceableByObjectsCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean checkNotNull;
 
   private static final EquivalenceChecker EQUIVALENCE = new NoSideEffectExpressionEquivalenceChecker();

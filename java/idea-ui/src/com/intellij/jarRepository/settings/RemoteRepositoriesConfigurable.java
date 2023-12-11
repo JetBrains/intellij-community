@@ -44,7 +44,7 @@ import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.
 import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.updateLibrariesRepositoryId;
 import static com.intellij.ui.ListUtil.removeSelectedItems;
 
-public class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
 
   private JBList<String> myServiceList;

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
+public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   public SealClassAction() {
     super(PsiClass.class);
   }

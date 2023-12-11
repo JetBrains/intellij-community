@@ -21,7 +21,7 @@ import com.intellij.spi.psi.SPIFile;
 import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-public class SPIParserDefinition implements ParserDefinition {
+public final class SPIParserDefinition implements ParserDefinition {
   public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 
   private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);

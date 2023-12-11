@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
-public class FileFQPackage extends Macro {
+public final class FileFQPackage extends Macro {
   @Override
   public String expand(@NotNull DataContext dataContext) {
     PsiPackage aPackage = FilePackageMacro.getFilePackage(dataContext);

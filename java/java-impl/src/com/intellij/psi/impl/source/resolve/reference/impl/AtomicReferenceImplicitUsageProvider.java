@@ -23,7 +23,7 @@ import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCUR
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 
-public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
+public final class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
   private static final Set<String> ourUpdateMethods = Set.of(
     "compareAndSet", "weakCompareAndSet", "set", "lazySet", "getAndSet", "getAndIncrement", "getAndDecrement", "getAndAdd",
     "incrementAndGet", "decrementAndGet", "addAndGet", "getAndUpdate", "updateAndGet", "getAndAccumulate", "accumulateAndGet");

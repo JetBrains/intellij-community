@@ -460,7 +460,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
   }
 
-  public static class ProcessAttachDebuggerRunner extends GenericDebuggerRunner {
+  public static final class ProcessAttachDebuggerRunner extends GenericDebuggerRunner {
     @NotNull
     @Override
     public String getRunnerId() {

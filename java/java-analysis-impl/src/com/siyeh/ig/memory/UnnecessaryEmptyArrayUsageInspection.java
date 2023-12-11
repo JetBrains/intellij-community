@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryEmptyArrayUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

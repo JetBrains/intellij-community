@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MethodParametersMacro extends Macro {
+public final class MethodParametersMacro extends Macro {
 
   @Override
   public String getName() {

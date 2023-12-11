@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

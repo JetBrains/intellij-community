@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
-public class LanguageLevelParameterFactory extends ProjectTemplateParameterFactory {
+public final class LanguageLevelParameterFactory extends ProjectTemplateParameterFactory {
   @Override
   public String getParameterId() {
     return IJ_LANGUAGE_LEVEL;

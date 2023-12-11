@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NegateConditionalIntention extends MCIntention {
+public final class NegateConditionalIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

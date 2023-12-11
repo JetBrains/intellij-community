@@ -42,7 +42,7 @@ import static com.siyeh.ig.psiutils.EquivalenceChecker.getCanonicalPsiEquivalenc
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
-public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8MapApiInspection.class);
   public static final String SHORT_NAME = "Java8MapApi";
   private static final CallMatcher KEY_VALUE_GET_METHODS =

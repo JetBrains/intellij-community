@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public class StringConcatenationArgumentToLogCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StringConcatenationArgumentToLogCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   private static final Set<String> logNames = new HashSet<>();

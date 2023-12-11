@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PreviewFeatureInspection extends LocalInspectionTool {
+public final class PreviewFeatureInspection extends LocalInspectionTool {
 
   @Override
   public @NotNull String getID() {

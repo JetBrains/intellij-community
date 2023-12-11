@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class SwapIfStatementsIntentionAction extends PsiUpdateModCommandAction<PsiKeyword> {
+public final class SwapIfStatementsIntentionAction extends PsiUpdateModCommandAction<PsiKeyword> {
   public SwapIfStatementsIntentionAction() {
     super(PsiKeyword.class);
   }

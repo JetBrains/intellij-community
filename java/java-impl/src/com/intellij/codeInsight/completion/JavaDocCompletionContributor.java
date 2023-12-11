@@ -54,7 +54,7 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
     Set.of("link", "linkplain", "code", "return", "literal", "value", "index", "summary");
 

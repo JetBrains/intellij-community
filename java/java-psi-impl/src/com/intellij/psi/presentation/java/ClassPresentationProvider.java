@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
+public final class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
   @Override
   public ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
     return new ColoredItemPresentation() {

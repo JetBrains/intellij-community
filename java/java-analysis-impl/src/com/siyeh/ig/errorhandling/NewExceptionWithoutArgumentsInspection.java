@@ -21,7 +21,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
+public final class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   public final List<String> exceptions = new ArrayList<>();
 
   @NotNull

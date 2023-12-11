@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class AddSingleMemberStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddSingleMemberStaticImportAction.class);
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 

@@ -6,7 +6,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfConcreteClassMerger extends InspectionElementsMergerBase {
+public final class UseOfConcreteClassMerger extends InspectionElementsMergerBase {
   @Override
   public @NotNull String getMergedToolName() {
     return "UseOfConcreteClass";

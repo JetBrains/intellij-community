@@ -33,7 +33,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExtractSetFromComparisonChainAction implements ModCommandAction {
+public final class ExtractSetFromComparisonChainAction implements ModCommandAction {
   private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
   private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
   private static final String INITIALIZER_FORMAT_JAVA2 =

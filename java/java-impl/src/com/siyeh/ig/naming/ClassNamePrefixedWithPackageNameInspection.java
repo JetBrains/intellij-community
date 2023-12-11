@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.StringTokenizer;
 
-public class ClassNamePrefixedWithPackageNameInspection
+public final class ClassNamePrefixedWithPackageNameInspection
   extends BaseInspection {
 
   @Override

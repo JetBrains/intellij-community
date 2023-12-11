@@ -26,7 +26,7 @@ import java.util.Map;
 
 import static com.intellij.psi.JavaTokenType.PLUS;
 
-public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
+public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
 
   @NotNull

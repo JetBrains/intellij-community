@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class MakeCallChainIntoCallSequenceIntention extends MCIntention {
+public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

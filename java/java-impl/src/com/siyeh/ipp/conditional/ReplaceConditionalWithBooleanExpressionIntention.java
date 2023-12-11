@@ -18,7 +18,7 @@ import static com.siyeh.ig.psiutils.ParenthesesUtils.AND_PRECEDENCE;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConditionalWithBooleanExpressionIntention extends MCIntention {
+public final class ReplaceConditionalWithBooleanExpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

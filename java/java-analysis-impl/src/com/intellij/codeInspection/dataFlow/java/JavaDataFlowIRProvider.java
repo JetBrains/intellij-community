@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaDataFlowIRProvider implements DataFlowIRProvider {
+public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
   @Override
   public @Nullable ControlFlow createControlFlow(@NotNull DfaValueFactory factory, @NotNull PsiElement psiBlock) {
     return new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
-public class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

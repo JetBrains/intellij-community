@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InlineIncrementIntention extends MCIntention {
+public final class InlineIncrementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

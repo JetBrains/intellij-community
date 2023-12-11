@@ -29,7 +29,7 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NewMethodNamingConventionInspection extends AbstractNamingConventionInspection<PsiMethod> {
+public final class NewMethodNamingConventionInspection extends AbstractNamingConventionInspection<PsiMethod> {
   public static final ExtensionPointName<NamingConvention<PsiMethod>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.method");
   public NewMethodNamingConventionInspection() {
     super(EP_NAME.getExtensionList(), InstanceMethodNamingConvention.INSTANCE_METHOD_NAMING_CONVENTION);

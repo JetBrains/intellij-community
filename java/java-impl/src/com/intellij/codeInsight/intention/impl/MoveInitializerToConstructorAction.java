@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
+public final class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
   @NotNull
   public String getText() {

@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class IfCanBeSwitchInspection extends BaseInspection {
+public final class IfCanBeSwitchInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public int minimumBranches = 3;

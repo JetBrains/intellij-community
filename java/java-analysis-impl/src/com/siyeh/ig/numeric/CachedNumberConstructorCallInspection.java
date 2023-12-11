@@ -39,7 +39,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CachedNumberConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CachedNumberConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final Set<String> cachedNumberTypes = new HashSet<>();
 

@@ -32,7 +32,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class StringConcatenationInsideStringBufferAppendInspection extends BaseInspection {
+public final class StringConcatenationInsideStringBufferAppendInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {

@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher CLEANER_REGISTER = CallMatcher.instanceCall(
     "java.lang.ref.Cleaner", "register"

@@ -25,7 +25,7 @@ import java.util.List;
 import static com.intellij.codeInsight.ExceptionUtil.HandlePlace.UNHANDLED;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
-public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspection {
+public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspection {
   private static final CallMatcher OPTIONAL_OR_ELSE_THROW = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseThrow").parameterCount(1),
     CallMatcher.instanceCall("java.util.OptionalDouble", "orElseThrow").parameterCount(1),

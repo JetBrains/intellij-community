@@ -18,7 +18,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.siyeh.InspectionGadgetsBundle.message;
 
-public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
+public final class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreByteAndShortArrayParameters = false;

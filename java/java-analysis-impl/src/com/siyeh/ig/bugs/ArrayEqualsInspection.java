@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayEqualsInspection extends BaseInspection {
+public final class ArrayEqualsInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 
-public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
+public final class ExtractMethodIntentionAction implements IntentionAction, Iconable {
   @NotNull
   @Override
   public String getText() {

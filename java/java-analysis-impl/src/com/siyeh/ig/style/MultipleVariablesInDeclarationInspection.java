@@ -20,7 +20,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class MultipleVariablesInDeclarationInspection extends BaseInspection {
+public final class MultipleVariablesInDeclarationInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreForLoopDeclarations = true;

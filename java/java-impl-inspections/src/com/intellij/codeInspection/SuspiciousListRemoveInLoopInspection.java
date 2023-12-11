@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class SuspiciousListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_REMOVE = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "remove").parameterTypes("int");
 
   @NotNull

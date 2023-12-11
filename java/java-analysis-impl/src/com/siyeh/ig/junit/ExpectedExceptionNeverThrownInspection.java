@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
+public final class ExpectedExceptionNeverThrownInspection extends BaseInspection {
 
   @NotNull
   @Override

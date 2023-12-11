@@ -25,7 +25,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class CharToStringIntention extends MCIntention {
+public final class CharToStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

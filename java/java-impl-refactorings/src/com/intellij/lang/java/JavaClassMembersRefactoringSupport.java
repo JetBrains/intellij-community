@@ -25,7 +25,7 @@ import com.intellij.refactoring.util.classMembers.DependentMembersCollector;
 /**
  * @author Dennis.Ushakov
  */
-public class JavaClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {
+public final class JavaClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {
   @Override
   public DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass) {
     return new DependentMembersCollector((PsiClass)clazz, (PsiClass)superClass);

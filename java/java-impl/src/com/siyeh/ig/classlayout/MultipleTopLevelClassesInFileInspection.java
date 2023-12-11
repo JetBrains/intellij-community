@@ -29,7 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
+public final class MultipleTopLevelClassesInFileInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

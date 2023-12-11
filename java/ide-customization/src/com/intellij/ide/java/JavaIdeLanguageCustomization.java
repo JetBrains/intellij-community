@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaIdeLanguageCustomization extends IdeLanguageCustomization {
+public final class JavaIdeLanguageCustomization extends IdeLanguageCustomization {
   @NotNull
   @Override
   public List<Language> getPrimaryIdeLanguages() {

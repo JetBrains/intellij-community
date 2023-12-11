@@ -30,7 +30,7 @@ import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler {
+public final class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler {
 
   @Override
   public boolean isEnabledOnElement(PsiElement element) {

@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
+public final class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   private static final Logger LOG = Logger.getInstance(SuppressWarningsFoldingBuilder.class);
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {

@@ -19,7 +19,7 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
   private static final CallMatcher MATCHER_FIND = CallMatcher.instanceCall("java.util.regex.Matcher", "find").parameterCount(0);

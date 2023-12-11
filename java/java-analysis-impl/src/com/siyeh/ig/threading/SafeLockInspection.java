@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SafeLockInspection extends BaseInspection { // todo extend ResourceInspection?
+public final class SafeLockInspection extends BaseInspection { // todo extend ResourceInspection?
 
   @Override
   @NotNull

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaLongLineInspectionPolicy implements LongLineInspectionPolicy {
+public final class JavaLongLineInspectionPolicy implements LongLineInspectionPolicy {
   @Override
   public boolean ignoreLongLineFor(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, false, PsiImportStatementBase.class, PsiPackageStatement.class) != null;

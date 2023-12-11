@@ -14,7 +14,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

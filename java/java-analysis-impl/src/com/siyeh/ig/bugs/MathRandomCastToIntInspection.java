@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MathRandomCastToIntInspection extends BaseInspection {
+public final class MathRandomCastToIntInspection extends BaseInspection {
 
   @NotNull
   @Override

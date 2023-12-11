@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Handles tooltip links in format {@code #assignment/escaped_full_tooltip_text}.
  * On a click comparison table opens.
  */
-public class AssignmentTooltipLinkHandler extends TooltipLinkHandler {
+public final class AssignmentTooltipLinkHandler extends TooltipLinkHandler {
   @Nullable
   @Override
   @NlsSafe

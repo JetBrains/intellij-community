@@ -175,7 +175,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
   }
 
-  public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
+  public static final class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
     @Nullable
     @Override
     public String getQualifiedName(@NotNull NavigationItem item) {

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 40;
   private static final int MAX_EXPRESSION_LENGTH = 200;
 

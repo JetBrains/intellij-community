@@ -15,7 +15,7 @@ import java.util.List;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_ENUM_CONSTANT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_FIELD;
 
-public class FieldSelectioner extends WordSelectioner {
+public final class FieldSelectioner extends WordSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

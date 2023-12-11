@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ChangeVariableTypeToRhsTypeIntention extends MCIntention {
+public final class ChangeVariableTypeToRhsTypeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

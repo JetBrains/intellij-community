@@ -29,7 +29,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DesignForExtensionInspection extends BaseInspection {
+public final class DesignForExtensionInspection extends BaseInspection {
 
   @Override
   @NotNull

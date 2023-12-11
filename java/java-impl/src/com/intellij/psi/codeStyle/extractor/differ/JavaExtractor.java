@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.LinkedList;
 
-public class JavaExtractor implements LangCodeStyleExtractor {
+public final class JavaExtractor implements LangCodeStyleExtractor {
   @NotNull
   @Override
   public Differ getDiffer(final Project project, PsiFile psiFile, CodeStyleSettings settings) {

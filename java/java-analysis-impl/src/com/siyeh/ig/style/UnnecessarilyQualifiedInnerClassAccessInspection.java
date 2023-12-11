@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesNeedingImport = false;

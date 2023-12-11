@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalSystemJavaSdkProvider implements ExternalSystemJdkProvider {
+public final class ExternalSystemJavaSdkProvider implements ExternalSystemJdkProvider {
   @NotNull
   @Override
   public SdkType getJavaSdkType() {

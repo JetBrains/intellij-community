@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword> {
+public final class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword> {
   private static final Logger LOG = Logger.getInstance(UnwrapElseBranchAction.class);
   
   public UnwrapElseBranchAction() {

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MethodParameterTypesMacro extends Macro {
+public final class MethodParameterTypesMacro extends Macro {
 
   @Override
   public String getName() {

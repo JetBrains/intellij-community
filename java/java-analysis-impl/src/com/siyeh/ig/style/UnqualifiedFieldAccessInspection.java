@@ -10,7 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.AddThisQualifierFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UnqualifiedFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnqualifiedFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public static final String SHORT_NAME = "UnqualifiedFieldAccess"; 
 
   @Override

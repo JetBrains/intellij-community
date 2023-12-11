@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String FOR_EACH_METHOD = "forEach";
 
   private static final CallMatcher SET_REMOVE_ALL =

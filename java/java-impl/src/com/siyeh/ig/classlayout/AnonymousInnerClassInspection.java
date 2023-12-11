@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassInspection extends BaseInspection {
+public final class AnonymousInnerClassInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

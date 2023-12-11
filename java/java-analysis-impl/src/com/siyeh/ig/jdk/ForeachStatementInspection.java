@@ -33,7 +33,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ForeachStatementInspection extends BaseInspection {
+public final class ForeachStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

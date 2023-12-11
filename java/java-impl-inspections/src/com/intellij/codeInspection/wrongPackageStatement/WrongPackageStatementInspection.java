@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
   private static void addMoveToPackageFix(@NotNull PsiFile file, String packName, @NotNull List<? super LocalQuickFix> availableFixes) {
     MoveToPackageFix moveToPackageFix = MoveToPackageFix.createIfAvailable(file, packName);
     if (moveToPackageFix != null) {

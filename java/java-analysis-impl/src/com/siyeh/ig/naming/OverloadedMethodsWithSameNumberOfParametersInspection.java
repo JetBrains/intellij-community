@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseInspection {
+public final class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreInconvertibleTypes = true;

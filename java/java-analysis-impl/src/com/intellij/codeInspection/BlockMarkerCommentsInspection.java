@@ -22,7 +22,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author Dmitry Batkovich
  */
-public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final PsiJavaElementPattern.Capture<PsiElement> ANONYMOUS_CLASS_MARKER_PATTERN = psiElement().
     withParent(psiElement(PsiDeclarationStatement.class, PsiExpressionStatement.class))
     .afterSiblingSkipping(or(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {

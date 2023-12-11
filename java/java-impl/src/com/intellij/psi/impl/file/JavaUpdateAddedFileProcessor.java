@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim.Mossienko
  */
-public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
+public final class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull final PsiFile file) {
     return file instanceof PsiClassOwner && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(file);

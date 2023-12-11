@@ -19,7 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.Map;
 import java.util.Objects;
 
-public class JavaTreeCopyHandler implements TreeCopyHandler {
+public final class JavaTreeCopyHandler implements TreeCopyHandler {
   private static final Logger LOG = Logger.getInstance(JavaTreeCopyHandler.class);
 
   private static final Key<Boolean> ALREADY_ESCAPED = new Key<>("ALREADY_ESCAPED");

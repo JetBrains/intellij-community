@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls static final Set<String> constantMathCall = new HashSet<>(23);
 

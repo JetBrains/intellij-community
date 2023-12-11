@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class FloatingPointEqualityInspection extends BaseInspection {
+public final class FloatingPointEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

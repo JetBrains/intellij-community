@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
+public final class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
   @Override
   @NotNull

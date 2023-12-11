@@ -11,7 +11,7 @@ import java.util.Set;
 
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> ALL_CONSUMING_OPERATIONS = Set.of(
     "sorted",
     "count",

@@ -35,7 +35,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COLLECTION_IS_EMPTY = anyOf(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
                                                                instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0));
   private static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);

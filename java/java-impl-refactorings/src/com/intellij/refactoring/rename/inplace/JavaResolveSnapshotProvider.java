@@ -18,7 +18,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 
-public class JavaResolveSnapshotProvider extends ResolveSnapshotProvider {
+public final class JavaResolveSnapshotProvider extends ResolveSnapshotProvider {
   @Override
   public ResolveSnapshot createSnapshot(PsiElement scope) {
     return new JavaResolveSnapshot(scope);

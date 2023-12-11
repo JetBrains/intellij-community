@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertAtomicToLongAdderIntention extends BaseElementAtCaretIntentionAction {
+public final class ConvertAtomicToLongAdderIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {

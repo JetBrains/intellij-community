@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModCommandAction<PsiElement> {
   public ConvertCompactConstructorToCanonicalAction() {
     super(PsiElement.class);
   }

@@ -46,7 +46,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TooBroadScopeInspection extends BaseInspection {
+public final class TooBroadScopeInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization

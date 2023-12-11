@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparisonOfShortAndCharInspection extends BaseInspection {
+public final class ComparisonOfShortAndCharInspection extends BaseInspection {
 
   @Override
   @NotNull

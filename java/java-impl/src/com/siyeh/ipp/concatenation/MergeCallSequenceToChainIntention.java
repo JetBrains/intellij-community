@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class MergeCallSequenceToChainIntention extends MCIntention {
+public final class MergeCallSequenceToChainIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

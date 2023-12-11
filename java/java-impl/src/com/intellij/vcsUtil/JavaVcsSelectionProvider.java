@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class JavaVcsSelectionProvider implements VcsSelectionProvider {
+public final class JavaVcsSelectionProvider implements VcsSelectionProvider {
   @Override
   @Nullable
   public VcsSelection getSelection(@NotNull DataContext context) {

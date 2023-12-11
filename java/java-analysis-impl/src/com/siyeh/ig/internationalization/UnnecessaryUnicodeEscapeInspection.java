@@ -32,7 +32,7 @@ import java.nio.charset.CodingErrorAction;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
+public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
   @NotNull
   @Override

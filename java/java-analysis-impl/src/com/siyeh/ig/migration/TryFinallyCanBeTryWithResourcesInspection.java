@@ -35,7 +35,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
+public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {

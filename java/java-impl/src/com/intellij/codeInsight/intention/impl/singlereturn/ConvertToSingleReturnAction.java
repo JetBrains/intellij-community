@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiParameterListOwner> {
+public final class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiParameterListOwner> {
   
   public ConvertToSingleReturnAction() {
     super(PsiParameterListOwner.class);

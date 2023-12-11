@@ -62,7 +62,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   }
 
   @ApiStatus.Internal
-  static class JavaBuildWorkspaceConfiguration implements BuildWorkspaceConfiguration {
+  static final class JavaBuildWorkspaceConfiguration implements BuildWorkspaceConfiguration {
     private final @NotNull Project myProject;
 
     JavaBuildWorkspaceConfiguration(@NotNull Project project) {

@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescendantClassesEnumMacro extends Macro {
+public final class DescendantClassesEnumMacro extends Macro {
   @Override
   public String getName() {
     return "descendantClassesEnum";

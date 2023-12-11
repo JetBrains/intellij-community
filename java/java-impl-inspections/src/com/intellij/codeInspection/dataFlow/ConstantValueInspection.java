@@ -49,7 +49,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;

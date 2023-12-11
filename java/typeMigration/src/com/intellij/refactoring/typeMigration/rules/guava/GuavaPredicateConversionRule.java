@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
+public final class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
   private static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
 
   protected GuavaPredicateConversionRule() {

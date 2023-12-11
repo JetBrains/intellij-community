@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class InnerClassReferencedViaSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class InnerClassReferencedViaSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

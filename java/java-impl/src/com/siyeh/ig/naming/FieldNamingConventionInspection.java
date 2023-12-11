@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldNamingConventionInspection extends AbstractNamingConventionInspection<PsiField> {
+public final class FieldNamingConventionInspection extends AbstractNamingConventionInspection<PsiField> {
   public static final ExtensionPointName<NamingConvention<PsiField>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.field");
   public FieldNamingConventionInspection() {
     super(EP_NAME.getExtensionList(), null);

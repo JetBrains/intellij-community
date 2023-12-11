@@ -24,7 +24,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodNameSameAsParentNameInspection extends BaseInspection {
+public final class MethodNameSameAsParentNameInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public final class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesToLocalInnerClasses = true;

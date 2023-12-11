@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class StringToUpperWithoutLocaleInspection extends BaseInspection {
+public final class StringToUpperWithoutLocaleInspection extends BaseInspection {
   private static final CallMatcher MATCHER = CallMatcher.instanceCall(
     CommonClassNames.JAVA_LANG_STRING, HardcodedMethodConstants.TO_UPPER_CASE, HardcodedMethodConstants.TO_LOWER_CASE
   ).parameterCount(0);

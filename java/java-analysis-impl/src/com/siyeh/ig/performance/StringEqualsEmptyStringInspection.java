@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class StringEqualsEmptyStringInspection extends BaseInspection {
+public final class StringEqualsEmptyStringInspection extends BaseInspection {
   public boolean SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = true;
 
   @Override

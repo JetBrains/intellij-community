@@ -25,7 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
+public final class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.modcommand.ModCommand.*;
 
-public class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
+public final class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
   private final ThreeState myProcessHierarchy;
 
   public AddRuntimeExceptionToThrowsAction() {

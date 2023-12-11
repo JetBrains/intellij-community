@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConstantOnWrongSideOfComparisonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean myConstantShouldGoLeft = true;
   public boolean myIgnoreNull = false;

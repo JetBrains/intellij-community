@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IfCanBeAssertionInspection extends BaseInspection {
+public final class IfCanBeAssertionInspection extends BaseInspection {
   private static final CallMatcher.Simple MATCHER = CallMatcher.staticCall("com.google.common.base.Preconditions", "checkNotNull");
 
   @NotNull

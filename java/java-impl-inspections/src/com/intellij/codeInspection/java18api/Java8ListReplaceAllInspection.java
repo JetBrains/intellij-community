@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_SET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "set").parameterTypes("int", "E");
 
   @SuppressWarnings("PublicField") public boolean dontWarnInCaseOfMultilineLambda = true;

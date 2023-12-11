@@ -43,7 +43,7 @@ import static com.siyeh.HardcodedMethodConstants.TO_STRING;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   enum FixType {
     REPLACE_WITH_QUALIFIER,
     REPLACE_WITH_ARGUMENTS

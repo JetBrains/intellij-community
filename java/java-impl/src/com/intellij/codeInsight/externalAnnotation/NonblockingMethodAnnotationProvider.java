@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.externalAnnotation.BlockingMethodAnnotationProvider.DEFAULT_BLOCKING_ANNOTATION;
 import static com.intellij.codeInsight.externalAnnotation.BlockingMethodAnnotationProvider.DEFAULT_NONBLOCKING_ANNOTATION;
 
-public class NonblockingMethodAnnotationProvider implements AnnotationProvider {
+public final class NonblockingMethodAnnotationProvider implements AnnotationProvider {
 
   @NotNull
   @Override

@@ -19,7 +19,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * =>
  * x = (...).a().b().c();}</pre>
  */
-public class AssignmentSequenceJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class AssignmentSequenceJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
     PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start), PsiJavaToken.class);

@@ -20,7 +20,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
   public boolean ignoreLeftShiftWithNegativeResult = true;

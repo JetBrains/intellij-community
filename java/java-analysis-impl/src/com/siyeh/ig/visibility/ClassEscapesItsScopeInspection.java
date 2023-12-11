@@ -42,7 +42,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
   @SuppressWarnings("PublicField") public boolean checkPublicApi = true; // All public & protected fields & methods

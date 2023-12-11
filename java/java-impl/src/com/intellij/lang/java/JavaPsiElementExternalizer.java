@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaPsiElementExternalizer implements PsiElementExternalizer {
+public final class JavaPsiElementExternalizer implements PsiElementExternalizer {
   @Override
   public String getQualifiedName(PsiElement element) {
     if (element instanceof PsiClass) {

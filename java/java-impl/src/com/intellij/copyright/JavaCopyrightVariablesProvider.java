@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class JavaCopyrightVariablesProvider extends CopyrightVariablesProvider {
+public final class JavaCopyrightVariablesProvider extends CopyrightVariablesProvider {
   @Override
   public void collectVariables(@NotNull Map<String, Object> context, Project project, Module module, @NotNull final PsiFile file) {
     if (file instanceof PsiClassOwner) {

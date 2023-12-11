@@ -23,7 +23,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AdditionalAnnotationsRefactoringElementListener implements RefactoringElementListenerProvider {
+public final class AdditionalAnnotationsRefactoringElementListener implements RefactoringElementListenerProvider {
   @Nullable
   @Override
   public RefactoringElementListener getListener(final PsiElement psiElement) {

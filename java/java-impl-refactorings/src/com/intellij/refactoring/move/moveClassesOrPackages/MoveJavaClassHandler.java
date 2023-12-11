@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class MoveJavaClassHandler implements MoveClassHandler {
+public final class MoveJavaClassHandler implements MoveClassHandler {
   private static final Logger LOG = Logger.getInstance(MoveJavaClassHandler.class);
 
   @Override

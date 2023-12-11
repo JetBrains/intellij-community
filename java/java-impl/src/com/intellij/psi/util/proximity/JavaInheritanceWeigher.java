@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaInheritanceWeigher extends ProximityWeigher {
+public final class JavaInheritanceWeigher extends ProximityWeigher {
   private static final NotNullLazyKey<Set<String>, ProximityLocation> PLACE_SUPER_CLASSES = NotNullLazyKey.createLazyKey("PLACE_SUPER_CLASSES",
                                                                                                                   location -> {
                                                                                                                     final HashSet<String> result = new HashSet<>();

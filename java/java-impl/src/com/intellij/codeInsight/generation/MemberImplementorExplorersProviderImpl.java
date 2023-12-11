@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class MemberImplementorExplorersProviderImpl implements OverrideImplementExploreUtil.MemberImplementorExplorersProvider {
+public final class MemberImplementorExplorersProviderImpl implements OverrideImplementExploreUtil.MemberImplementorExplorersProvider {
   @NotNull
   @Override
   public List<MethodImplementor> getExplorers() {

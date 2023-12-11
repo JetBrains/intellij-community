@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
+public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

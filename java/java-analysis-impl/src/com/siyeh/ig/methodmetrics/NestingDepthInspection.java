@@ -20,7 +20,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class NestingDepthInspection extends MethodMetricInspection {
+public final class NestingDepthInspection extends MethodMetricInspection {
 
   @Override
   @NotNull

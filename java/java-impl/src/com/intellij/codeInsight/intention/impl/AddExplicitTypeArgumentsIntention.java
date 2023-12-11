@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntentionAction {
+public final class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

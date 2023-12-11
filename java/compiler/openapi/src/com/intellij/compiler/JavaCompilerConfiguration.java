@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
+public final class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
   @Override
   @NotNull
   public List<String> getAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module) {
@@ -44,7 +44,7 @@ public class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
   /**
    * Provides an option "JavaCompilerConfiguration.additionalOptions" to change module-specific compiler options 
    */
-  public static class Provider implements OptionControllerProvider {
+  public static final class Provider implements OptionControllerProvider {
 
     @SuppressWarnings({"InjectedReferences", "LanguageMismatch"})
     @Override

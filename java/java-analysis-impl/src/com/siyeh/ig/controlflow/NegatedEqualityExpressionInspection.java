@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NegatedEqualityExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class NegatedEqualityExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

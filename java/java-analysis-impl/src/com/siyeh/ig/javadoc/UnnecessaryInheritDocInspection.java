@@ -19,7 +19,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryInheritDocInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryInheritDocInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

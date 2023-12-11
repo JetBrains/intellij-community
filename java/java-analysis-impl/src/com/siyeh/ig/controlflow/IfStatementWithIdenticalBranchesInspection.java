@@ -43,7 +43,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // Not really with identical branches, but also common parts
-public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myHighlightWhenLastStatementIsCall = false;
   public boolean myHighlightElseIf = false;
 

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntention {
+public final class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

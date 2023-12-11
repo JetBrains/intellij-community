@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
-public class DocCommentSelectioner extends LineCommentSelectioner {
+public final class DocCommentSelectioner extends LineCommentSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

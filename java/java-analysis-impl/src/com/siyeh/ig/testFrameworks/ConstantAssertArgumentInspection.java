@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstantAssertArgumentInspection extends BaseInspection {
+public final class ConstantAssertArgumentInspection extends BaseInspection {
   @NonNls
   private static final Set<String> ASSERT_METHODS = new HashSet<>();
 

@@ -31,7 +31,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
-public class AbstractClassWithoutAbstractMethodsInspection
+public final class AbstractClassWithoutAbstractMethodsInspection
   extends BaseInspection {
 
   @SuppressWarnings("PublicField")

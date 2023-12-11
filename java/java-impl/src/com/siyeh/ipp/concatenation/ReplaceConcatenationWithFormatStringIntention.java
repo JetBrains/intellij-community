@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
+public final class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {

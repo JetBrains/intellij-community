@@ -60,7 +60,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 
-public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
+public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
   private final Project myProject;

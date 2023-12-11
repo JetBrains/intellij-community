@@ -42,7 +42,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class TypeMayBeWeakenedInspection extends BaseInspection {
+public final class TypeMayBeWeakenedInspection extends BaseInspection {
   @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 

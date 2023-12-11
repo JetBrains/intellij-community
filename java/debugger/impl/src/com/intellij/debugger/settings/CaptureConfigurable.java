@@ -63,7 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
+public final class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
   private final Project myProject;
 

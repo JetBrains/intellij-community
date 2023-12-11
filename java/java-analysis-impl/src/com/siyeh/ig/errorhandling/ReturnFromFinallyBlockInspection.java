@@ -26,7 +26,7 @@ import org.jetbrains.uast.UReturnExpression;
 import org.jetbrains.uast.util.UastControlFlowUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public class ReturnFromFinallyBlockInspection extends AbstractBaseUastLocalInspectionTool {
+public final class ReturnFromFinallyBlockInspection extends AbstractBaseUastLocalInspectionTool {
 
   @Override
   @NotNull

@@ -29,7 +29,7 @@ import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-public class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
+public final class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     ResultTracker tracker = new ResultTracker(result) {

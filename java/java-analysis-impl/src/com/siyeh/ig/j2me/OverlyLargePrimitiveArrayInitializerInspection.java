@@ -30,7 +30,7 @@ import java.util.Arrays;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class OverlyLargePrimitiveArrayInitializerInspection
+public final class OverlyLargePrimitiveArrayInitializerInspection
   extends BaseInspection {
 
   /**

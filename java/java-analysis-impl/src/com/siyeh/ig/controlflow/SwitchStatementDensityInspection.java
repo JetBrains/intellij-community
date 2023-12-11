@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SwitchStatementDensityInspection extends BaseInspection {
+public final class SwitchStatementDensityInspection extends BaseInspection {
 
   private static final int DEFAULT_DENSITY_LIMIT = 20;
 

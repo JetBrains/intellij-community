@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class StringEqualsCharSequenceInspection extends BaseInspection {
+public final class StringEqualsCharSequenceInspection extends BaseInspection {
 
   @NotNull
   @Override

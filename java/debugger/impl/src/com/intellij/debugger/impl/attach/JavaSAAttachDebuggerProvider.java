@@ -6,7 +6,7 @@ import com.intellij.execution.process.ProcessInfo;
 import com.intellij.xdebugger.attach.XAttachPresentationGroup;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaSAAttachDebuggerProvider extends JavaAttachDebuggerProvider {
+public final class JavaSAAttachDebuggerProvider extends JavaAttachDebuggerProvider {
   private static final XAttachPresentationGroup<ProcessInfo> ourAttachGroup = new JavaDebuggerAttachGroup(
     JavaDebuggerBundle.message("debugger.attach.group.name.java.read.only"), -19);
 

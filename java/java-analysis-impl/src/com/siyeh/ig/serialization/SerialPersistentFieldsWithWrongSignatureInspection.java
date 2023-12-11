@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.PsiModifier.*;
 
-public class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInspection {
+public final class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInspection {
 
   @Override
   @NotNull

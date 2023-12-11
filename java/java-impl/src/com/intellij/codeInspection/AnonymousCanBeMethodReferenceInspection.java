@@ -24,7 +24,7 @@ import java.util.Collections;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AnonymousCanBeMethodReferenceInspection.class);
 
   public boolean reportNotAnnotatedInterfaces = true;

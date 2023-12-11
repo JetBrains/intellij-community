@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceAllDotInspection extends BaseInspection {
+public final class ReplaceAllDotInspection extends BaseInspection {
 
   private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
 

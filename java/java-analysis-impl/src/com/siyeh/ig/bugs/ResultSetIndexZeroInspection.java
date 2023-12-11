@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ResultSetIndexZeroInspection extends BaseInspection {
+public final class ResultSetIndexZeroInspection extends BaseInspection {
 
   @Override
   @NotNull

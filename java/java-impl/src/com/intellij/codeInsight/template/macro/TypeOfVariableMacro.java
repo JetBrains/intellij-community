@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeOfVariableMacro extends Macro {
+public final class TypeOfVariableMacro extends Macro {
   @Override
   public String getName() {
     return "typeOfVariable";

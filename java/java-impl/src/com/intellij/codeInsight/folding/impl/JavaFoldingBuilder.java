@@ -25,7 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
+public final class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
   protected boolean isBelowRightMargin(@NotNull PsiFile file, int lineLength) {
     final CodeStyleSettings settings = CodeStyle.getSettings(file);

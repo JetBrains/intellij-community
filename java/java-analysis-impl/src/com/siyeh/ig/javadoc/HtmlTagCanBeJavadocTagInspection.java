@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

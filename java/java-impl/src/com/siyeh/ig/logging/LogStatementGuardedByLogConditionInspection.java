@@ -29,7 +29,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class LogStatementGuardedByLogConditionInspection extends BaseInspection {
+public final class LogStatementGuardedByLogConditionInspection extends BaseInspection {
 
   final List<String> logMethodNameList = new ArrayList<>();
   final List<String> logConditionMethodNameList = new ArrayList<>();

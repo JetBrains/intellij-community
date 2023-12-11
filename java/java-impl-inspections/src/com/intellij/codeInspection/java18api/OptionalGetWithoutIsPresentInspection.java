@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

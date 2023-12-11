@@ -45,7 +45,7 @@ import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class StaticImportInspection extends BaseInspection {
+public final class StaticImportInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"}) public boolean ignoreSingleFieldImports = false;
   @SuppressWarnings({"PublicField"}) public boolean ignoreSingeMethodImports = false;

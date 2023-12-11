@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory {
+public final class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof PsiClass && !(element instanceof PsiAnonymousClass);

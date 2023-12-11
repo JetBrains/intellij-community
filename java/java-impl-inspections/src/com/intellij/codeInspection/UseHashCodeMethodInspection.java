@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher DOUBLE_TO_LONG_BITS =
     CallMatcher.staticCall("java.lang.Double", "doubleToLongBits").parameterTypes("double");
-  
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -37,7 +37,7 @@ public class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspection
             // Avoid suggesting inside JDK sources
             return;
           }
-          holder.registerProblem(expression, 
+          holder.registerProblem(expression,
                                  JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", model.type + ".hashCode()"),
                                  new ReplaceWithLongHashCodeFix(model.type));
         }
@@ -101,7 +101,7 @@ public class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspection
   public static class ReplaceWithLongHashCodeFix extends PsiUpdateModCommandQuickFix {
     private final String myType;
 
-    public ReplaceWithLongHashCodeFix(String type) { 
+    public ReplaceWithLongHashCodeFix(String type) {
       myType = type;
     }
 

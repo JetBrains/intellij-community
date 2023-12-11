@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_REPLACE_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "replaceAll").parameterTypes("java.util.function.UnaryOperator");
 

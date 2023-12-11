@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantEscapeInRegexReplacementInspection extends BaseInspection {
+public final class RedundantEscapeInRegexReplacementInspection extends BaseInspection {
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
     char c = (char)infos[0];

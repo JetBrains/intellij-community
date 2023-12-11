@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
 
-public class SplitIfAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+public final class SplitIfAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   public SplitIfAction() {
     super(PsiJavaToken.class);
   }

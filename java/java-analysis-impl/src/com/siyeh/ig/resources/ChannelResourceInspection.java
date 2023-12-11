@@ -21,7 +21,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ChannelResourceInspection extends ResourceInspection {
+public final class ChannelResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

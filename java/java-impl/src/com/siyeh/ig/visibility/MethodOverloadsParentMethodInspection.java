@@ -32,7 +32,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodOverloadsParentMethodInspection extends BaseInspection {
+public final class MethodOverloadsParentMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean reportIncompatibleParameters = false;
 

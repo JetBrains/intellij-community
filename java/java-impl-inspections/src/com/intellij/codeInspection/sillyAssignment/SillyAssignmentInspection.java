@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
 
   protected LocalQuickFix createRemoveAssignmentFix(PsiExpression expression) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

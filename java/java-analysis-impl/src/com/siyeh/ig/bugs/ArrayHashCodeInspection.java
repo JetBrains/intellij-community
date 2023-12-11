@@ -17,7 +17,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayHashCodeInspection extends BaseInspection {
+public final class ArrayHashCodeInspection extends BaseInspection {
   enum Kind {
     ARRAY_HASH_CODE,
     OBJECTS_HASH

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class LibraryJavaSourceRootDetector extends RootDetector {
+public final class LibraryJavaSourceRootDetector extends RootDetector {
   public LibraryJavaSourceRootDetector() {
     super(OrderRootType.SOURCES, false, "sources");
   }

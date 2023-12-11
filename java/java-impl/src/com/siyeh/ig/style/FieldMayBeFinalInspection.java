@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

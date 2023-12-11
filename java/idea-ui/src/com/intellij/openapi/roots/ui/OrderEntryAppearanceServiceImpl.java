@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
+public final class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
 
   @NotNull
   @Override

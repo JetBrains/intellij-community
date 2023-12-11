@@ -36,7 +36,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection {
+public final class PublicMethodNotExposedInInterfaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();

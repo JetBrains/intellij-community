@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiClass,ClassesWithAnnotatedMembersSearch.Parameters> {
+public final class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiClass,ClassesWithAnnotatedMembersSearch.Parameters> {
   @Override
   public void processQuery(@NotNull ClassesWithAnnotatedMembersSearch.Parameters queryParameters,
                            @NotNull final Processor<? super PsiClass> consumer) {

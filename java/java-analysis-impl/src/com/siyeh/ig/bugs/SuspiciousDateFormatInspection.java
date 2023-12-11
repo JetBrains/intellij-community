@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

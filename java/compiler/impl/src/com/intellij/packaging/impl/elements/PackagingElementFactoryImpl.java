@@ -35,7 +35,7 @@ import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 import static org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.APPLICATION_LEVEL;
 import static org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.PROJECT_LEVEL;
 
-public class PackagingElementFactoryImpl extends PackagingElementFactory {
+public final class PackagingElementFactoryImpl extends PackagingElementFactory {
   private static final Logger LOG = Logger.getInstance(PackagingElementFactoryImpl.class);
   public static final PackagingElementType<DirectoryPackagingElement> DIRECTORY_ELEMENT_TYPE = new DirectoryElementType();
   public static final PackagingElementType<ArchivePackagingElement> ARCHIVE_ELEMENT_TYPE = new ArchiveElementType();

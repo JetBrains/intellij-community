@@ -455,7 +455,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
    *   <li>NullableNotNullManager.myDefaultNotNull - default notnull annotation fqn</li>
    * </ul>
    */
-  public static class Provider implements OptionControllerProvider {
+  public static final class Provider implements OptionControllerProvider {
     @Override
     public @NotNull OptionController forContext(@NotNull PsiElement context) {
       Project project = context.getProject();

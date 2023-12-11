@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
+public final class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
     if (elements.length != 1) return false;

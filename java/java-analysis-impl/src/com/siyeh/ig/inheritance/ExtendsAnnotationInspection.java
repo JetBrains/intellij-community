@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsAnnotationInspection extends BaseInspection {
+public final class ExtendsAnnotationInspection extends BaseInspection {
 
   @Override
   @NotNull

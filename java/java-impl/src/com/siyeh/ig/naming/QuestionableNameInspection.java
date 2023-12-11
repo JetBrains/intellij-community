@@ -37,7 +37,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class QuestionableNameInspection extends BaseInspection {
+public final class QuestionableNameInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

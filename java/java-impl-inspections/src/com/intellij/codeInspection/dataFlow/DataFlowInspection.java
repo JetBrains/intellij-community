@@ -36,7 +36,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 
-public class DataFlowInspection extends DataFlowInspectionBase {
+public final class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override

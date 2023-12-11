@@ -25,7 +25,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;

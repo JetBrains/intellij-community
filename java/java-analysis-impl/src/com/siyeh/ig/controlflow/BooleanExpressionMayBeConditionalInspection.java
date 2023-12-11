@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanExpressionMayBeConditionalInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class BooleanExpressionMayBeConditionalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

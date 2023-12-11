@@ -24,7 +24,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.JavaTokenType.WHILE_KEYWORD;
 
-public class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

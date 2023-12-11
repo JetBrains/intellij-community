@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
+public final class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   private final Map<String, ReplaceInfo> myClasses =
     Map.ofEntries(
       Map.entry(CommonClassNames.JAVA_LANG_STRING_BUILDER, ReplaceInfo.stringBuilders()),

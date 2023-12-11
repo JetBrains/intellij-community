@@ -20,7 +20,7 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(PossibleHeapPollutionVarargsInspection.class);
   @Nls
   @NotNull

@@ -7,7 +7,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavadocTypedHandler extends AbstractBasicJavadocTypedHandler {
+public final class JavadocTypedHandler extends AbstractBasicJavadocTypedHandler {
   @Override
   public boolean isJavaFile(@Nullable PsiFile file) {
     return file instanceof PsiJavaFile;

@@ -30,7 +30,7 @@ public class ModuleTypeCategory extends ProjectCategory {
     }
   }
 
-  public static class JavaSE extends Java {
+  public static final class JavaSE extends Java {
     @Override
     public int getWeight() {
       return JavaModuleBuilder.JAVA_WEIGHT;

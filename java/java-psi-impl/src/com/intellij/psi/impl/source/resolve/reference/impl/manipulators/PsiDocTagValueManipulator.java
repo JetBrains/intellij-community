@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Gregory.Shrago
  */
-public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDocTag> {
+public final class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDocTag> {
 
   @Override
   public PsiDocTag handleContentChange(@NotNull PsiDocTag tag, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

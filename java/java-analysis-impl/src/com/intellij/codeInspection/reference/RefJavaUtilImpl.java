@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class RefJavaUtilImpl extends RefJavaUtil {
+public final class RefJavaUtilImpl extends RefJavaUtil {
   private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
 
   @Override

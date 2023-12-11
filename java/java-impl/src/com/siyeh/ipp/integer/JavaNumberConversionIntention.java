@@ -28,7 +28,7 @@ import java.util.Objects;
 
 import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 
-public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
+public final class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
 
   private static final class Holder {
     static final List<NumberConverter> JAVA_1_CONVERTERS = List.of(

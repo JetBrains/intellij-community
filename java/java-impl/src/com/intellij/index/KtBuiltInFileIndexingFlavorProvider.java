@@ -11,7 +11,7 @@ import com.intellij.util.indexing.flavor.HashBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class KtBuiltInFileIndexingFlavorProvider implements FileIndexingFlavorProvider<CharSequence> {
+public final class KtBuiltInFileIndexingFlavorProvider implements FileIndexingFlavorProvider<CharSequence> {
   @Nullable
   @Override
   public CharSequence getFlavor(@NotNull IndexedFile file) {

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ConfusingElseInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConfusingElseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField"})
   public boolean reportWhenNoStatementFollow = true;

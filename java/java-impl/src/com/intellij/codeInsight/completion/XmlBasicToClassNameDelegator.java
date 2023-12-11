@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlBasicToClassNameDelegator extends CompletionContributor {
+public final class XmlBasicToClassNameDelegator extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {

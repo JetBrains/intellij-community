@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
+public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   private boolean myNeedToAddDependency;
 
   @Nls

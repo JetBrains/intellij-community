@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ContinueStatementWithLabelInspection extends BaseInspection {
+public final class ContinueStatementWithLabelInspection extends BaseInspection {
 
   @Override
   @NotNull

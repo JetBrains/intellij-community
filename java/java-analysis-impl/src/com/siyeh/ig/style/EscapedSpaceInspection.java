@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
-public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.TEXT_BLOCK_ESCAPES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;

@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
-public class FormatCommentsProcessor implements PreFormatProcessor {
+public final class FormatCommentsProcessor implements PreFormatProcessor {
   @NotNull
   @Override
   public TextRange process(@NotNull final ASTNode element, @NotNull final TextRange range) {

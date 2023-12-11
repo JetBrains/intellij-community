@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean TRANSITIVE_ONLY = true;
 
   @Override

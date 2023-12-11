@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class AccessibilityWeigher extends ProximityWeigher {
+public final class AccessibilityWeigher extends ProximityWeigher {
   @Override
   public AccessibilityLevel weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
     if (element instanceof PsiDocCommentOwner member) {

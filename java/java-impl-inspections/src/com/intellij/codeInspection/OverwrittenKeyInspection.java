@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher SET_ADD =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SET, "add").parameterCount(1);
   private static final CallMatcher MAP_PUT =

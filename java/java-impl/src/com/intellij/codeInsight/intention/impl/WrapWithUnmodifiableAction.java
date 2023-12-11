@@ -28,7 +28,7 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExpression> {
+public final class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExpression> {
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
 
   private static final Map<String, String> CLASS_TO_METHOD = Map.of(

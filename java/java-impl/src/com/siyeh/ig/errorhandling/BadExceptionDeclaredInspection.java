@@ -32,7 +32,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class BadExceptionDeclaredInspection extends BaseInspection {
+public final class BadExceptionDeclaredInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public String exceptionsString = "";

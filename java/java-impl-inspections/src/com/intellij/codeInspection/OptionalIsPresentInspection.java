@@ -30,7 +30,7 @@ import java.util.Objects;
 
 import static com.intellij.codeInsight.PsiEquivalenceUtil.areElementsEquivalent;
 
-public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(OptionalIsPresentInspection.class);
 
   private static final CallMatcher OPTIONAL_IS_PRESENT =

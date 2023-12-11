@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_CONTAINS_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "containsAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
 

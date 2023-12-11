@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CallToSimpleGetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CallToSimpleGetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreGetterCallsOnOtherObjects = false;
   @SuppressWarnings("UnusedDeclaration")

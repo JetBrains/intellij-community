@@ -27,7 +27,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaIndentHelper extends IndentHelperImpl {
+public final class JavaIndentHelper extends IndentHelperImpl {
   @Override
   protected int getIndentInner(@NotNull PsiFile file,
                                @NotNull final ASTNode element,

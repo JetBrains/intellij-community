@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
-public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

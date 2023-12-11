@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiExpressionStatement> {
+public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiExpressionStatement> {
   public CreateSwitchIntention() {
     super(PsiExpressionStatement.class);
   }

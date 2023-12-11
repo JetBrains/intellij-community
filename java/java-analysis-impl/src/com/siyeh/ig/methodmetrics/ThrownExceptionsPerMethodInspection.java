@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrownExceptionsPerMethodInspection
+public final class ThrownExceptionsPerMethodInspection
   extends MethodMetricInspection {
 
   @Override

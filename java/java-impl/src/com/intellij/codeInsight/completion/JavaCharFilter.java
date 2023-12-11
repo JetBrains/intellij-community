@@ -30,7 +30,7 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 
-public class JavaCharFilter extends CharFilter {
+public final class JavaCharFilter extends CharFilter {
 
   private static boolean isWithinLiteral(final Lookup lookup) {
     PsiElement psiElement = lookup.getPsiElement();

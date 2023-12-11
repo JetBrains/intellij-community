@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author anna
  */
-public class ChangeClassParametersIntention extends PsiElementBaseIntentionAction {
+public final class ChangeClassParametersIntention extends PsiElementBaseIntentionAction {
 
   private static final Logger LOG = Logger.getInstance(ChangeClassParametersIntention.class);
 

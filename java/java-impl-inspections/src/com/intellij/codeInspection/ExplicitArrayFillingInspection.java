@@ -34,7 +34,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ExplicitArrayFillingInspection.class);
 
   public boolean mySuggestSetAll = false;

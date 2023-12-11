@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection {
+public final class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection {
 
   @Override
   @NotNull

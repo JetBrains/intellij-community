@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
+public final class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ComposeFunctionChainAction() {
     super(PsiMethodCallExpression.class);
   }

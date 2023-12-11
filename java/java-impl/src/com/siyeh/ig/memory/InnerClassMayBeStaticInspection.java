@@ -46,7 +46,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class InnerClassMayBeStaticInspection extends BaseInspection {
+public final class InnerClassMayBeStaticInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public OrderedSet<String> ignorableAnnotations =

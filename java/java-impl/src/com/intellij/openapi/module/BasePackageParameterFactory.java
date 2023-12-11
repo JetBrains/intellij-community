@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
+public final class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
 
   private static final Condition<PsiPackage> PACKAGE_CONDITION =
     aPackage -> PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&

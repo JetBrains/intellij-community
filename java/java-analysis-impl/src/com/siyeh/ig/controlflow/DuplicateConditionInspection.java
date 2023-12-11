@@ -35,7 +35,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DuplicateConditionInspection extends BaseInspection {
+public final class DuplicateConditionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

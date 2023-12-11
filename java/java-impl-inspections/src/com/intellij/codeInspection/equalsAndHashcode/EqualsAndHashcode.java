@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsAndHashcode extends EqualsAndHashcodeBase {
+public final class EqualsAndHashcode extends EqualsAndHashcodeBase {
 
   @Override
   protected LocalQuickFix[] buildFixes(boolean isOnTheFly, boolean hasEquals) {

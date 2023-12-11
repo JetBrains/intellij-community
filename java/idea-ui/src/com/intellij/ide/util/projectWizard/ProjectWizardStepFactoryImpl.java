@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
+public final class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   private static final Key<ProjectJdkStep> PROJECT_JDK_STEP_KEY = Key.create("ProjectJdkStep");
 
   @Override

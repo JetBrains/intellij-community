@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
+public final class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {

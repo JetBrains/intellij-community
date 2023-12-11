@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssertWithSideEffectsInspection extends BaseInspection {
+public final class AssertWithSideEffectsInspection extends BaseInspection {
 
   @Override
   @NotNull

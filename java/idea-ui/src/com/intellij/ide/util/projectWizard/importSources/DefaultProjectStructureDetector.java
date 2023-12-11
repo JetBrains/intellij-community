@@ -24,7 +24,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultProjectStructureDetector extends ProjectStructureDetector {
+public final class DefaultProjectStructureDetector extends ProjectStructureDetector {
   @NotNull
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir,

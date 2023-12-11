@@ -28,7 +28,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
+public final class ClassNameDiffersFromFileNameInspection extends BaseInspection {
 
   @Override
   @Nullable

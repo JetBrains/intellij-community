@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-class StackTraceElementObjectRenderer extends CompoundRendererProvider {
+final class StackTraceElementObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
 
   @Override

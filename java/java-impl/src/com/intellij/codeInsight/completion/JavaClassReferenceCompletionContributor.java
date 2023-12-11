@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());

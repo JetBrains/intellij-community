@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 
-class DebuggerKeymapExtension implements KeymapExtension {
+final class DebuggerKeymapExtension implements KeymapExtension {
   @Override
   public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     AnAction[] xDebuggerActions = ActionsTreeUtil.getActions("XDebugger.Actions");

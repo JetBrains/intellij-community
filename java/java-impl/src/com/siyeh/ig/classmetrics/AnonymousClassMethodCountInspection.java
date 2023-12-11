@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassMethodCountInspection
+public final class AnonymousClassMethodCountInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;

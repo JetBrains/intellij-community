@@ -24,7 +24,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspection {
+public final class ConditionalCanBePushedInsideExpressionInspection extends BaseInspection {
 
   public boolean ignoreSingleArgument = true;
 

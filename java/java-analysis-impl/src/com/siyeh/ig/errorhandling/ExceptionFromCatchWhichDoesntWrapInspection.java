@@ -35,7 +35,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
+public final class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreGetMessage;

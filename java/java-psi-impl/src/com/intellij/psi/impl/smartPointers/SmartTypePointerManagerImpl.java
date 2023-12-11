@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
+public final class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   private static final SmartTypePointer NULL_POINTER = () -> null;
 
   private final SmartPointerManager myPsiPointerManager;

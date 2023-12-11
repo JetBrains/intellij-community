@@ -25,7 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodOverridesStaticMethodInspection extends BaseInspection {
+public final class MethodOverridesStaticMethodInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();

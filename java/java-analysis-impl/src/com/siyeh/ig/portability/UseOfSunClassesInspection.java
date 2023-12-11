@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfSunClassesInspection extends BaseInspection {
+public final class UseOfSunClassesInspection extends BaseInspection {
 
   @Override
   @NotNull

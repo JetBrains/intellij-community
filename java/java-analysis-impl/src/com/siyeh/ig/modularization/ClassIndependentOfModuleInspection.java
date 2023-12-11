@@ -19,7 +19,7 @@ import org.jetbrains.uast.UDeclarationKt;
 
 import java.util.Set;
 
-public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
+public final class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(

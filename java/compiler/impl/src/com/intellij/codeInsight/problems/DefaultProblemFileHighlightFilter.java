@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class DefaultProblemFileHighlightFilter implements Condition<VirtualFile> {
+public final class DefaultProblemFileHighlightFilter implements Condition<VirtualFile> {
   private final Project myProject;
 
   public DefaultProblemFileHighlightFilter(Project project) {

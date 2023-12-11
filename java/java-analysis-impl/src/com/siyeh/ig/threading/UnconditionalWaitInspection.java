@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnconditionalWaitInspection extends BaseInspection {
+public final class UnconditionalWaitInspection extends BaseInspection {
 
   @Override
   @NotNull

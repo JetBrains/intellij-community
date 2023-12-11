@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Bas Leijdekkers
  */
-public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
+public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
   private final PsiElementPredicate myPredicate = new AnnotateOverriddenMethodsPredicate();
   private @IntentionName String m_text = null;
 

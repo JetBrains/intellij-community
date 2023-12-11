@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExplicitlyImportedWeigher extends ProximityWeigher {
+public final class ExplicitlyImportedWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiPackage, ProximityLocation> PLACE_PACKAGE = NullableLazyKey.create("placePackage", location -> {
     PsiElement position = location.getPosition();
     return position == null ? null : getContextPackage(position);

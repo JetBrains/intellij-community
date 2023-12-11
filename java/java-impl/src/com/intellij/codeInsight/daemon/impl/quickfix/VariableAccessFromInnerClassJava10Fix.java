@@ -30,7 +30,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
-public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
+public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
   @NonNls private final static String[] NAMES = {
     "ref",
     "lambdaContext",

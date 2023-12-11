@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ProtobufInferredAnnotationProvider implements InferredAnnotationProvider {
+public final class ProtobufInferredAnnotationProvider implements InferredAnnotationProvider {
   @Override
   public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!isProtobufGetter(listOwner)) return null;

@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedTryStatementInspection extends BaseInspection {
+public final class NestedTryStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

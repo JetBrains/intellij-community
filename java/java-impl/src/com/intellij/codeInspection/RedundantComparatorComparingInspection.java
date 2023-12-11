@@ -28,7 +28,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class RedundantComparatorComparingInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantComparatorComparingInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher THEN_COMPARING_COMPARATOR = instanceCall(JAVA_UTIL_COMPARATOR, "thenComparing")
     .parameterTypes(JAVA_UTIL_COMPARATOR);
   private static final CallMatcher THEN_COMPARING_FUNCTION = instanceCall(JAVA_UTIL_COMPARATOR, "thenComparing")

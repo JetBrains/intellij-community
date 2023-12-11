@@ -29,7 +29,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

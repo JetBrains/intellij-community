@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 
   private static final CallMatcher MAP_ENTRY_SET =

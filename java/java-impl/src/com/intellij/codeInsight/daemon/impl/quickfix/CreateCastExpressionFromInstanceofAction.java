@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction.*;
 import static java.util.Objects.requireNonNull;
 
-public class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
+public final class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     if (!BaseIntentionAction.canModify(context.file())) return null;

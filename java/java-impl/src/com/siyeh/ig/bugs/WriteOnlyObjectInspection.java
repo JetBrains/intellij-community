@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECT_CLONE =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
   public boolean ignoreImpureConstructors = true;

@@ -15,7 +15,7 @@ import static com.intellij.codeInsight.daemon.impl.JavaServiceUtil.JAVA_UTIL_SER
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
 
-public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

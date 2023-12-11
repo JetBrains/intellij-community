@@ -30,7 +30,7 @@ import java.util.function.Function;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-public class JavaCompletionStatistician extends CompletionStatistician{
+public final class JavaCompletionStatistician extends CompletionStatistician{
   private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
 
   @Override

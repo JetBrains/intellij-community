@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
+public final class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
   @NonNls
   protected static final Collection<String> regexMethodNames = Set.of(
     "matches", "replace", "replaceFirst", "replaceAll", "split"

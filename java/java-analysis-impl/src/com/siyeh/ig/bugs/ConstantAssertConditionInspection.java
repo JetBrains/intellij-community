@@ -10,7 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantAssertConditionInspection extends BaseInspection {
+public final class ConstantAssertConditionInspection extends BaseInspection {
 
   @Override
   @NotNull

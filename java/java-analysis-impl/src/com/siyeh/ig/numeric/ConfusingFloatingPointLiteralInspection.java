@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreScientificNotation = false;

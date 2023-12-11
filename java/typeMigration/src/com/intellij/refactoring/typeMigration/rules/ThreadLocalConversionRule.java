@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ThreadLocalConversionRule extends TypeConversionRule {
+public final class ThreadLocalConversionRule extends TypeConversionRule {
   private static final Logger LOG = Logger.getInstance(ThreadLocalConversionRule.class);
 
   @Override

@@ -45,7 +45,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField", "unused"})
   public boolean m_ignoreJavadoc; // left here to prevent changes to project files.

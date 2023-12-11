@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class IterateOverIterableIntention implements IntentionAction {
+public final class IterateOverIterableIntention implements IntentionAction {
   private final @Nullable PsiExpression myExpression;
   private @IntentionName String myText;
 

@@ -37,7 +37,7 @@ import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
 import static com.intellij.psi.util.PsiFormatUtilBase.MAX_PARAMS_TO_SHOW;
 
 @ApiStatus.Experimental
-public class JavaQualifierAsArgumentContributor extends CompletionContributor implements DumbAware {
+public final class JavaQualifierAsArgumentContributor extends CompletionContributor implements DumbAware {
 
   private static final int MAX_SIZE = 50;
 
