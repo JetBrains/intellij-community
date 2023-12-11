@@ -150,7 +150,10 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     completeTokenOrFutureToken(token, token.isSuccessful())
   }
 
-  fun completeToken(token: ScanningRequestToken) {
+  fun completeToken(token: ScanningRequestToken, isFullScanning: Boolean) {
+    if (token.isSuccessful() && isFullScanning) {
+      completeTokenOrFutureToken(RequestHeavyScanningOnNextStartToken, true)
+    }
     completeTokenOrFutureToken(token, token.isSuccessful())
   }
 

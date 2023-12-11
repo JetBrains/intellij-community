@@ -519,7 +519,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     finally {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
-        projectIndexingDependenciesService.completeToken(scanningRequest);
+        projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate());
       }
     }
   }
