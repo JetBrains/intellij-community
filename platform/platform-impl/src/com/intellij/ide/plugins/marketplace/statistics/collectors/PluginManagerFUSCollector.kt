@@ -20,9 +20,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
-internal const val EVENT_GROUP_ID = "plugin.manager"
-private const val EVENT_GROUP_VERSION = 8
-private val EVENT_GROUP = EventLogGroup(EVENT_GROUP_ID, EVENT_GROUP_VERSION)
+internal const val PM_FUS_GROUP_ID = "plugin.manager"
+internal const val PM_FUS_GROUP_VERSION = 8
+private val EVENT_GROUP = EventLogGroup(PM_FUS_GROUP_ID, PM_FUS_GROUP_VERSION)
 
 @ApiStatus.Internal
 open class PluginManagerFUSCollector : CounterUsagesCollector() {

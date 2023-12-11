@@ -25,6 +25,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   private @NotNull PluginId id;
   private String name;
+  private boolean isPaid = false;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
@@ -70,7 +71,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String mySuggestedCommercialIde = null;
   private Collection<String> mySuggestedFeatures;
   private boolean myConverted;
-
   private Collection<String> dependencyNames;
 
   /**
@@ -105,6 +105,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setId(@NotNull String id) {
     this.id = PluginId.getId(id);
+  }
+
+  public boolean getIsPaid() {
+    return isPaid;
+  }
+
+  public void setIsPaid(boolean isPaid) {
+    this.isPaid = isPaid;
   }
 
   @Override

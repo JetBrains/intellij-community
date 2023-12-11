@@ -101,7 +101,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.organization = organization
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId ?: nearestUpdate?.id
-
+    pluginNode.isPaid = isPaid
     if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode

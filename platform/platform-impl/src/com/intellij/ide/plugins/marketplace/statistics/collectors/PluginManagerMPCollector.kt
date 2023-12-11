@@ -15,9 +15,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 
-private const val MP_EVENT_GROUP_ID = "mp.$EVENT_GROUP_ID"
-private const val MP_EVENT_GROUP_VERSION = 8
-private val EVENT_GROUP = EventLogGroup(MP_EVENT_GROUP_ID, MP_EVENT_GROUP_VERSION, MP_RECORDER_ID)
+private const val PM_MP_GROUP_ID = "mp.$PM_FUS_GROUP_ID"
+private const val PM_MP_GROUP_VERSION = 1
+private val EVENT_GROUP = EventLogGroup(
+  PM_MP_GROUP_ID,
+  // this is needed to be able to change `PM_MP_GROUP_ID` child group without a requirement to update `PM_FUS_GROUP_ID` parent group version.
+  PM_FUS_GROUP_VERSION + PM_MP_GROUP_VERSION,
+  MP_RECORDER_ID
+)
 
 @ApiStatus.Internal
 class PluginManagerMPCollector : PluginManagerFUSCollector() {
@@ -25,16 +30,16 @@ class PluginManagerMPCollector : PluginManagerFUSCollector() {
 
   // Search
   private val USER_QUERY_FEATURES_DATA_KEY = ObjectEventField(
-    "userQueryFeatures", *PluginManagerUserQueryFeatureProvider.getFeaturesDefinition().toTypedArray()
+    "userQueryFeatures", *PluginManagerUserQueryFeatureProvider.getFeaturesDefinition()
   )
   private val MARKETPLACE_SEARCH_FEATURES_DATA_KEY = ObjectEventField(
-    "marketplaceSearchFeatures", *PluginManagerMarketplaceSearchFeatureProvider.getFeaturesDefinition().toTypedArray()
+    "marketplaceSearchFeatures", *PluginManagerMarketplaceSearchFeatureProvider.getFeaturesDefinition()
   )
   private val LOCAL_SEARCH_FEATURES_DATA_KEY = ObjectEventField(
-    "localSearchFeatures", *PluginManagerLocalSearchFeatureProvider.getFeaturesDefinition().toTypedArray()
+    "localSearchFeatures", *PluginManagerLocalSearchFeatureProvider.getFeaturesDefinition()
   )
   private val SEARCH_RESULTS_FEATURES_DATA_KEY = ObjectEventField(
-    "resultsFeatures", *PluginManagerSearchResultsFeatureProvider.getFeaturesDefinition().toTypedArray()
+    "resultsFeatures", *PluginManagerSearchResultsFeatureProvider.getFeaturesDefinition()
   )
 
   private val MARKETPLACE_TAB_SEARCH_PERFORMED = group.registerVarargEvent(
@@ -48,13 +53,13 @@ class PluginManagerMPCollector : PluginManagerFUSCollector() {
   fun performMarketplaceSearch(project: Project?, query: SearchQueryParser.Marketplace, results: List<IdeaPluginDescriptor>) {
     MARKETPLACE_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
       add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerUserQueryFeatureProvider().getSearchStateFeatures(query.searchQuery)
+        PluginManagerUserQueryFeatureProvider.getSearchStateFeatures(query.searchQuery)
       )))
       add(MARKETPLACE_SEARCH_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerMarketplaceSearchFeatureProvider().getSearchStateFeatures(query)
+        PluginManagerMarketplaceSearchFeatureProvider.getSearchStateFeatures(query)
       )))
       add(SEARCH_RESULTS_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerSearchResultsFeatureProvider().getSearchStateFeatures(query.searchQuery, results)
+        PluginManagerSearchResultsFeatureProvider.getSearchStateFeatures(query.searchQuery, results)
       )))
     }
   }
@@ -62,13 +67,13 @@ class PluginManagerMPCollector : PluginManagerFUSCollector() {
   fun performInstalledTabSearch(project: Project?, query: SearchQueryParser.Installed, results: List<IdeaPluginDescriptor>) {
     INSTALLED_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
       add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerUserQueryFeatureProvider().getSearchStateFeatures(query.searchQuery)
+        PluginManagerUserQueryFeatureProvider.getSearchStateFeatures(query.searchQuery)
       )))
       add(LOCAL_SEARCH_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerLocalSearchFeatureProvider().getSearchStateFeatures(query)
+        PluginManagerLocalSearchFeatureProvider.getSearchStateFeatures(query)
       )))
       add(SEARCH_RESULTS_FEATURES_DATA_KEY.with(ObjectEventData(
-        PluginManagerSearchResultsFeatureProvider().getSearchStateFeatures(query.searchQuery, results)
+        PluginManagerSearchResultsFeatureProvider.getSearchStateFeatures(query.searchQuery, results)
       )))
     }
   }
