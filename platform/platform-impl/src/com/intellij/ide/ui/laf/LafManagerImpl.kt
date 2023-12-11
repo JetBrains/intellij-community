@@ -264,15 +264,29 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       getGetOrCreateLafDetector()
     }
 
-    val oldTheme = currentTheme
-
-    val newThemeSupplier = loadThemeState(element)
-    val newTheme = newThemeSupplier.get()!!
-    if (isFirstSetup || newThemeSupplier == oldTheme) {
-      currentTheme = newTheme
+    if (isFirstSetup) {
+      currentTheme = try {
+        loadThemeState(element).get()
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        null
+      } ?: loadDefaultTheme().get()
     }
     else {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newTheme, true, true, true)
+      val oldTheme = currentTheme
+      val newThemeSupplier = loadThemeState(element)
+      val newTheme = newThemeSupplier.get()!!
+      if (newThemeSupplier == oldTheme) {
+        currentTheme = newTheme
+      }
+      else {
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this,
+                                                    /* lf = */ newTheme,
+                                                    /* async = */ true,
+                                                    /* force = */ true,
+                                                    /* lockEditorScheme = */ true)
+      }
     }
   }
 
