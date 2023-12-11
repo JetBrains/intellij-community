@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ public class MethodCountInspection extends BaseInspection {
 
   private static final int DEFAULT_METHOD_COUNT_LIMIT = 20;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_METHOD_COUNT_LIMIT;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreGettersAndSetters = false;
 
   @SuppressWarnings("PublicField")
@@ -80,10 +80,9 @@ public class MethodCountInspection extends BaseInspection {
     }
 
     private int calculateTotalMethodCount(PsiClass aClass) {
-      final PsiMethod[] methods = aClass.getMethods();
       int totalCount = 0;
-      for (final PsiMethod method : methods) {
-        if (method.isConstructor()) {
+      for (final PsiMethod method : aClass.getMethods()) {
+        if (method.isConstructor() || !method.isPhysical()) {
           continue;
         }
         if (ignoreGettersAndSetters) {
