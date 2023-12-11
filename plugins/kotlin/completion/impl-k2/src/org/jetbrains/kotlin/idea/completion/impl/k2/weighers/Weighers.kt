@@ -65,7 +65,7 @@ internal class WeighingContext private constructor(
                 symbols.flatMap { it.getAllOverriddenSymbols() }.toSet()
             }
 
-            return symbol in overriddenSymbols
+            return symbol.unwrapFakeOverrides in overriddenSymbols
         }
 
         context(KtAnalysisSession)
