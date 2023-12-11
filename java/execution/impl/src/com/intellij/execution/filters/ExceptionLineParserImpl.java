@@ -19,7 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -154,12 +157,15 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   private static final class StackFrameMatcher implements ExceptionLineRefiner {
     private record ClassMethod(String className, String methodName) {
     }
+    private record ClassSetMethods(String className, Set<String> methodName){
+
+    }
     private static final ClassMethod METHOD_HANDLE_AS_TYPE = new ClassMethod("java.lang.invoke.MethodHandle", "asType");
     private static final ClassMethod VAR_HANDLE_METHOD_HANDLE = new ClassMethod("java.lang.invoke.VarHandle", "getMethodHandle");
     private static final ClassMethod INVOKERS_CHECK_GENERIC_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkGenericType");
     private static final ClassMethod INVOKERS_CHECK_EXACT_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkExactType");
-    private static final Pair<String, Set<String>> VAR_HANDLES =
-      Pair.create("java.lang.invoke.VarHandle", Set.of("get", "set", "getVolatile", "setVolatile", "setOpaque", "getOpaque",
+    private static final ClassSetMethods VAR_HANDLES =
+      new ClassSetMethods("java.lang.invoke.VarHandle", Set.of("get", "set", "getVolatile", "setVolatile", "setOpaque", "getOpaque",
                                                        "getAcquire", "setAcquire", "setRelease", "compareAndSet", "compareAndExchange",
                                                        "compareAndExchangeAcquire", "compareAndExchangeRelease", "weakCompareAndSetPlain",
                                                        "weakCompareAndSet", "weakCompareAndSetAcquire", "weakCompareAndSetRelease",
@@ -169,9 +175,9 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
                                                        "getAndBitwiseOrRelease",
                                                        "getAndBitwiseAnd", "getAndBitwiseAndAcquire", "getAndBitwiseAndRelease",
                                                        "getAndBitwiseXor", "getAndBitwiseXorAcquire", "getAndBitwiseXorRelease"));
-    private static final Pair<String, Set<String>> METHOD_HANDLES =
-      Pair.create("java.lang.invoke.MethodHandle", Set.of("invokeExact", "invoke"));
-    private static final Map<ClassMethod, Pair<String, Set<String>>> MAPPED_METHODS = Map.of(
+    private static final ClassSetMethods METHOD_HANDLES =
+      new ClassSetMethods("java.lang.invoke.MethodHandle", Set.of("invokeExact", "invoke"));
+    private static final Map<ClassMethod, ClassSetMethods> MAPPED_METHODS = Map.of(
       METHOD_HANDLE_AS_TYPE, VAR_HANDLES,
       VAR_HANDLE_METHOD_HANDLE, VAR_HANDLES,
       INVOKERS_CHECK_GENERIC_TYPE, METHOD_HANDLES,
@@ -184,9 +190,9 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
       this(info.classFqnRange.substring(line), Set.of(info.methodNameRange.substring(line)));
-      Pair<String, Set<String>> mappedMethods = MAPPED_METHODS.get(new ClassMethod(myClassName, info.methodNameRange.substring(line)));
+      ClassSetMethods mappedMethods = MAPPED_METHODS.get(new ClassMethod(myClassName, info.methodNameRange.substring(line)));
       if (mappedMethods != null) {
-        myAdditionalMatchers.add(new StackFrameMatcher(mappedMethods.first, mappedMethods.second));
+        myAdditionalMatchers.add(new StackFrameMatcher(mappedMethods.className(), mappedMethods.methodName()));
       }
     }
 
