@@ -37,6 +37,7 @@
     <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.virtualManifestProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.unhandledExceptionFixProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.UnhandledExceptionFixProvider" dynamic="true"/>
 
       <extensionPoint qualifiedName="com.intellij.injectedLanguageJavaReferenceSupplier"
                       beanClass="com.intellij.codeInsight.daemon.impl.analysis.InjectedLanguageJavaReferenceSupplier" dynamic="true"/>

@@ -23,7 +23,7 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
     final PsiCodeBlock containingCodeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, false);
-    if (isCodeBlockWithExceptionInConstructorCall(containingCodeBlock, exceptionType)) {
+    if (isCodeBlockWithExceptionInConstructorCall(containingCodeBlock, Collections.singleton(exceptionType))) {
       // call to a sibling or super constructor is excluded from the @SneakyThrows treatment
       return false;
     }
@@ -50,18 +50,23 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
   }
 
   private static boolean isCodeBlockWithExceptionInConstructorCall(@Nullable PsiCodeBlock codeBlock,
-                                                                   @NotNull PsiClassType exceptionType) {
+                                                                   @NotNull Collection<PsiClassType> exceptionTypes) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
     if (null != containingMethod) {
       final PsiMethodCallExpression thisOrSuperCallInConstructor =
         JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(containingMethod);
       if (null != thisOrSuperCallInConstructor) {
-        ExceptionTypesCollector visitor = new ExceptionTypesCollector();
-        thisOrSuperCallInConstructor.accept(visitor);
-        return visitor.exceptionTypes.contains(exceptionType);
+        return throwsExceptionsTypes(thisOrSuperCallInConstructor, exceptionTypes);
       }
     }
     return false;
+  }
+
+  static boolean throwsExceptionsTypes(@NotNull PsiMethodCallExpression thisOrSuperCallInConstructor,
+                                       @NotNull Collection<PsiClassType> exceptionTypes) {
+    ExceptionTypesCollector visitor = new ExceptionTypesCollector();
+    thisOrSuperCallInConstructor.accept(visitor);
+    return ContainerUtil.intersects(visitor.exceptionTypes, exceptionTypes);
   }
 
   private static class ExceptionTypesCollector extends JavaRecursiveElementWalkingVisitor {

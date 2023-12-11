@@ -176,26 +176,29 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo.Builder info) {
-    IntentionAction action4 = QuickFixFactory.getInstance().createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo.Builder info,
+                                              @NotNull List<PsiClassType> unhandledExceptions) {
     if (info != null) {
+      final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+
+      IntentionAction action4 = quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
       info.registerFix(action4, null, null, null, null);
-    }
-    IntentionAction action3 = QuickFixFactory.getInstance().createAddExceptionToCatchFix();
-    if (info != null) {
+
+      IntentionAction action3 = quickFixFactory.createAddExceptionToCatchFix();
       info.registerFix(action3, null, null, null, null);
-    }
-    IntentionAction action2 = QuickFixFactory.getInstance().createAddExceptionToExistingCatch(element);
-    if (info != null) {
+
+      IntentionAction action2 = quickFixFactory.createAddExceptionToExistingCatch(element);
       info.registerFix(action2, null, null, null, null);
-    }
-    IntentionAction action1 = QuickFixFactory.getInstance().createAddExceptionToThrowsFix(element);
-    if (info != null) {
+
+      IntentionAction action1 = quickFixFactory.createAddExceptionToThrowsFix(element);
       info.registerFix(action1, null, null, null, null);
-    }
-    IntentionAction action = QuickFixFactory.getInstance().createSurroundWithTryCatchFix(element);
-    if (info != null) {
+
+      IntentionAction action = quickFixFactory.createSurroundWithTryCatchFix(element);
       info.registerFix(action, null, null, null, null);
+
+      for (UnhandledExceptionFixProvider provider : UnhandledExceptionFixProvider.EP_NAME.getExtensionList()) {
+        provider.registerUnhandledExceptionFixes(info, element, unhandledExceptions);
+      }
     }
   }
 
