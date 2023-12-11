@@ -42,13 +42,13 @@ public fun LazyTreeColors.Companion.light(
     nodeBackgroundSelectedFocused: Color = IntUiLightTheme.colors.blue(11),
 ): LazyTreeColors =
     LazyTreeColors(
-        elementBackgroundFocused = content,
-        elementBackgroundSelected = contentFocused,
-        elementBackgroundSelectedFocused = contentSelected,
-        content = contentSelectedFocused,
-        contentFocused = nodeBackgroundFocused,
-        contentSelected = nodeBackgroundSelected,
-        contentSelectedFocused = nodeBackgroundSelectedFocused,
+        elementBackgroundFocused = nodeBackgroundFocused,
+        elementBackgroundSelected = nodeBackgroundSelected,
+        elementBackgroundSelectedFocused = nodeBackgroundSelectedFocused,
+        content = content,
+        contentFocused = contentFocused,
+        contentSelected = contentSelected,
+        contentSelectedFocused = contentSelectedFocused,
     )
 
 @Composable
@@ -62,13 +62,13 @@ public fun LazyTreeColors.Companion.dark(
     nodeBackgroundSelectedFocused: Color = IntUiDarkTheme.colors.blue(2),
 ): LazyTreeColors =
     LazyTreeColors(
-        elementBackgroundFocused = content,
-        elementBackgroundSelected = contentFocused,
-        elementBackgroundSelectedFocused = contentSelected,
-        content = contentSelectedFocused,
-        contentFocused = nodeBackgroundFocused,
-        contentSelected = nodeBackgroundSelected,
-        contentSelectedFocused = nodeBackgroundSelectedFocused,
+        elementBackgroundFocused = nodeBackgroundFocused,
+        elementBackgroundSelected = nodeBackgroundSelected,
+        elementBackgroundSelectedFocused = nodeBackgroundSelectedFocused,
+        content = content,
+        contentFocused = contentFocused,
+        contentSelected = contentSelected,
+        contentSelectedFocused = contentSelectedFocused,
     )
 
 public fun LazyTreeMetrics.Companion.defaults(
