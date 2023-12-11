@@ -1327,6 +1327,7 @@
         <component>ErrorReportConfigurable</component>
         <component>PluginAdvertiserExtensions</component>
         <component>PluginFeatureService</component>
+        <component>editorConfigEncodings</component>
       </components>
     </obsoleteStorage>
 

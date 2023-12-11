@@ -403,7 +403,6 @@ For more information, check the documentation for <a href="https://editorconfig.
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
-    <applicationService serviceImplementation="org.editorconfig.configmanagement.EditorConfigEncodingCache"/>
 
     <schemeExporter
         nameKey="scheme.exporter.target.name"
