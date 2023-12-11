@@ -349,6 +349,7 @@ public final class JavaSdkImpl extends JavaSdk {
           modificator.removeRoot(root, annoType);
         }
         modificator.addRoot(root, annoType);
+        ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
       })
       .submit(AppExecutorUtil.getAppExecutorService())
       .then(file -> file != null);
