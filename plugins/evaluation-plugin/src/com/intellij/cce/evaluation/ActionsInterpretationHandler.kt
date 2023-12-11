@@ -41,7 +41,7 @@ class ActionsInterpretationHandler(
       if (interpretationConfig.sessionProbability < 1)
         RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(invokersFactory, handler, filter, project.basePath)
+    val interpreter = Interpreter(invokersFactory, handler, filter, config.interpret.order, project.basePath)
     val featuresStorage = if (interpretationConfig.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
     if (interpretationConfig.sessionProbability < 1) {

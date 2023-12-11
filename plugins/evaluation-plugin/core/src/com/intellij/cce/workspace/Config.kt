@@ -3,6 +3,7 @@ package com.intellij.cce.workspace
 
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.filter.EvaluationFilter
+import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
@@ -43,6 +44,7 @@ data class Config private constructor(
     val sessionsLimit: Int?,
     val sessionProbability: Double,
     val sessionSeed: Long?,
+    val order: InterpretationOrder,
     val saveLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
@@ -76,6 +78,7 @@ data class Config private constructor(
     var sessionsLimit: Int? = null
     var sessionProbability: Double = 1.0
     var sessionSeed: Long? = null
+    var order: InterpretationOrder = InterpretationOrder.LINEAR
     var useReordering: Boolean = false
     var reorderingTitle: String = evaluationTitle
     var featuresForReordering = mutableListOf<String>()
@@ -132,6 +135,7 @@ data class Config private constructor(
         sessionsLimit,
         sessionProbability,
         sessionSeed,
+        order,
         saveLogs,
         saveFeatures,
         saveContent,
