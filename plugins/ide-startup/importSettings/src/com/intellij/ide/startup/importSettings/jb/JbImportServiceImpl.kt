@@ -247,37 +247,32 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                             ApplicationManagerEx.getApplicationEx().restart(true)
                                                           }, modalityState)
         }
-      } else if (!plugins2import.isNullOrEmpty()) {
-        LOG.info("Started importing plugins...")
-        importer.installPlugins(progressIndicator, plugins2import)
+      } else{
+        progressIndicator.text2 = "Migrating options"
+        LOG.info("Starting migration...")
+        var restartRequired = false
+        if (!plugins2import.isNullOrEmpty()) {
+          LOG.info("Started importing plugins...")
+          importer.installPlugins(progressIndicator, plugins2import)
+          restartRequired = true
+        }
+        if (importer.importOptions(filteredCategories)) {
+          restartRequired = true
+        }
+        LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+        progressIndicator.fraction = 0.1
         storeImportConfig(productInfo.configDirPath, filteredCategories)
         LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         // restart if we install plugins
         withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().invokeLater({
-                                                            ApplicationManagerEx.getApplicationEx().restart(true)
-                                                          }, modalityState)
-        }
-      }
-      else if (importer.isNewUIValueChanged()) {
-        withContext(Dispatchers.EDT) {
-          SettingsService.getInstance().doClose.fire(Unit)
-          LOG.info("Starting migration after windows is closed")
-          importer.importOptions(filteredCategories)
-          LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-          LOG.info("Migration complete. Showing welcome screen")
-        }
-      }
-      else {
-        progressIndicator.text2 = "Migrating options"
-        LOG.info("Starting migration...")
-        importer.importOptions(filteredCategories)
-        LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-        progressIndicator.fraction = 0.1
-        LOG.info("Migration complete. Showing welcome screen")
-        withContext(Dispatchers.EDT) {
-          SettingsService.getInstance().doClose.fire(Unit)
+          if (restartRequired) {
+            ApplicationManager.getApplication().invokeLater({
+                                                              ApplicationManagerEx.getApplicationEx().restart(true)
+                                                            }, modalityState)
+          } else {
+            SettingsService.getInstance().doClose.fire(Unit)
+          }
         }
       }
     }

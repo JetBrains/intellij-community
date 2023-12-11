@@ -7,13 +7,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.registry.*
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
@@ -34,12 +33,20 @@ import kotlin.io.path.*
 class JbSettingsImporter(private val configDirPath: Path,
                          private val pluginsPath: Path,
                          private val prevIdeHome: Path?
-                         ) {
+) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
   private val defaultNewUIValue = true
-  private val IDE_GENERAL_XML = "ide.general.xml"
 
-  suspend fun importOptions(categories: Set<SettingsCategory>) {
+  /**
+   * Imports options from XML files and applies them to the application.
+   *
+   * @param categories The set of settings categories to import.
+   * @return <strong>true</strong> if restart is required,
+   * `false` otherwise.
+   */
+  suspend fun importOptions(categories: Set<SettingsCategory>): Boolean {
+    // load all components
+    // import all, except schema managers
     val allFiles = mutableSetOf<String>()
     val loadedComponentNames = componentStore.getComponentNames()
     val notLoadedComponents = arrayListOf<String>()
@@ -48,7 +55,6 @@ class JbSettingsImporter(private val configDirPath: Path,
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val cachedFileStorages = storageManager.getCachedFileStorages().map { (it as FileBasedStorage).file.name }
 
-    optionsPath.listDirectoryEntries("*.xml").map { it.name }.forEach { allFiles.add(it) }
     for (optionsEntry in optionsPath.listDirectoryEntries()) {
       if (optionsEntry.name.lowercase().endsWith(".xml")) {
         allFiles.add(optionsEntry.name)
@@ -70,19 +76,8 @@ class JbSettingsImporter(private val configDirPath: Path,
         allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
       }
     }
-    // ensure CodeStyleSchemes manager is created
-    // TODO check other scheme managers that needs to be created
-    CodeStyleSchemes.getInstance()
 
-    val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
-    schemeManagerFactory.process {
-      val dirPath = configDirPath / it.fileSpec
-      if (dirPath.isDirectory()) {
-        allFiles.addAll(filesFromFolder(dirPath, it.fileSpec))
-      }
-    }
-
-    //TODO: remove later
+    //TODO: remove later, now keep for logging purposes
     LOG.info("Loaded components:\n${loadedComponentNames.joinToString()}")
     LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
     LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
@@ -90,15 +85,25 @@ class JbSettingsImporter(private val configDirPath: Path,
     loadNotLoadedComponents(notLoadedComponents)
 
     LOG.info("Detected ${allFiles.size} files to import: ${allFiles.joinToString()}")
-    val files2process = filterFiles(allFiles, categories)
+    val componentsAndFilesMap = filterComponents(allFiles, categories)
+    val filesSet = componentsAndFilesMap.values.toSet()
 
-    LOG.info("After filtering we have ${files2process.size} files to import: ${files2process.joinToString()}")
+    LOG.info("After filtering we have ${filesSet.size} files to import: ${filesSet.joinToString()}")
 
+    // setting dummy valueChangeListener, so effects won't affect the UI, etc.
+    Registry.setValueChangeListener(object : RegistryValueListener {
+      // do nothing
+    })
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
-    componentStore.reloadComponents(files2process, emptyList())
+    componentStore.reloadComponents(filesSet, emptyList(), componentsAndFilesMap.keys)
     storageManager.removeStreamProvider(provider::class.java)
     saveSettings(ApplicationManager.getApplication(), true)
+    RegistryManager.getInstanceAsync().resetValueChangeListener()
+
+    // there's currently only one reason to restart after reading configs
+    // plugins are handled separately
+    return Registry.getInstance().isRestartNeeded
   }
 
   private fun loadNotLoadedComponents(notLoadedComponents: List<String>) {
@@ -144,7 +149,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
   private fun isAppLevelLightService(clazz: Class<*>): Boolean {
     val serviceAnnotation = clazz.annotations.find { it.annotationClass == Service::class } as? Service ?: return false
-    return serviceAnnotation.value.find { it == Service.Level.APP} != null
+    return serviceAnnotation.value.find { it == Service.Level.APP } != null
   }
 
   private fun scanClassLoader(pluginClassLoader: PluginClassLoader): ScanResult {
@@ -156,22 +161,22 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
 
-  internal fun isNewUIValueChanged() : Boolean {
-    val ideGeneralXmlFile = configDirPath / PathManager.OPTIONS_DIRECTORY / IDE_GENERAL_XML
-    try {
-      val ideGeneral = JDOMUtil.load(ideGeneralXmlFile.toFile())
-      val registry = ideGeneral.getChildren("component").find {
-        it.getAttributeValue("name") == "Registry"
-      } ?: return false
-      val newUIValue = registry.getChildren("entry").find {
-        it.getAttributeValue("key") == ExperimentalUI.KEY
-      }?.value ?: return false
-
-      return newUIValue.toBoolean() != defaultNewUIValue
-    } catch (e: Exception) {
-      LOG.warn("An error occurred while checking new UI state", e)
+  internal fun isNewUIValueChanged(): Boolean {
+    val earlyAccessRegistryPath = configDirPath / EarlyAccessRegistryManager.fileName
+    if (!earlyAccessRegistryPath.exists()) {
       return false
     }
+    val eaLinesIterator = earlyAccessRegistryPath.toFile().readLines().iterator()
+    while (eaLinesIterator.hasNext()) {
+      val key = eaLinesIterator.next()
+      if (eaLinesIterator.hasNext()) {
+        val value = eaLinesIterator.next()
+        if (key == ExperimentalUI.KEY) {
+          return value != defaultNewUIValue.toString()
+        }
+      }
+    }
+    return false
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
@@ -180,7 +185,8 @@ class JbSettingsImporter(private val configDirPath: Path,
       if (entry.isRegularFile()) {
         if (prefix.isNullOrEmpty()) {
           retval.add(entry.name)
-        } else {
+        }
+        else {
           retval.add("$prefix/${entry.name}")
         }
       }
@@ -189,26 +195,35 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
 
-  private fun filterFiles(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
+  // key: PSC, value - file
+  private fun filterComponents(allFiles: Set<String>, categories: Set<SettingsCategory>): Map<String, String> {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
-    val retval = hashSetOf<String>()
+    val retval = hashMapOf<String, String>()
     val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
-      if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-        val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
-        if (!categories.contains(state.category) && !state.canBeMigrated)
-          return@processAllImplementationClasses
-        state.storages.forEach { storage ->
-          if (storage.deprecated)
-            return@forEach
-          if (storage.roamingType == RoamingType.PER_OS && allFiles.contains("$osFolderName/${storage.value}")) {
-            retval.add("$osFolderName/${storage.value}")
-          } else if (storage.roamingType != RoamingType.DISABLED && allFiles.contains(storage.value)) {
-            retval.add(storage.value)
-          }
-        }
+      if (!PersistentStateComponent::class.java.isAssignableFrom(aClass))
+        return@processAllImplementationClasses
+
+      val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
+      if (!categories.contains(state.category) || !state.roamingType.canBeMigrated())
+        return@processAllImplementationClasses
+
+      val activeStorage = state.storages.find { !it.deprecated } ?: return@processAllImplementationClasses
+      if (activeStorage.value == StoragePathMacros.CACHE_FILE || !activeStorage.roamingType.canBeMigrated())
+        return@processAllImplementationClasses
+
+      if (activeStorage.roamingType.isOSSpefic && allFiles.contains("$osFolderName/${activeStorage.value}")) {
+        retval[state.name] = "$osFolderName/${activeStorage.value}"
+      }
+      else if (allFiles.contains(activeStorage.value)) {
+        retval[state.name] = activeStorage.value
       }
     }
+    return retval
+  }
+
+  private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
+    val retval = hashSetOf<String>()
     val schemeCategories = hashSetOf<String>()
     // fileSpec is e.g. keymaps/mykeymap.xml
     (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -221,11 +236,10 @@ class JbSettingsImporter(private val configDirPath: Path,
       if (split.size != 2)
         continue
 
-      if (schemeCategories.contains(split[0])){
+      if (schemeCategories.contains(split[0])) {
         retval.add(file)
       }
     }
-
     return retval.toList()
   }
 

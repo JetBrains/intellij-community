@@ -35,6 +35,8 @@ interface RegistryManager {
   fun intValue(key: String, defaultValue: Int): Int
 
   fun get(key: String): RegistryValue
+
+  fun resetValueChangeListener()
 }
 
 @ApiStatus.Experimental

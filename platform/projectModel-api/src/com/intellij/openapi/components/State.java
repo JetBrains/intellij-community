@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -91,8 +88,8 @@ public @interface State {
   SettingsCategory category() default SettingsCategory.OTHER;
 
   /**
-   * Indicates whether the component state can be migrated within the same machine (used in import settings on startup)
-   * regardless of RoamingType and SettingsCategory.
+   * Indicates the roaming type of the component. See {@link RoamingType} for details.
+   *
    */
-  boolean canBeMigrated() default true;
+  RoamingType roamingType() default RoamingType.DEFAULT;
 }

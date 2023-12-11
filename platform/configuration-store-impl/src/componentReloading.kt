@@ -10,16 +10,20 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>, deletedFileSpecs: Collection<String>) {
-  LOG.debug { "reloadComponents: changed=$changedFileSpecs, deleted=$deletedFileSpecs" }
+fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>,
+                                        deletedFileSpecs: Collection<String>,
+                                        componentNames2reload: Set<String>? = null
+) {
+  LOG.debug { "reloadComponents: changed=$changedFileSpecs, deleted=$deletedFileSpecs, componentNames2=$componentNames2reload" }
   val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
   val storageManager = storageManager as StateStorageManagerImpl
   val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
 
-  val changedComponentNames = LinkedHashSet<String>()
-  updateStateStorage(changedComponentNames, changed, false)
-  updateStateStorage(changedComponentNames, deleted, true)
-  LOG.debug { "changed component names: $changedComponentNames" }
+  val changedComponentNames = componentNames2reload ?: LinkedHashSet<String>().also {
+    updateStateStorage(it, changed, false)
+    updateStateStorage(it, deleted, true)
+    LOG.debug { "calculated changed component names: $it" }
+  }
 
   val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
   for (schemeManager in schemeManagersToReload) {
