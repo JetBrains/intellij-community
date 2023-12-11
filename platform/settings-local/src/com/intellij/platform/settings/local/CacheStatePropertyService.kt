@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("MismatchedLightServiceLevelAndCtor")
+
 package com.intellij.platform.settings.local
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -16,9 +18,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.settings.SettingValueSerializer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.*
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
@@ -27,7 +33,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.LongAdder
+
+private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
 
 // todo get rid of Disposable as soon as it will be possible to get service from coroutine scope
 @Suppress("NonDefaultConstructor")
@@ -36,6 +46,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class CacheStatePropertyService(componentManager: ComponentManager) : Disposable, SettingsSavingComponent {
   private val map: PersistentMapBase<String, ByteArray> = createOrResetPersistentMap(getStorageDir(componentManager))
   private val isChanged = AtomicBoolean(false)
+
+  private val meter: Meter = TelemetryManager.getMeter(cacheScope)
+
+  private val getMeasurer = Measurer(meter, "get")
+  private val setMeasurer = Measurer(meter, "set")
 
   override fun dispose() {
     map.close()
@@ -68,8 +83,11 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
   }
 
   fun <T : Any> getValue(key: String, serializer: SettingValueSerializer<T>): T? {
+    val start = System.nanoTime()
     try {
-      return map.get(key)?.let { serializer.decode(it) }
+      val result = map.get(key)?.let { serializer.decode(it) }
+      getMeasurer.add(System.nanoTime() - start)
+      return result
     }
     catch (e: CancellationException) {
       throw e
@@ -84,6 +102,7 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
   }
 
   fun <T : Any> setValue(key: String, value: T?, serializer: SettingValueSerializer<T>) {
+    val start = System.nanoTime()
     try {
       if (value == null) {
         map.remove(key)
@@ -92,6 +111,7 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
         map.put(key, serializer.encode(value))
       }
       isChanged.set(true)
+      setMeasurer.add(System.nanoTime() - start)
     }
     catch (e: CancellationException) {
       throw e
@@ -172,4 +192,28 @@ private fun createPersistentMap(dbFile: Path): PersistentMapBase<String, ByteArr
                                                                                       /* compactChunksWithValueDeserialization = */ false,
                                                                                       /* hasNoChunks = */ false,
                                                                                       /* doCompression = */ false))
+}
+
+private class Measurer(meter: Meter, subKey: String) {
+  private val time = LongAdder()
+  private val counter = LongAdder()
+
+  private val timeObserver = meter.counterBuilder("cacheStateStorage.$subKey.duration").buildObserver()
+  private val counterObserver = meter.counterBuilder("cacheStateStorage.$subKey.counter").buildObserver()
+
+  init {
+    meter.batchCallback(
+      {
+        // compute in nanoseconds to avoid round errors, but report as ms
+        timeObserver.record(TimeUnit.NANOSECONDS.toMillis(time.sum()))
+        counterObserver.record(counter.sum())
+      },
+      counterObserver, timeObserver
+    )
+  }
+
+  fun add(nano: Long) {
+    time.add(nano)
+    counter.increment()
+  }
 }
