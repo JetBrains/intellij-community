@@ -882,7 +882,7 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3.5f
       private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
       private const val DEFAULT_ARC: Float = 8.0f
 
