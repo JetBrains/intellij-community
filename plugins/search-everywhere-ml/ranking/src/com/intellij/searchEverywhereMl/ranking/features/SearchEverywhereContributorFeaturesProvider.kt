@@ -13,7 +13,6 @@ internal class SearchEverywhereContributorFeaturesProvider {
       "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
       "FileSearchEverywhereContributor", "RecentFilesSEContributor",
       "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
-      "SemanticActionSearchEverywhereContributor",
       "RunConfigurationsSEContributor", "CommandsContributor",
       "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
       "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
