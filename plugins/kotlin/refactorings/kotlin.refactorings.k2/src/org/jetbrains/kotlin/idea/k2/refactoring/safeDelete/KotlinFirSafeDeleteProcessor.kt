@@ -172,15 +172,18 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         if (ktElement is KtConstructor<*>) {
             val containingClass = ktElement.containingClass() ?: return
 
-            val directInheritors = DirectKotlinClassInheritorsSearch.search(containingClass).findAll()
-            if (directInheritors.any { it !is KtElement }) {
-                val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
-                MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
-                    JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                        ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-                    return@Processor true
-                })
-                return
+            val directInheritors = mutableListOf<KtElement>()
+            DirectKotlinClassInheritorsSearch.search(containingClass).forEach { el ->
+                if (el !is KtElement) {
+                    val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
+                    MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
+                        JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                            ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                        return@Processor true
+                    })
+                    return
+                }
+                directInheritors.add(el)
             }
 
             fun processDelegatingReferences(ktClass: KtClass) {
