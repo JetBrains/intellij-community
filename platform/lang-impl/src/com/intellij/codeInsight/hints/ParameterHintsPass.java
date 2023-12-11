@@ -213,5 +213,10 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.widthAdjustment = widthAdjustment;
     }
+
+    @Override
+    public @NotNull String toString() {
+      return '\'' + presentationText + '\'';
+    }
   }
 }

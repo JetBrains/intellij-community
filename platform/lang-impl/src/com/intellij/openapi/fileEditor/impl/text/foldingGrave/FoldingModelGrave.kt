@@ -25,9 +25,8 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 @Service(Level.PROJECT)
 internal class FoldingModelGrave(private val project: Project, private val scope: CoroutineScope) : TextEditorCache<FoldingState>(project, scope) {
-  override fun graveName() = "persistent-folding"
-  override fun valueExternalizer() = FoldingState.Companion.FoldingStateExternalizer
-  override fun serdeVersion() = FoldingState.SERDE_VERSION
+  override fun namePrefix() = "persistent-folding"
+  override fun valueExternalizer() = FoldingState.FoldingStateExternalizer
   override fun useHeapCache() = true
 
   private val fileToModel: MutableMap<Int, FoldingModelEx> = ConcurrentHashMap()

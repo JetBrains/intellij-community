@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave.FileMarkupIn
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.io.DataExternalizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,9 +12,8 @@ import java.io.DataInput
 import java.io.DataOutput
 
 internal class HighlightingMarkupStore(project: Project, private val scope: CoroutineScope) : TextEditorCache<FileMarkupInfo>(project, scope) {
-  override fun graveName() = "persistent-markup"
+  override fun namePrefix() = "persistent-markup"
   override fun valueExternalizer() = FileMarkupInfoExternalizer
-  override fun serdeVersion() = 2
   override fun useHeapCache() = false
 
   fun getMarkup(file: VirtualFileWithId): FileMarkupInfo? {
@@ -36,13 +34,9 @@ internal class HighlightingMarkupStore(project: Project, private val scope: Coro
     }
   }
 
-  object FileMarkupInfoExternalizer : DataExternalizer<FileMarkupInfo> {
-    override fun save(output: DataOutput, value: FileMarkupInfo) {
-      value.bury(output)
-    }
-
-    override fun read(input: DataInput): FileMarkupInfo {
-      return FileMarkupInfo.exhume(input)
-    }
+  object FileMarkupInfoExternalizer : ValueExternalizer<FileMarkupInfo> {
+    override fun serdeVersion() = 2
+    override fun save(output: DataOutput, value: FileMarkupInfo) = value.bury(output)
+    override fun read(input: DataInput) = FileMarkupInfo.exhume(input)
   }
 }

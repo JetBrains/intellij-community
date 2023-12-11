@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache.Companion.contentHash
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
@@ -80,19 +80,18 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
     }
   }
 
+  object FoldingStateExternalizer : TextEditorCache.ValueExternalizer<FoldingState> {
+    override fun serdeVersion() = 2
+    override fun save(output: DataOutput, value: FoldingState) = value.save(output)
+    override fun read(input: DataInput) = FoldingState.read(input)
+  }
+
   companion object {
     private val logger: Logger = Logger.getInstance(FoldingState::class.java)
-
-    const val SERDE_VERSION = 2
 
     fun create(contentHash: Int, foldRegions: Array<FoldRegion>): FoldingState {
       val regions = foldRegions.map { RegionState.create(it) }.toList()
       return FoldingState(contentHash, regions)
-    }
-
-    object FoldingStateExternalizer : DataExternalizer<FoldingState> {
-      override fun save(output: DataOutput, value: FoldingState) = value.save(output)
-      override fun read(input: DataInput) = FoldingState.read(input)
     }
 
     private fun read(input: DataInput): FoldingState {

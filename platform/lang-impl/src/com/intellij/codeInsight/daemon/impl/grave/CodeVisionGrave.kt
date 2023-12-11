@@ -23,9 +23,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Level.PROJECT)
 internal class CodeVisionGrave(project: Project, private val scope: CoroutineScope) : TextEditorCache<CodeVisionState>(project, scope) {
-  override fun graveName() = "persistent-code-vision"
-  override fun valueExternalizer() = CodeVisionStateExternalizer
-  override fun serdeVersion() = CodeVisionStateExternalizer.SERDE_VERSION
+  override fun namePrefix() = "persistent-code-vision"
+  override fun valueExternalizer() = CodeVisionState.Externalizer
   override fun useHeapCache() = true
 
   fun raise(file: VirtualFile, document: Document): Iterable<Pair<TextRange, CodeVisionEntry>>? {
