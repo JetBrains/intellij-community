@@ -18,13 +18,13 @@ import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 
 @State(name = "editorConfigEncodings", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
-  private val myCharsetMap: MutableMap<String, CharsetData> = ConcurrentHashMap()
+internal class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
+  private val charsetMap: MutableMap<String, CharsetData> = ConcurrentHashMap()
+
   override fun getState(): Element {
     val root = Element("encodings")
-    for (url in myCharsetMap.keys) {
-      val charsetData = myCharsetMap[url]
-      if (charsetData != null) {
+    for (url in charsetMap.keys) {
+      val charsetData = charsetMap[url] ?: continue
         val charsetStr = ConfigEncodingCharsetUtil.toString(charsetData.charset, charsetData.isUseBom)
         if (charsetStr != null) {
           val entryElement = Element(ENTRY_ELEMENT)
@@ -38,13 +38,12 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
           }
           root.addContent(entryElement)
         }
-      }
     }
     return root
   }
 
   override fun loadState(state: Element) {
-    myCharsetMap.clear()
+    charsetMap.clear()
     for (fileElement in state.getChildren(ENTRY_ELEMENT)) {
       val urlAttr = fileElement.getAttribute(URL_ATTR)
       val charsetAttr = fileElement.getAttribute(CHARSET_ATTR)
@@ -55,7 +54,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
         val useBom = ConfigEncodingCharsetUtil.UTF8_BOM_ENCODING == charsetStr
         if (charset != null) {
           val charsetData = CharsetData(charset, useBom)
-          myCharsetMap[url] = charsetData
+          charsetMap[url] = charsetData
           val ignoreAttr = fileElement.getAttribute(IGNORE_ATTR)
           if (ignoreAttr != null) {
             try {
@@ -70,8 +69,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     }
   }
 
-  fun getUseUtf8Bom(project: Project?, virtualFile: VirtualFile): Boolean =
-    getCharsetData(project, virtualFile, true)?.isUseBom ?: false
+  fun getUseUtf8Bom(project: Project?, virtualFile: VirtualFile): Boolean = getCharsetData(project, virtualFile, true)?.isUseBom ?: false
 
   fun getCharsetData(project: Project?, virtualFile: VirtualFile, withCache: Boolean): CharsetData? {
     if (project == null || !Utils.isEnabledFor (project, virtualFile)) return null
@@ -86,7 +84,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     val key = getKey(virtualFile)
     val charsetData = getCharsetData(project, virtualFile, false)
     if (charsetData != null) {
-      myCharsetMap[key] = charsetData
+      charsetMap[key] = charsetData
       virtualFile.charset = charsetData.charset
     }
   }
@@ -96,8 +94,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     return if (charsetData != null && !charsetData.isIgnored) charsetData.charset else null
   }
 
-  private fun getCachedCharsetData(virtualFile: VirtualFile): CharsetData? =
-    myCharsetMap[getKey(virtualFile)]
+  private fun getCachedCharsetData(virtualFile: VirtualFile): CharsetData? = charsetMap[getKey(virtualFile)]
 
   fun isIgnored(virtualFile: VirtualFile): Boolean =
     getCachedCharsetData(virtualFile).let { it != null && it.isIgnored }
@@ -107,7 +104,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     if (charsetData == null) {
       charsetData = CharsetData(Charset.defaultCharset(), false)
       charsetData.isIgnored = true
-      myCharsetMap[getKey(virtualFile)] = charsetData
+      charsetMap[getKey(virtualFile)] = charsetData
     }
     else {
       charsetData.isIgnored = true
@@ -115,7 +112,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
   }
 
   fun reset() {
-    myCharsetMap.clear()
+    charsetMap.clear()
   }
 
   class CharsetData(val charset: Charset, val isUseBom: Boolean) {
