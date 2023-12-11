@@ -34,6 +34,8 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
   protected abstract fun saveFilterToProperties(filter: Filter?)
   protected abstract fun getFilterFromProperties(): Filter?
 
+  fun updateFilterFromProperties() = setFilter(getFilterFromProperties())
+
   fun addSetFilterListener(runnable: Runnable) {
     listeners.add(runnable)
   }
@@ -108,10 +110,6 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
       if (anyFiltersDiffers) {
         super.setFilter(newFilter);
       }
-    }
-
-    fun updateFilterFromProperties() {
-      setFilter(getFilterFromProperties())
     }
 
     override fun saveFilterToProperties(filter: FilterPair<Filter1, Filter2>?) {

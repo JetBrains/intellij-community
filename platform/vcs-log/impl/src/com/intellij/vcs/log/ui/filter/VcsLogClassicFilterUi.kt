@@ -575,10 +575,6 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
 
     override fun getFilterValues(filter: VcsLogDateFilter): List<String> = getDateValues(filter)
 
-    fun updateFilterFromProperties() {
-      setFilter(getFilterFromProperties())
-    }
-
     companion object {
       fun getDateValues(filter: VcsLogDateFilter): List<String> {
         val after = filter.after
