@@ -225,12 +225,12 @@ fun <T : CommandChain> T.startProfile(args: String): T = apply {
   addCommand("${CMD_PREFIX}startProfile $args")
 }
 
-fun <T : CommandChain> T.startProfile(args: String, profilerParams: String): T = apply {
-  addCommand("${CMD_PREFIX}startProfile $args $profilerParams")
+fun <T : CommandChain> T.startProfile(profileFileName: String, profilerParams: String): T = apply {
+  addCommand("${CMD_PREFIX}startProfile $profileFileName $profilerParams")
 }
 
-fun <T : CommandChain> T.stopProfile(args: String = "jfr"): T = apply {
-  addCommand("${CMD_PREFIX}stopProfile $args")
+fun <T : CommandChain> T.stopProfile(profilerParams: String = "jfr"): T = apply {
+  addCommand("${CMD_PREFIX}stopProfile $profilerParams")
 }
 
 fun <T : CommandChain> T.memoryDump(): T = apply {
