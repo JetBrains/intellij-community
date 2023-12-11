@@ -68,7 +68,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             return
         }
 
-        val kotlinFacetSettings = deserializeFacetSettings(facetConfiguration).also { it.updateMergedArguments() }
+        val kotlinFacetSettings = deserializeFacetSettings(facetConfiguration)
 
         // Can be optimized by not setting default values (KTIJ-27769)
         kotlinSettingsEntity.useProjectSettings = kotlinFacetSettings.useProjectSettings
