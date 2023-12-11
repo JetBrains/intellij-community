@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.*
 import java.nio.file.Path
 
-internal const val PYDEVD_PACKAGE = "pydevd_package"
+const val PYDEVD_PACKAGE: String = "pydevd_package"
 
 abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
   override val baseFileName: String
