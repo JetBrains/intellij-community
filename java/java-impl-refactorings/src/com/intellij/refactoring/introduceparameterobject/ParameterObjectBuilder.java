@@ -100,7 +100,6 @@ class ParameterObjectBuilder {
 
     if (recordsAvailable) {
       out.append("(");
-      fields.stream().map(param -> param.getType().getCanonicalText(true) + " " + param.getName());
       StringUtil.join(fields, param -> {
         PsiType type = param.getType();
         if (param.getParameter().isVarArgs() && type instanceof PsiArrayType) {
