@@ -1,9 +1,9 @@
 <html>
 <body>
 <p>
-Informs you when bitwise operations can be replaced with the <code>Long.hashCode</code> method.
-  It detects instances of the pattern <code>(int)(x ^ (x >>> 32))</code> where <code>x</code> is a variable of type <code>long</code>.
-  This improves readability of code.
+Informs you when bitwise operations can be replaced with the <code>Long.hashCode()</code> or <code>Double.hashCode()</code> method.
+  It detects instances of the pattern <code>(int)(x ^ (x >>> 32))</code> where <code>x</code> is a variable of type <code>long</code> or
+  the result of the previous <code>Double.doubleToLongBits()</code> call. This replacement shortens the code improves its readability.
 </p>
 <p>
   Example:

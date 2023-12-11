@@ -3,6 +3,7 @@ public class Test {
   Long var = 1234567890123456789L;
 
   public void testMethod() {
-    int result = var.hashCode();
+      /*shift amount*/
+      int result = var.hashCode();
   }
 }

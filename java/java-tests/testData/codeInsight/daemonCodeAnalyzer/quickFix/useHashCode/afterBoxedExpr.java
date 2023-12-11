@@ -4,6 +4,7 @@ public class Test {
   Long var1 = 1234567890123456784L;
 
   public void testMethod(boolean f) {
-    int result = (f ? var : var1).hashCode();
+      /*shift amount*/
+      int result = (f ? var : var1).hashCode();
   }
 }
