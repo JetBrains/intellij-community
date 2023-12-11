@@ -24,8 +24,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -303,14 +305,19 @@ public class PerformanceTestInfo {
             PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
             actualInputSize = new AtomicInteger(expectedInputSize);
 
+            int iterationNumber = attempt;
             Supplier<IterationStatus> operation = () -> {
               CpuUsageData currentData;
               try {
+                AsyncProfiler.startProfiling(PathManager.getLogDir().resolve(iterationType.name() + iterationNumber + ".jfr"));
                 currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
               }
               catch (Throwable e) {
                 ExceptionUtil.rethrowUnchecked(e);
                 throw new RuntimeException(e);
+              }
+              finally {
+                AsyncProfiler.stopProfiling();
               }
               int actualUsedCpuCores = usedReferenceCpuCores < 8
                                        ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
@@ -432,6 +439,53 @@ public class PerformanceTestInfo {
     BORDERLINE, // test barely managed to complete within the specified range
     SLOW,       // test was too slow
     DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
+  }
+
+  private static final class AsyncProfiler {
+    private static final Object asyncProfiler = getAsyncProfilerInstance();
+
+    private static Object getAsyncProfilerInstance() {
+      try {
+        Class<?> asyncProfilerExtractorClass = Class.forName("com.intellij.profiler.ultimate.async.extractor.AsyncProfilerExtractor");
+        Field instanceField = asyncProfilerExtractorClass.getField("INSTANCE");
+        Object instance = instanceField.get(null);
+        Method getInstanceMethod = asyncProfilerExtractorClass.getMethod("getAsyncProfilerInstance", String.class);
+        return getInstanceMethod.invoke(instance, new Object[]{null});
+      }
+      catch (ClassNotFoundException e) {
+        System.out.println("Async is not in class loader");
+      }
+      catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+        e.printStackTrace();
+      }
+      return null;
+    }
+
+    public static void stopProfiling() {
+      try {
+        execute("stop");
+      }
+      catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+        System.out.println("Can't stop profiling");
+      }
+    }
+
+    public static void startProfiling(Path file) {
+      try {
+        String command = String.format("start,interval=5ms,event=wall,jfr,file=%s.jfr", file.toAbsolutePath());
+        execute(command);
+      }
+      catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+        System.out.println("Can't start profiling");
+      }
+    }
+
+    private static void execute(String command) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+      if (asyncProfiler != null) {
+        Method executeMethod = asyncProfiler.getClass().getMethod("execute", String.class);
+        executeMethod.invoke(asyncProfiler, command);
+      }
+    }
   }
 
   private int getExpectedTimeOnThisMachine(int actualInputSize, int actualUsedCpuCores) {
