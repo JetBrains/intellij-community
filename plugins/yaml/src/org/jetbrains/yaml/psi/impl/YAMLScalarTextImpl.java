@@ -109,17 +109,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
     boolean currentLineIsIndented = input.length() > 0 && input.charAt(0) == ' ';
     for (int i = 0; i < input.length(); ++i) {
       if (input.charAt(i) == '\n') {
-        final String replacement;
-        if (i + 1 >= input.length() ||
-            YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1)) ||
-            input.charAt(i + 1) == '\n' ||
-            currentLineIsIndented) {
-          replacement = "\n" + indentString;
-        }
-        else {
-          replacement = "\n" + indentString;
-        }
-
+        final String replacement = "\n" + indentString;
         result.add(Pair.create(TextRange.from(i, 1), replacement));
         currentLength = 0;
         currentLineIsIndented = i + 1 < input.length() && input.charAt(i + 1) == ' ';
