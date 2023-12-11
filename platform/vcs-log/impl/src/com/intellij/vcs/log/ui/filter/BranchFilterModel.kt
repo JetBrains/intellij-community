@@ -8,7 +8,6 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import java.util.function.Supplier
@@ -18,60 +17,29 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
                                              private val storage: VcsLogStorage,
                                              private val roots: Collection<VirtualFile>,
                                              properties: MainVcsLogUiProperties,
-                                             filters: VcsLogFilterCollection?) : FilterModel<BranchFilters>(properties) {
+                                             filters: VcsLogFilterCollection?) :
+  FilterModel.MultipleFilterModel(listOf(VcsLogFilterCollection.BRANCH_FILTER, VcsLogFilterCollection.REVISION_FILTER,
+                                         VcsLogFilterCollection.RANGE_FILTER), properties, filters) {
+
   var visibleRoots: Collection<VirtualFile>? = null
     private set
 
-  init {
-    if (filters != null) {
-      saveFilterToProperties(BranchFilters(filters.get(VcsLogFilterCollection.BRANCH_FILTER),
-                                           filters.get(VcsLogFilterCollection.REVISION_FILTER),
-                                           filters.get(VcsLogFilterCollection.RANGE_FILTER)))
+  override fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter? {
+    return when (key) {
+      VcsLogFilterCollection.BRANCH_FILTER -> createBranchFilter(values)
+      VcsLogFilterCollection.REVISION_FILTER -> createRevisionFilter(values)
+      VcsLogFilterCollection.RANGE_FILTER -> createRangeFilter(values)
+      else -> null
     }
   }
 
-  override fun setFilter(filter: BranchFilters?) {
-    var newFilters = filter
-    if (newFilters != null && newFilters.isEmpty()) newFilters = null
-
-    var anyFilterDiffers = false
-
-    if (newFilters?.branchFilter != _filter?.branchFilter) {
-      if (newFilters?.branchFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.BRANCH_FILTER.name)
-      anyFilterDiffers = true
+  override fun getFilterValues(filter: VcsLogFilter): List<String>? {
+    return when (filter) {
+      is VcsLogBranchFilter -> getBranchFilterValues(filter)
+      is VcsLogRevisionFilter -> getRevisionFilterValues(filter)
+      is VcsLogRangeFilter -> getRangeFilterValues(filter)
+      else -> null
     }
-    if (newFilters?.revisionFilter != _filter?.revisionFilter) {
-      if (newFilters?.revisionFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.REVISION_FILTER.name)
-      anyFilterDiffers = true
-    }
-    if (newFilters?.rangeFilter != _filter?.rangeFilter) {
-      if (newFilters?.rangeFilter != null) VcsLogUsageTriggerCollector.triggerFilterSet(VcsLogFilterCollection.RANGE_FILTER.name)
-      anyFilterDiffers = true
-    }
-    if (anyFilterDiffers) {
-      super.setFilter(newFilters)
-    }
-  }
-
-  override fun saveFilterToProperties(filter: BranchFilters?) {
-    uiProperties.saveFilterValues(VcsLogFilterCollection.BRANCH_FILTER.name, filter?.branchFilter?.let { getBranchFilterValues(it) })
-    uiProperties.saveFilterValues(VcsLogFilterCollection.REVISION_FILTER.name,
-                                  filter?.revisionFilter?.let { getRevisionFilterValues(it) })
-    uiProperties.saveFilterValues(VcsLogFilterCollection.RANGE_FILTER.name, filter?.rangeFilter?.let { getRangeFilterValues(it) })
-  }
-
-  override fun getFilterFromProperties(): BranchFilters? {
-    val branchFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.BRANCH_FILTER.name)
-    val branchFilter = branchFilterValues?.let { createBranchFilter(it) }
-
-    val revisionFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.REVISION_FILTER.name)
-    val revisionFilter = revisionFilterValues?.let { createRevisionFilter(it) }
-
-    val rangeFilterValues = uiProperties.getFilterValues(VcsLogFilterCollection.RANGE_FILTER.name)
-    val rangeFilter = rangeFilterValues?.let { createRangeFilter(it) }
-
-    if (branchFilter == null && revisionFilter == null && rangeFilter == null) return null
-    return BranchFilters(branchFilter, revisionFilter, rangeFilter)
   }
 
   fun onStructureFilterChanged(rootFilter: VcsLogRootFilter?, structureFilter: VcsLogStructureFilter?) {
@@ -126,7 +94,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     return null
   }
 
-  fun createFilterFromPresentation(values: List<String>): BranchFilters {
+  fun createFilterFromPresentation(values: List<String>): VcsLogFilterCollection {
     val hashes = mutableListOf<String>()
     val branches = mutableListOf<String>()
     val ranges = mutableListOf<String>()
@@ -145,22 +113,22 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     val branchFilter = if (branches.isEmpty()) null else createBranchFilter(branches)
     val hashFilter = if (hashes.isEmpty()) null else createRevisionFilter(hashes)
     val refDiffFilter = if (ranges.isEmpty()) null else createRangeFilter(ranges)
-    return BranchFilters(branchFilter, hashFilter, refDiffFilter)
+    return VcsLogFilterObject.collection(branchFilter, hashFilter, refDiffFilter)
   }
 
   var branchFilter: VcsLogBranchFilter?
-    get() = getFilter()?.branchFilter
+    get() = getFilter(VcsLogFilterCollection.BRANCH_FILTER)
     set(branchFilter) {
-      setFilter(BranchFilters(branchFilter, null, null))
+      setFilter(VcsLogFilterObject.collection(branchFilter))
     }
 
   val revisionFilter: VcsLogRevisionFilter?
-    get() = getFilter()?.revisionFilter
+    get() = getFilter(VcsLogFilterCollection.REVISION_FILTER)
 
   var rangeFilter: VcsLogRangeFilter?
-    get() = getFilter()?.rangeFilter
+    get() = getFilter(VcsLogFilterCollection.RANGE_FILTER)
     set(rangeFilter) {
-      setFilter(BranchFilters(null, null, rangeFilter))
+      setFilter(VcsLogFilterObject.collection(rangeFilter))
     }
 
   companion object {
@@ -200,10 +168,11 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     }
 
     @JvmStatic
-    fun getFilterPresentation(filters: BranchFilters): List<String> {
-      val branchFilterValues = filters.branchFilter?.let { getBranchFilterValues(it) } ?: emptyList()
-      val revisionFilterValues = filters.revisionFilter?.let { getRevisionFilter2Presentation(it) } ?: emptyList()
-      val rangeFilterValues = filters.rangeFilter?.let { getRangeFilterValues(filters.rangeFilter) } ?: emptyList()
+    fun getFilterPresentation(filters: VcsLogFilterCollection): List<String> {
+      val branchFilterValues = filters[VcsLogFilterCollection.BRANCH_FILTER]?.let { getBranchFilterValues(it) } ?: emptyList()
+      val revisionFilterValues = filters[VcsLogFilterCollection.REVISION_FILTER]?.let { getRevisionFilter2Presentation(it) }
+                                 ?: emptyList()
+      val rangeFilterValues = filters[VcsLogFilterCollection.RANGE_FILTER]?.let { getRangeFilterValues(it) } ?: emptyList()
       return branchFilterValues + revisionFilterValues + rangeFilterValues
     }
   }

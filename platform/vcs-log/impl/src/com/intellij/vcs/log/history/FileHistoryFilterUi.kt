@@ -15,7 +15,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.BranchFilterModel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
-import com.intellij.vcs.log.ui.filter.BranchFilters
 import com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -58,7 +57,7 @@ class FileHistoryFilterUi(private val path: FilePath,
 
   @RequiresEdt
   fun resetFiltersToDefault() {
-    branchFilterModel.setFilter(BranchFilters.fromCollection(initialFilters))
+    branchFilterModel.setFilter(initialFilters)
   }
 
   @RequiresEdt

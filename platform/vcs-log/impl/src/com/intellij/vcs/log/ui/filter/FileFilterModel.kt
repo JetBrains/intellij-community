@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.VcsLogStructureFilter
@@ -14,41 +15,50 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.NonNls
 
 class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiProperties, filters: VcsLogFilterCollection?) :
-  FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter>(VcsLogFilterCollection.STRUCTURE_FILTER,
-                                                                       VcsLogFilterCollection.ROOT_FILTER,
-                                                                       uiProperties, filters) {
+  FilterModel.MultipleFilterModel(listOf(VcsLogFilterCollection.STRUCTURE_FILTER, VcsLogFilterCollection.ROOT_FILTER),
+                                  uiProperties, filters) {
 
-  override fun getFilter1Values(filter1: VcsLogStructureFilter): List<String> = getFilterValues(filter1)
-  override fun getFilter2Values(filter2: VcsLogRootFilter): List<String> = getRootFilterValues(filter2)
-
-  override fun createFilter1(values: List<String>): VcsLogStructureFilter = createStructureFilter(values)
-  override fun createFilter2(values: List<String>): VcsLogRootFilter? {
-    val selectedRoots: MutableList<VirtualFile> = ArrayList()
-    for (path in values) {
-      val root = LocalFileSystem.getInstance().findFileByPath(path)
-      if (root != null) {
-        if (roots.contains(root)) {
-          selectedRoots.add(root)
-        }
-        else {
-          LOG.warn("Can not find VCS root for filtering $root")
-        }
-      }
-      else {
-        LOG.warn("Can not filter by root that does not exist $path")
-      }
+  override fun getFilterValues(filter: VcsLogFilter): List<String>? {
+    return when (filter) {
+      is VcsLogStructureFilter -> getStructureFilterValues(filter)
+      is VcsLogRootFilter -> getRootFilterValues(filter)
+      else -> null
     }
-    if (selectedRoots.isEmpty()) return null
-    return VcsLogFilterObject.fromRoots(selectedRoots)
+  }
+
+  override fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter? {
+    return when (key) {
+      VcsLogFilterCollection.STRUCTURE_FILTER -> createStructureFilter(values)
+      VcsLogFilterCollection.ROOT_FILTER -> {
+        val selectedRoots: MutableList<VirtualFile> = ArrayList()
+        for (path in values) {
+          val root = LocalFileSystem.getInstance().findFileByPath(path)
+          if (root != null) {
+            if (roots.contains(root)) {
+              selectedRoots.add(root)
+            }
+            else {
+              LOG.warn("Can not find VCS root for filtering $root")
+            }
+          }
+          else {
+            LOG.warn("Can not filter by root that does not exist $path")
+          }
+        }
+        if (selectedRoots.isEmpty()) return null
+        return VcsLogFilterObject.fromRoots(selectedRoots)
+      }
+      else -> null
+    }
   }
 
   val rootFilter: VcsLogRootFilter?
-    get() = filter2
+    get() = getFilter(VcsLogFilterCollection.ROOT_FILTER)
 
   var structureFilter: VcsLogStructureFilter?
-    get() = filter1
+    get() = getFilter(VcsLogFilterCollection.STRUCTURE_FILTER)
     private set(filter) {
-      setFilter(FilterPair(filter, null))
+      setFilter(VcsLogFilterObject.collection(filter))
     }
 
   companion object {
@@ -61,7 +71,7 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
     }
 
     @JvmStatic
-    fun getFilterValues(filter: VcsLogStructureFilter): List<String> {
+    fun getStructureFilterValues(filter: VcsLogStructureFilter): List<String> {
       return filter.files.map { path -> (if (path.isDirectory) DIR else FILE) + path.path }
     }
 

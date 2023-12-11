@@ -131,23 +131,22 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
 
   @RequiresEdt
   override fun getFilters(): VcsLogFilterCollection {
-    return VcsLogFilterObject.collection(branchFilterModel.branchFilter, branchFilterModel.revisionFilter,
-                                         branchFilterModel.rangeFilter,
-                                         textFilterModel.filter1, textFilterModel.filter2,
-                                         structureFilterModel.filter1, structureFilterModel.filter2,
-                                         dateFilterModel.getFilter(), userFilterModel.getFilter())
+    val filters = buildList {
+      addAll(branchFilterModel.filtersList)
+      addAll(textFilterModel.filtersList)
+      addAll(structureFilterModel.filtersList)
+      add(dateFilterModel.getFilter())
+      add(userFilterModel.getFilter())
+    }.filterNotNull()
+    return VcsLogFilterObject.collection(*filters.toTypedArray())
   }
 
   @RequiresEdt
   override fun setFilters(collection: VcsLogFilterCollection) {
-    branchFilterModel.setFilter(BranchFilters(collection.get(VcsLogFilterCollection.BRANCH_FILTER),
-                                              collection.get(VcsLogFilterCollection.REVISION_FILTER),
-                                              collection.get(VcsLogFilterCollection.RANGE_FILTER)))
-    structureFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.STRUCTURE_FILTER),
-                                              collection.get(VcsLogFilterCollection.ROOT_FILTER)))
+    branchFilterModel.setFilter(collection)
+    structureFilterModel.setFilter(collection)
+    textFilterModel.setFilter(collection)
     dateFilterModel.setFilter(collection.get(VcsLogFilterCollection.DATE_FILTER))
-    textFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.TEXT_FILTER),
-                                         collection.get(VcsLogFilterCollection.HASH_FILTER)))
     userFilterModel.setFilter(collection.get(VcsLogFilterCollection.USER_FILTER))
   }
 
