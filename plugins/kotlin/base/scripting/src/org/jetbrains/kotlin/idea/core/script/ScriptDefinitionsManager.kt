@@ -212,7 +212,10 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
             withLocks {
                 definitionsBySource.putAll(newDefinitionsBySource)
 
-                loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
+                loadedDefinitions = definitionsBySource
+                    .entries
+                    .sortedBy { sources.indexOf(it.key).takeIf { it >= 0 } ?: Int.MAX_VALUE }
+                    .flatMapTo(mutableListOf()) { it.value }
                     .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
                     .sortedBy(ScriptDefinition::order)
                     .takeIf { it.isNotEmpty() }
