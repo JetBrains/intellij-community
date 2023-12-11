@@ -21,7 +21,7 @@ public class Enumerator<T> {
 
   public Enumerator(int expectNumber, @NotNull HashingStrategy<? super T> strategy) {
     myNumbers =
-      strategy == HashingStrategy.canonical() ? new Object2IntOpenHashMap<>() :
+      strategy == HashingStrategy.canonical() ? new Object2IntOpenHashMap<>(expectNumber) :
       new Object2IntOpenCustomHashMap<>(expectNumber, new Hash.Strategy<T>() {
         @Override
         public int hashCode(@Nullable T o) {
