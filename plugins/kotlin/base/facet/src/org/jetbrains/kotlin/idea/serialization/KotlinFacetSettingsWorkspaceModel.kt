@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.platform.toTargetPlatform
 
 class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder) : IKotlinFacetSettings {
     private var myUseProjectSettings = entity.useProjectSettings
@@ -52,11 +51,26 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             _additionalVisibleModuleNames = value
         }
 
+    private var _compilerArguments: CommonCompilerArguments? = null
     override var compilerArguments: CommonCompilerArguments?
-        get() = if (entity.compilerArguments == "") null else KotlinModuleSettingsSerializer.serializeFromString(entity.compilerArguments) as? CommonCompilerArguments
+        get() {
+            if (_compilerArguments != null) {
+                return _compilerArguments
+            }
+
+            val serializedArguments = entity.compilerArguments
+            _compilerArguments = if (serializedArguments.isNotEmpty()) {
+                KotlinModuleSettingsSerializer.serializeFromString(serializedArguments) as? CommonCompilerArguments
+            } else {
+                null
+            }
+
+            return _compilerArguments
+        }
         set(value) {
             entity.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(value)
             updateMergedArguments()
+            _compilerArguments = value
         }
 
     override val mergedCompilerArguments: CommonCompilerArguments?
@@ -72,19 +86,29 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             }
         }
 
+    private var _compilerSettings: CompilerSettings? = null
     override var compilerSettings: CompilerSettings?
         get() {
+            if (_compilerSettings != null) {
+                return _compilerSettings
+            }
+
             val compilerSettingsData = entity.compilerSettings
             if (!compilerSettingsData.isInitialized) return null
-            return compilerSettingsData.toCompilerSettings { newSettings ->
+
+            _compilerSettings = compilerSettingsData.toCompilerSettings { newSettings ->
                 entity.compilerSettings = newSettings.toCompilerSettingsData()
                 updateMergedArguments()
             }
+
+            return _compilerSettings
         }
         set(value) {
             entity.compilerSettings = value.toCompilerSettingsData()
             updateMergedArguments()
+            _compilerSettings = value
         }
+
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames
     override var dependsOnModuleNames: List<String>
@@ -182,19 +206,26 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.sourceSetNames = value.toMutableList()
         }
 
+    private var _targetPlatform: TargetPlatform? = null
     override var targetPlatform: TargetPlatform?
         get() {
+            if (_targetPlatform != null) {
+                return _targetPlatform
+            }
+
             val args = compilerArguments
             val deserializedTargetPlatform =
                 entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
             val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
             if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
-                return IdePlatformKind.platformByCompilerArguments(args)
+                _targetPlatform = IdePlatformKind.platformByCompilerArguments(args)
+                return _targetPlatform
             }
             return deserializedTargetPlatform
         }
         set(value) {
             entity.targetPlatform = value?.serializeComponentPlatforms() ?: ""
+            _targetPlatform = value
         }
 
     private var _testOutputPath: String? = entity.testOutputPath
@@ -210,6 +241,6 @@ fun IKotlinFacetSettings.updateCompilerArguments(block: CommonCompilerArguments.
     val compilerArguments = this.compilerArguments ?: return
     block(compilerArguments)
     if (this is KotlinFacetSettingsWorkspaceModel) {
-        entity.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(compilerArguments)
+        this.compilerArguments = compilerArguments
     }
 }
