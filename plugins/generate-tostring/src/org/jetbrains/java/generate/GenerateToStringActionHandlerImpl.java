@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -94,7 +95,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             LOG.debug("Current project " + project.getName());
         }
 
-        final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
+        final PsiElementClassMember<?>[] dialogMembers = buildMembersToShow(clazz);
 
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         LOG.debug("Displaying member chooser dialog");
@@ -163,19 +164,19 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
            : ContainerUtil.filter(dialogMembers, selectedElements::contains);
   }
 
-  private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
+  private static PsiElementClassMember<?>[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember<?>[] dialogMembers) {
         return Arrays.stream(dialogMembers)
           .filter(member -> member.getElement().getContainingClass() == clazz)
           .toArray(PsiElementClassMember[]::new);
     }
 
-    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember> dialog) {
-        final PsiElementClassMember[] members = buildMembersToShow(clazz);
+    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember<?>> dialog) {
+        final PsiElementClassMember<?>[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(getPreselection(clazz, members));
     }
 
-    public static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
+    public static PsiElementClassMember<?>[] buildMembersToShow(PsiClass clazz) {
         Config config = GenerateToStringContext.getConfig();
         PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
         if (LOG.isDebugEnabled()) LOG.debug("Number of fields after filtering: " + filteredFields.length);
@@ -213,10 +214,10 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
     public static class MemberChooserHeaderPanel extends JPanel {
-        private MemberChooser<PsiElementClassMember> chooser;
+        private MemberChooser<PsiElementClassMember<?>> chooser;
         private final JComboBox<TemplateResource> comboBox;
 
-        public void setChooser(MemberChooser chooser) {
+        public void setChooser(MemberChooser<PsiElementClassMember<?>> chooser) {
             this.chooser = chooser;
         }
 
@@ -230,20 +231,22 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
           comboBox = new ComboBox<>(all);
-          Set<String> inaccessibleTemplates = new HashSet<>();
+          final Set<String> inaccessibleTemplates = new HashSet<>();
           final JavaPsiFacade instance = JavaPsiFacade.getInstance(clazz.getProject());
           final GlobalSearchScope resolveScope = clazz.getResolveScope();
           ReadAction.nonBlocking(() -> {
-            for (TemplateResource template : templates) {
-              String className = template.getClassName();
-              if (className != null && instance.findClass(className, resolveScope) == null) {
-                inaccessibleTemplates.add(className);
+              for (TemplateResource template : templates) {
+                String className = template.getClassName();
+                if (className != null && instance.findClass(className, resolveScope) == null) {
+                  inaccessibleTemplates.add(className);
+                }
               }
-            }
-            if (!inaccessibleTemplates.isEmpty()) {
-              SwingUtilities.invokeLater(comboBox::repaint);
-            }
-          }).submit(AppExecutorUtil.getAppExecutorService());
+              return inaccessibleTemplates;
+            })
+            .finishOnUiThread(ModalityState.current(), ts -> {
+              if (!ts.isEmpty()) SwingUtilities.invokeLater(comboBox::repaint);
+            })
+            .submit(AppExecutorUtil.getAppExecutorService());;
           final ListCellRenderer<TemplateResource> renderer =
             SimpleListCellRenderer.create((label, value, index) -> {
               label.setText(value.getName());

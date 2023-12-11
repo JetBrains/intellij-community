@@ -18,6 +18,7 @@ package org.jetbrains.java.generate.view;
 import com.intellij.CommonBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.util.ui.JBUI;
@@ -57,7 +58,7 @@ public class ConfigUI extends JPanel {
     private final LanguageTextField filterFieldType;
     private final LanguageTextField filterMethodName;
     private final LanguageTextField filterMethodType;
-    private final JComboBox sortElementsComboBox = new JComboBox();
+    private final JComboBox<String> sortElementsComboBox = new ComboBox<>();
     private final JCheckBox sortElements = new JCheckBox(JavaBundle.message("generate.tostring.sort.checkbox"));
 
     /**
@@ -264,7 +265,7 @@ public class ConfigUI extends JPanel {
 
     @Nullable
     private static String emptyToNull(final String s) {
-        if (s != null && s.length() == 0) return null;
+        if (s != null && s.isEmpty()) return null;
         return s;
     }
 

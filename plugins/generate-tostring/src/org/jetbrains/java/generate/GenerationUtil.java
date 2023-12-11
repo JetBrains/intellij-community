@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.generate;
 
 import com.intellij.CommonBundle;
@@ -76,8 +76,8 @@ public final class GenerationUtil {
    * @param filteredMethods methods to be included in the dialog
    * @return the combined list
    */
-  public static PsiElementClassMember[] combineToClassMemberList(PsiField[] filteredFields, PsiMethod[] filteredMethods) {
-      PsiElementClassMember[] members = new PsiElementClassMember[filteredFields.length + filteredMethods.length];
+  public static PsiElementClassMember<?>[] combineToClassMemberList(PsiField[] filteredFields, PsiMethod[] filteredMethods) {
+      PsiElementClassMember<?>[] members = new PsiElementClassMember[filteredFields.length + filteredMethods.length];
 
       // first add fields
       for (int i = 0; i < filteredFields.length; i++) {
@@ -98,13 +98,13 @@ public final class GenerationUtil {
    * @param classMemberList  list of {@link PsiElementClassMember}
    * @return a list of {PsiMember} objects.
    */
-  public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<? extends PsiElementClassMember> classMemberList) {
+  public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<? extends PsiElementClassMember<?>> classMemberList) {
       if (classMemberList == null || classMemberList.isEmpty()) {
         return Collections.emptyList();
       }
       List<PsiMember> psiMemberList = new ArrayList<>();
 
-      for (PsiElementClassMember classMember : classMemberList) {
+      for (PsiElementClassMember<?> classMember : classMemberList) {
           psiMemberList.add(classMember.getElement());
       }
 
