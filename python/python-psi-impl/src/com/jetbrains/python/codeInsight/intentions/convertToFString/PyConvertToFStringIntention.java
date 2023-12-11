@@ -35,7 +35,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertToFStringIntention extends PyBaseIntentionAction {
+public final class PyConvertToFStringIntention extends PyBaseIntentionAction {
   @Nls
   @NotNull
   @Override

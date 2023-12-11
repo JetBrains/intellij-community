@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PyFromFutureImportInspection extends PyInspection {
+public final class PyFromFutureImportInspection extends PyInspection {
 
   @NotNull
   @Override

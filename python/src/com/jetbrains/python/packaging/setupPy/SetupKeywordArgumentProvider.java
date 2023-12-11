@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
+public final class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
   @NotNull
   @Override
   public List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr) {

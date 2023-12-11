@@ -5,7 +5,7 @@ import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 
 
-public class PyIdeCommonOptionsFormFactory extends PyCommonOptionsFormFactory {
+public final class PyIdeCommonOptionsFormFactory extends PyCommonOptionsFormFactory {
   @Override
   public PyIdeCommonOptionsForm createForm(PyCommonOptionsFormData data) {
     return new PyIdeCommonOptionsForm(data);

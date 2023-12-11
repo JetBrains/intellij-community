@@ -34,7 +34,7 @@ import java.util.Deque;
 import java.util.Formatter;
 
 
-public class PyElementGeneratorImpl extends PyElementGenerator {
+public final class PyElementGeneratorImpl extends PyElementGenerator {
   private static final CommasOnly COMMAS_ONLY = new CommasOnly();
   private final Project myProject;
 

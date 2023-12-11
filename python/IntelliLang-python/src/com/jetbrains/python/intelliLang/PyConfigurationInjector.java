@@ -30,7 +30,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyConfigurationInjector extends PyInjectorBase {
+public final class PyConfigurationInjector extends PyInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof PyElement)) return;

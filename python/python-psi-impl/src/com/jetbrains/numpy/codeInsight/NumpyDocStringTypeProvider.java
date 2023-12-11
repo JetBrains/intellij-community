@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  *
  * @author avereshchagin
  */
-public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
+public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<>();
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");

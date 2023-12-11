@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class PyiVisitorFilter implements PythonVisitorFilter {
+public final class PyiVisitorFilter implements PythonVisitorFilter {
 
   @NotNull
   private static final Set<Class<?>> disabledVisitors = ImmutableSet.of(

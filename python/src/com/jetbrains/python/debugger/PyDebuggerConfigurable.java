@@ -25,7 +25,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
   private JCheckBox myAttachToSubprocess;
   private JCheckBox mySaveSignatures;

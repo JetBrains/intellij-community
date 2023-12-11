@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class PyNamedTupleStubType extends CustomTargetExpressionStubType<PyNamedTupleStub> {
+public final class PyNamedTupleStubType extends CustomTargetExpressionStubType<PyNamedTupleStub> {
 
   @Nullable
   @Override

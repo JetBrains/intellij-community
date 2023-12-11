@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+public final class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   @NonNls private static final String SUPPORT_ID = "python";
 
   @NotNull

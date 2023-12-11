@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyTestCreator implements TestCreator {
+public final class PyTestCreator implements TestCreator {
   private static final Logger LOG = Logger.getInstance(PyTestCreator.class);
 
   @Override

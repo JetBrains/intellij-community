@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : catherine
  */
-public class RestLanguageSubstitutor extends LanguageSubstitutor {
+public final class RestLanguageSubstitutor extends LanguageSubstitutor {
   @Override
   public Language getLanguage(@NotNull final VirtualFile vFile, @NotNull final Project project) {
     final Module module = ModuleUtilCore.findModuleForFile(vFile, project);

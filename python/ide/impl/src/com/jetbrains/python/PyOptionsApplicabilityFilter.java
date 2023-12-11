@@ -5,7 +5,7 @@ import com.intellij.application.options.OptionId;
 import com.intellij.application.options.OptionsApplicabilityFilter;
 
 
-public class PyOptionsApplicabilityFilter extends OptionsApplicabilityFilter {
+public final class PyOptionsApplicabilityFilter extends OptionsApplicabilityFilter {
   @Override
   public boolean isOptionApplicable(OptionId optionId) {
     return optionId == OptionId.RENAME_IN_PLACE;

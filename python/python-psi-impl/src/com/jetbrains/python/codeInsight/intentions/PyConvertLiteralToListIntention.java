@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.PyListLiteralExpression;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLiteralToListIntention extends PyBaseConvertCollectionLiteralIntention {
+public final class PyConvertLiteralToListIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToListIntention() {
     super(PyListLiteralExpression.class, "list", "[", "]");
   }

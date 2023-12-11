@@ -19,7 +19,7 @@ import java.util.List;
  *
  * User : ktisha
  */
-public class NumpyClassMembersProvider extends PyClassMembersProviderBase {
+public final class NumpyClassMembersProvider extends PyClassMembersProviderBase {
   private static final String BUNCH = "sklearn.datasets.base.Bunch";
   public static final List<String> BUNCH_MEMBERS = Lists.newArrayList("target", "data", "filenames", "target_names", "DESCR");
 

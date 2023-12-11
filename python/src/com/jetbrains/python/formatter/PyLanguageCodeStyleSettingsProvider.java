@@ -17,7 +17,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALU
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 
-public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public Language getLanguage() {

@@ -34,7 +34,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 /**
  * User : ktisha
  */
-public class SphinxDirectiveCompletionContributor extends CompletionContributor implements DumbAware {
+public final class SphinxDirectiveCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiElementPattern.Capture<PsiElement> DIRECTIVE_PATTERN = psiElement().afterSibling(or(psiElement().
     withElementType(RestTokenTypes.WHITESPACE).afterSibling(psiElement(RestReferenceTarget.class)),
        psiElement().withElementType(RestTokenTypes.EXPLISIT_MARKUP_START)));

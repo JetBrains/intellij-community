@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
+public final class PyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
   @NotNull
   @Override
   protected PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document) {

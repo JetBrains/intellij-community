@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * dict(foo) -> no transformation
  * dict(**foo) -> no transformation
  */
-public class PyDictConstructorToLiteralFormIntention extends PyBaseIntentionAction {
+public final class PyDictConstructorToLiteralFormIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to find set built-in function and replace it with set literal
  * available if the selected language level supports set literals.
  */
-public class PySetFunctionToLiteralInspection extends PyInspection {
+public final class PySetFunctionToLiteralInspection extends PyInspection {
 
   @NotNull
   @Override

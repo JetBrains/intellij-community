@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
+public final class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
   @NotNull
   @Override
   public List<Language> getPrimaryIdeLanguages() {

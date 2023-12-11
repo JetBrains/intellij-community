@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class PythonCodeStyleServiceImpl extends PythonCodeStyleService {
+public final class PythonCodeStyleServiceImpl extends PythonCodeStyleService {
   @Override
   public boolean isSpaceAroundEqInKeywordArgument(@NotNull PsiFile file) {
     return CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT;

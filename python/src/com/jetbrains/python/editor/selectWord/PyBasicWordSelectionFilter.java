@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 
 
-public class PyBasicWordSelectionFilter implements Condition<PsiElement> {
+public final class PyBasicWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {
     IElementType elementType = element.getNode().getElementType();

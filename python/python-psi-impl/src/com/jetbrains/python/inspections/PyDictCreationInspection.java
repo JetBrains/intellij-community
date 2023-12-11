@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyDictCreationInspection extends PyInspection {
+public final class PyDictCreationInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PyStdReferenceContributor extends PsiReferenceContributor {
+public final class PyStdReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =
       new PatternCondition<>("in optional parenthesis inside assignment") {

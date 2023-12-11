@@ -35,7 +35,7 @@ import java.util.List;
  *
  * pylint W0601
  */
-public class PyGlobalUndefinedInspection extends PyInspection {
+public final class PyGlobalUndefinedInspection extends PyInspection {
 
   @NotNull
   @Override

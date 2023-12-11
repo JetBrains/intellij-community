@@ -31,7 +31,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author Mikhail Golubev
  */
-public class DocStringSectionHeaderCompletionContributor extends CompletionContributor implements DumbAware {
+public final class DocStringSectionHeaderCompletionContributor extends CompletionContributor implements DumbAware {
   public DocStringSectionHeaderCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN),
            new CompletionProvider<>() {

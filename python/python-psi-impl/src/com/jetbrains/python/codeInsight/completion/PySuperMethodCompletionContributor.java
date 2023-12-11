@@ -39,7 +39,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PySuperMethodCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PySuperMethodCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement().afterLeafSkipping(psiElement().whitespace(), psiElement().withElementType(PyTokenTypes.DEF_KEYWORD)),

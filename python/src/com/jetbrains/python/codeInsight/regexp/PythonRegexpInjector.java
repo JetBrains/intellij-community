@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class PythonRegexpInjector implements MultiHostInjector {
+public final class PythonRegexpInjector implements MultiHostInjector {
   private static final class RegexpMethodDescriptor {
     @NotNull private final String methodName;
     private final int argIndex;

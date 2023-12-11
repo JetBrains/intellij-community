@@ -38,7 +38,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PySimplifyBooleanCheckInspection extends PyInspection {
+public final class PySimplifyBooleanCheckInspection extends PyInspection {
   private static final List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
 
   public boolean ignoreComparisonToZero = true;

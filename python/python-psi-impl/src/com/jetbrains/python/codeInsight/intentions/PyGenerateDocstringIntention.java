@@ -29,7 +29,7 @@ import java.util.List;
  * Intention to add documentation string for function
  * (with checked format)
  */
-public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
+public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

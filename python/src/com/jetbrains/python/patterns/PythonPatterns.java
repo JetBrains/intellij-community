@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  *
  * @see PlatformPatterns
  */
-public class PythonPatterns extends PlatformPatterns {
+public final class PythonPatterns extends PlatformPatterns {
 
   private static final int STRING_LITERAL_LIMIT = 10000;
 

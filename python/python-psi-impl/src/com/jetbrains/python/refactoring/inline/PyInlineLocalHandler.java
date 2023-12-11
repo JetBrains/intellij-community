@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyInlineLocalHandler extends InlineActionHandler {
+public final class PyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(PyInlineLocalHandler.class.getName());
 
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);

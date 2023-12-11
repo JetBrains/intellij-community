@@ -51,7 +51,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  *
  * Looks for using not defined roles
  */
-public class RestRoleInspection extends RestInspection {
+public final class RestRoleInspection extends RestInspection {
   public JDOMExternalizableStringList ignoredRoles = new JDOMExternalizableStringList();
 
   @NotNull

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Inspection to highlight backslashes in places where line continuation is implicit (inside (), [], {}).
  */
-public class PyUnnecessaryBackslashInspection extends PyInspection {
+public final class PyUnnecessaryBackslashInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PythonRuntimeServiceImpl extends PythonRuntimeService {
+public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public boolean isInPydevConsole(@NotNull PsiElement file) {
     return PydevConsoleRunnerUtil.isInPydevConsole(file);

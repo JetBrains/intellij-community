@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyDocstringTypesInspection extends PyInspection {
+public final class PyDocstringTypesInspection extends PyInspection {
 
   @NotNull
   @Override

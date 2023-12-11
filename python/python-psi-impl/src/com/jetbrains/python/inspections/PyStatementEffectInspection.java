@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PyStatementEffectInspection extends PyInspection {
+public final class PyStatementEffectInspection extends PyInspection {
 
   @NotNull
   @Override

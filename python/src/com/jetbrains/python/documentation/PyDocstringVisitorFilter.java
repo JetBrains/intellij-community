@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * filter out some python inspections and annotations if we're in docstring substitution
  */
-public class PyDocstringVisitorFilter implements PythonVisitorFilter {
+public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
     //inspections

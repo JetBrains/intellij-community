@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  *
  * @author jansorg
  */
-public class Flake8InspectionSuppressor implements InspectionSuppressor {
+public final class Flake8InspectionSuppressor implements InspectionSuppressor {
   public static final @NonNls String NOQA = "noqa";
   // See flake8.defaults module
   private static final Pattern NOQA_COMMENT_PATTERN = Pattern.compile("# noqa(?::\\s?(?<codes>([A-Z]+[0-9]+(?:[,\\s]+)?)+))?.*",

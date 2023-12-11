@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PyUnboundLocalVariableInspection extends PyInspection {
+public final class PyUnboundLocalVariableInspection extends PyInspection {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {

@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class FStringsAnnotator extends PyAnnotator {
+public final class FStringsAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFStringFragment(@NotNull PyFStringFragment node) {

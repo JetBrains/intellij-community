@@ -31,7 +31,7 @@ import java.util.Collection;
  * Decorators are indexed by name
  * @author Ilya.Kazakevich
  */
-public class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> {
+public final class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> {
   /**
    * Key to search for python decorators
    */

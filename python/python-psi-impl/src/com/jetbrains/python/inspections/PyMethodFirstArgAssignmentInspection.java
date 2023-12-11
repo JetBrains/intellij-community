@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Reports assignment to 'self' or 'cls'.
  */
-public class PyMethodFirstArgAssignmentInspection extends PyInspection {
+public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -37,7 +37,7 @@ import java.util.function.Predicate;
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
  */
-public class PyPropertyDefinitionInspection extends PyInspection {
+public final class PyPropertyDefinitionInspection extends PyInspection {
 
   private static final ImmutableList<String> SUFFIXES = ImmutableList.of(PyNames.SETTER, PyNames.DELETER);
 

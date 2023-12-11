@@ -34,7 +34,7 @@ import java.util.List;
  *
  * Handler to select commas around a selection before widening the selection to few words  
  */
-public class PyCommaSelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class PyCommaSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof PyReferenceExpression || e instanceof PyKeyValueExpression || e instanceof PyKeywordArgument 

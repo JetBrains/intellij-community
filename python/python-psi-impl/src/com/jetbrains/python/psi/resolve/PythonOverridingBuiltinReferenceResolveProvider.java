@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverridingReferenceResolveProvider {
+public final class PythonOverridingBuiltinReferenceResolveProvider implements PyOverridingReferenceResolveProvider {
 
   @NotNull
   @Override

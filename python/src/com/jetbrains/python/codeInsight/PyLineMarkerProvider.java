@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
+public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
   private static final class TooltipProvider implements Function<PsiElement, @NlsContexts.Tooltip String> {
     private final String myText;

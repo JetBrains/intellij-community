@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PyExceptClausesOrderInspection extends PyInspection {
+public final class PyExceptClausesOrderInspection extends PyInspection {
 
   @NotNull
   @Override

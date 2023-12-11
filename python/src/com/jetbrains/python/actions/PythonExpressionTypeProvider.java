@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
+public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
   @NotNull
   @Override
   public String getInformationHint(@NotNull PyExpression element) {

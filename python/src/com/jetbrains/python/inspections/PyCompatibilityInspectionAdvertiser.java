@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyCompatibilityInspectionAdvertiser implements Annotator {
+public final class PyCompatibilityInspectionAdvertiser implements Annotator {
 
   private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Compatibility Inspection Advertiser");
   private static final Key<Boolean> DONT_SHOW_BALLOON = Key.create("showingPyCompatibilityAdvertiserBalloon");

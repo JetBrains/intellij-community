@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvider {
+public final class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvider {
   @Nullable
   @Override
   public PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {

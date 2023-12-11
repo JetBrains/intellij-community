@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class PyArgumentListInspection extends PyInspection {
+public final class PyArgumentListInspection extends PyInspection {
 
   @NotNull
   @Override

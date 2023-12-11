@@ -60,7 +60,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PyPackageRequirementsInspection extends PyInspection {
+public final class PyPackageRequirementsInspection extends PyInspection {
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 
   @NotNull

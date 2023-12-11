@@ -37,7 +37,7 @@ import java.util.function.Function;
 /**
  * Adds completion variants for Python classes, functions and variables.
  */
-public class PyClassNameCompletionContributor extends PyExtendedCompletionContributor {
+public final class PyClassNameCompletionContributor extends PyExtendedCompletionContributor {
 
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {

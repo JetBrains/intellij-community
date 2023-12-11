@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : catherine
  */
-public class RestEditorHighlighterProvider implements EditorHighlighterProvider  {
+public final class RestEditorHighlighterProvider implements EditorHighlighterProvider  {
   @Override
   public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                 @NotNull FileType fileType,

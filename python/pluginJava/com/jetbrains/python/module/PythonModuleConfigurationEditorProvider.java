@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PythonModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
+public final class PythonModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   @Override
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
     final Module module = state.getCurrentRootModel().getModule();

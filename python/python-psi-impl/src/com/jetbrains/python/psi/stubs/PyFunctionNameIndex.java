@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PyFunctionNameIndex extends StringStubIndexExtension<PyFunction> {
+public final class PyFunctionNameIndex extends StringStubIndexExtension<PyFunction> {
   public static final StubIndexKey<String, PyFunction> KEY = StubIndexKey.createIndexKey("Py.function.shortName");
 
   @Override

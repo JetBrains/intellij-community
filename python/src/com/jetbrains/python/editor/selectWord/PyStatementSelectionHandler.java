@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof PyStringLiteralExpression || e instanceof PyCallExpression || e instanceof PyStatement ||

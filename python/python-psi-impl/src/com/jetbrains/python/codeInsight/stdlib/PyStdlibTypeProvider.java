@@ -24,7 +24,7 @@ import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getOp
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyStdlibTypeProvider extends PyTypeProviderBase {
+public final class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("os.fdopen", "posix.fdopen");

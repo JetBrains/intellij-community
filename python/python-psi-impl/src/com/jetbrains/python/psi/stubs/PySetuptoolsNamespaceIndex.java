@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
+public final class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.setuptools.namespace");
   private static final Pattern RE_NAMESPACE = Pattern.compile("sys\\.modules\\.setdefault\\('([^']*)'");
   private static final String NAMESPACE_FILE_SUFFIX = "-nspkg.pth";

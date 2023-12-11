@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
+public final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
   public PythonFrameworkSupportProvider() {
     super("Python", PythonFacetType.getInstance().getPresentableName());
   }

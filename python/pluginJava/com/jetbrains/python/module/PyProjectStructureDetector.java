@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class PyProjectStructureDetector extends ProjectStructureDetector {
+public final class PyProjectStructureDetector extends ProjectStructureDetector {
   private static final Logger LOG = Logger.getInstance(PyProjectStructureDetector.class);
   public static final @NlsSafe String PYTHON = "Python";
 

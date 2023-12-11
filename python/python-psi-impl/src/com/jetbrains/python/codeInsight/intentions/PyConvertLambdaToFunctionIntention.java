@@ -29,7 +29,7 @@ import java.util.List;
  * User: catherine
  * Intention to convert lambda to function
  */
-public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
+public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

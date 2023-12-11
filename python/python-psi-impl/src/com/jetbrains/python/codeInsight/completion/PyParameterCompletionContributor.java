@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PyParameterCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyParameterCompletionContributor extends CompletionContributor implements DumbAware {
   public PyParameterCompletionContributor() {
     extend(CompletionType.BASIC,
            CaptureExtKt.inParameterList(psiElement()).afterLeaf("*"),

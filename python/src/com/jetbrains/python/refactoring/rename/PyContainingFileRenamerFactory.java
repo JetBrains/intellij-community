@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
+public final class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     if (!(element instanceof PyClass)) {

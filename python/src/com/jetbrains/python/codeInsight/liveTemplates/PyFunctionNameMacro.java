@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyFunctionNameMacro extends Macro {
+public final class PyFunctionNameMacro extends Macro {
   @Override
   public String getName() {
     return "pyFunctionName";

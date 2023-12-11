@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyDemorganIntention extends PyBaseIntentionAction {
+public final class PyDemorganIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getText() {

@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters> {
+public final class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters> {
 
   /**
    * These base classes are to general to look for inheritors list.

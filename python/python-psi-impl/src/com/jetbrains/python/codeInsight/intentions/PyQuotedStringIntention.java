@@ -21,7 +21,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * User: catherine
  * Intention to convert between single-quoted and double-quoted strings
  */
-public class PyQuotedStringIntention extends PyBaseIntentionAction {
+public final class PyQuotedStringIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

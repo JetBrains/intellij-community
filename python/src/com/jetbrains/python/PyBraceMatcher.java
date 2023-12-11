@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyBraceMatcher implements PairedBraceMatcher {
+public final class PyBraceMatcher implements PairedBraceMatcher {
   private static final BracePair[] ourBraces = {
     new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),
     new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false),

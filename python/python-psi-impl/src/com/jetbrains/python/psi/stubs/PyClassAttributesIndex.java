@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
+public final class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.attributes");
 
   @NotNull

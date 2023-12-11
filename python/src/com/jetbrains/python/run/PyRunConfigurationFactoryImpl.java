@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactoryEx {
+public final class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactoryEx {
   @Override
   public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName) {
     RunnerAndConfigurationSettings settings = createRunConfiguration(module, PythonConfigurationType.getInstance().getFactory());

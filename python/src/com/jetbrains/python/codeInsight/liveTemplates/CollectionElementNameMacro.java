@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class CollectionElementNameMacro extends Macro {
+public final class CollectionElementNameMacro extends Macro {
   @Override
   public String getName() {
     return "collectionElementName";

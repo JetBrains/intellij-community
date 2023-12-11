@@ -17,7 +17,7 @@ import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
-public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
+public final class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

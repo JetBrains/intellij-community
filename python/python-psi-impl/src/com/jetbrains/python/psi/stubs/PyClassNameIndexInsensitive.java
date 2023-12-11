@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClass> {
+public final class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String,PyClass> KEY = StubIndexKey.createIndexKey("Py.class.shortNameInsensitive");
 
   @NotNull

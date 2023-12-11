@@ -17,7 +17,7 @@ import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
-public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
+public final class SphinxConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

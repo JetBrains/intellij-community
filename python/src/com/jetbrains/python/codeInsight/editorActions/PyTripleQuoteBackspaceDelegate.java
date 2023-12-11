@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.editor.BaseQuoteHandler;
 
-public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
+public final class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
   private boolean isTripleQuote;
 
   @Override

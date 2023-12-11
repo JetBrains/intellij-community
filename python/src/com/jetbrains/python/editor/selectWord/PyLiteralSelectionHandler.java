@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class PyLiteralSelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class PyLiteralSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     final ASTNode node = e.getNode();

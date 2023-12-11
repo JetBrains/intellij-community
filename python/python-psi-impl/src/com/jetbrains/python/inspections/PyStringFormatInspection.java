@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyStringFormatInspection extends PyInspection {
+public final class PyStringFormatInspection extends PyInspection {
 
   @NotNull
   @Override

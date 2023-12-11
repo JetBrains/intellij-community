@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @author avereshchagin
  */
-public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
+public final class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   private static final String[] NUMERIC_TYPES = {
     "int8", "int16", "int32", "int64", "int128",
     "uint8", "uint16", "uint32", "uint64", "uint128",

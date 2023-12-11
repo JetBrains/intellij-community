@@ -7,7 +7,7 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PyDiffPreviewProvider extends DiffPreviewProvider {
+public final class PyDiffPreviewProvider extends DiffPreviewProvider {
   @Override
   public DiffContent @NotNull [] createContents() {
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, PythonFileType.INSTANCE);

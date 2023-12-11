@@ -27,7 +27,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyDefaultArgumentInspection extends PyInspection {
+public final class PyDefaultArgumentInspection extends PyInspection {
 
   @NotNull
   @Override

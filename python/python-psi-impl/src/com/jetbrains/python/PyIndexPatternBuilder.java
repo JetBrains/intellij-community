@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyIndexPatternBuilder implements IndexPatternBuilder {
+public final class PyIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet COMMENTS = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT, PyTokenTypes.DOCSTRING);
 
   @Nullable

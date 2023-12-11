@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 
-public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
+public final class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   public PyProjectScopeBuilder(Project project) {
     super(project);
   }

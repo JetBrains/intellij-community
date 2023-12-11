@@ -33,7 +33,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br><small>
  * </small>
  */
-public class ImportFromToImportIntention extends PyBaseIntentionAction {
+public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   /**
    * This class exists to extract bunches of info we can't store in our stateless instance.
    * Instead, we store it per thread.

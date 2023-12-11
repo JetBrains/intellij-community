@@ -44,7 +44,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * User : ktisha
  */
-public class PyPep8NamingInspection extends PyInspection {
+public final class PyPep8NamingInspection extends PyInspection {
 
   protected static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");

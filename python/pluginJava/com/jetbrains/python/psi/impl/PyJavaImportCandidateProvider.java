@@ -15,7 +15,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider;
 
 
-public class PyJavaImportCandidateProvider implements PyImportCandidateProvider {
+public final class PyJavaImportCandidateProvider implements PyImportCandidateProvider {
   @Override
   public void addImportCandidates(PsiReference reference, String name, AutoImportQuickFix quickFix) {
     final PsiElement element = reference.getElement();

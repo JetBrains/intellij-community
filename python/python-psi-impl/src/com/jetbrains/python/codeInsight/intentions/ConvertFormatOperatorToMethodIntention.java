@@ -33,7 +33,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Replaces expressions like {@code "%s" % values} with likes of {@code "{0:s}".format(values)}.
  * <br/>
  */
-public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionAction {
+public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionAction {
 
   private static final Pattern FORMAT_PATTERN =
     Pattern.compile("%(?:\\((\\w+)\\))?([-#0+ ]*)((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+))?)?[hlL]?([diouxXeEfFgGcrs%])");

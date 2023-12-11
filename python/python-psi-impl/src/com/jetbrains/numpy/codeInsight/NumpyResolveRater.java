@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
-public class NumpyResolveRater extends PyResolveResultRaterBase {
+public final class NumpyResolveRater extends PyResolveResultRaterBase {
 
   @Override
   public int getMemberRate(PsiElement member, PyType type, TypeEvalContext context) {

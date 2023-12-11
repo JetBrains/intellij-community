@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
+public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   protected static final Logger LOG = Logger.getInstance(PySignatureCacheManagerImpl.class.getName());
 
   private final static boolean SHOULD_OVERWRITE_TYPES = false;

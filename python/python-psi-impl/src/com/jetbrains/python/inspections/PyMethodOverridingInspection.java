@@ -17,7 +17,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyMethodOverridingInspection extends PyInspection {
+public final class PyMethodOverridingInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -50,7 +50,7 @@ import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPIN
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
+public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
 
   public static final String TYPING = "typing";
 

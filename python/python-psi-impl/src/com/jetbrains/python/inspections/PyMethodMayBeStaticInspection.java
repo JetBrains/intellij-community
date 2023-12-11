@@ -38,7 +38,7 @@ import java.util.Locale;
  * User: ktisha
  *
  */
-public class PyMethodMayBeStaticInspection extends PyInspection {
+public final class PyMethodMayBeStaticInspection extends PyInspection {
 
   @NotNull
   @Override

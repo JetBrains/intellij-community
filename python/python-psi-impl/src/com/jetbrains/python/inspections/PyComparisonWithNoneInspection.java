@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyComparisonWithNoneInspection extends PyInspection {
+public final class PyComparisonWithNoneInspection extends PyInspection {
 
   @NotNull
   @Override

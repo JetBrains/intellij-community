@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyParameterList;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyDeclarationRangeHandler implements DeclarationRangeHandler {
+public final class PyDeclarationRangeHandler implements DeclarationRangeHandler {
   @NotNull
   @Override
   public TextRange getDeclarationRange(@NotNull PsiElement container) {

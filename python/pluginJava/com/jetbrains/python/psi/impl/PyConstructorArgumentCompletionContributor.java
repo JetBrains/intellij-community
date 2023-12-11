@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PyConstructorArgumentCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyConstructorArgumentCompletionContributor extends CompletionContributor implements DumbAware {
   public PyConstructorArgumentCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement()

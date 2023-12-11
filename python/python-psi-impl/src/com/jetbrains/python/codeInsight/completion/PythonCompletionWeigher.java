@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * Weighs down items starting with two underscores.
  * <br/>
  */
-public class PythonCompletionWeigher extends CompletionWeigher {
+public final class PythonCompletionWeigher extends CompletionWeigher {
 
   // TODO Unify different ways of detecting and weighing elements
   public static final int PRIORITY_WEIGHT = 5;

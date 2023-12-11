@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * else:
  *    x = b
  */
-public class PyTransformConditionalExpressionIntention extends PyBaseIntentionAction {
+public final class PyTransformConditionalExpressionIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

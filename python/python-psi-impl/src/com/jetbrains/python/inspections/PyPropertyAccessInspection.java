@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Checks that properties are accessed correctly.
  */
-public class PyPropertyAccessInspection extends PyInspection {
+public final class PyPropertyAccessInspection extends PyInspection {
 
   @NotNull
   @Override

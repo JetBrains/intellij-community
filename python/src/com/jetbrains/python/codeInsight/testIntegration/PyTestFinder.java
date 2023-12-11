@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * User : catherine
  */
-public class PyTestFinder implements TestFinder {
+public final class PyTestFinder implements TestFinder {
   @Override
   public PyDocStringOwner findSourceElement(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PyClass.class, PyFunction.class);

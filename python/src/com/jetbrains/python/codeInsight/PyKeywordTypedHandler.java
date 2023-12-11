@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Handles overtyping ':' in definitions.
  */
-public class PyKeywordTypedHandler extends TypedHandlerDelegate {
+public final class PyKeywordTypedHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {

@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
+public final class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
   private final static String[] SITE_PACKAGES = new String[]{PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES};
 
   private final Project myProject;

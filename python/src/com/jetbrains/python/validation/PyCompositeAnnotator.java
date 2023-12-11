@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyCompositeAnnotator implements Annotator {
+public final class PyCompositeAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     PyAnnotator[] annotators = ExtensionPointName.<PyAnnotator>create("Pythonid.pyAnnotator").getExtensions();

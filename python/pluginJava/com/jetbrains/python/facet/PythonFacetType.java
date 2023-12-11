@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.util.List;
 
 
-public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
+public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
 
   @NonNls
   private static final String ID = "Python";

@@ -32,7 +32,7 @@ import java.util.Objects;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyCompletionConfidence extends CompletionConfidence {
+public final class PyCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override

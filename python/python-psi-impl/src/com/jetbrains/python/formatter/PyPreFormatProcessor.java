@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyPreFormatProcessor implements PreFormatProcessor {
+public final class PyPreFormatProcessor implements PreFormatProcessor {
   @NotNull
   @Override
   public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {

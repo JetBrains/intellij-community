@@ -24,7 +24,7 @@ import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyIntegratedToolsModulesConfigurable extends ModuleAwareProjectConfigurable {
+public final class PyIntegratedToolsModulesConfigurable extends ModuleAwareProjectConfigurable {
   public PyIntegratedToolsModulesConfigurable(@NotNull Project project) {
     super(project, PyBundle.message("configurable.PyIntegratedToolsModulesConfigurable.display.name"), "reference-python-integrated-tools");
   }

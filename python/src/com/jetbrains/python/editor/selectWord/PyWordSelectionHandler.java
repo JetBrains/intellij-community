@@ -8,7 +8,7 @@ import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyWordSelectionHandler extends AbstractWordSelectioner {
+public final class PyWordSelectionHandler extends AbstractWordSelectioner {
   @Override
   public boolean canSelect(@NotNull final PsiElement e) {
     final ASTNode astNode = e.getNode();

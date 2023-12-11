@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
+public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {

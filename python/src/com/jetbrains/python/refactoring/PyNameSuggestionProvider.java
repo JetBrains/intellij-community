@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
-public class PyNameSuggestionProvider implements NameSuggestionProvider {
+public final class PyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     if (!(element instanceof PyElement)) return null;

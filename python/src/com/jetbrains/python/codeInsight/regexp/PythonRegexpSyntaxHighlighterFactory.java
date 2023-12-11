@@ -20,7 +20,7 @@ import org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory;
 /**
  * @author Bas Leijdekkers
  */
-public class PythonRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
+public final class PythonRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
   public PythonRegexpSyntaxHighlighterFactory() {
     super(PythonRegexpLanguage.INSTANCE);
   }

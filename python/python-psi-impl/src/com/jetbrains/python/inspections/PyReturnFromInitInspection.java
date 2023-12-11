@@ -21,7 +21,7 @@ import java.util.Collection;
 /**
  * Checks that no value is returned from __init__().
  */
-public class PyReturnFromInitInspection extends PyInspection {
+public final class PyReturnFromInitInspection extends PyInspection {
 
   @NotNull
   @Override

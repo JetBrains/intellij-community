@@ -48,7 +48,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
+public final class PyMoveSymbolDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     if (targetContainer != null && !super.canMove(elements, targetContainer, reference)) {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 
-public class PythonVerboseRegexpParserDefinition extends PythonRegexpParserDefinition {
+public final class PythonVerboseRegexpParserDefinition extends PythonRegexpParserDefinition {
   public static final IFileElementType VERBOSE_PYTHON_REGEXP_FILE = new IFileElementType("VERBOSE_PYTHON_REGEXP_FILE", PythonVerboseRegexpLanguage.INSTANCE);
   private final EnumSet<RegExpCapability> VERBOSE_CAPABILITIES;
 

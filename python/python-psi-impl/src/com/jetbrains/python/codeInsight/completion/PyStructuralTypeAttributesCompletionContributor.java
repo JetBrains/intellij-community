@@ -36,7 +36,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author Mikhail Golubev
  */
-public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);
 

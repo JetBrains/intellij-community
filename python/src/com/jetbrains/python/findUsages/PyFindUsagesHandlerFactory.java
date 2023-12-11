@@ -34,7 +34,7 @@ import java.util.Collection;
 /**
  * @author traff
  */
-public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
+public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {

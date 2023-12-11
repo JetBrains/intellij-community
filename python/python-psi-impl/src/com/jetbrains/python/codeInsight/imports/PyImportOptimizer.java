@@ -37,7 +37,7 @@ import java.util.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyImportOptimizer implements ImportOptimizer {
+public final class PyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
   private static final Set<JavaResourceRootType> TEST_RESOURCE_ROOT_TYPES = Set.of(JavaResourceRootType.TEST_RESOURCE);
 

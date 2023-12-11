@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
+public final class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

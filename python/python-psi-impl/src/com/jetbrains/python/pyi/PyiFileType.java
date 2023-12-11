@@ -19,7 +19,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class PyiFileType extends PythonFileType {
+public final class PyiFileType extends PythonFileType {
   @NotNull
   public static final PythonFileType INSTANCE = new PyiFileType();
 

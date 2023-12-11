@@ -22,7 +22,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
+public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
   private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;
 

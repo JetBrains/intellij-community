@@ -37,7 +37,7 @@ import static com.jetbrains.python.PyNames.*;
  *
  * Inspection to warn if call to super constructor in class is missed
  */
-public class PyMissingConstructorInspection extends PyInspection {
+public final class PyMissingConstructorInspection extends PyInspection {
 
   @NotNull
   @Override

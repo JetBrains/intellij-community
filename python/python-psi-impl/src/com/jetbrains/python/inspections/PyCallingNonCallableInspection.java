@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyCallingNonCallableInspection extends PyInspection {
+public final class PyCallingNonCallableInspection extends PyInspection {
 
   @NotNull
   @Override

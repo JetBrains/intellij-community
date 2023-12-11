@@ -37,7 +37,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
+public final class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
   @NotNull
   @Override
   public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {

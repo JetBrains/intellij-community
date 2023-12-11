@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * User : ktisha
  */
-public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
+public final class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
 
   @NotNull
   @Override

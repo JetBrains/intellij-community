@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights doc strings in classes, functions, and files.
  */
-public class DocStringAnnotator extends PyAnnotator {
+public final class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFile(final @NotNull PyFile node) {

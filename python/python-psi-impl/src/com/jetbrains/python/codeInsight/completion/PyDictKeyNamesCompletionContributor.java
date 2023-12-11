@@ -32,7 +32,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * <p/>
  * Complete known keys for dictionaries
  */
-public class PyDictKeyNamesCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyDictKeyNamesCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String DEFAULT_QUOTE = "\"";
 
   public PyDictKeyNamesCompletionContributor() {

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : catherine
  */
-public class RestFileProviderFactory implements FileViewProviderFactory {
+public final class RestFileProviderFactory implements FileViewProviderFactory {
 
     @Override
     @NotNull

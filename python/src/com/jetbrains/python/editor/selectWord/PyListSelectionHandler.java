@@ -34,7 +34,7 @@ import java.util.List;
  *
  * Handler to select list contents without parentheses 
  */
-public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PyListLiteralExpression || e instanceof PyParameterList || e instanceof PyArgumentList;

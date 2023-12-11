@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : catherine
  */
-public class PythonSpaceHandler extends TypedHandlerDelegate {
+public final class PythonSpaceHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

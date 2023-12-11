@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Mikhail Golubev
  */
-public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProcessor {
+public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProcessor {
 
   private static boolean isApplicableTo(@NotNull PsiFile source) {
     if (InjectedLanguageManager.getInstance(source.getProject()).isInjectedFragment(source)) {

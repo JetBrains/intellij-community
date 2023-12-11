@@ -37,7 +37,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
+public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
 
   private static final Pattern TYPE_ANNOTATION_LIKE = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*" +

@@ -30,7 +30,7 @@ import java.util.Collections;
  * <strong>Install it</strong> as {@link FindUsagesHandlerFactory#EP_NAME}
  * @author Ilya.Kazakevich
  */
-public class PyMagicLiteralFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public final class PyMagicLiteralFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull final PsiElement element) {
     return PyMagicLiteralTools.couldBeMagicLiteral(element);

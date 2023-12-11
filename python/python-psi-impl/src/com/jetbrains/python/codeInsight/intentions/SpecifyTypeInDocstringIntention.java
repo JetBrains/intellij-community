@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Helps to specify type
  */
-public class SpecifyTypeInDocstringIntention extends TypeIntention {
+public final class SpecifyTypeInDocstringIntention extends TypeIntention {
   @Override
   @NotNull
   public String getFamilyName() {

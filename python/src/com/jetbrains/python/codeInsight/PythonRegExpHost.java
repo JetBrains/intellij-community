@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-public class PythonRegExpHost implements RegExpLanguageHost {
+public final class PythonRegExpHost implements RegExpLanguageHost {
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   public PythonRegExpHost() {

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class PyQualifiedNameProvider implements QualifiedNameProvider {
+public final class PyQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
   public PsiElement adjustElementToCopy(@NotNull PsiElement element) {

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PyCharmProfessionalAdvertiser implements Annotator {
+public final class PyCharmProfessionalAdvertiser implements Annotator {
   private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("PyCharm Professional Advertiser");
 
   @Override

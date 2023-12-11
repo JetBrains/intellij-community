@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class RenamePyFileProcessor extends RenamePsiFileProcessor {
+public final class RenamePyFileProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFile;

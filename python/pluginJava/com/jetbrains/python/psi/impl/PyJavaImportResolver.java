@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyJavaImportResolver implements PyImportResolver {
+public final class PyJavaImportResolver implements PyImportResolver {
   @Override
   @Nullable
   public PsiElement resolveImportReference(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context, boolean withRoots) {

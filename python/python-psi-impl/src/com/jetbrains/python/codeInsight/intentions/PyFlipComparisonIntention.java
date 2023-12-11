@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class PyFlipComparisonIntention extends PyBaseIntentionAction {
+public final class PyFlipComparisonIntention extends PyBaseIntentionAction {
   private static class Holder {
     private static final Map<PyElementType, String> FLIPPED_OPERATORS = Map.of(
       PyTokenTypes.EQEQ, "==",

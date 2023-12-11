@@ -15,7 +15,7 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
+public final class PyEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,

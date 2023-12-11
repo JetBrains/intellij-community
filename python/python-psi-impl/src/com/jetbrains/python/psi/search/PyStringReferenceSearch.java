@@ -15,7 +15,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public PyStringReferenceSearch() {
     super(true);

@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 
-public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
+public final class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
   private static final Map<String, String> py2LibraryModulesToWebpageName = new MyBuilder()
     .put("BaseHTTPServer", "basehttpserver")

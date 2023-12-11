@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyRestDocstringLanguageInjector implements LanguageInjector {
+public final class PyRestDocstringLanguageInjector implements LanguageInjector {
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (host instanceof RestLine) {

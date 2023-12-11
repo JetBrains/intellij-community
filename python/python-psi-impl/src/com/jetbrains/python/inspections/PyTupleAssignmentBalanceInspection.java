@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class PyTupleAssignmentBalanceInspection extends PyInspection {
+public final class PyTupleAssignmentBalanceInspection extends PyInspection {
 
   @NotNull
   @Override

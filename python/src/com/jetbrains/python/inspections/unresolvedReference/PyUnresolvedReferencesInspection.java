@@ -49,7 +49,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  */
-public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
+public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 

@@ -31,7 +31,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * if a and b:
  *   #stuff here
  */
-public class PyJoinIfIntention extends PyBaseIntentionAction {
+public final class PyJoinIfIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {

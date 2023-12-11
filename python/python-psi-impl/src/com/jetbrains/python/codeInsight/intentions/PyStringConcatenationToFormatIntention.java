@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class PyStringConcatenationToFormatIntention extends PyBaseIntentionAction {
+public final class PyStringConcatenationToFormatIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

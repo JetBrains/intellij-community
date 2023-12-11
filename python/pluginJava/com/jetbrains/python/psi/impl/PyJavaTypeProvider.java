@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyJavaTypeProvider extends PyTypeProviderBase {
+public final class PyJavaTypeProvider extends PyTypeProviderBase {
   @Override
   @Nullable
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {

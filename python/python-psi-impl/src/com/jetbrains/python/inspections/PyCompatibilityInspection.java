@@ -60,7 +60,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
  *
  * Inspection to detect code incompatibility with python versions
  */
-public class PyCompatibilityInspection extends PyInspection {
+public final class PyCompatibilityInspection extends PyInspection {
 
   @NotNull
   public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()

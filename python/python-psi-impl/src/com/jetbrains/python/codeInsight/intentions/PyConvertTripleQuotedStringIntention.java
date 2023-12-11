@@ -30,7 +30,7 @@ import java.util.List;
  *      "but \"this\" includes far too much" "\n"
  *      "whitespace at the start")
  */
-public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction {
+public final class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

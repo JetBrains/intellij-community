@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 
-public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+public final class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.create(key -> new PyHighlighter(key));
 
   private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.create(key -> new PyHighlighter(key) {

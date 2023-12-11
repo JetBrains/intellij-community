@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class InterpreterDirectoryMacro extends Macro implements PathMacro {
+public final class InterpreterDirectoryMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

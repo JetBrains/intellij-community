@@ -20,7 +20,7 @@ import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
 /**
  * Infer type for reference of decorated {@link PyDecoratable} objects.
  */
-public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
+public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override

@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyFile;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-public class PyNegateComparisonIntention extends PyBaseIntentionAction {
+public final class PyNegateComparisonIntention extends PyBaseIntentionAction {
 
 
   @Override

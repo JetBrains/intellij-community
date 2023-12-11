@@ -2,7 +2,7 @@
 package com.jetbrains.python.run;
 
 
-public class PyPluginCommonOptionsFormFactory extends PyCommonOptionsFormFactory {
+public final class PyPluginCommonOptionsFormFactory extends PyCommonOptionsFormFactory {
   @Override
   public AbstractPyCommonOptionsForm createForm(PyCommonOptionsFormData data) {
     return new PyPluginCommonOptionsForm(data);

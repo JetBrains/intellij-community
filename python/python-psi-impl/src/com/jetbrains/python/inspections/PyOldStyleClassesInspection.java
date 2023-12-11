@@ -41,7 +41,7 @@ import java.util.List;
  *
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
-public class PyOldStyleClassesInspection extends PyInspection {
+public final class PyOldStyleClassesInspection extends PyInspection {
 
   @NotNull
   @Override

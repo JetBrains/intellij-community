@@ -29,7 +29,7 @@ import java.util.Collections;
 /**
  * User : ktisha
  */
-public class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
+public final class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
 
   @Override
   public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {

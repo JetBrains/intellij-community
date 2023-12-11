@@ -34,7 +34,7 @@ import java.util.Set;
  * for instance,
  * dict().get(x, None) --> None is default value for second param in dict().get function
  */
-public class PyArgumentEqualDefaultInspection extends PyInspection {
+public final class PyArgumentEqualDefaultInspection extends PyInspection {
 
   @NotNull
   @Override

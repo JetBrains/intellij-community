@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
-public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
+public final class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
   public @NotNull String getName() {
     return "python";

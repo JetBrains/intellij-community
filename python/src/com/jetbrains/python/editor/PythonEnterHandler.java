@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 
 
-public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
+public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private int myPostprocessShift = 0;
 
   @Override

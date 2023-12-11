@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
+public final class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
 
   @Override
   public void visitPyFunction(@NotNull PyFunction node) {

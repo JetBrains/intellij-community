@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
+public final class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
   static {

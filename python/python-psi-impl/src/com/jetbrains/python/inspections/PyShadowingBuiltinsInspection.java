@@ -46,7 +46,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * Warns about shadowing built-in names.
  *
  */
-public class PyShadowingBuiltinsInspection extends PyInspection {
+public final class PyShadowingBuiltinsInspection extends PyInspection {
 
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();

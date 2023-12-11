@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyAbstractClassInspection extends PyInspection {
+public final class PyAbstractClassInspection extends PyInspection {
 
   @NotNull
   @Override
