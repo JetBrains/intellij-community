@@ -101,7 +101,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {
-    return readAction { myFixture.getDocument(findPsiFile(f)!!) }
+    return readAction { fixture.getDocument(findPsiFile(f)!!) }
   }
 
   private suspend fun checkHighlightingEdt() {

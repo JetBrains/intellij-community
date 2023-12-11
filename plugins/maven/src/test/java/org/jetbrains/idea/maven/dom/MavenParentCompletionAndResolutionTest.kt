@@ -248,7 +248,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                     </parent>
                     """.trimIndent())
 
-    myFixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
+    fixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
     checkHighlighting()
   }
 
@@ -303,7 +303,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                            <artifactId>m1</artifactId>
                            """.trimIndent())
 
-    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
+    fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
     checkHighlighting(m2)
   }
 
@@ -358,7 +358,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
 
-    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
+    fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
     checkHighlighting(m2)
   }
 
@@ -504,7 +504,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
     importProjectWithErrors()
 
-    myFixture.enableInspections(MavenParentMissedVersionInspection::class.java)
+    fixture.enableInspections(MavenParentMissedVersionInspection::class.java)
     checkHighlighting()
   }
 
@@ -563,7 +563,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret("Fix Relative Path")
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
     val el = getElementAtCaret(myProjectPom)
 
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))

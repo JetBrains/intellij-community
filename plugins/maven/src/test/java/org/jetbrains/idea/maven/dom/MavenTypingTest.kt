@@ -307,7 +307,7 @@ class MavenTypingTest : MavenDomTestCase() {
 
   private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
     type(f, c)
-    myFixture.checkResult(expected)
+    fixture.checkResult(expected)
   }
 
   private fun assertBackspaceResult(xml: String) {

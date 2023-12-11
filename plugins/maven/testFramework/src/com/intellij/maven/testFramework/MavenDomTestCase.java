@@ -56,7 +56,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCase {
-  protected CodeInsightTestFixture myFixture;
+  private CodeInsightTestFixture fixture;
   private final Map<VirtualFile, Long> myConfigTimestamps = new HashMap<>();
   private boolean myOriginalAutoCompletion;
 
@@ -72,11 +72,11 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   protected void setUpFixtures() throws Exception {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
 
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
-    myFixture.setUp();
-    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true); // org.jetbrains.idea.maven.utils.MavenRehighlighter
+    fixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
+    getFixture().setUp();
+    ((CodeInsightTestFixtureImpl)getFixture()).canChangeDocumentDuringHighlighting(true); // org.jetbrains.idea.maven.utils.MavenRehighlighter
 
-    myFixture.enableInspections(MavenModelInspection.class);
+    getFixture().enableInspections(MavenModelInspection.class);
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
@@ -88,10 +88,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
       myConfigTimestamps.clear();
 
-      myFixture.tearDown();
+      getFixture().tearDown();
     }
     finally {
-      myFixture = null;
+      fixture = null;
     }
   }
 
@@ -109,14 +109,14 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       MavenLog.LOG.warn("MavenDomTestCase configTest skipped");
       return;
     }
-    myFixture.configureFromExistingVirtualFile(f);
+    getFixture().configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getTimeStamp());
     MavenLog.LOG.warn("MavenDomTestCase configTest performed");
   }
 
   protected void type(VirtualFile f, char c) {
     configTest(f);
-    myFixture.type(c);
+    getFixture().type(c);
   }
 
   protected PsiReference getReferenceAtCaret(VirtualFile f) {
@@ -142,7 +142,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected Editor getEditor(VirtualFile f) {
     configTest(f);
-    return myFixture.getEditor();
+    return getFixture().getEditor();
   }
 
   protected int getEditorOffset() {
@@ -159,7 +159,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   private PsiFile getTestPsiFile(VirtualFile f) {
     configTest(f);
-    return myFixture.getFile();
+    return getFixture().getFile();
   }
 
   protected XmlTag findTag(String path) {
@@ -300,7 +300,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected List<String> getCompletionVariants(VirtualFile f, Function<? super LookupElement, String> lookupElementStringFunction) {
     configTest(f);
-    LookupElement[] variants = myFixture.completeBasic();
+    LookupElement[] variants = getFixture().completeBasic();
 
     List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {
@@ -316,7 +316,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   protected Set<String> getDependencyCompletionVariants(VirtualFile f,
                                                         Function<? super MavenRepositoryArtifactInfo, String> lookupElementStringFunction) {
     configTest(f);
-    LookupElement[] variants = myFixture.completeBasic();
+    LookupElement[] variants = getFixture().completeBasic();
 
     Set<String> result = new TreeSet<>();
     for (LookupElement each : variants) {
@@ -371,7 +371,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       MavenLog.LOG.warn("checkHighlighting: psi file is null");
     }
     else {
-      var document = myFixture.getDocument(psiFile);
+      var document = getFixture().getDocument(psiFile);
       if (null == document) {
         MavenLog.LOG.warn("checkHighlighting: document is null");
       }
@@ -385,7 +385,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     MavenLog.LOG.warn("checkHighlighting: test configured");
 
     try {
-      myFixture.testHighlighting(true, false, true, f);
+      getFixture().testHighlighting(true, false, true, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -402,7 +402,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   protected IntentionAction getIntentionAtCaret(VirtualFile pomFile, String intentionName) {
     configTest(pomFile);
     try {
-      List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+      List<IntentionAction> intentions = getFixture().getAvailableIntentions();
 
       return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     }
@@ -429,7 +429,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     assertNotNull(renameHandler);
     assertInstanceOf(renameHandler, VariableInplaceRenameHandler.class);
-    CodeInsightTestUtil.doInlineRename((VariableInplaceRenameHandler)renameHandler, value, myFixture);
+    CodeInsightTestUtil.doInlineRename((VariableInplaceRenameHandler)renameHandler, value, getFixture());
   }
 
   protected void assertCannotRename() {
@@ -498,6 +498,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     }
 
     assertUnorderedElementsAreEqual(actual, expected);
+  }
+
+  protected @NotNull CodeInsightTestFixture getFixture() {
+    return fixture;
   }
 
   protected static class HighlightPointer {

@@ -40,8 +40,8 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    myFixture.configureFromExistingVirtualFile(pom)
-    val resolved = myFixture.getElementAtCaret()
+    fixture.configureFromExistingVirtualFile(pom)
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
@@ -72,8 +72,8 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    myFixture.configureFromExistingVirtualFile(pom)
-    val resolved = myFixture.getElementAtCaret()
+    fixture.configureFromExistingVirtualFile(pom)
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)

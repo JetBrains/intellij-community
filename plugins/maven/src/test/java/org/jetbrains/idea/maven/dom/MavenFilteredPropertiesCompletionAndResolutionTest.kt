@@ -514,7 +514,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${x<caret>xx}abc")
     assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
-    myFixture.configureFromExistingVirtualFile(filter)
+    fixture.configureFromExistingVirtualFile(filter)
     doInlineRename(f, "bar")
 
     assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
@@ -676,9 +676,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            </root>
                                            """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
 
-    val attribute = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), XmlAttribute::class.java)
+    val attribute = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()), XmlAttribute::class.java)
 
     val references = attribute!!.getReferences()
 

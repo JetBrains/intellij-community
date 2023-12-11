@@ -45,10 +45,10 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
     val dir = createProjectSubDir("aaa/bbb/res")
 
     val bbb = dir.getParent()
-    myFixture.renameElement(PsiManager.getInstance(myFixture.getProject()).findDirectory(bbb)!!, "Z")
+    fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
 
 
-    val text = PsiManager.getInstance(myFixture.getProject()).findFile(myProjectPom)!!.getText()
+    val text = PsiManager.getInstance(fixture.getProject()).findFile(myProjectPom)!!.getText()
     assert(text.contains("<directory>aaa/Z/res</directory>"))
     assert(text.contains("<directory>aaa/Z/res</directory>"))
     assert(text.contains("<directory>aaa/Z/res</directory>"))

@@ -30,7 +30,7 @@ import org.junit.Test
 class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
   
   private fun findAddMavenIntention(): IntentionAction {
-    for (intention in myFixture.getAvailableIntentions()) {
+    for (intention in fixture.getAvailableIntentions()) {
       if (intention.getText().contains("Add Maven")) {
         return intention
       }
@@ -59,7 +59,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
@@ -67,7 +67,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
       }
     }
     val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
@@ -96,20 +96,20 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
       }
     }
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
       }
     }
     val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
@@ -159,14 +159,14 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
       }
     }
     val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
@@ -207,7 +207,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
 
@@ -215,7 +215,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
       }
     }
     val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }

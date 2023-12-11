@@ -94,8 +94,8 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   private fun doTest(classText: String, referenceText: String?) {
     val file = createProjectSubFile("src/main/java/A.java", classText)
 
-    myFixture.configureFromExistingVirtualFile(file)
-    val element = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()),
+    fixture.configureFromExistingVirtualFile(file)
+    val element = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()),
                                               PsiJavaCodeReferenceElement::class.java)
 
     assertNull(element!!.resolve())
@@ -103,7 +103,7 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
     val fix = AddMavenDependencyQuickFix(element)
 
     if (referenceText == null) {
-      assertFalse(fix.isAvailable(myProject, myFixture.getEditor(), myFixture.getFile()))
+      assertFalse(fix.isAvailable(myProject, fixture.getEditor(), fixture.getFile()))
     }
     else {
       assertEquals(fix.getReferenceText(), referenceText)

@@ -10,7 +10,7 @@ public class MavenDuplicatedPluginInspectionTest extends MavenDomTestCase {
 
   @Test
   public void testDuplicatedPlugin() {
-    myFixture.enableInspections(MavenDuplicatePluginInspection.class);
+    getFixture().enableInspections(MavenDuplicatePluginInspection.class);
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>

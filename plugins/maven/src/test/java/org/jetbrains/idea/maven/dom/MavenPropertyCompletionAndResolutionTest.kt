@@ -756,9 +756,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(profiles)
-    myFixture.complete(CompletionType.BASIC)
-    val strings = myFixture.getLookupElementStrings()!!
+    fixture.configureFromExistingVirtualFile(profiles)
+    fixture.complete(CompletionType.BASIC)
+    val strings = fixture.getLookupElementStrings()!!
 
     assert(strings.containsAll(mutableListOf("foo", "bar")))
     assert(!strings.contains("xxx"))
@@ -778,9 +778,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(profiles)
+    fixture.configureFromExistingVirtualFile(profiles)
     readAction {
-      val elementAtCaret = myFixture.getElementAtCaret()
+      val elementAtCaret = fixture.getElementAtCaret()
       assert(elementAtCaret is XmlTag)
       assertEquals("foo", (elementAtCaret as XmlTag).getName())
     }

@@ -17,7 +17,7 @@ public class MavenRedundantGroupIdTest extends MavenDomTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myFixture.enableInspections(MavenRedundantGroupIdInspection.class);
+    getFixture().enableInspections(MavenRedundantGroupIdInspection.class);
   }
 
   @Test
@@ -75,12 +75,12 @@ public class MavenRedundantGroupIdTest extends MavenDomTestCase {
                          <version>1.0</version>
                        </parent>""");
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
-    myFixture.doHighlighting();
+    getFixture().configureFromExistingVirtualFile(myProjectPom);
+    getFixture().doHighlighting();
 
-    for (IntentionAction intention : myFixture.getAvailableIntentions()) {
+    for (IntentionAction intention : getFixture().getAvailableIntentions()) {
       if (intention.getText().startsWith("Remove ") && intention.getText().contains("<groupId>")) {
-        myFixture.launchAction(intention);
+        getFixture().launchAction(intention);
         break;
       }
     }
@@ -89,7 +89,7 @@ public class MavenRedundantGroupIdTest extends MavenDomTestCase {
     //doPostponedFormatting(myProject)
     PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
 
-    myFixture.checkResult(MavenTestCase.createPomXml("""
+    getFixture().checkResult(MavenTestCase.createPomXml("""
                                                        <artifactId>childA</artifactId>
                                                            <version>1.0</version>
                                                          

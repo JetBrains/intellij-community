@@ -713,7 +713,7 @@ $libPath<caret></systemPath>
     try {
       // prevent file path from wrapping.
       xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-      myFixture.launchAction(action)
+      fixture.launchAction(action)
     }
     finally {
       xmlSettings.XML_TEXT_WRAP = prevValue

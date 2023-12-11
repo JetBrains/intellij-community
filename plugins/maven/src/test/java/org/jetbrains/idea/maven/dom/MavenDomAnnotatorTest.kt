@@ -166,10 +166,10 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 
   private fun checkGutters(virtualFile: VirtualFile, expectedProperties: Collection<String>) {
     val file = PsiManager.getInstance(myProject).findFile(virtualFile)!!
-    myFixture.configureFromExistingVirtualFile(virtualFile)
+    fixture.configureFromExistingVirtualFile(virtualFile)
 
     val text = file.text
-    val actualProperties = myFixture.doHighlighting()
+    val actualProperties = fixture.doHighlighting()
       .filter { it.gutterIconRenderer != null }
       .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
       .map { it.replace(" ", "") }

@@ -344,7 +344,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule/pom.xml",
@@ -387,7 +387,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml",
@@ -431,7 +431,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml/pom.xml",
@@ -477,7 +477,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -522,7 +522,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
 
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     val pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml")
     assertNotNull(pom)
@@ -548,7 +548,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val i = getIntentionAtCaret(createModuleIntention)
     assertNotNull(i)
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -590,7 +590,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val i = getIntentionAtCaret(createModuleWithParentIntention)
     assertNotNull(i)
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -638,7 +638,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val i = getIntentionAtCaret(createModuleWithParentIntention)
     assertNotNull(i)
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
@@ -677,7 +677,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync(parentPom)
 
-    myFixture.saveText(parentPom, createPomXml(
+    fixture.saveText(parentPom, createPomXml(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -690,7 +690,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
     val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
     assertNotNull(i)
-    myFixture.launchAction(i)
+    fixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
