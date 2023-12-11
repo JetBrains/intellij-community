@@ -1,4 +1,9 @@
-object Tests: MermaidBuild(
+import MermaidGradleBuild.Companion.defaultGradleStep
+import jetbrains.buildServer.configs.kotlin.buildSteps.ScriptBuildStep
+import jetbrains.buildServer.configs.kotlin.buildSteps.qodana
+import jetbrains.buildServer.configs.kotlin.buildSteps.script
+
+object Tests: MermaidGradleBuild(
   name = "Tests",
   root = Mermaid,
   tasks = listOf("test"),
@@ -9,7 +14,7 @@ object Tests: MermaidBuild(
   }
 )
 
-object PluginVerifier: MermaidBuild(
+object PluginVerifier: MermaidGradleBuild(
   name = "Plugin Verifier",
   root = Mermaid,
   tasks = listOf("runPluginVerifier"),
@@ -20,7 +25,24 @@ object PluginVerifier: MermaidBuild(
   }
 )
 
-object ReleaseStable: MermaidBuild(
+object Qodana: MermaidBaseBuild(
+  name = "Qodana",
+  root = Mermaid,
+  configuration = {
+    steps {
+      defaultGradleStep(tasks = listOf(":plugin:generateLexerAndParser"), configuration = {})
+      qodana {
+        linter = jvm()
+        cloudToken = "%mermaid.qodana.cloud.token%"
+      }
+    }
+    withDockerFeature()
+    withBaseVcsTrigger()
+    withCommitStatusPublisher("Qodana")
+  }
+)
+
+object ReleaseStable: MermaidGradleBuild(
   name = "Release Stable",
   root = Mermaid,
   tasks = listOf("test", "publishPlugin"),
@@ -30,7 +52,7 @@ object ReleaseStable: MermaidBuild(
   }
 )
 
-object ReleaseNightly: MermaidBuild(
+object ReleaseNightly: MermaidGradleBuild(
   name = "Release Nightly",
   root = Mermaid,
   tasks = listOf("test", "publishPlugin"),

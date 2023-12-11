@@ -1,3 +1,4 @@
+import jetbrains.buildServer.configs.kotlin.BuildSteps
 import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.VcsRoot
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
@@ -8,27 +9,37 @@ import jetbrains.buildServer.configs.kotlin.triggers.vcs
 
 internal const val DefaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0"
 
-abstract class MermaidBuild(
+abstract class MermaidGradleBuild(
   name: String,
   root: VcsRoot,
   dockerImage: String = DefaultImage,
   tasks: List<String>,
   configuration: BuildType.() -> Unit = {}
-): BuildType({
-  this.name = name
-
-  vcs {
-    root(root)
-  }
+): MermaidBaseBuild(name, root, configuration = {
   steps {
-    gradle {
-      this.tasks = tasks.joinToString(separator = " ")
-      gradleParams = "--info"
-      this.dockerImage = dockerImage
-      dockerImagePlatform = GradleBuildStep.ImagePlatform.Linux
+    defaultGradleStep(tasks, image = dockerImage, configuration = {})
+  }
+  withDockerFeature()
+  configuration()
+}) {
+  companion object {
+    internal fun BuildSteps.defaultGradleStep(
+      tasks: List<String>,
+      image: String = DefaultImage,
+      configuration: GradleBuildStep.() -> Unit
+    ): GradleBuildStep {
+      return gradle {
+        this.tasks = tasks.joinToString(separator = " ")
+        gradleParams = "--info"
+        dockerImage = image
+        dockerImagePlatform = GradleBuildStep.ImagePlatform.Linux
+        configuration()
+      }
     }
   }
-  configuration()
+}
+
+internal fun BuildType.withDockerFeature() {
   features {
     dockerSupport {
       loginToRegistry = on {
@@ -36,7 +47,7 @@ abstract class MermaidBuild(
       }
     }
   }
-})
+}
 
 internal fun BuildType.withBaseVcsTrigger() {
   triggers {

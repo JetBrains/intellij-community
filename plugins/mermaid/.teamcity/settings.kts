@@ -6,6 +6,7 @@ project {
   vcsRoot(Mermaid)
   buildType(Tests)
   buildType(PluginVerifier)
+  buildType(Qodana)
   buildType(ReleaseStable)
   buildType(ReleaseNightly)
 }
