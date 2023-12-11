@@ -133,7 +133,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return@async null
 
       // reading
-      val rootProjectData = readProject(rootModel, rootProjectFile);
+      val rootProjectData = readProject(rootModel, rootProjectFile)
       tree.addRoot(rootProjectData)
 
       val readPomsJob = launch {
@@ -158,7 +158,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         }
       }
       meditationJob.join()
-      return@async tree;
+      return@async tree
     }
     catch (e: Exception) {
       MavenLog.LOG.warn(e)
@@ -205,7 +205,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         if (version == null) return@forEach
         if (version.startsWith("$")) {
           val versionResolved = resolveProperty(project, version)
-          if (versionResolved != null) {
+          if (versionResolved.isNotBlank()) {
             project.resolvedDependencyManagement[trimVersion(it)] = MavenId(it.groupId, it.artifactId, versionResolved)
           }
         }
@@ -237,8 +237,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       }
       else if (version.startsWith("$")) {
         val versionResolved = resolveProperty(project, version)
-        if (versionResolved != null) {
-          project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved));
+        if (versionResolved.isNotBlank()) {
+          project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved))
         }
       }
       else {
@@ -304,7 +304,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val mavenProject = MavenProject(file)
     val mavenProjectData = MavenProjectData(mavenProject)
 
-    rootModel.getChild("properties")?.getChildren()?.forEach {
+    rootModel.getChild("properties")?.children?.forEach {
       mavenModel.properties.setProperty(it.name, it.textTrim)
       mavenProjectData.properties[it.name] = it.textTrim
     }
@@ -344,28 +344,27 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
     resolveDirectories(mavenProjectData, mavenModel, parentFolder, rootModel)
 
-    modelMap.put("build.outputDirectory", mavenModel.build.outputDirectory)
-    modelMap.put("build.testOutputDirectory", mavenModel.build.testOutputDirectory)
-    modelMap.put("build.finalName", mavenModel.build.finalName)
-    modelMap.put("build.directory", mavenModel.build.directory)
+    modelMap["build.outputDirectory"] = mavenModel.build.outputDirectory
+    modelMap["build.testOutputDirectory"] = mavenModel.build.testOutputDirectory
+    modelMap["build.finalName"] = mavenModel.build.finalName
+    modelMap["build.directory"] = mavenModel.build.directory
 
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, null, emptyList(), emptySet())
-    mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true);
-    return mavenProjectData;
+    mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true)
+    return mavenProjectData
 
   }
 
   private fun resolveDirectories(mavenProjectData: MavenProjectData, mavenModel: MavenModel, parentFolder: Path, rootModel: Element) {
-    val compilerPlugin = findPlugin(mavenProjectData, "org.apache.maven.plugins", "maven-compiler-plugin")
     val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
     val sources = ArrayList<String>()
     val testSources = ArrayList<String>()
 
-    val sourceDir = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
-    val testSourceDir = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/test/java")
+    val sourceDirectory = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
+    val testSourceDirectory = resolveProperty(mavenProjectData, rootModel.getChildText("build.testSourceDirectory") ?: "src/test/java")
 
-    sources.add(sourceDir)
-    testSources.add(testSourceDir)
+    sources.add(sourceDirectory)
+    testSources.add(testSourceDirectory)
     if (kotlinPlugin != null) {
       sources.add("src/main/kotlin")
       testSources.add("src/test/kotlin")
@@ -463,7 +462,7 @@ class ProjectTree {
 
   suspend fun addChild(aggregator: MavenProjectData, child: MavenProjectData) {
     mutex.withLock {
-      tree.compute(aggregator.file) { k, v ->
+      tree.compute(aggregator.file) { _, v ->
         val arr = v ?: ArrayList()
         arr.also { it.add(child) }
       }
