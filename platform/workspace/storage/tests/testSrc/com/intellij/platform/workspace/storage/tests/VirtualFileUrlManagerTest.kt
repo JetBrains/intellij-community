@@ -71,7 +71,10 @@ class VirtualFileUrlManagerTest {
     virtualFileManager.add("/")
     virtualFileManager.add("/a")
     virtualFileManager.remove("/a")
-    assertEquals("", virtualFileManager.print())
+    assertEquals("""
+      # 
+      # '-  
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -160,6 +163,8 @@ class VirtualFileUrlManagerTest {
     roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar")
     roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!/")
     roundTrip("jar://C:/Users/X/.m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6/jdom-2.0.6.jar!//")
+    roundTrip("file://C:/Users/user/Monorepo/intellij/community/java/jdkAnnotations")
+    roundTrip("//wsl.localhost/Ubuntu/home/test/.jdks/openjdk-20.0.1")
   }
 
   @Test
