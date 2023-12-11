@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -301,12 +302,6 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenModel.mavenId = id
     mavenModel.name = file.parent.name
     mavenModel.build.finalName = file.parent.name
-    mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
-    mavenModel.build.sources = listOf(parentFolder.resolve("src/main/java").toString(), parentFolder.resolve("src/main/kotlin").toString())
-    mavenModel.build.testSources = listOf(parentFolder.resolve("src/test/java").toString(),
-                                          parentFolder.resolve("src/test/kotlin").toString());
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
@@ -332,17 +327,28 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenModel.mavenId.artifactId?.let { modelMap.put("artifactId", it) }
     mavenModel.mavenId.version?.let { modelMap.put("version", it) }
 
+    readPlugins(mavenProjectData, rootModel)
+
+    resolveDirectories(mavenModel, parentFolder)
+
     modelMap.put("build.outputDirectory", mavenModel.build.outputDirectory)
     modelMap.put("build.testOutputDirectory", mavenModel.build.testOutputDirectory)
     modelMap.put("build.finalName", mavenModel.build.finalName)
     modelMap.put("build.directory", mavenModel.build.directory)
 
-    readPlugins(mavenProjectData, rootModel)
-
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, null, emptyList(), emptySet())
     mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true);
     return mavenProjectData;
 
+  }
+
+  private fun resolveDirectories(mavenModel: MavenModel, parentFolder: Path) {
+    mavenModel.build.directory = parentFolder.resolve("target").toString()
+    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
+    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    mavenModel.build.sources = listOf(parentFolder.resolve("src/main/java").toString(), parentFolder.resolve("src/main/kotlin").toString())
+    mavenModel.build.testSources = listOf(parentFolder.resolve("src/test/java").toString(),
+                                          parentFolder.resolve("src/test/kotlin").toString());
   }
 
   private fun readPlugins(mavenProjectData: MavenProjectData, rootModel: Element) {
