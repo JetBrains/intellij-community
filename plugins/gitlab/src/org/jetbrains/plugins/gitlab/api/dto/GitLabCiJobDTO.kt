@@ -13,5 +13,5 @@ data class GitLabCiJobDTO(
   @SinceGitLab("13.11") val allowFailure: Boolean?,
   @SinceGitLab("13.5") val detailedStatus: DetailedStatus?
 ) {
-  data class DetailedStatus(val detailsPath: String)
+  data class DetailedStatus(val detailsPath: String?)
 }
