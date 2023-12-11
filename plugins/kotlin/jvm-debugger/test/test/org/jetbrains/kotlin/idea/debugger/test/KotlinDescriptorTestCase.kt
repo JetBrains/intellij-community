@@ -511,7 +511,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         )
         return extensions.filterNotNull()
             .map { File(getTestDataPath(), getTestName(true) + it) }
-            .first(File::exists)
+            .run { firstOrNull(File::exists) ?: last() }
     }
 
     override fun getData(dataId: String): Any? {
