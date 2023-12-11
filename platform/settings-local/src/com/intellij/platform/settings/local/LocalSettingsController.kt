@@ -23,7 +23,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
       }
       else if (tag is CacheStateTag) {
         val store = componentManager.serviceAsync<CacheStatePropertyService>()
-        return store.getValue(getEffectiveKey(key), key.serializer)
+        return store.getValue(getEffectiveKey(key = key), key.serializer, key.pluginId)
       }
     }
 
@@ -35,7 +35,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
     for (tag in key.tags) {
       if (tag is CacheStateTag) {
         val store = componentManager.serviceAsync<CacheStatePropertyService>()
-        store.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer)
+        store.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
         return
       }
     }

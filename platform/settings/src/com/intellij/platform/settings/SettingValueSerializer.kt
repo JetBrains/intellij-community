@@ -23,7 +23,9 @@ interface SettingValueSerializer<T : Any> {
 interface ObjectSettingValueSerializerFactory {
   //todo should we rename it to "objectSettingValueSerializer" or "binarySettingValueSerializer"?
   //todo how to inform client that class expected to be kotlinx serializable
-  fun <T : Any> protobufSettingValueSerializer(aClass: Class<T>): SettingValueSerializer<T>
+  fun <T : Any> objectValueSerializer(aClass: Class<T>): SettingValueSerializer<T>
+
+  fun <K : Any, V: Any?> mapSerializer(keyClass: Class<K>, valueClass: Class<V>): SettingValueSerializer<Map<K, V>>
 }
 
 @Internal
@@ -35,12 +37,32 @@ inline fun <reified T : Any> objectSettingValueSerializer(): SettingValueSeriali
 internal class ObjectSettingValueSerializerDelegate<T : Any>(private val aClass: Class<T>) : SettingValueSerializer<T> {
   // don't resolve service as a part of service descriptor creation
   private val impl by lazy(LazyThreadSafetyMode.NONE) {
-    ApplicationManager.getApplication().getService(ObjectSettingValueSerializerFactory::class.java).protobufSettingValueSerializer(aClass)
+    ApplicationManager.getApplication().getService(ObjectSettingValueSerializerFactory::class.java).objectValueSerializer(aClass)
   }
 
   override fun encode(value: T): ByteArray = impl.encode(value)
 
   override fun decode(input: ByteArray): T = impl.decode(input)
+}
+
+// todo hide as soon as will be coroutine scope service injection API
+@Internal
+class MapSettingValueSerializerDelegate<K : Any, V: Any?>(keyClass: Class<K>, valueClass: Class<V>) : SettingValueSerializer<Map<K, V>> {
+  // don't resolve service as a part of service descriptor creation
+  private val impl by lazy(LazyThreadSafetyMode.NONE) {
+    ApplicationManager.getApplication().getService(ObjectSettingValueSerializerFactory::class.java).mapSerializer(keyClass, valueClass)
+  }
+
+  override fun encode(value: Map<K, V>): ByteArray = impl.encode(value)
+
+  override fun decode(input: ByteArray): Map<K, V> = impl.decode(input)
+}
+
+// todo hide as soon as will be coroutine scope service injection API
+object ByteArraySettingValueSerializer : SettingValueSerializer<ByteArray> {
+  override fun encode(value: ByteArray): ByteArray = value
+
+  override fun decode(input: ByteArray): ByteArray = input
 }
 
 @Suppress("ConvertObjectToDataObject")

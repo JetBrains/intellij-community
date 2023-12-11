@@ -3,15 +3,13 @@ package com.intellij.platform.settings.local
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.platform.settings.CacheStateTag
-import com.intellij.platform.settings.SettingsController
-import com.intellij.platform.settings.objectSettingValueSerializer
-import com.intellij.platform.settings.settingDescriptor
+import com.intellij.platform.settings.*
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 @TestApplication
 class LocalSettingsControllerTest {
@@ -45,6 +43,46 @@ class LocalSettingsControllerTest {
     controller.setItem(settingsDescriptor, cats)
     assertThat(controller.getItem(settingsDescriptor)).isEqualTo(cats)
   }
+
+  @Test
+  fun `cache object map value state`() = runBlocking<Unit> {
+    serviceAsync<CacheStatePropertyService>().clear()
+
+    val controller = serviceAsync<SettingsController>()
+    val settingsDescriptor = settingDescriptor("test.flag",
+                                               PluginManagerCore.CORE_ID,
+                                               MapSettingValueSerializerDelegate(String::class.java, String::class.java)) {
+      tags = listOf(CacheStateTag)
+    }
+
+    assertThat(controller.getItem(settingsDescriptor)).isNull()
+
+    val map = java.util.Map.of("foo", "12", "bar", "42")
+    controller.setItem(settingsDescriptor, map)
+    assertThat(controller.getItem(settingsDescriptor)).isEqualTo(map)
+
+    corruptValue("test.flag", controller)
+    try {
+      controller.getItem(settingsDescriptor)
+    }
+    catch (e: Throwable) {
+      assertThat(e.message).startsWith("Cannot deserialize value for key com.intellij.test.flag (size=4096, value will be stored under key com.intellij.test.flag.__corrupted__) ")
+    }
+    assertThat(controller.getItem(settingsDescriptor)).isNull()
+    assertThat(controller.getItem(settingDescriptor("test.flag.__corrupted__", PluginManagerCore.CORE_ID, ByteArraySettingValueSerializer) {
+      tags = listOf(CacheStateTag)
+    }
+    )).hasSize(4096)
+  }
+}
+
+private suspend fun corruptValue(key: String, controller: SettingsController) {
+  val settingsDescriptor = settingDescriptor(key = key,
+                                             pluginId = PluginManagerCore.CORE_ID,
+                                             serializer = ByteArraySettingValueSerializer) {
+    tags = listOf(CacheStateTag)
+  }
+  controller.setItem(settingsDescriptor, Random(42).nextBytes(4096))
 }
 
 private suspend fun getCacheStorageAsMap(): Map<String, String> {

@@ -5,6 +5,7 @@ package com.intellij.platform.settings.local
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
@@ -25,6 +27,7 @@ import com.intellij.platform.settings.SettingValueSerializer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.*
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
@@ -82,10 +85,12 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
     }
   }
 
-  fun <T : Any> getValue(key: String, serializer: SettingValueSerializer<T>): T? {
+  fun <T : Any> getValue(key: String, serializer: SettingValueSerializer<T>, pluginId: PluginId): T? {
     val start = System.nanoTime()
+    var bytes: ByteArray? = null
     try {
-      val result = map.get(key)?.let { serializer.decode(it) }
+      bytes = map.get(key)
+      val result = bytes?.let { serializer.decode(it) }
       getMeasurer.add(System.nanoTime() - start)
       return result
     }
@@ -95,13 +100,33 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
     catch (e: ProcessCanceledException) {
       throw e
     }
+    catch (e: SerializationException) {
+      var message = "Cannot deserialize value for key $key (size=${bytes?.size ?: "null"}"
+      try {
+        map.remove(key)
+        if (bytes == null || bytes.isEmpty()) {
+          message += ")"
+        }
+        else {
+          val keyForInvestigation = "${key}.__corrupted__"
+          map.put(keyForInvestigation, bytes)
+          message += ", value will be stored under key ${keyForInvestigation})"
+        }
+      }
+      catch (e: Throwable) {
+        e.addSuppressed(e)
+      }
+
+      thisLogger().error(PluginException(message, e, pluginId))
+      return null
+    }
     catch (e: Throwable) {
-      thisLogger().error(e)
+      thisLogger().error(PluginException("Cannot deserialize value for key $key", e, pluginId))
       return null
     }
   }
 
-  fun <T : Any> setValue(key: String, value: T?, serializer: SettingValueSerializer<T>) {
+  fun <T : Any> setValue(key: String, value: T?, serializer: SettingValueSerializer<T>, pluginId: PluginId) {
     val start = System.nanoTime()
     try {
       if (value == null) {
@@ -120,7 +145,7 @@ internal class CacheStatePropertyService(componentManager: ComponentManager) : D
       throw e
     }
     catch (e: Throwable) {
-      thisLogger().error(e)
+      thisLogger().error(PluginException(e, pluginId))
     }
   }
 }
