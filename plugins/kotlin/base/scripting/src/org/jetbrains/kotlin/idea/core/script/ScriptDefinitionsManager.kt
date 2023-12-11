@@ -366,7 +366,7 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
     private val definitionsLock = ReentrantLock()
 
     // Support for insertion order is crucial because 'getSources()' is based on EP order in XML (default configuration source goes last)
-    private val definitionsBySource = ConcurrentHashMap<ScriptDefinitionsSource, List<ScriptDefinition>>()
+    private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
