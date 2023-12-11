@@ -22,6 +22,24 @@ public final class HashCodeBuilder extends org.apache.commons.lang3.builder.Hash
     return this;
   }
 
+  @Override
+  public HashCodeBuilder append(int value) {
+    super.append(value);
+    return this;
+  }
+
+  @Override
+  public HashCodeBuilder append(Object array) {
+    super.append(array);
+    return this;
+  }
+
+  @Override
+  public HashCodeBuilder appendSuper(final int superHashCode) {
+    super.appendSuper(superHashCode);
+    return this;
+  }
+
   public static int reflectionHashCode(Object object) {
     return reflectionHashCode(17, 37, object, false);
   }

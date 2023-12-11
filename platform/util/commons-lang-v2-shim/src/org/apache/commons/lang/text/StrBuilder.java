@@ -18,4 +18,22 @@ public final class StrBuilder extends org.apache.commons.lang3.text.StrBuilder {
   public StrBuilder(String str) {
     super(str);
   }
+
+  @Override
+  public StrBuilder append(String str) {
+    super.append(str);
+    return this;
+  }
+
+  @Override
+  public StrBuilder append(int v) {
+    super.append(v);
+    return this;
+  }
+
+  @Override
+  public StrBuilder appendNewLine() {
+    super.appendNewLine();
+    return this;
+  }
 }

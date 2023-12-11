@@ -8,4 +8,31 @@ package org.apache.commons.lang.builder;
  */
 @Deprecated(forRemoval = true)
 public final class EqualsBuilder extends org.apache.commons.lang3.builder.EqualsBuilder {
+  @Override
+  public EqualsBuilder append(Object lhs, Object rhs) {
+    return (EqualsBuilder)super.append(lhs, rhs);
+  }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static boolean reflectionEquals(Object lhs, Object rhs) {
+    return org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals(lhs, rhs);
+  }
+
+  @Override
+  public EqualsBuilder append(int lhs, int rhs) {
+    super.append(lhs, rhs);
+    return this;
+  }
+
+  @Override
+  public EqualsBuilder append(boolean lhs, boolean rhs) {
+    super.append(lhs, rhs);
+    return this;
+  }
+
+  @Override
+  public EqualsBuilder appendSuper(boolean superEquals) {
+    super.appendSuper(superEquals);
+    return this;
+  }
 }
