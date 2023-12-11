@@ -12,7 +12,6 @@ import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
@@ -44,8 +43,8 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
-  public @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-    return List.of(myJumpOffset.getInstructionOffset());
+  public int @NotNull [] getPossibleTargets() {
+    return new int[] {myJumpOffset.getInstructionOffset()};
   }
 
   @NotNull

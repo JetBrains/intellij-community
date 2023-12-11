@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class TryCatchAllTrap implements DfaControlTransferValue.Trap {
@@ -23,7 +22,7 @@ public class TryCatchAllTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
-  public @NotNull Collection<@NotNull Integer> getPossibleTargets() {
+  public int @NotNull [] getPossibleTargets() {
     return DfaControlTransferValue.Trap.super.getPossibleTargets();
   }
 
