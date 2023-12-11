@@ -6,14 +6,19 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.*
-import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.systemIndependentPath
@@ -36,6 +41,31 @@ class JbSettingsImporter(private val configDirPath: Path,
 ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
   private val defaultNewUIValue = true
+
+  // these are options that need to be reloaded after restart
+  // for instance, LaFManager, because the actual theme might be provided by a plugin.
+  // Same applies to the Keymap manager.
+  // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
+  suspend fun importLastOptions(categories: Set<SettingsCategory>) {
+    if (!categories.contains(SettingsCategory.KEYMAP) && !categories.contains(SettingsCategory.UI)) {
+      return
+    }
+    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    withExternalStreamProvider(storageManager) {
+      if (categories.contains(SettingsCategory.KEYMAP)) {
+        // ensure component is loaded
+        KeymapManager.getInstance()
+        componentStore.reloadState(KeymapManagerImpl::class.java)
+      }
+      if (categories.contains(SettingsCategory.UI)) {
+        // ensure component is loaded
+        LafManager.getInstance()
+        EditorColorsManager.getInstance()
+        componentStore.reloadState(LafManagerImpl::class.java)
+        componentStore.reloadState(EditorColorsManagerImpl::class.java)
+      }
+    }
+  }
 
   /**
    * Imports options from XML files and applies them to the application.
@@ -84,21 +114,20 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     loadNotLoadedComponents(notLoadedComponents)
 
-    LOG.info("Detected ${allFiles.size} files to import: ${allFiles.joinToString()}")
-    val componentsAndFilesMap = filterComponents(allFiles, categories)
-    val filesSet = componentsAndFilesMap.values.toSet()
-
-    LOG.info("After filtering we have ${filesSet.size} files to import: ${filesSet.joinToString()}")
+    LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
+    val componentAndFilesMap = filterComponents(allFiles, categories)
+    val componentFiles = componentAndFilesMap.values.toSet()
+    LOG.info("After filtering we have ${componentFiles.size} component files to import: ${componentFiles.joinToString()}")
+    val schemeFiles = filterSchemes(allFiles, categories)
+    LOG.info("After filtering we have ${schemeFiles.size} scheme files to import: ${schemeFiles.joinToString()}")
 
     // setting dummy valueChangeListener, so effects won't affect the UI, etc.
     Registry.setValueChangeListener(object : RegistryValueListener {
       // do nothing
     })
-    val provider = ImportStreamProvider(configDirPath)
-    storageManager.addStreamProvider(provider)
-    componentStore.reloadComponents(filesSet, emptyList(), componentsAndFilesMap.keys)
-    storageManager.removeStreamProvider(provider::class.java)
-    saveSettings(ApplicationManager.getApplication(), true)
+    withExternalStreamProvider(storageManager) {
+      componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
+    }
     RegistryManager.getInstanceAsync().resetValueChangeListener()
 
     // there's currently only one reason to restart after reading configs
@@ -106,7 +135,17 @@ class JbSettingsImporter(private val configDirPath: Path,
     return Registry.getInstance().isRestartNeeded
   }
 
-  private fun loadNotLoadedComponents(notLoadedComponents: List<String>) {
+  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: ()->Unit) {
+    val provider = ImportStreamProvider(configDirPath)
+    storageManager.addStreamProvider(provider)
+
+    action()
+
+    storageManager.removeStreamProvider(provider::class.java)
+    saveSettings(ApplicationManager.getApplication(), true)
+  }
+
+  private fun loadNotLoadedComponents(notLoadedComponents: Collection<String>) {
     val appServiceClasses = hashSetOf<Class<*>>()
     (ApplicationManager.getApplication() as ComponentManagerImpl).processAllImplementationClasses { componentClass, _ ->
       appServiceClasses.add(componentClass)
@@ -222,7 +261,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     return retval
   }
 
-  private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
+  private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): Set<String> {
     val retval = hashSetOf<String>()
     val schemeCategories = hashSetOf<String>()
     // fileSpec is e.g. keymaps/mykeymap.xml
@@ -240,7 +279,7 @@ class JbSettingsImporter(private val configDirPath: Path,
         retval.add(file)
       }
     }
-    return retval.toList()
+    return retval
   }
 
   fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {

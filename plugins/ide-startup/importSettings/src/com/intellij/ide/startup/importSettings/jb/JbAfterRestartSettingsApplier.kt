@@ -41,7 +41,7 @@ private class JbAfterRestartSettingsApplier : ApplicationInitializedListener {
         }
         val importer = JbSettingsImporter(oldConfDir, oldConfDir, null)
         withContext(Dispatchers.EDT) {
-          importer.importOptions(options)
+          importer.importLastOptions(options)
         }
       } catch (e: Throwable) {
         JbImportServiceImpl.LOG.warn("An exception occurred while importing $configPathFile", e)
