@@ -124,13 +124,14 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             PsiFile dependencyFile = dependency.getContainingFile();
             if (dependencyFile != null) {
               if (viewProvider == dependencyFile.getViewProvider()) return;
-              if (dependencyFile.isPhysical()) {
-                final VirtualFile depFile = dependencyFile.getVirtualFile();
-                if (depFile != null
-                    && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
-                    && (myTargetScope == null || myTargetScope.contains(depFile))) {
-                  final PsiElement navigationElement = dependencyFile.getNavigationElement();
-                  found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
+              final VirtualFile depFile = dependencyFile.getVirtualFile();
+              if (depFile != null
+                  && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
+                  && (myTargetScope == null || myTargetScope.contains(depFile))) {
+                final PsiElement navigationElement = dependencyFile.getNavigationElement();
+                PsiFile navigationFile = navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile;
+                if (navigationFile.isPhysical()) {
+                  found.add(navigationFile);
                 }
               }
             }
