@@ -28,8 +28,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.settings.CacheStateTag
 import com.intellij.platform.settings.SettingsController
-import com.intellij.platform.settings.objectSettingValueSerializer
-import com.intellij.platform.settings.settingDescriptorFactoryFactory
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
@@ -65,14 +65,14 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   }
 
   // this will be injected by ComponentManager (a client will request it from a coroutine scope as a service)
-  private val settingDescriptorFactory = settingDescriptorFactoryFactory(PluginManagerCore.CORE_ID)
+  private val settingDescriptorFactory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
 
   private val pluginCache: LinkedHashMap<String, PluginData>
   private val isChanged = AtomicBoolean()
 
   private val settingDescriptor = settingDescriptorFactory.settingDescriptor(
     key = "pluginAdvertiserExtensions",
-    serializer = objectSettingValueSerializer<PluginAdvertiserExtensionsState>(),
+    serializer = settingDescriptorFactory.objectSerializer<PluginAdvertiserExtensionsState>(),
   ) {
     tags = listOf(CacheStateTag)
   }

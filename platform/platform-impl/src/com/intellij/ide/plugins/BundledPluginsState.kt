@@ -14,7 +14,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.settings.CacheStateTag
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
-import com.intellij.platform.settings.settingDescriptor
+import com.intellij.platform.settings.settingDescriptorFactory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -61,11 +61,11 @@ class BundledPluginsState : ApplicationInitializedListener {
 @VisibleForTesting
 suspend fun saveBundledPluginsState() {
   val settingsController = serviceAsync<SettingsController>()
-  val settingsDescriptor = settingDescriptor("bundled.plugins.list.saved.version", PluginManagerCore.CORE_ID) {
+  val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
     tags = listOf(CacheStateTag)
   }
 
-  val savedBuildNumber = getSavedBuildNumber(settingsController, settingsDescriptor)
+  val savedBuildNumber = getSavedBuildNumber(settingsController, settingDescriptor)
   val currentBuildNumber = ApplicationInfo.getInstance().build
 
   val shouldSave = savedBuildNumber == null ||
@@ -79,7 +79,7 @@ suspend fun saveBundledPluginsState() {
   withContext(Dispatchers.IO) {
     try {
       writePluginIdsToFile(bundledPluginIds)
-      setSavedBuildNumber(currentBuildNumber, settingsController, settingsDescriptor)
+      setSavedBuildNumber(currentBuildNumber, settingsController, settingDescriptor)
     }
     catch (e: IOException) {
       LOG.warn("Unable to save bundled plugins list", e)

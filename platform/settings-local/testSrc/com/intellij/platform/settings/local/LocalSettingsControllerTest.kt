@@ -13,12 +13,14 @@ import kotlin.random.Random
 
 @TestApplication
 class LocalSettingsControllerTest {
+  private val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
+
   @Test
   fun `cache string value state`() = runBlocking<Unit> {
     serviceAsync<CacheStatePropertyService>().clear()
 
     val controller = serviceAsync<SettingsController>()
-    val settingsDescriptor = settingDescriptor("test.flag", PluginManagerCore.CORE_ID) {
+    val settingsDescriptor = factory.settingDescriptor("test.flag") {
       tags = listOf(CacheStateTag)
     }
 
@@ -33,7 +35,7 @@ class LocalSettingsControllerTest {
     serviceAsync<CacheStatePropertyService>().clear()
 
     val controller = serviceAsync<SettingsController>()
-    val settingsDescriptor = settingDescriptor("test.flag", PluginManagerCore.CORE_ID, objectSettingValueSerializer<CustomObject>()) {
+    val settingsDescriptor = factory.settingDescriptor("test.flag", factory.objectSerializer<CustomObject>()) {
       tags = listOf(CacheStateTag)
     }
 
@@ -48,10 +50,10 @@ class LocalSettingsControllerTest {
   fun `cache object map value state`() = runBlocking<Unit> {
     serviceAsync<CacheStatePropertyService>().clear()
 
+    val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
+
     val controller = serviceAsync<SettingsController>()
-    val settingsDescriptor = settingDescriptor("test.flag",
-                                               PluginManagerCore.CORE_ID,
-                                               MapSettingValueSerializerDelegate(String::class.java, String::class.java)) {
+    val settingsDescriptor = factory.settingDescriptor("test.flag", factory.mapSerializer<String, String>()) {
       tags = listOf(CacheStateTag)
     }
 

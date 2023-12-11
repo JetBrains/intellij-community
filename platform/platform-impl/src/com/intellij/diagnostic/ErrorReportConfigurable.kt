@@ -12,8 +12,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.settings.CacheStateTag
 import com.intellij.platform.settings.SettingsController
-import com.intellij.platform.settings.objectSettingValueSerializer
-import com.intellij.platform.settings.settingDescriptorFactoryFactory
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.serialization.Serializable
@@ -52,11 +52,11 @@ internal class ErrorReportConfigurable {
   }
 
   // this will be injected by ComponentManager (a client will request it from a coroutine scope as a service)
-  private val settingDescriptorFactory = settingDescriptorFactoryFactory(PluginManagerCore.CORE_ID)
+  private val settingDescriptorFactory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
 
   private val settingDescriptor = settingDescriptorFactory.settingDescriptor(
     key = "ideErrorReporter.developerList",
-    serializer = objectSettingValueSerializer<DeveloperList>(),
+    serializer = settingDescriptorFactory.objectSerializer<DeveloperList>(),
   ) {
     tags = listOf(CacheStateTag)
   }

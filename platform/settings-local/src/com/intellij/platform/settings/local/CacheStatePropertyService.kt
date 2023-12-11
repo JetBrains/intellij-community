@@ -47,7 +47,7 @@ private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
 @ApiStatus.Internal
 @Service(Service.Level.APP, Service.Level.PROJECT)
 internal class CacheStatePropertyService(componentManager: ComponentManager) : Disposable, SettingsSavingComponent {
-  private val map: PersistentMapBase<String, ByteArray> = createOrResetPersistentMap(getStorageDir(componentManager))
+  private val map = createOrResetPersistentMap(getStorageDir(componentManager))
   private val isChanged = AtomicBoolean(false)
 
   private val meter: Meter = TelemetryManager.getMeter(cacheScope)
@@ -164,7 +164,7 @@ private class CacheStateStorageInvalidator : CachesInvalidator() {
   }
 }
 
-private fun createOrResetPersistentMap(dbDir: Path): PersistentMapBase<String, ByteArray> {
+private fun createOrResetPersistentMap(dbDir: Path): PersistentMapImpl<String, ByteArray> {
   val markerFile = dbDir.resolve(".invalidated")
   if (Files.exists(markerFile)) {
     NioFiles.deleteRecursively(dbDir)
@@ -185,7 +185,7 @@ private fun createOrResetPersistentMap(dbDir: Path): PersistentMapBase<String, B
   return createPersistentMap(dbFile)
 }
 
-private fun createPersistentMap(dbFile: Path): PersistentMapBase<String, ByteArray> {
+private fun createPersistentMap(dbFile: Path): PersistentMapImpl<String, ByteArray> {
   val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<String> {
     override fun getHashCode(value: String) = Hashing.komihash5_0().hashCharsToInt(value)
 
@@ -210,7 +210,7 @@ private fun createPersistentMap(dbFile: Path): PersistentMapBase<String, ByteArr
       return result
     }
   })
-    .withStorageLockContext(StorageLockContext(true, true, true))
+    .withStorageLockContext(StorageLockContext(/* useReadWriteLock = */ true, /* cacheChannels = */ true, /* disableAssertions = */ true))
     .withVersion(2)
 
   return PersistentMapImpl(builder, PersistentHashMapValueStorage.CreationTimeOptions(/* readOnly = */ false,

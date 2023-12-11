@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
@@ -8,11 +9,11 @@ import org.jetbrains.annotations.ApiStatus
 //todo this will be injected by ComponentManager (a client will request it from a coroutine scope as a service),
 // pluginId will be from coroutine scope
 @ApiStatus.Internal
-fun settingDescriptorFactoryFactory(pluginId: PluginId): SettingDescriptorFactory = SettingDescriptorFactoryImpl(pluginId)
+fun settingDescriptorFactory(pluginId: PluginId): SettingDescriptorFactory = SettingDescriptorFactoryImpl(pluginId)
 
 private class SettingDescriptorFactoryImpl(private val pluginId: PluginId) : SettingDescriptorFactory {
   override fun settingDescriptor(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<String> {
-    return settingDescriptor(key = key, pluginId = pluginId, block = block)
+    return SettingDescriptor.Builder().apply(block = block).build(key = key, pluginId = pluginId, serializer = StringSettingValueSerializer)
   }
 
   override fun <T : Any> settingDescriptor(key: String,
@@ -24,6 +25,38 @@ private class SettingDescriptorFactoryImpl(private val pluginId: PluginId) : Set
   override fun group(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptorTemplateFactory {
     return SettingDescriptorTemplateFactoryImpl(key = key, pluginId = pluginId, block = block)
   }
+
+  override fun <T : Any> objectSerializer(aClass: Class<T>): SettingValueSerializer<T> {
+    return ObjectSettingValueSerializer(aClass)
+  }
+
+  override fun <K : Any, V> mapSerializer(keyClass: Class<K>, valueClass: Class<V>): SettingValueSerializer<Map<K, V>> {
+    return MapSettingValueSerializer(keyClass, valueClass)
+  }
+}
+
+private class ObjectSettingValueSerializer<T : Any>(private val aClass: Class<T>) : SettingValueSerializer<T> {
+  // don't resolve service as a part of service descriptor creation
+  private val impl by lazy(LazyThreadSafetyMode.NONE) {
+    ApplicationManager.getApplication().getService(ObjectSettingValueSerializerFactory::class.java).objectSerializer(aClass)
+  }
+
+  override fun encode(value: T): ByteArray = impl.encode(value)
+
+  override fun decode(input: ByteArray): T = impl.decode(input)
+}
+
+private class MapSettingValueSerializer<K : Any, V : Any?>(
+  keyClass: Class<K>,
+  valueClass: Class<V>,
+) : SettingValueSerializer<Map<K, V>> {
+  private val impl by lazy(LazyThreadSafetyMode.NONE) {
+    ApplicationManager.getApplication().getService(ObjectSettingValueSerializerFactory::class.java).mapSerializer(keyClass, valueClass)
+  }
+
+  override fun encode(value: Map<K, V>): ByteArray = impl.encode(value)
+
+  override fun decode(input: ByteArray): Map<K, V> = impl.decode(input)
 }
 
 private class SettingDescriptorTemplateFactoryImpl(
@@ -54,4 +87,13 @@ private class SettingImpl<T : Any>(
   override suspend fun get(): T? = serviceAsync<SettingsController>().getItem(settingDescriptor)
 
   override suspend fun set(value: T?) = serviceAsync<SettingsController>().setItem(settingDescriptor, value)
+}
+
+@Suppress("ConvertObjectToDataObject")
+internal object StringSettingValueSerializer : SettingValueSerializer<String> {
+  override fun encode(value: String): ByteArray = value.encodeToByteArray()
+
+  override fun decode(input: ByteArray): String = input.decodeToString()
+
+  override fun toString(): String = "StringSettingValueSerializer"
 }

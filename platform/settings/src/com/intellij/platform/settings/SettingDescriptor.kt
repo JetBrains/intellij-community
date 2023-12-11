@@ -1,14 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ConvertObjectToDataObject")
 
 package com.intellij.platform.settings
 
 import com.intellij.openapi.extensions.PluginId
-
-// Implementation note: API to use when you do not have a service
-inline fun settingDescriptor(key: String, pluginId: PluginId, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<String> {
-  return SettingDescriptor.Builder().apply(block).build(key = key, pluginId = pluginId, serializer = StringSettingValueSerializer)
-}
 
 inline fun <T : Any> settingDescriptor(key: String,
                                        pluginId: PluginId,
@@ -32,6 +27,16 @@ sealed interface SettingDescriptorFactory {
                                   block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<T>
 
   fun group(key: String, block: SettingDescriptor.Builder.() -> Unit): SettingDescriptorTemplateFactory
+
+  /**
+   * See [com.intellij.platform.settings.mapSerializer]
+   */
+  fun <T: Any> objectSerializer(aClass: Class<T>): SettingValueSerializer<T>
+
+  /**
+   * See [com.intellij.platform.settings.objectSerializer]
+   */
+  fun <K : Any, V: Any?> mapSerializer(keyClass: Class<K>, valueClass: Class<V>): SettingValueSerializer<Map<K, V>>
 }
 
 sealed interface SettingDescriptorTemplateFactory {
@@ -91,9 +96,7 @@ class SettingDescriptor<T : Any> private constructor(
     return result
   }
 
-  override fun toString(): String {
-    return "SettingDescriptor(key='$key', pluginId=$pluginId, tags=$tags, serializer=$serializer)"
-  }
+  override fun toString() = "SettingDescriptor(key='$key', pluginId=$pluginId, tags=$tags, serializer=$serializer)"
 }
 
 /**
@@ -114,13 +117,14 @@ class PropertyManagerAdapterTag(val oldKey: String) : SettingTag
 // Implementation note 1: We don't use a tag with an enum field like RoamingType, but rather a bare tag, as it's more concise.
 // Clients can add multiple tags in any case, so there's no concern that conflicting tags may be specified for the same setting.
 // Implementation note 2: stored in a config dir rather in a system dir (see CacheStateTag)
-object NonShareableStateTag : SettingTag
+object NonShareableStateTag : SettingTag {
+  override fun toString() = "NonShareableStateTag"
+}
 
 /**
  * Similar to [NonShareableStateTag], but acts as a cache-like state. It isn't crucial if the stored value is lost frequently.
  */
 // Implementation note: stored in a system dir (see NonShareableStateTag)
-@Suppress("ConvertObjectToDataObject")
 object CacheStateTag : SettingTag {
   override fun toString() = "CacheStateTag"
 }

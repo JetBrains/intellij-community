@@ -12,8 +12,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.settings.CacheStateTag
-import com.intellij.platform.settings.objectSettingValueSerializer
-import com.intellij.platform.settings.settingDescriptorFactoryFactory
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -42,8 +42,10 @@ class PluginFeatureService {
     @JvmField val featureMap: Map<@NonNls String, FeaturePluginData> = emptyMap(),
   )
 
-  private val serializer = objectSettingValueSerializer<FeaturePluginList>()
-  private val settingGroup = settingDescriptorFactoryFactory(PluginId.getId("com.intellij")).group(key = "pluginFeature") {
+  private val factory = settingDescriptorFactory(PluginId.getId("com.intellij"))
+
+  private val serializer = factory.objectSerializer<FeaturePluginList>()
+  private val settingGroup = factory.group(key = "pluginFeature") {
     tags = listOf(CacheStateTag)
   }
 

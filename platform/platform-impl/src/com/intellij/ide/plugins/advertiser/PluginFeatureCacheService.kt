@@ -6,8 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.settings.CacheStateTag
 import com.intellij.platform.settings.Setting
-import com.intellij.platform.settings.objectSettingValueSerializer
-import com.intellij.platform.settings.settingDescriptorFactoryFactory
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -23,8 +23,9 @@ class PluginFeatureCacheService {
     fun getInstance(): PluginFeatureCacheService = service()
   }
 
-  private val serializer = objectSettingValueSerializer<PluginFeatureMap>()
-  private val settingGroup = settingDescriptorFactoryFactory(PluginManagerCore.CORE_ID).group(key = "pluginFeatureCache") {
+  private val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
+  private val serializer = factory.objectSerializer<PluginFeatureMap>()
+  private val settingGroup = factory.group(key = "pluginFeatureCache") {
     tags = listOf(CacheStateTag)
   }
 

@@ -1,18 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:Suppress("OPT_IN_USAGE")
 
 package com.intellij.platform.settings.local
 
 import com.intellij.platform.settings.ObjectSettingValueSerializerFactory
 import com.intellij.platform.settings.SettingValueSerializer
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.serializer
 
 private class ProtobufObjectSettingValueSerializerFactory : ObjectSettingValueSerializerFactory {
-  override fun <T : Any> objectValueSerializer(aClass: Class<T>): SettingValueSerializer<T> {
+  override fun <T : Any> objectSerializer(aClass: Class<T>): SettingValueSerializer<T> {
     @Suppress("UNCHECKED_CAST")
     return ProtobufSettingValueSerializer(serializer(aClass) as KSerializer<T>)
   }
