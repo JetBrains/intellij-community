@@ -34,9 +34,9 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testInheritorWarnings() {
     UiInterceptors.register(new ConflictInterceptor(
       List.of(
-        "() -> {...} in x() in InheritorWarnings.AX will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class",
-        "interface <b><code>InheritorWarnings.SomethingSub</code></b> implementing interface <b><code>InheritorWarnings.Something</code></b> will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class",
-        "enum <b><code>InheritorWarnings.SomethingEnum</code></b> implementing interface <b><code>InheritorWarnings.Something</code></b> will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class"
+        "() -> {...} in x() in AX will not compile after converting interface <b><code>Something</code></b> to a class",
+        "interface <b><code>SomethingSub</code></b> implementing interface <b><code>Something</code></b> will not compile after converting interface <b><code>Something</code></b> to a class",
+        "enum <b><code>SomethingEnum</code></b> implementing interface <b><code>Something</code></b> will not compile after converting interface <b><code>Something</code></b> to a class"
       )));
     doTest();
   }
