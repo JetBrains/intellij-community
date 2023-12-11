@@ -10,7 +10,6 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.registerUProblem
-import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -42,7 +41,7 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("org.mockito.Mockito", "verify.*")
     .add("org.mockito.InOrder", "verify")
     .add("org.junit.rules.ExpectedException", "expect.*")
-    .add(ORG_HAMCREST_MATCHER_ASSERT, "assertThat")
+    .add("org.hamcrest.MatcherAssert", "assertThat")
     .add("mockit.Verifications", "Verifications")
     .add("kotlin.PreconditionsKt__AssertionsJVMKt", "assert")
     .add("kotlin.test.AssertionsKt__AssertionsKt", "assert.*|fail.*|expect")
