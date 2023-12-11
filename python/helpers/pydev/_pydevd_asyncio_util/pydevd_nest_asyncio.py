@@ -215,6 +215,9 @@ if IS_ASYNCIO_DEBUGGER_ENV:
             Simplified re-implementation of asyncio's _run_once that
             runs handles as they become ready.
             """
+            if not hasattr(self, '_compute_internal_coro'):
+                self._compute_internal_coro = False
+
             ready = self._ready
             scheduled = self._scheduled
             while scheduled and scheduled[0]._cancelled:
