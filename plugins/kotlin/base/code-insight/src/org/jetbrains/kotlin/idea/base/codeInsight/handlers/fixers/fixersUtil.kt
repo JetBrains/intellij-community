@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
-val PsiElement.range: TextRange get() = textRange!!
+val PsiElement.range: TextRange get() = textRange ?: error(if (isPhysical) "No text range for $this" else "No text range is expected for non-physical element $this")
 val TextRange.start: Int get() = startOffset
 val TextRange.end: Int get() = endOffset
 
