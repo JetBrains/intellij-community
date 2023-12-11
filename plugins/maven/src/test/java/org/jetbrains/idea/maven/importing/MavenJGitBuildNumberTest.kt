@@ -20,8 +20,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenJGitBuildNumberTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
   fun testCompletion() = runBlocking {
     importProjectAsync("""
