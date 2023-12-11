@@ -723,6 +723,10 @@ fun <T : CommandChain> T.authenticateInGrazie(token: String): T = apply {
   addCommand("${CMD_PREFIX}authenticateInGrazie ${token}")
 }
 
+fun <T : CommandChain> T.waitFullLineModelLoaded(language: String): T = apply {
+  addCommand("${CMD_PREFIX}waitFullLineModelLoaded ${language}")
+}
+
 fun <T : CommandChain> T.createJavaFile(fileName: String, filePath: String, fileType: String): T = apply {
   addCommand("${CMD_PREFIX}createJavaFile $fileName,$filePath,$fileType")
 }
