@@ -281,6 +281,7 @@ tasks {
     // To make sure that the property will be evaluated only once
     localPaths.finalizeValueOnRead()
     offline.set(true)
+    teamCityOutputFormat.set(isTeamcity)
   }
 
   signPlugin {

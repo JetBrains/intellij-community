@@ -33,6 +33,9 @@ fun Project.findBooleanProperty(name: String): Boolean {
   return property.toBoolean()
 }
 
+val Project.isTeamcity: Boolean
+  get() = providers.environmentVariable("TEAMCITY_VERSION").isPresent
+
 val Project.isAutomatedBuild: Boolean
   get() = findBooleanProperty("automatedProductionBuild") || System.getenv("AUTOMATED_PRODUCTION_BUILD") != null
 
