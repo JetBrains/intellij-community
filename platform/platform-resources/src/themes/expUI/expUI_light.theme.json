@@ -759,11 +759,11 @@
     "Tooltip.Learning": {
       "background": "Blue4",
       "borderColor": "Blue4",
-      "spanBackground": "Blue2",
+      "spanBackground": "Blue1",
       "spanForeground": "Grey14",
       "foreground": "Grey14",
       "stepNumberForeground": "Blue9",
-      "codeBorderColor": "#FFFFFFBF"
+      "codeBorderColor": "#FFFFFF80"
     },
 
     "PackageSearch": {
