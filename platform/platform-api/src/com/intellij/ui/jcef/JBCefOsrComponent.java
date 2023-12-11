@@ -456,7 +456,7 @@ class JBCefOsrComponent extends JPanel {
       return e1.getComponent() == e2.getComponent() &&
              e1.getID() == e2.getID() &&
              e1.getModifiersEx() == e2.getModifiersEx() &&
-             e1.isPopupTrigger() == e1.isPopupTrigger() &&
+             e1.isPopupTrigger() == e2.isPopupTrigger() &&
              e1.getScrollType() == e2.getScrollType() &&
              distance < TOLERANCE;
     }
