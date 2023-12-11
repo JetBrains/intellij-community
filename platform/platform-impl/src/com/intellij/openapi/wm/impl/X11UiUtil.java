@@ -302,6 +302,11 @@ public final class X11UiUtil {
     return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
   }
 
+  public static boolean isUndefinedDesktop() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop == null;
+  }
+
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
