@@ -26,6 +26,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
       .setProject(myProject)
       .setModalContext(false)
+      .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelKeyEnabled(false)

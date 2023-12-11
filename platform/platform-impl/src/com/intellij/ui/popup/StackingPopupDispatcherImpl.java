@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,9 +115,17 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           return false;
         }
 
-        final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
-        if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
-          return false;
+        if (!StartupUiUtil.isWaylandToolkit()) {
+          final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
+          if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
+            return false;
+          }
+        } else {
+          // In Wayland "location on screen" is not available, so do close unless the event came
+          // directly from the popup itself.
+          if (window == popup.getPopupWindow() || !popup.isCancelOnClickOutside()) {
+            return false;
+          }
         }
 
         if (!popup.canClose()){
