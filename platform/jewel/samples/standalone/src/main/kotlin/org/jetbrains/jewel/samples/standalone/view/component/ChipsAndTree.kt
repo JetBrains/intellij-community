@@ -71,6 +71,7 @@ fun SelectableLazyColumnSample() {
     }
 
     LaunchedEffect(Unit) {
+        @Suppress("InjectDispatcher") // Ok for demo code
         launch(Dispatchers.Default) {
             listOfItems = List(5_000_000) { "Item $it" }
         }
