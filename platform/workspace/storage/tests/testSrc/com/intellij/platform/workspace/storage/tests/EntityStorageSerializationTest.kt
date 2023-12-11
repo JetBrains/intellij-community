@@ -284,7 +284,6 @@ private val expectedKryoRegistration = """
   java.util.IdentityHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
-  com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
   com.intellij.util.containers.BidirectionalMultiMap
   com.google.common.collect.HashBiMap
