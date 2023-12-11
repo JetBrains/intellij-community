@@ -625,10 +625,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   return distState
 }
 
-private fun buildProjectArtifacts(platform: PlatformLayout,
-                                  enabledPluginModules: Set<String>,
-                                  compilationTasks: CompilationTasks,
-                                  context: BuildContext) {
+private suspend fun buildProjectArtifacts(platform: PlatformLayout,
+                                          enabledPluginModules: Set<String>,
+                                          compilationTasks: CompilationTasks,
+                                          context: BuildContext) {
   val artifactNames = LinkedHashSet<String>()
   artifactNames.addAll(platform.includedArtifacts.keys)
   getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)

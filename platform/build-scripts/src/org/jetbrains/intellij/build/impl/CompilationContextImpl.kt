@@ -13,6 +13,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -41,7 +42,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
-@JvmOverloads
+@Obsolete
 fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
                                      projectHome: Path,
                                      defaultOutputRoot: Path,

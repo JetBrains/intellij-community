@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -17,7 +18,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
     }
   }
 
-  override fun buildProjectArtifacts(artifactNames: Set<String>) {
+  override suspend fun buildProjectArtifacts(artifactNames: Set<String>) {
     if (artifactNames.isEmpty()) {
       return
     }
@@ -28,8 +29,8 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
     }
 
     spanBuilder("build project artifacts")
-      .setAttribute(AttributeKey.stringArrayKey("artifactNames"), artifactNames.toList())
-      .useWithScopeBlocking {
+      .setAttribute(AttributeKey.stringArrayKey("artifactNames"), java.util.List.copyOf(artifactNames))
+      .useWithScope {
         jps.buildArtifacts(artifactNames, buildIncludedModules = false)
       }
   }

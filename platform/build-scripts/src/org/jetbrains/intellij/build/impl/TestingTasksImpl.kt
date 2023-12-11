@@ -16,7 +16,6 @@ import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.io.runProcess
@@ -75,10 +74,10 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .toList()
   }
 
-  override fun runTests(additionalJvmOptions: List<String>,
-                        additionalSystemProperties: Map<String, String>,
-                        defaultMainModule: String?,
-                        rootExcludeCondition: ((Path) -> Boolean)?) {
+  override suspend fun runTests(additionalJvmOptions: List<String>,
+                                additionalSystemProperties: Map<String, String>,
+                                defaultMainModule: String?,
+                                rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
@@ -90,7 +89,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val runConfigurations = loadTestRunConfigurations()
 
     try {
-      val compilationTasks = create(context)
+      val compilationTasks = CompilationTasks.create(context)
       options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
         compilationTasks.buildProjectArtifacts(it)
       }
@@ -101,7 +100,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
       }
       else {
-        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOfNotNull(mainModule, "intellij.platform.buildScripts"))
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
+                                        listOfNotNull(mainModule, "intellij.platform.buildScripts"))
       }
     }
     catch (e: Exception) {
@@ -361,7 +361,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
     Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).joinToString(separator = "\n"))
-    @Suppress("NAME_SHADOWING") 
+    @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
@@ -551,8 +551,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
-  override fun runTestsSkippedInHeadlessEnvironment() {
-    create(context).compileAllModulesAndTests()
+  override suspend fun runTestsSkippedInHeadlessEnvironment() {
+    CompilationTasks.create(context).compileAllModulesAndTests()
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
       options.batchTestIncludes = it.getFirst()
@@ -643,10 +643,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
         // Run JUnit 4 and 5 whole test classes separately
         if (options.isDedicatedRuntimePerClassEnabled && jUnit4And5TestMethods.isNotEmpty()) {
-          val exitCode = runJUnit5Engine(
-            systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
-            qName, null)
-          noTests = noTests && exitCode == NO_TESTS_ERROR
+          val exitCode = runJUnit5Engine(systemProperties = systemProperties,
+                                         jvmArgs = jvmArgs,
+                                         envVariables = envVariables,
+                                         bootstrapClasspath = bootstrapClasspath,
+                                         modulePath = null,
+                                         testClasspath = testClasspath,
+                                         suiteName = qName,
+                                         methodName = null)
+          noTests = exitCode == NO_TESTS_ERROR
         }
         // Run JUnit 4 and 5 test methods separately if any
         else if (jUnit4And5TestMethods.isNotEmpty()) {

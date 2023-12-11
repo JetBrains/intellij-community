@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -153,12 +154,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              canceledStatus = canceledStatus)
   }
 
-  @Deprecated("", ReplaceWith("buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)"))
-  fun buildArtifacts(artifactNames: Set<String>) {
-    buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)
-  }
-
-  fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
+  suspend fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
     val artifacts = getArtifactsWithIncluded(artifactNames)
     val missing = artifactNames.filter { name ->
       artifacts.none { it.name == name }
@@ -214,24 +210,24 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 
   // FIXME: workaround for sporadically missing build artifacts, to be investigated
-  private fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
+  private suspend fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
     val modules = getModulesIncludedInArtifacts(artifacts)
     require(modules.isNotEmpty()) {
       "No modules found for artifacts ${artifacts.map { it.name }}"
     }
-    artifacts.forEach {
-      context.compilationData.builtArtifacts.remove(it.name)
+    for (artifact in artifacts) {
+      context.compilationData.builtArtifacts.remove(artifact.name)
     }
-    context.messages.block("Compiling modules for missing artifacts: ${modules.joinToString()}") {
+    spanBuilder("Compiling modules for missing artifacts: ${modules.joinToString()}").useWithScope {
       runBuild(moduleSet = modules,
                allModules = false,
                artifactNames = artifacts.map { it.name },
                includeTests = false,
                resolveProjectDependencies = false)
     }
-    artifacts.forEach {
-      if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
-        context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
+    for (artifact in artifacts) {
+      if (artifact.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
+        context.messages.error("${artifact.name} is expected to be built at ${artifact.outputFilePath}")
       }
     }
   }

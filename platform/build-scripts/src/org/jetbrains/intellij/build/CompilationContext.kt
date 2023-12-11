@@ -70,7 +70,7 @@ interface CompilationTasks {
   /**
    * [compileModules] is called if required
    */
-  fun buildProjectArtifacts(artifactNames: Set<String>)
+  suspend fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
   
