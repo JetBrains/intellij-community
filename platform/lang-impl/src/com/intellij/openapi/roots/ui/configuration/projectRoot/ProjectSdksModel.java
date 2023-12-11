@@ -470,6 +470,7 @@ public class ProjectSdksModel implements SdkModel {
     final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
     SdkModificator sdkModificator = newJdk.getSdkModificator();
     sdkModificator.setHomePath(home);
+    sdkModificator.setVersionString(type.getVersionString(home));
     ApplicationManager.getApplication().runWriteAction(() -> {
       sdkModificator.commitChanges();
     });
