@@ -7,7 +7,6 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.DisposableWrapperList;
@@ -40,7 +40,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   public CoverageViewManager(@NotNull Project project) {
     myProject = project;
 
-    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, builder -> {
         builder.sideTool = true;
         builder.icon = AllIcons.Toolwindows.ToolWindowCoverage;
