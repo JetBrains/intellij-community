@@ -39,6 +39,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
@@ -192,13 +193,21 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
       return false;
     }
-    if (gradleVersion == null || isGradleOlderThan(gradleVersion, "8.3")) {
-      LOG.debug("TestLauncher isn't applicable: unsupported Gradle version " + gradleVersion);
+    if (gradleVersion == null) {
+      LOG.debug("TestLauncher isn't applicable: Gradle version cannot be determined");
+      return false;
+    }
+    if (isGradleOlderThan(gradleVersion, "8.3")) {
+      LOG.debug("TestLauncher isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
     }
     var project = id.findProject();
     if (project == null) {
       LOG.debug("TestLauncher isn't applicable: Project is already closed");
+      return false;
+    }
+    if (isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
+      LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
       return false;
     }
     var commandLine = GradleCommandLineUtil.parseCommandLine(tasksAndArguments, settings.getArguments());
@@ -242,6 +251,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
     }
     return false;
+  }
+
+  private static boolean hasProjectIncludedBuild(@NotNull Project project, @NotNull String projectPath) {
+    var projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath);
+    if (projectNode == null) return false;
+    var compositeBuildNode = ExternalSystemApiUtil.find(projectNode, CompositeBuildData.KEY);
+    if (compositeBuildNode == null) return false;
+    var compositeBuildParticipants = compositeBuildNode.getData().getCompositeParticipants();
+    return !compositeBuildParticipants.isEmpty();
   }
 
   private static boolean hasNonTestOptions(@NotNull GradleCommandLine commandLine) {
