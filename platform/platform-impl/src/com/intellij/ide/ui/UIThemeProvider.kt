@@ -82,12 +82,17 @@ class UIThemeProvider {
         return null
       }
 
-      return UITheme.loadFromJson(parentTheme = parentTheme,
-                                  data = data,
-                                  themeId = id!!,
-                                  classLoader = classLoader,
-                                  defaultDarkParent = defaultDarkParent,
-                                  defaultLightParent = defaultLightParent)
+      return UITheme.loadFromJson(
+        parentTheme = parentTheme,
+        data = data,
+        themeId = id!!,
+        classLoader = classLoader,
+        defaultDarkParent = defaultDarkParent,
+        defaultLightParent = defaultLightParent,
+        warn = { message, error ->
+          thisLogger().warn(PluginException(message, error, pluginDescriptor.pluginId))
+        },
+      )
     }
     catch (e: Throwable) {
       thisLogger().warn(PluginException("Cannot load UI theme (path=$path, pluginDescriptor=$pluginDescriptor)",

@@ -19,9 +19,29 @@ class UIThemeBeanTest {
         },
         "name": "Theme Name"
       }
-    """.trimIndent())
+    """.trimIndent(), warn = { m, e -> throw RuntimeException(m, e) })
 
     assertThat(bean.get("author")).isEqualTo("No one")
     assertThat(bean.get("name")).isEqualTo("Theme Name")
+  }
+
+  @Test
+  fun `null as string`() {
+    var error = ""
+    readThemeBeanForTest("""
+      {
+        "author": "No one",
+        "ui": {
+          "Editor": {
+            "tabInsets": "null"
+          }
+        },
+        "name": "Theme Name"
+      }
+    """.trimIndent(), warn = { m, e ->
+      error = m
+    })
+
+    assertThat(error).isEqualTo("Cannot parse null for Editor.tabInsets")
   }
 }
