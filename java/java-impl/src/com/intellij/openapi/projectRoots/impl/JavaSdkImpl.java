@@ -237,7 +237,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     setupSdkPaths(sdk);
 
-    if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
+    if (sdk.getRootProvider().getUrls(OrderRootType.CLASSES).length == 0) {
       String title = JavaBundle.message("sdk.cannot.create");
       String message = JavaBundle.message("sdk.java.no.classes", sdk.getHomePath());
       Messages.showMessageDialog(message, title, Messages.getErrorIcon());
