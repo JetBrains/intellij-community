@@ -46,7 +46,7 @@ private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
 @Suppress("NonDefaultConstructor")
 @ApiStatus.Internal
 @Service(Service.Level.APP, Service.Level.PROJECT)
-internal class CacheStatePropertyService(componentManager: ComponentManager) : Disposable, SettingsSavingComponent {
+internal class CacheStateStorageService(componentManager: ComponentManager) : Disposable, SettingsSavingComponent {
   private val map = createOrResetPersistentMap(getStorageDir(componentManager))
   private val isChanged = AtomicBoolean(false)
 
@@ -175,10 +175,10 @@ private fun createOrResetPersistentMap(dbDir: Path): PersistentMapImpl<String, B
     return createPersistentMap(dbFile)
   }
   catch (e: CorruptedException) {
-    logger<CacheStatePropertyService>().warn("Cache state storage is corrupted (${e.message})")
+    logger<CacheStateStorageService>().warn("Cache state storage is corrupted (${e.message})")
   }
   catch (e: Throwable) {
-    logger<CacheStatePropertyService>().warn("Cannot open cache state storage, will be recreated", e)
+    logger<CacheStateStorageService>().warn("Cannot open cache state storage, will be recreated", e)
   }
 
   NioFiles.deleteRecursively(dbDir)

@@ -17,7 +17,7 @@ class LocalSettingsControllerTest {
 
   @Test
   fun `cache string value state`() = runBlocking<Unit> {
-    serviceAsync<CacheStatePropertyService>().clear()
+    serviceAsync<CacheStateStorageService>().clear()
 
     val controller = serviceAsync<SettingsController>()
     val settingsDescriptor = factory.settingDescriptor("test.flag") {
@@ -32,7 +32,7 @@ class LocalSettingsControllerTest {
 
   @Test
   fun `cache object value state`() = runBlocking<Unit> {
-    serviceAsync<CacheStatePropertyService>().clear()
+    serviceAsync<CacheStateStorageService>().clear()
 
     val controller = serviceAsync<SettingsController>()
     val settingsDescriptor = factory.settingDescriptor("test.flag", factory.objectSerializer<CustomObject>()) {
@@ -48,7 +48,7 @@ class LocalSettingsControllerTest {
 
   @Test
   fun `cache object map value state`() = runBlocking<Unit> {
-    serviceAsync<CacheStatePropertyService>().clear()
+    serviceAsync<CacheStateStorageService>().clear()
 
     val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
 
@@ -88,7 +88,7 @@ private suspend fun corruptValue(key: String, controller: SettingsController) {
 }
 
 private suspend fun getCacheStorageAsMap(): Map<String, String> {
-  return serviceAsync<CacheStatePropertyService>().getCacheStorageAsMap()
+  return serviceAsync<CacheStateStorageService>().getCacheStorageAsMap()
 }
 
 @Serializable

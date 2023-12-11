@@ -22,7 +22,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
         return propertyManager.getValue(tag.oldKey) as T?
       }
       else if (tag is CacheStateTag) {
-        val store = componentManager.serviceAsync<CacheStatePropertyService>()
+        val store = componentManager.serviceAsync<CacheStateStorageService>()
         return store.getValue(getEffectiveKey(key = key), key.serializer, key.pluginId)
       }
     }
@@ -34,7 +34,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
   override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (tag in key.tags) {
       if (tag is CacheStateTag) {
-        val store = componentManager.serviceAsync<CacheStatePropertyService>()
+        val store = componentManager.serviceAsync<CacheStateStorageService>()
         store.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
         return
       }
