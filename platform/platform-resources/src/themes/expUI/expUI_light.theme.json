@@ -622,11 +622,11 @@
       "stepForeground": "Grey7",
       "Header.foreground": "Grey14",
       "shortcutForeground": "Grey14",
-      "shortcutBackground": "Grey5",
+      "shortcutBackground": "Grey4",
       "codeForeground": "Grey14",
       "codeBackground": "Grey2",
       "codeBorderColor": "Grey6",
-      "linkForeground": "Blue7",
+      "linkForeground": "Blue8",
       "imageBorderColor": "Grey4",
       "animationBackground": "Grey13",
       "Button": {
