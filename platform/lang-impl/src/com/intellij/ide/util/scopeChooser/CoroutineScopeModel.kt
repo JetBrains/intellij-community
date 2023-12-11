@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.text.StringUtil
@@ -59,13 +62,15 @@ internal class CoroutineScopeModel internal constructor(
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
       semaphore.withPermit {
         yield() // dispatch
-        val scopes = if (asyncDataContext == null) {
-          getScopeDescriptors(filter)
-        }
-        else {
-          getScopeDescriptors(asyncDataContext, filter)
-        }
-        fireScopesUpdated(scopes)
+        runCatching {
+          val scopes = if (asyncDataContext == null) {
+            getScopeDescriptors(filter)
+          }
+          else {
+            getScopeDescriptors(asyncDataContext, filter)
+          }
+          fireScopesUpdated(scopes)
+        }.getOrLogException(LOG)
       }
     }
   }
@@ -167,3 +172,5 @@ private val comparator = Comparator { o1: SearchScope, o2: SearchScope ->
 }
 
 private val SearchScope.weight: Int get() = if (this is WeighedItem) weight else Int.MAX_VALUE
+
+private val LOG = logger<CoroutineScopeModel>()
