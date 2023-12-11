@@ -5,6 +5,7 @@ object Mermaid: GitVcsRoot({
   id("Mermaid${BranchConfiguration.IdSuffix}")
   url = "ssh://git@git.jetbrains.team/grazi/mermaid.git"
   branch = BranchConfiguration.Branch
+  branchSpec = BranchConfiguration.BranchSpec
   authMethod = uploadedKey {
     uploadedKey = "default teamcity key"
   }
