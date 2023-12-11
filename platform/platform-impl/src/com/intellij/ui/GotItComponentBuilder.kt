@@ -634,10 +634,12 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    val increasedLineSpacing = htmlBuilder.toString().let {
-      it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")
+    val lineSpacing = htmlBuilder.toString().let {
+      if (it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")) 0.3f
+      else if (it.contains("""<icon src=""")) 0.2f
+      else 0.1f
     }
-    editorKit = createEditorKit(useContrastColors, if (increasedLineSpacing) 0.2f else 0.1f, iconsMap)
+    editorKit = createEditorKit(useContrastColors, lineSpacing, iconsMap)
 
     putClientProperty("caretWidth", 0)
 
