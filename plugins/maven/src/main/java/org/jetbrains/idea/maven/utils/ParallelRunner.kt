@@ -14,12 +14,19 @@ import kotlinx.coroutines.awaitAll
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
 
   suspend fun <T> runInParallel(collection: Collection<T>, method: suspend (T) -> Unit) {
-    val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
-    collection.map {
-      runScope.async {
-        method(it)
-      }
-    }.awaitAll()
+    if (collection.isEmpty()) return;
+    if (collection.size == 1) {
+      method.invoke(collection.first())
+    }
+    else {
+      val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
+      collection.map {
+        runScope.async {
+          method(it)
+        }
+      }.awaitAll()
+    }
+
   }
 
   companion object {
