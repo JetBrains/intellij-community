@@ -305,21 +305,14 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
-    MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency")?.map {
-      MavenId(it.getChildTextTrim("groupId"),
-              it.getChildTextTrim("artifactId"),
-              it.getChildTextTrim("version"))
-    }
+    MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency")?.map { extractId(it) }
     mavenProjectData.declaredDependencies.addAll(
-      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency")
-        .map { MavenId(it.getChildTextTrim("groupId"), it.getChildTextTrim("artifactId"), it.getChildTextTrim("version")) }
-
+      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map { extractId(it) }
     )
 
     mavenProjectData.dependencyManagement.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel.getChild("dependencyManagement"), "dependencies", "dependency")
-        .map { MavenId(it.getChildTextTrim("groupId"), it.getChildTextTrim("artifactId"), it.getChildTextTrim("version")) }
-
+        .map { extractId(it) }
     )
 
     val modelMap = HashMap<String, String>()
@@ -353,6 +346,9 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
   private fun readPlugins(mavenProjectData: MavenProjectData, rootModel: Element) {
     MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
+      val id = extractId(it)
+      val plugin = MavenPlugin(id.groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), emptyList(), emptyList())
+      mavenProjectData.declaredPlugins[trimVersion(id)] = plugin
     }
   }
 
