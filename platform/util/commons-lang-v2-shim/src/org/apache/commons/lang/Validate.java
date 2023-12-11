@@ -20,4 +20,9 @@ public class Validate extends org.apache.commons.lang3.Validate {
       throw new IllegalArgumentException("The validated string is empty");
     }
   }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static <T> T notNull(T object) {
+    return org.apache.commons.lang3.Validate.notNull(object);
+  }
 }

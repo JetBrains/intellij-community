@@ -40,4 +40,9 @@ public final class ReflectionToStringBuilder extends org.apache.commons.lang3.bu
                                        boolean excludeNullValues) {
     super(object, style, buffer, reflectUpToClass, outputTransients, outputStatics, excludeNullValues);
   }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static String toString(Object object, ToStringStyle style) {
+    return org.apache.commons.lang3.builder.ReflectionToStringBuilder.toString(object, style);
+  }
 }
