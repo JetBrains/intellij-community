@@ -121,10 +121,9 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
         int row = getSelectedRow();
         if (row < 0 || row >= myMemberInfos.size()) return false;
-        final M memberInfo = myMemberInfos.get(row);
-        memberInfo.setChecked(!memberInfo.isChecked());
-        fireMemberInfoChange(List.of(memberInfo));
-        myTableModel.fireTableDataChanged();
+        Boolean current = (Boolean)getValueAt(row, CHECKED_COLUMN);
+        setValueAt(!current, row, CHECKED_COLUMN);
+        setRowSelectionInterval(row,row);
         return true;
       }
     }.installOn(this);
@@ -167,7 +166,6 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     ArrayList<M> list = new ArrayList<>(myMemberInfos.size());
     for (M info : myMemberInfos) {
       if (isMemberInfoSelected(info)) {
-//      if (info.isChecked() || (!myMemberInfoModel.isMemberEnabled(info) && myMemberInfoModel.isCheckedWhenDisabled(info))) {
         list.add(info);
       }
     }
