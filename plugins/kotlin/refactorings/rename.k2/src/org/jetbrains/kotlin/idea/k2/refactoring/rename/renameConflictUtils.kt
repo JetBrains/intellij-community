@@ -9,13 +9,12 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
-import org.jetbrains.kotlin.idea.refactoring.conflicts.findSiblingsByName
+import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithFqNameReplacement
@@ -341,23 +340,5 @@ private fun reportShadowing(
 context(KtAnalysisSession)
 private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KtDeclarationSymbol) -> Unit) {
     val declarationSymbol = declaration.getSymbol()
-
-    val nameAsName = Name.identifier(name)
-    fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
-        findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).filter { filterCandidates(declarationSymbol, it) }.forEach(retargetJob)
-    }
-
-    var classOrObjectSymbol = declarationSymbol.getContainingSymbol()
-    while (classOrObjectSymbol != null) {
-        (classOrObjectSymbol as? KtClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
-
-        val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
-        companionObject?.getMemberScope()?.processScope(companionObject)
-
-        classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
-    }
-
-    val file = declaration.containingKtFile
-    getPackageSymbolIfPackageExists(file.packageFqName)?.getPackageScope()?.processScope(null)
-    file.getImportingScopeContext().getCompositeScope().processScope(null)
+    registerRetargetJobOnPotentialCandidates(declaration, name, { filterCandidates(declarationSymbol, it) }, retargetJob)
 }

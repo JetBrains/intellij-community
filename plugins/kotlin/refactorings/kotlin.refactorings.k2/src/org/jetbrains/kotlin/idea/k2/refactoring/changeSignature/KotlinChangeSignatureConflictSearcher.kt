@@ -25,10 +25,10 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFun
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
 import org.jetbrains.kotlin.idea.refactoring.conflicts.areSameSignatures
-import org.jetbrains.kotlin.idea.refactoring.conflicts.checkDeclarationNewNameConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
+import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
+import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -46,8 +46,10 @@ class KotlinChangeSignatureConflictSearcher(
         if (originalInfo.isNameChanged || originalInfo.isParameterSetOrOrderChanged || originalInfo.isParameterTypesChanged) {
             val unresolvableCollisions = mutableListOf<UsageInfo>()
             analyze(function) {
-                checkDeclarationNewNameConflicts(function, Name.identifier(originalInfo.newName), unresolvableCollisions) {
+                registerRetargetJobOnPotentialCandidates(function, originalInfo.newName, {
                     filterCandidates(function, it)
+                }) {
+                    registerAlreadyDeclaredConflict(it, unresolvableCollisions)
                 }
             }
             for (info in unresolvableCollisions) {

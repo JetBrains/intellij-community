@@ -11,12 +11,15 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
@@ -87,7 +90,13 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
     }
 
     override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo {
-        return KotlinTypeInfo(false, null, type)
+        val kotlinType = if (type != null) {
+            val typeRef = KtPsiFactory(project).createType(type)
+            typeRef.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, typeRef]
+        } else null
+
+
+        return KotlinTypeInfo(false, kotlinType, type)
     }
 
     fun testJavaMethodJvmStaticKotlinUsages() = doJavaTest {

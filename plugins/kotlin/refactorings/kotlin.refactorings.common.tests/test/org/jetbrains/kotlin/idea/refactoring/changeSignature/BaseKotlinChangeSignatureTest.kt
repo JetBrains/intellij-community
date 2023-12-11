@@ -920,6 +920,20 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         receiverParameterInfo = null
     }
 
+
+    //-----  conflicts with parents ------------------------
+    fun testAddReceiverConflict() = doTestConflict {
+        receiverParameterInfo = createKotlinParameter("receiver", "String", currentType = "kotlin.String")
+    }
+
+    fun testRemoveParameterInContainingClassConflict() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testRemoveReceiverInContainingClassConflict() = doTestConflict {
+        removeParameter(0)
+    }
+
     // ----  renames ----------------------------------
 
 

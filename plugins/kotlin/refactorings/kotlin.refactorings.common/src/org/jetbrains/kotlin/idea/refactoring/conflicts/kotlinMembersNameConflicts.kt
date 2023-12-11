@@ -182,13 +182,17 @@ fun checkDeclarationNewNameConflicts(
 
     var potentialCandidates = getPotentialConflictCandidates(declaration, newName).filter { filterCandidate(it) }
     for (candidateSymbol in potentialCandidates) {
-        val candidate = candidateSymbol.psi as? PsiNamedElement ?: continue
-
-        val what = candidate.renderDescription()
-        val where = candidate.representativeContainer()?.renderDescription() ?: continue
-        val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
-        result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
+        registerAlreadyDeclaredConflict(candidateSymbol, result)
     }
+}
+
+fun registerAlreadyDeclaredConflict(candidateSymbol: KtDeclarationSymbol, result: MutableList<UsageInfo>) {
+    val candidate = candidateSymbol.psi as? PsiNamedElement ?: return
+
+    val what = candidate.renderDescription()
+    val where = candidate.representativeContainer()?.renderDescription() ?: return
+    val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
+    result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
 }
 
 context(KtAnalysisSession)
@@ -282,5 +286,52 @@ private fun checkRedeclarationConflictsInInheritors(declaration: KtNamedDeclarat
                 }
             }
         }
+    }
+}
+
+fun registerRetargetJobOnPotentialCandidates(
+    declaration: KtNamedDeclaration,
+    name: String,
+    filterCandidate: (KtDeclarationSymbol) -> Boolean,
+    retargetJob: (KtDeclarationSymbol) -> Unit
+) {
+    analyze(declaration) {
+        val declarationSymbol = declaration.getSymbol()
+
+        val nameAsName = Name.identifier(name)
+        fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
+            findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).filter { filterCandidate(it) }.forEach(retargetJob)
+        }
+
+        var classOrObjectSymbol = declarationSymbol.getContainingSymbol()
+        val block = declaration.parent as? KtBlockExpression
+        if (block != null) {
+            classOrObjectSymbol = declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KtFunctionLikeSymbol
+            classOrObjectSymbol?.valueParameters?.filter { it.name.asString() == name }?.filter { filterCandidate(it) }?.forEach(retargetJob)
+            block.statements.mapNotNull {
+                if (it.name != name) return@mapNotNull null
+                val isAccepted = when (declarationSymbol) {
+                    is KtClassOrObjectSymbol -> it is KtClassOrObject
+                    is KtVariableSymbol -> it is KtProperty
+                    is KtFunctionLikeSymbol -> it is KtNamedFunction
+                    else -> false
+                }
+                if (!isAccepted) return@mapNotNull null
+                (it as? KtDeclaration)?.getSymbol()?.takeIf { filterCandidate(it) }
+            }.forEach(retargetJob)
+        }
+
+        while (classOrObjectSymbol != null) {
+            (classOrObjectSymbol as? KtClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
+
+            val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
+            companionObject?.getMemberScope()?.processScope(companionObject)
+
+            classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
+        }
+
+        val file = declaration.containingKtFile
+        getPackageSymbolIfPackageExists(file.packageFqName)?.getPackageScope()?.processScope(null)
+        file.getImportingScopeContext().getCompositeScope().processScope(null)
     }
 }
