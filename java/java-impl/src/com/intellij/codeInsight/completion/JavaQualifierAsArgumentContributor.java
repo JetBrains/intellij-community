@@ -25,6 +25,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,13 +70,14 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     PrefixMatcher matcher = result.getPrefixMatcher();
     Project project = parameters.getEditor().getProject();
     if (project == null) return;
-    MyStaticMembersProcessor processor = new MyStaticMembersProcessor(parameters, qualifierExpression);
+    JavaQualifierAsArgumentStaticMembersProcessor
+      processor = new JavaQualifierAsArgumentStaticMembersProcessor(parameters, qualifierExpression);
     process(parameters, matcher, processor, result);
   }
 
   private static void process(@NotNull CompletionParameters parameters,
                               @NotNull PrefixMatcher matcher,
-                              @NotNull MyStaticMembersProcessor processor,
+                              @NotNull JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor processor,
                               @NotNull CompletionResultSet result) {
 
     PsiElement position = parameters.getPosition();
@@ -183,7 +185,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
   }
 
 
-  private static final class MyStaticMembersProcessor extends JavaStaticMemberProcessor {
+  static final class JavaQualifierAsArgumentStaticMembersProcessor extends JavaStaticMemberProcessor {
 
     @NotNull
     private final PsiExpression myOldQualifiedExpression;
@@ -194,9 +196,15 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     @NotNull
     private final NotNullLazyValue<Collection<PsiType>> myExpectedTypes;
 
+    @NotNull
+    private static final CallMatcher MY_SKIP_METHODS =
+      CallMatcher.anyOf(
+        CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "format")
+      );
 
-    private MyStaticMembersProcessor(@NotNull CompletionParameters parameters,
-                                     @NotNull PsiExpression oldQualifiedExpression) {
+
+    JavaQualifierAsArgumentStaticMembersProcessor(@NotNull CompletionParameters parameters,
+                                                  @NotNull PsiExpression oldQualifiedExpression) {
       super(parameters);
       this.myOldQualifiedExpression = oldQualifiedExpression;
       this.myOriginalPosition = parameters.getOriginalPosition();
@@ -212,7 +220,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
 
     @Override
     protected boolean additionalFilter(PsiMember member) {
-      return (member instanceof PsiMethod method && filter(method));
+      return (member instanceof PsiMethod method && filter(method) && !MY_SKIP_METHODS.methodMatches(method));
     }
 
     @Override

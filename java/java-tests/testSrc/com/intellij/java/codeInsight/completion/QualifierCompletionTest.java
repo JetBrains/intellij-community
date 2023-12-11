@@ -581,4 +581,70 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
                             }
                             """);
   }
+
+  @NeedsIndex.Full
+  public void testStaticInClass() {
+    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
+    myFixture.addClass("""
+          package org.test;
+          public class T {
+            static public void test(T t){
+            }
+          }
+
+      """);
+    myFixture.configureByText("Test.java", """
+      package org.test;
+                                        
+      public class Test {
+        public static void main(T t){
+          t.test<caret>
+        }            
+      }
+      """);
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+      package org.test;
+                                        
+      public class Test {
+        public static void main(T t){
+          T.test(t);
+        }            
+      }
+       """);
+  }
+
+  @NeedsIndex.Full
+  public void testSmartStaticInClass() {
+    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
+    myFixture.addClass("""
+          package org.test;
+          public class T {
+            static public String test(T t){
+            }
+          }
+
+      """);
+    myFixture.configureByText("Test.java", """
+      package org.test;
+                                        
+      public class Test {
+        public static String main(T t){
+          return t.test<caret>
+        }            
+      }
+      """);
+    myFixture.complete(CompletionType.SMART, 2);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+      package org.test;
+                                        
+      public class Test {
+        public static String main(T t){
+          return T.test(t);
+        }            
+      }
+       """);
+  }
 }
