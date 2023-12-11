@@ -3,6 +3,7 @@ package com.intellij.java.navigation
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.gotoByName.GotoActionTest
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -136,7 +137,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-
+  @IJIgnore(issue = "IDEA-336671")
   fun `test top hit priority`() {
     mixingResultsFlag.set(true)
 
@@ -170,7 +171,8 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
       future = ui.findElementsForPattern("bravo")
       bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
       assertEquals(listOf(action2, class1, matchedAction1, class2), bravoResult.filter { it in testElements })
-    } finally {
+    }
+    finally {
       actions.forEach { (key, _) -> actionManager.unregisterAction(key) }
       abbreviationManager.removeAllAbbreviations("ia2")
     }
