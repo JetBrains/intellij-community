@@ -387,7 +387,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     importProjectsAsync(listOf(*files))
   }
 
-  protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
+  protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
     if (preimportTestMode) {
       val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
       try {

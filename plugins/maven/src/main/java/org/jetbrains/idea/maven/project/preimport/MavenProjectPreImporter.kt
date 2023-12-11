@@ -204,7 +204,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         val version = it.version
         if (version == null) return@forEach
         if (version.startsWith("$")) {
-          val versionResolved = project.properties[version.substring(2, version.length - 1)]
+          val versionResolved = resolveProperty(project, version)
           if (versionResolved != null) {
             project.resolvedDependencyManagement[trimVersion(it)] = MavenId(it.groupId, it.artifactId, versionResolved)
           }
@@ -236,7 +236,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         }
       }
       else if (version.startsWith("$")) {
-        val versionResolved = project.properties[version.substring(2, version.length - 1)]
+        val versionResolved = resolveProperty(project, version)
         if (versionResolved != null) {
           project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved));
         }
@@ -254,6 +254,26 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                       file, localRepo, true, false)
       })
   }
+
+  private fun resolveProperty(project: MavenProjectData, value: String): String {
+    val start = value.indexOf("${'$'}{")
+    if (start == -1) return value
+    val end = value.indexOf("}")
+    if (start + 2 >= end) return value
+    val variable = value.substring(start + 2, end)
+    val resolvedValue = project.properties[variable] ?: ""
+    if (start == 0 && end == value.length - 1) {
+      return resolveProperty(project, resolvedValue)
+    }
+    val tail = if (end == value.length - 1) {
+      ""
+    }
+    else {
+      value.substring(end + 1, value.length)
+    }
+    return resolveProperty(project, value.substring(0, start) + resolvedValue + tail)
+  }
+
 
   private fun CoroutineScope.readRecursively(parentModel: Element,
                                              aggregatorProjectFile: VirtualFile,
@@ -322,7 +342,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
     readPlugins(mavenProjectData, rootModel)
 
-    resolveDirectories(mavenModel, parentFolder)
+    resolveDirectories(mavenProjectData, mavenModel, parentFolder, rootModel)
 
     modelMap.put("build.outputDirectory", mavenModel.build.outputDirectory)
     modelMap.put("build.testOutputDirectory", mavenModel.build.testOutputDirectory)
@@ -335,14 +355,35 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
   }
 
-  private fun resolveDirectories(mavenModel: MavenModel, parentFolder: Path) {
+  private fun resolveDirectories(mavenProjectData: MavenProjectData, mavenModel: MavenModel, parentFolder: Path, rootModel: Element) {
+    val compilerPlugin = findPlugin(mavenProjectData, "org.apache.maven.plugins", "maven-compiler-plugin")
+    val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
+    val sources = ArrayList<String>()
+    val testSources = ArrayList<String>()
+
+    val sourceDir = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
+    val testSourceDir = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/test/java")
+
+    sources.add(sourceDir)
+    testSources.add(testSourceDir)
+    if (kotlinPlugin != null) {
+      sources.add("src/main/kotlin")
+      testSources.add("src/test/kotlin")
+    }
+
+    mavenModel.build.directory = parentFolder.resolve("target").toString()
+
+
+
     mavenModel.build.directory = parentFolder.resolve("target").toString()
     mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
     mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
-    mavenModel.build.sources = listOf(parentFolder.resolve("src/main/java").toString(), parentFolder.resolve("src/main/kotlin").toString())
-    mavenModel.build.testSources = listOf(parentFolder.resolve("src/test/java").toString(),
-                                          parentFolder.resolve("src/test/kotlin").toString());
+    mavenModel.build.sources = sources.map(parentFolder::resolve).map(Path::toString)
+    mavenModel.build.testSources = testSources.map(parentFolder::resolve).map(Path::toString)
   }
+
+  private fun findPlugin(mavenProjectData: MavenProjectData, groupId: String, artifactId: String) =
+    mavenProjectData.allPlugins[MavenId(groupId, artifactId, null)]
 
   private fun readPlugins(mavenProjectData: MavenProjectData, rootModel: Element) {
     MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
