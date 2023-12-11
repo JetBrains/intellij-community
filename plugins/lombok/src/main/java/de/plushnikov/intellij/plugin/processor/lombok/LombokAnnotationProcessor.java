@@ -35,9 +35,18 @@ public final class LombokAnnotationProcessor {
     return Pair.pair(shortNamesList, fqnList);
   }
 
+  /**
+   * Processes the given PsiClass if it's a specific lombok annotation with onX functionality
+   * and returns a list of phantom underscored "onX_" methods
+   *
+   * @param psiClass the PsiClass to process
+   * @param nameHint the name hint to filter the results (optional)
+   * @return the list of augmented PsiMethods or empty list
+   * @see <a href="https://projectlombok.org/features/experimental/onX">Lombok onX</a>
+   */
   @NotNull
   public static List<PsiMethod> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
-    if (nameHint != null && !ContainerUtil.exists(config.keySet(), nameHint::startsWith)) {
+    if (nameHint != null && !config.containsKey(nameHint)) {
       return Collections.emptyList();
     }
 
