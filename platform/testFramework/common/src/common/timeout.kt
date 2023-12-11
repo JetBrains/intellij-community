@@ -9,7 +9,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
-val DEFAULT_TEST_TIMEOUT: Duration = 1000.seconds
+val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 
 @TestOnly
 fun <T> timeoutRunBlocking(
