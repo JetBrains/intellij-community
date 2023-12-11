@@ -666,14 +666,16 @@ public class JavaCoverageEngine extends CoverageEngine {
                                          String testName,
                                          String className,
                                          PsiManager psiManager) {
-    PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className);
-    if (psiClass == null) return;
-    TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
-    if (testFramework == null) return;
-    Arrays.stream(psiClass.getAllMethods())
-      .filter(method -> testFramework.isTestMethod(method) &&
-                        testName.equals(CoverageListener.sanitize(method.getName(), className.length())))
-      .forEach(elements::add);
+    ReadAction.run(() -> {
+      PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className);
+      if (psiClass == null) return;
+      TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
+      if (testFramework == null) return;
+      Arrays.stream(psiClass.getAllMethods())
+        .filter(method -> testFramework.isTestMethod(method) &&
+                          testName.equals(CoverageListener.sanitize(method.getName(), className.length())))
+        .forEach(elements::add);
+    });
   }
 
 
