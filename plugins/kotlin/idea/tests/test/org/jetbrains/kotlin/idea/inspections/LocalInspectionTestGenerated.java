@@ -17585,6 +17585,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/parameterOfOverriddenFunction.kt");
             }
 
+            @TestMetadata("parameterOfPropertySetter.kt")
+            public void testParameterOfPropertySetter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/parameterOfPropertySetter.kt");
+            }
+
             @TestMetadata("parameterOnlyUsedAsNamedArgument.kt")
             public void testParameterOnlyUsedAsNamedArgument() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/parameterOnlyUsedAsNamedArgument.kt");

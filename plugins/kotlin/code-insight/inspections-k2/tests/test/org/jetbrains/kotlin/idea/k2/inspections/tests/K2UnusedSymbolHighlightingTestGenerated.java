@@ -434,6 +434,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfOverriddenFunction.kt");
         }
 
+        @TestMetadata("parameterOfPropertySetter.kt")
+        public void testParameterOfPropertySetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfPropertySetter.kt");
+        }
+
         @TestMetadata("parameterOnlyUsedAsNamedArgument.kt")
         public void testParameterOnlyUsedAsNamedArgument() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOnlyUsedAsNamedArgument.kt");

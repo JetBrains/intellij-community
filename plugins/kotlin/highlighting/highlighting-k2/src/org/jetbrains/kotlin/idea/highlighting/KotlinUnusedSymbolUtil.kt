@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
@@ -702,14 +703,20 @@ object KotlinUnusedSymbolUtil {
   }
 
     fun createQuickFixes(declaration: KtNamedDeclaration): Array<LocalQuickFixAndIntentionActionOnPsiElement> {
-        if (declaration is KtParameter && declaration.isLoopParameter) {
-            return emptyArray()
-        }
-        if (declaration is KtParameter && declaration.isCatchParameter) {
-            return if (declaration.name == "_") {
-                emptyArray()
-            } else {
-                arrayOf(com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix(declaration, "_"))
+        if (declaration is KtParameter) {
+            if (declaration.isLoopParameter) {
+                return emptyArray()
+            }
+            if (declaration.isCatchParameter) {
+                return if (declaration.name == "_") {
+                    emptyArray()
+                } else {
+                    arrayOf(RenameElementFix(declaration, "_"))
+                }
+            }
+            val ownerFunction = declaration.ownerFunction
+            if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {
+                return emptyArray()
             }
         }
         // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
