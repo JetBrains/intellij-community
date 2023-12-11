@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Editor
@@ -16,11 +16,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+private const val QTS = "\"\"\""
+
 class IndentRawStringIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java, KotlinBundle.lazyMessage("indent.raw.string")
 ) {
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
-        if (!element.text.startsWith("\"\"\"")) return false
+        if (!element.text.startsWith(QTS)) return false
         if (element.parents.any { it is KtAnnotationEntry || (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true }) return false
         if (element.getQualifiedExpressionForReceiver() != null) return false
         val entries = element.entries
@@ -44,7 +46,6 @@ class IndentRawStringIntention : SelfTargetingOffsetIndependentIntention<KtStrin
             }
         }
 
-        element.replace(KtPsiFactory(project).createExpression("\"\"\"$newString\"\"\".trimIndent()"))
+        element.replace(KtPsiFactory(project).createExpression("$QTS${newString}$QTS.trimIndent()"))
     }
-
 }

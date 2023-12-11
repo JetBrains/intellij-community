@@ -11041,49 +11041,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/indentRawString")
-    public static class IndentRawString extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotationEntry.kt")
-        public void testAnnotationEntry() throws Exception {
-            runTest("testData/intentions/indentRawString/annotationEntry.kt");
-        }
-
-        @TestMetadata("const.kt")
-        public void testConst() throws Exception {
-            runTest("testData/intentions/indentRawString/const.kt");
-        }
-
-        @TestMetadata("hasIndent.kt")
-        public void testHasIndent() throws Exception {
-            runTest("testData/intentions/indentRawString/hasIndent.kt");
-        }
-
-        @TestMetadata("notRawString.kt")
-        public void testNotRawString() throws Exception {
-            runTest("testData/intentions/indentRawString/notRawString.kt");
-        }
-
-        @TestMetadata("receiver.kt")
-        public void testReceiver() throws Exception {
-            runTest("testData/intentions/indentRawString/receiver.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/indentRawString/simple.kt");
-        }
-
-        @TestMetadata("singleLine.kt")
-        public void testSingleLine() throws Exception {
-            runTest("testData/intentions/indentRawString/singleLine.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/infixCallToOrdinary")
     public static class InfixCallToOrdinary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

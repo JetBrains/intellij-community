@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
