@@ -22,6 +22,7 @@
 
 #ifdef USE_CEF_SANDBOX
 #include "include/cef_sandbox_win.h"
+#include "include/cef_version.h"
 void* cef_sandbox_info = nullptr;
 #endif // USE_CEF_SANDBOX
 
@@ -369,6 +370,7 @@ static void LoadVMOptions(const std::string &homeDir) {
     char buf[64];
     snprintf(buf, sizeof(buf), "-Djcef.sandbox.ptr=%p", cef_sandbox_info);
     lines.push_back(std::string(buf));
+    lines.emplace_back(std::string("-Djcef.sandbox.cefVersion=") + CEF_VERSION);
   }
 #endif // USE_CEF_SANDBOX
 
