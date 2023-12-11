@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
+import org.jetbrains.kotlin.idea.k2.quickDoc.AbstractFirRenderingKDocTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
@@ -67,6 +68,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirMoveLeftRightTest> {
             model("../../../idea/tests/testData/codeInsight/moveLeftRight")
+        }
+
+        testClass<AbstractFirRenderingKDocTest> {
+            model("../../../idea/tests/testData/codeInsight/renderingKDoc", testMethodName = "doTest")
         }
     }
 }

@@ -1660,6 +1660,8 @@
                        key="inspection.incorrect.formatting.notification.group"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
+    <platform.backend.documentation.inlineDocumentationProvider
+      implementation="com.intellij.codeInsight.documentation.render.PsiInlineDocumentationProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
 

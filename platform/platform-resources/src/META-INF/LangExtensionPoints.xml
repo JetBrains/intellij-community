@@ -665,6 +665,8 @@
                     interface="com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.psiTargetProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.inlineDocumentationProvider" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.InlineDocumentationProvider"/>
     <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.linkHandler" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.DocumentationLinkHandler"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
