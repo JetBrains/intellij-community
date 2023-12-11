@@ -727,6 +727,10 @@ fun <T : CommandChain> T.waitFullLineModelLoaded(language: String): T = apply {
   addCommand("${CMD_PREFIX}waitFullLineModelLoaded ${language}")
 }
 
+fun <T : CommandChain> T.waitKotlinFullLineModelLoaded(): T = apply {
+  waitFullLineModelLoaded("kotlin")
+}
+
 fun <T : CommandChain> T.createJavaFile(fileName: String, filePath: String, fileType: String): T = apply {
   addCommand("${CMD_PREFIX}createJavaFile $fileName,$filePath,$fileType")
 }
