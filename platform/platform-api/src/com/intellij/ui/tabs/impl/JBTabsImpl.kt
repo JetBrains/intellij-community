@@ -3055,7 +3055,9 @@ open class JBTabsImpl(private var project: Project?,
       accessibleComponent
       addListener(object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null, null)
+          if (!SystemInfo.isMac) {
+            firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null, null)
+          }
         }
       })
     }
