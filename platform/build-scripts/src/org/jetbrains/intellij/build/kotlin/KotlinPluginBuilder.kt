@@ -22,7 +22,7 @@ object KotlinPluginBuilder {
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection")
   val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
     "kotlin.plugin.k1",
@@ -195,7 +195,7 @@ object KotlinPluginBuilder {
     "kotlin.bundled-compiler-plugins-support",
   )
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection")
   private val LIBRARIES = persistentListOf(
     "kotlinc.analysis-api-providers",
     "kotlinc.analysis-project-structure",

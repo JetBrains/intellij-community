@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
  */
 object CommunityLibraryLicenses {
   @JvmStatic
-  @SuppressWarnings("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection")
   val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
     LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "json-schema-validator",
                    url = "https://github.com/networknt/json-schema-validator")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
@@ -308,7 +308,6 @@ internal open class SsiProcessor {
     return values
   }
 
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private fun parseParamValues(command: StringBuilder, start: Int, count: Int): Array<String>? {
     var valueIndex = 0
     var inside = false

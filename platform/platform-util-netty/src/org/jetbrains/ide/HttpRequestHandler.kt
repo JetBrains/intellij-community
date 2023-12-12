@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.ide
@@ -51,7 +51,6 @@ abstract class HttpRequestHandler {
   /**
    * Write request from browser without Origin will always be blocked regardless of your implementation.
    */
-  @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {
     val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
