@@ -193,13 +193,16 @@ public class LinkLabel<T> extends JLabel {
     super.paintComponent(g);
 
     if (getText() != null) {
-      g.setColor(getTextColor());
+      Color underlineColor = getUnderlineColor();
 
-      if (myUnderline && myPaintUnderline) {
+      if (underlineColor != null) {
+        g.setColor(underlineColor);
         Rectangle bounds = getTextBounds();
-        int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
+        int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + getUnderlineShift();
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
+
+      g.setColor(getTextColor());
 
       if (g instanceof Graphics2D && isFocusOwner()) {
         g.setColor(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR);
@@ -221,6 +224,15 @@ public class LinkLabel<T> extends JLabel {
     return myIsLinkActive ? getActive() :
            myUnderline ? getHover() :
            isVisited() ? getVisited() : getNormal();
+  }
+
+  protected @Nullable Color getUnderlineColor() {
+    if (myUnderline && myPaintUnderline) return getTextColor();
+    else return null;
+  }
+
+  protected int getUnderlineShift() {
+    return 1;
   }
 
   public void setPaintUnderline(boolean paintUnderline) {

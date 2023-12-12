@@ -627,6 +627,8 @@
       "codeBackground": "Grey2",
       "codeBorderColor": "Grey6",
       "linkForeground": "Blue8",
+      "linkUnderlineActive": "#Grey9",
+      "linkUnderlinePassive": "FFFFFF00",
       "imageBorderColor": "Grey4",
       "animationBackground": "Grey13",
       "Button": {
@@ -763,7 +765,10 @@
       "spanForeground": "Grey14",
       "foreground": "Grey14",
       "stepNumberForeground": "Blue9",
-      "codeBorderColor": "#FFFFFF80"
+      "codeBorderColor": "#FFFFFF80",
+      "linkForeground": "Grey14",
+      "linkUnderlineActive": "#FFFFFF80",
+      "linkUnderlinePassive": "#FFFFFF80"
     },
 
     "PackageSearch": {

@@ -1815,6 +1815,17 @@ public final class JBUI {
         return base;
       }
 
+      public static @NotNull Color linkUnderline(boolean useContrastColors, boolean isActive, Color defaultColor) {
+        if (useContrastColors) {
+          if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineActive", defaultColor);
+          else return JBColor.namedColor("Tooltip.Learning.linkUnderlinePassive", defaultColor);
+        }
+        else {
+          if (isActive) return JBColor.namedColor("GotItTooltip.linkUnderlineActive", defaultColor);
+          else return JBColor.namedColor("GotItTooltip.linkUnderlinePassive", defaultColor);
+        }
+      }
+
       public static @NotNull Color headerForeground() {
         return JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
       }
@@ -1856,8 +1867,9 @@ public final class JBUI {
         return base;
       }
 
-      public static @NotNull Color linkForeground() {
-        return JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
+      public static @NotNull Color linkForeground(boolean useContrastColors) {
+        if (useContrastColors) return JBColor.namedColor("Tooltip.Learning.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
+        else return JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
       }
 
       public static @NotNull Color borderColor(boolean useContrastColors) {

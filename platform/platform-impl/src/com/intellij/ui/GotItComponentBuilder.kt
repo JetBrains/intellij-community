@@ -193,7 +193,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = false)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors), isExternal = false)
     linkAction = action
     return this
   }
@@ -202,7 +202,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = true)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors), isExternal = true)
     linkAction = { BrowserUtil.browse(url) }
     return this
   }
@@ -213,6 +213,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       override fun getHover(): Color = foreground
       override fun getVisited(): Color = foreground
       override fun getActive(): Color = foreground
+      override fun getUnderlineColor(): Color = JBUI.CurrentTheme.GotItTooltip.linkUnderline(useContrastColors, myUnderline, foreground)
+      override fun getUnderlineShift(): Int = 4
     }.also {
       if (isExternal) it.horizontalTextPosition = SwingConstants.LEFT
     }
@@ -664,7 +666,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
 
   private fun createEditorKit(useContrastColors: Boolean, lineSpacing: Float, iconsMap: Map<Int, Icon>): HTMLEditorKit {
     val styleSheet = StyleSheet()
-    val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
+    val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors))} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
                                                      JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors))
     val codeFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())

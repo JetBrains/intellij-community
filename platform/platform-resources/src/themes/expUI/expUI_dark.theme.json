@@ -608,25 +608,27 @@
     },
 
     "GotItTooltip": {
-      "background": "Grey3",
-      "borderColor": "Grey3",
-      "foreground": "Grey10",
-      "stepForeground": "Grey8",
+      "background": "Blue4",
+      "borderColor": "Blue4",
+      "foreground": "#FFFFFFCC",
+      "stepForeground": "Blue11",
       "Header.foreground": "Grey14",
       "shortcutForeground": "Grey14",
-      "shortcutBackground": "Grey5",
+      "shortcutBackground": "Blue2",
       "codeForeground": "Grey14",
-      "codeBackground": "Grey3",
-      "codeBorderColor": "Grey7",
-      "linkForeground": "Blue9",
-      "imageBorderColor": "Grey4",
+      "codeBackground": "Blue4",
+      "codeBorderColor": "#FFFFFF80",
+      "linkForeground": "#FFFFFFCC",
+      "linkUnderlineActive": "#FFFFFF65",
+      "linkUnderlinePassive": "#FFFFFF65",
+      "imageBorderColor": "Blue4",
       "animationBackground": "Grey1",
       "Button": {
         "foreground": "Grey14",
-        "startBackground": "Grey6",
-        "endBackground": "Grey6",
-        "startBorderColor": "Grey6",
-        "endBorderColor": "Grey6"
+        "startBackground": "Blue4",
+        "endBackground": "Blue4",
+        "startBorderColor": "#FFFFFF80",
+        "endBorderColor": "#FFFFFF80"
       }
     },
 
@@ -740,7 +742,10 @@
       "spanForeground": "Grey14",
       "foreground": "Grey14",
       "stepNumberForeground": "Blue11",
-      "codeBorderColor": "#FFFFFFBF"
+      "codeBorderColor": "#FFFFFF80",
+      "linkForeground": "Grey14",
+      "linkUnderlineActive": "#FFFFFF65",
+      "linkUnderlinePassive": "#FFFFFF65"
     },
 
     "RecentProject": {
