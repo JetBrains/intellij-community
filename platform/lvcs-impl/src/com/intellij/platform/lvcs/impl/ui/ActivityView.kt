@@ -4,12 +4,14 @@ package com.intellij.platform.lvcs.impl.ui
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -36,7 +38,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
   private val model = ActivityViewModel(project, gateway, activityScope, coroutineScope)
 
-  private val activityList = ActivityList { model.activityProvider.getPresentation(it) }
+  private val activityList = ActivityList { model.activityProvider.getPresentation(it) }.apply {
+    updateEmptyText(true)
+  }
   private val editorDiffPreview = CombinedActivityDiffPreview(project, activityList, activityScope, this)
 
   init {
@@ -79,18 +83,24 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
     }, this)
     model.addListener(object : ActivityModelListener {
-      override fun onItemsLoaded(items: List<ActivityItem>) {
+      override fun onItemsLoadingStarted() {
+        activityList.updateEmptyText(true)
+      }
+      override fun onItemsLoadingStopped(items: List<ActivityItem>) {
         activityList.setItems(items)
+        activityList.updateEmptyText(false)
       }
       override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
         editorDiffPreview.setDiffData(diffData)
       }
       override fun onFilteringStarted() {
         filterProgress?.startLoading(false)
+        activityList.updateEmptyText(true)
       }
       override fun onFilteringStopped(result: Set<ActivityItem>?) {
         filterProgress?.stopLoading()
         activityList.setVisibleItems(result)
+        activityList.updateEmptyText(false)
       }
     }, this)
   }
@@ -124,6 +134,22 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
     })
     return searchTextArea
+  }
+
+  private fun ActivityList.updateEmptyText(isLoading: Boolean) = setEmptyText(getEmptyText(isLoading))
+
+  private fun getEmptyText(isLoading: Boolean): @NlsContexts.StatusText String {
+    if (isLoading) return LocalHistoryBundle.message("activity.list.empty.text.loading")
+    if (model.isFilterSet) {
+      if (activityScope is ActivityScope.Recent) {
+        return LocalHistoryBundle.message("activity.list.empty.text.recent.matching")
+      }
+      return LocalHistoryBundle.message("activity.list.empty.text.in.scope.matching", activityScope.presentableName)
+    }
+    if (activityScope is ActivityScope.Recent) {
+      return LocalHistoryBundle.message("activity.list.empty.text.recent")
+    }
+    return LocalHistoryBundle.message("activity.list.empty.text.in.scope", activityScope.presentableName)
   }
 
   override fun dispose() {

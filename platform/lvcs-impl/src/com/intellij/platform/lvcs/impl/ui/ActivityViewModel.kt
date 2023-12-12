@@ -29,12 +29,13 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
   init {
     coroutineScope.launch {
       combine(activityProvider.activityItemsChanged.debounce(500), scopeFilterFlow) { _, filter -> filter }.collect { filter ->
+        withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
         val activityItems = withContext(Dispatchers.Default) {
           activityProvider.loadActivityList(activityScope, filter)
         }
         withContext(Dispatchers.EDT) {
           activityItemsFlow.value = activityItems
-          eventDispatcher.multicaster.onItemsLoaded(activityItems)
+          eventDispatcher.multicaster.onItemsLoadingStopped(activityItems)
         }
       }
     }
@@ -61,6 +62,8 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
   val isFilterSupported: Boolean
     get() = activityProvider.isScopeFilterSupported(activityScope) || activityProvider.isActivityFilterSupported(activityScope)
 
+  val isFilterSet: Boolean get() = !scopeFilterFlow.value.isNullOrEmpty() || !activityFilterFlow.value.isNullOrEmpty()
+
   fun setFilter(pattern: String?) {
     if (activityProvider.isScopeFilterSupported(activityScope)) {
       scopeFilterFlow.value = pattern
@@ -80,7 +83,8 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 }
 
 interface ActivityModelListener : EventListener {
-  fun onItemsLoaded(items: List<ActivityItem>)
+  fun onItemsLoadingStarted()
+  fun onItemsLoadingStopped(items: List<ActivityItem>)
   fun onDiffDataLoaded(diffData: ActivityDiffData?)
   fun onFilteringStarted()
   fun onFilteringStopped(result: Set<ActivityItem>?)
