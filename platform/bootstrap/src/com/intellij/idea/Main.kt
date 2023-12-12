@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -184,6 +185,10 @@ private fun initRemoteDev(args: List<String>) {
 
   if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
     System.setProperty("idea.initially.ask.config", "never")
+  }
+  if (SystemInfo.isMac) { // avoid icon jumping in dock for the backend process
+    System.setProperty("apple.awt.BackgroundOnly", "true") // this makes sure that the following call doesn't create an icon in Dock
+    Toolkit.getDefaultToolkit() // this will tell the operating system, that app initialization is finished
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
