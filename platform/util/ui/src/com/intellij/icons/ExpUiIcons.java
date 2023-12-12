@@ -731,6 +731,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Vcs {
+    /** 16x16 */ public static final @NotNull Icon Abort = load("expui/vcs/abort.svg", 655634747, 10);
     /** 16x16 */ public static final @NotNull Icon BranchLabel = load("expui/vcs/branchLabel.svg", 2143717139, 2);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("expui/vcs/changelist.svg", -1628126378, 2);
     /** 16x16 */ public static final @NotNull Icon Changes = load("expui/vcs/changes.svg", -1671898712, 2);
@@ -748,7 +749,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon OutgoingPush = load("expui/vcs/outgoingPush.svg", 1327071653, 2);
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/vcs/patch.svg", -1862136134, 2);
     /** 16x16 */ public static final @NotNull Icon Push = load("expui/vcs/push.svg", 310167329, 2);
+    /** 16x16 */ public static final @NotNull Icon ResolveContinue = load("expui/vcs/resolveContinue.svg", -2074983376, 10);
     /** 16x16 */ public static final @NotNull Icon Revert = load("expui/vcs/revert.svg", 1003761112, 2);
+    /** 16x16 */ public static final @NotNull Icon SkipCommit = load("expui/vcs/skipCommit.svg", -560367291, 10);
     /** 16x16 */ public static final @NotNull Icon Stash = load("expui/vcs/stash.svg", -380414361, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("expui/vcs/unshelve.svg", 2111312416, 2);
     /** 16x16 */ public static final @NotNull Icon Update = load("expui/vcs/update.svg", -127818827, 2);
