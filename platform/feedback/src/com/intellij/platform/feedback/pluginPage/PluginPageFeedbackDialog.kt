@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.pluginPage
 
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
@@ -19,7 +22,7 @@ internal enum class CaseType {
   DISABLE, UNINSTALL
 }
 
-internal abstract class PluginPageFeedbackDialog(pluginId: String,
+internal abstract class PluginPageFeedbackDialog(private val pluginId: String,
                                                  pluginName: String,
                                                  caseType: CaseType,
                                                  project: Project?,
@@ -61,6 +64,13 @@ internal abstract class PluginPageFeedbackDialog(pluginId: String,
   override fun showThanksNotification() {
     ThanksForFeedbackNotification(description = PluginPageFeedbackBundle.message(
       "notification.thanks.feedback.content")).notify(myProject)
+  }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
+    val pluginVendor = pluginDescriptor?.vendor ?: return true
+
+    return !StringUtil.equalsIgnoreCase(pluginVendor, "JetBrains")
   }
 }
 
