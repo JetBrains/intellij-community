@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.bridge.theme
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -87,6 +88,9 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.SliderColors
+import org.jetbrains.jewel.ui.component.styling.SliderMetrics
+import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
 import org.jetbrains.jewel.ui.component.styling.TabColors
 import org.jetbrains.jewel.ui.component.styling.TabContentAlpha
@@ -178,6 +182,7 @@ internal fun createBridgeComponentStyling(
         outlinedButtonStyle = readOutlinedButtonStyle(),
         radioButtonStyle = readRadioButtonStyle(),
         scrollbarStyle = readScrollbarStyle(theme.isDark),
+        sliderStyle = readSliderStyle(theme.isDark),
         textAreaStyle = readTextAreaStyle(textAreaTextStyle, textFieldStyle.metrics),
         textFieldStyle = textFieldStyle,
         tooltipStyle = readTooltipStyle(),
@@ -626,6 +631,14 @@ private fun readScrollbarStyle(isDark: Boolean) =
         ),
         hoverDuration = 300.milliseconds,
     )
+
+private fun readSliderStyle(dark: Boolean): SliderStyle {
+    // There are no values for sliders in IntUi, so we're essentially reusing the
+    // standalone colors logic, reading the palette values (and falling back to
+    // hardcoded defaults).
+    val colors = if (dark) SliderColors.dark() else SliderColors.light()
+    return SliderStyle(colors, SliderMetrics.defaults(), CircleShape)
+}
 
 private fun readTextAreaStyle(textStyle: TextStyle, metrics: TextFieldMetrics): TextAreaStyle {
     val normalBackground = retrieveColorOrUnspecified("TextArea.background")

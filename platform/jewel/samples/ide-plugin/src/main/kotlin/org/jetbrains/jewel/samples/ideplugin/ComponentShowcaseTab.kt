@@ -27,7 +27,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import icons.JewelIcons
 import org.jetbrains.jewel.bridge.LocalComponent
-import org.jetbrains.jewel.bridge.ToolWindowScope
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.modifier.onActivated
@@ -43,12 +42,13 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
+import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
-internal fun ToolWindowScope.ComponentShowcaseTab() {
+internal fun ComponentShowcaseTab() {
     val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
     val scrollState = rememberScrollState()
@@ -178,6 +178,9 @@ private fun RowScope.ColumnOne() {
                 )
             }
         }
+
+        var sliderValue by remember { mutableStateOf(.15f) }
+        Slider(sliderValue, { sliderValue = it }, steps = 5)
     }
 }
 

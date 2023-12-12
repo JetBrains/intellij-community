@@ -94,8 +94,9 @@ private fun ButtonImpl(
     textStyle: TextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
-    var buttonState by
-        remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled)) }
+    var buttonState by remember(interactionSource) {
+        mutableStateOf(ButtonState.of(enabled = enabled))
+    }
 
     remember(enabled) { buttonState = buttonState.copy(enabled = enabled) }
 
@@ -103,9 +104,9 @@ private fun ButtonImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
-                is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> buttonState = buttonState.copy(pressed = false)
+                is PressInteraction.Cancel, is PressInteraction.Release ->
+                    buttonState = buttonState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
                 is FocusInteraction.Focus -> buttonState = buttonState.copy(focused = true)

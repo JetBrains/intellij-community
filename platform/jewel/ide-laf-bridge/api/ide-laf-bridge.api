@@ -73,6 +73,15 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 }
 
+public final class org/jetbrains/jewel/bridge/theme/BridgeSliderStylingKt {
+	public static final fun dark-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static synthetic fun dark-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static final fun defaults-IDSuZpE (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFF)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
+	public static synthetic fun defaults-IDSuZpE$default (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
+	public static final fun light-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static synthetic fun light-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
 	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
