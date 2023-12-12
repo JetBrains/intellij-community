@@ -1356,6 +1356,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
 
+            @TestMetadata("addNullableAnnotation")
+            public void testAddNullableAnnotation() throws Exception {
+                runTest("withJava/javaUsedInKotlin/addNullableAnnotation/");
+            }
+
             public void testAllFilesPresentInJavaUsedInKotlin() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
             }
@@ -1363,6 +1368,16 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             @TestMetadata("changeFieldType")
             public void testChangeFieldType() throws Exception {
                 runTest("withJava/javaUsedInKotlin/changeFieldType/");
+            }
+
+            @TestMetadata("changeGetterType")
+            public void testChangeGetterType() throws Exception {
+                runTest("withJava/javaUsedInKotlin/changeGetterType/");
+            }
+
+            @TestMetadata("changeMethodToPropertyInInheritance")
+            public void testChangeMethodToPropertyInInheritance() throws Exception {
+                runTest("withJava/javaUsedInKotlin/changeMethodToPropertyInInheritance/");
             }
 
             @TestMetadata("changeNotUsedSignature")
@@ -1394,6 +1409,23 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             public void testChangeSignatureStatic() throws Exception {
                 runTest("withJava/javaUsedInKotlin/changeSignatureStatic/");
             }
+
+            @TestMetadata("changeSyntheticProperty")
+            public void testChangeSyntheticProperty() throws Exception {
+                runTest("withJava/javaUsedInKotlin/changeSyntheticProperty/");
+            }
+
+            @TestMetadata("changeSyntheticProperty2")
+            public void testChangeSyntheticProperty2() throws Exception {
+                runTest("withJava/javaUsedInKotlin/changeSyntheticProperty2/");
+            }
+
+            //TODO: enable for Kolin 2.1
+            //@TestMetadata("changeSyntheticProperty3")
+            //public void testChangeSyntheticProperty3() throws Exception {
+            //    runTest("withJava/javaUsedInKotlin/changeSyntheticProperty3/");
+            //}
+
 
             @TestMetadata("constantChanged")
             public void testConstantChanged() throws Exception {
@@ -1460,6 +1492,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 runTest("withJava/javaUsedInKotlin/notChangeSignature/");
             }
 
+            @TestMetadata("potentialSamAdapter")
+            public void testPotentialSamAdapter() throws Exception {
+                runTest("withJava/javaUsedInKotlin/potentialSamAdapter/");
+            }
+
             @TestMetadata("rawErrorTypeDuringSerialization")
             public void testRawErrorTypeDuringSerialization() throws Exception {
                 runTest("withJava/javaUsedInKotlin/rawErrorTypeDuringSerialization/");
@@ -1468,6 +1505,24 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             @TestMetadata("removeAnnotation")
             public void testRemoveAnnotation() throws Exception {
                 runTest("withJava/javaUsedInKotlin/removeAnnotation/");
+            }
+
+            @TestMetadata("removeGetter")
+            public void testRemoveGetter() throws Exception {
+                runTest("withJava/javaUsedInKotlin/removeGetter/");
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/addNullableAnnotation")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class AddNullableAnnotation extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInAddNullableAnnotation() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/addNullableAnnotation"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
             }
 
             @TestMetadata("withJava/javaUsedInKotlin/changeFieldType")
@@ -1480,6 +1535,32 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
 
                 public void testAllFilesPresentInChangeFieldType() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeFieldType"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/changeGetterType")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ChangeGetterType extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInChangeGetterType() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeGetterType"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/changeMethodToPropertyInInheritance")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ChangeMethodToPropertyInInheritance extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInChangeMethodToPropertyInInheritance() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeMethodToPropertyInInheritance"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
                 }
             }
 
@@ -1558,6 +1639,45 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
 
                 public void testAllFilesPresentInChangeSignatureStatic() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeSignatureStatic"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/changeSyntheticProperty")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ChangeSyntheticProperty extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInChangeSyntheticProperty() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeSyntheticProperty"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/changeSyntheticProperty2")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ChangeSyntheticProperty2 extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInChangeSyntheticProperty2() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeSyntheticProperty2"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/changeSyntheticProperty3")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ChangeSyntheticProperty3 extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInChangeSyntheticProperty3() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/changeSyntheticProperty3"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
                 }
             }
 
@@ -1730,6 +1850,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 }
             }
 
+            @TestMetadata("withJava/javaUsedInKotlin/potentialSamAdapter")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class PotentialSamAdapter extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInPotentialSamAdapter() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/potentialSamAdapter"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
             @TestMetadata("withJava/javaUsedInKotlin/rawErrorTypeDuringSerialization")
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1753,6 +1886,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
 
                 public void testAllFilesPresentInRemoveAnnotation() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/removeAnnotation"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/removeGetter")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class RemoveGetter extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInRemoveGetter() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/removeGetter"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
                 }
             }
 
@@ -2176,7 +2322,7 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             }
 
             @TestMetadata("conflictingPlatformDeclarations")
-            public void testConflictingPlatformDeclarations() throws Exception {//hjk
+            public void testConflictingPlatformDeclarations() throws Exception {
                 runTest("withJava/other/conflictingPlatformDeclarations/");
             }
 
