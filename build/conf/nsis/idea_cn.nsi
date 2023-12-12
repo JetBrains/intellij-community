@@ -12,7 +12,7 @@ LangString update_path_var_label ${LANG_SIMPCHINESE} '添加 "bin" 文件夹到 
 LangString update_context_menu_group ${LANG_SIMPCHINESE} "更新上下文菜单"
 LangString update_context_menu_label ${LANG_SIMPCHINESE} '添加 "将文件夹作为项目打开"'
 LangString create_associations_group ${LANG_SIMPCHINESE} "创建关联"
-;; Rider-specific:
+; Rider-specific:
 LangString additional_features ${LANG_SIMPCHINESE} "其他功能"
 LangString install_etw_service ${LANG_SIMPCHINESE} "安装 JetBrains ETW Host Service"
 LangString windows_defender_exclusions ${LANG_SIMPCHINESE} "将 Rider 可执行文件添加到 Microsoft Defender 排除列表中"
