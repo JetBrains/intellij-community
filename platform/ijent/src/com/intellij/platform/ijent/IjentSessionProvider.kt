@@ -148,7 +148,7 @@ interface IjentSessionProvider {
      * All requests and data transfer with the remote machine is performed through stdin and stdout of [shellProcess].
      *
      * It is recommended to always use `/bin/sh` for [shellProcess], but any other POSIX-compliant interpreter is accepted too. The shell
-     * is later changed to the default user's shell before starting IJent, in order that [IjentApi.fetchLoginShellEnvVariables] returns
+     * is later changed to the default user's shell before starting IJent, in order that [IjentExecApi.fetchLoginShellEnvVariables] returns
      * the variables from the appropriate shell configs.
      *
      * [shellProcess] must have stdin, stdout and stderr piped.
@@ -239,7 +239,7 @@ private suspend fun bootstrapOverShellSession(
       val line = readLineWithoutBuffering(inputStream, tracingLabel = "stdout")
       LOG.trace { "Received greeting line from stdout: $line" }
     }
-    while (line != boundary);
+    while (line != boundary)
 
     readLineWithoutBuffering(inputStream, tracingLabel = "stdout")
   }.split(" ")
