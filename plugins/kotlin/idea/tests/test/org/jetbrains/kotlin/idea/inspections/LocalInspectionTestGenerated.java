@@ -17252,6 +17252,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/multifile/parameterOnlyUsedAsNamedArgument.kt");
             }
 
+            @TestMetadata("privateClassReferencedFromXml.kt")
+            public void testPrivateClassReferencedFromXml() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/multifile/privateClassReferencedFromXml.kt");
+            }
+
             @TestMetadata("propertyReference.kt")
             public void testPropertyReference() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/multifile/propertyReference.kt");

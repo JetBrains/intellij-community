@@ -101,6 +101,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/parameterOnlyUsedAsNamedArgument.kt");
         }
 
+        @TestMetadata("privateClassReferencedFromXml.kt")
+        public void testPrivateClassReferencedFromXml() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/privateClassReferencedFromXml.kt");
+        }
+
         @TestMetadata("propertyReference.kt")
         public void testPropertyReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/propertyReference.kt");

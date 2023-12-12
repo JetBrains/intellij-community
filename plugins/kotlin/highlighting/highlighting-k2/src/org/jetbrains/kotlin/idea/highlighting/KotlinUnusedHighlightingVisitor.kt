@@ -154,13 +154,16 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
             return
         }
         val nameIdentifier = declaration.nameIdentifier
-        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+        val problemPsiElement =
+            if (mustBeLocallyReferenced
+                && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+                && declaration !is KtClass // look globally for private classes too, since they could be referenced from some fancy .xml
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
-            val problem = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
-            (problem ?: return)
+            KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
         }
+        if (problemPsiElement == null) return
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
