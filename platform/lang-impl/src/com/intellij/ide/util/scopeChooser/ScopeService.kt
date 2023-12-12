@@ -2,10 +2,15 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -14,6 +19,15 @@ class ScopeService(
   private val project: Project,
   private val scope: CoroutineScope,
 ) {
+
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // Fix "MessageBusImpl is already disposed: (disposed temporarily)" during LightPlatformTestCase
+      (project as? ProjectEx)?.earlyDisposable?.let { disposable ->
+        scope.coroutineContext.job.cancelOnDispose(disposable)
+      }
+    }
+  }
 
   fun createModel(options: Set<ScopeOption>): AbstractScopeModel =
     if (Registry.`is`("coroutine.scope.model", true))
