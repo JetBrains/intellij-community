@@ -312,13 +312,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private @NotNull List<TemplatesGroup> fillTemplatesMap(@NotNull WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-
-    //add them later for new wizard, after sorting
-    builders.removeIf(
-      it -> it instanceof NewProjectBuilder ||
-            it instanceof NewEmptyProjectBuilder ||
-            it instanceof NewModuleBuilder);
-
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
       try {
