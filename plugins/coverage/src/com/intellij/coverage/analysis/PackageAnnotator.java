@@ -8,16 +8,10 @@ import com.intellij.coverage.JavaCoverageOptionsProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -72,48 +66,6 @@ public final class PackageAnnotator {
     outputRoot = !rootPackageVMName.isEmpty() ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
   }
-
-  public PackageAnnotator.ClassCoverageInfo visitClass(PsiClass psiClass) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module != null) {
-      final boolean isInTests = ProjectRootManager.getInstance(module.getProject()).getFileIndex()
-        .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
-      final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension == null) return null;
-      final String outputPathUrl = isInTests ? moduleExtension.getCompilerOutputUrlForTests() : moduleExtension.getCompilerOutputUrl();
-      final File outputPath = outputPathUrl != null ? new File(VfsUtilCore.urlToPath(outputPathUrl)) : null;
-
-      if (outputPath != null) {
-        final String qualifiedName = psiClass.getQualifiedName();
-        if (qualifiedName == null) return null;
-        final String packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(qualifiedName));
-        final File packageRoot = findRelativeFile(packageVMName, outputPath);
-        if (packageRoot.exists()) {
-          final File[] files = packageRoot.listFiles();
-          if (files != null) {
-            final PackageAnnotator.ClassCoverageInfo result = new PackageAnnotator.ClassCoverageInfo();
-            for (File child : files) {
-              if (AnalysisUtils.isClassFile(child)) {
-                String simpleName = AnalysisUtils.getClassName(child);
-                String classFqVMName = AnalysisUtils.buildVMName(packageVMName, simpleName);
-                String toplevelClassSrcFQName = AnalysisUtils.getSourceToplevelFQName(classFqVMName);
-                if (toplevelClassSrcFQName.equals(qualifiedName)) {
-                  final String className = AnalysisUtils.internalNameToFqn(classFqVMName);
-                  final PackageAnnotator.ClassCoverageInfo coverageInfo = collectClassCoverageInformation(child, psiClass, className);
-                  if (coverageInfo != null) {
-                    result.append(coverageInfo);
-                  }
-                }
-              }
-            }
-            return result;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
 
   /**
    * Collect coverage for classes with the same top level name.
