@@ -446,4 +446,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testArrayInitBeforeSuper() {
     doTest(false);
   }
+
+  public void testThisReferencedInnerClass() {
+    doTest(false);
+  }
 }

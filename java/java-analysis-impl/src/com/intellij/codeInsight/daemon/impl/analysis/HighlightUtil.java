@@ -2801,31 +2801,44 @@ public final class HighlightUtil {
           return null;
         }
 
-        // only this class/superclasses instance methods are not allowed to call
-        if (PsiUtil.isInnerClass(parentClass) && referencedClass == parentClass.getContainingClass()) return null;
+        // references to private methods from the outer class are not calls to super methods
+        // even if the outer class is the super class
+        if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) &&
+            PsiUtil.isInnerClass(parentClass) && referencedClass == parentClass.getContainingClass()) {
+          return null;
+        }
         // field or method should be declared in this class or super
         if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return null;
         // and point to our instance
-        if (expression instanceof PsiReferenceExpression &&
-            !isThisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), parentClass)) {
-          return null;
+        if (expression instanceof PsiReferenceExpression ref) {
+          PsiExpression qualifier = ref.getQualifierExpression();
+          if (!isThisOrSuperReference(qualifier, parentClass)) {
+            return null;
+          }
+          else if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+            if (((PsiQualifiedExpression)qualifier).getQualifier() != null) return null;
+          }
         }
 
-        if (expression instanceof PsiJavaCodeReferenceElement &&
-            !parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
-            PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
-          return null;
+        if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+          if (referencedClass != parentClass) return null;
         }
 
-        if (expression instanceof PsiJavaCodeReferenceElement &&
-            PsiTreeUtil.getParentOfType(expression, PsiClassObjectAccessExpression.class) != null) {
-          return null;
-        }
+        if (expression instanceof PsiJavaCodeReferenceElement) {
+          if (!parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+              PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
+            return null;
+          }
 
-        if (expression instanceof PsiJavaCodeReferenceElement &&
-            expression.getParent() instanceof PsiNewExpression newExpression &&
-            newExpression.isArrayCreation() && newExpression.getClassOrAnonymousClassReference() == expression) {
-          return null;
+          if (PsiTreeUtil.getParentOfType(expression, PsiClassObjectAccessExpression.class) != null) {
+            return null;
+          }
+
+          if (expression.getParent() instanceof PsiNewExpression newExpression &&
+              newExpression.isArrayCreation() &&
+              newExpression.getClassOrAnonymousClassReference() == expression) {
+            return null;
+          }
         }
 
         HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
