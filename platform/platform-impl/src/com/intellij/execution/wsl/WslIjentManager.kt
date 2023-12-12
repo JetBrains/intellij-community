@@ -7,21 +7,21 @@ import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.computeDetached
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -50,7 +50,11 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       }
 
       validOldHolder ?: scope.suspendingLazy {
-        deployAndLaunchIjent(scope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        val scopeName = "IJent on WSL $wslDistribution"
+        val ijentScope = scope.namedChildScope(scopeName, CoroutineExceptionHandler { _, err ->
+          LOG.error("Unexpected error in $scopeName", err)
+        })
+        deployAndLaunchIjent(ijentScope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
       }
     }!!.getValue()
   }
@@ -114,6 +118,8 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
   }
 
   companion object {
+    private val LOG = logger<WslIjentManager>()
+
     @JvmStatic
     fun isIjentAvailable(): Boolean {
       val id = PluginId.getId("intellij.platform.ijent.impl")
