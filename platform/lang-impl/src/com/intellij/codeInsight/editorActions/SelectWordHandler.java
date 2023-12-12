@@ -205,6 +205,9 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
     if ((caretOffset == text.length() || Character.isWhitespace(text.charAt(caretOffset))) && !Character.isWhitespace(prev)) {
       return caretOffset - 1;
     }
+    if (caret.getSelectionEnd() == caretOffset && caret.getSelectionStart() < caretOffset) {
+      return caretOffset - 1;
+    }
     return caretOffset;
   }
 
