@@ -514,6 +514,7 @@ as an example
       const maxHeapBytes = extractTimeSeries("JVM.maxHeapBytes")
       const usedNativeBytes = extractTimeSeries("JVM.usedNativeBytes")
       const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
+      const totalDirectByteBuffersBytes = extractTimeSeries("JVM.totalDirectByteBuffersBytes")
       const threadsCount = extractTimeSeries("JVM.threadCount")
 
       const gcCollections = extractTimeSeries("JVM.GC.collections")
@@ -576,6 +577,19 @@ as an example
           }
         )
       }
+
+      plotTimeSeries(
+        'Direct ByteBuffers',
+        'jvmBasics_DirectByteBuffers_Chart',
+        [{
+          name: 'Total DirectByteBuffers, Mb',
+          color: 'green',
+          series: totalDirectByteBuffersBytes.mulScalar(1.0 / 1024 / 1024)
+        }],
+        /*yaxis:*/ {
+          title: 'Mb'
+        }
+      )
 
 
       plotTimeSeries(
@@ -1479,6 +1493,7 @@ as an example
 
     <div id="jvmBasics_Heap_Chart" class="plot hideable"></div>
     <div id="jvmBasics_OffHeap_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_DirectByteBuffers_Chart" class="plot hideable"></div>
     <div id="jvmBasics_Threads_Chart" class="plot hideable"></div>
 
     <div id="jvmBasics_GC_Times_Chart" class="plot hideable"></div>

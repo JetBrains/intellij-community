@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.diagnostic.telemetry.JVM
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.util.io.IOUtil
 import com.sun.management.ThreadMXBean
 import io.opentelemetry.api.metrics.BatchCallback
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
@@ -33,7 +34,10 @@ private class JVMStatsToOTelReporter : ProjectActivity {
       val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
       val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
 
+      //Off-heap memory used by JVM structures
       val usedNativeMemoryGauge = otelMeter.gaugeBuilder("JVM.usedNativeBytes").ofLongs().buildObserver()
+      //Off-heap memory used by direct ByteBuffers
+      val totalDirectByteBuffersGauge = otelMeter.gaugeBuilder("JVM.totalDirectByteBuffersBytes").ofLongs().buildObserver()
 
       val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
       val threadCountMaxGauge = otelMeter.gaugeBuilder("JVM.maxThreadCount").ofLongs().buildObserver()
@@ -65,6 +69,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
           maxHeapMemoryGauge.record(heapUsage.max)
 
           usedNativeMemoryGauge.record(nonHeapUsage.used)
+          totalDirectByteBuffersGauge.record(IOUtil.directBuffersTotalAllocatedSize())
 
           threadCountGauge.record(threadMXBean.threadCount.toLong())
           threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
@@ -91,7 +96,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         },
 
         usedHeapMemoryGauge, maxHeapMemoryGauge,
-        usedNativeMemoryGauge,
+        usedNativeMemoryGauge, totalDirectByteBuffersGauge,
         threadCountGauge,
         threadCountMaxGauge,
         osLoadAverageGauge,
