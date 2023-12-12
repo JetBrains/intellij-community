@@ -15,20 +15,23 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicReference
 
 class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
   @Test
   fun testBasic() = runBlocking {
     createProjectSubDir("res")
@@ -49,8 +52,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-
-    assertResolved(f, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag("project.version"))
+    }
   }
 
   @Test
@@ -73,8 +77,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-
-    assertResolved(f, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag("project.version"))
+    }
   }
 
   @Test
@@ -98,7 +103,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc@project<caret>.version@abc")
 
-    assertResolved(f, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag("project.version"))
+    }
   }
 
   @Test
@@ -122,8 +129,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${basedir<caret>}abc")
 
-    val baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent())
-    assertResolved(f, baseDir!!)
+    withContext(Dispatchers.EDT) {
+      val baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent())
+      assertResolved(f, baseDir!!)
+    }
   }
 
   @Test
@@ -166,7 +175,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=\${parentProp<caret>}")
 
-    assertResolved(f, findTag(parent, "project.properties.parentProp"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag(parent, "project.properties.parentProp"))
+    }
   }
 
   @Test
@@ -199,8 +210,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=@profileProp<caret>@")
-
-    assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java))
+    }
   }
 
   @Test
@@ -223,7 +235,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-    assertNoReferences(f, MavenPropertyPsiReference::class.java)
+    withContext(Dispatchers.EDT) {
+      assertNoReferences(f, MavenPropertyPsiReference::class.java)
+    }
   }
 
   @Test
@@ -246,7 +260,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${project<caret>.version}abc")
-    assertNoReferences(f, MavenPropertyPsiReference::class.java)
+
+    withContext(Dispatchers.EDT) {
+      assertNoReferences(f, MavenPropertyPsiReference::class.java)
+    }
   }
 
   @Test
@@ -272,7 +289,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${xx<caret>x}abc")
-    assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+    }
   }
 
   private fun findPropertyPsiElement(filter: VirtualFile, propName: String): PsiElement? {
@@ -338,8 +357,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                         """.trimIndent())
     val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
-    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"),
-                               MavenDomUtil.findPropertyValue(myProject, f, "foo2"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"),
+                                 MavenDomUtil.findPropertyValue(myProject, f, "foo2"))
+    }
   }
 
   @Test
@@ -464,11 +485,12 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${f<caret>oo}abc")
 
-    assertResolved(f, findTag("project.properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findTag("project.properties.foo"))
 
-    doRename(f, "bar")
+      doRename(f, "bar")
 
-    assertEquals(createPomXml("""
+      assertEquals(createPomXml("""
                                 <groupId>test</groupId>
                                 <artifactId>project</artifactId>
                                 <version>1</version>
@@ -484,9 +506,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                   </resources>
                                 </build>
                                 """.trimIndent()),
-                 findPsiFile(myProjectPom).getText())
+                   findPsiFile(myProjectPom).getText())
 
-    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
+      assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
+    }
   }
 
   @Test
@@ -513,12 +536,15 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${x<caret>xx}abc")
-    assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
-    fixture.configureFromExistingVirtualFile(filter)
-    doInlineRename(f, "bar")
 
-    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
-    assertEquals("bar=1", findPsiFile(filter).getText())
+    withContext(Dispatchers.EDT) {
+      assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+      fixture.configureFromExistingVirtualFile(filter)
+      doInlineRename(f, "bar")
+
+      assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
+      assertEquals("bar=1", findPsiFile(filter).getText())
+    }
   }
 
   @Test
@@ -558,12 +584,13 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            foo2=|pom.baseUri|
                                            foo3=a(ve|rsion]
                                            """.trimIndent())
-
-    assertNotNull(resolveReference(f, "basedir"))
-    assertNotNull(resolveReference(f, "pom.baseUri"))
-    val ref = getReference(f, "ve|rsion")
-    assertNotNull(ref)
-    assertTrue(ref!!.isSoft())
+    withContext(Dispatchers.EDT) {
+      assertNotNull(resolveReference(f, "basedir"))
+      assertNotNull(resolveReference(f, "pom.baseUri"))
+      val ref = getReference(f, "ve|rsion")
+      assertNotNull(ref)
+      assertTrue(ref!!.isSoft())
+    }
   }
 
   @Test
@@ -603,8 +630,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                         foo2=|pom.baseUri|
                                         """.trimIndent())
 
-    assert(getReference(f, "basedir") !is MavenPropertyPsiReference)
-    assertNotNull(resolveReference(f, "pom.baseUri"))
+    withContext(Dispatchers.EDT) {
+      assert(getReference(f, "basedir") !is MavenPropertyPsiReference)
+      assertNotNull(resolveReference(f, "pom.baseUri"))
+    }
   }
 
   @Test
@@ -678,17 +707,22 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     fixture.configureFromExistingVirtualFile(f)
 
-    val attribute = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()), XmlAttribute::class.java)
+    val added = AtomicReference(false)
 
-    val references = attribute!!.getReferences()
+    withContext(Dispatchers.EDT) {
+      val attribute = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()), XmlAttribute::class.java)
 
-    for (ref in references) {
-      if (ref.resolve() is PsiDirectory) {
-        return@runBlocking  // Maven references was added.
+      val references = attribute!!.getReferences()
+
+      for (ref in references) {
+        if (ref.resolve() is PsiDirectory) {
+          added.set(true)  // Maven references was added.
+          break
+        }
       }
     }
 
-    fail("Maven filter reference was not added")
+    assertTrue("Maven filter reference was not added", added.get())
   }
 
   private fun importProjectAndExpectResourcePluginIndexed(@Language(value = "XML", prefix = "<project>",

@@ -6,7 +6,6 @@ import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspec
 import org.junit.Test
 
 class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
   @Test
   fun testDuplicatedInSameFile() = runBlocking {
     fixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)

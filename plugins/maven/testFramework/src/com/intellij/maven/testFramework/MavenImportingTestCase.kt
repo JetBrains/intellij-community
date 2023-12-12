@@ -458,11 +458,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     }
   }
 
-  protected fun readProjects(files: List<VirtualFile>, vararg profiles: String) {
+  private fun readProjects(files: List<VirtualFile>, vararg profiles: String) {
     readProjects(files, emptyList<String>(), *profiles)
   }
 
-  protected fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
+  private fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
     projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
   }
 

@@ -5,8 +5,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
   fun testHighlighting() = runBlocking {
     importProjectAsync(

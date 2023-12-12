@@ -16,16 +16,18 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
 import org.junit.Test
 
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
   @Test
   fun testVariants() = runBlocking {
     importProjectAsync("""
@@ -85,7 +87,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProjects(myProjectPom, m)
+    importProjectsAsync(myProjectPom, m)
 
     createModulePom("m", """
       <groupId>test</groupId>
@@ -98,7 +100,9 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       </parent>
       """.trimIndent())
 
-    assertResolved(m, findPsiFile(myProjectPom))
+    withContext(Dispatchers.EDT) {
+      assertResolved(m, findPsiFile(myProjectPom))
+    }
   }
 
   @Test
@@ -122,7 +126,10 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().findFileByPath(filePath)
-    assertResolved(myProjectPom, findPsiFile(f))
+
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(f))
+    }
   }
 
   @Test
@@ -152,7 +159,9 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            <version>1</version>
                                            """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent))
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(parent))
+    }
   }
 
   @Test
@@ -185,7 +194,9 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            <version>1</version>
                                            """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent))
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(parent))
+    }
   }
 
   @Test
@@ -215,7 +226,9 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent))
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(parent))
+    }
   }
 
   @Test
@@ -546,7 +559,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProjects(myProjectPom, m)
+    importProjectsAsync(myProjectPom, m)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -560,13 +573,15 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    val i = getIntentionAtCaret("Fix Relative Path")
-    assertNotNull(i)
+    withContext(Dispatchers.EDT) {
+      val i = getIntentionAtCaret("Fix Relative Path")
+      assertNotNull(i)
 
-    fixture.launchAction(i)
-    val el = getElementAtCaret(myProjectPom)
+      fixture.launchAction(i!!)
+      val el = getElementAtCaret(myProjectPom)!!
 
-    assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))
+      assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))
+    }
   }
 
   @Test

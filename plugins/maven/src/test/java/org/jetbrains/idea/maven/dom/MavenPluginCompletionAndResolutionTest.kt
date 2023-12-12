@@ -1,15 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.xml.XmlTag
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
   }
@@ -113,7 +114,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    assertResolved(myProjectPom, findPsiFile(f))
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(f))
+    }
   }
 
   @Test
@@ -158,8 +161,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(
-      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
+    val variants = getDependencyCompletionVariants(myProjectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
 
 
     assertContain(variants,
@@ -225,7 +227,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    assertResolved(myProjectPom, findPsiFile(f))
+    withContext(Dispatchers.EDT) {
+      assertResolved(myProjectPom, findPsiFile(f))
+    }
   }
 
   @Test
@@ -245,9 +249,11 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
-    ref.resolve() // shouldn't throw;
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(myProjectPom)
+      assertNotNull(ref)
+      ref!!.resolve() // shouldn't throw;
+    }
     return@runBlocking
   }
 
@@ -374,13 +380,15 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
-    val resolved = ref.resolve()
-    assertNotNull(resolved)
-    assertTrue(resolved is XmlTag)
-    assertEquals("parameter", (resolved as XmlTag?)!!.getName())
-    assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(myProjectPom)
+      assertNotNull(ref)
+      val resolved = ref!!.resolve()
+      assertNotNull(resolved)
+      assertTrue(resolved is XmlTag)
+      assertEquals("parameter", (resolved as XmlTag?)!!.getName())
+      assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
+    }
   }
 
   @Test
@@ -402,13 +410,15 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
-    val resolved = ref.resolve()
-    assertNotNull(resolved)
-    assertTrue(resolved is XmlTag)
-    assertEquals("parameter", (resolved as XmlTag?)!!.getName())
-    assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(myProjectPom)
+      assertNotNull(ref)
+      val resolved = ref!!.resolve()
+      assertNotNull(resolved)
+      assertTrue(resolved is XmlTag)
+      assertEquals("parameter", (resolved as XmlTag?)!!.getName())
+      assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
+    }
   }
 
   @Test
@@ -568,14 +578,16 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(myProjectPom)
+      assertNotNull(ref)
 
-    val resolved = ref.resolve()
-    assertNotNull(resolved)
-    assertTrue(resolved is XmlTag)
-    assertEquals("mojo", (resolved as XmlTag?)!!.getName())
-    assertEquals("compile", resolved!!.findFirstSubTag("goal")!!.getValue().getText())
+      val resolved = ref!!.resolve()
+      assertNotNull(resolved)
+      assertTrue(resolved is XmlTag)
+      assertEquals("mojo", (resolved as XmlTag?)!!.getName())
+      assertEquals("compile", resolved!!.findFirstSubTag("goal")!!.getValue().getText())
+    }
   }
 
 
@@ -608,8 +620,10 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                            </build>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(myProjectPom)
-    assertNotNull(ref)
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(myProjectPom)
+      assertNotNull(ref)
+    }
   }
 
 
@@ -634,8 +648,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-
-    assertCompletionVariants(myProjectPom)
+    withContext(Dispatchers.EDT) {
+      assertCompletionVariants(myProjectPom)
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -656,8 +671,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-
-    assertUnresolved(myProjectPom)
+    withContext(Dispatchers.EDT) {
+      assertUnresolved(myProjectPom)
+    }
   }
 
   @Test

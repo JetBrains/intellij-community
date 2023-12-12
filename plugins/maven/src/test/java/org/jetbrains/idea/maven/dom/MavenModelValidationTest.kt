@@ -1,14 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
-
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""
@@ -55,10 +56,12 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                                               """.trimIndent())
 
     configTest(modulePom)
-    val elementAtCaret = fixture.getElementAtCaret()
+    withContext(Dispatchers.EDT) {
+      val elementAtCaret = fixture.getElementAtCaret()
 
-    UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
-    assertEquals((elementAtCaret as PsiFile).getVirtualFile(), myProjectPom)
+      UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
+      assertEquals((elementAtCaret as PsiFile).getVirtualFile(), myProjectPom)
+    }
   }
 
   @Test

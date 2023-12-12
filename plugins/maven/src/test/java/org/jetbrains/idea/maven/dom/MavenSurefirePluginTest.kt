@@ -6,8 +6,6 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
 class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
-
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", "local1")
   }

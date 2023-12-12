@@ -20,8 +20,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPackagingCompletionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
   fun testVariants() = runBlocking {
     importProjectAsync("""
