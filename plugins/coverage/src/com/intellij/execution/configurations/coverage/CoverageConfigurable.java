@@ -46,7 +46,7 @@ import java.util.Objects;
  * group.addEditor(title, yourCoverageConfigurable);
  * </code>
  */
-public final class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
+public final class CoverageConfigurable extends SettingsEditor<RunConfigurationBase<?>> {
   private static final Logger LOG = Logger.getInstance(CoverageConfigurable.class);
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
@@ -60,20 +60,20 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
   private JCheckBox myTrackTestSourcesCb;
 
   private JCheckBox myBranchCoverageCb;
-  private final RunConfigurationBase myConfig;
+  private final RunConfigurationBase<?> myConfig;
 
-  public CoverageConfigurable(RunConfigurationBase config) {
+  public CoverageConfigurable(RunConfigurationBase<?> config) {
     myConfig = config;
     myProject = config.getProject();
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull final RunConfigurationBase runConfiguration) {
+  protected void resetEditorFrom(@NotNull final RunConfigurationBase<?> runConfiguration) {
     final boolean isJre50;
     if (runConfiguration instanceof CommonJavaRunConfigurationParameters && myVersionDetector.isJre50Configured((CommonJavaRunConfigurationParameters)runConfiguration)) {
       isJre50 = true;
     } else if (runConfiguration instanceof ModuleBasedConfiguration){
-      isJre50 = myVersionDetector.isModuleJre50Configured((ModuleBasedConfiguration)runConfiguration);
+      isJre50 = myVersionDetector.isModuleJre50Configured((ModuleBasedConfiguration<?, ?>)runConfiguration);
     } else {
       isJre50 = true;
     }
@@ -264,10 +264,6 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
 
     public CoverageRunner getRunner() {
       return myRunner;
-    }
-
-    public @NotNull String getRunnerId() {
-      return myRunnerId;
     }
 
     public String getPresentableName() {
