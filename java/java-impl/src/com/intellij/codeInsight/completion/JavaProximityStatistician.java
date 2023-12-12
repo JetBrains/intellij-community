@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public class JavaProximityStatistician extends ProximityStatistician{
   @Override
   public StatisticsInfo serialize(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
-    if (element.getLanguage().getID().equals("Scala")) return null;
     return element instanceof PsiMember ? JavaStatisticsManager.createInfo(null, (PsiMember)element) : null;
   }
 }
