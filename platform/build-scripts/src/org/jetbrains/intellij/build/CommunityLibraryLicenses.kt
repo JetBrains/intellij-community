@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
  */
 object CommunityLibraryLicenses {
   @JvmStatic
-  @Suppress("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
   val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
     LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "json-schema-validator",
                    url = "https://github.com/networknt/json-schema-validator")
@@ -933,8 +933,6 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Henri Tremblay", "Joe Walnes", "Leonardo Mesquita"),
     LibraryLicense(name = "OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/")
       .apache("https://square.github.io/okhttp/#license"),
-    //LibraryLicense(name = "Okio", libraryName = "okio", url = "https://github.com/square/okio")
-    //  .apache("https://github.com/square/okio/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/",
                    licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0")
       .suppliedByOrganizations("The OpenTelemetry Authors"),
