@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -266,7 +267,7 @@ public final class ExceptionUtil {
   private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
                                                               @Nullable PsiElement topElement,
                                                               @Nullable Set<PsiClassType> foundExceptions,
-                                                              @NotNull Predicate<? super PsiCallExpression> callFilter) {
+                                                              @NotNull Predicate<? super PsiCall> callFilter) {
     Collection<PsiClassType> unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
@@ -450,9 +451,9 @@ public final class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> getUnhandledExceptions(@NotNull final PsiCallExpression methodCall,
+  private static List<PsiClassType> getUnhandledExceptions(@NotNull final PsiCall methodCall,
                                                            @Nullable final PsiElement topElement,
-                                                           @NotNull Predicate<? super PsiCallExpression> skipCondition) {
+                                                           @NotNull Predicate<? super PsiCall> skipCondition) {
     //exceptions only influence the invocation type after overload resolution is complete
     if (MethodCandidateInfo.isOverloadCheck()) {
       return Collections.emptyList();
@@ -471,49 +472,83 @@ public final class ExceptionUtil {
     if (thrownExceptions.length == 0) {
       return Collections.emptyList();
     }
-
-    if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
-      PsiFile containingFile = methodCall.getContainingFile();
-      MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
-      try {
-        PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
-        // Resolve other signatures in case of multiple interface inheritance
-        // e.g. consider
-        // interface X {void a() throws A;} interface Y{void a() throws B;} class Z extends X, Y {}
-        // here normal resolve returns X.a(), but we should check throws clauses for both a() methods.
-        // (see JLS 15.12.2.5)
-        final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
-          processor.getResults(), info -> {
-            PsiElement element1 = info.getElement();
-            if (info instanceof MethodCandidateInfo &&
-                element1 != method && //don't check self
-                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
-                !((PsiMethod)element1).hasModifierProperty(PsiModifier.PRIVATE) &&
-                !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method) &&
-                !(((MethodCandidateInfo)info).isToInferApplicability() && !((MethodCandidateInfo)info).isApplicable())) {
-              return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));
-            }
-            return null;
-          });
-        if (!candidates.isEmpty()) {
-          GlobalSearchScope scope = methodCall.getResolveScope();
-          List<PsiClassType> ex = collectSubstituted(result.getSubstitutor(), thrownExceptions, scope);
-          for (Pair<PsiMethod, PsiSubstitutor> pair : candidates) {
-            final PsiClassType[] exceptions = pair.first.getThrowsList().getReferencedTypes();
-            if (exceptions.length == 0) {
-              return Collections.emptyList();
-            }
-            retainExceptions(ex, collectSubstituted(pair.second, exceptions, scope));
-          }
-          return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
-        }
-      }
-      catch (MethodProcessorSetupFailedException ignore) {
+    List<Pair<PsiMethod, PsiSubstitutor>> otherTargets;
+    if (methodCall instanceof PsiTemplateExpression) {
+      otherTargets = getTemplateTargets((PsiTemplateExpression)methodCall, method);
+    }
+    else if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
+      otherTargets = getMethodCallTargets((PsiMethodCallExpression)methodCall, method);
+    }
+    else {
+      otherTargets = Collections.emptyList();
+    }
+    GlobalSearchScope scope = methodCall.getResolveScope();
+    List<PsiClassType> ex = collectSubstituted(result.getSubstitutor(), thrownExceptions, scope);
+    for (Pair<PsiMethod, PsiSubstitutor> pair : otherTargets) {
+      final PsiClassType[] exceptions = pair.first.getThrowsList().getReferencedTypes();
+      if (exceptions.length == 0) {
         return Collections.emptyList();
       }
+      retainExceptions(ex, collectSubstituted(pair.second, exceptions, scope));
     }
+    return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
+  }
 
-    return getUnhandledExceptions(method, methodCall, topElement, result::getSubstitutor);
+  private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
+                                                                            @NotNull PsiMethod method) {
+    PsiFile containingFile = call.getContainingFile();
+    MethodResolverProcessor processor = new MethodResolverProcessor(call, containingFile);
+    try {
+      PsiScopesUtil.setupAndRunProcessor(processor, call, false);
+      // Resolve other signatures in case of multiple interface inheritance
+      // e.g. consider
+      // interface X {void a() throws A;} interface Y{void a() throws B;} class Z extends X, Y {}
+      // here normal resolve returns X.a(), but we should check throws clauses for both a() methods.
+      // (see JLS 15.12.2.5)
+      return ContainerUtil.mapNotNull(
+        processor.getResults(), info -> {
+          PsiElement element1 = info.getElement();
+          if (info instanceof MethodCandidateInfo &&
+              element1 != method && //don't check self
+              MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
+              !((PsiMethod)element1).hasModifierProperty(PsiModifier.PRIVATE) &&
+              !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method) &&
+              !(((MethodCandidateInfo)info).isToInferApplicability() && !((MethodCandidateInfo)info).isApplicable())) {
+            return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));
+          }
+          return null;
+        });
+    }
+    catch (MethodProcessorSetupFailedException ignore) {
+    }
+    return Collections.emptyList();
+  }
+
+  private static List<Pair<PsiMethod, PsiSubstitutor>> getTemplateTargets(@NotNull PsiTemplateExpression methodCall,
+                                                                          @NotNull PsiMethod baseMethod) {
+    PsiExpression processor = methodCall.getProcessor();
+    if (processor == null) return Collections.emptyList();
+    PsiType type = processor.getType();
+    if (type == null) return Collections.emptyList();
+    List<Pair<PsiMethod, PsiSubstitutor>> candidates = new ArrayList<>();
+    // Resolve other signatures in case of multiple interface inheritance
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      if (InheritanceUtil.isInheritor(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR)) {
+        final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+        final PsiClass aClass = resolveResult.getElement();
+        if (aClass == null) continue;
+        for (PsiMethod foundMethod : aClass.findMethodsBySignature(baseMethod, true)) {
+          if (foundMethod == baseMethod) continue;
+          PsiClass methodContainingClass = foundMethod.getContainingClass();
+          if (methodContainingClass == null) continue;
+          final PsiSubstitutor substitutor =
+            TypeConversionUtil.getClassSubstitutor(methodContainingClass, aClass, resolveResult.getSubstitutor());
+          if (substitutor == null) continue;
+          candidates.add(Pair.create(foundMethod, substitutor));
+        }
+      }
+    }
+    return candidates;
   }
 
   public static void retainExceptions(List<PsiClassType> ex, List<? extends PsiClassType> thrownEx) {
@@ -549,6 +584,13 @@ public final class ExceptionUtil {
       else if (psiType instanceof PsiCapturedWildcardType) {
         final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)psiType;
         final PsiType upperBound = capturedWildcardType.getUpperBound();
+        if (upperBound instanceof PsiClassType) {
+          ex.add((PsiClassType)upperBound);
+        }
+      }
+      else if (psiType instanceof PsiWildcardType) {
+        final PsiWildcardType capturedWildcardType = (PsiWildcardType)psiType;
+        final PsiType upperBound = capturedWildcardType.getExtendsBound();
         if (upperBound instanceof PsiClassType) {
           ex.add((PsiClassType)upperBound);
         }
@@ -620,6 +662,9 @@ public final class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
                                                                    @Nullable PsiElement topElement) {
+    if (!PsiUtil.getLanguageLevel(templateExpression).equals(LanguageLevel.JDK_21_PREVIEW)) {
+      return getUnhandledExceptions(templateExpression, topElement, c -> false);
+    }
     PsiExpression processor = templateExpression.getProcessor();
     if (processor == null) return Collections.emptyList();
     PsiType type = processor.getType();

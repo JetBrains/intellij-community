@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -117,6 +118,13 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
 
   @Override
   public @Nullable PsiType getType() {
+    if (!PsiUtil.getLanguageLevel(this).equals(LanguageLevel.JDK_21_PREVIEW)) {
+      JavaResolveResult result = resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)result.getElement();
+      if (method != null) {
+        return result.getSubstitutor().substitute(method.getReturnType());
+      }
+    }
     final PsiExpression processor = getProcessor();
     if (processor == null) return null;
     PsiType type = processor.getType();
