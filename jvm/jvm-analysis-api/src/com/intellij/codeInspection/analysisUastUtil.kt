@@ -23,8 +23,6 @@ fun ULambdaExpression.getLambdaType(): PsiType? =
 
 fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
 
-annotation class X(vararg val value: String)
-
 /**
  * Gets all attribute values, ignore whether these are written as array initializer.
  *
