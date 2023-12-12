@@ -20,7 +20,7 @@ internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.
   fun showPopupMenu() {
     val start = System.nanoTime()
     val popup = createPopupMenu()
-    Utils.showPopupElapsedMillisIfConfigured(start, popup.content);
+    Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
     popup.showUnderneathOf(getTargetComponent())
   }
 

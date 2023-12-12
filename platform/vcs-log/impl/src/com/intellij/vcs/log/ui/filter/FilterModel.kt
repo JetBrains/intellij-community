@@ -58,7 +58,7 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
         VcsLogUsageTriggerCollector.triggerFilterSet(filterKey.name)
       }
 
-      super.setFilter(filter);
+      super.setFilter(filter)
     }
 
     protected abstract fun createFilter(values: List<String>): Filter?
@@ -108,7 +108,7 @@ abstract class FilterModel<Filter> internal constructor(@JvmField protected val 
       }
 
       if (anyFiltersDiffers) {
-        super.setFilter(newFilter);
+        super.setFilter(newFilter)
       }
     }
 
