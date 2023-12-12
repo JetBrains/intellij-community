@@ -625,10 +625,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public List<Pair<String, Boolean>> getSmartStepIntoVariants(int startContextLine, int endContextLine) {
+  public @NotNull List<Pair<String, Boolean>> getSmartStepIntoVariants(int startContextLine, int endContextLine) {
     try {
       PyStackFrame frame = currentFrame();
-      return myDebugger.getSmartStepIntoVariants(frame.getThreadId(), frame.getFrameId(), startContextLine, endContextLine);
+      var smartStepIntoVariants = myDebugger.getSmartStepIntoVariants(
+        frame.getThreadId(), frame.getFrameId(), startContextLine, endContextLine);
+      return smartStepIntoVariants != null ? smartStepIntoVariants : Collections.emptyList();
     }
     catch (PyDebuggerException e) {
       return Collections.emptyList();
