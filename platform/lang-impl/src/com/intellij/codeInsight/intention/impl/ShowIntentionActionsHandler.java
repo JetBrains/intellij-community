@@ -211,7 +211,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
             ActionContext actionContext = ActionContext.from(editor, psiFile);
             ThrowableComputable<Boolean, RuntimeException> computable =
               () -> ReadAction.nonBlocking(() -> modCommand.getPresentation(actionContext) != null)
-                .expireWhen(() -> project.isDisposed())
+                .expireWith(project)
                 .executeSynchronously();
             return ProgressManager.getInstance().runProcessWithProgressSynchronously(
               computable, LangBundle.message("command.check.availability.for", modCommand.getFamilyName()), true, project);
