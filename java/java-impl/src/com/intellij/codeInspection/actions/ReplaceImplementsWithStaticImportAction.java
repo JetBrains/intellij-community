@@ -52,7 +52,7 @@ public class ReplaceImplementsWithStaticImportAction implements ModCommandAction
     return Presentation.of(getFamilyName());
   }
 
-  private static boolean isEmptyClass(@NotNull PsiClass targetClass) {
+  private static boolean isEmptyInterfaceWithFields(@NotNull PsiClass targetClass) {
     if (!targetClass.isInterface()) {
       return false;
     }
@@ -136,7 +136,7 @@ public class ReplaceImplementsWithStaticImportAction implements ModCommandAction
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiClass psiClass) {
-        return isEmptyClass(psiClass) && DirectClassInheritorsSearch.search(psiClass).findFirst() != null ? psiClass : null;
+        return isEmptyInterfaceWithFields(psiClass) && DirectClassInheritorsSearch.search(psiClass).findFirst() != null ? psiClass : null;
       }
     }
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.getNonStrictParentOfType(element, PsiJavaCodeReferenceElement.class);
@@ -153,7 +153,7 @@ public class ReplaceImplementsWithStaticImportAction implements ModCommandAction
     final PsiElement target = ref.resolve();
     if (!(target instanceof PsiClass targetClass)) return null;
 
-    return isEmptyClass(targetClass) ? targetClass : null;
+    return isEmptyInterfaceWithFields(targetClass) ? targetClass : null;
   }
 
   private static boolean encodeQualifier(PsiClass containingClass, PsiElement reference, PsiClass targetClass) {
