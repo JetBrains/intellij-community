@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.handler;
 
 import com.intellij.codeInsight.CustomExceptionHandler;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
@@ -22,12 +22,6 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
-    final PsiCodeBlock containingCodeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, false);
-    if (isCodeBlockWithExceptionInConstructorCall(containingCodeBlock, Collections.singleton(exceptionType))) {
-      // call to a sibling or super constructor is excluded from the @SneakyThrows treatment
-      return false;
-    }
-
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiTryStatement.class, PsiMethod.class);
     if (parent instanceof PsiLambdaExpression) {
       // lambda it's another scope, @SneakyThrows annotation can't neglect exceptions in lambda only on method, constructor
@@ -44,42 +38,30 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
     }
     if (!(topElement instanceof PsiCodeBlock)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      return psiMethod != null && isExceptionHandled(psiMethod, exceptionType);
+      if (psiMethod != null) {
+        if (isConstructorMethodWithExceptionInSiblingConstructorCall(psiMethod, exceptionType)) {
+          // call to a sibling or super constructor is excluded from the @SneakyThrows treatment
+          return false;
+        }
+        return isExceptionHandled(psiMethod, exceptionType);
+      }
     }
     return false;
   }
 
-  private static boolean isCodeBlockWithExceptionInConstructorCall(@Nullable PsiCodeBlock codeBlock,
-                                                                   @NotNull Collection<PsiClassType> exceptionTypes) {
-    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
-    if (null != containingMethod) {
-      final PsiMethodCallExpression thisOrSuperCallInConstructor =
-        JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(containingMethod);
-      if (null != thisOrSuperCallInConstructor) {
-        return throwsExceptionsTypes(thisOrSuperCallInConstructor, exceptionTypes);
-      }
+  private static boolean isConstructorMethodWithExceptionInSiblingConstructorCall(@NotNull PsiMethod containingMethod,
+                                                                                  @NotNull PsiClassType exceptionTypes) {
+    final PsiMethodCallExpression thisOrSuperCallInConstructor = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(containingMethod);
+    if (null != thisOrSuperCallInConstructor) {
+      return throwsExceptionsTypes(thisOrSuperCallInConstructor, Collections.singleton(exceptionTypes));
     }
     return false;
   }
 
   static boolean throwsExceptionsTypes(@NotNull PsiMethodCallExpression thisOrSuperCallInConstructor,
                                        @NotNull Collection<PsiClassType> exceptionTypes) {
-    ExceptionTypesCollector visitor = new ExceptionTypesCollector();
-    thisOrSuperCallInConstructor.accept(visitor);
-    return ContainerUtil.intersects(visitor.exceptionTypes, exceptionTypes);
-  }
-
-  private static class ExceptionTypesCollector extends JavaRecursiveElementWalkingVisitor {
-    private final Collection<PsiClassType> exceptionTypes = new HashSet<>();
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      PsiMethod method = expression.resolveMethod();
-      if (method != null) {
-        Collections.addAll(exceptionTypes, method.getThrowsList().getReferencedTypes());
-      }
-      super.visitMethodCallExpression(expression);
-    }
+    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(thisOrSuperCallInConstructor);
+    return ContainerUtil.intersects(thrownExceptions, exceptionTypes);
   }
 
   private static boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
