@@ -12,7 +12,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
@@ -61,20 +60,14 @@ object NewProjectUtil {
     val proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null)
     var time = 0L
     val context = wizard.wizardContext
-    if (isNewWizard) {
-      time = System.nanoTime()
-      NewProjectWizardCollector.logOpen(context)
-    }
+    time = System.nanoTime()
+    NewProjectWizardCollector.logOpen(context)
     if (proceed && wizard.showAndGet()) {
       createFromWizard(wizard)
-      if (isNewWizard) {
-        NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
-      }
+      NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
       return
     }
-    if (isNewWizard) {
-      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
-    }
+    NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
   }
 
   @JvmOverloads
@@ -84,9 +77,7 @@ object NewProjectUtil {
       val newProject = doCreate(wizard, projectToClose)
       @Suppress("DEPRECATION", "removal")
       FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created")
-      if (isNewWizard) {
-        NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
-      }
+      NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
       newProject
     }
     catch (e: IOException) {
@@ -230,7 +221,4 @@ object NewProjectUtil {
   fun applyJdkToProject(project: Project, jdk: Sdk) {
     JavaSdkUtil.applyJdkToProject(project, jdk)
   }
-
-  private val isNewWizard: Boolean
-    get() = Experiments.getInstance().isFeatureEnabled("new.project.wizard")
 }

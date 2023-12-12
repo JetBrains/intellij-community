@@ -1255,10 +1255,6 @@
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
-    <experimentalFeature id="new.project.wizard" percentOfUsers="100">
-      <description>New project wizard</description>
-    </experimentalFeature>
-
     <applicationService serviceInterface="com.intellij.ide.ui.ToolbarSettings"
                         serviceImplementation="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
 

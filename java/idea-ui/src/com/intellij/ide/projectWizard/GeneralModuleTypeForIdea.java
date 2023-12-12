@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -60,7 +59,7 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
 
       @Override
       public boolean isAvailable() {
-        return !isNewWizard();
+        return false;
       }
 
       @Override
@@ -122,10 +121,6 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
         return bounds == null ? new Point(x, 10) : new Point(x, (int)bounds.getCenterY());
       }
     };
-  }
-
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

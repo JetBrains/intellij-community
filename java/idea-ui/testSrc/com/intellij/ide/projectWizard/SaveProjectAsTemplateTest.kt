@@ -10,7 +10,6 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.BasePackageParameterFactory
 import com.intellij.openapi.module.Module
@@ -20,7 +19,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.ProjectTemplatesFactory
 import com.intellij.platform.templates.ArchivedTemplatesFactory
 import com.intellij.platform.templates.LocalArchivedTemplate
 import com.intellij.platform.templates.SaveProjectAsTemplateAction
@@ -115,15 +113,10 @@ public class Bar {
     assertThat(zipFile.fileName.toString()).isEqualTo("foo.zip")
     assertThat(Files.size(zipFile)).isGreaterThan(0)
     val fromTemplate = withContext(Dispatchers.EDT) {
-      if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
-        createProject { step ->
-          if (step is ProjectTypeStep) {
-            assertTrue(step.setSelectedTemplate("foo", null))
-          }
+      createProject { step ->
+        if (step is ProjectTypeStep) {
+          assertTrue(step.setSelectedTemplate("foo", null))
         }
-      }
-      else {
-        createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null)
       }
     }
     val descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH)

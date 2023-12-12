@@ -2,7 +2,6 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.application.Experiments
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -17,7 +16,6 @@ abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewP
   override fun getGroupName(): String = wizard.groupName ?: super.getGroupName()
   override fun getNodeIcon(): Icon = wizard.icon
   override fun createStep(context: WizardContext): NewProjectWizardStep = wizard.createStep(context)
-  override fun isAvailable(): Boolean = Experiments.getInstance().isFeatureEnabled("new.project.wizard")
 
   companion object {
     /**

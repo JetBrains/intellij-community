@@ -7,11 +7,10 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -122,15 +121,8 @@ private fun isRowLabel(label: JLabel): Boolean {
 }
 
 fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
-  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
-    val top = if (topField) 20 else 15
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
-  }
-  else {
-    val top = if (topField) 15 else 5
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
-  }
-
+  val top = if (topField) 20 else 15
+  border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
   return this
 }
 
