@@ -13,7 +13,9 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.RepetitionInfo
 import java.util.*
 import kotlin.test.*
 
@@ -293,10 +295,9 @@ class AddDiffTest {
     target.addNamedEntity("Name")
     source.addNamedEntity("Name")
 
-    val thrown = assertThrows<Throwable> {
+    assertThrowsLogError<AddDiffException> {
       source.applyDiff(target)
     }
-    Assertions.assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)
@@ -310,10 +311,9 @@ class AddDiffTest {
       this.myName = "Name"
     }
 
-    val thrown = assertThrows<Throwable> {
+    assertThrowsLogError<AddDiffException> {
       source.applyDiff(target)
     }
-    Assertions.assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)
