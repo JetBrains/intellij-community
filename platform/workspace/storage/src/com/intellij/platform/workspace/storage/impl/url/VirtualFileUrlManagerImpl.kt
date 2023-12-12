@@ -123,7 +123,7 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         continue
       }
 
-      // Handling reuse of the root nodeќ
+      // Handling reuse of the root node
       if (latestNode === findRootNode(latestNode.contentId) && index == 0) {
         if (latestNode.contentId == nameId) {
           if (latestElement == 0) return latestNode.getVirtualFileUrl(this)
