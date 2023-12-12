@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
@@ -36,8 +35,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.UsageTargetUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -345,19 +342,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertSame(targetElement, lookupElement)
   }
 
-  protected suspend fun checkHighlighting() {
+  protected fun checkHighlighting() {
     checkHighlighting(myProjectPom)
   }
 
-  protected suspend fun checkHighlighting(f: VirtualFile) {
-    withContext(Dispatchers.EDT) {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      doCheckHighlighting(f)
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
-  }
-
-  private suspend fun doCheckHighlighting(f: VirtualFile) {
+  protected fun checkHighlighting(f: VirtualFile) {
     MavenLog.LOG.warn("checkHighlighting started")
 
     VirtualFileManager.getInstance().syncRefresh()

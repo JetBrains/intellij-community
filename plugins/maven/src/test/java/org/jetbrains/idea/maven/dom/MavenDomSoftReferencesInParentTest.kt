@@ -54,7 +54,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    checkHighlighting()
+    checkHighlightingEdt()
   }
 
   @Test
@@ -94,13 +94,21 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                        </build>
                        """.trimIndent()), false)
 
-    checkHighlighting()
+    checkHighlightingEdt()
 
     val documentSaved = !FileDocumentManager.getInstance().isDocumentUnsaved(getDocument(myProjectPom))
     assertTrue(documentSaved)
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {
-    return readAction { fixture.getDocument(findPsiFile(f)) }
+    return readAction { fixture.getDocument(findPsiFile(f)!!) }
+  }
+
+  private suspend fun checkHighlightingEdt() {
+    withContext(Dispatchers.EDT) {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      checkHighlighting()
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
   }
 }
