@@ -24,6 +24,7 @@ import com.intellij.ui.components.ProgressBarLoadingDecorator
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
@@ -49,9 +50,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
-    val scrollPane = ScrollPaneFactory.createScrollPane(activityList)
-    scrollPane.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    add(scrollPane, BorderLayout.CENTER)
+    val scrollPane = ScrollPaneFactory.createScrollPane(activityList).apply { border = IdeBorderFactory.createBorder(SideBorder.TOP) }
+    val progressStripe = ProgressStripe(scrollPane, this)
+    add(progressStripe, BorderLayout.CENTER)
 
     val toolbarComponent = BorderLayoutPanel()
 
@@ -89,10 +90,12 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     model.addListener(object : ActivityModelListener {
       override fun onItemsLoadingStarted() {
         activityList.updateEmptyText(true)
+        progressStripe.startLoading()
       }
       override fun onItemsLoadingStopped(items: List<ActivityItem>) {
         activityList.setItems(items)
         activityList.updateEmptyText(false)
+        progressStripe.stopLoading()
       }
       override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
         editorDiffPreview.setDiffData(diffData)
