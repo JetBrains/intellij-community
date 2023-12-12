@@ -22,8 +22,9 @@ public final class CloneDvcsValidationUtils {
   static {
     // TODO make real URL pattern
     @NonNls final String ch = "[\\p{ASCII}&&[\\p{Graph}]&&[^@:/]]";
+    @NonNls final String ch2 = "[\\p{ASCII}&&[\\p{Graph}]&&[^/]]";
     @NonNls final String host = ch + "+(?:\\." + ch + "+)*";
-    @NonNls final String path = "/?" + ch + "+(?:/" + ch + "+)*/?";
+    @NonNls final String path = "/?" + ch2 + "+(?:/" + ch2 + "+)*/?";
     @NonNls final String all = "(?:" + ch + "+@)?" + host + ":" + path;
     SSH_URL_PATTERN = Pattern.compile(all);
   }
