@@ -75,6 +75,8 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -212,14 +214,18 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
+        val lineRange = file.getRangeOfLine(line) ?: return null
+        val elementsOnLine = file.findElementsOfTypeInRange<PsiElement>(lineRange)
+            .filter { it.startOffset in lineRange && it.parents.contains(lambda) }
+
+        // Prefer elements that are inside body range
         val bodyRange = lambda.bodyExpression!!.textRange
-        val searchRange = file.getRangeOfLine(line)?.intersection(bodyRange) ?: return null
-        val elementsAtLine = file.findElementsOfTypeInRange<PsiElement>(searchRange)
+        elementsOnLine.firstOrNull {it.startOffset in bodyRange } ?.let { return it }
 
-        // Prefer elements that start on the line
-        elementsAtLine.firstOrNull { it.textRange.startOffset in searchRange }?.let { return it }
+        // Prefer KtElements
+        elementsOnLine.firstOrNull { it is KtElement } ?.let { return it }
 
-        return elementsAtLine.firstOrNull()
+        return elementsOnLine.firstOrNull()
     }
 
     private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {

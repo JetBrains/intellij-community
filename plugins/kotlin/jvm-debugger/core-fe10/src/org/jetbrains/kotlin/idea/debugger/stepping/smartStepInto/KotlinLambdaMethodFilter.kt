@@ -12,6 +12,7 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.breakpoints.inTheMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
@@ -56,16 +57,7 @@ class KotlinLambdaMethodFilter(
 
     private fun Location.matchesLambda(process: DebugProcessImpl, lambda: KtFunction): Boolean {
         val sourcePosition = process.positionManager.getSourcePosition(this) ?: return true
-        return runReadAction {
-            val bodyExpression = lambda.bodyExpression
-            val elementAt = sourcePosition.elementAt
-            if (elementAt == bodyExpression) {
-                return@runReadAction true
-            }
-
-            val blockAt = elementAt?.parentOfType<KtBlockExpression>(withSelf = true)
-            blockAt == bodyExpression
-        }
+        return runReadAction { inTheMethod(sourcePosition, lambda) }
     }
 
     override fun getCallingExpressionLines() = callingExpressionLines
