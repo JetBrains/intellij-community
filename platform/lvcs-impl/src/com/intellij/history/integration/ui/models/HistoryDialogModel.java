@@ -152,7 +152,7 @@ public abstract class HistoryDialogModel {
   }
 
   protected List<Difference> getDifferences() {
-    return getLeftRevision().getDifferencesWith(getRightRevision());
+    return Revision.getDifferencesBetween(getLeftRevision(), getRightRevision());
   }
 
   protected Change createChange(@NotNull Difference d) {

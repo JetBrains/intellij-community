@@ -20,6 +20,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -54,8 +55,8 @@ public abstract class Revision {
 
   public abstract @Nullable Entry findEntry();
 
-  public List<Difference> getDifferencesWith(Revision right) {
-    return Entry.getDifferencesBetween(findEntry(), right.findEntry(), right instanceof CurrentRevision);
+  public static @NotNull List<Difference> getDifferencesBetween(@NotNull Revision left, @NotNull Revision right) {
+    return Entry.getDifferencesBetween(left.findEntry(), right.findEntry(), right instanceof CurrentRevision);
   }
 
   public abstract RootEntry getRoot();

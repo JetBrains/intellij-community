@@ -7,6 +7,7 @@ import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Difference
+import com.intellij.history.core.revisions.Revision.getDifferencesBetween
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.integration.revertion.Reverter
@@ -34,7 +35,7 @@ import java.util.*
  * @see com.intellij.history.integration.ui.models.HistoryDialogModel.getDifferences
  */
 val RevisionSelection.diff: List<Difference>
-  get() = leftRevision.getDifferencesWith(rightRevision)
+  get() = getDifferencesBetween(leftRevision, rightRevision)
 
 /**
  * @see com.intellij.history.integration.ui.models.HistoryDialogModel.createChange

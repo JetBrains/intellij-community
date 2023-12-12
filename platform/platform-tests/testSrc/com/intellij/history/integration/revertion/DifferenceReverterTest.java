@@ -281,7 +281,7 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     List<Revision> revs = getRevisionsFor(myRoot);
     Revision leftRev = revs.get(change + 1);
     Revision rightRev = revs.get(change);
-    List<Difference> diffs = leftRev.getDifferencesWith(rightRev);
+    List<Difference> diffs = Revision.getDifferencesBetween(leftRev, rightRev);
     List<Difference> toRevert = new ArrayList<>();
     for (int i : diffsIndices) {
       toRevert.add(diffs.get(i));

@@ -288,7 +288,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
@@ -306,7 +306,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
@@ -321,7 +321,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
     List<Revision> rr = getRevisionsFor(dir);
 
-    assertTrue(rr.get(0).getDifferencesWith(rr.get(2)).isEmpty());
+    assertTrue(Revision.getDifferencesBetween(rr.get(0), rr.get(2)).isEmpty());
   }
 
   public void testDoesNotIncludeNotModifiedDifferences() throws IOException {
@@ -337,7 +337,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    List<Difference> dd = prev.getDifferencesWith(recent);
+    List<Difference> dd = Revision.getDifferencesBetween(prev, recent);
     assertEquals(1, dd.size());
 
     Difference d = dd.get(0);
