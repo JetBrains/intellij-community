@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutputStream;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntFunction;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
@@ -508,4 +510,27 @@ public final class IOUtil {
       throw mainEx;
     }
   }
+
+
+  //MAYBE RC: this method + PageCacheUtils.maxDirectMemory() is better to move to some common utility class
+  /** @return total size (bytes) of all direct {@link ByteBuffer}s allocated, or -1 if metric is not available */
+  public static long directBuffersTotalAllocatedSize() {
+    try {
+      Class<?> bitsClass = Class.forName("java.nio.Bits");
+      Field reservedMemoryField = bitsClass.getDeclaredField("RESERVED_MEMORY");
+      reservedMemoryField.setAccessible(true);
+      AtomicLong reservedMemory = (AtomicLong)reservedMemoryField.get(null);
+      return reservedMemory.get();
+    }
+    catch (Throwable t) {
+      Logger log = Logger.getInstance(IOUtil.class);
+      if (log.isDebugEnabled()) {
+        log.warn("Can't get java.nio.Bits.RESERVED_MEMORY", t);
+      }
+    }
+
+    return -1;
+  }
 }
+
+
