@@ -135,7 +135,15 @@ private class JavaMethodRenderer(
       setupTypeElement(method.returnTypeElement, returnType)
       setupParameters(method, request.expectedParameters)
     }
-    builder.setEndVariableAfter(method.body ?: method)
+    if (method.containingClass?.rBrace == null) {
+      val codeBlock = method.body
+      if (codeBlock != null) {
+        builder.setEndVariableBefore(codeBlock.lBrace ?: codeBlock)
+      }
+    }
+    else {
+      builder.setEndVariableAfter(method.body ?: method)
+    }
     return builder
   }
 

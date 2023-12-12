@@ -40,7 +40,7 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
 internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
-  if (this is PsiClassImpl || this is JspClass) {
+  if (this is PsiClassImpl || this is JspClass || this is PsiImplicitClass) {
     // `is JspClass` check should be removed when JSP will define its own action factory,
     // since Java should know nothing about JSP.
     if ((this as PsiClass).language == JavaLanguage.INSTANCE) {
