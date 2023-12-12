@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util
+package com.intellij.platform.util.coroutines.sync
 
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
@@ -161,44 +161,34 @@ private class DropOldestSemaphore(private val permits: Int) : DropOldestSemaphor
   private val _activeJobs = AtomicReference(persistentSetOf<Job>()) // ordered!
 
   override fun publishCurrentJob(currentJob: Job): Job? {
-    var activeJobs = _activeJobs.get()
     while (true) {
+      val activeJobs = _activeJobs.get()
       if (activeJobs.size < permits) {
         val newJobs = activeJobs.add(currentJob)
-        val witness = _activeJobs.compareAndExchange(activeJobs, newJobs)
-        if (witness === activeJobs) {
+        if (_activeJobs.compareAndSet(activeJobs, newJobs)) {
           return null
-        }
-        else {
-          activeJobs = witness
         }
       }
       else {
         val oldestJob = activeJobs.first() // rely on ordering
         val newJobs = activeJobs.remove(oldestJob).add(currentJob)
-        val witness = _activeJobs.compareAndExchange(activeJobs, newJobs)
-        if (witness === activeJobs) {
+        if (_activeJobs.compareAndSet(activeJobs, newJobs)) {
           return oldestJob
-        }
-        else {
-          activeJobs = witness
         }
       }
     }
   }
 
   override fun removeCurrentJob(currentJob: Job) {
-    var activeJobs = _activeJobs.get()
     while (true) {
+      val activeJobs = _activeJobs.get()
       val newJobs = activeJobs.remove(currentJob)
       if (newJobs === activeJobs) {
         return // Job was already removed
       }
-      val witness = _activeJobs.compareAndExchange(activeJobs, newJobs)
-      if (witness === activeJobs) {
-        return // CAX ok
+      if (_activeJobs.compareAndSet(activeJobs, newJobs)) {
+        return // CAS ok
       }
-      activeJobs = witness
     }
   }
 }

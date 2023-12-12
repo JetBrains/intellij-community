@@ -11,15 +11,13 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.search.PredefinedSearchScopeProvider
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
-import com.intellij.util.OverflowSemaphore
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.concurrency.await
