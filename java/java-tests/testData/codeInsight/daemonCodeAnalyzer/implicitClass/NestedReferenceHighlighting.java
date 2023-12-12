@@ -12,6 +12,7 @@ class AA {
 }
 
 void main() {
+  System.out.println(E.A);
   System.out.println(a);
   Rar x = new Rar();
   new AA().t(x);
