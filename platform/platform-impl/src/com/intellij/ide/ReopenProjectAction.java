@@ -40,7 +40,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     myProjectName = projectName;
     myDisplayName = displayName;
 
-    if (Strings.isEmpty(computePresentationText())) {
+    if (Strings.isEmpty(getProjectDisplayName())) {
       Logger.getInstance(ReopenProjectAction.class).error(
         String.format("Empty action text for projectName='%s' displayName='%s' path='%s'", projectName, displayName, projectPath));
     }
@@ -54,12 +54,12 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText(computePresentationText(), false);
+    presentation.setText(getProjectDisplayName(), false);
     presentation.setDescription(FileUtil.toSystemDependentName(myProjectPath));
     presentation.setEnabledAndVisible(true);
   }
 
-  private @Nullable @NlsSafe String computePresentationText() {
+  public @Nullable @NlsSafe String getProjectDisplayName() {
     return myProjectPath.equals(myDisplayName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myDisplayName;
   }
 
