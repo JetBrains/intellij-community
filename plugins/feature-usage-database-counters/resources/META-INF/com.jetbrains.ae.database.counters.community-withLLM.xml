@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.ae.database.counters.community.events.AIAssistantMessagesSentUserActivityListenerAttach"/>
+  </extensions>
+</idea-plugin>

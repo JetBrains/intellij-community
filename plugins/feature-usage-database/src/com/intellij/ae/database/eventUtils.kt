@@ -5,7 +5,9 @@ import com.intellij.ae.database.activities.UserActivity
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.sqlite.SqliteResultSet
 
 object AEEventUtils
@@ -19,18 +21,16 @@ object AEEventUtils
  */
 inline fun <T : UserActivity> CoroutineScope.runUpdateEvent(activity: T, crossinline action: suspend (T) -> Unit) {
   if (ApplicationManager.getApplication().isUnitTestMode) return
-  if (AppMode.isRemoteDevHost()) return
+  if (AppMode.isRemoteDevHost()) return // sorry, no remote dev for now
   launch {
-    withContext(Dispatchers.Default) {
-      try {
-        action(activity)
-      }
-      catch (t: CancellationException) {
-        throw t
-      }
-      catch (t: Throwable) {
-        logger<AEEventUtils>().error(t)
-      }
+    try {
+      action(activity)
+    }
+    catch (t: CancellationException) {
+      throw t
+    }
+    catch (t: Throwable) {
+      logger<AEEventUtils>().error(t)
     }
   }
 }

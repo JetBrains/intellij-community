@@ -12,4 +12,5 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.jetbrains.ae.database</depends>
+  <depends optional="true" config-file="com.jetbrains.ae.database.counters.community-withLLM.xml">com.intellij.ml.llm</depends>
 </idea-plugin>
