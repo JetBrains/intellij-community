@@ -239,7 +239,7 @@ class GlobalWorkspaceModel : Disposable {
 
       val entitySourceCopy = (sdkEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
       val sdkEntityCopy = SdkEntity(sdkEntity.name, sdkEntity.type, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
-        homePath = sdkEntity.homePath
+        homePath = sdkEntity.homePath?.createCopyAtManager(vfuManager)
         version = sdkEntity.version
       }
       mutableEntityStorage.addEntity(sdkEntityCopy)
