@@ -38,7 +38,8 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
   }
 
   fun testLightService() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+    myFixture.copyFileToProject(getCodeFilePath())
+    DevKitInspectionFixTestBase.doTest(myFixture, "Remove <applicationService> element", "xml", getTestName(true))
   }
 
   fun testLibraryClass() {
