@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Provides a way to link some additional data to a psi element.
- *
+ * <p>
  * The API is very close to {@link CachedValuesManager#getCachedValue} but the main difference is that
  * a provider isn't passed to the method, but registered separately via {{@link SemContributor}}.
  * Any key can have more than one provider.
@@ -32,4 +32,9 @@ public abstract class SemService {
   }
 
   public abstract @NotNull <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi);
+
+  /**
+   * Creates and returns SEM elements but does not cache them in the PSI if it does not have SEM cache already assigned.
+   */
+  public abstract @NotNull <T extends SemElement> List<T> getSemElementsNoCache(SemKey<T> key, @NotNull PsiElement psi);
 }
