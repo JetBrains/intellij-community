@@ -479,7 +479,7 @@ FunctionEnd
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !include "idea_en.nsi"
-!include "idea_cn.nsi"
+!include "idea_zh_CN.nsi"
 
 
 Function .onInstSuccess
