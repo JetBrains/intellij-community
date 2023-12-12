@@ -31,12 +31,13 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     return facade.getRecentChanges(runReadAction { gateway.createTransientRootEntry() }).map { RecentChangeActivityItem(it) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, items: List<ActivityItem>, activityFilter: String?): Set<Long>? {
+  override fun filterActivityList(scope: ActivityScope, items: List<ActivityItem>, activityFilter: String?): Set<ActivityItem>? {
     val revisions = items.mapNotNull { (it as? RevisionActivityItem)?.revisionItem }
     if (activityFilter.isNullOrEmpty() || revisions.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
-    return facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = false)
+    val revisionIds = facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = false)
+    return items.filterTo(mutableSetOf()) { (it is RevisionActivityItem) && revisionIds.contains(it.revisionItem.revision.changeSetId) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {

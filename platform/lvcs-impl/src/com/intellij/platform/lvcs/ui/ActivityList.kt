@@ -22,7 +22,7 @@ class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresent
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   private var allItems = emptyList<ActivityItem>()
-  private var visibleItems: Set<Long>? = null
+  private var visibleItems: Set<ActivityItem>? = null
 
   val selection: ActivitySelection get() = ActivitySelection(selectedIndices.map { model.getElementAt(it) }, allItems)
 
@@ -40,10 +40,10 @@ class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresent
     allItems = items
     val filteringModel = FilteringListModel(createDefaultListModel(items))
     setModel(filteringModel)
-    filteringModel.setFilter { visibleItems?.contains(it.id) != false }
+    filteringModel.setFilter { visibleItems?.contains(it) != false }
   }
 
-  fun setVisibleItems(items: Set<Long>?) {
+  fun setVisibleItems(items: Set<ActivityItem>?) {
     visibleItems = items
     (model as? FilteringListModel)?.refilter()
   }

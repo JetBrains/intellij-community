@@ -84,5 +84,5 @@ interface ActivityModelListener : EventListener {
   fun onItemsLoaded(items: List<ActivityItem>)
   fun onDiffDataLoaded(diffData: ActivityDiffData?)
   fun onFilteringStarted()
-  fun onFilteringStopped(result: Set<Long>?)
+  fun onFilteringStopped(result: Set<ActivityItem>?)
 }

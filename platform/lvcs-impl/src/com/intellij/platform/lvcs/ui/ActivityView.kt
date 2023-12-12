@@ -88,7 +88,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       override fun onFilteringStarted() {
         filterProgress?.startLoading(false)
       }
-      override fun onFilteringStopped(result: Set<Long>?) {
+      override fun onFilteringStopped(result: Set<ActivityItem>?) {
         filterProgress?.stopLoading()
         activityList.setVisibleItems(result)
       }

@@ -2,6 +2,5 @@
 package com.intellij.platform.lvcs
 
 interface ActivityItem {
-  val id: Long
   val timestamp: Long
 }

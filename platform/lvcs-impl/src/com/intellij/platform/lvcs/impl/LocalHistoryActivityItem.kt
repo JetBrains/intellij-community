@@ -2,19 +2,51 @@
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.revisions.RecentChange
+import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.ui.models.RevisionItem
 import com.intellij.platform.lvcs.ActivityItem
+import com.intellij.util.containers.HashingStrategy
 
 class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {
-  override val id: Long
-    get() = revisionItem.revision.changeSetId ?: 0
   override val timestamp: Long
     get() = revisionItem.revision.timestamp
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is RevisionActivityItem) return false
+
+    return RevisionHashingStrategy.equals(this.revisionItem.revision, other.revisionItem.revision)
+  }
+
+  override fun hashCode(): Int {
+    return RevisionHashingStrategy.hashCode(this.revisionItem.revision)
+  }
 }
 
 class RecentChangeActivityItem(val recentChange: RecentChange) : ActivityItem {
-  override val id: Long
-    get() = recentChange.revisionAfter.changeSetId ?: 0
   override val timestamp: Long
     get() = recentChange.revisionAfter.timestamp
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is RecentChangeActivityItem) return false
+
+    return RevisionHashingStrategy.equals(recentChange.revisionAfter, other.recentChange.revisionAfter) &&
+           RevisionHashingStrategy.equals(recentChange.revisionBefore, other.recentChange.revisionBefore)
+  }
+
+  override fun hashCode(): Int {
+    return 31 * RevisionHashingStrategy.hashCode(recentChange.revisionAfter) +
+           RevisionHashingStrategy.hashCode(recentChange.revisionBefore)
+  }
+}
+
+private object RevisionHashingStrategy : HashingStrategy<Revision> {
+  override fun hashCode(`object`: Revision): Int {
+    return `object`.changeSetId.hashCode()
+  }
+
+  override fun equals(o1: Revision, o2: Revision): Boolean {
+    return o1.changeSetId == o2.changeSetId
+  }
 }
