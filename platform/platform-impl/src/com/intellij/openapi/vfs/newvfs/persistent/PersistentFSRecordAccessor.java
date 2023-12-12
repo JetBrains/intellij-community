@@ -111,8 +111,13 @@ public final class PersistentFSRecordAccessor {
     int contentId = records.getContentRecordId(newRecordId);
     int attributeRecordId = records.getAttributeRecordId(newRecordId);
     if (nameId != NULL_NAME_ID || contentId != DataEnumerator.NULL_ID || attributeRecordId != DataEnumerator.NULL_ID) {
+      int parentId = records.getParent(newRecordId);
+      int flags = records.getFlags(newRecordId);
+      int modCount = records.getModCount(newRecordId);
       throw new IOException("new record (id: " + newRecordId + ") has non-empty fields: " +
-                            "nameId= " + nameId + ", contentId=" + contentId + ", attributeId=" + attributeRecordId);
+                            "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
+                            "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", modCount=" + modCount
+      );
     }
   }
 
