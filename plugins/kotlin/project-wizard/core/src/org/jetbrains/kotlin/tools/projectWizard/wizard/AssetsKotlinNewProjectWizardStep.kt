@@ -30,9 +30,6 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
 
                 if (renderedOnboardingTips) {
                     //@formatter:off
-                    put("SearchEverywhereComment1", KotlinNewProjectWizardBundle.message("onboarding.search.everywhere.tip.comment.render.1", rawShortcut("SHIFT")))
-                    put("SearchEverywhereComment2", KotlinNewProjectWizardBundle.message("onboarding.search.everywhere.tip.comment.render.2", rawShortcut("ENTER")))
-
                     put("RunComment1", KotlinNewProjectWizardBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
                     put("RunComment2", KotlinNewProjectWizardBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
 
@@ -44,13 +41,10 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
                     //@formatter:on
                 } else {
                     //@formatter:off
-                    put("SearchEverywhereComment1", KotlinNewProjectWizardBundle.message("onboarding.search.everywhere.tip.comment.1", "⇧"))
-                    put("SearchEverywhereComment2", KotlinNewProjectWizardBundle.message("onboarding.search.everywhere.tip.comment.2"))
+                    put("RunComment", KotlinNewProjectWizardBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
 
                     put("ShowIntentionComment1", KotlinNewProjectWizardBundle.message("onboarding.show.intention.tip.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
                     put("ShowIntentionComment2", KotlinNewProjectWizardBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
-
-                    put("RunComment", KotlinNewProjectWizardBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
 
                     put("DebugComment1", KotlinNewProjectWizardBundle.message("onboarding.debug.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
                     put("DebugComment2", KotlinNewProjectWizardBundle.message("onboarding.debug.comment.2", tipsContext.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
