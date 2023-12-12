@@ -1,34 +1,32 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project
+package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.util.messages.Topic
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
-interface MavenSyncListener {
-  /**
-   * Called when Maven sync is started
-   */
-  fun syncStarted(project: Project) {}
+import java.util.Collection;
+import java.util.List;
 
-  /**
-   * Called when Maven sync is finished
-   */
-  fun syncFinished(project: Project) {}
+public interface MavenSyncListener {
+  @Topic.AppLevel
+  Topic<MavenSyncListener> TOPIC = Topic.create("Maven import notifications", MavenSyncListener.class);
 
   /**
-   * Called when Maven model is collected and IDEA is ready to import Maven model into its own Workspace model
+    called when maven model is collected and IDEA ready to import maven model to workspace model
    */
-  fun importStarted(project: Project) {}
+  default void importModelStarted(@NotNull Project project) { }
 
-  /**
-   * Workspace model is committed, project structure is created. Please note, that certain related activities
-   * may not be completed yet, e.g., plugin resolution and source downloading
+  /*
+    called upon maven sync started
    */
-  fun importFinished(project: Project, importedProjects: Collection<MavenProject>, newModules: List<Module>) {}
+  default void syncStarted(@NotNull Project project) { }
 
-  companion object {
-    @Topic.AppLevel
-    val TOPIC: Topic<MavenSyncListener> = Topic.create("Maven sync notifications", MavenSyncListener::class.java)
-  }
+  /*
+    workspace model is commited, project structure is created. Please note, that some processes related to maven could not be completed yet, say facet updating, plugin descriptors could not be ready, etc.
+   */
+  default void importFinished(@NotNull Project project,
+                              @NotNull Collection<MavenProject> importedProjects,
+                              @NotNull List<@NotNull Module> newModules) { }
 }
