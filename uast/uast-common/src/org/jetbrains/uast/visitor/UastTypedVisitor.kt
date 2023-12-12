@@ -79,4 +79,6 @@ interface UastTypedVisitor<in D, out R> {
   fun visitDoWhileExpression(node: UDoWhileExpression, data: D): R = visitLoopExpression(node, data)
   fun visitForExpression(node: UForExpression, data: D): R = visitLoopExpression(node, data)
   fun visitForEachExpression(node: UForEachExpression, data: D): R = visitLoopExpression(node, data)
+
+  fun visitComment(node: UComment, data: D): R = visitElement(node, data)
 }

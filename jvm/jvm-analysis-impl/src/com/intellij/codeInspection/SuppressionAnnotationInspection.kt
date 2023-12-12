@@ -54,28 +54,19 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private inner class SuppressionAnnotationVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
-    override fun visitElement(node: UElement): Boolean {
-      if (node is UComment) {
-        return visitComment(node)
-      }
-      else {
-        return super.visitElement(node)
-      }
-    }
-
-    private fun visitComment(comment: UComment): Boolean {
-      if (isSuppressComment(comment)) {
-        val ids = getIdsFromComment(comment.text)
+    override fun visitComment(node: UComment): Boolean {
+      if (isSuppressComment(node)) {
+        val ids = getIdsFromComment(node.text)
         if (ids != null) {
           for (id in ids) {
             if (!myAllowedSuppressions.contains(id)) {
-              registerProblem(comment, true)
+              registerProblem(node, true)
               break
             }
           }
         }
         else {
-          registerProblem(comment, false)
+          registerProblem(node, false)
         }
       }
       return true

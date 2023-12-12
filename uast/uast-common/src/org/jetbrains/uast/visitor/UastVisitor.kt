@@ -58,6 +58,8 @@ interface UastVisitor {
   fun visitLambdaExpression(node: ULambdaExpression): Boolean = visitExpression(node)
   fun visitObjectLiteralExpression(node: UObjectLiteralExpression): Boolean = visitExpression(node)
 
+  fun visitComment(node: UComment): Boolean = visitElement(node)
+
   // After
 
   fun afterVisitElement(node: UElement) { }
@@ -113,6 +115,8 @@ interface UastVisitor {
   fun afterVisitLambdaExpression(node: ULambdaExpression) = afterVisitExpression(node)
   fun afterVisitObjectLiteralExpression(node: UObjectLiteralExpression) = afterVisitExpression(node)
   fun afterVisitPolyadicExpression(node: UPolyadicExpression) = afterVisitExpression(node)
+
+  fun afterVisitComment(node: UComment) = afterVisitElement(node)
 }
 
 abstract class AbstractUastVisitor : UastVisitor {
