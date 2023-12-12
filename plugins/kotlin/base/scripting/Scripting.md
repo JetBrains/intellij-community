@@ -213,6 +213,25 @@ ModuleProductionSourceInfo, ScriptModuleInfo
 At first glance, looks like `configuration = definition.configuration`.
 
 
+## What is important for highlighting
+
+### Dependencies
+
+to-be-described
+
+### SDK
+
+Having SDK "known" is crucial by the moment a script is analysed. SDK (besides StdLib) participates in the algo defining Kotlin Built-Ins.
+Missing SDK results in default Built-Ins having for instance no idea about class `kotlin.Clonable`
+(see `IdeaResolverForProject.BuiltInsCache.getOrCreateIfNeeded`). 
+
+It's expected that the SDK is available in the `SdkInfoCache (SdkInfoCacheImpl)` by corresponding `ModuleInfo` (i.e. `ScriptModuleInfo` and
+`ScriptDependenciesInfo`). The value is calculated  at `SdkInfoCacheImpl.calculate`. Closer look at the method leads to
+`ModuleInfo.dependencies` (i.e. `ScriptModuleInfo.dependencies` => `ScriptDependenciesInfo.ForFile.getSdk` => ... `ScriptClassRootsCache.getScriptSdk`).
+
+To have required `script ==> SDK` mapping in the `SdkInfoCache` it's vital to have this `ScriptClassRootsCache` filled by the right moment.
+See `ScriptClassRootsUpdater.recreateRootsCacheAndDiff`.
+
 ## Tests
 
 ```
