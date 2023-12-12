@@ -950,7 +950,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
       val ref = getReferenceAtCaret(myProjectPom)
       assertNotNull(ref)
 
-      val resolved = ref!!.resolve()
+      val resolved = ref.resolve()
       assertEquals(System.getenv("Path").replace("[^A-Za-z]".toRegex(), ""),
                    (resolved as IProperty?)!!.getValue()!!.replace("[^A-Za-z]".toRegex(), ""))
     }

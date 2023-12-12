@@ -563,8 +563,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val i = getIntentionAtCaret("Fix Relative Path")
     assertNotNull(i)
 
-    fixture.launchAction(i!!)
-    val el = getElementAtCaret(myProjectPom)!!
+    fixture.launchAction(i)
+    val el = getElementAtCaret(myProjectPom)
 
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))
   }

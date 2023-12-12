@@ -704,7 +704,7 @@ $libPath<caret></systemPath>
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
     val libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)
 
-    val intentionAction = IntentionActionDelegate.unwrap(action!!)
+    val intentionAction = IntentionActionDelegate.unwrap(action)
     (intentionAction as ChooseFileIntentionAction).setFileChooser { arrayOf(libFile) }
     val xmlSettings =
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getCustomSettings(XmlCodeStyleSettings::class.java)

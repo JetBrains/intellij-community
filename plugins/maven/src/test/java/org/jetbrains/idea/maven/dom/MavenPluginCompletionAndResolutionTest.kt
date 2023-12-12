@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -157,7 +158,8 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(myProjectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
+    val variants = getDependencyCompletionVariants(
+      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
 
 
     assertContain(variants,
@@ -245,7 +247,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val ref = getReferenceAtCaret(myProjectPom)
     assertNotNull(ref)
-    ref!!.resolve() // shouldn't throw;
+    ref.resolve() // shouldn't throw;
     return@runBlocking
   }
 
@@ -374,7 +376,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val ref = getReferenceAtCaret(myProjectPom)
     assertNotNull(ref)
-    val resolved = ref!!.resolve()
+    val resolved = ref.resolve()
     assertNotNull(resolved)
     assertTrue(resolved is XmlTag)
     assertEquals("parameter", (resolved as XmlTag?)!!.getName())
@@ -402,7 +404,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val ref = getReferenceAtCaret(myProjectPom)
     assertNotNull(ref)
-    val resolved = ref!!.resolve()
+    val resolved = ref.resolve()
     assertNotNull(resolved)
     assertTrue(resolved is XmlTag)
     assertEquals("parameter", (resolved as XmlTag?)!!.getName())
@@ -569,7 +571,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val ref = getReferenceAtCaret(myProjectPom)
     assertNotNull(ref)
 
-    val resolved = ref!!.resolve()
+    val resolved = ref.resolve()
     assertNotNull(resolved)
     assertTrue(resolved is XmlTag)
     assertEquals("mojo", (resolved as XmlTag?)!!.getName())

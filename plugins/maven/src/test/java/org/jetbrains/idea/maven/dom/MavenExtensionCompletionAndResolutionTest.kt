@@ -1,15 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.LocalFileSystem
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.junit.Test
 
 class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
   }
@@ -101,7 +101,8 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                          </extensions>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(myProjectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
+    val variants = getDependencyCompletionVariants(
+      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
 
     assertContain(variants,
                   "org.apache.maven.plugins:maven-clean-plugin",
@@ -139,7 +140,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    withContext(Dispatchers.EDT) { assertResolved(myProjectPom, findPsiFile(f)) }
+    assertResolved(myProjectPom, findPsiFile(f))
   }
 
 
@@ -160,11 +161,9 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
-      assertNotNull(ref)
-      ref!!.resolve() // shouldn't throw;
-    }
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
+    ref.resolve() // shouldn't throw;
     return@runBlocking
   }
 
