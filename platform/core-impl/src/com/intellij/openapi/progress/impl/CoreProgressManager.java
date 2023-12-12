@@ -14,15 +14,21 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.TitledIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Java11Shim;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.ui.EDT;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -36,9 +42,11 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ModalityKt.currentThreadContextModality;
+import static com.intellij.openapi.progress.impl.ProgressManagerScopeKt.ProgressManagerScope;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
+  private static final IJTracer myProgressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
@@ -203,7 +211,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         catch (Throwable e) {
           throw new RuntimeException(e);
         }
-        process.run();
+        Span span = startProcessSpan(progress);
+        try (Scope ignored = span.makeCurrent()) {
+          process.run();
+        }
+        finally {
+          span.end();
+        }
       }
       finally {
         if (progress != null && progress.isRunning()) {
@@ -214,6 +228,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
       }
     }, progress);
+  }
+
+  private static Span startProcessSpan(@Nullable ProgressIndicator progress) {
+    if (!(progress instanceof TitledIndicator)) return Span.getInvalid();
+    String progressText = ((TitledIndicator)progress).getTitle();
+    return myProgressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT)
+      .startSpan();
   }
 
   private static void assertNoOtherThreadUnder(@NotNull ProgressIndicator progress) {

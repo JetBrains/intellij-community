@@ -12,24 +12,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
-import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import static com.intellij.openapi.progress.impl.ProgressManagerScopeKt.ProgressManagerScope;
-
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
-
-  private static final IJTracer myProgressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
-
-  private Span mySpan;
 
   private StatusBarEx myStatusBar;
 
@@ -134,20 +124,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return cancellable;
       }
     });
-  }
-
-  @Override
-  public void start() {
-    mySpan = myProgressManagerTracer.spanBuilder("Progress: " + this.myInfo.getTitle(), TracerLevel.DEFAULT).startSpan();
-    super.start();
-  }
-
-  @Override
-  public void finish(@NotNull TaskInfo task) {
-    super.finish(task);
-    if(mySpan != null) {
-      mySpan.end();
-    }
   }
 
   @Override

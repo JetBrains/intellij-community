@@ -687,6 +687,10 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressPanel.setLabelText(text)
     }
 
+    override fun getProcessNameValue(): String {
+      return progressPanel.labelText
+    }
+
     override fun updateProgressNow() {
       super.updateProgressNow()
       suspendUpdateRunnable.run()
@@ -862,7 +866,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
 
     override fun setTitle(title: @NlsContexts.ProgressTitle String) {
-      setProcessNameValue(title)
+      processNameValue = title
+    }
+
+    override fun getTitle(): @NlsContexts.ProgressTitle String? {
+      return processNameValue
     }
   }
 
