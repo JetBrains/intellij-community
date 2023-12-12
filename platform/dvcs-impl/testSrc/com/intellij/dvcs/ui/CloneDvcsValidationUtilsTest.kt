@@ -36,4 +36,12 @@ class CloneDvcsValidationUtilsTest {
     val emptyUrl = ""
     assertFalse(CloneDvcsValidationUtils.isRepositoryUrlValid(emptyUrl), "Empty url is recognized as a valid repository url")
   }
+
+  @Test
+  fun `test that repository path url can contain @`() {
+    // https://youtrack.jetbrains.com/issue/IDEA-326235
+    val urlWithAtSign: String = "user_at_example_dot_com@example.com:/home/user@example.com/project"
+    assertTrue(CloneDvcsValidationUtils.isRepositoryUrlValid(urlWithAtSign),
+               "URL with @ sign in path is not recognized as a valid repository url")
+  }
 }
