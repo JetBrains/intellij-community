@@ -57,11 +57,11 @@ object CodeReviewCommentUIUtil {
     }
   }
 
-  fun createPostNowButton(actionListener: (ActionEvent) -> Unit): JComponent {
-    val button = ActionLink(CollaborationToolsBundle.message("review.comments.post-now.action"))
-    button.addActionListener(actionListener)
-    return button
-  }
+  fun createPostNowButton(actionListener: (ActionEvent) -> Unit): JComponent =
+    ActionLink(CollaborationToolsBundle.message("review.comments.post-now.action")).apply {
+      autoHideOnDisable = false
+      addActionListener(actionListener)
+    }
 
   fun createDeleteCommentIconButton(actionListener: (ActionEvent) -> Unit): JComponent {
     val icon = CollaborationToolsIcons.Delete
