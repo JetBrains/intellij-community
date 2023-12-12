@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -133,11 +133,13 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
                     check()
                 }
             }
-        } catch (e: FileComparisonFailure) {
-            val highlights =
-                DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject())
-            val text = myFixture.getFile().getText()
-            println(TagsTestDataUtil.insertInfoTags(highlights, text))
+        } catch (e: AssertionError) {
+            if (e is FileComparisonData) {
+                val highlights =
+                    DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject())
+                val text = myFixture.getFile().getText()
+                println(TagsTestDataUtil.insertInfoTags(highlights, text))
+            }
             throw e
         }
     }

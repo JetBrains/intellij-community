@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
@@ -28,13 +28,7 @@ import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestFiles
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -247,7 +241,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         val afterFilePath = beforeFileName.replace(".before.Main.", ".after.")
                         try {
                             myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", ".after."))
-                        } catch (e: FileComparisonFailure) {
+                        } catch (e: AssertionError) {
+                            if (e !is FileComparisonData) throw e
                             KotlinTestUtils.assertEqualsToFile(File(afterFilePath), editor)
                         }
 

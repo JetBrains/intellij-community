@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -162,7 +162,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: FileComparisonFailure) {
+            } catch (e: AssertionError) {
+                if (e !is FileComparisonData) throw e
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

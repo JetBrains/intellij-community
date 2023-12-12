@@ -28,7 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.rt.execution.junit.FileComparisonData;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -649,9 +649,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     try {
       assertSameLinesWithFile(filePath, expectedText);
     }
-    catch (FileComparisonFailure e) {
-      String expected = e.getExpectedStringPresentation();
-      String actual = e.getActualStringPresentation();
+    catch (AssertionError e) {
+      if (!(e instanceof FileComparisonData fcf)) throw e;
+      String expected = fcf.getExpectedStringPresentation();
+      String actual = fcf.getActualStringPresentation();
       assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
     }
   }
