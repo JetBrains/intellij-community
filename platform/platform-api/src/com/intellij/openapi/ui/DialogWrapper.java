@@ -82,7 +82,8 @@ public abstract class DialogWrapper {
         case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
         case PROJECT -> {
           LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
-          yield Dialog.ModalityType.APPLICATION_MODAL;
+          if (Registry.is("ide.treat.project.modality.as.application")) yield Dialog.ModalityType.APPLICATION_MODAL;
+          else yield Dialog.ModalityType.DOCUMENT_MODAL;
         }
         case MODELESS -> Dialog.ModalityType.MODELESS;
       };
