@@ -16,6 +16,5 @@
     <orderEntry type="module" module-name="intellij.ae.database" />
     <orderEntry type="module" module-name="intellij.platform.sqlite" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.ml.llm" />
   </component>
 </module>
