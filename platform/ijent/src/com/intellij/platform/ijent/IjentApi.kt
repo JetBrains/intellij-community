@@ -49,14 +49,14 @@ interface IjentApi : AutoCloseable {
    * On Unix-like OS, PID is int32. On Windows, PID is uint32. The type of Long covers both PID types, and a separate class doesn't allow
    * to forget that fact and misuse types in APIs.
    */
-  data class Pid(val value: Long) {
-    override fun toString(): String = value.toString()
+  interface Pid {
+    val value: Long
   }
 
   /**
    * [remotePid] is a process ID of IJent running on the remote machine.
    */
-  data class Info(
-    val remotePid: Pid,
-  )
+  interface Info {
+    val remotePid: Pid
+  }
 }
