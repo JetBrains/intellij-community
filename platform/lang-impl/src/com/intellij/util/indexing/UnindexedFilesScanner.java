@@ -312,8 +312,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     if (isFullIndexUpdate()) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       var service = myProject.getService(InitialVfsRefreshService.class);
-      if (Boolean.getBoolean("ij.initial.refresh.sync") ||
-          ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+      if (ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
         service.runInitialVfsRefresh();
       }
       else {
