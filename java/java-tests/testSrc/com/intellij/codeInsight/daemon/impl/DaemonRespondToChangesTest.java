@@ -3673,7 +3673,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     LocalInspectionTool slowTool = new MyFegnaInspection() {
       @Override
       public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-        slowToolFinished.set(true);
+        // invoke later because we are checking this flag in EDT below, and
+        // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
+        // and querying markup model in EDT
+        ApplicationManager.getApplication().invokeLater(() -> {
+          slowToolFinished.set(true);
+        });
       }
       @NotNull
       @Override
@@ -3700,7 +3705,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     LocalInspectionTool fastTool = new MyFegnaInspection() {
       @Override
       public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-        fastToolFinished.set(true);
+        // invoke later because we are checking this flag in EDT below, and
+        // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
+        // and querying markup model in EDT
+        ApplicationManager.getApplication().invokeLater(() -> {
+          fastToolFinished.set(true);
+        });
       }
       @NotNull
       @Override
