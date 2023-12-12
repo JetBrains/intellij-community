@@ -5,10 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.namedChildScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 
 @Service(Service.Level.PROJECT)
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
@@ -25,6 +22,7 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
           method(it)
         }
       }.awaitAll()
+      runScope.cancel()
     }
 
   }
