@@ -18,6 +18,6 @@ interface GlobalSdkTableBridge {
 
   companion object {
     fun getInstance(): GlobalSdkTableBridge = ApplicationManager.getApplication().service()
-    fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.sdk.bridge", false)
+    fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.sdk.bridge", true)
   }
 }
