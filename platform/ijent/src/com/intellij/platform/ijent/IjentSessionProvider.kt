@@ -102,7 +102,7 @@ interface IjentSessionProvider {
               }
               finally {
                 if (process.isAlive) {
-                  LOG.debug { "The process $ijentId is still alive, it will be killed" }
+                  LOG.warn("The process $ijentId is still alive, it will be killed")
                   process.destroy()
                 }
               }
