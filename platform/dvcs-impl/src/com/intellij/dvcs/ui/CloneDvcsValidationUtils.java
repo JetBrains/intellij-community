@@ -106,19 +106,7 @@ public final class CloneDvcsValidationUtils {
     repository = sanitizeCloneUrl(repository);
 
     // Is it a proper URL?
-    try {
-      if (new URI(repository).isAbsolute()) {
-        return null;
-      }
-    }
-    catch (URISyntaxException urlExp) {
-      // do nothing
-    }
-
-    // Is it SSH URL?
-    if (SSH_URL_PATTERN.matcher(repository).matches()) {
-      return null;
-    }
+    if (isRepositoryUrlValid(repository)) return null;
 
     // Is it FS URL?
     try {
@@ -136,6 +124,24 @@ public final class CloneDvcsValidationUtils {
     }
 
     return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.invalid"), component);
+  }
+
+  public static boolean isRepositoryUrlValid(@NotNull String repository) {
+    if (repository.isEmpty()) return false;
+    try {
+      if (new URI(repository).isAbsolute()) {
+        return true;
+      }
+    }
+    catch (URISyntaxException urlExp) {
+      // do nothing
+    }
+
+    // Is it SSH URL?
+    if (SSH_URL_PATTERN.matcher(repository).matches()) {
+      return true;
+    }
+    return false;
   }
 
   @NotNull
