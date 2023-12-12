@@ -74,6 +74,8 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "1,1,1,1",
       "disabledText": "#8a8a8a",
+      "iconSize": 13,
+      "textIconGap": 4,
       "UI": "com.intellij.laf.win10.WinIntelliJCheckBoxUI"
     },
 

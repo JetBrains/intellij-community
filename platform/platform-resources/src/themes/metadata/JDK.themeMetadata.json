@@ -147,6 +147,10 @@
       "key": "CheckBox.select"
     },
     {
+      "key": "CheckBox.textIconGap",
+      "description": "Space between CheckBox icon and text"
+    },
+    {
       "key": "CheckBoxMenuItem.acceleratorForeground",
       "description": "The JBCheckboxMenuItem component. Example: context menu for the editor status icon"
     },

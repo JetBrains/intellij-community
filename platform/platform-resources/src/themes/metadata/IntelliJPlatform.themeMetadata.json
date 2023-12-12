@@ -113,6 +113,10 @@
       "description": "Chevron arrow color for default split button"
     },
     {
+      "key": "CheckBox.iconSize",
+      "description": "Size of CheckBox icon"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -1261,6 +1265,10 @@
     },
     {
       "key": "ProgressBar.warningEndColor"
+    },
+    {
+      "key": "RadioButton.iconSize",
+      "description": "Size of RadioButton icon"
     },
     {
       "key": "SearchEverywhere.Advertiser.background",

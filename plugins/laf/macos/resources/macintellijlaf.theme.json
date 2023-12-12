@@ -54,6 +54,8 @@
       "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "4,4,4,4",
+      "iconSize": 22,
+      "textIconGap": 3,
       "UI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI"
     },
 

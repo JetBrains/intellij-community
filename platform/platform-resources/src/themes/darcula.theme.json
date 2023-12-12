@@ -110,6 +110,7 @@
     "CheckBox": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "2,3,3,3",
+      "textIconGap": 5,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI"
     },
 
