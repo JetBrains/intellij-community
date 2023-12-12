@@ -4,7 +4,7 @@
         <line>2</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ValPropertyWithReturn.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -14,7 +14,7 @@
         <line>2</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ValProperty.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -23,7 +23,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="StringTemplate.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -32,7 +32,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="StringLiteral.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -41,7 +41,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Simple.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -50,7 +50,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Return.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -59,7 +59,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="QualifiedCall.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -68,7 +68,7 @@
         <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="NotAvailableOnDocComment.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -77,7 +77,7 @@
         <line>2</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="NoDefaultImport.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -86,7 +86,7 @@
         <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="NoCompanionObjectImport.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -95,7 +95,7 @@
         <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Imports.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -104,7 +104,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="If.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -113,7 +113,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ExpressionBody.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -122,7 +122,7 @@
         <line>1</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="CommentInBody.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 
@@ -131,7 +131,7 @@
         <line>2</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ReplaceWithHasNamedArgument.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
+        <problem_class severity="WEAK WARNING" attribute_key="WARNING_ATTRIBUTES">@Deprecated annotation without 'replaceWith' argument</problem_class>
         <description>@Deprecated annotation without 'replaceWith' argument</description>
     </problem>
 </problems>
