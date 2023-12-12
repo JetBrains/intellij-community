@@ -1,16 +1,16 @@
-package org.jetbrains.idea.maven.inspections.dom
+package org.jetbrains.idea.maven.inspections.dom;
 
-import com.intellij.maven.testFramework.MavenDomTestCase
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection
-import org.junit.Test
+import com.intellij.maven.testFramework.MavenDomTestCase;
+import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection;
+import org.junit.Test;
 
-class MavenDuplicatedPluginInspectionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
+public class MavenDuplicatedPluginInspectionTest extends MavenDomTestCase {
+  @Override
+  public boolean runInDispatchThread() { return true; }
 
   @Test
-  fun testDuplicatedPlugin() = runBlocking {
-    fixture.enableInspections(MavenDuplicatePluginInspection::class.java)
+  public void testDuplicatedPlugin() {
+    getFixture().enableInspections(MavenDuplicatePluginInspection.class);
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -30,9 +30,8 @@ class MavenDuplicatedPluginInspectionTest : MavenDomTestCase() {
                              <version>2.2</version>
                            </plugin>
                          </plugins>
-                       </build>
-                       """.trimIndent())
+                       </build>""");
 
-    checkHighlighting()
+    checkHighlighting();
   }
 }

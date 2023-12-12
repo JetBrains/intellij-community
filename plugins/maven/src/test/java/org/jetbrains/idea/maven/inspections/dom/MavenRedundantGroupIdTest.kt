@@ -1,33 +1,37 @@
-package org.jetbrains.idea.maven.inspections.dom
+package org.jetbrains.idea.maven.inspections.dom;
 
-import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
-import org.junit.Test
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection;
+import org.junit.Test;
 
-class MavenRedundantGroupIdTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
+public class MavenRedundantGroupIdTest extends MavenDomTestCase {
+  @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
 
-  override fun setUp() {
-    super.setUp()
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
 
-    fixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
+    getFixture().enableInspections(MavenRedundantGroupIdInspection.class);
   }
 
   @Test
-  fun testHighlighting1() = runBlocking {
+  public void testHighlighting1() {
     createProjectPom("""
                        <groupId>my.group</groupId>
                        <artifactId>childA</artifactId>
-                       <version>1.0</version>
-                       """.trimIndent())
+                       <version>1.0</version>""");
 
-    checkHighlighting()
+    checkHighlighting();
   }
 
   @Test
-  fun testHighlighting2() = runBlocking {
+  public void testHighlighting2() {
     createProjectPom("""
                        <groupId>childGroupId</groupId>
                        <artifactId>childA</artifactId>
@@ -37,14 +41,13 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                          <groupId>my.group</groupId>
                          <artifactId>parent</artifactId>
                          <version>1.0</version>
-                       </parent>
-                       """.trimIndent())
+                       </parent>""");
 
-    checkHighlighting()
+    checkHighlighting();
   }
 
   @Test
-  fun testHighlighting3() = runBlocking {
+  public void testHighlighting3() {
     createProjectPom("""
                        <warning><groupId>my.group</groupId></warning>
                        <artifactId>childA</artifactId>
@@ -54,14 +57,13 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                          <groupId>my.group</groupId>
                          <artifactId>parent</artifactId>
                          <version>1.0</version>
-                       </parent>
-                       """.trimIndent())
+                       </parent>""");
 
-    checkHighlighting()
+    checkHighlighting();
   }
 
   @Test
-  fun testQuickFix() = runBlocking {
+  public void testQuickFix() {
     createProjectPom("""
                        <artifactId>childA</artifactId>
                        <groupId>mavenParen<caret>t</groupId>
@@ -71,24 +73,23 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                          <groupId>mavenParent</groupId>
                          <artifactId>childA</artifactId>
                          <version>1.0</version>
-                       </parent>
-                       """.trimIndent())
+                       </parent>""");
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
-    fixture.doHighlighting()
+    getFixture().configureFromExistingVirtualFile(myProjectPom);
+    getFixture().doHighlighting();
 
-    for (intention in fixture.availableIntentions) {
-      if (intention.text.startsWith("Remove ") && intention.text.contains("<groupId>")) {
-        fixture.launchAction(intention)
-        break
+    for (IntentionAction intention : getFixture().getAvailableIntentions()) {
+      if (intention.getText().startsWith("Remove ") && intention.getText().contains("<groupId>")) {
+        getFixture().launchAction(intention);
+        break;
       }
     }
 
 
     //doPostponedFormatting(myProject)
-    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting()
+    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
 
-    fixture.checkResult(createPomXml("""
+    getFixture().checkResult(MavenTestCase.createPomXml("""
                                                        <artifactId>childA</artifactId>
                                                            <version>1.0</version>
                                                          
@@ -96,7 +97,6 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                                                          <groupId>mavenParent</groupId>
                                                          <artifactId>childA</artifactId>
                                                          <version>1.0</version>
-                                                       </parent>
-                                                       """.trimIndent()))
+                                                       </parent>"""));
   }
 }
