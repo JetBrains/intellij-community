@@ -261,6 +261,9 @@ public final class HttpRequests {
 
     @Override
     public RequestBuilder redirectLimit(int redirectLimit) {
+      if (redirectLimit < 1) {
+        throw new IllegalArgumentException("Redirect limit should be positive");
+      }
       myRedirectLimit = redirectLimit;
       return this;
     }
@@ -547,7 +550,7 @@ public final class HttpRequests {
     }
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
-      String url = request.myUrl;
+      final String url = request.myUrl;
 
       final URLConnection connection;
       if (!builder.myUseProxy) {
@@ -603,6 +606,8 @@ public final class HttpRequests {
         return connection;
       }
 
+      httpURLConnection.setInstanceFollowRedirects(false);
+
       if (connection.getDoOutput()) {
         return connection;
       }
@@ -631,10 +636,15 @@ public final class HttpRequests {
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
         if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
           httpURLConnection.disconnect();
-          url = connection.getHeaderField("Location");
-          if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + url);
-          if (url != null) {
-            request.myUrl = url;
+          String loc = connection.getHeaderField("Location");
+          if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + loc);
+          if (loc != null) {
+            if (!loc.contains("://")) {
+              // Location is a relative URI
+              URL locUrl = new URL(new URL(url), loc);
+              loc = locUrl.toExternalForm();
+            }
+            request.myUrl = loc;
             continue;
           }
         }
