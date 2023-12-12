@@ -43,7 +43,7 @@ fun Path.inputStreamIfExists(): InputStream? =
   try {
     inputStream()
   }
-  catch (e: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     null
   }
 
@@ -178,54 +178,54 @@ fun generateRandomPath(parentDirectory: Path): Path {
 }
 
 //<editor-fold desc="Deprecated stuff.">
-@Deprecated(message = "Use kotlin.io.path.readText"/*, level = DeprecationLevel.ERROR*/)
+@Deprecated(message = "Use kotlin.io.path.readText", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
 fun Path.readBytes(): ByteArray = readBytes()
 
-@Deprecated(message = "Use kotlin.io.path.readText",/* level = DeprecationLevel.ERROR*/)
+@Deprecated(message = "Use kotlin.io.path.readText", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
 fun Path.readText(): String = readText()
 
 @Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.exists(): Boolean = exists()
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.exists(): Boolean = exists()
 
-@Deprecated(message = "Use kotlin.io.path.isDirectory"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.isDirectory(): Boolean = isDirectory()
+@Deprecated(message = "Use kotlin.io.path.isDirectory", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.isDirectory(): Boolean = isDirectory()
 
-@Deprecated(message = "Use kotlin.io.path.isRegularFile"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.isFile(): Boolean = isRegularFile()
+@Deprecated(message = "Use kotlin.io.path.isRegularFile", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.isFile(): Boolean = isRegularFile()
 
-@Deprecated(message = "Use kotlin.io.path.fileSize"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.size(): Long = fileSize()
+@Deprecated(message = "Use kotlin.io.path.fileSize", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.size(): Long = fileSize()
 
-@Deprecated(message = "Use kotlin.io.path.getLastModifiedTime"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.lastModified(): FileTime = getLastModifiedTime()
+@Deprecated(message = "Use kotlin.io.path.getLastModifiedTime", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.lastModified(): FileTime = getLastModifiedTime()
 
-@Deprecated(message = "Trivial, just inline"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
+@Deprecated(message = "Trivial, just inline", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
 
-@Deprecated(message = "Use kotlin.io.path.inputStream"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+@Deprecated(message = "Use kotlin.io.path.inputStream", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
-inline fun Path.inputStream(): InputStream = inputStream()
+fun Path.inputStream(): InputStream = inputStream()
 
-@Deprecated(message = "Trivial, just inline", ReplaceWith("resolve(relativePath).write(data.toByteArray())")/*, level = DeprecationLevel.ERROR*/)
+@Deprecated(message = "Trivial, just inline", ReplaceWith("resolve(relativePath).write(data.toByteArray())"), level = DeprecationLevel.ERROR)
 @Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: String): Path = resolve(relativePath).write(data.toByteArray())
 
-@Deprecated(message = "Use `kotlin.io.path.createSymbolicLinkPointingTo` with `com.intellij.util.io.createParentDirectories`"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.createSymbolicLink(target: Path): Path = this.createParentDirectories().createSymbolicLinkPointingTo(target)
+@Deprecated(message = "Use `kotlin.io.path.createSymbolicLinkPointingTo` with `com.intellij.util.io.createParentDirectories`", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.createSymbolicLink(target: Path): Path = this.createParentDirectories().createSymbolicLinkPointingTo(target)
 
-@Deprecated(message = "Use `kotlin.io.path.createFile` with `com.intellij.util.io.createParentDirectories`"/*, level = DeprecationLevel.ERROR*/)
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun Path.createFile(): Path = this.createParentDirectories().createFile()
+@Deprecated(message = "Use `kotlin.io.path.createFile` with `com.intellij.util.io.createParentDirectories`", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith")
+fun Path.createFile(): Path = this.createParentDirectories().createFile()
 //</editor-fold>
