@@ -73,6 +73,12 @@ class Interpreter(private val invokersFactory: InvokersFactory,
   }
 
   private fun groupActions(actions: List<Action>): List<List<Action>> {
+    if (actions.any { it is PrintText || it is DeleteRange }) {
+      if (order != InterpretationOrder.LINEAR) {
+        throw UnsupportedOperationException("PrintText and DeleteRange actions must be interpreted linearly")
+      }
+      return listOf(actions)
+    }
     val groups = mutableListOf<List<Action>>()
     var currentGroup = mutableListOf<Action>()
     for (action in actions) {
