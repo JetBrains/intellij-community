@@ -132,7 +132,7 @@ button:focus {
   white-space: nowrap;
 }
 
-.autocomplete-items div:hover {
+.autocomplete-items :not(.multiline) div:hover {
   background-color: #e9e9e9;
 }
 
@@ -404,4 +404,69 @@ pre {
   border-radius: 2px;
   opacity: 1;
   transition: transform 0.3s;
+}
+
+/*Multiline completion*/
+
+.multiline .autocomplete-items {
+  position: absolute;
+  box-shadow: 2px 0 0 lightgrey;
+  border: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  z-index: 99;
+  top: -1.5em;
+}
+
+.multiline .autocomplete-items div {
+  cursor: default;
+}
+
+.multiline .attachments-header {
+  border: none;
+  background-color: bisque;
+  padding: 0;
+  text-align: center;
+}
+
+.multiline .suggestion-header {
+  visibility: hidden;
+}
+
+.multiline .suggestion {
+  background-color: cornsilk;
+  padding: 0;
+  padding-right: 1em;
+  border: none;
+}
+
+.multiline .attachments {
+  background-color: cornsilk;
+  padding: 0;
+  padding-right: 1em;
+  border: none;
+}
+
+.multiline .suggestion:hover {
+  cursor: pointer;
+}
+
+.multiline .attachments:hover {
+  cursor: pointer;
+}
+.multiline .expected-header {
+  background-color: lightgrey;
+  padding: 0;
+  border: none;
+  text-align: center;
+}
+
+.multiline .expected {
+  padding: 0;
+  border: none;
+  padding-left: 1em;
+}
+
+.missing-context {
+  background-color: mistyrose;
 }

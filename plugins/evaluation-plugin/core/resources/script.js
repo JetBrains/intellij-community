@@ -7,6 +7,10 @@ const LC_KEYS = {
 }
 
 document.addEventListener("click", function (e) {
+  if (e.target.closest(".multiline") != null) {
+    updateMultilinePopup(e)
+    return
+  }
   const suggestionDiv = e.target.closest(".suggestion")
   const featureValueDiv = e.target.closest(".feature-value")
   if (featureValueDiv != null) {
@@ -274,5 +278,145 @@ function invertRows(event, key) {
     event.currentTarget.classList.add("stats-hidden")
   }
 }
+
+function updateMultilinePopup(event) {
+  if (event.altKey) {
+    showMultilinePrefixAndSuffix(event)
+    return
+  }
+  const target = event.target
+  const suggestionDiv = target.closest(".suggestion")
+  const attachmentsDiv = target.closest(".attachments")
+  const showSuggestion =  attachmentsDiv != null || target.classList.contains("completion")
+  if (suggestionDiv == null && !showSuggestion) {
+    return
+  }
+  const sessionDiv = target.closest(".completion")
+  closeAllLists()
+  const lookup = getLookup(sessionDiv)
+  const popup = document.createElement("DIV")
+  popup.setAttribute("class", "autocomplete-items")
+
+  addMultilineHeaders(popup, showSuggestion)
+  let indent = getMultilineContext(sessionDiv).prefix.match(/ *$/)[0].length
+  let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"].replace(new RegExp(`^ {${indent}}`, 'gm'), '')
+  if (showSuggestion) {
+    addMultilineSuggestion(sessionDiv, popup, lookup)
+    addMultilineExpectedText(popup, expectedText)
+  }
+  else {
+    addMultilineAttachments(sessionDiv, popup, expectedText)
+    // addMultilineExpectedText(popup, expectedText)
+  }
+  addMultilineStatsFooter(popup, lookup)
+  sessionDiv.appendChild(popup)
+}
+
+function addMultilineHeaders(popup, showSuggestion) {
+  const header = document.createElement("DIV")
+  if (showSuggestion) {
+    header.setAttribute("class", "suggestion-header")
+  }
+  else {
+    header.setAttribute("class", "attachments-header")
+    header.innerHTML = "attachments"
+  }
+  const expectedHeader = document.createElement("DIV")
+  expectedHeader.setAttribute("class", "expected-header")
+  expectedHeader.innerHTML = "expected"
+  popup.appendChild(header)
+  popup.appendChild(expectedHeader)
+}
+
+function addMultilineSuggestion(sessionDiv, popup, lookup) {
+  addSuggestions(sessionDiv, popup, lookup)
+  if (popup.children.length < 3) {
+    let suggestionDiv = document.createElement("DIV")
+    suggestionDiv.setAttribute("class", "suggestion")
+    let p = document.createElement("pre")
+    p.innerHTML = "\t\t\t\tNO SUGGESTION\t\t\t\t"
+    suggestionDiv.appendChild(p)
+    popup.appendChild(suggestionDiv)
+  }
+}
+
+function addMultilineAttachments(sessionDiv, popup, expectedText) {
+  const context = getMultilineContext(sessionDiv)
+  let attachmentsDiv = document.createElement("DIV")
+  attachmentsDiv.setAttribute("class", "attachments")
+  let p = document.createElement("pre")
+  p.innerHTML = context.attachments
+  attachmentsDiv.appendChild(p)
+  popup.appendChild(attachmentsDiv)
+
+  const expected = document.createElement("DIV")
+  expected.setAttribute("class", "expected")
+  const pExp = document.createElement("pre")
+  pExp.innerHTML = expectedText
+
+  let contextTokens = (context.attachments + "\n" + context.prefix + "\n" + context.suffix).split((/\W+/))
+  let expectedTokens = expectedText.split((/\W+/))
+  expectedTokens.forEach((token) => {
+    if (contextTokens.indexOf(token) === -1) {
+      pExp.innerHTML = pExp.innerHTML.replace(new RegExp('\\b' + token + '\\b'), '<span class="missing-context">$&</span>')
+    }
+  })
+  expected.appendChild(pExp)
+  popup.appendChild(expected)
+}
+
+function getMultilineContext(sessionDiv) {
+  const parts = sessionDiv.id.split(" ")
+  const sessionId = parts[0]
+  const lookupOrder = parts[1]
+  const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
+  return featuresJson[lookupOrder]["common"].context
+}
+
+function addMultilineExpectedText(popup, expectedText) {
+  const expected = document.createElement("DIV")
+  expected.setAttribute("class", "expected")
+  const p = document.createElement("pre")
+  p.innerHTML = expectedText
+  expected.appendChild(p)
+  popup.appendChild(expected)
+}
+
+function addMultilineStatsFooter(popup, lookup) {
+  const statsDiv = document.createElement("DIV")
+  statsDiv.setAttribute("style", "background-color: lightgrey; grid-column: span 2;")
+  statsDiv.innerHTML = `latency: ${lookup["latency"]}`
+  popup.appendChild(statsDiv)
+}
+
+function showMultilinePrefixAndSuffix(event) {
+  if (event.target.classList.contains("completion")) {
+    const sessionDiv = event.target
+    sessionDiv.parentNode.style.display = "none"
+    const newCode = document.createElement("pre")
+    newCode.setAttribute("class", "code context multiline")
+    newCode.style.backgroundColor = "bisque"
+    let context = getMultilineContext(sessionDiv)
+    let prefix = context.prefix
+    let suffix = context.suffix
+
+    let prev = sessionDiv.previousSibling
+    let offset = ""
+    while (prev != null) {
+      offset = prev.textContent + offset
+      prev = prev.previousSibling
+    }
+    let begin = "\n".repeat(offset.split('\n').length - prefix.split('\n').length)
+    let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"]
+    newCode.innerHTML = begin + prefix + "<span style='background-color: white'>" + expectedText +"</span>" + suffix
+    sessionDiv.parentNode.parentNode.prepend(newCode)
+  }
+  else if (event.target.closest(".code.context") != null) {
+    const newCode = event.target.closest(".code.context")
+    newCode.parentNode.lastElementChild.style.removeProperty("display")
+    newCode.remove()
+  }
+}
+
 
 document.getElementById("defaultTabOpen")?.click()

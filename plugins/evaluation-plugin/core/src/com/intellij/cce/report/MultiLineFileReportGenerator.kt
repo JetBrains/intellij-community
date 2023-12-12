@@ -11,5 +11,7 @@ class MultiLineFileReportGenerator(
   dirs: GeneratorDirectories
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
 
+  override val spanClass = "multiline ${super.spanClass}"
+
   override fun textToInsert(session: Session): String = session.expectedText.lines().first()
 }

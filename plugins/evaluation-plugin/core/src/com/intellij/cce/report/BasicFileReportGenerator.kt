@@ -14,6 +14,7 @@ open class BasicFileReportGenerator(
   featuresStorages: List<FeaturesStorage>,
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
+  protected open val spanClass = "completion"
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     val sessions = fileEvaluations.map { it.sessionsInfo.sessions }
@@ -84,7 +85,7 @@ open class BasicFileReportGenerator(
   }
 
   private fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
-    createHTML().span("completion ${
+    createHTML().span("$spanClass ${
       ReportColors.getColor(
         session,
         HtmlColorClasses,
