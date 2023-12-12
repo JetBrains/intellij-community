@@ -873,6 +873,15 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           Ref<LookupElement> staticref = new Ref<>();
           processor.processStaticMember(staticItem -> staticref.set(staticItem), psiMethod, new HashSet<>());
           if (!staticref.isNull()) {
+            PrioritizedLookupElement<?> prioritizedLookupElement = lookupItem.as(PrioritizedLookupElement.class);
+            if (prioritizedLookupElement != null) {
+              if (prioritizedLookupElement.getExplicitProximity() != 0) {
+                return PrioritizedLookupElement.withExplicitProximity(staticref.get(), prioritizedLookupElement.getExplicitProximity());
+              }
+              else {
+                return PrioritizedLookupElement.withPriority(staticref.get(), prioritizedLookupElement.getPriority());
+              }
+            }
             return staticref.get();
           }
         }
