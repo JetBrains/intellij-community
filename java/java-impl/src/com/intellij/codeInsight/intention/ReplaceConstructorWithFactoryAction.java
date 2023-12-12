@@ -238,18 +238,14 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiClass containingClass = ClassUtils.getContainingClass(element);
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
-    if (lBrace != null && element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
+    if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
     if (containingClass.getConstructors().length > 0) return null;
     return containingClass;
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
-    return containingClass != null &&
-           PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class, false) == null &&
-           !containingClass.isInterface() &&
-           !containingClass.isEnum() &&
-           !containingClass.isRecord() &&
-           !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
+           !(containingClass instanceof PsiImplicitClass) && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && 
            containingClass.getQualifiedName() != null;
   }
 }
