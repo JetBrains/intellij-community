@@ -13,6 +13,8 @@ import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import java.nio.file.Path
 
 class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
+  override fun runInDispatchThread() = false
+
   fun `test import non-default pom`() = runBlocking {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")

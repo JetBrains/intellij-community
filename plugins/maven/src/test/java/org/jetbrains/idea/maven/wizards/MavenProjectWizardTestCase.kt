@@ -5,9 +5,7 @@ import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -15,8 +13,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
 abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
-  override fun runInDispatchThread() = false
-
   override fun tearDown() = runBlocking {
     try {
       MavenServerManager.getInstance().shutdown(true)
@@ -44,22 +40,4 @@ abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjec
       <version>1</version>
       """.trimIndent())).toPath()
   }
-
-  protected fun createMavenWrapper(pomPath: Path, context: String) {
-    val fileName = pomPath.parent.resolve(".mvn").resolve("wrapper").resolve("maven-wrapper.properties")
-    fileName.write(context)
-  }
-
-  protected suspend fun importProjectFrom(path: Path): Module {
-    return withContext(Dispatchers.EDT) {
-      importProjectFrom(path.toString(), null, MavenProjectImportProvider())
-    }
-  }
-
-  protected suspend fun importModuleFrom(path: Path): Module {
-    return withContext(Dispatchers.EDT) {
-      importModuleFrom(MavenProjectImportProvider(), path.toString())
-    }
-  }
-
 }
