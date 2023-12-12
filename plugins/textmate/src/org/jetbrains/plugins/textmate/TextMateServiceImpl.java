@@ -317,7 +317,8 @@ public final class TextMateServiceImpl extends TextMateService {
                                                           internedSmartTypingPairs,
                                                           internedSurroundingPairs,
                                                           preferences.getAutoCloseBefore(),
-                                                          preferences.getIndentationRules()));
+                                                          preferences.getIndentationRules(),
+                                                          preferences.getOnEnterRules()));
       for (TextMateShellVariable variable : preferences.getVariables()) {
         myShellVariablesRegistry.addVariable(variable);
       }

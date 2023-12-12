@@ -43,10 +43,11 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
       return new TextMateAutoClosingPair(p.getLeft(), p.getRight(), null);
     }).collect(Collectors.toSet()) : null;
     final IndentationRules indentationRules = PreferencesReadUtil.loadIndentationRules(plist);
+    final Set<OnEnterRule> onEnterRules = Collections.emptySet(); // seems fine, since fillFromPList is deprecated anyway
     fillHighlightingBraces(highlightingPairs);
     fillSmartTypingBraces(smartTypingPairs);
     if (highlightingPairs != null || smartTypingPairs != null || !indentationRules.isEmpty()) {
-      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, Collections.emptySet(), null, indentationRules));
+      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, Collections.emptySet(), null, indentationRules, onEnterRules));
     }
   }
 
