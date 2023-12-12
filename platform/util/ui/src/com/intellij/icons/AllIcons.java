@@ -275,10 +275,13 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmPermissionEdit = load("codeWithMe/cwmPermissionEdit.svg", 1394955003, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionFull = load("codeWithMe/cwmPermissionFull.svg", -507224064, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissions = load("codeWithMe/cwmPermissions.svg", -739028255, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmPermissionsGranted = load("codeWithMe/cwmPermissionsGranted.svg", -1998019537, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmPermissionsDenied = load("codeWithMe/cwmPermissionsDenied.svg", 741643246, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmPermissionsGranted = load("codeWithMe/cwmPermissionsGranted.svg", 89346274, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionView = load("codeWithMe/cwmPermissionView.svg", 355418495, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("codeWithMe/cwmScreenOff.svg", 1148974817, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("codeWithMe/cwmScreenOn.svg", 700059865, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenInBrowserOff = load("codeWithMe/cwmScreenInBrowserOff.svg", -345267809, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenInBrowserOn = load("codeWithMe/cwmScreenInBrowserOn.svg", -1399166947, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("codeWithMe/cwmScreenOff.svg", -1526254437, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("codeWithMe/cwmScreenOn.svg", -1799304670, 2);
     /** 16x16 */ public static final @NotNull Icon CwmShared = load("codeWithMe/cwmShared.svg", -2035204589, 2);
     /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("codeWithMe/cwmTerminate.svg", -1812972690, 2);
     /** 14x14 */ public static final @NotNull Icon CwmVerified = load("codeWithMe/cwmVerified.svg", 1403626713, 2);

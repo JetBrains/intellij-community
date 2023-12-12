@@ -157,10 +157,13 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon CwmPermissionEdit = load("expui/codeWithMe/cwmPermissionEdit.svg", 607632437, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionFull = load("expui/codeWithMe/cwmPermissionFull.svg", 1383807042, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissions = load("expui/codeWithMe/cwmPermissions.svg", 1536220397, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmPermissionsDenied = load("expui/codeWithMe/cwmPermissionsDenied.svg", 1036264651, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionsGranted = load("expui/codeWithMe/cwmPermissionsGranted.svg", 236039752, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionView = load("expui/codeWithMe/cwmPermissionView.svg", 1023310169, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("expui/codeWithMe/cwmScreenOff.svg", 53389877, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("expui/codeWithMe/cwmScreenOn.svg", -831422832, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenInBrowserOff = load("expui/codeWithMe/cwmScreenInBrowserOff.svg", 887362509, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenInBrowserOn = load("expui/codeWithMe/cwmScreenInBrowserOn.svg", 522769420, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("expui/codeWithMe/cwmScreenOff.svg", 1209105362, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("expui/codeWithMe/cwmScreenOn.svg", 2032381401, 2);
     /** 16x16 */ public static final @NotNull Icon CwmUsers = load("expui/codeWithMe/cwmUsers.svg", 374429727, 2);
     /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", 1716201367, 2);
     /** 14x14 */ public static final @NotNull Icon CwmVerified = load("expui/codeWithMe/cwmVerified.svg", -1152626587, 2);
