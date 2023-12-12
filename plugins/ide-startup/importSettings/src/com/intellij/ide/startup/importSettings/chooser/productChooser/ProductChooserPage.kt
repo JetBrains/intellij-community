@@ -25,6 +25,9 @@ import javax.swing.SwingConstants
 class ProductChooserPage(val controller: ImportSettingsController) : ImportSettingsPage {
 
   override val stage = StartupWizardStage.ProductChoicePage
+  override fun confirmExit(parentComponent: Component?): Boolean? {
+    return true
+  }
 
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User

@@ -18,20 +18,20 @@ import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.Dimension
-import java.awt.Font
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import javax.swing.*
 
 class ImportProgressPage(importFromProduct: DialogImportData, controller: ImportSettingsController) : ImportSettingsPage {
 
   override val stage = StartupWizardStage.ImportProgressPage
 
-  override fun showExit(): MessageDialogBuilder.YesNo = MessageDialogBuilder.yesNo(ImportSettingsBundle.message("exit.confirm.title"),
-                                                                                   ImportSettingsBundle.message("exit.confirm.prompt"))
-    .yesText(ImportSettingsBundle.message("stop.import"))
-    .noText(CommonBundle.getCancelButtonText())
+  override fun confirmExit(parentComponent: Component?): Boolean {
+    return MessageDialogBuilder.yesNo(ImportSettingsBundle.message("exit.confirm.title"),
+                                      ImportSettingsBundle.message("exit.confirm.prompt"))
+      .yesText(ImportSettingsBundle.message("stop.import"))
+      .noText(CommonBundle.getCancelButtonText())
+      .ask(parentComponent)
+  }
 
 
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
@@ -53,7 +53,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
     })
 
 
-    if(importFromProduct is ImportFromProduct) {
+    if (importFromProduct is ImportFromProduct) {
       val from = importFromProduct.from
       val to = importFromProduct.to
 

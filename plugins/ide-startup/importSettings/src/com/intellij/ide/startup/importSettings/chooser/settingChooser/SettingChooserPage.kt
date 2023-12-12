@@ -53,10 +53,13 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
 
   open fun changeHandler() {}
 
-  override fun showExit(): MessageDialogBuilder.YesNo? = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
-                                                                                    ApplicationBundle.message("exit.confirm.prompt"))
-    .yesText(ApplicationBundle.message("command.exit"))
-    .noText(CommonBundle.getCancelButtonText())
+  override fun confirmExit(parentComponent: Component?): Boolean {
+    return MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
+                               ApplicationBundle.message("exit.confirm.prompt"))
+      .yesText(ApplicationBundle.message("command.exit"))
+      .noText(CommonBundle.getCancelButtonText())
+      .ask(parentComponent)
+  }
 
   private val pane = JPanel(BorderLayout()).apply {
     add(panel {

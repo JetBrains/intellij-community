@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.JButton
@@ -66,7 +67,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
 
   override fun doCancelAction() {
     currentPage?.let {
-      val shouldExit = it.showExit()?.ask(peer.contentPane)
+      val shouldExit = it.confirmExit(peer.contentPane)
 
       if (shouldExit != false) {
         super.doCancelAction()
@@ -153,5 +154,5 @@ interface ImportSettingsPage {
   val content: JComponent
   val stage: StartupWizardStage?
 
-  fun showExit(): MessageDialogBuilder.YesNo? = null
+  fun confirmExit(parentComponent: Component?) : Boolean?
 }
