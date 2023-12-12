@@ -56,7 +56,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -69,7 +68,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
 /**
@@ -127,14 +125,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
     // * Ability to open  an invalid projects (e.g. with errors in build scripts)
     if (isPreviewMode) {
-      GradlePreviewCustomizer customizer = GradlePreviewCustomizer.Companion.getCustomizer(projectPath);
-
-      if (customizer != null) {
-        DataNode<ProjectData> previewRoot = customizer.perform(projectPath, settings);
-        if (previewRoot != null) return previewRoot;
-      }
-
-      return DefaultGradlePreviewCustomizer.INSTANCE.perform(projectPath, settings);
+      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath).resolvePreviewProjectInfo(projectPath, settings);
     }
 
     DefaultProjectResolverContext resolverContext =

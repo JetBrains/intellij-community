@@ -14,23 +14,25 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.gradleIdentityPath
 import java.io.File
 
-@ApiStatus.Internal
-abstract class GradlePreviewCustomizer {
+@ApiStatus.OverrideOnly
+@ApiStatus.Experimental
+interface GradlePreviewCustomizer {
   companion object {
     var EP_NAME: ExtensionPointName<GradlePreviewCustomizer> = create("org.jetbrains.plugins.gradle.previewCustomizer")
 
-    fun getCustomizer(projectPath: String): GradlePreviewCustomizer? = EP_NAME.extensionList.firstOrNull { it.accept(projectPath) }
+    fun getCustomizer(projectPath: String): GradlePreviewCustomizer =
+      EP_NAME.extensionList.firstOrNull { it.isApplicable(projectPath) } ?: DefaultGradlePreviewCustomizer
   }
 
-  abstract fun accept(projectPath: String): Boolean
+  fun isApplicable(projectPath: String): Boolean
 
-  abstract fun perform(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData>?
+  fun resolvePreviewProjectInfo(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData>
 }
 
-object DefaultGradlePreviewCustomizer : GradlePreviewCustomizer() {
-  override fun accept(projectPath: String): Boolean = true
+object DefaultGradlePreviewCustomizer : GradlePreviewCustomizer {
+  override fun isApplicable(projectPath: String): Boolean = true
 
-  override fun perform(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData> {
+  override fun resolvePreviewProjectInfo(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData> {
     val projectName: String = File(projectPath).name
 
     val ideProjectPath = settings?.ideProjectPath
