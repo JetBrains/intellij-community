@@ -5,6 +5,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -350,6 +351,11 @@ object CodeWithMeClientDownloader {
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
+    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.hostBuildNumber)
+    if (embeddedClientLauncher != null) {
+      return ExtractedJetBrainsClientData(Path(PathManager.getHomePath()), null, sessionInfoResponse.hostBuildNumber)
+    }
+
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
 
@@ -542,6 +548,25 @@ object CodeWithMeClientDownloader {
     }
   }
 
+  internal fun createEmbeddedClientLauncherIfAvailable(expectedClientBuildNumber: String): EmbeddedClientLauncher? {
+    if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
+      val hostBuildNumberString = BuildNumber.fromStringOrNull(expectedClientBuildNumber)?.withoutProductCode()
+      val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
+      LOG.debug("Host build number: $hostBuildNumberString, current IDE build number: $currentIdeBuildNumber")
+      if (hostBuildNumberString == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
+        val embeddedClientLauncher = EmbeddedClientLauncher.create()
+        if (embeddedClientLauncher != null) {
+          LOG.debug("Embedded client is available")
+          return embeddedClientLauncher
+        }
+        else {
+          LOG.debug("Embedded client isn't available in the current IDE installation")
+        }
+      }
+    }
+    return null
+  }
+
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
     val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, config.modifiedDateInManifestIncluded, fileData.includeInManifest)
     return extractDirectory.isUpToDate && !fileData.targetPath.fileName.toString().contains("SNAPSHOT")
@@ -683,6 +708,11 @@ object CodeWithMeClientDownloader {
     url: String,
     extractedJetBrainsClientData: ExtractedJetBrainsClientData
   ): Lifetime {
+    if (extractedJetBrainsClientData.clientDir == Path(PathManager.getHomePath())) {
+      //todo: refactor this code to generalize ExtractedJetBrainsClientData and pass EmbeddedClientLauncher instance here explicitly
+      return EmbeddedClientLauncher.create()!!.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
+    }
+    
     val launcherData = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
 
     if (extractedJetBrainsClientData.jreDir != null) {

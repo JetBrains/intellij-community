@@ -1,6 +1,5 @@
 package com.intellij.remoteDev.downloader
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -11,10 +10,8 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
@@ -93,23 +90,6 @@ object CodeWithMeGuestLauncher {
         }
 
         val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-        if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
-          val hostBuildNumber = BuildNumber.fromStringOrNull(sessionInfo.hostBuildNumber)?.withoutProductCode()
-          val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
-          LOG.debug("Host build number: $hostBuildNumber, current IDE build number: $currentIdeBuildNumber")
-          if (hostBuildNumber == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
-            val embeddedClientLauncher = EmbeddedClientLauncher.create()
-            if (embeddedClientLauncher != null) {
-              LOG.debug("Launching client process from current IDE")
-              clientLifetime = embeddedClientLauncher.launch(url, parentLifetime, NotificationBasedEmbeddedClientErrorReporter(project))
-              return
-            }
-            else {
-              LOG.debug("Embedded client isn't available in the current IDE installation")
-            }
-          }
-        }
-        
         val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
 
         clientLifetime = runDownloadedClient(
@@ -143,9 +123,15 @@ object CodeWithMeGuestLauncher {
     if (clientBuild == null) {
       return false
     }
-    if (Registry.`is`("rdct.always.use.embedded.client")) {
-      return false
+    
+    val embeddedClientLauncher = CodeWithMeClientDownloader.createEmbeddedClientLauncherIfAvailable(clientBuild)
+    if (embeddedClientLauncher != null) {
+      val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+      val clientLifetime = embeddedClientLauncher.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(project))
+      onDone(clientLifetime)
+      return true
     }
+    
     if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
       return false
     }
