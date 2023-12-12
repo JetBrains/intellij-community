@@ -103,7 +103,10 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
 
       Map<MavenId, MavenDomDependency> dependencyMap = model.getDependencies().getDependencies().stream().collect(Collectors.toMap(
         it -> new MavenId(it.getGroupId().getStringValue(), it.getArtifactId().getStringValue(), it.getVersion().getStringValue()),
-        Function.identity()
+        Function.identity(),
+        (dep1, dep2) -> {
+          return dep1;
+        }
       ));
 
       for (MavenId each : ids) {
