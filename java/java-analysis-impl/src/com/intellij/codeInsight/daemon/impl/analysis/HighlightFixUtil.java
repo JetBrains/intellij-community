@@ -176,30 +176,23 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo.Builder info,
-                                              @NotNull List<PsiClassType> unhandledExceptions) {
-    if (info != null) {
-      final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull HighlightInfo.Builder info) {
+    final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
 
-      IntentionAction action4 = quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
-      info.registerFix(action4, null, null, null, null);
+    IntentionAction action4 = quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+    info.registerFix(action4, null, null, null, null);
 
-      IntentionAction action3 = quickFixFactory.createAddExceptionToCatchFix();
-      info.registerFix(action3, null, null, null, null);
+    IntentionAction action3 = quickFixFactory.createAddExceptionToCatchFix();
+    info.registerFix(action3, null, null, null, null);
 
-      IntentionAction action2 = quickFixFactory.createAddExceptionToExistingCatch(element);
-      info.registerFix(action2, null, null, null, null);
+    IntentionAction action2 = quickFixFactory.createAddExceptionToExistingCatch(element);
+    info.registerFix(action2, null, null, null, null);
 
-      IntentionAction action1 = quickFixFactory.createAddExceptionToThrowsFix(element);
-      info.registerFix(action1, null, null, null, null);
+    IntentionAction action1 = quickFixFactory.createAddExceptionToThrowsFix(element);
+    info.registerFix(action1, null, null, null, null);
 
-      IntentionAction action = quickFixFactory.createSurroundWithTryCatchFix(element);
-      info.registerFix(action, null, null, null, null);
-
-      for (UnhandledExceptionFixProvider provider : UnhandledExceptionFixProvider.EP_NAME.getExtensionList()) {
-        provider.registerUnhandledExceptionFixes(info, element, unhandledExceptions);
-      }
-    }
+    IntentionAction action = quickFixFactory.createSurroundWithTryCatchFix(element);
+    info.registerFix(action, null, null, null, null);
   }
 
   static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo.Builder info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {

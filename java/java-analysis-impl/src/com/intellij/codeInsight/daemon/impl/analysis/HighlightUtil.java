@@ -925,7 +925,8 @@ public final class HighlightUtil {
     TextRange textRange = computeRange(element);
     String description = getUnhandledExceptionsDescriptor(unhandled);
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightType).range(textRange).descriptionAndTooltip(description);
-    HighlightFixUtil.registerUnhandledExceptionFixes(element, info, unhandled);
+    HighlightFixUtil.registerUnhandledExceptionFixes(element, info);
+    ErrorFixExtensionPoint.registerFixes(info, element, "unhandled.exceptions");
     return info;
   }
 
@@ -958,7 +959,7 @@ public final class HighlightUtil {
     String description = JavaErrorBundle.message("unhandled.close.exceptions", formatTypes(unhandled), unhandled.size(),
                               JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo.Builder highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description);
-    HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight, unhandled);
+    HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
     return highlight;
   }
 

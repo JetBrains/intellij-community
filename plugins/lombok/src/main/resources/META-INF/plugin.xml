@@ -83,7 +83,7 @@
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
     <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
-    <unhandledExceptionFixProvider implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsUnhandledExceptionFixProvider"/>
+    <java.error.fix errorCode="unhandled.exceptions" implementationClass="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction"/>
 
     <implicit.resource.closer
       implementation="de.plushnikov.intellij.plugin.extension.LombokCleanUpImplicitResourceCloser"/>
