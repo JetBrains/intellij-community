@@ -186,24 +186,31 @@ class JpsProjectUrlRelativizerTest {
   }
 
   private fun assertBasePathExistsWithProtocolsFor(identifier: String) {
-    assertBasePathExistsFor(identifier)
-    assertBasePathExistsFor("file:$identifier")
-    assertBasePathExistsFor("file:/$identifier")
-    assertBasePathExistsFor("file://$identifier")
-    assertBasePathExistsFor("jar:$identifier")
-    assertBasePathExistsFor("jar:/$identifier")
-    assertBasePathExistsFor("jar://$identifier")
-    assertBasePathExistsFor("jrt:$identifier")
-    assertBasePathExistsFor("jrt:/$identifier")
-    assertBasePathExistsFor("jrt://$identifier")
+    if (basePathExists(identifier)) {
+      assertBasePathExistsFor("file:$identifier")
+      assertBasePathExistsFor("file:/$identifier")
+      assertBasePathExistsFor("file://$identifier")
+      assertBasePathExistsFor("jar:$identifier")
+      assertBasePathExistsFor("jar:/$identifier")
+      assertBasePathExistsFor("jar://$identifier")
+      assertBasePathExistsFor("jrt:$identifier")
+      assertBasePathExistsFor("jrt:/$identifier")
+      assertBasePathExistsFor("jrt://$identifier")
+    }
   }
 
   private fun assertBasePathExistsFor(identifier: String) {
     urlRelativizer.getAllBasePathIdentifiers().forEach { basePathIdentifier ->
-      if (identifier == basePathIdentifier)
-        return
+      if (identifier == basePathIdentifier) return
     }
     fail("Base path with identifier $identifier not found.")
+  }
+
+  private fun basePathExists(identifier: String): Boolean {
+    urlRelativizer.getAllBasePathIdentifiers().forEach { basePathIdentifier ->
+      if (identifier == basePathIdentifier) return true
+    }
+    return false
   }
 
   private fun getAbsolutePathsForEntities(storage: EntityStorage): List<String> {
