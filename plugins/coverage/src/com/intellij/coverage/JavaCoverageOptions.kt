@@ -22,13 +22,13 @@ class JavaCoverageOptions(private val project: Project) : CoverageOptions() {
       group(JavaCoverageBundle.message("settings.coverage.java.java.coverage")) {
         row {
           checkBox(JavaCoverageBundle.message("settings.coverage.java.ignore.implicitly.declared.default.constructors"))
-            .bindSelected(coverageOptionsProvider::ignoreImplicitConstructors, coverageOptionsProvider::setIgnoreImplicitConstructors)
+            .bindSelected(coverageOptionsProvider::ignoreImplicitConstructors)
         }
         row {
           val excludeAnnotationsPanel = object : AnnotationsPanel(
             project, "Exclude", "",
             coverageOptionsProvider.excludeAnnotationPatterns,
-            JavaCoverageOptionsProvider.getDefaultExcludeAnnotationPatterns(), emptySet(), false, false
+            JavaCoverageOptionsProvider.defaultExcludeAnnotationPatterns, emptySet(), false, false
           ) {
             override fun isAnnotationAccepted(annotation: PsiClass): Boolean {
               return annotation.containingClass == null

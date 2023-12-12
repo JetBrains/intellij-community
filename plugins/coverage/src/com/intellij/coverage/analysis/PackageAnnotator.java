@@ -57,7 +57,7 @@ public final class PackageAnnotator {
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
 
     JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
-    myIgnoreImplicitConstructor = optionsProvider.ignoreImplicitConstructors();
+    myIgnoreImplicitConstructor = optionsProvider.getIgnoreImplicitConstructors();
   }
 
   private synchronized ProjectData getUnloadedClassesProjectData() {
