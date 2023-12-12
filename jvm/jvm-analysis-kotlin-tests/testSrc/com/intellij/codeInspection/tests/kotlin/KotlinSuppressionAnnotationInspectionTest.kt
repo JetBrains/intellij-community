@@ -10,28 +10,28 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN,
       """
-        <warning descr="Inspection suppression annotation '@Suppress(\"ALL\", \"SuppressionAnnotation\")'">@Suppress("ALL", "SuppressionAnnotation")</warning>
-        class A {
-          <warning descr="Inspection suppression annotation '@Suppress(\"PublicField\")'">@Suppress("PublicField")</warning>
-          var s: String? = null
-          <warning descr="Inspection suppression annotation '@Suppress'">@Suppress</warning>
-          var t: String? = null
-          
-          fun foo() {
-            <warning descr="Inspection suppression annotation '//noinspection HardCodedStringLiteral'">//noinspection HardCodedStringLiteral</warning>
-            any("hello")
-            <warning descr="Inspection suppression annotation '// noinspection'">// noinspection</warning>
-            any()
-          }
-          
-          @Suppress("FreeSpeech")
-          fun bar() {
-            // noinspection FreeSpeech
-            any()
-          }
+      @<warning descr="Annotation suppresses 'ALL' and 'SuppressionAnnotation'">Suppress</warning>("ALL", "SuppressionAnnotation")
+      class A {
+        @<warning descr="Annotation suppresses 'PublicField'">Suppress</warning>("PublicField")
+        var s: String? = null
+        @<warning descr="Annotation suppresses">Suppress</warning>
+        var t: String? = null
+        
+        fun foo() {
+          <warning descr="Comment suppresses 'HardCodedStringLiteral'">//noinspection HardCodedStringLiteral</warning>
+          any("hello")
+          <warning descr="Comment suppresses">// noinspection</warning>
+          any()
         }
         
-        private fun any(s: String? = null): String? = s
+        @Suppress("FreeSpeech")
+        fun bar() {
+          // noinspection FreeSpeech
+          any()
+        }
+      }
+      
+      private fun any(s: String? = null): String? = s
         """.trimIndent()
     )
   }
@@ -39,7 +39,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - remove annotation`() {
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress("PublicField", "Hard<caret>CodedStringLiteral")
+            @Supp<caret>ress("PublicField", "HardCodedStringLiteral")
             var s: String = "test"
           }
         """.trimIndent(), """
@@ -65,7 +65,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow a single suppression from annotation`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress("Public<caret>Field")
+            @Supp<caret>ress("PublicField")
             var s: String = "test"
           }
         """.trimIndent(), "PublicField")
@@ -74,7 +74,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow a single suppression from annotation when array form used`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress(["Public<caret>Field"])
+            @Supp<caret>ress(["PublicField"])
             var s: String = "test"
           }
         """.trimIndent(), "PublicField")
@@ -83,7 +83,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow a single suppression from annotation when explicit attribute name exists`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress(names = "Public<caret>Field")
+            @Supp<caret>ress(names = "PublicField")
             var s: String = "test"
           }
         """.trimIndent(), "PublicField")
@@ -92,7 +92,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow multiple suppressions from annotation`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress("Public<caret>Field", "HardCodedStringLiteral")
+            @Supp<caret>ress("PublicField", "HardCodedStringLiteral")
             var s: String = "test"
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")
@@ -101,7 +101,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow multiple suppressions from annotation when array form used`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress(["Public<caret>Field", "HardCodedStringLiteral"])
+            @Supp<caret>ress(["PublicField", "HardCodedStringLiteral"])
             var s: String = "test"
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")
@@ -110,7 +110,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
   fun `test quickfix - allow multiple suppressions from annotation when explicit attribute name exists`() {
     testAllowSuppressionQuickFix(JvmLanguage.KOTLIN, """
           class A {
-            @Suppress(names = ["Public<caret>Field", "HardCodedStringLiteral"])
+            @Supp<caret>ress(names = ["PublicField", "HardCodedStringLiteral"])
             var s: String = "test"
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")
@@ -124,7 +124,7 @@ class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectio
           }
           
           class A {
-            @Suppress([Constants.PUBLIC_<caret>FIELD, Constants.HARD_CODED_STRING_LITERAL])
+            @Supp<caret>ress([Constants.PUBLIC_FIELD, Constants.HARD_CODED_STRING_LITERAL])
             var s: String = "test"
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")

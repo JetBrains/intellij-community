@@ -10,27 +10,27 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
     myFixture.testHighlighting(
       JvmLanguage.JAVA,
       """
-        <warning descr="Inspection suppression annotation '@SuppressWarnings({\"ALL\", \"SuppressionAnnotation\"})'">@SuppressWarnings({"ALL", "SuppressionAnnotation"})</warning>
-        public class A {
-          <warning descr="Inspection suppression annotation '@SuppressWarnings(\"PublicField\")'">@SuppressWarnings("PublicField")</warning>
-          public String s;
-          <warning descr="Inspection suppression annotation '@SuppressWarnings({})'">@SuppressWarnings({})</warning>
-          public String t;
-    
-          void foo() {
-            <warning descr="Inspection suppression annotation '//noinspection HardCodedStringLiteral'">//noinspection HardCodedStringLiteral</warning>
-            System.out.println("hello");
-            <warning descr="Inspection suppression annotation '// noinspection'">// noinspection</warning>
-            System.out.println();
-          }
-        
-          @SuppressWarnings("FreeSpeech")
-          void bar() {
-            //noinspection FreeSpeech
-            System.out.println();
-          }
+      @<warning descr="Annotation suppresses 'ALL' and 'SuppressionAnnotation'">SuppressWarnings</warning>({"ALL", "SuppressionAnnotation"})
+      public class A {
+        @<warning descr="Annotation suppresses 'PublicField'">SuppressWarnings</warning>("PublicField")
+        public String s;
+        @<warning descr="Annotation suppresses">SuppressWarnings</warning>({})
+        public String t;
+      
+        void foo() {
+          <warning descr="Comment suppresses 'HardCodedStringLiteral'">//noinspection HardCodedStringLiteral</warning>
+          System.out.println("hello");
+          <warning descr="Comment suppresses">// noinspection</warning>
+          System.out.println();
         }
-        """.trimIndent(),
+      
+        @SuppressWarnings("FreeSpeech")
+        void bar() {
+          //noinspection FreeSpeech
+          System.out.println();
+        }
+      }
+      """.trimIndent(),
       fileName = "A"
     )
   }
@@ -38,7 +38,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - remove annotation`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings("PublicField", "Hard<caret>CodedStringLiteral")
+            @Suppress<caret>Warnings("PublicField", "HardCodedStringLiteral")
             public String s = "test";
           }
         """.trimIndent(), """
@@ -64,7 +64,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - allow a single suppression from annotation`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings("Public<caret>Field")
+            @Suppress<caret>Warnings("PublicField")
             public String s = "test";
           }
         """.trimIndent(), "PublicField")
@@ -73,7 +73,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - allow a single suppression from annotation when array form used`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings({"Public<caret>Field"})
+            @Suppress<caret>Warnings({"PublicField"})
             public String s = "test";
           }
         """.trimIndent(), "PublicField")
@@ -82,7 +82,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - allow a single suppression from annotation when explicit attribute name exists`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings(value = "Public<caret>Field")
+            @Suppress<caret>Warnings(value = "PublicField")
             public String s = "test";
           }
         """.trimIndent(), "PublicField")
@@ -91,7 +91,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - allow multiple suppressions from annotation when array form used`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings({"Public<caret>Field", "HardCodedStringLiteral"})
+            @Suppress<caret>Warnings({"PublicField", "HardCodedStringLiteral"})
             public String s = "test";
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")
@@ -100,7 +100,7 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
   fun `test quickfix - allow multiple suppressions from annotation when explicit attribute name exists`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {
-            @SuppressWarnings(value = {"Public<caret>Field", "HardCodedStringLiteral"})
+            @Suppress<caret>Warnings(value = {"PublicField", "HardCodedStringLiteral"})
             public String s = "test";
           }
         """.trimIndent(), "PublicField", "HardCodedStringLiteral")
