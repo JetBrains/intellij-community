@@ -546,16 +546,33 @@ public final class DependencyResolverImpl implements DependencyResolver {
         continue;
       }
       ResolvedArtifactResult resolvedArtifactResult = (ResolvedArtifactResult)artifactResult;
-      File artifactResultFile = resolvedArtifactResult.getFile();
-      if (exactArtifactName.equals(getFileWithoutExtensionAndClassifier(artifactResultFile.getName()))) {
-        return artifactResultFile;
+      if (isArtifactComponent(exactArtifactName, resolvedArtifactResult)) {
+        return resolvedArtifactResult.getFile();
       }
       fallback = resolvedArtifactResult.getFile();
     }
     return fallback;
   }
 
-  private static @NotNull String getFileWithoutExtensionAndClassifier(@NotNull String fileWithExtensionAndClassifier) {
+  private static boolean isArtifactComponent(@NotNull String exactArtifactName, @NotNull ResolvedArtifactResult artifactResult) {
+    File artifactFile = artifactResult.getFile();
+    String artifactResultFile = artifactFile.getName();
+    if (exactArtifactName.equals(getFilenameWithoutExtensionAndClassifier(artifactResultFile))) {
+      return true;
+    }
+    String displayName = artifactResult.getId()
+      .getComponentIdentifier()
+      .getDisplayName();
+    if (displayName.contains(":")) {
+      String[] mayBeArtifactCoordinates = displayName.split(":");
+      if (mayBeArtifactCoordinates.length == 3) {
+        return exactArtifactName.equals(mayBeArtifactCoordinates[1]);
+      }
+    }
+    return false;
+  }
+
+  private static @NotNull String getFilenameWithoutExtensionAndClassifier(@NotNull String fileWithExtensionAndClassifier) {
     String[] particles = fileWithExtensionAndClassifier.split("\\.");
     if (particles.length > 0) {
       return particles[0];
