@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import kotlinx.coroutines.CoroutineScope
@@ -79,11 +78,8 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
 
     private fun shouldListen(library: Library): Boolean {
       //project and global level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher
-      if (GlobalLibraryTableBridge.isEnabled()) {
-        return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL &&
-               library.table?.tableLevel != LibraryTablesRegistrar.APPLICATION_LEVEL
-      }
-      return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL
+      return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL &&
+             library.table?.tableLevel != LibraryTablesRegistrar.APPLICATION_LEVEL
     }
 
     override fun referencedSdkAdded(sdk: Sdk) {

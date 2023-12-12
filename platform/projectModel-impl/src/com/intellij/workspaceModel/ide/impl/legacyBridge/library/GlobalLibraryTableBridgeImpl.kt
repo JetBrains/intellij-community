@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -32,7 +31,7 @@ import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
 class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
-  override fun isEnabled(): Boolean = GlobalLibraryTableBridge.isEnabled()
+  override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project,
                                  changes: Map<Class<*>,

@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
@@ -22,7 +21,5 @@ interface GlobalLibraryTableBridge : LibraryTable {
   fun handleChangedEvents(event: VersionedStorageChange)
   companion object {
     fun getInstance(): GlobalLibraryTableBridge = ApplicationManager.getApplication().service()
-
-    fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.library.bridge", true)
   }
 }

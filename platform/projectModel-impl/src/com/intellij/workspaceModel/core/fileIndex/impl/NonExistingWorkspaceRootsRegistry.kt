@@ -191,7 +191,7 @@ private class VfsChangeApplierImpl(
     indexData.updateDirtyEntities()
     
     // Keep old behaviour for global libraries
-    if (GlobalLibraryTableBridge.isEnabled() && affectedEntities.isNotEmpty()) {
+    if (affectedEntities.isNotEmpty()) {
       val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       val globalLibraryTableBridge = GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl
 

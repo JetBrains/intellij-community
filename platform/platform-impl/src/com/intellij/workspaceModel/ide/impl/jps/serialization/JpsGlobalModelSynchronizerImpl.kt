@@ -20,7 +20,6 @@ import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
 /**

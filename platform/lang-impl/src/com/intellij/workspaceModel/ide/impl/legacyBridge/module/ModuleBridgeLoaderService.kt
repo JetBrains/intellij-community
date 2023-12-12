@@ -27,8 +27,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -73,11 +71,9 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
                       targetUnloadedEntitiesBuilder = null,
                       loadedFromCache = workspaceModel.loadedFromCache)
         }
-        if (GlobalLibraryTableBridge.isEnabled() || GlobalSdkTableBridge.isEnabled()) {
-          val globalWorkspaceModel = serviceAsync<GlobalWorkspaceModel>()
-          writeAction {
-            globalWorkspaceModel.applyStateToProject(project)
-          }
+        val globalWorkspaceModel = serviceAsync<GlobalWorkspaceModel>()
+        writeAction {
+          globalWorkspaceModel.applyStateToProject(project)
         }
       }
       else {

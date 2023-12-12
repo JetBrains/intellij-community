@@ -49,7 +49,6 @@ import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.*
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -293,12 +292,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
-      if (GlobalLibraryTableBridge.isEnabled()) {
-        childActivity = childActivity?.endAndStart("applying entities from global storage")
-        val mutableStorage = MutableEntityStorage.create()
-        GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
-        builder.addDiff(mutableStorage)
-      }
+      childActivity = childActivity?.endAndStart("applying entities from global storage")
+      val mutableStorage = MutableEntityStorage.create()
+      GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
+      builder.addDiff(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
