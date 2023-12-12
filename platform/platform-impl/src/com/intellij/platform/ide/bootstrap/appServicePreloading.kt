@@ -66,21 +66,22 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
 
     pathMacroJob.join()
 
+    val registryManagerJob = asyncScope.launch {
+      app.serviceAsync<RegistryManager>()
+    }
+
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
       postAppRegistered(app = app,
                         asyncScope = asyncScope,
                         managingFsJob = managingFsJob,
+                        registryManagerJob = registryManagerJob,
                         initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
     }
   }
 
   asyncScope.launch {
-    launch {
-      app.serviceAsync<RegistryManager>()
-    }
-
     launch {
       app.serviceAsync<LogLevelConfigurationManager>()
     }
@@ -127,6 +128,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
 private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
                                              asyncScope: CoroutineScope,
                                              managingFsJob: Job,
+                                             registryManagerJob: Job,
                                              initAwtToolkitAndEventQueueJob: Job?) {
   asyncScope.launch {
     val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
@@ -152,6 +154,8 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
       span("VirtualFilePointerManager preloading") {
         app.serviceAsync<VirtualFilePointerManager>()
       }
+      // RegistryManager is needed for ProjectJdkTable
+      registryManagerJob.join()
       span("ProjectJdkTable preloading") {
         app.serviceAsync<ProjectJdkTable>()
       }
