@@ -9,8 +9,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface IjentExecApi {
-  val ijentApi: IjentApi
-
   /**
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.

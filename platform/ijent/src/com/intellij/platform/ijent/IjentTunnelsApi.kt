@@ -10,8 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface IjentTunnelsApi {
-  val ijentApi: IjentApi
-
   /**
    * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
