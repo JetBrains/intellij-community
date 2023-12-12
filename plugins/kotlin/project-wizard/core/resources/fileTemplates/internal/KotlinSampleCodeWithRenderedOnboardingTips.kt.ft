@@ -3,16 +3,14 @@ package ${PACKAGE_NAME}
 
 #end
 #parse("File Header.java")
-//TIP ${SearchEverywhereComment1}
-// ${SearchEverywhereComment2}
+//TIP ${RunComment1}
+// ${RunComment2}
 fun main() {
     val name = "Kotlin"
     //TIP ${ShowIntentionComment1}
     // ${ShowIntentionComment2}
     println("Hello, " + name + "!")
 
-    //TIP ${RunComment2}
-    // ${RunComment1}
     for (i in 1..5) {
         //TIP ${DebugComment1}
         // ${DebugComment2}
