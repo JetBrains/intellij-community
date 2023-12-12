@@ -253,33 +253,11 @@ public final class DiffDividerDrawUtil {
 
       DividerPolygon polygon = createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2, painter);
       if (withAlignedHeight && polygon != null) {
-        int inlayOffset = getInlayOffset(myEditor1, myEditor2, startLine1, startLine2, painter.getType());
-        polygon = polygon.withAlignedHeight(inlayOffset);
+        polygon = polygon.withAlignedHeight();
       }
 
       ContainerUtil.addIfNotNull(myPolygons, polygon);
       return true;
-    }
-
-    @ApiStatus.Internal
-    public static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
-                                      int startLine1, int startLine2,
-                                      @NotNull TextDiffType type) {
-      int visualStartLine1 = EditorUtil.logicalToVisualLine(editor1, startLine1);
-      int visualStartLine2 = EditorUtil.logicalToVisualLine(editor2, startLine2);
-
-      if (type == TextDiffType.INSERTED) {
-        return EditorUtil.getInlaysHeight(editor2, visualStartLine2, true);
-      }
-      if (type == TextDiffType.DELETED) {
-        return EditorUtil.getInlaysHeight(editor1, visualStartLine1, true);
-      }
-      if (type == TextDiffType.MODIFIED) {
-        return Math.max(EditorUtil.getInlaysHeight(editor1, visualStartLine1, true),
-                        EditorUtil.getInlaysHeight(editor2, visualStartLine2, true));
-      }
-
-      return 0;
     }
 
     @Nullable
@@ -522,7 +500,7 @@ public final class DiffDividerDrawUtil {
     }
 
     @NotNull
-    public DividerPolygon withAlignedHeight(int inlayOffset) {
+    public DividerPolygon withAlignedHeight() {
       int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
       if (delta == 0) return this;
 
@@ -537,16 +515,16 @@ public final class DiffDividerDrawUtil {
       if (delta < 0) {
         int startDelta = myStart2 == myEnd2 ? 0 : -delta;
         int endDelta = myStart2 == myEnd2 ? -delta : 0;
-        return new DividerPolygon(myStart1, myStart2 - startDelta + inlayOffset,
-                                  myEnd1, myEnd2 + endDelta + inlayOffset,
+        return new DividerPolygon(myStart1, myStart2 - startDelta,
+                                  myEnd1, myEnd2 + endDelta,
                                   myFillColor, myBorderColor, myDottedBorder);
       }
       else {
         int startDelta = myStart1 == myEnd1 ? 0 : delta;
         int endDelta = myStart1 == myEnd1 ? delta : 0;
         int firstLineOffset = (myStart1 == myEnd1 && myStart2 == 0) ? -1 : 0;
-        return new DividerPolygon(myStart1 - startDelta + firstLineOffset + inlayOffset, myStart2,
-                                  myEnd1 + endDelta + firstLineOffset + inlayOffset, myEnd2,
+        return new DividerPolygon(myStart1 - startDelta + firstLineOffset, myStart2,
+                                  myEnd1 + endDelta + firstLineOffset, myEnd2,
                                   myFillColor, myBorderColor, myDottedBorder);
       }
     }
