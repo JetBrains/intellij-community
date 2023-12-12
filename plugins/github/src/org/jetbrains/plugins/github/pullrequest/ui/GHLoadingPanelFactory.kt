@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -40,8 +39,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
     }
     object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler, contentListeners.toList()) {
       override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>): JComponent {
-        val stripe = ProgressStripe(contentFactory(parentPanel, valueModel), parentDisposable,
-                                    ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+        val stripe = ProgressStripe(contentFactory(parentPanel, valueModel), parentDisposable).apply {
           isOpaque = false
         }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -136,7 +135,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     val treePanel = GitStageTreePanel()
       .addToCenter(createScrollPane(tree, sideBorder))
       .addToBottom(statusPanel)
-    progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+    progressStripe = ProgressStripe(treePanel, this)
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
     treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)

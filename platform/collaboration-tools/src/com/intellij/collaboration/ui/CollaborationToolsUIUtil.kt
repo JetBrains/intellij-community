@@ -14,7 +14,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AbstractObservableProperty
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -134,7 +133,7 @@ object CollaborationToolsUIUtil {
    * Show progress stripe above [component]
    */
   fun wrapWithProgressStripe(scope: CoroutineScope, loadingFlow: Flow<Boolean>, component: JComponent): JComponent {
-    return ProgressStripe(component, scope.nestedDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+    return ProgressStripe(component, scope.nestedDisposable()).apply {
       bindProgressIn(scope, loadingFlow)
     }
   }

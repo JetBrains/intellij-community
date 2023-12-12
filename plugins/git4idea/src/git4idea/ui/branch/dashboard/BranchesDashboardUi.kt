@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -82,7 +81,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
-  private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this)
   private val branchesTreeWithLogPanel = simplePanel()
   private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
   private val branchesSearchFieldPanel = simplePanel()
