@@ -25,6 +25,8 @@ import java.util.function.Function;
  * {@code com.intellij.registryKey} extension point (see {@link RegistryKeyBean} for more details).
  */
 public final class Registry {
+  // TODO: Extract the common property-related logic into a new Kotlin class
+  private static Reference<Map<String, String>> bundledRegistryOverrides;
   private static Reference<Map<String, String>> bundledRegistry;
 
   public static final @NonNls String REGISTRY_BUNDLE = "misc.registry";
@@ -122,22 +124,39 @@ public final class Registry {
     return get(key).asColor(defaultValue);
   }
 
-  private static @Nullable Map<String, String> loadFromBundledConfig() throws IOException {
+  private static Map<String, String> loadOverridesFromBundledConfig() throws IOException {
+    Reference<Map<String, String>> bundleRef = bundledRegistryOverrides;
+    Map<String, String> result = bundleRef == null ? null : bundleRef.get();
+    if (result != null) {
+      return result;
+    }
+
+    result = loadFromBundledConfig("misc/registry.override.properties", 32);
+
+    bundledRegistryOverrides = new SoftReference<>(result);
+    return result;
+  }
+
+  private static Map<String, String> loadFromBundledConfig() throws IOException {
     Reference<Map<String, String>> bundleRef = bundledRegistry;
     Map<String, String> result = bundleRef == null ? null : bundleRef.get();
     if (result != null) {
       return result;
     }
 
-    Map<String, String> map = new LinkedHashMap<>(1_800);
-    boolean mainFound = loadFromResource("misc/registry.properties", map);
-    boolean overrideFound = loadFromResource("misc/registry.override.properties", map);
-    if (!mainFound && !overrideFound) {
-      return null;
+    result = loadFromBundledConfig("misc/registry.properties", 1800);
+
+    bundledRegistry = new SoftReference<>(result);
+    return result;
+  }
+
+  private static Map<String, String> loadFromBundledConfig(String resourceName, int initialCapacity) throws IOException {
+    Map<String, String> map = new LinkedHashMap<>(initialCapacity);
+    if (loadFromResource(resourceName, map)) {
+      return map;
     }
 
-    bundledRegistry = new SoftReference<>(map);
-    return map;
+    return Collections.emptyMap();
   }
 
   private static boolean loadFromResource(String sourceResourceName, Map<String, String> targetMap) throws IOException {
@@ -162,6 +181,18 @@ public final class Registry {
   }
 
   public @NlsSafe @Nullable String getBundleValueOrNull(@NonNls @NotNull String key) {
+    try {
+      Map<String, String> bundle = loadOverridesFromBundledConfig();
+      String overriddenValue = bundle.get(key);
+      if (overriddenValue != null) {
+        return overriddenValue;
+      }
+    }
+    catch (IOException e) {
+      // critical start-up error (cannot parse properties file), don't bother clients
+      throw new UncheckedIOException(e);
+    }
+
     RegistryKeyDescriptor contributed = myContributedKeys.get(key);
     if (contributed != null) {
       return contributed.getDefaultValue();
@@ -169,7 +200,7 @@ public final class Registry {
 
     try {
       Map<String, String> bundle = loadFromBundledConfig();
-      return bundle == null ? null : bundle.get(key);
+      return bundle.get(key);
     }
     catch (IOException e) {
       // critical start-up error (cannot parse properties file), don't bother clients
@@ -178,11 +209,6 @@ public final class Registry {
   }
 
   @NlsSafe @NotNull String getBundleValue(@NonNls @NotNull String key) throws MissingResourceException {
-    RegistryKeyDescriptor contributed = myContributedKeys.get(key);
-    if (contributed != null) {
-      return contributed.getDefaultValue();
-    }
-
     String result = getBundleValueOrNull(key);
     if (result == null) {
       throw new MissingResourceException("Registry key " + key + " is not defined", REGISTRY_BUNDLE, key);
@@ -288,6 +314,14 @@ public final class Registry {
     catch (IOException ignored) {
     }
     Set<String> keys = bundle == null ? Collections.emptySet() : bundle.keySet();
+
+    try {
+      bundle = loadOverridesFromBundledConfig();
+      keys.addAll(bundle.keySet());
+    }
+    catch (IOException ignored) {
+    }
+    
     List<RegistryValue> result = new ArrayList<>();
     // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
     Registry instance = ourInstance;
