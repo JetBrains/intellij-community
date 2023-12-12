@@ -1418,6 +1418,10 @@
                             order="last"/>
     <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory"
                             order="last"/>
+    <registryKey key="idea.memory.usage.tooltip.show.more"
+                 description="Show additional info in memory-usage bar's tooltip"
+                 defaultValue="true"/>
+
     <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager"
                             order="last"/>
     <statusBarWidgetFactory id="SmartModeIndicator" implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
