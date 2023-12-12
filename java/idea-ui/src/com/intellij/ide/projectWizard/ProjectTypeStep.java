@@ -816,15 +816,26 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
         @Override
         public String getCaptionAboveOf(TemplatesGroup value) {
-          return value.getModuleBuilder() instanceof TemplateModuleBuilder
-            ? UIBundle.message("list.caption.group.templates")
-            : UIBundle.message("list.caption.group.generators");
+          var builder = value.getModuleBuilder();
+          if (builder instanceof TemplateModuleBuilder) {
+            return UIBundle.message("list.caption.group.templates");
+          }
+          else if (builder instanceof NewProjectBuilder) {
+            return UIBundle.message("list.caption.group.newProject");
+          }
+          else if (builder instanceof NewModuleBuilder) {
+            return UIBundle.message("list.caption.group.newModule");
+          }
+          else {
+            return UIBundle.message("list.caption.group.generators");
+          }
         }
 
         @Override
         public boolean hasSeparatorAboveOf(TemplatesGroup value) {
           int index = groups.indexOf(value);
-          if (index < 1) return false;
+          if (index < 0) return false;
+          if (index == 0) return true;
           TemplatesGroup upper = groups.get(index - 1);
           if (value.getModuleBuilder() instanceof TemplateModuleBuilder && !(upper.getModuleBuilder() instanceof TemplateModuleBuilder)) {
             return true;
@@ -842,29 +853,25 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      myNextStepLabel.setIcon(value.isPromo() ? AllIcons.Ultimate.Lock : null);
-      return component;
-    }
+      var component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-    @Override
-    protected JComponent createItemComponent() {
-      JComponent component = super.createItemComponent();
+      var leftInset = 8;
+      var rightInset = 0;
+      var bottomInset = 5;
+      var topInset = index == 0 ? bottomInset : 20;
+      mySeparatorComponent.setBorder(JBUI.Borders.empty(topInset, leftInset, bottomInset, rightInset));
+      mySeparatorComponent.setCaptionCentered(false);
+      mySeparatorComponent.setFont(JBUI.Fonts.smallFont());
+
+      myNextStepLabel.setIcon(value.isPromo() ? AllIcons.Ultimate.Lock : null);
+
       myTextLabel.setBorder(JBUI.Borders.empty(5, 0));
+
       return component;
     }
 
     @Override
     protected SeparatorWithText createSeparator() {
-      SeparatorWithText separator = createSeparatorComponent();
-      separator.setBorder(JBUI.Borders.empty(20, 8, 5, 0));
-      separator.setCaptionCentered(false);
-      separator.setFont(JBUI.Fonts.smallFont());
-      return separator;
-    }
-
-    @NotNull
-    private static SeparatorWithText createSeparatorComponent() {
       return new SeparatorWithText() {
         @Override
         protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) { }
