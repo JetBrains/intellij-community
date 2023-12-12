@@ -28,8 +28,8 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
   abstract fun getChildren(e: AnActionEvent?): Array<AnAction>
 
-  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: ImportSettingsController): List<AnAction> {
-    return products.map { pr -> SettingChooserItemAction(pr, provider, callback) }
+  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, controller: ImportSettingsController): List<AnAction> {
+    return products.map { pr -> SettingChooserItemAction(pr, provider, controller) }
   }
 
   override fun actionPerformed(event: AnActionEvent) {

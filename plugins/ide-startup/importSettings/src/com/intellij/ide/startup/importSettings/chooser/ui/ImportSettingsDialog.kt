@@ -10,7 +10,6 @@ import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBDimension
@@ -25,7 +24,8 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE, false), ImportSettingsController {
+class ImportSettingsDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
+                                                                           false), ImportSettingsController {
   companion object {
     fun show(callback: () -> Unit = {},
              isModal: Boolean = true,
@@ -40,6 +40,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
     }
   }
 
+  private var currentPage: ImportSettingsPage = EmptyImportSettingsPage()
   override val lifetime: Lifetime = disposable.createLifetime()
   private val tracker = WizardPageTracker()
 
@@ -47,8 +48,6 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
     border = JBUI.Borders.empty()
     preferredSize = JBDimension(640, 457)
   }
-
-  private var currentPage: ImportSettingsPage? = null
 
   override fun goToSettingsPage(provider: ActionsDataProvider<*>, product: SettingsContributor) {
     val page = SettingChooserPage.createPage(provider, product, this)
@@ -61,23 +60,19 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
   }
 
   override fun goToImportPage(importFromProduct: DialogImportData) {
-    val page = ImportProgressPage(importFromProduct,this)
+    val page = ImportProgressPage(importFromProduct, this)
     changePage(page)
   }
 
   override fun doCancelAction() {
-    currentPage?.let {
-      val shouldExit = it.confirmExit(peer.contentPane)
+    val shouldExit = currentPage.confirmExit(peer.contentPane)
 
-      if (shouldExit != false) {
-        super.doCancelAction()
-        tracker.onLeave()
-        callback()
-      }
-
-    } ?: run {
+    if (shouldExit != false) {
       super.doCancelAction()
+      tracker.onLeave()
+      cancelCallback()
     }
+
   }
 
   override fun skipImport() {
@@ -86,15 +81,12 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
   }
 
   private fun changePage(page: ImportSettingsPage) {
-    currentPage?.content?.let {
-      overlay.clearNotifications()
-      pane.remove(it)
-      tracker.onLeave()
-    }
+    overlay.clearNotifications()
+    pane.remove(currentPage.content)
+    tracker.onLeave()
 
     val content = page.content
     pane.add(content)
-
 
     currentPage = page
     tracker.onEnter(page.stage)
@@ -107,9 +99,8 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
   private val overlay: BannerOverlay
 
   init {
-    goToProductChooserPage()
-
     overlay = BannerOverlay()
+    goToProductChooserPage()
 
     val settService = SettingsService.getInstance()
     settService.doClose.advise(lifetime) {
@@ -154,5 +145,11 @@ interface ImportSettingsPage {
   val content: JComponent
   val stage: StartupWizardStage?
 
-  fun confirmExit(parentComponent: Component?) : Boolean?
+  fun confirmExit(parentComponent: Component?): Boolean?
+}
+
+class EmptyImportSettingsPage : ImportSettingsPage {
+  override val content: JComponent = JPanel()
+  override val stage: StartupWizardStage = StartupWizardStage.InitialStart
+  override fun confirmExit(parentComponent: Component?): Boolean = true
 }

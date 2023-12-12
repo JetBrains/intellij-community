@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.Icon
 
-open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val callback: ImportSettingsController) : ProductChooserAction() {
+open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val controller: ImportSettingsController) : ProductChooserAction() {
   private var array: Array<AnAction> = emptyArray()
 
   override fun displayTextInToolbar(): Boolean {
@@ -19,7 +19,7 @@ open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if(array.isEmpty()) {
       val products = provider.main ?: emptyList()
-      array = productsToActions(products, provider, callback).toTypedArray()
+      array = productsToActions(products, provider, controller).toTypedArray()
     }
     return array
   }
