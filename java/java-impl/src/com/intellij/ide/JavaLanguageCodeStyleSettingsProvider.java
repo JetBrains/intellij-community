@@ -240,7 +240,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "NEW_LINE_WHEN_BODY_NON_EMPTY",
-                                JavaBundle.message("new.line.when.body.is.not.empty"),
+                                JavaBundle.message("new.line.when.body.is.presented"),
                                 ApplicationBundle.message("wrapping.method.parentheses"));
 
       // Record components
@@ -644,7 +644,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
         private int f1 = 1;
         private String field2 = "";
         public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}
-        public void fooNonEmptyBody(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {int x = 1;}
+        public void fooNonEmptyBody() {int x = 1;}
         public static void longerMethod() throws Exception1, Exception2, Exception3 {
       // todo something
           int

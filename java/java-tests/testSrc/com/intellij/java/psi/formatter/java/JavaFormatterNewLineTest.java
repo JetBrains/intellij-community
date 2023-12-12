@@ -250,4 +250,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   public void foo() { }
                   """);
   }
+
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenNonEmptyAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_NON_EMPTY = false;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {int x = 1;}
+                     """,
+                """
+                  public void foo() { int x = 1; }
+                  """);
+  }
 }
