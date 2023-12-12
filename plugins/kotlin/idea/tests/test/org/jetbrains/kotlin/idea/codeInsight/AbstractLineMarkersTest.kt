@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
@@ -229,7 +230,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                     val actualTextWithTestData = TagsTestDataUtil.insertInfoTags(markers, true, documentToAnalyze.text)
                     KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithTestData)
                 } catch (failure: FileComparisonFailure) {
-                    throw FileComparisonFailure(
+                    throw FileComparisonFailedError(
                         error.message + "\n" + failure.message,
                         failure.expectedStringPresentation,
                         failure.actualStringPresentation,

@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,9 +132,9 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
     addTmpFileToKeep(actualImageFile.toPath());
     ImageIO.write(actualImage, "png", actualImageFile);
 
-    throw new FileComparisonFailure(message,
-                                    expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath(),
-                                    expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath());
+    throw new FileComparisonFailedError(message,
+                                        expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath(),
+                                        expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath());
   }
 
   private static BufferedImage copy(BufferedImage image) {

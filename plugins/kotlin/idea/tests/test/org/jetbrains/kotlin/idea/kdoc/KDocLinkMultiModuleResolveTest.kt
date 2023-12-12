@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.kdoc
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest.wrapToFileComparisonFailure
@@ -98,7 +98,7 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
         val directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "INFO:")
 
         if (directives.isEmpty()) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 "'// INFO:' directive was expected",
                 textData,
                 "$textData\n\n//INFO: $info",

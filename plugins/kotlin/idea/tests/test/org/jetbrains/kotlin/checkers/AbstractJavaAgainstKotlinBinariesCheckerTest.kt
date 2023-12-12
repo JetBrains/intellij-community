@@ -15,7 +15,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.FileTreeAccessFilter
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher
@@ -129,7 +129,7 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
         }
 
         if (allowAstForCompiledFile != wasException) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 /* message = */ "Redundant '// ${AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE}'",
                 /* expected = */ ktFileText,
                 /* actual = */

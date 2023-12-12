@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.*
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
@@ -159,13 +159,13 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 |$fileText
                 |// $fusDirectiveName: $calledId
             """.trimMargin()
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 "expected to find quickfix `called` id", fileText, expected, file.toString()
             )
         }
 
         if (calledId != quickFixName) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 "expected to find quickfix `called` id",
                 fileText,
                 fileText.replace("// $fusDirectiveName: $quickFixName", "// $fusDirectiveName: $calledId"),
@@ -274,8 +274,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             }
 
             UsefulTestCase.assertEmpty(expectedErrorMessage)
-        } catch (e: FileComparisonFailure) {
-            throw e
         } catch (e: AssertionError) {
             throw e
         } catch (e: Throwable) {

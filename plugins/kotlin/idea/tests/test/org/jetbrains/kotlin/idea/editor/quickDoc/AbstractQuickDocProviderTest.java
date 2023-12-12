@@ -8,8 +8,8 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
         List<String> directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "INFO:");
 
         if (directives.isEmpty()) {
-            throw new FileComparisonFailure(
+            throw new FileComparisonFailedError(
                     "'// INFO:' directive was expected",
                     textData,
                     textData + "\n\n//INFO: " + info,
@@ -106,7 +106,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
         }
 
         String correctedFileText = fileData.replaceAll("//\\s?INFO:\\s?.*\n?", "") + infoBuilder.toString();
-        throw new FileComparisonFailure("Unexpected info", fileData, correctedFileText, new File(filePath).getAbsolutePath());
+        throw new FileComparisonFailedError("Unexpected info", fileData, correctedFileText, new File(filePath).getAbsolutePath());
     }
 
 

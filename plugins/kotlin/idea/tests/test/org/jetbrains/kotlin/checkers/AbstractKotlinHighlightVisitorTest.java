@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.checkers;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -112,8 +113,8 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                         return ((JavaCodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
                     }
                     catch (FileComparisonFailure e) {
-                        throw new FileComparisonFailure(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(),
-                                                        new File(e.getFilePath()).getAbsolutePath());
+                        throw new FileComparisonFailedError(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(),
+                                                            new File(e.getFilePath()).getAbsolutePath());
                     }
                 });
     }

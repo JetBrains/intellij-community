@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -130,7 +130,7 @@ internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
 
     if (normalizeContent(content) != normalizeContent(oldContent)) {
         if (isUpToDateCheck) {
-            throw FileComparisonFailure(
+            throw FileComparisonFailedError(
                 /* message = */ "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
                 /* expected = */ oldContent,
                 /* actual = */ content,

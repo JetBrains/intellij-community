@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
@@ -26,7 +27,7 @@ public abstract class AbstractKotlinFoldingTest extends KotlinLightCodeInsightFi
         try {
             myFixture.testFolding(path);
         } catch (FileComparisonFailure e) {
-            throw new FileComparisonFailure(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(), new File(e.getFilePath()).getAbsolutePath());
+            throw new FileComparisonFailedError(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(), new File(e.getFilePath()).getAbsolutePath());
         }
     }
 

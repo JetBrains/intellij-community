@@ -5,10 +5,10 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.VfsTestUtil;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -112,8 +112,8 @@ abstract public class MavenDependencyUpdaterTestBase extends MavenMultiVersionIm
       .toArray();
 
     if (!Arrays.equals(expectedLines, actualLines)) {
-      throw new FileComparisonFailure(null, StringUtil.convertLineSeparators(expectedText.trim()),
-                                      StringUtil.convertLineSeparators(actualText.trim()), expectedFilePath);
+      throw new FileComparisonFailedError(null, StringUtil.convertLineSeparators(expectedText.trim()),
+                                          StringUtil.convertLineSeparators(actualText.trim()), expectedFilePath);
     }
   }
 }
