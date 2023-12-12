@@ -117,11 +117,6 @@
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
 
     <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
-
-    <codeInspection.suppressionAnnotationUtil
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinSuppressionAnnotationUtil"/>
-
   </extensions>
 
 

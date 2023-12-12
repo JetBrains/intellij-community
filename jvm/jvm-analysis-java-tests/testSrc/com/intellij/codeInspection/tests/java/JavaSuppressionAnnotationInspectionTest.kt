@@ -88,15 +88,6 @@ class JavaSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionT
         """.trimIndent(), "PublicField")
   }
 
-  fun `test quickfix - allow multiple suppressions from annotation`() {
-    testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
-          public class A {
-            @SuppressWarnings("Public<caret>Field", "HardCodedStringLiteral")
-            public String s = "test";
-          }
-        """.trimIndent(), "PublicField", "HardCodedStringLiteral")
-  }
-
   fun `test quickfix - allow multiple suppressions from annotation when array form used`() {
     testAllowSuppressionQuickFix(JvmLanguage.JAVA, """
           public class A {

@@ -13,17 +13,20 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+
+private class SuppressAnnotationDescriptor(val pkg: String, val shortName: String, val attributeValue: String)
+
+private val suppressAnnotations = listOf(
+  SuppressAnnotationDescriptor("kotlin", "Suppress", "names"),
+  SuppressAnnotationDescriptor("java.lang", "SuppressWarnings", "value")
+)
 
 @VisibleForTesting
 class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
@@ -51,7 +54,6 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private inner class SuppressionAnnotationVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
-
     override fun visitElement(node: UElement): Boolean {
       if (node is UComment) {
         return visitComment(node)
@@ -96,13 +98,12 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     override fun visitAnnotation(node: UAnnotation): Boolean {
-      val suppressionAnnotationUtil = SuppressionAnnotationUtil.extension.forLanguage(node.lang) ?: return false
-      if (suppressionAnnotationUtil.isSuppressionAnnotation(node)) {
-        val ids = getInspectionIdsSuppressedInAnnotation(node, suppressionAnnotationUtil)
-        when {
-          ids.isNotEmpty() && !myAllowedSuppressions.containsAll(ids) -> registerProblem(node, true)
-          ids.isEmpty() -> registerProblem(node, false)
-        }
+      val suppressDescriptor = node.suppressDescriptor()
+      if (suppressDescriptor == null) return true
+      val suppressIds = node.suppressIds(suppressDescriptor.attributeValue)
+      when {
+        suppressIds.isNotEmpty() && !myAllowedSuppressions.containsAll(suppressIds) -> registerProblem(node, true)
+        suppressIds.isEmpty() -> registerProblem(node, false)
       }
       return true
     }
@@ -151,8 +152,8 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
     private fun getIds(psiElement: PsiElement): Collection<String>? {
       val annotation = psiElement.toUElement()?.getParentOfType<UAnnotation>(strict = false)
       if (annotation != null) {
-        val suppressionAnnotationUtil = SuppressionAnnotationUtil.extension.forLanguage(annotation.lang) ?: return null
-        return getInspectionIdsSuppressedInAnnotation(annotation, suppressionAnnotationUtil)
+        val attributeValue = annotation.suppressDescriptor()?.attributeValue ?: return null
+        return annotation.suppressIds(attributeValue)
       }
       else {
         val comment = psiElement.toUElement(UComment::class.java) ?: return null
@@ -170,29 +171,16 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
   }
 }
 
-private fun getInspectionIdsSuppressedInAnnotation(annotation: UAnnotation,
-                                                   suppressionAnnotationUtil: SuppressionAnnotationUtil): List<String> {
-  val sourcePsi = annotation.sourcePsi ?: return emptyList()
-  return CachedValuesManager.getCachedValue(sourcePsi) {
-    CachedValueProvider.Result.create(
-      doGetInspectionIdsSuppressedInAnnotation(annotation, suppressionAnnotationUtil),
-      PsiModificationTracker.MODIFICATION_COUNT
-    )
-  }
+private fun UAnnotation.suppressDescriptor(): SuppressAnnotationDescriptor? {
+  val shortName = uastAnchor?.name ?: return null
+  if (suppressAnnotations.none { descr -> descr.shortName == shortName }) return null
+  return suppressAnnotations.firstOrNull { descr -> "${descr.pkg}.${descr.shortName}" == qualifiedName }
 }
 
-// do not move it into visitor class, as it will cause CachedValue-related exceptions
-private fun doGetInspectionIdsSuppressedInAnnotation(annotation: UAnnotation,
-                                                     suppressionAnnotationUtil: SuppressionAnnotationUtil): List<String> {
-  val expressions = suppressionAnnotationUtil.getSuppressionAnnotationAttributeExpressions(annotation)
-  return expressions.flatMap { getInspectionIdsSuppressedInAnnotation(it) }
-}
-
-private fun getInspectionIdsSuppressedInAnnotation(expression: UExpression): List<String> {
-  return when (expression) {
-    is UInjectionHost, is UReferenceExpression -> listOfNotNull(expression.evaluateString())
-    is UCallExpression -> expression.valueArguments.flatMap { getInspectionIdsSuppressedInAnnotation(it) }
-    else -> emptyList()
+private fun UAnnotation.suppressIds(attributeName: String): List<String> = flattenedAttributeValues(attributeName).mapNotNull {
+  when (it) {
+    is UInjectionHost, is UReferenceExpression -> it.evaluateString()
+    else -> null
   }
 }
 
@@ -204,19 +192,5 @@ private fun getIdsFromComment(commentText: String): List<String>? {
   }
   else {
     return null
-  }
-}
-
-internal class JavaSuppressionAnnotationUtil : SuppressionAnnotationUtil {
-  override fun isSuppressionAnnotation(annotation: UAnnotation): Boolean {
-    val psiAnnotation = annotation.sourcePsi as? PsiAnnotation ?: return false
-    val referenceText = psiAnnotation.nameReferenceElement?.text ?: return false
-    return "SuppressWarnings" == referenceText || BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME == referenceText
-  }
-
-  override fun getSuppressionAnnotationAttributeExpressions(annotation: UAnnotation): List<UExpression> {
-    return annotation.attributeValues
-      .filter { it.name == null || it.name == "value" }
-      .map { it.expression }
   }
 }
