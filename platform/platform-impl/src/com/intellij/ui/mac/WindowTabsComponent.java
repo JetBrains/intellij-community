@@ -197,7 +197,9 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       protected void setHovered(boolean value) {
         super.setHovered(value);
-        myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
+        if (myActionPanel != null) {
+          myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
+        }
       }
 
       @Override
