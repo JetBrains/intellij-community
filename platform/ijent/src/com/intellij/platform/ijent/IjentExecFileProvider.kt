@@ -5,13 +5,6 @@ import com.intellij.openapi.components.serviceAsync
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
-private const val LINUX = "linux"
-private const val DARWIN = "darwin"
-private const val WINDOWS = "windows"
-
-private val arm64Names = setOf("arm64", "aarch64")
-private val amd64Names = setOf("amd64", "x86_64", "x86-64")
-
 /**
  * Gets the path to the IJent binary. See [getIjentBinary].
  */
@@ -21,19 +14,34 @@ interface IjentExecFileProvider {
     suspend fun getInstance(): IjentExecFileProvider = serviceAsync()
   }
 
-  enum class SupportedPlatform(private val os: String, private val archNames: Set<String>) {
-    AARCH64__DARWIN(DARWIN, arm64Names),
-    AARCH64__LINUX(LINUX, arm64Names),
-    X86_64__DARWIN(DARWIN, amd64Names),
-    X86_64__LINUX(LINUX, amd64Names),
-    X86_64__WINDOWS(WINDOWS, amd64Names);
+  enum class SupportedPlatform(private val os: OS, private val arch: Arch) {
+    AARCH64__DARWIN(OS.DARWIN, Arch.AARCH64),
+    AARCH64__LINUX(OS.LINUX, Arch.AARCH64),
+    X86_64__DARWIN(OS.DARWIN, Arch.X86_64),
+    X86_64__LINUX(OS.LINUX, Arch.X86_64),
+    X86_64__WINDOWS(OS.WINDOWS, Arch.X86_64);
 
-    fun isFor(os: String, arch: String): Boolean {
-      return os.lowercase().trim() == this.os && arch.lowercase().trim() in this.archNames
+    enum class Arch(internal val names: Set<String>) {
+      AARCH64(setOf("arm64", "aarch64")),
+      X86_64(setOf("amd64", "x86_64", "x86-64")),
+    }
+
+    enum class OS {
+      DARWIN,
+      LINUX,
+      WINDOWS,
     }
 
     companion object {
-      fun getFor(os: String, arch: String) = entries.firstOrNull { it.isFor(os, arch) }
+      fun getFor(os: String, arch: String): SupportedPlatform? {
+        val osEnum =
+          OS.entries.find { it.name.equals(os, ignoreCase = true) }
+          ?: return null
+        val archEnum =
+          Arch.entries.find { arch.lowercase() in it.names }
+          ?: return null
+        return entries.find { it.os == osEnum && it.arch == archEnum }
+      }
     }
   }
 
