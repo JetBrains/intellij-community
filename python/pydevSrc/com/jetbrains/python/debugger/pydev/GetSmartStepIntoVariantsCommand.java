@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger.pydev;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class GetSmartStepIntoVariantsCommand extends AbstractFrameCommand {
     myVariants = ProtocolParser.parseSmartStepIntoVariants(payload);
   }
 
-  public List<Pair<String, Boolean>> getVariants() {
+  public @Nullable List<Pair<String, Boolean>> getVariants() {
     return myVariants;
   }
 }
