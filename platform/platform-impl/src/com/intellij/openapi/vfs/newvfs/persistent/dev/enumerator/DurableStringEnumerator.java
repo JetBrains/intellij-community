@@ -196,9 +196,17 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   @Override
   public void close() throws IOException {
     try {
-      //Must stop the scanning _before_ we close valuesLog -- because we expect (e.g. in closeAndUnsafelyUnmap()/closeAndClean() )
-      //  that closed enumerator does not use the file/mapped buffers anymore
-      valueHashToIdFuture.cancel(false);
+      //We must ensure scanning is finished _before_ we close valuesLog -- because we expect (e.g. in .closeAndUnsafelyUnmap()
+      // and/or .closeAndClean()) that closed enumerator does not use the file/mapped buffers anymore.
+
+      //BEWARE: Don't call valueHashToIdFuture.cancel() here!
+      //        Future.cancel() doesn't _require_ to actually cancel the running task (even with `interruptIfRunning) -- but
+      //        .cancel() makes .join()/.get() return immediately, (because 'result'=cancellation is already known).
+      //        By default .join() waits until task is finished -- successfully or exceptionally, doesn't matter, either
+      //        way if .join() terminates => task is not running anymore. But .cancel() breaks than invariant: since result
+      //        of the Future is already known (cancellation), .join()/.get() don't need to wait for task to actually finish
+      //        In this scenario it leads to SIGSEGV (Access Violation) if un-mmap follows close() -- while valueHash building
+      //        async task is still running.
       valueHashToIdFuture.join();
     }
     catch (CancellationException e) {
