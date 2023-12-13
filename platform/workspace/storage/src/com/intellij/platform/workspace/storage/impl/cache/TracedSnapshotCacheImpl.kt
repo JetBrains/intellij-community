@@ -33,7 +33,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val lock = Any()
 
   private val queryIdToChain: HashMap<QueryId, CellChain> = HashMap()
-  private val queryIdToTraceIndex: HashMap<QueryId, ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>> = HashMap()
+  private val queryIdToTraceIndex: HashMap<QueryId, ReadTraceIndex<CellUpdateInfo>> = HashMap()
 
   private val changeQueue: MutableMap<QueryId, MutableList<EntityStorageChange>> = HashMap()
 
@@ -57,7 +57,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
       // Do not perform changes in [from] cache while we copy state to the new cache
       synchronized(from.lock) {
         from.queryIdToTraceIndex.forEach { (chainId, index) ->
-          val newIndex = ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>()
+          val newIndex = ReadTraceIndex<CellUpdateInfo>()
           newIndex.pull(index)
           this.queryIdToTraceIndex[chainId] = newIndex
         }
@@ -100,11 +100,11 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
     val cellIndex = queryIdToTraceIndex.getValue(chainId)
     val newTraces = changes.createTraces(newSnapshot)
 
-    cellIndex.get(newTraces).forEach { (query, updateRequest) ->
+    cellIndex.get(newTraces).forEach { updateRequest ->
       val cells = queryIdToChain[updateRequest.chainId] ?: error("Unindexed cell")
       val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes, updateRequest.cellId)
       tracesAndModifiedCells.forEach { (traces, updateRequest) ->
-        cellIndex.set(ReadTraceHashSet(traces), query to updateRequest)
+        cellIndex.set(ReadTraceHashSet(traces), updateRequest)
       }
       this.queryIdToChain[newChain.id] = newChain
     }
@@ -142,7 +142,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
       val chainWithTraces = emptyCellChain.snapshotInput(snapshot)
       val (newChain, traces) = chainWithTraces
       traces.forEach { (trace, updateRequest) ->
-        queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.set(ReadTraceHashSet(trace), query to updateRequest)
+        queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.set(ReadTraceHashSet(trace), updateRequest)
       }
       queryIdToChain[newChain.id] = newChain
       return newChain.data()
