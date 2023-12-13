@@ -188,6 +188,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       is SyncSettingsEvent.SyncRequest -> {
         checkServer()
       }
+      is SyncSettingsEvent.RestoreSettingsSnapshot -> {
+        val previousState = collectCurrentState()
+        settingsLog.restoreStateAt(event.hash)
+        pushToIde(settingsLog.collectCurrentSnapshot(), settingsLog.getIdePosition(), null)
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, MUST_PUSH)
+        event.onComplete.run()
+      }
     }
   }
 

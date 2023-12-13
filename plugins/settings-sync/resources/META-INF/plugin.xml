@@ -44,11 +44,16 @@
     <registryKey key="settingsSync.promotion.in.settings" defaultValue="true"
                  description="Whether to show GotIt tooltip with promotion to enable the Settings Sync
                               on Apply button click in the Settings dialog"/>
+    <registryKey key="settingsSync.ui.new.toolwindow.show" defaultValue="false"
+                 description="Use new toolwindow to display Settings Sync history."/>
 
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.statistics.SettingsSyncStateStatistics"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics"/>
     <iconMapper mappingFile="SettingsSyncIconMappings.json"/>
+
+    <toolWindow id="Settings Sync History" secondary="false" icon="AllIcons.Toolwindows.SettingSync" anchor="left"
+                factoryClass="com.intellij.settingsSync.git.SettingsHistoryToolWindowFactory"/>
     </extensions>
 
   <applicationListeners>

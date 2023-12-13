@@ -72,6 +72,16 @@ interface SettingsLog {
   fun advanceMaster(): Position
 
   /**
+   * Restores the repository's state to match that of a specific commit, identified by its hash.
+   *
+   * This method emulates the behavior of the Git command `git checkout <hash> -- .`, which resets the state of the
+   * current working directory to match the state at the specified commit. In addition to checking out files as they
+   * were at the specified commit, this method also removes any files from the working directory that were added
+   * to the repository after the specified commit.
+   */
+  fun restoreStateAt(commitHash: String)
+
+  /**
    * Applies the given state to the master branch of the settings without any merging (as opposed to [advanceMaster] which merges
    * changes coming from different sources).
    *

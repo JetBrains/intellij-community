@@ -443,6 +443,34 @@ internal class GitSettingsLogTest {
     assertFalse(headLock.exists())
   }
 
+  @Test
+  fun `test reset to state`() {
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", "State 1")
+    }, "Local changes")
+    val state1Hash = getRepository().headCommit().id.name
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", "State 2")
+      fileState("options/laf.xml", "Laf State 2")
+    }, "Local changes")
+    settingsLog.advanceMaster()
+
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "State 2")
+      fileState("options/laf.xml", "Laf State 2")
+    }
+
+    settingsLog.restoreStateAt(state1Hash.toString())
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "State 1")
+    }
+  }
+
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
     arrayOf<FileAttribute<*>>()
     val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()

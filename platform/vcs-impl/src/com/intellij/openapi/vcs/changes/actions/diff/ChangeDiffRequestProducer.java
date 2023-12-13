@@ -321,7 +321,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (bRev != null) checkContentRevision(project, bRev, context, indicator);
     if (aRev != null) checkContentRevision(project, aRev, context, indicator);
 
-    String title = getRequestTitle(change);
+    final String editorTabTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE);
+    String title = editorTabTitle == null ? getRequestTitle(change) : editorTabTitle;
 
     indicator.setIndeterminate(true);
     DiffContent content1 = createContent(project, bRev, context, indicator);

@@ -3,6 +3,7 @@ package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,8 @@ import java.util.TreeMap;
 class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   private final @NotNull Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
 
-  VcsLogFilterCollectionImpl(@NotNull Collection<? extends VcsLogFilter> filters) {
+  @ApiStatus.Internal
+  public VcsLogFilterCollectionImpl(@NotNull Collection<? extends VcsLogFilter> filters) {
     for (VcsLogFilter filter : filters) {
       myFilters.put(filter.getKey(), filter);
     }

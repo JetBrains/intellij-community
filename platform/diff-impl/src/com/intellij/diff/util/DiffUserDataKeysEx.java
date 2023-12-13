@@ -125,6 +125,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<@Nls String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
   Key<@Nls String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
   Key<@Nls String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
+  Key<@Nls String> VCS_DIFF_EDITOR_TAB_TITLE = Key.create("Diff.Editor.Tab.Title");
 
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");

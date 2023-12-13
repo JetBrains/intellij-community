@@ -372,6 +372,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (renderer == null) return null;
     if (ClientProperty.isTrue(renderer, RENDERER_DISABLED)) return null;
 
+    if (renderer instanceof ExpandedItemRendererComponentWrapper) {
+      Component delegate = ((ExpandedItemRendererComponentWrapper) renderer).getDelegate();
+      if (delegate != null && ClientProperty.isTrue(delegate, RENDERER_DISABLED)) return null;
+    }
+
     myKeyItemBounds = rendererAndBounds.second;
 
     if (ClientProperty.isTrue(renderer, USE_RENDERER_BOUNDS)) {

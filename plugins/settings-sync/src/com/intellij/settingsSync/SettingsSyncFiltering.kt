@@ -48,6 +48,20 @@ private fun getCategory(componentClasses: List<Class<PersistentStateComponent<An
   }
 }
 
+private val categoryCache = mutableMapOf<String, SettingsCategory>()
+fun getCategory(fileName: String): SettingsCategory {
+  categoryCache[fileName]?.let { cachedCategory ->
+    return cachedCategory
+  }
+
+  val componentClasses = findComponentClasses(fileName)
+  val category = getSchemeCategory(fileName) ?: getCategory(componentClasses)
+
+  categoryCache[fileName] = category
+
+  return category
+}
+
 private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
   // fileSpec is e.g. keymaps/mykeymap.xml
   val separatorIndex = fileSpec.indexOf("/")
@@ -60,6 +74,10 @@ private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
     }
   }
   return settingsCategory
+}
+
+fun getFileSpec(path: String): String {
+  return removeOsPrefix(path)
 }
 
 private fun getSubCategory(componentClasses: List<Class<PersistentStateComponent<Any>>>): String? {

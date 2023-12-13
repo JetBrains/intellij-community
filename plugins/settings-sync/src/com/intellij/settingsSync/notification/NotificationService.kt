@@ -8,6 +8,7 @@ internal interface NotificationService {
     fun getInstance(): NotificationService = service<NotificationService>()
   }
 
+  fun notifySateRestoreFailed()
   fun notifyZipSizeExceed()
   fun notifyRestartNeeded(reasons: Collection<RestartReason>)
 }
