@@ -2,7 +2,6 @@
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
-
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.LoadingState
@@ -322,35 +321,33 @@ private fun CoroutineScope.runPostAppInitTasks() {
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
 private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineScope): Deferred<ApplicationStarter> {
-  val commandName = args.firstOrNull()
-  // first argument maybe a project path
-  if (commandName == null) {
-    return asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
-  }
-  else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName)) {
-    return asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
-  }
-
-  return span("app custom starter creation") {
-    val starter = findStarter(commandName) ?: createDefaultAppStarter()
-    if (AppMode.isHeadless() && !starter.isHeadless) {
-      val message = IdeBundle.message(
-        "application.cannot.start.in.a.headless.mode",
-        when {
-          starter is IdeStarter -> 0
-          else -> 1
-        },
-        commandName,
-        if (args.isEmpty()) 0 else 1,
-        args.joinToString(" ")
-      )
-      StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
-      exitProcess(AppExitCodes.NO_GRAPHICS)
+  val commandName = args.firstOrNull()  // the first argument maybe a project path
+  return when {
+    commandName == null -> {
+      asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
     }
-
-    // must be executed before container creation
-    starter.premain(args)
-    CompletableDeferred(starter)
+    args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName) -> {
+      asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
+    }
+    else -> {
+      span("app custom starter creation") {
+        val starter = findStarter(commandName) ?: createDefaultAppStarter()
+        if (AppMode.isHeadless() && !starter.isHeadless) {
+          val message = IdeBundle.message(
+            "application.cannot.start.in.a.headless.mode",
+            if (starter is IdeStarter) 0 else 1,
+            commandName,
+            if (args.isEmpty()) 0 else 1,
+            args.joinToString(" ")
+          )
+          StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+          exitProcess(AppExitCodes.NO_GRAPHICS)
+        }
+        // must be executed before container creation
+        starter.premain(args)
+        CompletableDeferred(starter)
+      }
+    }
   }
 }
 
@@ -427,22 +424,20 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
 
 private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
 
-fun findStarter(key: String): ApplicationStarter? {
-  @Suppress("DEPRECATION")
-  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
-}
+@Suppress("DEPRECATION")
+fun findStarter(key: String): ApplicationStarter? =
+  ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
 
 /**
- * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file. It should be used instead of deprecated
- * [ApplicationStarter.commandName].
+ * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
+ * It should be used instead of deprecated [ApplicationStarter.commandName].
  */
 val ApplicationStarter.commandNameFromExtension: String?
-  get() {
-    val extension = ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).filterableLazySequence().find {
-      it.implementationClassName == javaClass.name
-    }
-    return extension?.id
-  }
+  get() =
+    ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
+      .filterableLazySequence()
+      .find { it.implementationClassName == javaClass.name }
+      ?.id
 
 @VisibleForTesting
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {

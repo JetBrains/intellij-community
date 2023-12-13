@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -91,6 +90,7 @@ internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
 // the main thread's dispatcher is sequential - use it with care
+@OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.startApplication(args: List<String>,
                                     configImportNeededDeferred: Deferred<Boolean>,
                                     targetDirectoryToImportConfig: Path?,
@@ -379,7 +379,7 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
         }
       }
       catch (ignore: NoClassDefFoundError) {
-        // if for some reason, class loader has ByteBuddy in the classpath
+        // if for some reason, the class loader has ByteBuddy in the classpath
         // (it is an error, and should be fixed - our dev mode and production behaves correctly)
       }
       catch (e: Exception) {
@@ -460,9 +460,8 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDefe
   }
 }
 
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
-  return EXTERNAL_LISTENER.apply(currentDirectory, args)
-}
+fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int =
+  EXTERNAL_LISTENER.apply(currentDirectory, args)
 
 @get:Internal
 val isImplicitReadOnEDTDisabled: Boolean
@@ -605,8 +604,7 @@ private fun checkDirectory(directory: Path, kind: String, property: String, chec
     try {
       tempFile?.let { Files.deleteIfExists(tempFile) }
     }
-    catch (_: Exception) {
-    }
+    catch (_: Exception) { }
   }
 }
 
