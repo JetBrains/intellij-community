@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.ui.ClickListener;
@@ -32,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 
 public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatable {
   public static final String WIDGET_ID = "Memory";
+
+  public static final String SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY = "idea.memory.usage.show.total.memory.estimation";
+  public static final String SHOW_MORE_INFO_IN_TOOLTIP_REGISTRY_KEY = "idea.memory.usage.tooltip.show.more";
 
   private final LazyValue<MemoryUsagePanelImpl> myComponent = LazyInitializer.create(MemoryUsagePanelImpl::new);
   private ScheduledFuture<?> myFuture;
@@ -89,13 +91,8 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
     private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
     private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
 
-    private final long maxMemoryMb = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
-
     private long lastCommitedMb = -1;
     private long lastUsedMb = -1;
-
-    private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-    private final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
     MemoryUsagePanelImpl() {
       setFocusable(false);
@@ -132,11 +129,26 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       Dimension size = getSize();
       int barWidth = size.width;
 
-      Runtime rt = Runtime.getRuntime();
-      long maxMem = rt.maxMemory();
-      long allocatedMem = rt.totalMemory();
-      long unusedMem = rt.freeMemory();
-      long usedMem = allocatedMem - unusedMem;
+
+      long usedMem;
+      long allocatedMem;
+      long maxMem;
+      if (Registry.is(SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY)) {
+        // [ heap used | heap commited | total (approx.) commited ]
+        AppMemoryUsage memoryUsage = calculateMemoryUsage();
+        maxMem = toMb(memoryUsage.estimatedTotalMemoryUsedBytes());
+        allocatedMem = toMb(memoryUsage.heapCommitedBytes);
+        usedMem = toMb(memoryUsage.heapUsedBytes);
+      }
+      else {
+        // [ heap used | heap commited | heap max ]
+        // use old-school heap accessor:
+        Runtime runtime = Runtime.getRuntime();
+
+        maxMem = runtime.maxMemory();
+        allocatedMem = runtime.totalMemory();
+        usedMem = allocatedMem - runtime.freeMemory();
+      }
 
       int usedBarLength = (int)(barWidth * usedMem / maxMem);
       int allocatedBarLength = (int)(barWidth * allocatedMem / maxMem);
@@ -159,7 +171,10 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
     @Override
     protected String getTextForPreferredSize() {
-      var sample = maxMemoryMb < 1000 ? 999 : maxMemoryMb < 10000 ? 9999 : 99999;
+      long maxMemoryMb = toMb(Runtime.getRuntime().maxMemory());
+      long sample = maxMemoryMb < 1000 ? 999 :
+                    maxMemoryMb < 10_000 ? 9_999 : 99_999;
+      //if -Xmx > 100Gb -- well, I'm sorry
       return " " + UIBundle.message("memory.usage.panel.message.text", sample, sample);
     }
 
@@ -167,56 +182,33 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       if (!isShowing()) {
         return;
       }
-
-      //pools list could change during execution, so can't be cached once
-      List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
-
-      MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
-      long heapMaxBytes = heapMemoryUsage.getMax();
-      long heapCommitedBytes = heapMemoryUsage.getCommitted();
-      long heapUsedBytes = heapMemoryUsage.getUsed();
-
-      //RC: counter-intuitively, but memoryMXBean.getNonHeapMemoryUsage() doesn't count direct ByteBuffers.
-      //    nonHeapMemoryUsage is mostly about JVM-internal data structures -- code cache, metaspace, etc.
-      //    Direct ByteBuffers (seems to be) invisible to any public API, so we need some private API for it
-      long directBuffersUsedBytes = IOUtil.directBuffersTotalAllocatedSize();
-      long directBuffersUsedByFileCacheBytes = DirectByteBufferAllocator.ALLOCATOR.getStatistics().totalSizeOfBuffersAllocatedInBytes;
-      if (directBuffersUsedBytes <= 0) {
-        //can't get value by some reason => use directBuffersUsedByFileCacheBytes as lower bound, better than nothing:
-        directBuffersUsedBytes = directBuffersUsedByFileCacheBytes;
-      }
-
-      long jvmInternalsMemoryBytes = jvmInternalsMemory(memoryPoolMXBeans);
-
-      long memoryMappedFilesBytes = MMappedFileStorage.totalBytesMapped();
+      AppMemoryUsage memoryUsage = calculateMemoryUsage();
 
       // convert to UI-friendly Mb:
-      long heapMaxMb = heapMaxBytes / IOUtil.MiB;
-      long heapCommitedMb = heapCommitedBytes / IOUtil.MiB;
-      long heapUsedMb = heapUsedBytes / IOUtil.MiB;
+      long heapMaxMb = toMb(memoryUsage.heapMaxBytes);
+      long heapCommitedMb = toMb(memoryUsage.heapCommitedBytes);
+      long heapUsedMb = toMb(memoryUsage.heapUsedBytes);
 
-      long directBuffersUsedMb = directBuffersUsedBytes / IOUtil.MiB;
-      long directBuffersFileCacheUsedMb = directBuffersUsedByFileCacheBytes / IOUtil.MiB;
+      long directBuffersUsedMb = toMb(memoryUsage.directByteBuffersBytes);
+      long directBuffersFileCacheUsedMb = toMb(memoryUsage.directBuffersFileCacheUsedBytes);
 
-      long jvmInternalsMb = jvmInternalsMemoryBytes / IOUtil.MiB;
-      //RC: I know no way to get thread-stack size, but 1Mb seems to be a default stack size for most OSes, so
-      //    lets just assume (1 thread = 1Mb of stack). This seems to be an underestimation: seems like JVM
-      //    provision memory for threads with big margin, and also thread local allocation 'arenas' are not included
-      long threadStacksMemoryMb = threadMXBean.getThreadCount();
+      long jvmInternalsMb = toMb(memoryUsage.jvmInternalsMemoryBytes);
+      long threadStacksMemoryMb = toMb(memoryUsage.threadStacksBytes);
 
-      long memoryMappedFilesMb = memoryMappedFilesBytes / IOUtil.MiB;
+      long memoryMappedFilesMb = toMb(memoryUsage.memoryMappedFilesBytes);
 
-      //Should be +/- good estimation:
-      long estimatedTotalMemoryUsedMb = heapCommitedMb + threadStacksMemoryMb + directBuffersUsedMb + jvmInternalsMb;
+      long estimatedTotalMemoryUsedMb = toMb(memoryUsage.estimatedTotalMemoryUsedBytes());
 
-      var text = UIBundle.message("memory.usage.panel.message.text", heapUsedMb, heapMaxMb);
+      var text = Registry.is(SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY) ?
+                 UIBundle.message("memory.usage.panel.message.text", heapUsedMb, estimatedTotalMemoryUsedMb) :
+                 UIBundle.message("memory.usage.panel.message.text", heapUsedMb, heapMaxMb);
 
       if (heapCommitedMb != lastCommitedMb || heapUsedMb != lastUsedMb || !text.equals(getText())) {
         lastCommitedMb = heapCommitedMb;
         lastUsedMb = heapUsedMb;
         setText(text);
 
-        boolean showExtendedInfoInTooTip = Registry.is("idea.memory.usage.tooltip.show.more");
+        boolean showExtendedInfoInTooTip = Registry.is(SHOW_MORE_INFO_IN_TOOLTIP_REGISTRY_KEY);
         String i18nBundleKey = showExtendedInfoInTooTip ?
                                "memory.usage.panel.message.tooltip-extended" :
                                "memory.usage.panel.message.tooltip";
@@ -235,12 +227,105 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
           ));
       }
     }
+  }
 
-    private static long jvmInternalsMemory(@NotNull List<MemoryPoolMXBean> memoryPools) {
-      return memoryPools.stream()
-        .filter(pool -> pool.getType() == MemoryType.NON_HEAP)
-        .mapToLong(pool -> pool.getUsage().getUsed())
-        .sum();
+
+  private static final MemoryMXBean MEMORY_MX_BEAN = ManagementFactory.getMemoryMXBean();
+  private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
+
+  private static AppMemoryUsage calculateMemoryUsage() {
+    MemoryUsage heapMemoryUsage = MEMORY_MX_BEAN.getHeapMemoryUsage();
+
+    long directBuffersUsedByFileCacheBytes = DirectByteBufferAllocator.ALLOCATOR.getStatistics().totalSizeOfBuffersAllocatedInBytes;
+    //RC: counter-intuitively, but memoryMXBean.getNonHeapMemoryUsage() does NOT count direct ByteBuffers.
+    //    nonHeapMemoryUsage is mostly about JVM-internal data structures -- code cache, metaspace, etc.
+    //    Direct ByteBuffers (seems to be) invisible to any public API, so we need some private API for it
+    long directBuffersUsedBytes = IOUtil.directBuffersTotalAllocatedSize();
+    if (directBuffersUsedBytes <= 0) {
+      //can't get value by some reason => use directBuffersUsedByFileCacheBytes as lower bound, better than nothing:
+      directBuffersUsedBytes = directBuffersUsedByFileCacheBytes;
     }
+
+    //RC: I know no way to get thread-stack size, but 1Mb seems to be a default stack size for most OSes, so
+    //    lets just assume (1 thread = 1Mb of stack). This seems to be an underestimation: seems like JVM
+    //    provision memory for threads with big margin, and also thread local allocation 'arenas' are not included
+    long threadsStackBytes = THREAD_MX_BEAN.getThreadCount() * (long)IOUtil.MiB;
+
+    //pools list could change during execution, so can't be cached once
+    long jvmInternalsMemoryBytes = jvmInternalsMemory(ManagementFactory.getMemoryPoolMXBeans());
+
+    long memoryMappedFilesBytes = MMappedFileStorage.totalBytesMapped();
+
+    return new AppMemoryUsage(
+      heapMemoryUsage.getMax(), heapMemoryUsage.getCommitted(), heapMemoryUsage.getUsed(),
+      jvmInternalsMemoryBytes,
+      directBuffersUsedBytes, directBuffersUsedByFileCacheBytes,
+      threadsStackBytes,
+      memoryMappedFilesBytes
+    );
+  }
+
+  private static final class AppMemoryUsage {
+    public final long heapMaxBytes;
+    public final long heapCommitedBytes;
+    public final long heapUsedBytes;
+
+    public final long jvmInternalsMemoryBytes;
+    public final long directByteBuffersBytes;
+    public final long directBuffersFileCacheUsedBytes;
+
+    public final long threadStacksBytes;
+
+    public final long memoryMappedFilesBytes;
+
+    private AppMemoryUsage(long heapMaxBytes,
+                           long heapCommitedBytes,
+                           long heapUsedBytes,
+                           long jvmInternalsMemoryBytes,
+                           long directByteBuffersBytes,
+                           long directBuffersFileCacheUsedBytes,
+                           long threadStacksBytes,
+                           long memoryMappedFilesBytes) {
+      this.heapMaxBytes = heapMaxBytes;
+      this.heapCommitedBytes = heapCommitedBytes;
+      this.heapUsedBytes = heapUsedBytes;
+      this.jvmInternalsMemoryBytes = jvmInternalsMemoryBytes;
+      this.directByteBuffersBytes = directByteBuffersBytes;
+      this.directBuffersFileCacheUsedBytes = directBuffersFileCacheUsedBytes;
+      this.threadStacksBytes = threadStacksBytes;
+      this.memoryMappedFilesBytes = memoryMappedFilesBytes;
+    }
+
+    public long estimatedTotalMemoryUsedBytes() {
+      //Should be +/- good estimation:
+      return roundUpTo(
+        heapCommitedBytes + threadStacksBytes + directByteBuffersBytes + jvmInternalsMemoryBytes,
+        100 * IOUtil.MiB //to show too many digits could be confusing for a 'rough estimation'
+      );
+    }
+  }
+
+  private static long jvmInternalsMemory(@NotNull List<MemoryPoolMXBean> memoryPools) {
+    return memoryPools.stream()
+      .filter(pool -> pool.getType() == MemoryType.NON_HEAP)
+      .mapToLong(pool -> pool.getUsage().getUsed())
+      .sum();
+  }
+
+  /** @return value rounded up the nearest bucket up */
+  private static long roundUpTo(long value,
+                                long bucket) {
+    long fraction = value / bucket;
+    long remainder = value % bucket;
+    if (remainder > 0) {
+      return (fraction + 1) * bucket;
+    }
+    else {
+      return value;
+    }
+  }
+
+  private static long toMb(long value) {
+    return value / IOUtil.MiB;
   }
 }

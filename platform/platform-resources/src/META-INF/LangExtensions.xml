@@ -1420,7 +1420,10 @@
     <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory"
                             order="last"/>
     <registryKey key="idea.memory.usage.tooltip.show.more"
-                 description="Show additional info in memory-usage bar's tooltip"
+                 description="Show additional info in a memory-usage bar's tooltip"
+                 defaultValue="true"/>
+    <registryKey key="idea.memory.usage.show.total.memory.estimation"
+                 description="Show total memory usage estimation (instead of -Xmx) info in a memory-usage bar"
                  defaultValue="true"/>
 
     <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager"
