@@ -135,7 +135,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     List<PsiTypeCastExpression> relatedCastExpressions = new ArrayList<>(getRelatesCastExpressions(ifStatement.getThenBranch(), targetInstanceOf));
 
-    processConditions(ifStatement, targetInstanceOf, relatedCastExpressions);
+    collectRelatedCastsFromIfCondition(ifStatement, targetInstanceOf, relatedCastExpressions);
     PsiLocalVariable castedVariable = null;
     for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
       castedVariable = findCastedLocalVariable(castExpression);
@@ -159,9 +159,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     );
   }
 
-  private static void processConditions(PsiIfStatement ifStatement,
-                                        PsiInstanceOfExpression targetInstanceOf,
-                                        List<PsiTypeCastExpression> relatedCastExpressions) {
+  private static void collectRelatedCastsFromIfCondition(PsiIfStatement ifStatement,
+                                                         PsiInstanceOfExpression targetInstanceOf,
+                                                         List<PsiTypeCastExpression> relatedCastExpressions) {
     PsiElement current = targetInstanceOf;
     while (true) {
       PsiElement parent = current.getParent();
