@@ -54,7 +54,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
 
     testGroup("refactorings/kotlin.refactorings.introduce.k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceVariableTest> {
-            model("refactoring/introduceVariable", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceVariableTest")
+            model("refactoring/introduceVariable", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
         }
     }
 }

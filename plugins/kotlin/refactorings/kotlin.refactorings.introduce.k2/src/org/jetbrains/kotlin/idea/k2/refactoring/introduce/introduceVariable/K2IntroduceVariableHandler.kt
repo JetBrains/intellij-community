@@ -64,7 +64,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     ) {
         private val psiFactory = KtPsiFactory(expression.project)
 
-        var propertyRef: KtDeclaration? = null
+        var introducedVariablePointer: SmartPsiElementPointer<KtDeclaration>? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
         val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
         var mustSpecifyTypeExplicitly = false
@@ -234,7 +234,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
                     }
                 }
-                propertyRef = property
+                introducedVariablePointer = property.createSmartPointer()
             }
 
             specifyTypeIfNeeded(property)
@@ -452,7 +452,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
                     introduceVariableContext.runRefactoring(project, editor, isVar)
 
-                    val property = introduceVariableContext.propertyRef ?: return@executeCommand
+                    val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
 
                     if (editor == null) {
                         return@executeCommand

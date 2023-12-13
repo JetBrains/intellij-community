@@ -101,7 +101,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     ) {
         private val psiFactory = KtPsiFactory(expression.project)
 
-        var propertyRef: KtDeclaration? = null
+        var introducedVariablePointer: SmartPsiElementPointer<KtDeclaration>? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
         val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
 
@@ -275,7 +275,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     }
                 }
             }
-            propertyRef = property
+            introducedVariablePointer = property.createSmartPointer()
             if (noTypeInference) {
                 ShortenReferences.DEFAULT.process(property)
             }
@@ -545,7 +545,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
                     runWriteAction { introduceVariableContext.runRefactoring(isVar) }
 
-                    val property = introduceVariableContext.propertyRef ?: return@executeCommand
+                    val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
 
                     if (editor == null) {
                         onNonInteractiveFinish?.invoke(property)
