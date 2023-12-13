@@ -236,15 +236,17 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void addService(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item != null) return;
-
     if (e.parent != null) {
-      ServiceViewItem parent = findItem(e.parent, e.contributorClass);
+      ServiceViewItem parent = findItemSafe(e.parent, e.contributorClass);
       ServiceViewContributor<?> parentContributor = parent instanceof ServiceNode ? ((ServiceNode)parent).getProvidingContributor() : null;
-      if (parentContributor == null) return;
+      if (parentContributor == null) {
+        LOG.debug("Parent not found; event: " + e);
+        return;
+      }
 
-      addService(e.target, parent.getChildren(), myProject, parent, parentContributor);
+      if (!hasChild(parent, e.target)) {
+        addService(e.target, parent.getChildren(), myProject, parent, parentContributor);
+      }
       return;
     }
 
@@ -269,11 +271,13 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       }
     }
 
-    addService(e.target, contributorNode.getChildren(), myProject, contributorNode, contributorNode.getContributor());
+    if (!hasChild(contributorNode, e.target)) {
+      addService(e.target, contributorNode.getChildren(), myProject, contributorNode, contributorNode.getContributor());
+    }
   }
 
   private void removeService(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    ServiceViewItem item = findItemSafe(e.target, e.contributorClass);
     if (item == null) return;
 
     ServiceViewItem parent = item.getParent();
@@ -303,7 +307,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void serviceChanged(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    ServiceViewItem item = findItemSafe(e.target, e.contributorClass);
     if (item instanceof ServiceNode) {
       updateServiceViewDescriptor((ServiceNode)item, e.target);
     }
@@ -323,13 +327,13 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void serviceChildrenChanged(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    ServiceViewItem item = findItemSafe(e.target, e.contributorClass);
     if (item instanceof ServiceNode node) {
       node.reloadChildren();
     }
   }
   private void serviceStructureChanged(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    ServiceViewItem item = findItemSafe(e.target, e.contributorClass);
     if (item instanceof ServiceNode node) {
       updateServiceViewDescriptor(node, e.target);
       node.reloadChildren();
@@ -337,7 +341,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void serviceGroupChanged(ServiceEvent e) {
-    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    ServiceViewItem item = findItemSafe(e.target, e.contributorClass);
     if (!(item instanceof ServiceNode)) return;
 
     ServiceViewItem parent = item.getParent();
@@ -378,7 +382,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void groupChanged(ServiceEvent e) {
-    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass, false).filter(ServiceGroupNode.class);
+    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass, true).filter(ServiceGroupNode.class);
     ServiceGroupNode first = groups.first();
     if (first == null) return;
 
@@ -393,6 +397,15 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         addGroupOrdered(children, (ServiceGroupNode)group);
       }
     }
+  }
+
+  private static boolean hasChild(ServiceViewItem item, Object service) {
+    for (ServiceViewItem child : item.getChildren()) {
+      if (child.getValue().equals(service)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static <T> List<ServiceViewItem> getContributorChildren(Project project,
@@ -701,7 +714,6 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       super.getChildren().clear();
       if (myProvidingContributor != null) {
         myChildrenInitialized = false;
-        myLoaded = true;
       }
     }
 
