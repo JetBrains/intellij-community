@@ -1849,6 +1849,59 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertMergedModuleCompileLibDepScope("project", depName);
   }
 
+  @TargetVersions("4.0+")
+  @Test
+  public void testSourcesForDependencyWithMultipleArtifactsWithIvyLayout() throws Exception {
+    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    // IVY_ARTIFACT_PATTERN = "[organisation]/[module]/[revision]/[type]s/[artifact](.[ext])"
+    createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivys/ivy.xml",
+                         """
+                           <?xml version="1.0" encoding="ISO-8859-1"?>
+                           <ivy-module version="1.0">
+                             <info organisation="depGroup" module="depArtifact" revision="1.0-SNAPSHOT" status="integration"/>
+                             <configurations>
+                               <conf name="current"/>
+                               <conf name="sources"/>
+                               <conf name="format"/>
+                             </configurations>
+                             <publications>
+                               <artifact name="depArtifact-current" ext="jar" type="jar" conf="current"/>
+                               <artifact name="depArtifact-current" ext="src.jar" type="source" conf="sources"/>
+                               <artifact name="depArtifact-format" ext="jar" type="jar" conf="current"/>
+                               <artifact name="depArtifact-format" ext="src.jar" type="source" conf="sources"/>
+                             </publications>
+                             <dependencies/>
+                           </ivy-module>
+                           """);
+    String current = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/jars/depArtifact-current.jar")
+      .getUrl();
+    String currentSrc = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/sources/depArtifact-current.src.jar")
+      .getUrl();
+    String format = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/jars/depArtifact-format.jar")
+      .getUrl();
+    String formatSrc = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/sources/depArtifact-format.src.jar")
+      .getUrl();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addPrefix("repositories { ivy { url = file('repo') \n layout('ivy') } }")
+        .addPrefix("dependencies { implementation 'depGroup:depArtifact:1.0-SNAPSHOT' targetConfiguration 'current'}")
+        .withIdeaPlugin()
+        .addPrefix("idea.module.downloadJavadoc true")
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test");
+
+    assertModuleModuleDepScope("project.test", "project.main", DependencyScope.COMPILE);
+
+    final String depName = "Gradle: depGroup:depArtifact:1.0-SNAPSHOT";
+    assertModuleLibDep("project.main", depName, List.of(current, format), List.of(currentSrc, formatSrc), List.of());
+    assertModuleLibDepScope("project.main", depName, DependencyScope.COMPILE);
+    assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
+  }
+
   @Test
   @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {
