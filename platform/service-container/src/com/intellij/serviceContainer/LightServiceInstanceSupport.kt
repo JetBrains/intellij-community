@@ -4,6 +4,7 @@ package com.intellij.serviceContainer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.instantiate
@@ -12,6 +13,7 @@ import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport.D
 import com.intellij.platform.instanceContainer.internal.InstanceHolder
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
+import java.lang.reflect.Modifier
 
 internal class LightServiceInstanceSupport(
   private val componentManager: ComponentManagerImpl,
@@ -68,4 +70,8 @@ internal class LightServiceInstanceSupport(
       return pluginId
     }
   }
+}
+
+internal fun isLightService(serviceClass: Class<*>): Boolean {
+  return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }

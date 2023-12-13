@@ -17,9 +17,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -28,7 +26,6 @@ import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
-import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.*
 import java.lang.reflect.Constructor
@@ -36,12 +33,7 @@ import kotlin.properties.Delegates.notNull
 
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val errors = if (useInstanceContainer) {
-      createAllServicesAndExtensions2()
-    }
-    else {
-      createAllServicesAndExtensions()
-    }
+    val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {
       logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
     }
@@ -53,42 +45,6 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
-}
-
-private fun createAllServicesAndExtensions(): List<Throwable> {
-  val errors = mutableListOf<Throwable>()
-  runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
-    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
-      try {
-        task()
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        errors.add(e)
-      }
-    }
-
-    // check first
-    checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-
-    val application = ApplicationManager.getApplication() as ComponentManagerImpl
-    checkContainer(application, "app", indicator, taskExecutor)
-
-    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
-    if (project != null) {
-      checkContainer(project, "project", indicator, taskExecutor)
-      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
-      if (module != null) {
-        checkContainer(module, "module", indicator, taskExecutor)
-      }
-    }
-
-    indicator.text2 = "Checking light services..."
-    checkLightServices(application, project, errors)
-  }
-  return errors
 }
 
 private fun checkLightServices(
@@ -213,14 +169,6 @@ private val extensionPointsWhichRequireReadAction = setOf(
   "com.intellij.backgroundPostStartupActivity",
   "org.jetbrains.kotlin.defaultErrorMessages",
 )
-
-private fun checkContainer(container: ComponentManagerImpl, levelDescription: String?, indicator: ProgressIndicator,
-                           taskExecutor: (task: () -> Unit) -> Unit) {
-  indicator.text2 = "Checking ${levelDescription} services..."
-  ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
-  indicator.text2 = "Checking ${levelDescription} extensions..."
-  checkExtensions(container, taskExecutor)
-}
 
 private suspend fun checkContainer2(
   container: ComponentManagerImpl,

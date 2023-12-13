@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 
 class ServiceContainerTest {
@@ -20,31 +19,23 @@ class ServiceContainerTest {
 
       componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
       componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
-      if (useInstanceContainer) {
-        try {
-          componentManager.getService(C1::class.java)
-        }
-        catch (e: Throwable) {
-          val stringBuilder = StringBuilder()
-          var cause = e
-          while (true) {
-            stringBuilder.append(cause.javaClass.simpleName).append(" " + cause.message).appendLine()
-            val newCause = cause.cause
-            if (newCause !== cause) {
-              cause = newCause ?: break
-            }
+      try {
+        componentManager.getService(C1::class.java)
+      }
+      catch (e: Throwable) {
+        val stringBuilder = StringBuilder()
+        var cause = e
+        while (true) {
+          stringBuilder.append(cause.javaClass.simpleName).append(" " + cause.message).appendLine()
+          val newCause = cause.cause
+          if (newCause !== cause) {
+            cause = newCause ?: break
           }
-          assertThat(stringBuilder).isEqualToIgnoringWhitespace("""
+        }
+        assertThat(stringBuilder).isEqualToIgnoringWhitespace("""
             PluginException [com.intellij.serviceContainer.C1, com.intellij.serviceContainer.C2] [Plugin: test]
             CycleInitializationException [com.intellij.serviceContainer.C1, com.intellij.serviceContainer.C2]
           """.trimIndent())
-        }
-      }
-      else {
-        assertThatThrownBy {
-          componentManager.getService(C1::class.java)
-        }
-          .hasMessageContaining("Cyclic service initialization")
       }
     }
     finally {

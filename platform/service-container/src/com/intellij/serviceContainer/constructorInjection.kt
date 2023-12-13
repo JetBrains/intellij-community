@@ -22,7 +22,6 @@ import kotlin.Comparator
 import kotlin.Pair
 import kotlin.RuntimeException
 import kotlin.Suppress
-import kotlin.check
 import kotlin.let
 
 private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
@@ -253,15 +252,7 @@ private fun resolveInstance(componentManager: ComponentManagerImpl,
                                   pluginId = pluginId)
                 ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType, pluginId)
   return when {
-    adapter is BaseComponentAdapter -> {
-      check(!useInstanceContainer)
-      // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
-      adapter.getInstance(adapter.componentManager, null)
-    }
-    adapter is HolderAdapter -> {
-      check(useInstanceContainer)
-      adapter.componentInstance
-    }
+    adapter is HolderAdapter -> adapter.componentInstance
     componentManager.parent == null -> adapter.componentInstance
     else -> componentManager.getComponentInstance(adapter.componentKey)
   }
