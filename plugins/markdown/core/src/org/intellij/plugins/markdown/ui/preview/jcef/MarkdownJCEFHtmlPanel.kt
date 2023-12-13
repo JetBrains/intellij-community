@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.SlowOperations
 import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import org.cef.browser.CefBrowser
@@ -38,10 +39,8 @@ class MarkdownJCEFHtmlPanel(
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
 
-  private val projectRoot: VirtualFile? = if (_virtualFile != null && _project != null) {
-    ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
-  } else null
-  private val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
+  private var projectRoot: VirtualFile? = null
+  private val fileSchemeResourcesProcessor: ResourceProvider
 
   private val resourceProvider = MyAggregatingResourceProvider()
   private val browserPipe = JcefBrowserPipeImpl(
@@ -109,6 +108,14 @@ class MarkdownJCEFHtmlPanel(
   private var previousRenderClosure: String = ""
 
   init {
+    if (_virtualFile != null && _project != null) {
+      // Will be fixed in IDEA-340851
+      SlowOperations.allowSlowOperations<Throwable> {
+        projectRoot = ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
+      }
+    }
+    fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
+
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
