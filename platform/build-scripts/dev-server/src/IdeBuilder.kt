@@ -160,7 +160,10 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                             homePath = request.homePath)
     }
   }
-
+    .invokeOnCompletion {
+    // close debug logging to prevent locking of output directory on Windows
+    context.messages.close()
+  }
   return runDir
 }
 
