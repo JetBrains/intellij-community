@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.language;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
@@ -22,7 +21,7 @@ public class LombokConfigParserDefinition implements ParserDefinition {
     private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
   }
 
-  private static final IFileElementType FILE = new IFileElementType(Language.findInstance(LombokConfigLanguage.class));
+  private static final IFileElementType FILE = new IFileElementType(LombokConfigLanguage.INSTANCE);
 
   @NotNull
   @Override
