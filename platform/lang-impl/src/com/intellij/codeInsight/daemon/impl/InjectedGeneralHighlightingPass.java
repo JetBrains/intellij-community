@@ -185,7 +185,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
                                                         @NotNull InjectedLanguageManager injectedLanguageManager,
                                                         @NotNull Consumer<? super HighlightInfo> outInfos) {
-    List<HighlightInfoFilter> filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList();
+    HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList().toArray(HighlightInfoFilter.EMPTY_ARRAY);
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {
       @Override
