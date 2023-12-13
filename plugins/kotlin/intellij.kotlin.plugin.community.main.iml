@@ -61,7 +61,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" exported="" />

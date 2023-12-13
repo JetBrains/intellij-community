@@ -45,7 +45,7 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" scope="RUNTIME" />

@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" scope="RUNTIME" />

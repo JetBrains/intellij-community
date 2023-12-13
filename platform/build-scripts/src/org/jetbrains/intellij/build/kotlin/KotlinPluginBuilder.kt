@@ -64,7 +64,7 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.parcelize.k1",
     "kotlin.compiler-plugins.parcelize.k2",
     "kotlin.compiler-plugins.parcelize.gradle",
-    "kotlin.compiler-plugins.allopen.common",
+    "kotlin.compiler-plugins.allopen.common-k1",
     "kotlin.compiler-plugins.allopen.gradle",
     "kotlin.compiler-plugins.allopen.maven",
     "kotlin.compiler-plugins.compiler-plugin-support.common",

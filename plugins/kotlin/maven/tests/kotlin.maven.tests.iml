@@ -34,7 +34,7 @@
     <orderEntry type="module" module-name="kotlin.maven" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" scope="RUNTIME" />

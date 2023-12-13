@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
