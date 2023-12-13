@@ -16,10 +16,11 @@
 package com.jetbrains.rest.quickfixes;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.inspections.RestRoleInspection;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : catherine
  */
-public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
+public class AddIgnoredRoleFix extends PsiUpdateModCommandQuickFix implements LowPriorityAction {
   private final String myRole;
   private final RestRoleInspection myInspection;
 
@@ -48,13 +49,9 @@ public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
     return RestBundle.message("QFIX.ignore.role");
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!myInspection.ignoredRoles.contains(myRole)) {
       myInspection.ignoredRoles.add(myRole);
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
