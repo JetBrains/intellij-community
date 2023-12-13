@@ -134,6 +134,11 @@
       }
     },
 
+    "Tooltip.Learning": {
+      "Header.foreground": "Grey14",
+      "codeForeground": "Grey14"
+    },
+
     "RecentProject": {
       "Color1": {
         "MainToolbarGradientStart": "#F5D4C1",

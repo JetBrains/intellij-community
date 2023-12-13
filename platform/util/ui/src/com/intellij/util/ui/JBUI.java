@@ -1826,8 +1826,12 @@ public final class JBUI {
         }
       }
 
-      public static @NotNull Color headerForeground() {
-        return JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
+      public static @NotNull Color headerForeground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.Header.foreground", foreground(false));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.Header.foreground", base);
+        }
+        return base;
       }
 
       public static @NotNull Color shortcutForeground(boolean useContrastColors) {
@@ -1853,7 +1857,11 @@ public final class JBUI {
       }
 
       public static @NotNull Color codeForeground(boolean useContrastColors) {
-        return JBColor.namedColor("GotItTooltip.codeForeground", foreground(useContrastColors));
+        Color base = JBColor.namedColor("GotItTooltip.codeForeground", foreground(useContrastColors));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.codeForeground", base);
+        }
+        return base;
       }
 
       public static @NotNull Color codeBackground(boolean useContrastColors) {

@@ -769,7 +769,8 @@
       "codeBorderColor": "#FFFFFF80",
       "linkForeground": "Grey14",
       "linkUnderlineActive": "#FFFFFF80",
-      "linkUnderlinePassive": "#FFFFFF80"
+      "linkUnderlinePassive": "#FFFFFF80",
+      "Header.foreground": "Grey14"
     },
 
     "PackageSearch": {
