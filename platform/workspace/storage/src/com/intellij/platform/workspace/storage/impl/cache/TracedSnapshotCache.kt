@@ -16,26 +16,31 @@ import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import com.intellij.platform.workspace.storage.trace.toTraces
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal interface TracedSnapshotCache {
+@ApiStatus.Experimental
+@ApiStatus.Internal
+public interface TracedSnapshotCache {
 
   /**
    * Thread-safe
    */
-  fun <T> cached(query: StorageQuery<T>, snapshot: ImmutableEntityStorageInstrumentation): T
+  public fun <T> cached(query: StorageQuery<T>, snapshot: ImmutableEntityStorageInstrumentation): T
 
   /**
    * Not thread-safe
    */
-  fun pullCache(
+  public fun pullCache(
     newSnapshot: ImmutableEntityStorage,
     from: TracedSnapshotCache,
     changes: EntityStorageChange,
   )
 }
 
+@ApiStatus.Experimental
+@ApiStatus.Internal
 public sealed interface EntityStorageChange {
   public val size: Int
 }
