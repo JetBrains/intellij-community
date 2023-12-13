@@ -3,6 +3,9 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ListUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -10,12 +13,14 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
   private Condition<? super T> myCondition = null;
+  private boolean myUpdating = false;
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -48,27 +53,53 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     refilter();
   }
 
-  private void removeAllElements() {
-    int index1 = myData.size() - 1;
-    if (index1 >= 0) {
-      myData.clear();
-      fireIntervalRemoved(this, 0, index1);
-    }
-  }
-
   public void refilter() {
-    removeAllElements();
-    int count = 0;
+    if (myUpdating) return;
+    List<T> newData = new ArrayList<>();
     Collection<T> elements = getElementsToFilter();
     for (T elt : elements) {
       if (passElement(elt)) {
-        addToFiltered(elt);
-        count++;
+        newData.add(elt);
       }
     }
+    
+    commit(newData);
+  }
 
-    if (count > 0) {
-      fireIntervalAdded(this, 0, count - 1);
+  private void commit(List<T> newData) {
+    Diff.Change change;
+    try {
+      change = Diff.buildChanges(myData.toArray(), newData.toArray(), HashingStrategy.identity());
+    }
+    catch (FilesTooBigForDiffException e) {
+      replace(0, myData.size(), newData);
+      return;
+    }
+    if (change != null) {
+      ArrayList<Diff.Change> list = change.toList();
+      Collections.reverse(list);
+      for (Diff.Change ch : list) {
+        replace(ch.line0, ch.line0 + ch.deleted, newData.subList(ch.line1, ch.line1 + ch.inserted));
+      }
+      assert myData.equals(newData);
+    }
+  }
+
+  /**
+   * Replaces the interval between from and to with elements from the new list.
+   * 
+   * @param from start index
+   * @param to end index
+   * @param newData new data
+   */
+  protected void replace(int from, int to, List<T> newData) {
+    if (to > from) {
+      myData.subList(from, to).clear();
+      fireIntervalRemoved(this, from, to);
+    }
+    if (!newData.isEmpty()) {
+      myData.addAll(from, newData);
+      fireIntervalAdded(this, from, from + newData.size());
     }
   }
 
@@ -78,10 +109,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
       result.add(myOriginalModel.getElementAt(i));
     }
     return result;
-  }
-
-  protected void addToFiltered(T elt) {
-    myData.add(elt);
   }
 
   @Override
@@ -115,8 +142,15 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   public void replaceAll(List<? extends T> elements) {
-    ListUtil.removeAllItems(myOriginalModel);
-    ListUtil.addAllItems(myOriginalModel, elements);
+    try {
+      myUpdating = true;
+      ListUtil.removeAllItems(myOriginalModel);
+      ListUtil.addAllItems(myOriginalModel, elements);
+    }
+    finally {
+      myUpdating = false;
+      refilter();
+    }
   }
 
   public void remove(int index) {

@@ -35,5 +35,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
   </component>
 </module>
