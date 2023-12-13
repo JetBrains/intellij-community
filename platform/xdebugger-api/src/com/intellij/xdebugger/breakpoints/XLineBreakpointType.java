@@ -172,6 +172,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Nullable
     public abstract TextRange getHighlightRange();
 
+    /**
+     * @return true iff this variant corresponds to breakpoint hitting at all line locations
+     *         (i.e., "all", "line and all lambdas")
+     */
+    public boolean isMultiVariant() {
+      return false;
+    }
+
     @Nullable
     public abstract P createProperties();
 
@@ -211,6 +219,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     }
 
     @Override
+    public boolean isMultiVariant() {
+      // Historically, base class for all variants was "all" variant.
+      return true;
+    }
+
+    @Override
     @Nullable
     public P createProperties() {
       return createBreakpointProperties(mySourcePosition.getFile(),
@@ -241,6 +255,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Override
     public TextRange getHighlightRange() {
       return myElement.getTextRange();
+    }
+
+    @Override
+    public boolean isMultiVariant() {
+      return false;
     }
   }
 }

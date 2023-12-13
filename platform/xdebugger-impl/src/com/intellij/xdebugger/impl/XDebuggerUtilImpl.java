@@ -221,6 +221,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       public @NotNull Icon getIcon() {
         return type.getEnabledIcon();
       }
+
+      @Override
+      public boolean isMultiVariant() {
+        // TODO[inline-bp]: unfortunatelly it's wrong for default line variant, which is currently "all" by default,
+        //                  see IDEA-336373.
+        return false;
+      }
     };
   }
 
@@ -278,7 +285,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
     if (areInlineBreakpointsEnabled()) {
       return variantsAsync.then(variantsWithAll -> {
-        var variants = variantsWithAll.stream().filter(v -> !InlineBreakpointInlayManager.isAllVariant(v)).toList();
+        var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
 
         var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
                                                             Stream.concat(

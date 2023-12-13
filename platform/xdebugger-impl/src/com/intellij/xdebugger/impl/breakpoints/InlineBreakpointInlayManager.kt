@@ -1,7 +1,6 @@
 
 package com.intellij.xdebugger.impl.breakpoints
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -238,7 +237,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       if (breakpointTypes.isNotEmpty()) {
         XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
           // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
-          .filter { !isAllVariant(it) }
+          .filter { !it.isMultiVariant }
       }
       else {
         emptyList()
@@ -361,17 +360,5 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     @JvmStatic
     fun getInstance(project: Project): InlineBreakpointInlayManager =
       project.service<InlineBreakpointInlayManager>()
-
-    /**
-     * Returns whether this breakpoint variant covers multiple locations (e.g. "line and lambdas" aka "All").
-     * Such variants aren't used with new inline breakpoints inlays because user can manually put separate breakpoints at every location.
-     */
-    @JvmStatic
-    fun isAllVariant(variant: XLineBreakpointType<*>.XLineBreakpointVariant): Boolean {
-      // Currently, it's the easiest way to check that it's really multi-location variant.
-      // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.
-      // FIXME[inline-bp]: introduce better way for this or completely get rid of multi-location variants
-      return variant.icon === AllIcons.Debugger.MultipleBreakpoints
-    }
   }
 }
