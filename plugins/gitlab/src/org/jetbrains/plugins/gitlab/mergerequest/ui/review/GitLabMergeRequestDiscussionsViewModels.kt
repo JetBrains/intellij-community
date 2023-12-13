@@ -20,11 +20,12 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiscussionViewModel>>
+private typealias DraftNotesFlow = Flow<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>
 private typealias NewDiscussionsFlow = Flow<Map<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, NewGitLabNoteViewModel>>
 
 interface GitLabMergeRequestDiscussionsViewModels {
   val discussions: DiscussionsFlow
-  val draftDiscussions: DiscussionsFlow
+  val draftNotes: DraftNotesFlow
   val newDiscussions: NewDiscussionsFlow
 
   fun requestNewDiscussion(position: NewDiscussionPosition, focus: Boolean)
@@ -63,10 +64,10 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, currentUser, it, mergeRequest.glProject) }
     .modelFlow(cs, LOG)
 
-  override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes
+  override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes
     .throwFailure()
     .mapFiltered { it.discussionId == null }
-    .mapModelsToViewModels { GitLabMergeRequestDraftDiscussionViewModelBase(project, this, it, mergeRequest.glProject) }
+    .mapModelsToViewModels { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest.glProject) }
     .modelFlow(cs, LOG)
 
 

@@ -23,8 +23,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDraftNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDiscussionInlayRenderer
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDraftNoteInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewControlsGutterRenderer
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -56,8 +58,8 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
                                                         GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 
-            viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+            viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDraftNoteViewModel::id) {
+              GitLabMergeRequestDraftNoteInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
                                                         GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 

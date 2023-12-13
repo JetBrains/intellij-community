@@ -13,7 +13,10 @@ import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
+import java.net.URL
+import java.util.*
 
 interface GitLabMergeRequestDiscussionViewModel {
   val id: GitLabId
@@ -86,23 +89,28 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
 }
 
-class GitLabMergeRequestDraftDiscussionViewModelBase(
+class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   project: Project,
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
   glProject: GitLabProjectCoordinates
-) : GitLabMergeRequestDiscussionViewModel {
+) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   override val id: GitLabId = note.id
+  override val author: GitLabUserDTO = note.author
+  override val createdAt: Date? = note.createdAt
+  override val isDraft: Boolean = true
+  override val serverUrl: URL = glProject.serverPath.toURL()
 
-  override val notes: Flow<List<NoteItem>> = flowOf(
-    listOf(NoteItem.Note(GitLabNoteViewModelImpl(project, cs, note, flowOf(true), glProject)))
-  )
+  override val actionsVm: GitLabNoteAdminActionsViewModel? =
+    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
 
-  override val position: Flow<GitLabNotePosition?> = note.position
+  override val body: Flow<String> = note.body
+  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
 
-  override val resolveVm: GitLabDiscussionResolveViewModel? = null
-  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> = flowOf(null)
+  override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
+
+  val position: Flow<GitLabNotePosition?> = note.position
 }

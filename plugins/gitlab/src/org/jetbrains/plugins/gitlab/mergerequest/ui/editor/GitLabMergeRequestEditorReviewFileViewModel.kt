@@ -27,7 +27,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val changedRanges: List<Range>
 
   val discussions: Flow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
-  val draftDiscussions: Flow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
+  val draftNotes: Flow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>
 
   val canComment: Flow<Boolean>
   val newDiscussions: Flow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
@@ -56,18 +56,18 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 
   override val discussions: Flow<Collection<GitLabMergeRequestEditorDiscussionViewModel>> =
     discussionsContainer.discussions.map {
-      it.map { GitLabMergeRequestEditorDiscussionViewModelImpl(it, diffData, discussionsViewOption) }
+      it.map { GitLabMergeRequestEditorDiscussionViewModel(it, diffData, discussionsViewOption) }
     }
-  override val draftDiscussions: Flow<Collection<GitLabMergeRequestEditorDiscussionViewModel>> =
-    discussionsContainer.draftDiscussions.map {
-      it.map { GitLabMergeRequestEditorDiscussionViewModelImpl(it, diffData, discussionsViewOption) }
+  override val draftNotes: Flow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>> =
+    discussionsContainer.draftNotes.map {
+      it.map { GitLabMergeRequestEditorDraftNoteViewModel(it, diffData, discussionsViewOption) }
     }
 
   override val canComment: Flow<Boolean> = discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
   override val newDiscussions: Flow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> = discussionsContainer.newDiscussions.map {
     it.mapNotNull { (position, vm) ->
       val line = position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNull null
-      GitLabMergeRequestEditorNewDiscussionViewModelImpl(vm, line, discussionsViewOption)
+      GitLabMergeRequestEditorNewDiscussionViewModel(vm, line, discussionsViewOption)
     }
   }
 

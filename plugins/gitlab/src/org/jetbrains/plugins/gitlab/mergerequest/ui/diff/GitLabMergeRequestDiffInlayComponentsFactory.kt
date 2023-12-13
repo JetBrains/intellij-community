@@ -32,6 +32,17 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
     }
 
+  fun createDraftNote(project: Project,
+                      cs: CoroutineScope,
+                      avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                      vm: GitLabNoteViewModel,
+                      place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent =
+    GitLabNoteComponentFactory.create(CodeReviewChatItemUIUtil.ComponentType.COMPACT, project, cs, avatarIconsProvider, vm, place).apply {
+      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
+    }.let {
+      CodeReviewCommentUIUtil.createEditorInlayPanel(it)
+    }
+
   fun createNewDiscussion(project: Project,
                           cs: CoroutineScope,
                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,

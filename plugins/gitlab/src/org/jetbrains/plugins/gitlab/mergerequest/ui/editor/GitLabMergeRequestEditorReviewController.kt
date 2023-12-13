@@ -99,21 +99,21 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     val cs = this
     editor as EditorEx
 
-    editor.controlInlaysIn(cs, model.discussions, { it.id }) {
-      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider,
+    editor.controlInlaysIn(cs, model.discussions, { it.vm.id }) {
+      GitLabMergeRequestDiscussionInlayRenderer(this, project, it.vm, model.avatarIconsProvider,
                                                 GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
     }
 
-    editor.controlInlaysIn(cs, model.draftDiscussions, { it.id }) {
-      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider,
+    editor.controlInlaysIn(cs, model.draftDiscussions, { it.vm.id }) {
+      GitLabMergeRequestDraftNoteInlayRenderer(this, project, it.vm, model.avatarIconsProvider,
                                                 GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
     }
 
-    editor.controlInlaysIn(cs, model.newDiscussions, { "NEW_${it.originalLine}" }) {
+    editor.controlInlaysIn(cs, model.newDiscussions, { "NEW_${it.vm.originalLine}" }) {
       GitLabMergeRequestNewDiscussionInlayRenderer(
-        this, project, it, model.avatarIconsProvider,
+        this, project, it.vm, model.avatarIconsProvider,
         GitLabStatistics.MergeRequestNoteActionPlace.EDITOR
-      ) { model.cancelNewDiscussion(it.originalLine) }
+      ) { model.cancelNewDiscussion(it.vm.originalLine) }
     }
   }
 

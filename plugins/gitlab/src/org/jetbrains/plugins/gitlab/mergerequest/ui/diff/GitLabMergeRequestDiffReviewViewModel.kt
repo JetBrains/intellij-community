@@ -18,7 +18,7 @@ interface GitLabMergeRequestDiffReviewViewModel {
   val canComment: Flow<Boolean>
 
   val discussions: Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
-  val draftDiscussions: Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
+  val draftDiscussions: Flow<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>
   val newDiscussions: Flow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -38,18 +38,18 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
 
   override val discussions: Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>> =
     discussionsContainer.discussions.map {
-      it.map { GitLabMergeRequestDiffDiscussionViewModelImpl(it, diffData, discussionsViewOption) }
+      it.map { GitLabMergeRequestDiffDiscussionViewModel(it, diffData, discussionsViewOption) }
     }
-  override val draftDiscussions: Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>> =
-    discussionsContainer.draftDiscussions.map {
-      it.map { GitLabMergeRequestDiffDiscussionViewModelImpl(it, diffData, discussionsViewOption) }
+  override val draftDiscussions: Flow<Collection<GitLabMergeRequestDiffDraftNoteViewModel>> =
+    discussionsContainer.draftNotes.map {
+      it.map { GitLabMergeRequestDiffDraftNoteViewModel(it, diffData, discussionsViewOption) }
     }
 
   override val canComment: Flow<Boolean> = discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
   override val newDiscussions: Flow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>> = discussionsContainer.newDiscussions.map {
     it.mapNotNull { (position, vm) ->
       val location = position.mapToLocation(diffData) ?: return@mapNotNull null
-      GitLabMergeRequestEditorNewDiscussionViewModelImpl(vm, location, discussionsViewOption)
+      GitLabMergeRequestDiffNewDiscussionViewModel(vm, location, discussionsViewOption)
     }
   }
 

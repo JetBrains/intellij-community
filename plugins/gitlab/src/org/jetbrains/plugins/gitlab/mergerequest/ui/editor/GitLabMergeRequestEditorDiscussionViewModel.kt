@@ -11,16 +11,15 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-interface GitLabMergeRequestEditorDiscussionViewModel : GitLabMergeRequestDiscussionViewModel, EditorMapped
-
-internal class GitLabMergeRequestEditorDiscussionViewModelImpl(
+class GitLabMergeRequestEditorDiscussionViewModel internal constructor(
   base: GitLabMergeRequestDiscussionViewModel,
   diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: Flow<DiscussionsViewOption>
-) : GitLabMergeRequestDiscussionViewModel by base,
-    GitLabMergeRequestEditorDiscussionViewModel {
+) : GitLabMergeRequestDiscussionViewModel by base, EditorMapped {
 
   override val line: Flow<Int?> = base.position.map {
     it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
@@ -35,16 +34,29 @@ internal class GitLabMergeRequestEditorDiscussionViewModelImpl(
   }
 }
 
-interface GitLabMergeRequestEditorNewDiscussionViewModel : NewGitLabNoteViewModel, EditorMapped {
-  val originalLine: Int
+class GitLabMergeRequestEditorDraftNoteViewModel internal constructor(
+  base: GitLabMergeRequestStandaloneDraftNoteViewModelBase,
+  diffData: GitTextFilePatchWithHistory,
+  discussionsViewOption: Flow<DiscussionsViewOption>
+) : GitLabNoteViewModel by base, EditorMapped {
+
+  override val line: Flow<Int?> = base.position.map {
+    it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
+  }
+
+  override val isVisible: Flow<Boolean> = discussionsViewOption.map {
+    when (it) {
+      DiscussionsViewOption.UNRESOLVED_ONLY, DiscussionsViewOption.ALL -> true
+      DiscussionsViewOption.DONT_SHOW -> false
+    }
+  }
 }
 
-internal class GitLabMergeRequestEditorNewDiscussionViewModelImpl(
+class GitLabMergeRequestEditorNewDiscussionViewModel internal constructor(
   base: NewGitLabNoteViewModel,
-  override val originalLine: Int,
+  val originalLine: Int,
   discussionsViewOption: Flow<DiscussionsViewOption>
-) : NewGitLabNoteViewModel by base,
-    GitLabMergeRequestEditorNewDiscussionViewModel {
+) : NewGitLabNoteViewModel by base, EditorMapped {
 
   override val line: Flow<Int?> = flowOf(originalLine)
   override val isVisible: Flow<Boolean> = discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }

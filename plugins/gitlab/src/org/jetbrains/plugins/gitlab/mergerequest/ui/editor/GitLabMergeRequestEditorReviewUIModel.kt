@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.LineRange
@@ -83,13 +84,13 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     }
   }
 
-  val newDiscussions: Flow<List<GitLabMergeRequestEditorNewDiscussionViewModel>> = fileVm.newDiscussions.map {
+  val newDiscussions: Flow<List<ShiftedNewDiscussion>> = fileVm.newDiscussions.map {
     it.map(::ShiftedNewDiscussion)
   }
-  val draftDiscussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.draftDiscussions.map {
-    it.map(::ShiftedDiscussion)
+  val draftDiscussions: Flow<List<ShiftedDraftNote>> = fileVm.draftNotes.map {
+    it.map(::ShiftedDraftNote)
   }
-  val discussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.discussions.map {
+  val discussions: Flow<List<ShiftedDiscussion>> = fileVm.discussions.map {
     it.map(::ShiftedDiscussion)
   }
 
@@ -120,16 +121,21 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.showDiff(originalLine)
   }
 
-  private inner class ShiftedDiscussion(private val vm: GitLabMergeRequestEditorDiscussionViewModel)
-    : GitLabMergeRequestEditorDiscussionViewModel by vm {
+  inner class ShiftedDiscussion(val vm: GitLabMergeRequestEditorDiscussionViewModel) : EditorMapped {
     override val isVisible: Flow<Boolean> = vm.isVisible
     override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }
 
-  private inner class ShiftedNewDiscussion(private val vm: GitLabMergeRequestEditorNewDiscussionViewModel)
-    : GitLabMergeRequestEditorNewDiscussionViewModel by vm {
+  inner class ShiftedDraftNote(val vm: GitLabMergeRequestEditorDraftNoteViewModel) : EditorMapped {
+    override val isVisible: Flow<Boolean> = vm.isVisible
+    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
+    }
+  }
+
+  inner class ShiftedNewDiscussion(val vm: GitLabMergeRequestEditorNewDiscussionViewModel) : EditorMapped {
     override val isVisible: Flow<Boolean> = flowOf(true)
     override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }

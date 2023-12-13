@@ -12,16 +12,16 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-interface GitLabMergeRequestDiffDiscussionViewModel : GitLabMergeRequestDiscussionViewModel, DiffMapped
-
-internal class GitLabMergeRequestDiffDiscussionViewModelImpl(
+class GitLabMergeRequestDiffDiscussionViewModel internal constructor(
   base: GitLabMergeRequestDiscussionViewModel,
   diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: Flow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiscussionViewModel by base,
-    GitLabMergeRequestDiffDiscussionViewModel {
+    DiffMapped {
 
   override val location: Flow<DiffLineLocation?> = base.position.map {
     it?.mapToLocation(diffData, Side.LEFT)
@@ -36,17 +36,30 @@ internal class GitLabMergeRequestDiffDiscussionViewModelImpl(
   }
 }
 
-interface GitLabMergeRequestDiffNewDiscussionViewModel : NewGitLabNoteViewModel, DiffMapped {
-  val originalLocation: DiffLineLocation
+class GitLabMergeRequestDiffDraftNoteViewModel internal constructor(
+  base: GitLabMergeRequestStandaloneDraftNoteViewModelBase,
+  diffData: GitTextFilePatchWithHistory,
+  discussionsViewOption: Flow<DiscussionsViewOption>
+) : GitLabNoteViewModel by base, DiffMapped {
+
+  override val location: Flow<DiffLineLocation?> = base.position.map {
+    it?.mapToLocation(diffData, Side.LEFT)
+  }
+
+  override val isVisible: Flow<Boolean> = discussionsViewOption.map {
+    when (it) {
+      DiscussionsViewOption.UNRESOLVED_ONLY, DiscussionsViewOption.ALL -> true
+      DiscussionsViewOption.DONT_SHOW -> false
+    }
+  }
 }
 
-internal class GitLabMergeRequestEditorNewDiscussionViewModelImpl(
+class GitLabMergeRequestDiffNewDiscussionViewModel internal constructor(
   base: NewGitLabNoteViewModel,
-  override val originalLocation: DiffLineLocation,
+  val originalLocation: DiffLineLocation,
   discussionsViewOption: Flow<DiscussionsViewOption>
 ) : NewGitLabNoteViewModel by base,
-    GitLabMergeRequestDiffNewDiscussionViewModel {
-
+    DiffMapped {
   override val location: Flow<DiffLineLocation?> = flowOf(originalLocation)
   override val isVisible: Flow<Boolean> = discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
 }
