@@ -16,8 +16,8 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class DictCreationQuickFix implements LocalQuickFix {
+public class DictCreationQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -42,10 +42,10 @@ public class DictCreationQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final Map<String, String> statementsMap = Maps.newLinkedHashMap();
-    final PyAssignmentStatement myStatement = as(descriptor.getPsiElement(), PyAssignmentStatement.class);
+    final PyAssignmentStatement myStatement = as(element, PyAssignmentStatement.class);
     if (myStatement == null) return;
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
