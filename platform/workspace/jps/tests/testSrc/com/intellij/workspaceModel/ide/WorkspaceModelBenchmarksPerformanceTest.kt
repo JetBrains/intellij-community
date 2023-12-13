@@ -597,6 +597,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @Test
+  @Disabled("IDEA-340767")
   fun `request of cache`(testInfo: TestInfo) {
     CacheResetTracker.enable()
     println("Create snapshot")
