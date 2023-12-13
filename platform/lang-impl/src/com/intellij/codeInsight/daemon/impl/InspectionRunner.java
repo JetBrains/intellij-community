@@ -539,7 +539,7 @@ class InspectionRunner {
         synchronized (toolInfos) {
           while (infoIterator.hasNext()) {
             HighlightInfo next = infoIterator.next();
-            next.setVisitingTextRange(document, elementRange);
+            next.setVisitingTextRange(getFile(), document, elementRange);
           }
         }
       }

@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -293,5 +294,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
+  }
+
+  @NotNull
+  static RangeMarker getOrCreateVisitingRangeMarker(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
+    // in the case of multi-roots provider, the session is stored in the main
+    PsiFile mainRoot = psiFile.getViewProvider().getAllFiles().get(0);
+    HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(mainRoot);
+    return session.myRange2markerCache.computeIfAbsent(range, r->document.createRangeMarker(TextRangeScalarUtil.create(r)));
   }
 }

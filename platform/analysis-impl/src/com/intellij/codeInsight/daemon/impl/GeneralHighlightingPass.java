@@ -399,7 +399,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         // if this highlight info range is contained inside the current element range we are visiting
         // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
         // We also know that we can remove a syntax error element.
-        info.setVisitingTextRange(myDocument, elementRange);
+        info.setVisitingTextRange(myFile, myDocument, elementRange);
         infosForThisRange.add(info);
       }
       holder.clear();

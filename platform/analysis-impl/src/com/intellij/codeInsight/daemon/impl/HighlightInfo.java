@@ -18,6 +18,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -337,12 +339,13 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  void setVisitingTextRange(@NotNull Document document, long range) {
+  void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
     if (document instanceof DocumentWindow window) {
       range = TextRangeScalarUtil.toScalarRange(window.injectedToHost(TextRangeScalarUtil.create(range)));
       document = window.getDelegate();
+      psiFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
     }
-    visitingRange = document.createRangeMarker(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
+    visitingRange = HighlightingSessionImpl.getOrCreateVisitingRangeMarker(psiFile, document, range);
   }
 
   @NotNull
