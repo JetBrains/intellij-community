@@ -34,15 +34,14 @@ internal object OptInFixFactories {
     context(KtAnalysisSession)
     private fun createQuickFix(diagnostic: KtFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
-        val annotationFqName = OptInFixUtils.optInMarkerFqName(diagnostic) ?: return emptyList()
+        val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()
 
         val optInClassId = ClassId.topLevel(OptInFixUtils.optInFqName() ?: return emptyList())
         val isOverrideError = isOverrideError(diagnostic)
 
-        val annotationSymbol = OptInFixUtils.findAnnotation(annotationFqName, element) ?: return emptyList()
+        val annotationSymbol = OptInFixUtils.findAnnotation(annotationClassId) ?: return emptyList()
         if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
 
-        val annotationClassId = annotationSymbol.classIdIfNonLocal ?: return emptyList()
         val applicableTargets = annotationSymbol.annotationApplicableTargets
         val result = mutableListOf<AddAnnotationFix>()
 
@@ -58,7 +57,6 @@ internal object OptInFixFactories {
                 kind,
                 applicableTargets,
                 actualTargetList,
-                annotationFqName,
                 annotationClassId,
                 isOverrideError
             )

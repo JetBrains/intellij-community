@@ -55,20 +55,20 @@ object ChangeTypeQuickFixFactories {
             updateType(element, typeInfo, project, editor)
     }
 
-    val changeFunctionReturnTypeOnOverride =
-        changeReturnTypeOnOverride<KtFirDiagnostic.ReturnTypeMismatchOnOverride> {
-            it.function as? KtFunctionSymbol
-        }
+    val changeFunctionReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.ReturnTypeMismatchOnOverride>(
+        getCallableSymbol = { it.function as KtFunctionSymbol },
+        getSuperCallableSymbol = { it.superFunction as KtFunctionSymbol },
+    )
 
-    val changePropertyReturnTypeOnOverride =
-        changeReturnTypeOnOverride<KtFirDiagnostic.PropertyTypeMismatchOnOverride> {
-            it.property as? KtPropertySymbol
-        }
+    val changePropertyReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.PropertyTypeMismatchOnOverride>(
+        getCallableSymbol = { it.property as KtPropertySymbol },
+        getSuperCallableSymbol = { it.superProperty as KtPropertySymbol },
+    )
 
-    val changeVariableReturnTypeOnOverride =
-        changeReturnTypeOnOverride<KtFirDiagnostic.VarTypeMismatchOnOverride> {
-            it.variable as? KtPropertySymbol
-        }
+    val changeVariableReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.VarTypeMismatchOnOverride>(
+        getCallableSymbol = { it.variable as KtPropertySymbol },
+        getSuperCallableSymbol = { it.superVariable as KtPropertySymbol },
+    )
 
     context(KtAnalysisSession)
     private fun getActualType(ktType: KtType): KtType {
@@ -217,66 +217,40 @@ object ChangeTypeQuickFixFactories {
         }
 
     private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<KtNamedDeclaration>> changeReturnTypeOnOverride(
-        crossinline getCallableSymbol: (DIAGNOSTIC) -> KtCallableSymbol?
+        crossinline getCallableSymbol: (DIAGNOSTIC) -> KtCallableSymbol,
+        crossinline getSuperCallableSymbol: (DIAGNOSTIC) -> KtCallableSymbol,
     ) = diagnosticFixFactory(DIAGNOSTIC::class) { diagnostic ->
         val declaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
-        val callable = getCallableSymbol(diagnostic) ?: return@diagnosticFixFactory emptyList()
+        val callable = getCallableSymbol(diagnostic)
+        val superCallable = getSuperCallableSymbol(diagnostic)
         listOfNotNull(
-            createChangeCurrentDeclarationQuickFix(callable, declaration),
-            createChangeOverriddenFunctionQuickFix(callable),
+            createChangeCurrentDeclarationQuickFix(superCallable, declaration),
+            createChangeOverriddenFunctionQuickFix(callable, superCallable),
         )
     }
 
     context(KtAnalysisSession)
     private fun <PSI : KtCallableDeclaration> createChangeCurrentDeclarationQuickFix(
-        callable: KtCallableSymbol,
+        superCallable: KtCallableSymbol,
         declaration: PSI
     ): UpdateTypeQuickFix<PSI>? {
-        val lowerSuperType = findLowerBoundOfOverriddenCallablesReturnTypes(callable) ?: return null
-        return UpdateTypeQuickFix(declaration, TargetType.CURRENT_DECLARATION, createTypeInfo(lowerSuperType))
+        return UpdateTypeQuickFix(declaration, TargetType.CURRENT_DECLARATION, createTypeInfo(superCallable.returnType))
     }
 
     context(KtAnalysisSession)
-    private fun createChangeOverriddenFunctionQuickFix(callable: KtCallableSymbol): UpdateTypeQuickFix<KtCallableDeclaration>? {
+    private fun createChangeOverriddenFunctionQuickFix(
+        callable: KtCallableSymbol,
+        superCallable: KtCallableSymbol,
+    ): UpdateTypeQuickFix<KtCallableDeclaration>? {
         val type = callable.returnType
-        val singleNonMatchingOverriddenFunction = findSingleNonMatchingOverriddenFunction(callable, type) ?: return null
-        val singleMatchingOverriddenFunctionPsi = singleNonMatchingOverriddenFunction.psiSafe<KtCallableDeclaration>() ?: return null
+        val singleMatchingOverriddenFunctionPsi = superCallable.psiSafe<KtCallableDeclaration>() ?: return null
         if (!singleMatchingOverriddenFunctionPsi.isWritable) return null
         return UpdateTypeQuickFix(singleMatchingOverriddenFunctionPsi, TargetType.BASE_DECLARATION, createTypeInfo(type))
     }
 
     context(KtAnalysisSession)
-    private fun findSingleNonMatchingOverriddenFunction(
-        callable: KtCallableSymbol,
-        type: KtType
-    ): KtCallableSymbol? {
-        val overriddenSymbols = callable.getDirectlyOverriddenSymbols()
-        return overriddenSymbols
-            .singleOrNull { overridden ->
-                !type.isSubTypeOf(overridden.returnType)
-            }
-    }
-
-    context(KtAnalysisSession)
     private fun createTypeInfo(ktType: KtType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
         createByKtTypes(ktType)
-    }
-
-    context(KtAnalysisSession)
-    private fun findLowerBoundOfOverriddenCallablesReturnTypes(symbol: KtCallableSymbol): KtType? {
-        var lowestType: KtType? = null
-        for (overridden in symbol.getDirectlyOverriddenSymbols()) {
-            val overriddenType = overridden.returnType
-            when {
-                lowestType == null || overriddenType isSubTypeOf lowestType -> {
-                    lowestType = overriddenType
-                }
-                lowestType isNotSubTypeOf overriddenType -> {
-                    return null
-                }
-            }
-        }
-        return lowestType
     }
 
     private fun getDestructuringDeclarationEntryThatTypeMismatchComponentFunction(
