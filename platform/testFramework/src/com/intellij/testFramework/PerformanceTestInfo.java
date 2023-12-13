@@ -309,7 +309,7 @@ public class PerformanceTestInfo {
             Supplier<IterationStatus> operation = () -> {
               CpuUsageData currentData;
               try {
-                AsyncProfiler.startProfiling(PathManager.getLogDir().resolve(iterationType.name() + iterationNumber + ".jfr"));
+                AsyncProfiler.startProfiling(iterationType.name() + iterationNumber);
                 currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
               }
               catch (Throwable e) {
@@ -470,9 +470,12 @@ public class PerformanceTestInfo {
       }
     }
 
-    public static void startProfiling(Path file) {
+    public static void startProfiling(String fileName) {
+      Path logDir = PathManager.getLogDir();
       try {
-        String command = String.format("start,interval=5ms,event=wall,jfr,file=%s.jfr", file.toAbsolutePath());
+        String command =
+          String.format("start,interval=5ms,event=wall,jfr,file=%s.jfr,loglevel=DEBUG,log=%s",
+                        logDir.resolve(fileName + ".jfr"), logDir.resolve(fileName + ".log"));
         execute(command);
       }
       catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
