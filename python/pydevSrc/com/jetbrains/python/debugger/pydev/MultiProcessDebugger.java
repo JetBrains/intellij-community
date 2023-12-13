@@ -46,12 +46,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
-  public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
-                              @NotNull final ServerSocket serverSocket,
-                              final int timeoutInMillis) {
-    this(debugProcess, serverSocket, timeoutInMillis, false);
-  }
-
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
