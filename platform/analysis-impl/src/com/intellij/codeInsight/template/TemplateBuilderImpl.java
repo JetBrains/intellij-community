@@ -157,13 +157,20 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   /**
-   * Adds end variable after the specified element
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element after which the cursor will be placed
    */
   public void setEndVariableAfter(PsiElement element) {
     element = PsiTreeUtil.nextLeaf(element);
     setEndVariableBefore(element);
   }
 
+  /**
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element before which the cursor will be placed
+   */
   public void setEndVariableBefore(PsiElement element) {
     if (myEndElement != null) {
       myElements.remove(myEndElement);
