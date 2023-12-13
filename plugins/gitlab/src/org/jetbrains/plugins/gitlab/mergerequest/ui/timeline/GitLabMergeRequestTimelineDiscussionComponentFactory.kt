@@ -61,6 +61,25 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(createRepliesPanelIn(project, cs, vm, avatarIconsProvider))
     }
 
+  fun createIn(project: Project,
+               cs: CoroutineScope,
+               vm: GitLabMergeRequestTimelineItemViewModel.DraftNote,
+               avatarIconsProvider: IconsProvider<GitLabUserDTO>): JComponent {
+    val contentPanel = createContentIn(project, cs, vm)
+    val mainItem = CodeReviewChatItemUIUtil.build(ComponentType.FULL,
+                                                  { avatarIconsProvider.getIcon(vm.author, it) },
+                                                  contentPanel) {
+      maxContentWidth = null
+
+      val titlePanel = GitLabNoteComponentFactory.createTitle(cs, vm, project, ACTION_PLACE)
+      val actionsPanel = GitLabNoteComponentFactory.createActions(cs, flowOf(vm), project, ACTION_PLACE)
+      withHeader(titlePanel, actionsPanel)
+    }
+    return mainItem.apply {
+      name = "GitLab Draft Discussion Panel ${vm.id}"
+    }
+  }
+
   private fun createDiscussionItemIn(project: Project,
                                      cs: CoroutineScope,
                                      vm: GitLabMergeRequestTimelineDiscussionViewModel,
@@ -103,7 +122,12 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
 
     val diffPanelFlow = vm.diffVm.mapScoped { diffVm ->
-      diffVm?.let { createDiffPanel(project, vm, it) }
+      diffVm?.let {
+        val fileNameClickHandler = diffVm.showDiffHandler.asActionHandler()
+        TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, fileNameClickHandler) {
+          createDiffPanel(project, diffVm)
+        }
+      }
     }
 
     val contentPanel = VerticalListPanel().apply {
@@ -131,54 +155,70 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     return contentPanel
   }
 
+  private fun createContentIn(project: Project,
+                              cs: CoroutineScope,
+                              vm: GitLabMergeRequestTimelineItemViewModel.DraftNote): JPanel {
+    val textPanel = GitLabNoteComponentFactory.createTextPanel(cs, vm.bodyHtml, vm.serverUrl)
+
+    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
+                                           ACTION_PLACE)
+    }.let {
+      wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }
+
+    return VerticalListPanel(CodeReviewTimelineUIUtil.Thread.DIFF_TEXT_GAP).apply {
+      bindChildIn(cs, vm.diffVm, index = 0) { diffVm ->
+        diffVm?.let {
+          val fileNameClickHandler = diffVm.showDiffHandler.asActionHandler()
+          TimelineDiffComponentFactory.createDiffWithHeader(this, diffVm.position.filePath, fileNameClickHandler,
+                                                            createDiffPanel(project, it))
+        }
+      }
+      add(textContentPanel)
+    }
+  }
+
   private const val OPEN_DIFF_LINK_HREF = "OPEN_DIFF"
 
-  private fun CoroutineScope.createDiffPanel(project: Project,
-                                             vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                             diffVm: GitLabDiscussionDiffViewModel): JComponent {
-    val fileNameClickHandler = diffVm.showDiffHandler.map { handler ->
-      handler?.let { ActionListener { _ -> it() } }
-    }
-    return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, fileNameClickHandler) {
-      val diffCs = this
-      Wrapper(LoadingLabel()).apply {
-        bindContentIn(diffCs, diffVm.patchHunk) { hunkState ->
-          val loadedDiffCs = this
-          when (hunkState) {
-            is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
-              TimelineDiffComponentFactory.createDiffComponentIn(loadedDiffCs, project, EditorFactory.getInstance(), hunkState.hunk,
-                                                                 hunkState.anchor, null)
-            }
-            is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
-            GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
-              JPanel(SingleComponentCenteringLayout()).apply {
-                isOpaque = false
-                border = JBUI.Borders.empty(16)
+  private fun CoroutineScope.createDiffPanel(project: Project, diffVm: GitLabDiscussionDiffViewModel): JComponent =
+    Wrapper(LoadingLabel()).apply {
+      bindContentIn(this@createDiffPanel, diffVm.patchHunk) { hunkState ->
+        val loadedDiffCs = this
+        when (hunkState) {
+          is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
+            TimelineDiffComponentFactory.createDiffComponentIn(loadedDiffCs, project, EditorFactory.getInstance(), hunkState.hunk,
+                                                               hunkState.anchor, null)
+          }
+          is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
+          GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
+            JPanel(SingleComponentCenteringLayout()).apply {
+              isOpaque = false
+              border = JBUI.Borders.empty(16)
 
-                bindChildIn(loadedDiffCs, fileNameClickHandler) { clickListener ->
-                  if (clickListener != null) {
-                    val text = buildCantLoadHunkText(hunkState)
-                      .append(HtmlChunk.p().child(
-                        HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
-                      .wrapWith(HtmlChunk.div("text-align: center"))
-                      .toString()
+              bindChildIn(loadedDiffCs, diffVm.showDiffHandler.asActionHandler()) { clickListener ->
+                if (clickListener != null) {
+                  val text = buildCantLoadHunkText(hunkState)
+                    .append(HtmlChunk.p().child(
+                      HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
+                    .wrapWith(HtmlChunk.div("text-align: center"))
+                    .toString()
 
-                    SimpleHtmlPane(addBrowserListener = false).apply {
-                      setHtmlBody(text)
-                    }.also {
-                      it.addHyperlinkListener(object : HyperlinkAdapter() {
-                        override fun hyperlinkActivated(e: HyperlinkEvent) {
-                          if (e.description == OPEN_DIFF_LINK_HREF) {
-                            clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
-                          }
+                  SimpleHtmlPane(addBrowserListener = false).apply {
+                    setHtmlBody(text)
+                  }.also {
+                    it.addHyperlinkListener(object : HyperlinkAdapter() {
+                      override fun hyperlinkActivated(e: HyperlinkEvent) {
+                        if (e.description == OPEN_DIFF_LINK_HREF) {
+                          clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
                         }
-                      })
-                    }
+                      }
+                    })
                   }
-                  else {
-                    val text = buildCantLoadHunkText(hunkState).toString()
-                    SimpleHtmlPane(text)
-                  }
+                }
+                else {
+                  val text = buildCantLoadHunkText(hunkState).toString()
+                  SimpleHtmlPane(text)
                 }
               }
             }
@@ -186,7 +226,6 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
         }
       }
     }
-  }
 
   private fun buildCantLoadHunkText(hunkState: GitLabDiscussionDiffViewModel.PatchHunkResult) =
     HtmlBuilder()
@@ -325,4 +364,8 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
     return repliesPanel
   }
+}
+
+private fun Flow<(() -> Unit)?>.asActionHandler() = map { handler ->
+  handler?.let { ActionListener { _ -> it() } }
 }

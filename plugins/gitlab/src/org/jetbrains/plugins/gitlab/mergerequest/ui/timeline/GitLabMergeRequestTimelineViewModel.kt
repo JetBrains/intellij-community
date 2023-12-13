@@ -146,7 +146,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftDiscussion(project, cs, currentUser, mr, item.note).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mr, item.note).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

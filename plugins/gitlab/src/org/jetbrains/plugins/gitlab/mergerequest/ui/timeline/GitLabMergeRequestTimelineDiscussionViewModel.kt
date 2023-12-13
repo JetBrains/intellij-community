@@ -13,12 +13,10 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.net.URL
 
 interface GitLabMergeRequestTimelineDiscussionViewModel :
-  GitLabMergeRequestTimelineItemViewModel,
   CollapsibleTimelineItemViewModel {
   val id: String
   val serverUrl: URL
@@ -118,57 +116,6 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GitLabMergeRequestTimelineDiscussionViewModelImpl) return false
-
-    if (id != other.id) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return id.hashCode()
-  }
-}
-
-class GitLabMergeRequestTimelineDraftDiscussionViewModel(
-  project: Project,
-  parentCs: CoroutineScope,
-  currentUser: GitLabUserDTO,
-  private val mr: GitLabMergeRequest,
-  draftNote: GitLabMergeRequestNote
-) : GitLabMergeRequestTimelineDiscussionViewModel {
-
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
-
-  override val mainNote: Flow<GitLabNoteViewModel> =
-    flowOf(GitLabNoteViewModelImpl(project, cs, draftNote, flowOf(true), mr.glProject))
-
-  override val id: String = draftNote.id.toString()
-  override val serverUrl: URL = mr.glProject.serverPath.toURL()
-  override val author: Flow<GitLabUserDTO> = flowOf(currentUser)
-
-  private val _repliesFolded = MutableStateFlow(true)
-  override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
-
-  override val replies: Flow<List<GitLabNoteViewModel>> = flowOf(emptyList())
-
-  override val resolveVm: GitLabDiscussionResolveViewModel? = null
-
-  override val collapsible: Flow<Boolean> = flowOf(false)
-  override val collapsed: Flow<Boolean> = flowOf(false)
-
-  override val replyVm: StateFlow<NewGitLabNoteViewModel?> = MutableStateFlow(null)
-
-  override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
-    draftNote.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
-      .modelFlow(cs, LOG)
-
-  override fun setCollapsed(collapsed: Boolean) = Unit
-
-  override fun setRepliesFolded(folded: Boolean) = Unit
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GitLabMergeRequestTimelineDraftDiscussionViewModel) return false
 
     if (id != other.id) return false
 

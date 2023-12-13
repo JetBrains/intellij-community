@@ -188,7 +188,10 @@ internal object GitLabMergeRequestTimelineComponentFactory {
           withHeader(CodeReviewTimelineUIUtil.createTitleTextPane(immutableItem.actor.name, immutableItem.actor.webUrl, immutableItem.date))
         }
       }
-      is GitLabMergeRequestTimelineDiscussionViewModel -> {
+      is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
+        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider)
+      }
+      is GitLabMergeRequestTimelineItemViewModel.DraftNote -> {
         GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider)
       }
     }
