@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LombokConfigFileType extends LanguageFileType {
+public final class LombokConfigFileType extends LanguageFileType {
   public static final LombokConfigFileType INSTANCE = new LombokConfigFileType();
 
   private LombokConfigFileType() {

@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenDirectoryCompletionContributor implements CreateDirectoryCompletionContributor {
+public final class MavenDirectoryCompletionContributor implements CreateDirectoryCompletionContributor {
   @NotNull
   @Override
   public String getDescription() {

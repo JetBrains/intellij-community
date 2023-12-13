@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
-public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspection {
+public final class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {

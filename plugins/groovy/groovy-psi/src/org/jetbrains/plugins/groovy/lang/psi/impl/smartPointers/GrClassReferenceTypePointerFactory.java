@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 
-public class GrClassReferenceTypePointerFactory implements ClassTypePointerFactory {
+public final class GrClassReferenceTypePointerFactory implements ClassTypePointerFactory {
   @Nullable
   @Override
   public SmartTypePointer createClassTypePointer(@NotNull PsiClassType classType, @NotNull Project project) {

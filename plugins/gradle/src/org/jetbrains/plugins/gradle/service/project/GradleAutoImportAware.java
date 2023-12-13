@@ -112,7 +112,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       .collect(Collectors.toList());
   }
 
-  public static class GradlePropertiesCollector implements GradleAutoReloadSettingsCollector {
+  public static final class GradlePropertiesCollector implements GradleAutoReloadSettingsCollector {
 
     @NotNull
     @Override
@@ -131,7 +131,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     }
   }
 
-  public static class VersionCatalogCollector implements GradleAutoReloadSettingsCollector {
+  public static final class VersionCatalogCollector implements GradleAutoReloadSettingsCollector {
 
     @NotNull
     @Override
@@ -152,7 +152,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     }
   }
 
-  public static class WrapperConfigCollector implements GradleAutoReloadSettingsCollector {
+  public static final class WrapperConfigCollector implements GradleAutoReloadSettingsCollector {
     @NotNull
     @Override
     public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
@@ -166,7 +166,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     }
   }
 
-  public static class GradleScriptCollector implements GradleAutoReloadSettingsCollector {
+  public static final class GradleScriptCollector implements GradleAutoReloadSettingsCollector {
 
     @NotNull
     @Override

@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
+public final class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
 
   @Override

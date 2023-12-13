@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 /**
  * @author Max Medvedev
  */
-public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
+public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
   @Override
   public Template setupTemplateImpl(PsiField f,
                                     Object expectedTypes,

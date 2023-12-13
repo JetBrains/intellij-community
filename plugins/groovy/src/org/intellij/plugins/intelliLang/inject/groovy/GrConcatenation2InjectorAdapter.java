@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
+public final class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
   public GrConcatenation2InjectorAdapter(@NotNull Project project) {
     super(project);
   }

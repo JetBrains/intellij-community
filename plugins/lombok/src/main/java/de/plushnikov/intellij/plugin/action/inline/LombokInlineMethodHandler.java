@@ -13,7 +13,7 @@ import static com.intellij.refactoring.inline.InlineMethodHandler.performInline;
 /**
  * Custom InlineMethodHandler to support lombok generated methods
  */
-public class LombokInlineMethodHandler extends JavaInlineActionHandler {
+public final class LombokInlineMethodHandler extends JavaInlineActionHandler {
 
   private LombokInlineMethodHandler() {
   }

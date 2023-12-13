@@ -53,7 +53,7 @@ import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMET
 /**
  * @author Maxim.Medvedev
  */
-public class CreateParameterForFieldIntention extends Intention {
+public final class CreateParameterForFieldIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(CreateParameterForFieldIntention.class);
   private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 

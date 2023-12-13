@@ -34,7 +34,7 @@ import static org.jetbrains.idea.maven.importing.MavenRootModelAdapter.getMavenE
 /**
  * @author Vladislav.Soroka
  */
-public class MavenSourceFoldersModuleExtension extends ModuleExtension {
+public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
 
   private ModifiableRootModel myRootModel;
   private JpsModule myDummyJpsModule;

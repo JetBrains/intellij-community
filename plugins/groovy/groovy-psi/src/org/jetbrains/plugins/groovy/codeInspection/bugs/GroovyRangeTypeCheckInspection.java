@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyRangeTypeCheckInspection extends BaseInspection {
+public final class GroovyRangeTypeCheckInspection extends BaseInspection {
 
   @NotNull
   @Override

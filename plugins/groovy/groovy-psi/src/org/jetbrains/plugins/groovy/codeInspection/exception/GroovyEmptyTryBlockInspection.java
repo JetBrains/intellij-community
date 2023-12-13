@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GroovyEmptyTryBlockInspection extends BaseInspection {
+public final class GroovyEmptyTryBlockInspection extends BaseInspection {
 
   @Override
   @Nullable

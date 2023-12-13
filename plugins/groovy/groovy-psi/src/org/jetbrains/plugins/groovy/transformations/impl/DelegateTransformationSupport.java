@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.*;
 
-public class DelegateTransformationSupport implements AstTransformationSupport {
+public final class DelegateTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     Map<PsiType, PsiAnnotation> declaredTypes = new LinkedHashMap<>();

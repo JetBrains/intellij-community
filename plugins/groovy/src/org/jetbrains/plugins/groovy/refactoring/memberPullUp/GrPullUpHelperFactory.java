@@ -19,7 +19,7 @@ import com.intellij.refactoring.memberPullUp.PullUpData;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.memberPullUp.PullUpHelperFactory;
 
-public class GrPullUpHelperFactory implements PullUpHelperFactory{
+public final class GrPullUpHelperFactory implements PullUpHelperFactory{
   @Override
   public PullUpHelper createPullUpHelper(PullUpData data) {
     return new GrPullUpHelper(data);

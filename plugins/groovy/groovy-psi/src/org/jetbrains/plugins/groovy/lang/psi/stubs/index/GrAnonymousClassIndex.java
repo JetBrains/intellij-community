@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class GrAnonymousClassIndex extends StringStubIndexExtension<GrAnonymousClassDefinition> {
+public final class GrAnonymousClassIndex extends StringStubIndexExtension<GrAnonymousClassDefinition> {
   public static final StubIndexKey<String, GrAnonymousClassDefinition> KEY = StubIndexKey.createIndexKey("gr.anonymous.class");
 
   @Override

@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertyFoldingBuilder extends FoldingBuilderEx {
+public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
   public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY);

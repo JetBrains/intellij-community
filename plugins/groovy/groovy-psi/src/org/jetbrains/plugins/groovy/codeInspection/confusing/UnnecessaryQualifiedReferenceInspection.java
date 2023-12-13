@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 /**
  * @author Max Medvedev
  */
-public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
+public final class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
 
   @NotNull
   @Override

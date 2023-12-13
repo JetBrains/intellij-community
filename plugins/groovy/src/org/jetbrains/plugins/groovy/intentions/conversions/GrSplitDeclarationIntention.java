@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 /**
  * @author Max Medvedev
  */
-public class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
+public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

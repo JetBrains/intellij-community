@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-public class GroovyOctalIntegerInspection extends BaseInspection {
+public final class GroovyOctalIntegerInspection extends BaseInspection {
 
   @Override
   @Nullable

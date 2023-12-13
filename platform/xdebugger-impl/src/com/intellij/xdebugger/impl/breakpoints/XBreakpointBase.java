@@ -781,7 +781,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   }
 
-  static class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
+  static final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     @Override
     public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
       // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.

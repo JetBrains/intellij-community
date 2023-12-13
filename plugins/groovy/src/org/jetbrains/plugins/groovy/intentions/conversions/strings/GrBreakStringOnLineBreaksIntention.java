@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class GrBreakStringOnLineBreaksIntention extends GrPsiUpdateIntention {
+public final class GrBreakStringOnLineBreaksIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final String text = invokeImpl(element);

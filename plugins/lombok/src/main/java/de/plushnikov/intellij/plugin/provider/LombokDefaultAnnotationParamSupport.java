@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Ignore DefaultAnnotationParamInspection for lombok EqualsAndHashCode annotation and callSuper param
  */
-public class LombokDefaultAnnotationParamSupport implements DefaultAnnotationParamInspection.IgnoreAnnotationParamSupport {
+public final class LombokDefaultAnnotationParamSupport implements DefaultAnnotationParamInspection.IgnoreAnnotationParamSupport {
 
   @Override
   public boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {

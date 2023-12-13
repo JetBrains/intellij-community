@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 import java.util.List;
 
-public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
+public final class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types) {
     return new DynamicMethodFix(expression, types);

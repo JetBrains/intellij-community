@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 
-public class GroovyUnnecessaryContinueInspection extends BaseInspection {
+public final class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   @Override
   @Nullable

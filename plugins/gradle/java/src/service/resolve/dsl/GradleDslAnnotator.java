@@ -22,7 +22,7 @@ import static org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.M
 /**
  * @author Vladislav.Soroka
  */
-public class GradleDslAnnotator implements Annotator {
+public final class GradleDslAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GrReferenceExpression referenceExpression) {

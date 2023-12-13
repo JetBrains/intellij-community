@@ -5,7 +5,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 
-public class ReplaceValWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
+public final class ReplaceValWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
 
   public ReplaceValWithExplicitTypeIntentionAction() {
     super(LombokClassNames.VAL);

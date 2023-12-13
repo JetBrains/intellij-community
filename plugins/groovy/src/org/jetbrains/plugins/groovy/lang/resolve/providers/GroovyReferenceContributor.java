@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 /**
  * @author Dmitry.Krasilschikov
  */
-public class GroovyReferenceContributor extends PsiReferenceContributor {
+public final class GroovyReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrLiteral.class), new PropertiesReferenceProvider(),

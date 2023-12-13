@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-public class GrClosureTypeConverter extends GrTypeConverter {
+public final class GrClosureTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
   public ConversionResult isConvertible(@NotNull PsiType targetType,

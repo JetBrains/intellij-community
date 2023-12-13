@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesKt;
 
 
-public class GrWildcardTypeConverter extends GrTypeConverter {
+public final class GrWildcardTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
+public final class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
   Logger LOG = Logger.getInstance(RenameGroovyPropertyProcessor.class);
 
   @Override

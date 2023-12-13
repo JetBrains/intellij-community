@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.skipParenthesesDownOrNull;
 
-public class GroovyConstantExpressionEvaluator implements ConstantExpressionEvaluator {
+public final class GroovyConstantExpressionEvaluator implements ConstantExpressionEvaluator {
 
   @Nullable
   public static Object evaluate(@Nullable GrExpression expression) {

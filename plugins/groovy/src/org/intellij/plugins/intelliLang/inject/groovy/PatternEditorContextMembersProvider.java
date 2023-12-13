@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * @author Gregory.Shrago
  */
-public class PatternEditorContextMembersProvider extends NonCodeMembersContributor {
+public final class PatternEditorContextMembersProvider extends NonCodeMembersContributor {
 
   private static final Key<SoftFactoryMap<Class[], PsiFile>> PATTERN_INJECTION_CONTEXT = Key.create("PATTERN_INJECTION_CONTEXT");
   private static final Key<CachedValue<Set<String>>> PATTERN_CLASSES = Key.create("PATTERN_CLASSES");

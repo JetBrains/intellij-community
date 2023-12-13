@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class MergeElseIfIntention extends GrPsiUpdateIntention {
+public final class MergeElseIfIntention extends GrPsiUpdateIntention {
 
   @Override
   @NotNull

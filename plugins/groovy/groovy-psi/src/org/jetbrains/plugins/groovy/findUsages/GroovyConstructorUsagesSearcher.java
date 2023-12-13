@@ -43,7 +43,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+public final class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   public GroovyConstructorUsagesSearcher() {
     super(true);
   }

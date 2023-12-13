@@ -39,7 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
+public final class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
 
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,

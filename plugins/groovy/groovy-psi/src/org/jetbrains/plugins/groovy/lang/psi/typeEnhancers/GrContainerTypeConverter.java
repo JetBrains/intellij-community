@@ -22,7 +22,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCom
 /**
  * @author Maxim.Medvedev
  */
-public class GrContainerTypeConverter extends GrTypeConverter {
+public final class GrContainerTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
   public ConversionResult isConvertible(@NotNull PsiType targetType,

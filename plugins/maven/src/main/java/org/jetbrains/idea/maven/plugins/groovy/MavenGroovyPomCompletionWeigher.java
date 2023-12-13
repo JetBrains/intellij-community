@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
+public final class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {

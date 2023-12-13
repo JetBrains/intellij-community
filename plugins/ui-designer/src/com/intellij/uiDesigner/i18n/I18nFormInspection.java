@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class I18nFormInspection extends StringDescriptorInspection {
+public final class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
     super("I18nForm");
   }

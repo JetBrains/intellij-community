@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleProjectStructureCustomizer extends ExternalProjectStructureCustomizer {
+public final class GradleProjectStructureCustomizer extends ExternalProjectStructureCustomizer {
 
   @NotNull
   @Override

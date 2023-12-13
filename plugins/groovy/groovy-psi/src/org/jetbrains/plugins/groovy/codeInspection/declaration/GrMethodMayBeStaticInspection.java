@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GrMethodMayBeStaticInspection extends BaseInspection {
+public final class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myIgnoreTraitMethods = true;
   public boolean myOnlyPrivateOrFinal = false;
   public boolean myIgnoreEmptyMethods = true;

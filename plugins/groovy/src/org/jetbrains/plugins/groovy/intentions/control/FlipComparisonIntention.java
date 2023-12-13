@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 
-public class FlipComparisonIntention extends GrPsiUpdateIntention {
+public final class FlipComparisonIntention extends GrPsiUpdateIntention {
   @Override
   public @NotNull String getText(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression) element;

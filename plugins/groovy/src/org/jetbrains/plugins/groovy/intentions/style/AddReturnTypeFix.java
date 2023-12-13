@@ -29,7 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrMo
 /**
  * @author Max Medvedev
  */
-public class AddReturnTypeFix extends PsiUpdateModCommandAction<PsiElement> {
+public final class AddReturnTypeFix extends PsiUpdateModCommandAction<PsiElement> {
   
   public AddReturnTypeFix() {
     super(PsiElement.class);

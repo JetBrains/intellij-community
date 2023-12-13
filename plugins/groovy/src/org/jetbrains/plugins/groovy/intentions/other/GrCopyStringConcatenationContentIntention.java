@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 /**
  * @author Max Medvedev
  */
-public class GrCopyStringConcatenationContentIntention extends PsiBasedModCommandAction<GrExpression> {
+public final class GrCopyStringConcatenationContentIntention extends PsiBasedModCommandAction<GrExpression> {
   public GrCopyStringConcatenationContentIntention() {
     super(GrExpression.class);
   }

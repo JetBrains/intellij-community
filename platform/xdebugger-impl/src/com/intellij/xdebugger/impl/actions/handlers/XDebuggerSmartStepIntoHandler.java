@@ -460,7 +460,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                       SmartStepData stepData);
   }
 
-  static class UpHandler extends SmartStepEditorActionHandler {
+  static final class UpHandler extends SmartStepEditorActionHandler {
     UpHandler(EditorActionHandler original) {
       super(original);
     }
@@ -474,7 +474,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class DownHandler extends SmartStepEditorActionHandler {
+  static final class DownHandler extends SmartStepEditorActionHandler {
     DownHandler(EditorActionHandler original) {
       super(original);
     }
@@ -488,7 +488,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class LeftHandler extends SmartStepEditorActionHandler {
+  static final class LeftHandler extends SmartStepEditorActionHandler {
     LeftHandler(EditorActionHandler original) {
       super(original);
     }
@@ -502,7 +502,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class RightHandler extends SmartStepEditorActionHandler {
+  static final class RightHandler extends SmartStepEditorActionHandler {
     RightHandler(EditorActionHandler original) {
       super(original);
     }
@@ -516,7 +516,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class EscHandler extends SmartStepEditorActionHandler {
+  static final class EscHandler extends SmartStepEditorActionHandler {
     EscHandler(EditorActionHandler original) {
       super(original);
     }
@@ -533,7 +533,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class EnterHandler extends SmartStepEditorActionHandler {
+  static final class EnterHandler extends SmartStepEditorActionHandler {
     EnterHandler(EditorActionHandler original) {
       super(original);
     }

@@ -9,7 +9,7 @@ import org.jetbrains.jps.gradle.model.impl.GradleResourcesTargetType;
 import java.util.Arrays;
 import java.util.List;
 
-public class GradleUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
+public final class GradleUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
   @Override
   @NotNull
   public List<? extends ModuleBasedBuildTargetType<?>> getResourceTargetTypes() {

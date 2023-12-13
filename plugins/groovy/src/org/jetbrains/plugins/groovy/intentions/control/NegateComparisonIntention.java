@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 
-public class NegateComparisonIntention extends GrPsiUpdateIntention {
+public final class NegateComparisonIntention extends GrPsiUpdateIntention {
   @Override
   public @NotNull String getText(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression) element;

@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyUnnecessaryReturnInspection extends BaseInspection {
+public final class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
   @Override
   @Nullable

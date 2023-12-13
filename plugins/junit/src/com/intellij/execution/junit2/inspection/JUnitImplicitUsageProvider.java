@@ -27,7 +27,7 @@ import java.util.List;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE;
 
-public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
+public final class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static final String MOCKITO_MOCK = "org.mockito.Mock";
   private static final String JUNIT_TEMP_DIR = "org.junit.jupiter.api.io.TempDir";
   private static final String KOTLIN_JVM_STATIC = "kotlin.jvm.JvmStatic";

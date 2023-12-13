@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
  * @author Niels Harremoes
  * @author Oscar Toernroth
  */
-public class SimplifyTernaryOperatorIntention extends GrPsiUpdateIntention {
+public final class SimplifyTernaryOperatorIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

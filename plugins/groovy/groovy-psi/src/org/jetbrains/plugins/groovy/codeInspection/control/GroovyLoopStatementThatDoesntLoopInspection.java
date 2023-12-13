@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
-public class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection {
+public final class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection {
 
   @Override
   @Nullable

@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
+public final class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
 
   @Override
   @Nullable

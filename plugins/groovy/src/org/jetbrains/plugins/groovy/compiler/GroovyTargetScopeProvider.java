@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
+public final class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope,

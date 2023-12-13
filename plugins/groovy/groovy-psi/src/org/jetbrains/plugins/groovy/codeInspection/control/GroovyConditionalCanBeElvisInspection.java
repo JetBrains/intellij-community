@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
+public final class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {

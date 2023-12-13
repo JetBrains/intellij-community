@@ -36,7 +36,7 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class GradleExtensionsDataService extends AbstractProjectDataService<GradleExtensions, Module> {
+public final class GradleExtensionsDataService extends AbstractProjectDataService<GradleExtensions, Module> {
 
   @NotNull
   public static final Key<GradleExtensions> KEY =

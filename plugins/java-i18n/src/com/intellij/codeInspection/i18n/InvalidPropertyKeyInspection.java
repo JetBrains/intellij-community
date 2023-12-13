@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getShortName() {

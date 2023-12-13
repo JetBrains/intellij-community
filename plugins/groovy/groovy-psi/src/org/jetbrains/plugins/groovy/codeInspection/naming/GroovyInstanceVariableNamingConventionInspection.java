@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
-public class GroovyInstanceVariableNamingConventionInspection extends ConventionInspection {
+public final class GroovyInstanceVariableNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 1;
   private static final int DEFAULT_MAX_LENGTH = 32;

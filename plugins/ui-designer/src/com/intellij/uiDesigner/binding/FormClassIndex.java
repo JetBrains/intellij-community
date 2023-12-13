@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 
-public class FormClassIndex extends ScalarIndexExtension<String> {
+public final class FormClassIndex extends ScalarIndexExtension<String> {
   public static final @NonNls ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 

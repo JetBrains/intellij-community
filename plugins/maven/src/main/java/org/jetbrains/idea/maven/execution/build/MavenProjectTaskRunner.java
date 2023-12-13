@@ -39,7 +39,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
-public class MavenProjectTaskRunner extends ProjectTaskRunner {
+public final class MavenProjectTaskRunner extends ProjectTaskRunner {
   @Override
   public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
     AsyncPromise<Result> promise = new AsyncPromise<>();

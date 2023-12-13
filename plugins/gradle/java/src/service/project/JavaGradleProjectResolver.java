@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
+public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
   private final static Logger LOG = Logger.getInstance(JavaGradleProjectResolver.class);
 
   @Override

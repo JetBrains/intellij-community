@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyAssignmentCanBeOperatorAssignmentInspection
+public final class GroovyAssignmentCanBeOperatorAssignmentInspection
     extends BaseInspection {
 
   /**

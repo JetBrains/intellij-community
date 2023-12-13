@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-public class MavenDomGutterAnnotator implements Annotator {
+public final class MavenDomGutterAnnotator implements Annotator {
 
   private static void annotateDependencyUsages(@NotNull MavenDomDependency dependency, AnnotationHolder holder) {
     final XmlTag tag = dependency.getXmlTag();

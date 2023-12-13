@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethodTreeGenerator implements TreeGenerator {
+public final class LombokLightMethodTreeGenerator implements TreeGenerator {
 
   public LombokLightMethodTreeGenerator() {
   }

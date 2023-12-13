@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.json.JsonElementTypes.*;
 
-public class JsonFormattingBuilderModel implements FormattingModelBuilder {
+public final class JsonFormattingBuilderModel implements FormattingModelBuilder {
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();

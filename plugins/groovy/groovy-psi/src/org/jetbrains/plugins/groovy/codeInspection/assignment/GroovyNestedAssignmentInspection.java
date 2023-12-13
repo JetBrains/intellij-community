@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 
-public class GroovyNestedAssignmentInspection extends BaseInspection {
+public final class GroovyNestedAssignmentInspection extends BaseInspection {
 
   @Override
   @Nullable

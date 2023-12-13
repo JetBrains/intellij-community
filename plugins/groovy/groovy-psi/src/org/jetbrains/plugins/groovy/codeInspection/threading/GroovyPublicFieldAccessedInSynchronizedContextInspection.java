@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
+public final class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @Override
   @NotNull

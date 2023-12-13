@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MavenConsoleFilterProvider implements ConsoleFilterProvider {
+public final class MavenConsoleFilterProvider implements ConsoleFilterProvider {
   private static final String MAVEN_PREFIX = "(?:^|(?:\\[\\w+\\]\\s*)( /)?)";
   private static final String CONSOLE_FILTER_REGEXP =
     MAVEN_PREFIX + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";

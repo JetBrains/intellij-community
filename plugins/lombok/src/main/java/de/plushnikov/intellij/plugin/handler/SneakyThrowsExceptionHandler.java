@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
+public final class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   private static final String JAVA_LANG_THROWABLE = "java.lang.Throwable";
 

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.URL;
 
 
-public class JUnit5Migration implements PredefinedMigrationProvider {
+public final class JUnit5Migration implements PredefinedMigrationProvider {
 
   @NotNull
   @Override

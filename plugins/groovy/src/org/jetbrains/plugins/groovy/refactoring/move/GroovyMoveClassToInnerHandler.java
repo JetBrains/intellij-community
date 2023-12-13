@@ -35,7 +35,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
 /**
  * @author Max Medvedev
  */
-public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
+public final class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
   private static final Logger LOG = Logger.getInstance(GroovyMoveClassToInnerHandler.class);
 
   @Override

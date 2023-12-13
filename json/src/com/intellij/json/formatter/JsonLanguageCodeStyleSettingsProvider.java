@@ -24,7 +24,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 /**
  * @author Mikhail Golubev
  */
-public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   private static final class Holder {
     private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
       .map(alignment -> alignment.getDescription())

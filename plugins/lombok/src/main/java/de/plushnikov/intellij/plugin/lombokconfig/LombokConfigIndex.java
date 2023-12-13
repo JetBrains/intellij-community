@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
+public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
   @NonNls
   public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 

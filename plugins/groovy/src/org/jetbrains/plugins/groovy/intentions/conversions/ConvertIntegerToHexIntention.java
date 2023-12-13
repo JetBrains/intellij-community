@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.math.BigInteger;
 
-public class ConvertIntegerToHexIntention extends GrPsiUpdateIntention {
+public final class ConvertIntegerToHexIntention extends GrPsiUpdateIntention {
 
 
   @Override

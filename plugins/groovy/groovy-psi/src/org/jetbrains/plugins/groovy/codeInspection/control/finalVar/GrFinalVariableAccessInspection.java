@@ -42,7 +42,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class GrFinalVariableAccessInspection extends BaseInspection {
+public final class GrFinalVariableAccessInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrCreateMissingSwitchBranchesIntention extends GrPsiUpdateIntention {
+public final class GrCreateMissingSwitchBranchesIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrSwitchStatement)) return;

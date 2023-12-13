@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertClosureToMethodIntention extends Intention {
+public final class ConvertClosureToMethodIntention extends Intention {
   private static final Logger LOG =
     Logger.getInstance(ConvertClosureToMethodIntention.class);
 

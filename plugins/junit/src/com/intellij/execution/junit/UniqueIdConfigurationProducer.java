@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
+public final class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
   @Override
   protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
                                                   @NotNull ConfigurationContext context,

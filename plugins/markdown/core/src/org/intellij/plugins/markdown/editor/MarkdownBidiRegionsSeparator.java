@@ -5,7 +5,7 @@ import com.intellij.psi.tree.TokenSet;
 
 import static org.intellij.plugins.markdown.lang.MarkdownTokenTypes.*;
 
-public class MarkdownBidiRegionsSeparator extends TokenSetBidiRegionsSeparator {
+public final class MarkdownBidiRegionsSeparator extends TokenSetBidiRegionsSeparator {
 
   public static final TokenSet PARAGRAPH_CONTENTS = TokenSet.create(TEXT,
                                                                     WHITE_SPACE,

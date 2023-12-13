@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
+public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
   @Override
   @NotNull
   protected String getTagName() {

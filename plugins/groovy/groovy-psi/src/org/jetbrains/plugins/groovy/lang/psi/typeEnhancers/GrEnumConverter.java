@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.isEnum;
 
-public class GrEnumConverter extends GrTypeConverter {
+public final class GrEnumConverter extends GrTypeConverter {
 
   @Nullable
   @Override

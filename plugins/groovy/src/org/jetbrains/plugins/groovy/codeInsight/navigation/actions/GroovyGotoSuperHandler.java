@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * @author Medvedev Max
  */
-public class GroovyGotoSuperHandler extends GotoTargetHandler implements LanguageCodeInsightActionHandler {
+public final class GroovyGotoSuperHandler extends GotoTargetHandler implements LanguageCodeInsightActionHandler {
 
   private static final Logger LOG = Logger.getInstance(GroovyGotoSuperHandler.class);
 

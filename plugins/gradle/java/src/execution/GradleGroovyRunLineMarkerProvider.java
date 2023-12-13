@@ -24,7 +24,7 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.isFromGroo
 /**
  * @author Vladislav.Soroka
  */
-public class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor {
+public final class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor {
   @Nullable
   @Override
   public Info getInfo(@NotNull final PsiElement element) {

@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyUntypedAccessInspection extends BaseInspection {
+public final class GroovyUntypedAccessInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -38,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class FieldAnnotationChecker extends CustomAnnotationChecker {
+public final class FieldAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {

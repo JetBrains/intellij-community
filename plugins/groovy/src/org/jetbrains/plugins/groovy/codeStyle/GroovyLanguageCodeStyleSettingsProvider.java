@@ -38,7 +38,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author Rustam Vishnyakov
  */
-public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,

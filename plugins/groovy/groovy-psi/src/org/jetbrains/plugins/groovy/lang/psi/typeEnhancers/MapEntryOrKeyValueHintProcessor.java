@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
+public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   @NlsSafe private static final String INDEX = "index";
   @NlsSafe private static final String ARG_NUM = "argNum";
 

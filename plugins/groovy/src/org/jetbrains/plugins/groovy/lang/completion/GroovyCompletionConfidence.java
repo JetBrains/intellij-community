@@ -11,7 +11,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-public class GroovyCompletionConfidence extends CompletionConfidence {
+public final class GroovyCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override

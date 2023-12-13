@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class GradlePositionManager extends ScriptPositionManagerHelper {
+public final class GradlePositionManager extends ScriptPositionManagerHelper {
   private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   @Override

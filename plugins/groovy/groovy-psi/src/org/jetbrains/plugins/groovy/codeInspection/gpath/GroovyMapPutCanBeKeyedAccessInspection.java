@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
+public final class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
   private final ReplaceWithPropertyAccessFix fix = new ReplaceWithPropertyAccessFix();
 
   @Override

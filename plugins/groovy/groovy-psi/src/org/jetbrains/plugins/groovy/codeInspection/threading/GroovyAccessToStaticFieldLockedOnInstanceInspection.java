@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyAccessToStaticFieldLockedOnInstanceInspection
+public final class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
 
   @Override

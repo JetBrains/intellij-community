@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author Max Medvedev
  */
-public class GrDeprecatedAPIUsageInspection extends BaseInspection {
+public final class GrDeprecatedAPIUsageInspection extends BaseInspection {
 
   @NotNull
   @Override

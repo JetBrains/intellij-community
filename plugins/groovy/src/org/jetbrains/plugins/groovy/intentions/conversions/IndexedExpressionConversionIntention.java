@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class IndexedExpressionConversionIntention extends GrPsiUpdateIntention {
+public final class IndexedExpressionConversionIntention extends GrPsiUpdateIntention {
 
   @Override
   @NotNull

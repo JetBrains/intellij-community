@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-public class GroovySourceRootDetector extends JavaSourceRootDetector {
+public final class GroovySourceRootDetector extends JavaSourceRootDetector {
   @NotNull
   @Override
   protected @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName() {

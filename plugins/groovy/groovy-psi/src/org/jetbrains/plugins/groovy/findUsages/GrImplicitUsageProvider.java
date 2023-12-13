@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GrImplicitUsageProvider implements ImplicitUsageProvider {
+public final class GrImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof GrMethod method) {

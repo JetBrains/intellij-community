@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
+public final class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
   @Override
   @Nullable

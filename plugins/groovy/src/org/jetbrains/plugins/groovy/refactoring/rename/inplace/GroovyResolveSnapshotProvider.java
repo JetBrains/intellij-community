@@ -21,7 +21,7 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyResolveSnapshotProvider extends ResolveSnapshotProvider{
+public final class GroovyResolveSnapshotProvider extends ResolveSnapshotProvider{
   @Override
   public ResolveSnapshot createSnapshot(PsiElement scope) {
     return new GroovyResolveSnapshot(scope);

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
-public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandlerBase {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

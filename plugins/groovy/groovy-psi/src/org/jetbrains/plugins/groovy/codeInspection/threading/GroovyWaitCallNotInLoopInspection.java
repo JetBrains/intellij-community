@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-public class GroovyWaitCallNotInLoopInspection extends BaseInspection {
+public final class GroovyWaitCallNotInLoopInspection extends BaseInspection {
 
   @Override
   @Nullable

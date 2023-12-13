@@ -28,7 +28,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContributor {
+public final class GradleWorkspaceContributor implements ExternalSystemWorkspaceContributor {
 
   @Nullable
   @Override

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-public class GrListToArrayTypeConverter extends GrTypeConverter {
+public final class GrListToArrayTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
   public ConversionResult isConvertible(@NotNull PsiType targetType,

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitor;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyAssignabilityCheckInspection extends BaseInspection {
+public final class GroovyAssignabilityCheckInspection extends BaseInspection {
 
   @NotNull
   @Override

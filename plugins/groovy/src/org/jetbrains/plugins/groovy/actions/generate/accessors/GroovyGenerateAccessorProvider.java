@@ -29,7 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class GroovyGenerateAccessorProvider implements NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> {
+public final class GroovyGenerateAccessorProvider implements NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> {
 
   @NotNull
   @Override

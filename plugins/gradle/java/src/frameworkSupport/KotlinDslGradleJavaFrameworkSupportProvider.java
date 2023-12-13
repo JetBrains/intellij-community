@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
+public final class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
 
   public static final String ID = "java";
 

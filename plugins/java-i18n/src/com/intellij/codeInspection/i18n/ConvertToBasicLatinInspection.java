@@ -30,7 +30,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

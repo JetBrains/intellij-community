@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * It should find calls to getters/setters of some field changed by lombok accessors
  */
-public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public final class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
   public LombokFieldFindUsagesHandlerFactory() {
   }

@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
+public final class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
