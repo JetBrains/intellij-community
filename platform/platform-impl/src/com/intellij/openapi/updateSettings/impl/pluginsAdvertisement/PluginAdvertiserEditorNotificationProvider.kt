@@ -279,9 +279,13 @@ private fun getSuggestedIdes(activeProductCode: String,
 
   val suggestedIde = PluginAdvertiserService.ides.entries.firstOrNull { it.key in productCodes }
   val commercialVersionCode = getSuggestedCommercialIdeCode(activeProductCode)
+  val commercialIde = PluginAdvertiserService.ides[commercialVersionCode]
 
-  if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode) {
-    return listOf(PluginAdvertiserService.ides[commercialVersionCode]!!)
+  if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode &&
+      // Don't suggest a commercial IDE if it doesn't support the extension.
+      // We assume that IU supports all extensions, which is not true (e.g. *.cpp), but it's better than nothing.
+      (commercialIde == PluginAdvertiserService.ideaUltimate || commercialVersionCode in productCodes)) {
+    return listOf(commercialIde!!)
   }
   else if (suggestedIde != null && suggestedIde.key == activeProductCode) {
     return emptyList()

@@ -74,6 +74,7 @@ sealed interface PluginAdvertiserService {
       "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
       "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
       "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
+      "RR" to SuggestedIde("RustRover", "https://www.jetbrains.com/rust/download/"),
       "IU" to ideaUltimate
     )
 
@@ -89,6 +90,7 @@ sealed interface PluginAdvertiserService {
       "CL" to "clion",
       "RD" to "rider",
       "RM" to "ruby",
+      "RR" to "rust",
       "AS" to "androidstudio"
     )
 
