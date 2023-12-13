@@ -500,6 +500,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
     if (UiInterceptors.tryIntercept(this)) return;
+    Window window = getCurrentWindow(project);
+    if (window != null && window.isShowing()) {
+      showInCenterOf(window);
+    }
+  }
+
+  @Nullable
+  protected static Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -512,9 +520,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if ((window == null || !window.isShowing()) && manager != null) {
       window = manager.getFrame(project);
     }
-    if (window != null && window.isShowing()) {
-      showInCenterOf(window);
-    }
+
+    return window;
   }
 
   private static Window getTargetWindow(Component component) {
