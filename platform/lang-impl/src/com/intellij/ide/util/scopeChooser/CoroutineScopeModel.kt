@@ -6,6 +6,8 @@ import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -59,7 +61,10 @@ internal class CoroutineScopeModel internal constructor(
 
   override fun refreshScopes(dataContext: DataContext?) {
     val asyncDataContext = dataContext?.let { Utils.createAsyncDataContext(it) }
-    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+    coroutineScope.launch(
+      start = CoroutineStart.UNDISPATCHED,
+      context = ModalityState.any().asContextElement(),
+    ) {
       semaphore.withPermit {
         yield() // dispatch
         runCatching {
