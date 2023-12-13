@@ -1,0 +1,3 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.highlighter.fake">
+  <module value="kotlin.highlighting.minimal" />
+</idea-plugin>

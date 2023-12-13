@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

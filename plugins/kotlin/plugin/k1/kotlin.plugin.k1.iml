@@ -109,7 +109,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
@@ -155,5 +154,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
   </component>
 </module>

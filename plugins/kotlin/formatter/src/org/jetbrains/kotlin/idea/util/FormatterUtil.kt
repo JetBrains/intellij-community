@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
@@ -54,7 +54,7 @@ fun PsiElement.leaf(forward: Boolean = true, filter: (PsiElement) -> Boolean): P
     if (forward) nextLeaf(filter)
     else prevLeaf(filter)
 
-val PsiElement.isComma: Boolean get() = PsiUtil.getElementType(this) == KtTokens.COMMA
+val PsiElement.isComma: Boolean get() = PsiUtilCore.getElementType(this) == KtTokens.COMMA
 
 fun PsiElement.containsLineBreakInChild(globalStartOffset: Int, globalEndOffset: Int): Boolean =
     getLineCountByDocument(globalStartOffset, globalEndOffset)?.let { it > 1 }

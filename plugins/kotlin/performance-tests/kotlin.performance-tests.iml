@@ -34,7 +34,6 @@
     <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />

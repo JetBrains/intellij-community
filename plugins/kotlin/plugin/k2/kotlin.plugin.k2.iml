@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.migration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
@@ -109,5 +108,7 @@
     <orderEntry type="module" module-name="kotlin.injection-k2" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
   </component>
 </module>

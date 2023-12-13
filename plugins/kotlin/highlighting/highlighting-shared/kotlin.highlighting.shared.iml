@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
   </component>
 </module>

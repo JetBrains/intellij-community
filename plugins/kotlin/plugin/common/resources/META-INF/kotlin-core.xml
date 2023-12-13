@@ -389,7 +389,7 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.editor.KotlinEnterBetweenBracesAndBracketsNoCommitDelegate"/>
 
-    <lang.smartEnterProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.KotlinSmartEnterHandler"/>
+    <lang.smartEnterProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.KotlinSmartEnterHandler"/>
 
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinStringTemplateBackspaceHandler"/>

@@ -123,7 +123,6 @@
     <orderEntry type="module" module-name="kotlin.injection" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
     <orderEntry type="module" module-name="kotlin.injection-k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" exported="" />
@@ -204,5 +203,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
   </component>
 </module>
