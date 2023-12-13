@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Experimental
 public abstract class AbstractBatchSuppressByNoInspectionCommentModCommandFix
   extends PsiUpdateModCommandQuickFix implements ContainerBasedSuppressQuickFix, InjectionAwareSuppressQuickFix, Iconable {
   protected final @NotNull String myID;
