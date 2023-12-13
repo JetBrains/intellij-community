@@ -8,6 +8,24 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
 
   override fun setUp() {
     super.setUp()
+    addClasses()
+    myFixture.enableInspections(LightServiceMigrationXMLInspection::class.java,
+                                LightServiceMigrationCodeInspection::class.java)
+  }
+
+  protected fun doTest(codeFilePath: String, xmlFilePath: String) {
+    myFixture.testHighlightingAllFiles(true, false, false, codeFilePath, xmlFilePath)
+  }
+
+  protected fun getCodeFilePath(): String {
+    return getTestName(false) + "." + fileExtension
+  }
+
+  protected fun getXmlFilePath(): String {
+    return getTestName(true) + ".xml"
+  }
+
+  private fun addClasses() {
     myFixture.addClass("""
       package com.intellij.openapi.components;
       public interface PersistentStateComponent<T> { }
@@ -61,19 +79,5 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
         boolean isHeadlessEnvironment();
       }
     """)
-    myFixture.enableInspections(LightServiceMigrationXMLInspection::class.java,
-                                LightServiceMigrationCodeInspection::class.java)
-  }
-
-  protected fun doTest(codeFilePath: String, xmlFilePath: String) {
-    myFixture.testHighlightingAllFiles(true, false, false, codeFilePath, xmlFilePath)
-  }
-
-  protected fun getCodeFilePath(): String {
-    return getTestName(false) + "." + fileExtension
-  }
-
-  protected fun getXmlFilePath(): String {
-    return getTestName(true) + ".xml"
   }
 }
