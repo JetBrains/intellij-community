@@ -1,18 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyEncodingUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -25,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * User: catherine
  */
-public class AddEncodingQuickFix implements LocalQuickFix {
+public class AddEncodingQuickFix extends PsiUpdateModCommandQuickFix {
 
   private final String myDefaultEncoding;
   private final int myEncodingFormatIndex;
@@ -42,8 +38,7 @@ public class AddEncodingQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiFile file = element.getContainingFile();
     if (file == null) return;
     PsiElement firstLine = file.getFirstChild();
@@ -56,12 +51,9 @@ public class AddEncodingQuickFix implements LocalQuickFix {
     PsiComment encodingComment = elementGenerator.createFromText(languageLevel, PsiComment.class, commentText);
     encodingComment = (PsiComment)file.addBefore(encodingComment, firstLine);
 
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, element.getContainingFile().getVirtualFile());
     if (encodingComment.getNextSibling() == null || !encodingComment.getNextSibling().textContains('\n')) {
       file.addAfter(elementGenerator.createFromText(languageLevel, PsiWhiteSpace.class, "\n"), encodingComment);
     }
-    final Document document = editor.getDocument();
-    final int insertedLineNumber = document.getLineNumber(encodingComment.getTextOffset());
-    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(insertedLineNumber + 1, 0));
+    updater.moveTo(encodingComment.getTextOffset() + encodingComment.getTextLength() + 1);
   }
 }
