@@ -16,6 +16,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -114,12 +115,18 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   @Override
   protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
     String suffix = finished ? "" : " so far";
+    name = adjustForKotlin(name);
     if (TestFinderHelper.isTest(sourceElement)) {
       return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length, suffix);
     }
     else {
       return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length, suffix);
     }
+  }
+
+  private static String adjustForKotlin(String name) {
+    // From JVM's perspective, Kotlin classes have the trailing "Kt". Users usually don't want to use it in their test names.
+    return StringUtil.trimEnd(name, "Kt");
   }
 
   @NotNull

@@ -104,7 +104,12 @@ public class CreateTestDialog extends DialogWrapper {
     JavaCodeStyleSettings customSettings = JavaCodeStyleSettings.getInstance(targetClass.getContainingFile());
     String prefix = customSettings.TEST_NAME_PREFIX;
     String suffix = customSettings.TEST_NAME_SUFFIX;
-    return prefix + targetClass.getName() + suffix;
+    return prefix + adjustForKotlin(targetClass.getName()) + suffix;
+  }
+
+  private static String adjustForKotlin(String targetClassName) {
+    // From JVM's perspective, Kotlin classes have the trailing "Kt". Users usually don't want to use it in their test names.
+    return StringUtil.trimEnd(targetClassName, "Kt");
   }
 
   private boolean isSuperclassSelectedManually() {
