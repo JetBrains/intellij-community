@@ -10,8 +10,16 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.OverlayLayout
 
-internal class BannerOverlay {
+internal class BannerOverlay(comp: JComponent) {
+
   private val container = JPanel(VerticalFlowLayout(0, 0)).apply { isOpaque = false }
+  private val pane = wrapComponent(comp)
+
+  val component: JComponent
+    get() {
+      return pane
+    }
+
 
   fun showError(notification: NotificationData) {
     clearNotifications()
@@ -41,7 +49,7 @@ internal class BannerOverlay {
     container.repaint()
   }
 
-  fun wrapComponent(comp: JComponent): JPanel {
+  private fun wrapComponent(comp: JComponent): JPanel {
     val res = object : JPanel() {
       override fun getPreferredSize(): Dimension = comp.preferredSize
       override fun getMinimumSize(): Dimension = comp.minimumSize

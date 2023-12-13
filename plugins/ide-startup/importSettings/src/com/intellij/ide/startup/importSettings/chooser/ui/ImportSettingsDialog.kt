@@ -101,10 +101,9 @@ class ImportSettingsDialog(val cancelCallback: () -> Unit) : DialogWrapper(null,
     return DialogStyle.COMPACT
   }
 
-  private val overlay: BannerOverlay
+  private val overlay = BannerOverlay(pane)
 
   init {
-    overlay = BannerOverlay()
     goToProductChooserPage()
 
     val settService = SettingsService.getInstance()
@@ -120,7 +119,7 @@ class ImportSettingsDialog(val cancelCallback: () -> Unit) : DialogWrapper(null,
   }
 
   override fun createCenterPanel(): JComponent {
-    return overlay.wrapComponent(pane)
+    return overlay.component
   }
 
   override fun createDefaultButton(name: @Nls String, handler: () -> Unit): JButton {
