@@ -34,12 +34,16 @@ public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsP
   public FileType getRegisteredFileTypeFromLanguageHierarchy(@NotNull FileType type) {
     if (super.forFileType(type) != null) return type;
 
-    while (type instanceof LanguageFileType) {
-      Language language = ((LanguageFileType)type).getLanguage();
-      Language baseLanguage = language.getBaseLanguage();
-      if (baseLanguage == null) break;
+    while (type instanceof LanguageFileType lft) {
+      Language language = lft.getLanguage();
+      if (!lft.isSecondary()) {
+        language = language.getBaseLanguage();
+      }
+      if (language == null) {
+        break;
+      }
 
-      FileType baseFileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(baseLanguage);
+      FileType baseFileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
       if (baseFileType == null) break;
       if (super.forFileType(baseFileType) != null) return baseFileType;
 
