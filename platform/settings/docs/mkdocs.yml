@@ -1,0 +1,38 @@
+site_name: IJ Settings (draft)
+docs_dir: src
+theme:
+  name: material
+  favicon: favicon.svg
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+#    - navigation.tabs
+#    - navigation.tabs.sticky
+    - navigation.sections
+#    - navigation.indexes
+    - navigation.top
+    - toc.integrate
+    - toc.follow
+    - navigation.top
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - d2:
+      layout: elk
+      dark_theme: 0
+      cache: false
+
+nav:
+    - "":
+      - Overview: index.md
+      - Setting Descriptor: setting-descriptor.md
+      - Setting Types: setting-types.md

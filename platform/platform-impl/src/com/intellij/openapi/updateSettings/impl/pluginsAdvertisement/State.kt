@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.objectSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
@@ -74,7 +74,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
     key = "pluginAdvertiserExtensions",
     serializer = settingDescriptorFactory.objectSerializer<PluginAdvertiserExtensionsState>(),
   ) {
-    tags = listOf(CacheStateTag)
+    tags = listOf(CacheTag)
   }
 
   init {

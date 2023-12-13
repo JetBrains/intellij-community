@@ -21,7 +21,7 @@ class LocalSettingsControllerTest {
 
     val controller = serviceAsync<SettingsController>()
     val settingsDescriptor = factory.settingDescriptor("test.flag") {
-      tags = listOf(CacheStateTag)
+      tags = listOf(CacheTag)
     }
 
     assertThat(controller.getItem(settingsDescriptor)).isNull()
@@ -36,7 +36,7 @@ class LocalSettingsControllerTest {
 
     val controller = serviceAsync<SettingsController>()
     val settingsDescriptor = factory.settingDescriptor("test.flag", factory.objectSerializer<CustomObject>()) {
-      tags = listOf(CacheStateTag)
+      tags = listOf(CacheTag)
     }
 
     assertThat(controller.getItem(settingsDescriptor)).isNull()
@@ -54,7 +54,7 @@ class LocalSettingsControllerTest {
 
     val controller = serviceAsync<SettingsController>()
     val settingsDescriptor = factory.settingDescriptor("test.flag", factory.mapSerializer<String, String>()) {
-      tags = listOf(CacheStateTag)
+      tags = listOf(CacheTag)
     }
 
     assertThat(controller.getItem(settingsDescriptor)).isNull()
@@ -72,7 +72,7 @@ class LocalSettingsControllerTest {
     }
     assertThat(controller.getItem(settingsDescriptor)).isNull()
     assertThat(controller.getItem(settingDescriptor("test.flag.__corrupted__", PluginManagerCore.CORE_ID, ByteArraySettingValueSerializer) {
-      tags = listOf(CacheStateTag)
+      tags = listOf(CacheTag)
     }
     )).hasSize(4096)
   }
@@ -82,7 +82,7 @@ private suspend fun corruptValue(key: String, controller: SettingsController) {
   val settingsDescriptor = settingDescriptor(key = key,
                                              pluginId = PluginManagerCore.CORE_ID,
                                              serializer = ByteArraySettingValueSerializer) {
-    tags = listOf(CacheStateTag)
+    tags = listOf(CacheTag)
   }
   controller.setItem(settingsDescriptor, Random(42).nextBytes(4096))
 }

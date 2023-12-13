@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.settingDescriptorFactory
@@ -62,7 +62,7 @@ class BundledPluginsState : ApplicationInitializedListener {
 suspend fun saveBundledPluginsState() {
   val settingsController = serviceAsync<SettingsController>()
   val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
-    tags = listOf(CacheStateTag)
+    tags = listOf(CacheTag)
   }
 
   val savedBuildNumber = getSavedBuildNumber(settingsController, settingDescriptor)

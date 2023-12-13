@@ -7,7 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.PropertyManagerAdapterTag
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
@@ -21,7 +21,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
         @Suppress("UNCHECKED_CAST")
         return propertyManager.getValue(tag.oldKey) as T?
       }
-      else if (tag is CacheStateTag) {
+      else if (tag is CacheTag) {
         val store = componentManager.serviceAsync<CacheStateStorageService>()
         return store.getValue(getEffectiveKey(key = key), key.serializer, key.pluginId)
       }
@@ -33,7 +33,7 @@ internal class LocalSettingsController(private val componentManager: ComponentMa
 
   override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (tag in key.tags) {
-      if (tag is CacheStateTag) {
+      if (tag is CacheTag) {
         val store = componentManager.serviceAsync<CacheStateStorageService>()
         store.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
         return

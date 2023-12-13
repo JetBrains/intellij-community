@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.objectSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
@@ -58,7 +58,7 @@ internal class ErrorReportConfigurable {
     key = "ideErrorReporter.developerList",
     serializer = settingDescriptorFactory.objectSerializer<DeveloperList>(),
   ) {
-    tags = listOf(CacheStateTag)
+    tags = listOf(CacheTag)
   }
 
   suspend fun getDeveloperList(): DeveloperList {

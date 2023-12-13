@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.advertiser
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.Setting
 import com.intellij.platform.settings.objectSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
@@ -26,7 +26,7 @@ class PluginFeatureCacheService {
   private val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
   private val serializer = factory.objectSerializer<PluginFeatureMap>()
   private val settingGroup = factory.group(key = "pluginFeatureCache") {
-    tags = listOf(CacheStateTag)
+    tags = listOf(CacheTag)
   }
 
   val dependencies: Setting<PluginFeatureMap> = settingGroup.setting("dependencies", serializer)

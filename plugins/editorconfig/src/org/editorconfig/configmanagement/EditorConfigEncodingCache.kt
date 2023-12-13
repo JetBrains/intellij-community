@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
-import com.intellij.platform.settings.CacheStateTag
+import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.settingDescriptorFactory
 import kotlinx.serialization.Serializable
@@ -36,7 +36,7 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
   @Suppress("SpellCheckingInspection")
   private val setting = settingDescriptorFactory(PluginId.getId("org.editorconfig.editorconfigjetbrains")).let { factory ->
     factory.settingDescriptor("encodings", factory.mapSerializer(String::class.java, CharsetData::class.java)) {
-      tags = listOf(CacheStateTag)
+      tags = listOf(CacheTag)
     }
   }
 
