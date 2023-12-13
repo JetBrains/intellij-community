@@ -86,6 +86,13 @@ internal fun Match.getData(snapshot: ImmutableEntityStorage): Any? {
   }
 }
 
+internal fun Match.value(): Any? {
+  return when (this) {
+    is MatchWithEntityId -> error("Cannot get a value from $this")
+    is MatchWithData -> this.data
+  }
+}
+
 internal fun Any?.toMatch(basedOn: Match?): Match {
   return if (this is WorkspaceEntityBase) {
     MatchWithEntityId(this.id, basedOn)

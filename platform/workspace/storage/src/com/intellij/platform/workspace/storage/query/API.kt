@@ -59,6 +59,10 @@ public fun <T, K> CollectionQuery<T>.flatMap(mapping: (T, ImmutableEntityStorage
   return CollectionQuery.FlatMapTo(this.queryId, this, mapping)
 }
 
+internal fun <T> CollectionQuery<T>.trackDiff(): CollectionQuery<T>{
+  return CollectionQuery.TrackDiff(this.queryId, this)
+}
+
 public fun <T, K, V> CollectionQuery<T>.groupBy(
   keySelector: (T) -> K,
   valueTransformer: (T) -> V,

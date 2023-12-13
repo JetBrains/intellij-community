@@ -31,6 +31,7 @@ public sealed interface CollectionQuery<T> : StorageQuery<Collection<T>> {
     public val from: CollectionQuery<T>,
     public val map: (T, ImmutableEntityStorage) -> Iterable<K>,
   ) : CollectionQuery<K>
+  public class TrackDiff<T>(override val queryId: QueryId, public val from: CollectionQuery<T>) : CollectionQuery<T>
 
   public class MapTo<T, K> internal constructor(
     override val queryId: QueryId,
@@ -69,6 +70,10 @@ internal fun <T> StorageQuery<T>.compile(cellCollector: MutableList<Cell<*>> = m
         }
         is CollectionQuery.MapTo<*, *> -> {
           cellCollector.prepend(MapCell(CellId(), map, persistentHashMapOf()))
+          this.from.compile(cellCollector)
+        }
+        is CollectionQuery.TrackDiff<*> -> {
+          cellCollector.prepend(DiffCollectorCell<T>(CellId(), emptyList(), emptyList()))
           this.from.compile(cellCollector)
         }
       }

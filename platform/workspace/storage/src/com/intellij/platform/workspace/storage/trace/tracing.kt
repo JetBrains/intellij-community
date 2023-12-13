@@ -262,3 +262,66 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
   }
   return patternSet
 }
+
+@OptIn(EntityStorageInstrumentationApi::class)
+internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
+  val patternSet = ReadTraceHashSet()
+  this.forEach { change ->
+    when (change) {
+      is EntityChange.Added<*> -> {
+        val ofClass = change.newEntity.getEntityInterface()
+        val entityData = change.newEntity.asBase().getData()
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+      is EntityChange.Removed<*> -> {
+        val ofClass = change.entity.getEntityInterface()
+        val entityData = change.entity.asBase().getData()
+
+        patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
+
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+      is EntityChange.Replaced<*> -> {
+        val ofClass = change.newEntity.getEntityInterface()
+        val entityData = change.newEntity.asBase().getData()
+
+        patternSet.add(ReadTrace.SomeFieldAccess(change.newEntity.asBase().id).hash)
+
+        // Becase maybe we update the field with links
+        if (entityData is SoftLinkable) {
+          entityData.getLinks().forEach { link ->
+            patternSet.add(ReadTrace.HasSymbolicLinkTo(link, ofClass).hash)
+          }
+        }
+
+        // Because maybe we update the field that calculates symbolic id
+        val entity = entityData.createEntity(newSnapshot)
+        if (entity is WorkspaceEntityWithSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        }
+      }
+    }
+  }
+  return patternSet
+}

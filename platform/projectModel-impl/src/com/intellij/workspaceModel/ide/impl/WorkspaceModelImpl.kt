@@ -20,11 +20,15 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.impl.query.Diff
+import com.intellij.platform.workspace.storage.query.CollectionQuery
+import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,6 +45,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   @Volatile
   var loadedFromCache = false
     protected set
+
+  private val reactive = WmReactive(this)
 
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
@@ -380,6 +386,10 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
     return true
   }
+
+  override suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T> = reactive.flowOfQuery(query)
+  override suspend fun <T> flowOfNewElements(query: CollectionQuery<T>): Flow<T> = reactive.flowOfNewElements(query)
+  override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
   final override fun dispose() = Unit
 

@@ -7,6 +7,10 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.query.Diff
+import com.intellij.platform.workspace.storage.query.CollectionQuery
+import com.intellij.platform.workspace.storage.query.StorageQuery
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -69,6 +73,15 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    * @see [WorkspaceModel.getBuilderSnapshot]
    */
   public fun replaceProjectModel(replacement: StorageReplacement): Boolean
+
+  @ApiStatus.Experimental
+  public suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T>
+
+  @ApiStatus.Experimental
+  public suspend fun <T> flowOfNewElements(query: CollectionQuery<T>): Flow<T>
+
+  @ApiStatus.Experimental
+  public suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>>
 }
 
 @get:ApiStatus.Internal

@@ -7,10 +7,13 @@ import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.query.compile
+import com.intellij.platform.workspace.storage.query.trackDiff
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 
 internal data class CellUpdateInfo(
   val chainId: QueryId,
@@ -58,10 +61,11 @@ internal sealed interface UpdateType {
 
 internal class PropagationResult<T>(
   val newCell: Cell<T>,
-  val matchSet: MatchSet,
+  val matchList: MatchList,
   val subscriptions: List<Pair<ReadTraceHashSet, UpdateType>>,
 )
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val lock = Any()
 
@@ -77,6 +81,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
    *   still this flag exists to catch bugs in implementation or after refactorings.
    */
   private var pullingCache = false
+  internal var shuffleEntities: Long = -1L
 
   override fun pullCache(
     newSnapshot: ImmutableEntityStorage,
@@ -96,6 +101,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
         }
         this.queryIdToChain.putAll(from.queryIdToChain)
         this.changeQueue.putAll(from.changeQueue.mapValues { ArrayList(it.value) })
+        this.shuffleEntities = from.shuffleEntities
 
         val cachesToRemove = ArrayList<QueryId>()
         this.queryIdToChain.keys.forEach { chainId ->
@@ -126,49 +132,85 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
     changeQueue.remove(queryId)
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   private fun updateCellIndex(chainId: QueryId,
                               changes: EntityStorageChange,
-                              newSnapshot: ImmutableEntityStorageInstrumentation) {
+                              newSnapshot: ImmutableEntityStorageInstrumentation,
+                              prevStorage: ImmutableEntityStorageInstrumentation?): Boolean {
     val cellIndex = queryIdToTraceIndex.getValue(chainId)
     val newTraces = changes.createTraces(newSnapshot)
 
-    cellIndex.get(newTraces).forEach { updateRequest ->
+    val updatedCells = HashMap<CellId, MatchSet>()
+    var cellsUpdated = false
+    cellIndex.get(newTraces).maybeShuffled().firstDiffThenRecalculate().forEach { updateRequest ->
+      cellsUpdated = true
       val cells = queryIdToChain[updateRequest.chainId] ?: error("Unindexed cell")
-      val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes, updateRequest.cellId)
+      val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, prevStorage, updateRequest, changes, updateRequest.cellId,
+                                                                 updatedCells)
       tracesAndModifiedCells.forEach { (traces, updateRequest) ->
         cellIndex.set(traces, updateRequest)
       }
       this.queryIdToChain[newChain.id] = newChain
     }
+    return cellsUpdated
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
-  override fun <T> cached(query: StorageQuery<T>, snapshot: ImmutableEntityStorageInstrumentation): T {
+  private fun Collection<CellUpdateInfo>.firstDiffThenRecalculate(): List<CellUpdateInfo> {
+    val (diff, recalculate) = this.partition { it.updateType == UpdateType.DIFF }
+    return diff + recalculate
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> cached(query: StorageQuery<T>,
+                          snapshot: ImmutableEntityStorageInstrumentation,
+                          prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<T> {
     check(!pullingCache) {
       "It's not allowed to request query when the cache is pulled from other snapshot"
     }
 
+    val lastCell = getUpdatedLastCell(query, snapshot, prevStorage)
+    return CachedValue(lastCell.cacheProcessStatus, lastCell.value.data() as T)
+  }
+
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun <T> diff(query: CollectionQuery<T>,
+                        snapshot: ImmutableEntityStorageInstrumentation,
+                        prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<Diff<T>> {
+    require(query !is CollectionQuery.TrackDiff<*>)
+
+    val queryWithDiffTracker = query.trackDiff()
+
+    val lastCell = getUpdatedLastCell(queryWithDiffTracker, snapshot, prevStorage)
+    check(lastCell.value is DiffCollectorCell<*>)
+
+    val diff = DiffImpl(lastCell.value.addedData as List<T>, lastCell.value.removedData as List<T>)
+    return CachedValue(lastCell.cacheProcessStatus, diff)
+  }
+
+  private fun <T> getUpdatedLastCell(query: StorageQuery<T>,
+                                     snapshot: ImmutableEntityStorageInstrumentation,
+                                     prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<Cell<*>> {
     val queryId = query.queryId
 
     val changes = changeQueue[queryId]
     val cellChain = queryIdToChain[queryId]
     if (cellChain != null && (changes == null || changes.size == 0)) {
-      return cellChain.data()
+      return CachedValue(CacheHit, cellChain.last())
     }
 
     synchronized(lock) {
       val doubleCheckChanges = changeQueue[queryId]
       val doubleCheckChain = queryIdToChain[queryId]
       if (doubleCheckChain != null && (doubleCheckChanges == null || doubleCheckChanges.size == 0)) {
-        return doubleCheckChain.data()
+        return CachedValue(CacheHitInSynchronized, doubleCheckChain.last())
       }
 
       if (doubleCheckChanges != null && doubleCheckChanges.size > 0) {
         val collapsedChangelog = doubleCheckChanges.collapse()
-        updateCellIndex(queryId, collapsedChangelog, snapshot)
+        val recalculated = updateCellIndex(queryId, collapsedChangelog, snapshot, prevStorage)
         changeQueue.remove(queryId)
-        return queryIdToChain[queryId]!!.data()
+        val status = if (recalculated) IncrementalUpdate else CacheHitNotAffectedByChanges
+        return CachedValue(status, queryIdToChain[queryId]!!.last())
       }
 
       val emptyCellChain = query.compile()
@@ -180,7 +222,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
         }
       }
       queryIdToChain[newChain.id] = newChain
-      return newChain.data()
+      return CachedValue(Initialization, newChain.last())
     }
   }
 
@@ -190,4 +232,14 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   internal fun getQueryIdToChain() = queryIdToChain
   @TestOnly
   internal fun getQueryIdToTraceIndex() = queryIdToTraceIndex
+
+  /**
+   * Shuffle collection if the field [shuffleEntities] is not -1 (set in tests)
+   */
+  private fun <E> Collection<E>.maybeShuffled(): Collection<E> {
+    if (shuffleEntities != -1L && this.size > 1) {
+      return this.shuffled(Random(shuffleEntities))
+    }
+    return this
+  }
 }

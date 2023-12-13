@@ -20,12 +20,12 @@ internal class CellChain(
   fun snapshotInput(snapshot: ImmutableEntityStorage): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     val newChain = cells.mutate {
-      var tokens = MatchSet()
+      var tokens = MatchList()
       it.indices.forEach { index ->
         val cell = it[index]
         if (index == 0) {
           val cellAndTokens = cell.snapshotInput(snapshot)
-          tokens = cellAndTokens.matchSet
+          tokens = cellAndTokens.matchList
           it[index] = cellAndTokens.newCell
           cellAndTokens.subscriptions.forEach { update ->
             val trace = update.second
@@ -33,8 +33,12 @@ internal class CellChain(
           }
         }
         else {
-          val cellAndTokens = cell.input(tokens, snapshot)
-          tokens = cellAndTokens.matchSet
+          val cellAndTokens = if (cell is DiffCollectorCell<*>) {
+            cell.input(tokens, snapshot, null)
+          }
+          else cell.input(tokens, snapshot)
+
+          tokens = cellAndTokens.matchList
           it[index] = cellAndTokens.newCell
           cellAndTokens.subscriptions.forEach { update ->
             val trace = update.second
@@ -47,20 +51,27 @@ internal class CellChain(
   }
 
   fun changeInput(newSnapshot: ImmutableEntityStorage,
+                  prevStorage: ImmutableEntityStorage?,
                   changeRequest: CellUpdateInfo,
                   changes: EntityStorageChange,
-                  cellToActivate: CellId): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
+                  cellToActivate: CellId,
+                  updatedCells: HashMap<CellId, MatchSet>): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     var myTokens = when (changeRequest.updateType) {
       is UpdateType.DIFF -> changes.makeTokensForDiff()
       is UpdateType.RECALCULATE -> {
-        val tokens = MatchSet()
+        val tokens = MatchList()
         val match = changeRequest.updateType.match
 
-        tokens.removedMatch(match)
-        if (match.isValid(newSnapshot)) {
-          tokens.addedMatch(match)
+        if (updatedCells[cellToActivate]?.contains(match) != true) {
+          if (prevStorage == null || match.isValid(prevStorage)) {
+            tokens.removedMatch(match)
+          }
+          if (match.isValid(newSnapshot)) {
+            tokens.addedMatch(match)
+          }
         }
+
         tokens
       }
     }
@@ -68,8 +79,20 @@ internal class CellChain(
       val startingIndex = cellList.withIndex().first { it.value.id == cellToActivate }.index
       (startingIndex..cellList.lastIndex).forEach { index ->
         val cell = cellList[index]
-        val cellAndTokens = cell.input(myTokens, newSnapshot)
-        myTokens = cellAndTokens.matchSet
+        val updatedMatches = updatedCells[cell.id]
+        if (updatedMatches != null) {
+          myTokens.removeMatches(updatedMatches)
+        }
+        if (myTokens.isEmpty()) return@mutate
+
+        updatedCells.getOrPut(cell.id) { MatchSet() }.also { it.addFromList(myTokens) }
+        val cellAndTokens = if (cell is DiffCollectorCell<*>) {
+          cell.input(myTokens, newSnapshot, prevStorage)
+        }
+        else {
+          cell.input(myTokens, newSnapshot)
+        }
+        myTokens = cellAndTokens.matchList
         cellList[index] = cellAndTokens.newCell
         cellAndTokens.subscriptions.forEach { update ->
           val trace = update.second
@@ -80,9 +103,8 @@ internal class CellChain(
     return newChain to traces
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun <T> data(): T {
-    return cells.last().data() as T
+  fun last(): Cell<*> {
+    return cells.last()
   }
 
   private fun PersistentList<Cell<*>>.toChain(id: QueryId) = CellChain(this, id)

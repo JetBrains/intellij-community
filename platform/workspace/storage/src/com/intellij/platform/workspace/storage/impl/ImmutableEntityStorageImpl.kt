@@ -80,7 +80,7 @@ internal open class ImmutableEntityStorageImpl(
   private val entityCache: Long2ObjectMap<WorkspaceEntity> = Long2ObjectOpenHashMap() // guarded by entityCache
 
   override fun <T> cached(query: StorageQuery<T>): T {
-    return snapshotCache.cached(query, this)
+    return snapshotCache.cached(query, this, null).value
   }
 
   @Suppress("UNCHECKED_CAST")
