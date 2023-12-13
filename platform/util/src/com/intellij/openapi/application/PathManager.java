@@ -70,7 +70,7 @@ public final class PathManager {
   }
 
   /**
-   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g. in a build process or a script)
+   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g., in a build process or a script)
    */
   @Contract("true -> !null")
   public static String getHomePath(boolean insideIde) {
@@ -235,7 +235,7 @@ public final class PathManager {
   /**
    * Looks for a file in all possible bin directories.
    *
-   * @return first that exists.
+   * @return the first file that exists.
    * @throws RuntimeException if nothing found.
    * @see #findBinFile(String)
    */
@@ -323,7 +323,6 @@ public final class PathManager {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
-  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull String getOptionsPath() {
     return getConfigPath() + '/' + OPTIONS_DIRECTORY;
   }
@@ -348,8 +347,7 @@ public final class PathManager {
   }
 
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share",
-                        "");
+    return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
   }
 
   public static @Nullable String getCustomOptionsDirectory() {
@@ -425,7 +423,7 @@ public final class PathManager {
 
   /**
    * This method isn't supposed to be used in new code. If you need to locate a directory where the startup script and related files are
-   * located, use {@link #getStartupScriptDir()} instead. If you need to save some custom caches related to plugins, create a your own 
+   * located, use {@link #getStartupScriptDir()} instead. If you need to save some custom caches related to plugins, create your own
    * directory under {@link #getSystemDir()}.
    */
   @ApiStatus.Obsolete
@@ -551,31 +549,32 @@ public final class PathManager {
     }
   }
 
+  @ApiStatus.Internal
   public static void loadProperties() {
-    Set<String> paths = new LinkedHashSet<>();
-    paths.add(System.getProperty(PROPERTIES_FILE));
-    paths.add(getCustomPropertiesFile());
-    // Don't use here SystemProperties.getUserHome(). Called too early to load extra class.
-    paths.add(System.getProperty("user.home") + '/' + PROPERTIES_FILE_NAME);
-    String homePath = getHomePath(true);
+    List<Path> files = new ArrayList<>();
+    String customFile = System.getProperty(PROPERTIES_FILE);
+    if (customFile != null) {
+      files.add(Paths.get(customFile));
+    }
+    String optionsDir = getCustomOptionsDirectory();
+    if (optionsDir != null) {
+      files.add(Paths.get(optionsDir, PROPERTIES_FILE_NAME));
+    }
+    files.add(Paths.get(System.getProperty("user.home"), PROPERTIES_FILE_NAME));
     for (Path binDir : getBinDirectories()) {
-      paths.add(binDir.resolve(PROPERTIES_FILE_NAME).toString());
+      files.add(binDir.resolve(PROPERTIES_FILE_NAME));
     }
 
     Properties sysProperties = System.getProperties();
-    for (String path : paths) {
-      Path file = path == null ? null : Paths.get(path);
-      if (file == null) {
-        continue;
-      }
-
+    String homePath = getHomePath(true);
+    for (Path file : files) {
       try (Reader reader = Files.newBufferedReader(file)) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
         new Properties() {
           @Override
           public Object put(Object key, Object value) {
             if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-              log(path + ": '" + key + "' cannot be redefined");
+              log(file + ": '" + key + "' cannot be redefined");
             }
             else if (!sysProperties.containsKey(key)) {
               sysProperties.setProperty((String)key, substituteVars((String)value, homePath));
@@ -584,10 +583,9 @@ public final class PathManager {
           }
         }.load(reader);
       }
-      catch (NoSuchFileException | AccessDeniedException ignore) {
-      }
+      catch (NoSuchFileException | AccessDeniedException ignore) { }
       catch (IOException e) {
-        log("Can't read property file '" + path + "': " + e.getMessage());
+        log("Can't read property file '" + file + "': " + e.getMessage());
       }
     }
 
@@ -614,7 +612,7 @@ public final class PathManager {
           if (paths.logDirPath != null) System.setProperty(PROPERTY_LOG_PATH, paths.logDirPath);
 
           if (paths.startupScriptDir != null) ourStartupScriptDir = paths.startupScriptDir;
-          // NB: IDE might use instance from a different classloader
+          // NB: IDE might use an instance from a different classloader
           ourConfigPath = null;
           ourSystemPath = null;
           ourPluginPath = null;
@@ -634,11 +632,6 @@ public final class PathManager {
   @ApiStatus.Internal
   public static @NotNull Path getOriginalConfigDir() {
     return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
-  }
-
-  private static String getCustomPropertiesFile() {
-    String configPath = getCustomOptionsDirectory();
-    return configPath != null ? configPath + '/' + PROPERTIES_FILE_NAME : null;
   }
 
   @Contract("null -> null")
