@@ -88,10 +88,14 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
     private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
     private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
-    private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
 
-    private long myLastCommitedMb = -1;
-    private long myLastUsedMb = -1;
+    private final long maxMemoryMb = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
+
+    private long lastCommitedMb = -1;
+    private long lastUsedMb = -1;
+
+    private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    private final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
     MemoryUsagePanelImpl() {
       setFocusable(false);
@@ -155,7 +159,7 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
     @Override
     protected String getTextForPreferredSize() {
-      var sample = myMaxMemory < 1000 ? 999 : myMaxMemory < 10000 ? 9999 : 99999;
+      var sample = maxMemoryMb < 1000 ? 999 : maxMemoryMb < 10000 ? 9999 : 99999;
       return " " + UIBundle.message("memory.usage.panel.message.text", sample, sample);
     }
 
@@ -164,9 +168,7 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         return;
       }
 
-      //TODO RC: cache MX-beans in a fields?
-      var memoryMXBean = ManagementFactory.getMemoryMXBean();
-      var threadMXBean = ManagementFactory.getThreadMXBean();
+      //pools list could change during execution, so can't be cached once
       List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
 
       MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
@@ -174,6 +176,9 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       long heapCommitedBytes = heapMemoryUsage.getCommitted();
       long heapUsedBytes = heapMemoryUsage.getUsed();
 
+      //RC: counter-intuitively, but memoryMXBean.getNonHeapMemoryUsage() doesn't count direct ByteBuffers.
+      //    nonHeapMemoryUsage is mostly about JVM-internal data structures -- code cache, metaspace, etc.
+      //    Direct ByteBuffers (seems to be) invisible to any public API, so we need some private API for it
       long directBuffersUsedBytes = IOUtil.directBuffersTotalAllocatedSize();
       long directBuffersUsedByFileCacheBytes = DirectByteBufferAllocator.ALLOCATOR.getStatistics().totalSizeOfBuffersAllocatedInBytes;
       if (directBuffersUsedBytes <= 0) {
@@ -181,7 +186,9 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         directBuffersUsedBytes = directBuffersUsedByFileCacheBytes;
       }
 
-      long totalMemoryMappedBytes = MMappedFileStorage.totalBytesMapped();
+      long jvmInternalsMemoryBytes = jvmInternalsMemory(memoryPoolMXBeans);
+
+      long memoryMappedFilesBytes = MMappedFileStorage.totalBytesMapped();
 
       // convert to UI-friendly Mb:
       long heapMaxMb = heapMaxBytes / IOUtil.MiB;
@@ -191,26 +198,25 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       long directBuffersUsedMb = directBuffersUsedBytes / IOUtil.MiB;
       long directBuffersFileCacheUsedMb = directBuffersUsedByFileCacheBytes / IOUtil.MiB;
 
-      long jvmInternalsMb = jvmInternalsMemory(memoryPoolMXBeans) / IOUtil.MiB;
+      long jvmInternalsMb = jvmInternalsMemoryBytes / IOUtil.MiB;
       //RC: I know no way to get thread-stack size, but 1Mb seems to be a default stack size for most OSes, so
       //    lets just assume (1 thread = 1Mb of stack). This seems to be an underestimation: seems like JVM
       //    provision memory for threads with big margin, and also thread local allocation 'arenas' are not included
       long threadStacksMemoryMb = threadMXBean.getThreadCount();
 
-      long totalMemoryMappedMb = totalMemoryMappedBytes / IOUtil.MiB;
+      long memoryMappedFilesMb = memoryMappedFilesBytes / IOUtil.MiB;
 
       //Should be +/- good estimation:
       long estimatedTotalMemoryUsedMb = heapCommitedMb + threadStacksMemoryMb + directBuffersUsedMb + jvmInternalsMb;
 
       var text = UIBundle.message("memory.usage.panel.message.text", heapUsedMb, heapMaxMb);
 
-      if (heapCommitedMb != myLastCommitedMb || heapUsedMb != myLastUsedMb || !text.equals(getText())) {
-        myLastCommitedMb = heapCommitedMb;
-        myLastUsedMb = heapUsedMb;
+      if (heapCommitedMb != lastCommitedMb || heapUsedMb != lastUsedMb || !text.equals(getText())) {
+        lastCommitedMb = heapCommitedMb;
+        lastUsedMb = heapUsedMb;
         setText(text);
 
-        boolean showExtendedInfoInTooTip = Registry.is("idea.memory.usage.tooltip.show.more",
-                                                       ApplicationManager.getApplication().isInternal());
+        boolean showExtendedInfoInTooTip = Registry.is("idea.memory.usage.tooltip.show.more");
         String i18nBundleKey = showExtendedInfoInTooTip ?
                                "memory.usage.panel.message.tooltip-extended" :
                                "memory.usage.panel.message.tooltip";
@@ -225,7 +231,7 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
                            estimatedTotalMemoryUsedMb,
 
-                           totalMemoryMappedMb //shown only in .tooltip-extended version
+                           memoryMappedFilesMb //shown only in .tooltip-extended version
           ));
       }
     }

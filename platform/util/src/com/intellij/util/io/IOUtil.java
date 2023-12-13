@@ -512,15 +512,19 @@ public final class IOUtil {
   }
 
 
-  //MAYBE RC: this method + PageCacheUtils.maxDirectMemory() is better to move to some common utility class
-  /** @return total size (bytes) of all direct {@link ByteBuffer}s allocated, or -1 if metric is not available */
-  public static long directBuffersTotalAllocatedSize() {
+  private static final AtomicLong BITS_RESERVED_MEMORY_FIELD;
+
+  static {
+    //RC: counter-intuitively, but Direct ByteBuffers (seems to be) invisible to any public monitoring API.
+    //    E.g. memoryMXBean.getNonHeapMemoryUsage() doesn't count memory occupied by direct ByteBuffers
+    //    -- and neither do others memory-related MX-beans.
+    //    java.nio.Bits.RESERVED_MEMORY is the best way I'm able to find:
+    AtomicLong reservedMemoryCounter = null;
     try {
       Class<?> bitsClass = Class.forName("java.nio.Bits");
       Field reservedMemoryField = bitsClass.getDeclaredField("RESERVED_MEMORY");
       reservedMemoryField.setAccessible(true);
-      AtomicLong reservedMemory = (AtomicLong)reservedMemoryField.get(null);
-      return reservedMemory.get();
+      reservedMemoryCounter = (AtomicLong)reservedMemoryField.get(null);
     }
     catch (Throwable t) {
       Logger log = Logger.getInstance(IOUtil.class);
@@ -529,7 +533,20 @@ public final class IOUtil {
       }
     }
 
-    return -1;
+    BITS_RESERVED_MEMORY_FIELD = reservedMemoryCounter;
+  }
+
+
+  //MAYBE RC: this method + PageCacheUtils.maxDirectMemory() is better to move to some common utility class
+
+  /** @return total size (bytes) of all direct {@link ByteBuffer}s allocated, or -1 if metric is not available */
+  public static long directBuffersTotalAllocatedSize() {
+    if (BITS_RESERVED_MEMORY_FIELD != null) {
+      return BITS_RESERVED_MEMORY_FIELD.get();
+    }
+    else {
+      return -1;
+    }
   }
 }
 
