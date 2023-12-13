@@ -170,7 +170,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ApplicationManager.getApplication().runWriteAction(() -> cleanPersistedVFSContent());
 
-    Path tempDirectory = descriptor.getProjectPath();
+    Path tempDirectory = descriptor.generateProjectPath();
     ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, descriptor.getOpenProjectOptions()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     ourPsiManager = null;

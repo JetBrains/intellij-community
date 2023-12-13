@@ -3,8 +3,7 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.conversion.ModuleSettings;
-import com.intellij.openapi.Disposable;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,52 +13,60 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.util.LazyInitializer;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import static com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT;
+import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
+import static org.jetbrains.jps.model.serialization.JpsProjectLoader.*;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*;
 import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*;
 
 public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTestCase {
+  private MultiModuleProjectDescriptor myDescriptor = new MultiModuleProjectDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)));
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new FakeModuleDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)));
+    return myDescriptor;
   }
 
   @Override
@@ -92,51 +99,102 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
     action.actionPerformed(event);
 
     // CHECK
-    final FakeModuleDescriptor descriptor = (FakeModuleDescriptor)getProjectDescriptor();
+    final MultiModuleProjectDescriptor descriptor = (MultiModuleProjectDescriptor)getProjectDescriptor();
 
-    PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.myAfterPath),
-                                            LocalFileSystem.getInstance().findFileByPath(getProject().getBasePath()));
+    PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.getAfterPath()),
+                                            LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()),
+                                            file -> "java".equals(file.getExtension()));
   }
 
-  private static class FakeModuleDescriptor extends DefaultLightProjectDescriptor {
-    private final Path myBeforePath;
-    private final Path myAfterPath;
-    private final Path myProjectPath;
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      WriteAction.run(() -> {
+        ModuleManager moduleManager = ModuleManager.getInstance(getProject());
+        for (Module module : moduleManager.getModules()) {
+          if (!module.isDisposed()) moduleManager.disposeModule(module);
+        }
+        ((MultiModuleProjectDescriptor)getProjectDescriptor()).cleanup();
+        LightPlatformTestCase.closeAndDeleteProject();
+      });
+      myDescriptor = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
-    FakeModuleDescriptor(@NotNull Path path) {
-      myBeforePath = path.resolve("before");
-      myAfterPath = path.resolve("after");
-      myProjectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
+  private static class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor {
+    private final Path myPath;
+    private final LazyInitializer.LazyValue<ProjectModel> myProjectModel;
+
+    MultiModuleProjectDescriptor(@NotNull Path path) {
+      myPath = path;
+      Path projectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
+
+      try {
+        FileUtil.copyDir(getBeforePath().toFile(), projectPath.toFile());
+        myProjectModel = LazyInitializer.create(() -> new ProjectModel(projectPath));
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    Path getBeforePath() {
+      return myPath.resolve("before");
+    }
+
+    Path getAfterPath() {
+      return myPath.resolve("after");
+    }
+
+    void cleanup() {
+      for (ModuleDescriptor module : myProjectModel.get().getModules()) {
+        try {
+          if (module.src() != null) {
+            for (VirtualFile child : module.src().getChildren()) {
+              child.delete(this);
+            }
+          }
+          if (module.testSrc() != null) {
+            for (VirtualFile child : module.testSrc().getChildren()) {
+              child.delete(this);
+            }
+          }
+          for (VirtualFile child : VirtualFileManager.getInstance().refreshAndFindFileByNioPath(myProjectModel.get().getProjectPath())
+            .getChildren()) {
+            child.delete(this);
+          }
+        }
+        catch (IOException ignore) {
+        }
+      }
     }
 
     @Override
+    public @NotNull Path generateProjectPath() {
+      return myProjectModel.get().getProjectPath();
+    }
+
     public @NotNull Path getProjectPath() {
-      return myProjectPath;
+      return myProjectModel.get().getProjectPath();
     }
 
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk11(); // TODO
+      return myProjectModel.get().getSdk();
     }
 
     @Override
     public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
       WriteAction.run(() -> {
-        final Path basePath = Paths.get(project.getBasePath());
-        FileUtil.copyDir(myBeforePath.toFile(), basePath.toFile());
-        VfsUtil.markDirtyAndRefresh(false, true, true, basePath.toFile());
-
-        final Element miscXml = JDomSerializationUtil.findComponent(JDOMUtil.load(basePath.resolve(".idea").resolve("misc.xml")),
-                                                                    "ProjectRootManager");
-        final String outputUrl = miscXml.getChild("output").getAttributeValue("url").replace("$PROJECT_DIR$", basePath.toString());
-        final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(project);
-
-        compilerProjectExtension.setCompilerOutputUrl(outputUrl);
-        final VirtualFilePointer pointer = VirtualFilePointerManager.getInstance()
-          .create(outputUrl, (Disposable)compilerProjectExtension, null);
-        compilerProjectExtension.setCompilerOutputPointer(pointer);
-        //CompilerModuleExtension
-        //ModuleElementsEditor
+        VfsUtil.markDirtyAndRefresh(false, true, true, myProjectModel.get().getProjectPath().toFile());
+        // replace services
+        CompilerProjectExtension.getInstance(project).setCompilerOutputUrl(myProjectModel.get().getOutputUrl());
         ServiceContainerUtil.replaceService(project, DumbService.class,
                                             new DumbServiceImpl(project, CoroutineScopeKt.CoroutineScope(JobKt.Job(null))) {
                                               @Override
@@ -151,105 +209,151 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
           }
         }, project);
 
-        final Element modulesXml = JDomSerializationUtil.findComponent(JDOMUtil.load(basePath.resolve(".idea").resolve("modules.xml")),
-                                                                       JpsProjectLoader.MODULE_MANAGER_COMPONENT);
-        final Element modulesElement = modulesXml.getChild(JpsProjectLoader.MODULES_TAG);
-        final List<Element> moduleElements = modulesElement.getChildren(JpsProjectLoader.MODULE_TAG);
-        for (Element moduleAttr : moduleElements) {
-          Path modulePath = Paths.get(moduleAttr.getAttributeValue(JpsProjectLoader.FILE_PATH_ATTRIBUTE)
-                                        .replace("$PROJECT_DIR$", basePath.toString()));
-          final ModuleDescriptor descriptor = new ModuleDescriptor(modulePath);
-          final Module module = makeModule(project, descriptor);
+        for (ModuleDescriptor descriptor : myProjectModel.get().getModules()) {
+          Path iml = descriptor.basePath().resolve(descriptor.name() + ModuleFileType.DOT_DEFAULT_EXTENSION);
+          final Module module = Files.exists(iml)
+                                ? ModuleManager.getInstance(project).loadModule(iml)
+                                : createModule(project, iml);
           handler.moduleCreated(module);
-          final VirtualFile vSrc = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(descriptor.src());
-          handler.sourceRootCreated(vSrc);
-          createContentEntry(module, vSrc);
+
+          ModuleRootModificationUtil.updateModel(module, model -> {
+            model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(descriptor.languageLevel());
+            model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
+            if (descriptor.src() != null) {
+              model.addContentEntry(descriptor.src()).addSourceFolder(descriptor.src(), JavaSourceRootType.SOURCE);
+              handler.sourceRootCreated(descriptor.src());
+            }
+            if (descriptor.testSrc() != null) {
+              model.addContentEntry(descriptor.testSrc()).addSourceFolder(descriptor.testSrc(), JavaSourceRootType.TEST_SOURCE);
+              handler.sourceRootCreated(descriptor.testSrc());
+            }
+
+            // maven
+            final Path mavenOutputPath = descriptor.basePath().resolve("target").resolve("classes");
+            if (Files.exists(mavenOutputPath)) {
+              final CompilerModuleExtension compiler = model.getModuleExtension(CompilerModuleExtension.class);
+              compiler.setCompilerOutputPath(mavenOutputPath.toString());
+              compiler.inheritCompilerOutputPath(false);
+            }
+          });
         }
       });
     }
+  }
 
-    @NotNull
-    private Module makeModule(@NotNull Project project, @NotNull ModuleDescriptor descriptor)
-      throws ModuleWithNameAlreadyExists, IOException {
-      final Module module;
-      Path iml = getIml(descriptor.basePath);
-      if (iml != null && Files.exists(iml)) {
-        module = ModuleManager.getInstance(project).loadModule(iml);
+  private static class ProjectModel {
+    private final Path myProjectPath;
+    private String myOutputUrl;
+    private LanguageLevel myLanguageLevel;
+    private Sdk mySdk;
+    private final List<ModuleDescriptor> myModules = new ArrayList<>();
+
+    private ProjectModel(Path path) {
+      try {
+        myProjectPath = path;
+        load();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    private Path getProjectPath() {
+      return myProjectPath;
+    }
+
+    private String getOutputUrl() {
+      return myOutputUrl;
+    }
+
+    private LanguageLevel getLanguageLevel() {
+      return myLanguageLevel == null ? LanguageLevel.JDK_11 : myLanguageLevel;
+    }
+
+    private Sdk getSdk() {
+      return mySdk == null ? IdeaTestUtil.getMockJdk11() : mySdk;
+    }
+
+    private List<ModuleDescriptor> getModules() {
+      return myModules;
+    }
+
+    private void load() throws IOException, JDOMException {
+      final Path projectConfigurationPath = myProjectPath.resolve(DIRECTORY_STORE_FOLDER);
+      final Element miscXml = JDomSerializationUtil.findComponent(JDOMUtil.load(projectConfigurationPath.resolve("misc.xml")),
+                                                                  "ProjectRootManager");
+
+      myLanguageLevel = parseLanguageLevel(miscXml.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE), LanguageLevel.JDK_11);
+      mySdk = IdeaTestUtil.getMockJdk(getLanguageLevel().toJavaVersion());
+
+      myOutputUrl = prepare(miscXml.getChild(OUTPUT_TAG).getAttributeValue(JpsJavaModelSerializerExtension.URL_ATTRIBUTE));
+
+      final Element modulesXml = JDomSerializationUtil.findComponent(JDOMUtil.load(projectConfigurationPath.resolve("modules.xml")),
+                                                                     MODULE_MANAGER_COMPONENT);
+      final Element modulesElement = modulesXml.getChild(MODULES_TAG);
+      final List<Element> moduleElements = modulesElement.getChildren(MODULE_TAG);
+      for (Element moduleAttr : moduleElements) {
+        final Path iml = Paths.get(prepare(moduleAttr.getAttributeValue(FILE_PATH_ATTRIBUTE))); // .iml
+        final String moduleName = FileUtil.getNameWithoutExtension(iml.toFile()); // module name
+
+        if (Files.exists(iml)) {
+          final Element component = JDomSerializationUtil.findComponent(JDOMUtil.load(iml), MODULE_ROOT_MANAGER_COMPONENT);
+          final LanguageLevel moduleLanguageLevel =
+            parseLanguageLevel(component.getAttributeValue(MODULE_LANGUAGE_LEVEL_ATTRIBUTE), getLanguageLevel());
+          final Element content = component.getChild(CONTENT_TAG);
+          Map<Boolean, String> sources = Collections.emptyMap();
+          if (content != null) {
+            // true -> testSrc, false -> src
+            sources = content.getChildren(SOURCE_FOLDER_TAG).stream()
+              .collect(Collectors.toMap(src -> Boolean.valueOf(src.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE)),
+                                        src -> prepare(src.getAttributeValue(JpsModuleRootModelSerializer.URL_ATTRIBUTE),
+                                                       iml.getParent().toString())));
+          }
+          myModules.add(new ModuleDescriptor(moduleName, iml.getParent(),
+                                             urlToVirtualFile(sources.get(Boolean.FALSE)),
+                                             urlToVirtualFile(sources.get(Boolean.TRUE)),
+                                             moduleLanguageLevel));
+        }
+        else {
+          myModules.add(new ModuleDescriptor(moduleName, iml.getParent(), null, null, getLanguageLevel()));
+        }
+      }
+    }
+
+    @Nullable
+    private static LanguageLevel parseLanguageLevel(@Nullable String level, LanguageLevel... levels) {
+      LanguageLevel result = null;
+      if (level != null) result = LanguageLevel.valueOf(level);
+      if (result != null) return result;
+      for (LanguageLevel languageLevel : levels) {
+        if (languageLevel != null) return languageLevel;
+      }
+      return null;
+    }
+
+    @Contract("null->null")
+    @Nullable
+    private static VirtualFile urlToVirtualFile(@Nullable String url) {
+      if (url == null) {
+        return null;
       }
       else {
-        iml = descriptor.basePath.resolve(descriptor.basePath.getFileName() + ".iml");
-        module = createModule(project, iml);
-      }
-      ModuleRootModificationUtil.updateModel(module, model -> configureModule(module, model, descriptor));
-      return module;
-    }
-
-    private void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ModuleDescriptor descriptor) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(descriptor.languageLevel());
-      model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
-      final BiConsumer<Path, JpsModuleSourceRootType<?>> register = (path, type) -> {
-        if (path == null) return;
-        final VirtualFile src = Files.exists(path)
-                                ? VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
-                                : createSourceRoot(module, path.toString());
-        registerSourceRoot(module.getProject(), src);
-        model.addContentEntry(src).addSourceFolder(src, type);
-      };
-      register.accept(descriptor.src(), JavaSourceRootType.SOURCE);
-      register.accept(descriptor.testSrc(), JavaSourceRootType.TEST_SOURCE);
-      //JavaResourceRootType.RESOURCE
-      //JavaResourceRootType.TEST_RESOURCE
-
-      // Maven
-      final Path mavenOutputPath = Paths.get(module.getModuleFilePath()).getParent().resolve("target").resolve("classes");
-      if (Files.exists(mavenOutputPath)) {
-        final CompilerModuleExtension compiler = model.getModuleExtension(CompilerModuleExtension.class);
-        compiler.setCompilerOutputPath(mavenOutputPath.toString());
-        compiler.inheritCompilerOutputPath(false);
+        return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
       }
     }
 
-    private record ModuleDescriptor(@NotNull String name, @NotNull Path basePath, @NotNull Path src, @Nullable Path testSrc,
-                                    @NotNull LanguageLevel languageLevel) {
-      @SuppressWarnings("SwitchStatementWithTooFewBranches")
-      private ModuleDescriptor(@NotNull Path iml) throws IOException, JDOMException {
-        this(iml.getFileName().toString().replace(".iml", ""), iml.getParent(),
-             Paths.get(new URL(getData(iml, List.of(CONTENT_TAG, SOURCE_FOLDER_TAG), e -> switch (e.getName()) {
-               case SOURCE_FOLDER_TAG -> e.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE).equals("false");
-               default -> true;
-             }).stream().findFirst().orElseThrow().getAttributeValue(URL_ATTRIBUTE)
-                                 .replace("$MODULE_DIR$", iml.getParent().toString())).getPath()), null, LanguageLevel.JDK_11);
-      }
+    @NotNull
+    private String prepare(@NotNull String path) {
+      return path.replace("$PROJECT_DIR$", myProjectPath.toString());
+    }
 
-      private static List<Element> getData(@NotNull Path iml, List<String> tags, @NotNull Predicate<Element> condition)
-        throws IOException, JDOMException {
-        final Element component = JDomSerializationUtil.findComponent(JDOMUtil.load(iml), ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT);
-        List<Element> elements = List.of(component);
-        for (String tag : tags) {
-          List<Element> newElements = new ArrayList<>();
-          for (Element element : elements) {
-            newElements.addAll(element.getChildren(tag).stream().filter(condition).toList());
-          }
-          elements = newElements;
-        }
-        return elements;
-      }
+    @NotNull
+    private String prepare(@NotNull String path, @NotNull String moduleDir) {
+      return prepare(path).replace("$MODULE_DIR$", moduleDir);
     }
   }
 
-  @Nullable
-  private static Path getIml(@NotNull Path path) {
-    return findFiles(path, "glob:**/*.iml").stream().findFirst().orElse(null);
-  }
-
-  @NotNull
-  private static List<Path> findFiles(@NotNull Path path, @NotNull String mask) {
-    final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(mask);
-    try (final Stream<Path> stream = Files.walk(path)) {
-      return stream.filter(matcher::matches).sorted().toList();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private record ModuleDescriptor(@NotNull String name, @NotNull Path basePath, @Nullable VirtualFile src, @Nullable VirtualFile testSrc,
+                                  @NotNull LanguageLevel languageLevel) {
   }
 }

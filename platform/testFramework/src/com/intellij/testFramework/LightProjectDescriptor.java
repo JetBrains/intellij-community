@@ -37,11 +37,6 @@ public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
   public static final String TEST_MODULE_NAME = "light_idea_test_case";
-  private final Path myProjectPath;
-
-  public LightProjectDescriptor() {
-    myProjectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
-  }
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     WriteAction.run(() -> {
@@ -184,8 +179,8 @@ public class LightProjectDescriptor {
   }
 
   @NotNull
-  public Path getProjectPath() {
-    return myProjectPath;
+  public Path generateProjectPath() {
+    return TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }
