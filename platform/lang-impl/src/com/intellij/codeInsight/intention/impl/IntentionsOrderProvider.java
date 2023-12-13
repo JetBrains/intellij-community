@@ -19,5 +19,5 @@ public interface IntentionsOrderProvider {
    * Returns context actions in order they are going to be displayed in popup.
    */
   @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
-                                                                    @NotNull List<? extends IntentionActionWithTextCaching> intentions);
+                                                                    @NotNull List<IntentionActionWithTextCaching> intentions);
 }
