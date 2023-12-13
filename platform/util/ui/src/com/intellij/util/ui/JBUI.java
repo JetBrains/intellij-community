@@ -1815,14 +1815,14 @@ public final class JBUI {
         return base;
       }
 
-      public static @NotNull Color linkUnderline(boolean useContrastColors, boolean isActive, Color defaultColor) {
+      public static @NotNull Color linkUnderline(boolean useContrastColors, boolean isActive, Color defaultActiveColor) {
         if (useContrastColors) {
-          if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineActive", defaultColor);
-          else return JBColor.namedColor("Tooltip.Learning.linkUnderlinePassive", defaultColor);
+          if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineActive", defaultActiveColor);
+          else return JBColor.namedColor("Tooltip.Learning.linkUnderlinePassive", CLEAR);
         }
         else {
-          if (isActive) return JBColor.namedColor("GotItTooltip.linkUnderlineActive", defaultColor);
-          else return JBColor.namedColor("GotItTooltip.linkUnderlinePassive", defaultColor);
+          if (isActive) return JBColor.namedColor("GotItTooltip.linkUnderlineActive", defaultActiveColor);
+          else return JBColor.namedColor("GotItTooltip.linkUnderlinePassive", CLEAR);
         }
       }
 
@@ -1845,6 +1845,11 @@ public final class JBUI {
           return JBColor.namedColor("Tooltip.Learning.spanBackground", base);
         }
         return base;
+      }
+
+      public static @NotNull Color shortcutBorder(boolean useContrastColors) {
+        if (useContrastColors) return shortcutBackground(useContrastColors);
+        else return JBColor.namedColor("GotItTooltip.shortcutBorderColor", shortcutBackground(useContrastColors));
       }
 
       public static @NotNull Color codeForeground(boolean useContrastColors) {
@@ -2014,6 +2019,7 @@ public final class JBUI {
     private static final Color DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
     private static final Color DEFAULT_RENDERER_HOVER_BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
     private static final Color DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
+    private static final Color CLEAR = new Color(0, true);
 
     public interface List {
       Color BACKGROUND = JBColor.namedColor("List.background", DEFAULT_RENDERER_BACKGROUND);

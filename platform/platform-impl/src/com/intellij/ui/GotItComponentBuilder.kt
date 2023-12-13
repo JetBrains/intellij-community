@@ -668,7 +668,8 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     val styleSheet = StyleSheet()
     val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground(useContrastColors))} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
-                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors))
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors),
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBorder(useContrastColors))
     val codeFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
     val codeStyles = InlineCodeExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.codeForeground(useContrastColors),
                                                    JBUI.CurrentTheme.GotItTooltip.codeBackground(useContrastColors),
@@ -755,10 +756,11 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   }
 
   companion object {
-    fun getStyles(foreground: Color, background: Color): String {
+    fun getStyles(foreground: Color, background: Color, border: Color): String {
       return ".shortcut { font-weight: bold;" +
              " color: ${ColorUtil.toHtmlColor(foreground)};" +
-             " background-color: ${ColorUtil.toHtmlColor(background)} }"
+             " background-color: ${ColorUtil.toHtmlColor(background)};" +
+             " border-color: #${ColorUtil.toHex(border, true)} }"
     }
 
     fun patchShortcutTags(htmlText: @Nls String, needLogIncorrectInput: Boolean): @Nls String {
