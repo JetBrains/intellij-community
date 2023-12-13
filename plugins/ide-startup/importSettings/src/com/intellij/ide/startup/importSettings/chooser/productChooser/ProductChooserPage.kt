@@ -102,7 +102,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : ImportSetti
     add(at.component, BorderLayout.EAST)
 
     border = JBUI.Borders.empty(0, 20, 10, 0)
-    preferredHeight = 47
+    preferredHeight = JBUI.scale(47)
   }
 
   private val contentPage = JPanel(GridBagLayout()).apply {
