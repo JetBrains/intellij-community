@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.psi.*
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.MoveHandler
@@ -50,6 +51,18 @@ abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
         if (config.get("enabledInK2")?.asBoolean == true && onlyPassingDisabledTests) fail()
         runMoveRefactoring(path, config, rootDir, project)
     }
+
+    override fun fileFilter(file: VirtualFile): Boolean {
+        if (file.isFile && file.extension == "kt") {
+            if (file.name.endsWith(".k2.kt")) return true
+            val k2CounterPart = file.parent.findChild("${file.nameWithoutExtension}.k2.kt")
+            if (k2CounterPart?.isFile == true) return false
+        }
+        return super.fileFilter(file)
+    }
+
+    override fun fileNameMapper(file: VirtualFile): String =
+        file.name.replace(".k2.kt", ".kt")
 }
 
 fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {

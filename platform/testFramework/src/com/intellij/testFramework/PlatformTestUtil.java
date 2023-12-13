@@ -722,11 +722,14 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files, @Nullable VirtualFileFilter filter) {
+  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files,
+                                                                      @Nullable VirtualFileFilter filter,
+                                                                      @Nullable Function<VirtualFile, String> fileNameMapper) {
     Map<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
-      map.put(file.getName(), file);
+      String fileName = fileNameMapper != null ? fileNameMapper.apply(file) : file.getName();
+      map.put(fileName, file);
     }
     return map;
   }
@@ -735,10 +738,17 @@ public final class PlatformTestUtil {
     assertDirectoriesEqual(dirExpected, dirActual, null);
   }
 
-  @SuppressWarnings("UnsafeVfsRecursion")
   public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected,
                                             @NotNull VirtualFile dirActual,
                                             @Nullable VirtualFileFilter fileFilter) throws IOException {
+    assertDirectoriesEqual(dirExpected, dirActual, fileFilter, null);
+  }
+
+  @SuppressWarnings("UnsafeVfsRecursion")
+  public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected,
+                                            @NotNull VirtualFile dirActual,
+                                            @Nullable VirtualFileFilter fileFilter,
+                                            @Nullable Function<VirtualFile, String> fileNameMapper) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile[] childrenAfter = dirExpected.getChildren();
@@ -747,8 +757,8 @@ public final class PlatformTestUtil {
     VirtualFile[] childrenBefore = dirActual.getChildren();
     shallowCompare(dirActual, childrenBefore);
 
-    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
-    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
+    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter, fileNameMapper);
+    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter, fileNameMapper);
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
@@ -758,7 +768,7 @@ public final class PlatformTestUtil {
       VirtualFile fileAfter = mapAfter.get(name);
       VirtualFile fileBefore = mapBefore.get(name);
       if (fileAfter.isDirectory()) {
-        assertDirectoriesEqual(fileAfter, fileBefore, fileFilter);
+        assertDirectoriesEqual(fileAfter, fileBefore, fileFilter, fileNameMapper);
       }
       else {
         assertFilesEqual(fileAfter, fileBefore);

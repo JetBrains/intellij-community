@@ -77,7 +77,15 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         FileDocumentManager.getInstance().saveAllDocuments()
-        PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile) { file -> !KotlinTestUtils.isMultiExtensionName(file.name) }
+        PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile, ::fileFilter, ::fileNameMapper)
+    }
+
+    protected open fun fileFilter(file: VirtualFile): Boolean {
+        return !KotlinTestUtils.isMultiExtensionName(file.name)
+    }
+
+    protected open fun fileNameMapper(file: VirtualFile): String {
+        return file.name
     }
 }
 

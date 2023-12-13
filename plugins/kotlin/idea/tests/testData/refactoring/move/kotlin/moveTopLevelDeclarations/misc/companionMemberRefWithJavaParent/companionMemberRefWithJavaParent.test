@@ -2,5 +2,5 @@
   "mainFile": "source/Foo.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
   "targetPackage": "target",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

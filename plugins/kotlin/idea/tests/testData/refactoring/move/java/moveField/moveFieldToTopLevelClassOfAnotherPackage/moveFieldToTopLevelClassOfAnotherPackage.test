@@ -2,5 +2,5 @@
   "mainFile": "j/main.java",
   "type": "MOVE_MEMBERS",
   "targetClass": "j.B",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

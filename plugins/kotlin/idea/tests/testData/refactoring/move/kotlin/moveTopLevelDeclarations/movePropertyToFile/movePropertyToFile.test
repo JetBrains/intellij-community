@@ -3,5 +3,5 @@
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
   "targetFile": "b/dependency.kt",
   "withRuntime": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

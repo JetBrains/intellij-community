@@ -2,5 +2,5 @@
   "mainFile": "bar/usages.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
   "targetPackage": "baz",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
