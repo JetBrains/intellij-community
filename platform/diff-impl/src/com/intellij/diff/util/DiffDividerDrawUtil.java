@@ -515,8 +515,9 @@ public final class DiffDividerDrawUtil {
       if (delta < 0) {
         int startDelta = myStart2 == myEnd2 ? 0 : -delta;
         int endDelta = myStart2 == myEnd2 ? -delta : 0;
-        return new DividerPolygon(myStart1, myStart2 - startDelta,
-                                  myEnd1, myEnd2 + endDelta,
+        int firstLineOffset = (myStart2 == myEnd2 && myStart1 == 0) ? -1 : 0;
+        return new DividerPolygon(myStart1, myStart2 - startDelta + firstLineOffset,
+                                  myEnd1, myEnd2 + endDelta + firstLineOffset,
                                   myFillColor, myBorderColor, myDottedBorder);
       }
       else {
