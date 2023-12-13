@@ -636,7 +636,8 @@
         "startBackground": "Grey4",
         "endBackground": "Grey4",
         "startBorderColor": "Grey4",
-        "endBorderColor": "Grey4"
+        "endBorderColor": "Grey4",
+        "contrastBackground": "Blue4"
       }
     },
 

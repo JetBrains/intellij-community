@@ -628,7 +628,8 @@
         "startBackground": "Blue4",
         "endBackground": "Blue4",
         "startBorderColor": "#FFFFFF80",
-        "endBorderColor": "#FFFFFF80"
+        "endBorderColor": "#FFFFFF80",
+        "contrastBackground": "Blue2"
       }
     },
 

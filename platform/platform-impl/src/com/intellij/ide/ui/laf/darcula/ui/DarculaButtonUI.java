@@ -92,6 +92,10 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast") == Boolean.TRUE;
   }
 
+  public static boolean isContrastGotItOnlyButton(Component c) {
+    return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast.only.button") == Boolean.TRUE;
+  }
+
   public static @Nullable Insets getCustomButtonInsets(Component c) {
     if (!(c instanceof AbstractButton b)) return null;
 
@@ -352,12 +356,18 @@ public class DarculaButtonUI extends BasicButtonUI {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
+    }
     return JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
   }
 
   private static Color getGotItButtonColorEnd(Component c) {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
     }
     return JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
   }

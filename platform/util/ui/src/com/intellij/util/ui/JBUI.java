@@ -1897,6 +1897,10 @@ public final class JBUI {
         return JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0);
       }
 
+      public static @NotNull Color buttonBackgroundContrastOnlyButton() {
+        return JBColor.namedColor("GotItTooltip.Button.contrastBackground", buttonBackgroundContrast());
+      }
+
       public static @NotNull Color buttonForeground() {
         return JBColor.namedColor("GotItTooltip.Button.foreground", JBColor.namedColor("Button.foreground"));
       }

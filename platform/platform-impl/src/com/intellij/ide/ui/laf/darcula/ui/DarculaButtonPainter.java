@@ -167,6 +167,9 @@ public class DarculaButtonPainter implements Border, UIResource {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
+    }
     return JBColor.namedColor("GotItTooltip.Button.startBorderColor",
                               JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
   }
@@ -177,6 +180,9 @@ public class DarculaButtonPainter implements Border, UIResource {
     }
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
     }
     return JBColor.namedColor("GotItTooltip.Button.endBorderColor",
                               JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));

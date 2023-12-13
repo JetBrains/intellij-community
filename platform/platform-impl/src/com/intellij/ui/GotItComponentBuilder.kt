@@ -523,8 +523,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
           putClientProperty("gotItButton.contrast", true)
         }
         else if (useContrastButton) {
-          // make the button bright blue as the default button
-          ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+          putClientProperty("gotItButton.contrast.only.button", true)
         }
         if (useContrastColors || useContrastButton) {
           foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
