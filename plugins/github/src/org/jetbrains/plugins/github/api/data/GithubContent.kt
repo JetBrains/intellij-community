@@ -3,7 +3,15 @@ package org.jetbrains.plugins.github.api.data
 
 class GithubContent(val name: String,
                     val path: String,
+                    val type: String,
                     val size: Long,
                     val url: String,
-                    val downloadUrl: String) {
+                    val downloadUrl: String? = null) {
+
+  object Types {
+    const val FILE = "file"
+    const val DIR = "dir"
+    const val SYMLINK = "symlink"
+    const val SUBMODULE = "submodule"
+  }
 }

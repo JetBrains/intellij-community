@@ -134,11 +134,18 @@ object GithubApiRequests {
 
       @JvmOverloads
       @JvmStatic
+      fun list(server: GithubServerPath, username: String, repoName: String, path: String, ref: String? = null, pagination: GithubRequestPagination) =
+          list(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref", pagination.toString())))
+      @JvmOverloads
+      @JvmStatic
       fun get(server: GithubServerPath, username: String, repoName: String, path: String, ref: String? = null) =
-        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref")))
+          get (getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref")))
+      @JvmStatic
+      fun list(url: String) = Get.jsonPage<GithubContent>(url).withOperationName("get content")
 
       @JvmStatic
-      fun get(url: String) = Get.json<GithubContent>(url).withOperationName("get content")
+      fun get(url: String) = Get.json<GithubContent>(url).withOperationName("get file")
+
     }
 
     object Branches : Entity("/branches") {
