@@ -40,7 +40,12 @@ class ImportSettingsDialog(val cancelCallback: () -> Unit) : DialogWrapper(null,
     }
   }
 
-  private var currentPage: ImportSettingsPage = EmptyImportSettingsPage()
+  private var currentPage: ImportSettingsPage = object  : ImportSettingsPage {
+    override val content: JComponent = JPanel()
+    override val stage: StartupWizardStage = StartupWizardStage.InitialStart
+    override fun confirmExit(parentComponent: Component?): Boolean = true
+  }
+
   override val lifetime: Lifetime = disposable.createLifetime()
   private val tracker = WizardPageTracker()
 
@@ -146,10 +151,4 @@ interface ImportSettingsPage {
   val stage: StartupWizardStage?
 
   fun confirmExit(parentComponent: Component?): Boolean?
-}
-
-class EmptyImportSettingsPage : ImportSettingsPage {
-  override val content: JComponent = JPanel()
-  override val stage: StartupWizardStage = StartupWizardStage.InitialStart
-  override fun confirmExit(parentComponent: Component?): Boolean = true
 }

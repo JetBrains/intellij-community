@@ -29,7 +29,27 @@ class ProductChooserPage(val controller: ImportSettingsController) : ImportSetti
     return true
   }
 
-  private val accountLabel = JLabel("user.name").apply {
+  private val accountLabel = object : JLabel("user.name"){
+    private val lifetime = controller.lifetime.createNested()
+    override fun addNotify() {
+      val settService = SettingsService.getInstance()
+
+      settService.jbAccount.advise(lifetime) {
+        isVisible = it != null
+        if (!isVisible) {
+          return@advise
+        }
+
+        text = it?.loginName
+      }
+      super.addNotify()
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      lifetime.terminate()
+    }
+  }.apply {
     icon = AllIcons.General.User
   }
 
@@ -62,21 +82,6 @@ class ProductChooserPage(val controller: ImportSettingsController) : ImportSetti
     act.targetComponent = pane
 
     pane.add(act.component)
-
-    prepareSubscriptions()
-  }
-
-  private fun prepareSubscriptions() {
-    val settService = SettingsService.getInstance()
-
-    settService.jbAccount.advise(controller.lifetime) {
-      accountLabel.isVisible = it != null
-      if (!accountLabel.isVisible) {
-        return@advise
-      }
-
-      accountLabel.text = it?.loginName
-    }
   }
 
   private val south = JPanel(BorderLayout()).apply {

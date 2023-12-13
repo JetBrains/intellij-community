@@ -90,17 +90,27 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
     }
 
     add(JPanel(VerticalLayout(JBUI.scale(8)).apply {
-      add(JProgressBar(0, 99).apply {
-        importFromProduct.progress.progress.advise(controller.lifetime) {
-          this.value = it
+      val hLabel = CommentLabel("")
+      val lifetime = controller.lifetime.createNested()
+      add(object : JProgressBar(0, 99) {
+        override fun addNotify() {
+          importFromProduct.progress.progress.advise(lifetime) {
+            this.value = it
+          }
+          importFromProduct.progress.progressMessage.advise(lifetime) {
+            hLabel.text = if (it != null) "<center>$it</center>" else "&nbsp"
+          }
+          super.addNotify()
         }
+
+        override fun removeNotify() {
+          super.removeNotify()
+          lifetime.terminate()
+        }
+      }.apply {
         preferredWidth = JBUI.scale(280)
       })
 
-      val hLabel = CommentLabel("")
-      importFromProduct.progress.progressMessage.advise(controller.lifetime) {
-        hLabel.text = if (it != null) "<center>$it</center>" else "&nbsp"
-      }
 
       add(hLabel.label.apply {
         font = JBFont.medium()
