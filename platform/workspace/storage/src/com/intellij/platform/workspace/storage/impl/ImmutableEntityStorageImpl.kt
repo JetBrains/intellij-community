@@ -9,6 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.cache.ChangeOnWorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -526,7 +527,8 @@ internal class MutableEntityStorageImpl(
     val cache = TracedSnapshotCacheImpl()
     val snapshot = ImmutableEntityStorageImpl(newEntities, newRefs, newIndexes, cache)
     val externalMappingChangelog = this.indexes.externalMappings.mapValues { it.value.indexLogBunches.changes.keys }
-    cache.pullCache(snapshot, this.originalSnapshot.snapshotCache, this.changeLog, externalMappingChangelog)
+    val changes = ChangeOnWorkspaceBuilderChangeLog(this.changeLog, externalMappingChangelog)
+    cache.pullCache(snapshot, this.originalSnapshot.snapshotCache, changes)
     return@addMeasuredTimeMillis snapshot
   }
 

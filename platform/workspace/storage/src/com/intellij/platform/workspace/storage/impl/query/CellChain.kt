@@ -7,7 +7,9 @@ import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.ChangeLog
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
+import com.intellij.platform.workspace.storage.impl.cache.EntityStorageChange
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
+import com.intellij.platform.workspace.storage.impl.cache.makeTokensForDiff
 import com.intellij.platform.workspace.storage.impl.query.Token.WithEntityId
 import com.intellij.platform.workspace.storage.impl.query.Token.WithInfo
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
@@ -52,12 +54,11 @@ internal class CellChain(
 
   fun changeInput(newSnapshot: ImmutableEntityStorage,
                   changeRequest: CellUpdateInfo,
-                  changes: ChangeLog,
-                  externalMappingChanges: Map<ExternalMappingKey<*>, Set<EntityId>>,
+                  changes: EntityStorageChange,
                   cellToActivate: CellId): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     var myTokens = when (changeRequest.updateType) {
-      is UpdateType.DIFF -> makeTokensForDiff(changes, externalMappingChanges)
+      is UpdateType.DIFF -> changes.makeTokensForDiff()
       is UpdateType.RECALCULATE -> {
         val tokens = TokenSet()
         if (changeRequest.updateType.entityId != null) {
@@ -85,35 +86,6 @@ internal class CellChain(
       }
     }.toChain(id)
     return newChain to traces
-  }
-
-  private fun makeTokensForDiff(changes: ChangeLog, externalMappingChanges: Map<ExternalMappingKey<*>, Set<EntityId>>): TokenSet {
-    val tokenSet = TokenSet()
-    val createdTokens = HashSet<Pair<Operation, EntityId>>()
-
-    changes.forEach { (entityId, change) ->
-      when (change) {
-        is ChangeEntry.AddEntity -> {
-          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += WithEntityId(Operation.ADDED, entityId)
-        }
-        is ChangeEntry.RemoveEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += WithEntityId(Operation.REMOVED, entityId)
-        }
-        is ChangeEntry.ReplaceEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += WithEntityId(Operation.REMOVED, entityId)
-          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += WithEntityId(Operation.ADDED, entityId)
-        }
-      }
-    }
-
-    externalMappingChanges.values.forEach { affectedIds ->
-      affectedIds.forEach { entityId ->
-        if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += WithEntityId(Operation.REMOVED, entityId)
-        if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += WithEntityId(Operation.ADDED, entityId)
-      }
-    }
-
-    return tokenSet
   }
 
   @Suppress("UNCHECKED_CAST")

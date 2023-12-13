@@ -4,16 +4,13 @@ package com.intellij.platform.workspace.storage.impl.cache
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
-import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.query.compile
-import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
-import com.intellij.platform.workspace.storage.trace.toTraces
 import org.jetbrains.annotations.TestOnly
 
 internal data class CellUpdateInfo(
@@ -40,7 +37,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val chainIdToChainIndex: HashMap<CellChainId, CellChain> = HashMap()
   private val cellChainToCellIndex: HashMap<CellChainId, ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>> = HashMap()
 
-  private val changeQueue: MutableMap<CellChainId, MutableList<Pair<WorkspaceBuilderChangeLog, Map<ExternalMappingKey<*>, Set<EntityId>>>>> = HashMap()
+  private val changeQueue: MutableMap<CellChainId, MutableList<EntityStorageChange>> = HashMap()
 
   /**
    * Flag indicating that this cache is now pulled from the other snapshot. During this pull, executing cache queries is not allowed
@@ -53,8 +50,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   override fun pullCache(
     newSnapshot: ImmutableEntityStorage,
     from: TracedSnapshotCache,
-    changes: WorkspaceBuilderChangeLog,
-    externalMappingChanges: Map<ExternalMappingKey<*>, MutableSet<EntityId>>
+    changes: EntityStorageChange,
   ) {
     try {
       pullingCache = true
@@ -74,7 +70,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
         val cachesToRemove = ArrayList<StorageQuery<*>>()
         this.queryToCellChainId.forEach { (query, chainId) ->
           val changesQueue = this.changeQueue.getOrPut(chainId) { ArrayList() }
-          val expectedNewChangelogSize = changesQueue.sumOf { it.first.changeLog.size + it.second.size } + changes.changeLog.size + externalMappingChanges.size
+          val expectedNewChangelogSize = changesQueue.sumOf { it.size } + changes.size
           if (expectedNewChangelogSize > LOG_QUEUE_MAX_SIZE) {
             @Suppress("TestOnlyProblems")
             if (CacheResetTracker.enabled) {
@@ -83,7 +79,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
             cachesToRemove += query
           }
           else {
-            changesQueue.add(changes to externalMappingChanges)
+            changesQueue.add(changes)
           }
         }
         cachesToRemove.forEach { removeCache(it) }
@@ -103,21 +99,14 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
 
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun updateCellIndex(chainId: CellChainId,
-                              externalMappingChanges: HashMap<ExternalMappingKey<*>, MutableSet<EntityId>>,
-                              changes: WorkspaceBuilderChangeLog,
+                              changes: EntityStorageChange,
                               newSnapshot: ImmutableEntityStorageInstrumentation) {
     val cellIndex = cellChainToCellIndex.getValue(chainId)
-    val externalMappingTraces: ReadTraceHashSet = externalMappingChanges.entries
-      .filter { it.value.isNotEmpty() }
-      .map { it.key }
-      .mapTo(ReadTraceHashSet()) { ReadTrace.ExternalMappingAccess(it).hash }
-    val newTraces = ReadTraceHashSet(changes.changeLog.toTraces(newSnapshot))
-    newTraces.addAll(externalMappingTraces)
+    val newTraces = changes.createTraces(newSnapshot)
 
     cellIndex.get(newTraces).forEach { (query, updateRequest) ->
       val cells = chainIdToChainIndex[updateRequest.chainId] ?: error("Unindexed cell")
-      val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes.changeLog, externalMappingChanges,
-                                                                     updateRequest.cellId)
+      val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes, updateRequest.cellId)
       this.queryToCellChainId[query] = newChain.id
       tracesAndModifiedCells.forEach { (traces, updateRequest) ->
         cellIndex.set(ReadTraceHashSet(traces), query to updateRequest)
@@ -151,18 +140,8 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
         }
 
         if (changelog != null && changelog.size > 0) {
-          val accChangeLog = WorkspaceBuilderChangeLog()
-          val accMappingLog = HashMap<ExternalMappingKey<*>, MutableSet<EntityId>>()
-          changelog.forEach { (changeLog, mappingChangeLog) ->
-            accChangeLog.join(changeLog)
-            mappingChangeLog.forEach { (key, log) ->
-              val existingLog = accMappingLog.getOrPut(key) { HashSet() }
-              log.forEach { affectedEntityId ->
-                existingLog.add(affectedEntityId)
-              }
-            }
-          }
-          updateCellIndex(doubleCheckCellId, accMappingLog, accChangeLog, snapshot)
+          val collapsedChangelog = changelog.collapse()
+          updateCellIndex(doubleCheckCellId, collapsedChangelog, snapshot)
           changeQueue.remove(doubleCheckCellId)
           return chainIdToChainIndex[doubleCheckCellId]!!.data()
         }
