@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
@@ -150,6 +151,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                     IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
                 else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             }
+            is LightVariableBuilder -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)
             is KtFunctionLiteral -> LAMBDA
             is KtClass -> when {
                 isInterface() -> INTERFACE
