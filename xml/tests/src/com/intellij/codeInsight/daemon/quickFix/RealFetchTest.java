@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManager;
@@ -120,6 +121,7 @@ public class RealFetchTest extends BasePlatformTestCase {
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
+    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
     myFixture.configureByText(XmlFileType.INSTANCE, """
       <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
         <root type="system"><map/></root>

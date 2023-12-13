@@ -3,6 +3,7 @@ package com.intellij.maven.testFramework
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.intention.IntentionAction
@@ -66,7 +67,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     // org.jetbrains.idea.maven.utils.MavenRehighlighter
     (myFixture!! as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
-    myFixture!!.enableInspections(MavenModelInspection::class.java)
+    myFixture!!.enableInspections(MavenModelInspection::class.java, XmlUnresolvedReferenceInspection::class.java)
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false

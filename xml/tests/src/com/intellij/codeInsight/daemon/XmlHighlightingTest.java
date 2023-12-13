@@ -5,10 +5,7 @@ import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
@@ -166,6 +163,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   // TODO: external validator should not be launched due to error detected after general highlighting pass!
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEntityRefWithEmptyDtd() throws Exception { doTest(); }
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEmptyNSRef() throws Exception { doTest(); }
 
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
@@ -421,6 +419,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testSchemaReferencesValidation() throws Exception {
     doTest(getFullRelativeTestName(".xsd"), false, false);
   }
@@ -1138,6 +1137,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     checkResultByFile(s + "_after.xml");
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testSpecifyXsiSchemaLocationQuickFix() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
@@ -1766,6 +1766,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testUnqualifiedAttributePsi() {
     doTestWithLocations(null, "xml");
     final List<XmlAttribute> attrs = new ArrayList<>(2);
@@ -1882,6 +1883,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testUnresolvedSymbolForForAttribute() throws Exception {
     doTest();
   }
@@ -2029,16 +2031,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedBoolean() {
     configureByFiles(null, BASE_PATH + "EnumeratedBoolean.xml", BASE_PATH + "EnumeratedBoolean.xsd");
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedList() {
     configureByFiles(null, BASE_PATH + "servers.xml", BASE_PATH + "servers.xsd");
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedExtension() {
     configureByFiles(null, BASE_PATH + "enumerations.xml", BASE_PATH + "enumerations.xsd");
     doDoTest(true, false);
@@ -2200,7 +2205,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       new XmlInvalidIdInspection(),
       new CheckDtdReferencesInspection(),
       new XmlUnboundNsPrefixInspection(),
-      new XmlPathReferenceInspection()
+      new XmlPathReferenceInspection(),
+      new XmlUnresolvedReferenceInspection()
     };
   }
 

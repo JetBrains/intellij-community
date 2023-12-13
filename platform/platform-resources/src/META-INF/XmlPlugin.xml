@@ -420,6 +420,10 @@
                      bundle="messages.XmlBundle" key="xml.inspections.path.resolve"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.unresolved"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection"/>
     <localInspection language="XML" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"

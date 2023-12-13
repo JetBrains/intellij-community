@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -38,7 +39,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(PluginXmlExtensionRegistrationInspection.class);
+    myFixture.enableInspections(PluginXmlExtensionRegistrationInspection.class, XmlUnresolvedReferenceInspection.class);
   }
 
   public void testStatusBarWidgetFactoryEP() {

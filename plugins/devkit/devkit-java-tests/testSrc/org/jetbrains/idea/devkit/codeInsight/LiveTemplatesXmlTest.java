@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class LiveTemplatesXmlTest extends LightJavaCodeInsightFixtureTestCase {
@@ -10,6 +11,7 @@ public class LiveTemplatesXmlTest extends LightJavaCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
     myFixture.addFileToProject("MyBundle.properties", "key1=value1");
+    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
   }
 
 
