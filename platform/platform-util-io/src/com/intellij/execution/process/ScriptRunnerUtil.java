@@ -131,7 +131,7 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
-    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() ) {
       if (!SystemInfo.isWindows) {
         commandLine = new PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS).withConsoleMode(false);
       }
