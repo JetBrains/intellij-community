@@ -847,7 +847,15 @@ private fun createMacAwareMenuBar(frame: JFrame,
     return ideMenu
   }
   else {
-    return createMenuBar(coroutineScope, frame, mainMenuActionGroup)
+    // Android Studio (b/316226315): this is a temporary workaround for missing menu bars in UI tests.
+    // The root cause is IDEA-337548: "No main menu on simple linux with Xvfb".
+    // This workaround should be reverted as soon as IDEA-337548 is fixed upstream.
+    val menuBar = createMenuBar(coroutineScope, frame, mainMenuActionGroup)
+    if (System.getProperty("idea.gui.test.port") != null) {
+      frame.jMenuBar = menuBar
+      component.jMenuBar = menuBar
+    }
+    return menuBar
   }
 }
 
