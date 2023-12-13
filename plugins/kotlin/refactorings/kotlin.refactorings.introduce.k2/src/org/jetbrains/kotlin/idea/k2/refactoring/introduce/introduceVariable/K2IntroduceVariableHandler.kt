@@ -238,13 +238,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
 
             specifyTypeIfNeeded(property)
-
-            val addedTypeReference = (property as? KtProperty)?.typeReference
-            if (addedTypeReference != null) {
-                application.runWriteAction {
-                    shortenReferences(addedTypeReference)
-                }
-            }
         }
 
         context(KtAnalysisSession)
@@ -261,6 +254,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             if (KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY || mustSpecifyTypeExplicitly) {
                 application.runWriteAction {
                     declaration.typeReference = psiFactory.createType(expressionRenderedType)
+                    declaration.typeReference?.let { shortenReferences(it) }
                 }
             }
         }
