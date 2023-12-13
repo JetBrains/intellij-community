@@ -480,7 +480,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
       @Override
       public boolean add(@Nullable HighlightInfo info) {
-        boolean added = super.add(info);
+        boolean added;
+        synchronized (this) {
+          added = super.add(info);
+        }
         if (info != null && added) {
           queueInfoToUpdateIncrementally(info, info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup());
         }
