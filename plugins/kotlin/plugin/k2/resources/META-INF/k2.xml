@@ -258,8 +258,16 @@
     <module name="kotlin.highlighting.k2"/>
 
     <module name="kotlin.compiler-reference-index"/>
+
     <module name="kotlin.compiler-plugins.assignment.common-k2"/>
     <module name="kotlin.compiler-plugins.scripting"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
+    <module name="kotlin.compiler-plugins.allopen.maven"/>
+    <module name="kotlin.compiler-plugins.noarg.maven"/>
+    <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
+    <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
+    <module name="kotlin.compiler-plugins.lombok.maven"/>
+    <module name="kotlin.compiler-plugins.assignment.maven"/>
 
     <module name="kotlin.injection-k2"/>
     <module name="kotlin.base.injection"/>

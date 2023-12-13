@@ -70,6 +70,7 @@
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
+
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
@@ -88,6 +89,7 @@
     <module name="kotlin.compiler-plugins.assignment.common-k1"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
+
     <module name="kotlin.features-trainer"/>
     <module name="kotlin.j2k.post-processing"/>
     <module name="kotlin.j2k.old.post-processing"/>
