@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction.Priority;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +18,15 @@ public final class DefaultIntentionsOrderProvider implements IntentionsOrderProv
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
                                                                            @NotNull List<IntentionActionWithTextCaching> intentions) {
-    return ContainerUtil.sorted(intentions, (o1, o2) -> {
-      int weight1 = getWeight(context, o1);
-      int weight2 = getWeight(context, o2);
-      if (weight1 != weight2) {
-        return weight2 - weight1;
-      }
-      return o1.compareTo(o2);
-    });
+    return StreamEx.of(intentions)
+      .mapToEntry(intention -> getWeight(context, intention))
+      .sorted((weightedIntention1, weightedIntention2) -> {
+        int intentionWeightComparison = Integer.compare(weightedIntention1.getValue(), weightedIntention2.getValue());
+        if (intentionWeightComparison != 0) return -intentionWeightComparison; //desc sorting for weight
+        return weightedIntention1.getKey().compareTo(weightedIntention2.getKey()); //asc sorting for text
+      })
+      .keys()
+      .toList();
   }
 
   public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action) {
