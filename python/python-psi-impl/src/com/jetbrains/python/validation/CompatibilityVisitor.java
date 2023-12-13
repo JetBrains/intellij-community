@@ -3,9 +3,10 @@ package com.jetbrains.python.validation;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -830,19 +831,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private static class ReplaceWithOldStyleUnionQuickFix implements LocalQuickFix {
+  private static class ReplaceWithOldStyleUnionQuickFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.replace.with.old.union.style");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiFile file = element.getContainingFile();
       if (file == null) return;
 
-      final PsiElement descriptorElement = descriptor.getPsiElement();
-      if (!(descriptorElement instanceof PyBinaryExpression expression)) return;
+      if (!(element instanceof PyBinaryExpression expression)) return;
 
       final List<String> types = collectUnionTypes(expression);
       final LanguageLevel languageLevel = LanguageLevel.forElement(file);
@@ -891,15 +891,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private static class AddFromFutureImportAnnotationsQuickFix implements LocalQuickFix {
+  private static class AddFromFutureImportAnnotationsQuickFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.add.from.future.import.annotations");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiFile file = element.getContainingFile();
       AddImportHelper.addOrUpdateFromImportStatement(file, "__future__", "annotations", null, AddImportHelper.ImportPriority.FUTURE, null);
     }
   }
