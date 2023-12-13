@@ -8,4 +8,3 @@ import second.One.<caret>
 // EXIST: {"lookupString":"NestedEnumClass","tailText":" (second.One)","icon":"org/jetbrains/kotlin/idea/icons/enumKotlin.svg","attributes":"","allLookupStrings":"NestedEnumClass","itemText":"NestedEnumClass"}
 // EXIST: {"lookupString":"NestedObject","tailText":" (second.One)","icon":"org/jetbrains/kotlin/idea/icons/objectKotlin.svg","attributes":"","allLookupStrings":"NestedObject","itemText":"NestedObject"}
 // NOTHING_ELSE
-// IGNORE_K2

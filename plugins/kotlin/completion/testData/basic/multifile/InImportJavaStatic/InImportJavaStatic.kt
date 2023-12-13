@@ -6,4 +6,3 @@ import second.InImportJavaStatic.<caret>
 // EXIST: {"lookupString":"CONST","typeText":"String!","icon":"fileTypes/java.svg","itemText":"CONST"}
 // EXIST: {"lookupString":"statMeth","tailText":"()","typeText":"Unit","icon":"fileTypes/java.svg","allLookupStrings":"statMeth","itemText":"statMeth"}
 // NOTHING_ELSE
-// IGNORE_K2

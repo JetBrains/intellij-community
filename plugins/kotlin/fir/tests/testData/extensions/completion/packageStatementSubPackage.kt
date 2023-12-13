@@ -1,4 +1,5 @@
-// IGNORE_K2
+// FIR_COMPARISON
+// FIR_IDENTICAL
 
 package generated.<caret>
 

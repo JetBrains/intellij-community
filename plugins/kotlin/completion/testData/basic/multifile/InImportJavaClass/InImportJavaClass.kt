@@ -6,4 +6,3 @@ import second.<caret>
 // EXIST: {"lookupString":"JavaClass","tailText":" (second)","icon":"fileTypes/java.svg","attributes":"","allLookupStrings":"JavaClass","itemText":"JavaClass"}
 // EXIST: {"lookupString":"JavaInterface","tailText":" (second)","icon":"fileTypes/java.svg","attributes":"","allLookupStrings":"JavaInterface","itemText":"JavaInterface"}
 // NOTHING_ELSE
-// IGNORE_K2

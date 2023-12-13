@@ -9,4 +9,3 @@ import second.<caret>
 // EXIST: {"lookupString":"Two","tailText":" (second)","icon":"org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg","attributes":"","allLookupStrings":"Two","itemText":"Two"}
 // EXIST: {"lookupString":"MyTypeAlias","tailText":" (second)","typeText":"One","icon":"org/jetbrains/kotlin/idea/icons/typeAlias.svg","attributes":"","allLookupStrings":"MyTypeAlias","itemText":"MyTypeAlias"}
 // NOTHING_ELSE
-// IGNORE_K2
