@@ -84,8 +84,8 @@ abstract class WeighingActionGroup extends ActionGroup {
       }
     }
     ActionGroup other = new ExcludingActionGroup(getDelegate(), heaviest);
-    other.setPopup(true);
-    updateSession.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setPopupGroup(true);
     return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 
