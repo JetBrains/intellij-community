@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -449,14 +450,18 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    ReadAction.nonBlocking(() -> {
+    NonBlockingReadAction<JavaOverrideImplementMemberChooserContainer> prepareChooserTask = ReadAction.nonBlocking(() -> {
         return prepareChooser(aClass, toImplement);
       })
-      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+      .expireWhen(() -> !aClass.isValid());
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      showAndPerform(project, editor, aClass, toImplement, prepareChooserTask.executeSynchronously());
+    } else {
+      prepareChooserTask.finishOnUiThread(ModalityState.defaultModalityState(), container -> {
         showAndPerform(project, editor, aClass, toImplement, container);
-      })
-      .expireWhen(() -> !aClass.isValid())
-      .submit(AppExecutorUtil.getAppExecutorService());
+      }).submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   public static void showAndPerform(@NotNull Project project,
