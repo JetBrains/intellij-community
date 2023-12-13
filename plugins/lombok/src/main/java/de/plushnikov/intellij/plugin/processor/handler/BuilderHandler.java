@@ -391,10 +391,10 @@ public class BuilderHandler {
   }
 
   @NotNull
-  static String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
+  static String getBuilderClassName(@NotNull PsiClass psiClass, @Nullable String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
-    return replace(builderClassNamePattern, "*", capitalize(returnTypeName));
+    return replace(builderClassNamePattern, "*", capitalize(StringUtil.notNullize(returnTypeName)));
   }
 
   boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {
