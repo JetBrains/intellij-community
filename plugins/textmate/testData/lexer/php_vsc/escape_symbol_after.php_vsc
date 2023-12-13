@@ -1,7 +1,7 @@
 text.html.php;meta.embedded.block.php;punctuation.section.embedded.begin.php: [0, 5], {<?php}
 text.html.php;meta.embedded.block.php;source.php: [5, 6], {
 }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [6, 19], {session_start}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.session.php: [6, 19], {session_start}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [19, 20], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.end.bracket.round.php: [20, 21], {)}
 text.html.php;meta.embedded.block.php;source.php;punctuation.terminator.expression.php: [21, 22], {;}
