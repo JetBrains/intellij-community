@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -145,7 +145,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   private static Map<String, String> getRequestParameters(boolean includePlatformData) {
-    var parameters = new HashMap<String, String>();
+    var parameters = new LinkedHashMap<String, String>();
 
     parameters.put("var", "embed");
 
