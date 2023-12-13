@@ -81,6 +81,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/optIn", pattern = pattern)
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
+            model("${idea}/quickfix/createFromUsage/createFunction/call/abstract", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileQuickFixTest> {

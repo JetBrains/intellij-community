@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import java.awt.event.MouseEvent
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.isExpectDeclaration
 
 class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
     override fun getName() = KotlinBundle.message("highlighter.name.expect.actual.line.markers")
