@@ -3,10 +3,14 @@ package com.intellij.platform.workspace.storage.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.query.QueryId
+import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
-public inline fun <reified T : WorkspaceEntity> entities(): CollectionQuery<T> {
-  return CollectionQuery.EachOfType(T::class)
+public inline fun <reified T : WorkspaceEntity> entities(): CollectionQuery<T> = entities(T::class)
+
+public fun <T: WorkspaceEntity> entities(ofType: KClass<T>): CollectionQuery<T> {
+  return CollectionQuery.EachOfType(QueryId(), ofType)
 }
 
 /**
@@ -50,12 +54,12 @@ public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline map
 }
 
 public fun <T, K> CollectionQuery<T>.flatMap(mapping: (T, ImmutableEntityStorage) -> Iterable<K>): CollectionQuery<K> {
-  return CollectionQuery.FlatMapTo(this, mapping)
+  return CollectionQuery.FlatMapTo(this.queryId, this, mapping)
 }
 
 public fun <T, K, V> CollectionQuery<T>.groupBy(
   keySelector: (T) -> K,
   valueTransformer: (T) -> V,
 ): AssociationQuery<K, List<V>> {
-  return AssociationQuery.GroupBy(this, keySelector, valueTransformer)
+  return AssociationQuery.GroupBy(this.queryId, this, keySelector, valueTransformer)
 }

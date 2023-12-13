@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl.cache
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
@@ -14,7 +13,7 @@ import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import org.jetbrains.annotations.TestOnly
 
 internal data class CellUpdateInfo(
-  val chainId: CellChainId,
+  val chainId: QueryId,
   val cellId: CellId,
   val updateType: UpdateType,
 )
@@ -32,12 +31,11 @@ internal class PropagationResult<T>(
 
 internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val lock = Any()
-  private val queryToCellChainId: MutableMap<StorageQuery<*>, CellChainId> = HashMap()
 
-  private val chainIdToChainIndex: HashMap<CellChainId, CellChain> = HashMap()
-  private val cellChainToCellIndex: HashMap<CellChainId, ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>> = HashMap()
+  private val queryIdToChain: HashMap<QueryId, CellChain> = HashMap()
+  private val queryIdToTraceIndex: HashMap<QueryId, ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>> = HashMap()
 
-  private val changeQueue: MutableMap<CellChainId, MutableList<EntityStorageChange>> = HashMap()
+  private val changeQueue: MutableMap<QueryId, MutableList<EntityStorageChange>> = HashMap()
 
   /**
    * Flag indicating that this cache is now pulled from the other snapshot. During this pull, executing cache queries is not allowed
@@ -58,17 +56,16 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
 
       // Do not perform changes in [from] cache while we copy state to the new cache
       synchronized(from.lock) {
-        this.queryToCellChainId.putAll(from.queryToCellChainId)
-        from.cellChainToCellIndex.forEach { (chainId, index) ->
+        from.queryIdToTraceIndex.forEach { (chainId, index) ->
           val newIndex = ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>()
           newIndex.pull(index)
-          this.cellChainToCellIndex[chainId] = newIndex
+          this.queryIdToTraceIndex[chainId] = newIndex
         }
-        this.chainIdToChainIndex.putAll(from.chainIdToChainIndex)
+        this.queryIdToChain.putAll(from.queryIdToChain)
         this.changeQueue.putAll(from.changeQueue.mapValues { ArrayList(it.value) })
 
-        val cachesToRemove = ArrayList<StorageQuery<*>>()
-        this.queryToCellChainId.forEach { (query, chainId) ->
+        val cachesToRemove = ArrayList<QueryId>()
+        this.queryIdToChain.keys.forEach { chainId ->
           val changesQueue = this.changeQueue.getOrPut(chainId) { ArrayList() }
           val expectedNewChangelogSize = changesQueue.sumOf { it.size } + changes.size
           if (expectedNewChangelogSize > LOG_QUEUE_MAX_SIZE) {
@@ -76,7 +73,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
             if (CacheResetTracker.enabled) {
               CacheResetTracker.cacheReset = true
             }
-            cachesToRemove += query
+            cachesToRemove += chainId
           }
           else {
             changesQueue.add(changes)
@@ -90,28 +87,26 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
     }
   }
 
-  private fun <T> removeCache(query: StorageQuery<T>) {
-    val chainId = queryToCellChainId.remove(query) ?: return
-    chainIdToChainIndex.remove(chainId)
-    cellChainToCellIndex.remove(chainId)
-    changeQueue.remove(chainId)
+  private fun removeCache(queryId: QueryId) {
+    queryIdToChain.remove(queryId)
+    queryIdToTraceIndex.remove(queryId)
+    changeQueue.remove(queryId)
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private fun updateCellIndex(chainId: CellChainId,
+  private fun updateCellIndex(chainId: QueryId,
                               changes: EntityStorageChange,
                               newSnapshot: ImmutableEntityStorageInstrumentation) {
-    val cellIndex = cellChainToCellIndex.getValue(chainId)
+    val cellIndex = queryIdToTraceIndex.getValue(chainId)
     val newTraces = changes.createTraces(newSnapshot)
 
     cellIndex.get(newTraces).forEach { (query, updateRequest) ->
-      val cells = chainIdToChainIndex[updateRequest.chainId] ?: error("Unindexed cell")
+      val cells = queryIdToChain[updateRequest.chainId] ?: error("Unindexed cell")
       val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes, updateRequest.cellId)
-      this.queryToCellChainId[query] = newChain.id
       tracesAndModifiedCells.forEach { (traces, updateRequest) ->
         cellIndex.set(ReadTraceHashSet(traces), query to updateRequest)
       }
-      this.chainIdToChainIndex[newChain.id] = newChain
+      this.queryIdToChain[newChain.id] = newChain
     }
   }
 
@@ -121,40 +116,35 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
       "It's not allowed to request query when the cache is pulled from other snapshot"
     }
 
-    val existingCellId = queryToCellChainId[query]
-    if (existingCellId != null) {
-      val changes = changeQueue[existingCellId]
-      val cellChain = chainIdToChainIndex[existingCellId]
-      if (cellChain != null && (changes == null || changes.size == 0)) {
-        return cellChain.data()
-      }
+    val queryId = query.queryId
+
+    val changes = changeQueue[queryId]
+    val cellChain = queryIdToChain[queryId]
+    if (cellChain != null && (changes == null || changes.size == 0)) {
+      return cellChain.data()
     }
 
     synchronized(lock) {
-      val doubleCheckCellId = queryToCellChainId[query]
-      if (doubleCheckCellId != null) {
-        val changelog = changeQueue[doubleCheckCellId]
-        val cellChain = chainIdToChainIndex[doubleCheckCellId]
-        if (cellChain != null && (changelog == null || changelog.size == 0)) {
-          return cellChain.data()
-        }
+      val doubleCheckChanges = changeQueue[queryId]
+      val doubleCheckChain = queryIdToChain[queryId]
+      if (doubleCheckChain != null && (doubleCheckChanges == null || doubleCheckChanges.size == 0)) {
+        return doubleCheckChain.data()
+      }
 
-        if (changelog != null && changelog.size > 0) {
-          val collapsedChangelog = changelog.collapse()
-          updateCellIndex(doubleCheckCellId, collapsedChangelog, snapshot)
-          changeQueue.remove(doubleCheckCellId)
-          return chainIdToChainIndex[doubleCheckCellId]!!.data()
-        }
+      if (doubleCheckChanges != null && doubleCheckChanges.size > 0) {
+        val collapsedChangelog = doubleCheckChanges.collapse()
+        updateCellIndex(queryId, collapsedChangelog, snapshot)
+        changeQueue.remove(queryId)
+        return queryIdToChain[queryId]!!.data()
       }
 
       val emptyCellChain = query.compile()
       val chainWithTraces = emptyCellChain.snapshotInput(snapshot)
       val (newChain, traces) = chainWithTraces
-      queryToCellChainId[query] = newChain.id
       traces.forEach { (trace, updateRequest) ->
-        cellChainToCellIndex.getOrPut(newChain.id) { ReadTraceIndex() }.set(ReadTraceHashSet(trace), query to updateRequest)
+        queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.set(ReadTraceHashSet(trace), query to updateRequest)
       }
-      chainIdToChainIndex[newChain.id] = newChain
+      queryIdToChain[newChain.id] = newChain
       return newChain.data()
     }
   }
@@ -162,11 +152,9 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   @TestOnly
   internal fun getChangeQueue() = changeQueue
   @TestOnly
-  internal fun getQueryToCellChainId() = queryToCellChainId
+  internal fun getQueryIdToChain() = queryIdToChain
   @TestOnly
-  internal fun getChainIdToChainIndex() = queryToCellChainId
-  @TestOnly
-  internal fun getCellChainToCellIndex() = cellChainToCellIndex
+  internal fun getQueryIdToTraceIndex() = queryIdToTraceIndex
 
   companion object {
     internal const val LOG_QUEUE_MAX_SIZE = 10_000

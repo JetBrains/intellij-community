@@ -8,8 +8,8 @@ import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
-import com.intellij.platform.workspace.storage.impl.query.CellChainId
 import com.intellij.platform.workspace.storage.impl.query.CellId
+import com.intellij.platform.workspace.storage.impl.query.QueryId
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
@@ -77,10 +77,10 @@ class CacheApiWithImplTest {
 
   @Test
   fun `update request is a data class`() {
-    val cellChainId = CellChainId()
+    val queryId = QueryId()
     val cellId = CellId()
-    val first = CellUpdateInfo(cellChainId, cellId, UpdateType.DIFF)
-    val second = CellUpdateInfo(cellChainId, cellId, UpdateType.DIFF)
+    val first = CellUpdateInfo(queryId, cellId, UpdateType.DIFF)
+    val second = CellUpdateInfo(queryId, cellId, UpdateType.DIFF)
     assertEquals(first, second)
   }
 
@@ -98,9 +98,8 @@ class CacheApiWithImplTest {
     snapshot.cached(query2)
     val tracedCache = ((snapshot as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(0, tracedCache.getChangeQueue().size)
-    assertEquals(2, tracedCache.getQueryToCellChainId().size)
-    assertEquals(2, tracedCache.getChainIdToChainIndex().size)
-    assertEquals(2, tracedCache.getCellChainToCellIndex().size)
+    assertEquals(2, tracedCache.getQueryIdToChain().size)
+    assertEquals(2, tracedCache.getQueryIdToTraceIndex().size)
 
     val snapshot2 = snapshot.update {
       it addEntity NamedEntity("Y", MySource)
@@ -108,15 +107,13 @@ class CacheApiWithImplTest {
 
     val tracedCache2 = ((snapshot2 as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(2, tracedCache2.getChangeQueue().size)
-    assertEquals(2, tracedCache2.getQueryToCellChainId().size)
-    assertEquals(2, tracedCache2.getChainIdToChainIndex().size)
-    assertEquals(2, tracedCache2.getCellChainToCellIndex().size)
+    assertEquals(2, tracedCache2.getQueryIdToChain().size)
+    assertEquals(2, tracedCache2.getQueryIdToTraceIndex().size)
 
     snapshot2.cached(query1)
     assertEquals(1, tracedCache2.getChangeQueue().size)
-    assertEquals(2, tracedCache2.getQueryToCellChainId().size)
-    assertEquals(2, tracedCache2.getChainIdToChainIndex().size)
-    assertEquals(2, tracedCache2.getCellChainToCellIndex().size)
+    assertEquals(2, tracedCache2.getQueryIdToChain().size)
+    assertEquals(2, tracedCache2.getQueryIdToTraceIndex().size)
 
     // Now we'll make two updates by half of limit. In the middle of updates, we'll update one of the caches.
     // In this way, one of caches should remain and the second will reset
@@ -134,9 +131,8 @@ class CacheApiWithImplTest {
 
     val tracedCache3 = ((snapshot3 as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(1, tracedCache3.getChangeQueue().size)
-    assertEquals(1, tracedCache3.getQueryToCellChainId().size)
-    assertEquals(1, tracedCache3.getChainIdToChainIndex().size)
-    assertEquals(1, tracedCache3.getCellChainToCellIndex().size)
+    assertEquals(1, tracedCache3.getQueryIdToChain().size)
+    assertEquals(1, tracedCache3.getQueryIdToTraceIndex().size)
   }
 
   private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): ImmutableEntityStorage {

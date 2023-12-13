@@ -16,12 +16,12 @@ import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 
-internal class CellChainId
+public class QueryId
 internal class CellId
 
 internal class CellChain(
   val cells: PersistentList<Cell<*>>,
-  val id: CellChainId,
+  val id: QueryId,
 ) {
   fun snapshotInput(snapshot: ImmutableEntityStorage): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
@@ -93,5 +93,5 @@ internal class CellChain(
     return cells.last().data() as T
   }
 
-  private fun PersistentList<Cell<*>>.toChain(id: CellChainId) = CellChain(this, id)
+  private fun PersistentList<Cell<*>>.toChain(id: QueryId) = CellChain(this, id)
 }
