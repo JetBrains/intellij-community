@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -128,15 +127,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
    */
   @Deprecated
   public @Nullable History getNavigationHistory() {
-    return null;
-  }
-
-  /**
-   * @deprecated provide help id in the data context of the main component if needed
-   * @see PlatformCoreDataKeys#HELP_ID
-   */
-  @Deprecated
-  public @Nullable String getHelpId() {
     return null;
   }
 
