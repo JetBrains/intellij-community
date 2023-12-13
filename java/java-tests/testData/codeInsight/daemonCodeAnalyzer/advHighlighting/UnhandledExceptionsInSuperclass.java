@@ -7,11 +7,11 @@ class a  {
 
 // super ctr
 
-<error descr="There is no default constructor available in 'a'">class b extends a</error> {
+<error descr="There is no parameterless constructor available in 'a'">class b extends a</error> {
 }
 
 class c extends a {
-  <error descr="There is no default constructor available in 'a'">c()</error> {
+  <error descr="There is no parameterless constructor available in 'a'">c()</error> {
   }
 
   c(String s) {

@@ -657,9 +657,9 @@ public final class HighlightClassUtil {
       }
       return null;
     }
+    if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return null;
 
     String description = JavaErrorBundle.message("no.default.constructor.available", HighlightUtil.formatClass(baseClass));
-
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description);
     IntentionAction action = QuickFixFactory.getInstance().createCreateConstructorMatchingSuperFix(aClass);
     info.registerFix(action, null, null, null, null);

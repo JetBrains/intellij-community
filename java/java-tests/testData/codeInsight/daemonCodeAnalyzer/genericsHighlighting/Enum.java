@@ -44,7 +44,7 @@ enum enumWithTypeParameterInValueOf {
   <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure"><error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error></error> {}
 }
 
-<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
+class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error> {
 }
 
 enum withConstant {

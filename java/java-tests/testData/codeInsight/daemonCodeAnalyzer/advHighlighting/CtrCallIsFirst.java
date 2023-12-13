@@ -39,7 +39,7 @@ class b extends a {
     }
 
 }
-class O extends <error descr="No enclosing instance of type 'A' is in scope">A.B</error>
+class O extends A.B
 {
   public O(A a)
   {
