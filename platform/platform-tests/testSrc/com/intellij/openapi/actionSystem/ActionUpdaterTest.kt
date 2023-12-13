@@ -256,6 +256,26 @@ class ActionUpdaterTest {
   }
 
   @Test
+  fun testPostprocessChildrenSessionCalls() = timeoutRunBlocking {
+    val actionGroup = object : ActionGroup() {
+      val extra = newAction(ActionUpdateThread.BGT) { awaitWithCheckCanceled(10) }
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+      }
+      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
+                                              updateSession: UpdateSession): List<AnAction?> {
+        updateSession.presentation(extra).isEnabledAndVisible = true
+        return listOf(extra)
+      }
+    }
+    val actions = withContext(Dispatchers.EDT) {
+      Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+    }
+    assertEquals(1, actions.size)
+  }
+
+  @Test
   fun testSkipOperationException() = timeoutRunBlocking {
     val key1 = Key.create<Int>("Key1")
     val key2 = Key.create<Int>("Key2")
