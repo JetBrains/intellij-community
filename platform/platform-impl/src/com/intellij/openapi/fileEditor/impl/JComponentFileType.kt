@@ -19,7 +19,7 @@ open class JComponentFileType(@JvmField @NonNls protected val name: String = "JC
 
   override fun getDescription(): String = description
 
-  override fun isMyFileType(file: VirtualFile): Boolean = JComponentEditorProvider.isJComponentFile(file)
+  override fun isMyFileType(file: VirtualFile): Boolean = JComponentEditorProviderUtils.isJComponentFile(file)
 
   override fun getIcon(): Icon = icon
 }
