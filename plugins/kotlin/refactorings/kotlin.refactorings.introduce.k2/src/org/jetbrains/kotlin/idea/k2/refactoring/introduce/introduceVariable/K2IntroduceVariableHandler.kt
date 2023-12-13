@@ -487,6 +487,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         return@executeCommand
                     }
 
+                    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+
                     when (property) {
                         is KtProperty -> {
                             KotlinVariableInplaceIntroducer(
