@@ -36,7 +36,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             get() = throw UnsupportedOperationException("JUnit3 does not support Ignore methods")
 
         override val allowTestMethodsInObject: Boolean
-            get() = false
+            get() = true // suite methods can be static
 
         override fun checkTestClass(declaration: KtClassOrObject): ThreeState =
             when (val checkState = super.checkTestClass(declaration)) {
@@ -96,7 +96,11 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             visitedShortNames: MutableSet<String>
         ): ThreeState {
             if (declaration is KtClass && declaration.isInner()) return NO
-
+            val objects = if (declaration is KtObjectDeclaration) listOf(declaration) else declaration.companionObjects
+            if (objects.flatMap { it.declarations }.filterIsInstance<KtNamedFunction>().any { it.name == "suite" }) {
+                return UNSURE // suites don't need to extend TestClass
+            }
+            if (declaration is KtObjectDeclaration) return NO // private constructor can't be instantiated
             val superTypeListEntries = declaration.superTypeListEntries
             for (superTypeEntry in superTypeListEntries) {
                 if (superTypeEntry is KtSuperTypeCallEntry) {
