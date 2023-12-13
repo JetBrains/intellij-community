@@ -96,7 +96,7 @@ public final class TextMateSyntaxTable {
         }
         Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);
         if (captureKey != null) {
-          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist(), interner));
+          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist(), result, interner));
           continue;
         }
         if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
@@ -116,7 +116,9 @@ public final class TextMateSyntaxTable {
 
   @Nullable
   @SuppressWarnings("SSBasedInspection")
-  private TextMateCapture @Nullable[] loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+  private TextMateCapture @Nullable [] loadCaptures(@NotNull Plist captures,
+                                                    @NotNull SyntaxNodeDescriptor parentNode,
+                                                    @NotNull Interner<CharSequence> interner) {
     Int2ObjectOpenHashMap<TextMateCapture> map = new Int2ObjectOpenHashMap<>();
     int maxGroupIndex = -1;
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
@@ -128,7 +130,7 @@ public final class TextMateSyntaxTable {
           map.put(index, new TextMateCapture.Name(interner.intern(captureName.getString())));
         }
         else {
-          map.put(index, new TextMateCapture.Rule(loadRealNode(captureDict, null, interner)));
+          map.put(index, new TextMateCapture.Rule(loadRealNode(captureDict, parentNode, interner)));
         }
         maxGroupIndex = Math.max(maxGroupIndex, index);
       }

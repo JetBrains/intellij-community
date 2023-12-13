@@ -18,7 +18,7 @@ import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBu
 
 public final class TestUtil {
   @NonNls public static final String BAT = "bat";
-
+  @NonNls public static final String GO = "go";
   @NonNls public static final String TERRAFORM = "terraform";
   @NonNls public static final String MAKE = "make";
   @NonNls public static final String JAVA = "java";
