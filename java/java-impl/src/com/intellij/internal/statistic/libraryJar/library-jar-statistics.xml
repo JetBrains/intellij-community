@@ -213,6 +213,7 @@
   <technology name="spring-security" class="org.springframework.security.config.BeanIds"/>
   <technology name="spring-security-oauth2" class="org.springframework.security.oauth2.provider.OAuth2Authentication"/>
   <technology name="spring-session" class="org.springframework.session.Session"/>
+  <technology name="spring-shell" class="org.springframework.shell.Shell"/>
   <technology name="spring-webflow" class="org.springframework.webflow.execution.Action"/>
   <technology name="spring-webflux" class="org.springframework.web.reactive.HandlerResult"/>
   <technology name="spring-websocket" class="org.springframework.web.socket.WebSocketMessage"/>
