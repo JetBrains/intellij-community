@@ -8,7 +8,7 @@ import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 
-class ExpectedKotlinType(val type: JvmType) : ExpectedType {
+internal class ExpectedKotlinType(val type: JvmType) : ExpectedType {
     override fun getTheType(): JvmType = type
 
     override fun getTheKind(): ExpectedType.Kind = ExpectedType.Kind.EXACT
@@ -16,7 +16,10 @@ class ExpectedKotlinType(val type: JvmType) : ExpectedType {
     companion object {
         fun createExpectedKotlinType(type: JvmType): ExpectedKotlinType = ExpectedKotlinType(type)
 
-        val NULL = createExpectedKotlinType(object : PsiType(emptyArray()) {
+        /**
+         * A placeholder to denote "This type is invalid". Only thing this type does is returning `false` for `isValid()` function.
+         */
+        val INVALID_TYPE = createExpectedKotlinType(object : PsiType(emptyArray()) {
             override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>): A {
                 return visitor.visitType(PsiTypes.nullType())
             }

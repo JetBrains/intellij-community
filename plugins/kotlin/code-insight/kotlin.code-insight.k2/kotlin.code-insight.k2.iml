@@ -54,5 +54,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
   </component>
 </module>

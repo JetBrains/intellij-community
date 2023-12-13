@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
+/**
+ * A request to create Kotlin callable from the usage in Kotlin.
+ */
 internal class CreateKotlinCallableFromKotlinUsageRequest (
     private val functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,

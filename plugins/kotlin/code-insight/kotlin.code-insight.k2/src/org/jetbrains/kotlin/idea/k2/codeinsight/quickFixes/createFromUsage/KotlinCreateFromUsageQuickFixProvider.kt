@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 class KotlinCreateFromUsageQuickFixProvider: UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(ref: PsiReference, registrar: QuickFixActionRegistrar) {
+        // TODO: Support cross language create-from-usage (Java-to-KT, Groovy-to-KT).
         // TODO: Add other cases like creating a class. Currently, it handles only the creation of callables.
         generateCreateKotlinCallableActions(ref).forEach(registrar::register)
     }

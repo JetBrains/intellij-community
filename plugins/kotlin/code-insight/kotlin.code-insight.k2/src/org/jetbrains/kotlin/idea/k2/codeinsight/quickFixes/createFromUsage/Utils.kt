@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.types.Variance
 
 fun PsiElement.isPartOfImportDirectiveOrAnnotation() = PsiTreeUtil.getParentOfType(
     this,
@@ -75,22 +73,16 @@ internal fun KtExpression.getClassOfExpressionType(): KtClassOrObject? = when (v
     else -> getKtType()?.expandedClassSymbol
 }?.psi as? KtClassOrObject
 
-internal data class ParameterInfo(val name: String, val type: JvmType?)
+internal data class ParameterInfo(val nameCandidates: MutableList<String>, val type: JvmType?)
 
 context (KtAnalysisSession)
-internal fun KtValueArgument.getExpectedParameterInfo(): ParameterInfo {
+internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ParameterInfo {
     val parameterNameAsString = getArgumentName()?.asName?.asString()
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
-    val parameterName = parameterNameAsString ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it).first() }
+    val parameterName = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
     val parameterType = expectedArgumentType?.asPsiType(argumentExpression, allowErrorTypes = false)
-    return ParameterInfo(parameterName ?: "x", parameterType)
-}
-
-context (KtAnalysisSession)
-internal fun CreateMethodRequest.getRenderedType(context: KtElement) = returnType.singleOrNull()?.let { returnType ->
-    val psiReturnType = returnType.theType as? PsiType
-    psiReturnType?.asKtType(context)?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+    return ParameterInfo(parameterName?.toMutableList() ?: mutableListOf("p$parameterIndex"), parameterType)
 }
 
 context (KtAnalysisSession)
