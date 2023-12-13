@@ -303,11 +303,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   nestedRange, nestedInfos);
     });
     // there can be extra highlights generated in PostHighlightVisitor
-    List<HighlightInfo> postInfos = new ArrayList<>(holder.size());
-    for (int j = 0; j < holder.size(); j++) {
-      HighlightInfo info = holder.get(j);
-      postInfos.add(info);
-      insideResult.add(info);
+    List<HighlightInfo> postInfos;
+    synchronized (holder) {
+      postInfos = new ArrayList<>(holder.size());
+      for (int j = 0; j < holder.size(); j++) {
+        HighlightInfo info = holder.get(j);
+        postInfos.add(info);
+        insideResult.add(info);
+      }
     }
     myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
                                                                     postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
