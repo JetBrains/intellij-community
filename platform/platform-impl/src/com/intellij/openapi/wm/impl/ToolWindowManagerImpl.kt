@@ -1718,7 +1718,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(content, options.icon, foreground, background, listenerWrapper)
       .setBorderColor(borderColor)
-      .setHideOnClickOutside(false)
+      .setHideOnClickOutside(true)
       .setHideOnFrameResize(false)
 
     options.balloonCustomizer?.accept(balloonBuilder)
@@ -1730,6 +1730,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {
+      balloon.setHideOnClickOutside(false)
       NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
         coroutineScope.launch {
           delay(100.milliseconds)
