@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -251,14 +252,20 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
 
     private void createFilesLater(List<ModuleInfo> moduleInfos) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          CommandProcessor.getInstance().executeCommand(myProject, () ->
-            ((ApplicationEx)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-              getCommandTitle(), myProject, null,
-              indicator -> createFiles(myProject, moduleInfos, indicator)), getCommandTitle(), null);
-        }
-      });
+      Runnable createFiles = () -> {
+        if (myProject.isDisposed()) return;
+        CommandProcessor.getInstance().executeCommand(myProject, () ->
+          ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
+            getCommandTitle(), myProject, null,
+            indicator -> createFiles(myProject, moduleInfos, indicator)), getCommandTitle(), null);
+      };
+
+      if (CoreProgressManager.shouldKeepTasksAsynchronous()) {
+        ApplicationManager.getApplication().invokeLater(createFiles);
+      }
+      else {
+        ApplicationManager.getApplication().invokeAndWait(createFiles);
+      }
     }
 
     private Map<String, Set<ModuleNode>> collectDependencies(Map<Module, List<File>> classFiles) {

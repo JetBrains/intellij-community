@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.lang.Language;
@@ -171,7 +170,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ApplicationManager.getApplication().runWriteAction(() -> cleanPersistedVFSContent());
 
-    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    Path tempDirectory = descriptor.getProjectPath();
     ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, descriptor.getOpenProjectOptions()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     ourPsiManager = null;
