@@ -10,16 +10,29 @@ internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInsp
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
   private val CANNOT_BE_LIGHT_SERVICE_KT = "CannotBeLightService.kt"
+  private val MY_SERVICE_KT = "MyService.kt"
 
   override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
   override fun getFileExtension(): String = "kt"
 
-  fun testCanBeLightServiceAppLevel() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+  fun testAddAppServiceAnnotation() {
+    myFixture.copyFileToProject(getXmlFilePath())
+    doTest(convertToLightServiceAppLevel, fileExtension, getTestName(false))
   }
 
-  fun testCanBeLightServiceProjectLevel() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+  fun testAddProjectServiceAnnotation() {
+    myFixture.copyFileToProject(getXmlFilePath())
+    doTest(convertToLightServiceProjectLevel, fileExtension, getTestName(false))
+  }
+
+  fun testRemoveAppServiceRegistration() {
+    myFixture.copyFileToProject(MY_SERVICE_KT)
+    doTest(convertToLightServiceAppLevel, xmlExtension, getTestName(true))
+  }
+
+  fun testRemoveProjectServiceRegistration() {
+    myFixture.copyFileToProject(MY_SERVICE_KT)
+    doTest(convertToLightServiceProjectLevel, xmlExtension, getTestName(true))
   }
 
   fun testOpenClass() {

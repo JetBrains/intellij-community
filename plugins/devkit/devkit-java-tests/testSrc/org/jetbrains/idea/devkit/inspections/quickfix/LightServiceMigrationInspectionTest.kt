@@ -9,16 +9,29 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
   private val CANNOT_BE_LIGHT_SERVICE_JAVA = "CannotBeLightService.java"
+  private val MY_SERVICE_JAVA = "MyService.java"
 
   override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
   override fun getFileExtension(): String = "java"
 
-  fun testCanBeLightServiceAppLevel() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+  fun testAddAppServiceAnnotation() {
+    myFixture.copyFileToProject(getXmlFilePath())
+    doTest(convertToLightServiceAppLevel, fileExtension, getTestName(false))
   }
 
-  fun testCanBeLightServiceProjectLevel() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+  fun testAddProjectServiceAnnotation() {
+    myFixture.copyFileToProject(getXmlFilePath())
+    doTest(convertToLightServiceProjectLevel, fileExtension, getTestName(false))
+  }
+
+  fun testRemoveAppServiceRegistration() {
+    myFixture.copyFileToProject(MY_SERVICE_JAVA)
+    doTest(convertToLightServiceAppLevel, xmlExtension, getTestName(true))
+  }
+
+  fun testRemoveProjectServiceRegistration() {
+    myFixture.copyFileToProject(MY_SERVICE_JAVA)
+    doTest(convertToLightServiceProjectLevel, xmlExtension, getTestName(true))
   }
 
   fun testNonFinalClass() {
@@ -39,11 +52,11 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
 
   fun testLightService() {
     myFixture.copyFileToProject(getCodeFilePath())
-    DevKitInspectionFixTestBase.doTest(myFixture, "Remove <applicationService> element", "xml", getTestName(true))
+    doTest("Remove <applicationService> element", xmlExtension, getTestName(true))
   }
 
   fun testLibraryClass() {
-    myFixture.testHighlighting(getTestName(true) + ".xml")
+    myFixture.testHighlighting(getTestName(true) + "." + xmlExtension)
   }
 
   fun testUnitTestMode() {

@@ -16,6 +16,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToLightServiceFix
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
 
@@ -40,8 +41,9 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
         holder.createProblem(element, ProblemHighlightType.ERROR, message, null, RemoveDomElementQuickFix(element))
       }
       else {
-        val message = getMessage(level)
-        holder.createProblem(element, message)
+        val message = DevKitBundle.message("inspection.light.service.migration.message")
+        val fix = ConvertToLightServiceFix(aClass, element.xmlTag, level)
+        holder.createProblem(element, message, fix)
       }
     }
   }

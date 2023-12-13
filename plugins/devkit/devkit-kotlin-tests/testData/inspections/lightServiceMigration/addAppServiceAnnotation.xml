@@ -5,7 +5,6 @@
     <extensionPoint qualifiedName="com.intellij.applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <<warning descr="Service can be converted to a light one.
-Annotate the service class with '@Service' and remove its registration from the 'plugin.xml' file.">applicationService</warning> serviceImplementation="com.example.demo.MyService"/>
+    <applicationService serviceImplementation="com.example.demo.MyService"/>
   </extensions>
 </idea-plugin>
