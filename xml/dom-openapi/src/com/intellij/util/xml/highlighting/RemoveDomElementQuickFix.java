@@ -54,18 +54,21 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myIsTag) {
-      final XmlTag tag = (XmlTag)descriptor.getPsiElement();
-      final XmlTag parentTag = tag.getParentTag();
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-      assert domElement != null;
-      domElement.undefine();
-      if (parentTag != null && parentTag.isValid()) {
-        parentTag.collapseIfEmpty();
-      }
+      removeXmlTag((XmlTag)descriptor.getPsiElement(), project);
     } else {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement((XmlAttribute)descriptor.getPsiElement());
       assert domElement != null;
       domElement.undefine();
+    }
+  }
+
+  public static void removeXmlTag(@NotNull XmlTag tag, @NotNull Project project) {
+    final XmlTag parentTag = tag.getParentTag();
+    final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+    assert domElement != null;
+    domElement.undefine();
+    if (parentTag != null && parentTag.isValid()) {
+      parentTag.collapseIfEmpty();
     }
   }
 }
