@@ -17,7 +17,7 @@ public final class DefaultIntentionsOrderProvider implements IntentionsOrderProv
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
-                                                                           @NotNull List<? extends IntentionActionWithTextCaching> intentions) {
+                                                                           @NotNull List<IntentionActionWithTextCaching> intentions) {
     return ContainerUtil.sorted(intentions, (o1, o2) -> {
       int weight1 = getWeight(context, o1);
       int weight2 = getWeight(context, o2);
