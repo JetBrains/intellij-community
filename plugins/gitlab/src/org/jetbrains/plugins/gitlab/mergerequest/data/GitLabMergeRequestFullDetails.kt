@@ -91,7 +91,7 @@ fun GitLabMergeRequestFullDetails.getRemoteDescriptor(server: GitLabServerPath):
     HostedGitRepositoryRemote(
       it.ownerPath,
       server.toURI(),
-      it.path,
+      it.fullPath,
       it.httpUrlToRepo,
       it.sshUrlToRepo
     )
