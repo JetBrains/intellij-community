@@ -580,6 +580,9 @@
     <appServiceAsStaticFinalFieldOrPropertyFixProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider"/>
+    <addServiceAnnotationProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
@@ -653,6 +656,11 @@
                     dynamic="true">
       <with attribute="implementationClass"
             implements="org.jetbrains.idea.devkit.inspections.MethodNameProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.addServiceAnnotationProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AddServiceAnnotationProvider"/>
     </extensionPoint>
   </extensionPoints>
 

@@ -82,5 +82,8 @@
     <methodNameProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtMethodNameProvider"/>
+    <addServiceAnnotationProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinAddServiceAnnotationProvider"/>
   </extensions>
 </idea-plugin>
