@@ -387,7 +387,8 @@ private fun addActivateAndWindowsCliListeners() {
       try {
         result.future.await().exitCode
       }
-      catch (e: Exception) {
+      catch (t: Throwable) {
+        LOG.error(t)
         AppExitCodes.ACTIVATE_ERROR
       }
     }

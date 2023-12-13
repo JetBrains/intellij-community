@@ -614,7 +614,14 @@ private suspend fun lockSystemDirs(args: List<String>) {
   val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { processorArgs ->
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
-      commandProcessor.get()(processorArgs).await()
+      try {
+        commandProcessor.get()(processorArgs).await()
+      }
+      catch (t: Throwable) {
+        @Suppress("SSBasedInspection")
+        Logger.getInstance("#com.intellij.platform.ide.bootstrap.StartupUtil").error(t)
+        CliResult(AppExitCodes.ACTIVATE_ERROR, IdeBundle.message("activation.unknown.error", t.message))
+      }
     }
   }
 

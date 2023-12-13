@@ -284,16 +284,7 @@ object CommandLineProcessor {
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CliResult? {
     val command = args.first()
 
-    val starter = try {
-      findStarter(command) ?: return null
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      return null
-    }
+    val starter = findStarter(command) ?: return null
 
     if (!starter.canProcessExternalCommandLine()) {
       return CliResult(1, IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
