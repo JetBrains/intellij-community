@@ -1247,6 +1247,32 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @SuppressWarnings({"RedundantOperationOnEmptyContainer", "DataFlowIssue"})
+  public void testWithClassLoader() {
+    @Language("JAVA") String classText =
+      """
+        package com.example;
+        
+        import java.util.ArrayList;
+        
+        public class SomeClass implements java.io.Serializable {
+        
+            public void throwException() {
+                ArrayList<String> emptyList = new ArrayList<>();
+                emptyList.remove(0);
+            }
+        }
+        """;
+
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem(
+        "Caused by: java.lang.IndexOutOfBoundsException: Index 0 out of bounds for length 0", null, null),
+      new LogItem("\tat java.base/java.util.ArrayList.remove(ArrayList.java:504)\n", null, null),
+      new LogItem("\tat deployment.WebTest.war//com.example.SomeClass.throwException(SomeClass.java:9)\n", 9, 19));
+
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
   public void testParseExceptionLine() {
     String exceptionLine = "Caused by: java.lang.AssertionError: expected same";
     ExceptionInfo info = ExceptionInfo.parseMessage(exceptionLine, exceptionLine.length());
