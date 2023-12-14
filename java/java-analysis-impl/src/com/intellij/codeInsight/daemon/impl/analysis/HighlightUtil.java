@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -3475,6 +3476,9 @@ public final class HighlightUtil {
             description = JavaErrorBundle.message("cannot.access.member.on.type", qualifierExpression.getText(),
                                                   primitiveType.getPresentableText(false));
           }
+        }
+        if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
+          description = JavaErrorBundle.message("implicit.class.can.not.be.referenced", ref.getText());
         }
       }
 
