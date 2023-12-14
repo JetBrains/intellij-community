@@ -72,6 +72,14 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_FIRST_TEST = "/test_pytest_plugins_as_tuple_first.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_SECOND_TEST = "/test_pytest_plugins_as_tuple_second.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_STR_TEST = "/test_pytest_plugins_as_str.py"
+
+    const val IMPORT_WITH_WILDCARD_DIR_NAME = "testImportWithWildcard"
+    const val IMPORT_WITH_WILDCARD_DIR = "/$IMPORT_WITH_WILDCARD_DIR_NAME"
+    const val IMPORT_WITH_WILDCARD_FROM_INIT_DIR = "/import_from_init"
+    const val IMPORT_WITH_WILDCARD_FROM_FILE_DIR = "/import_from_file"
+    const val IMPORT_WITH_WILDCARD_FIXTURES_DIR = "fixtures_dir"
+    const val IMPORT_WITH_WILDCARD_FIXTURES_FILE = "fixtures.py"
+    const val IMPORT_WITH_WILDCARD_TEST_FILE = "/test_one.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -253,5 +261,15 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   fun testPytestPluginsFixtureAsStr() {
     val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_STR_DIR
     assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_STR_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
+  }
+
+  fun testImportWithWildCardFromInit() {
+    val testDir = IMPORT_WITH_WILDCARD_DIR + IMPORT_WITH_WILDCARD_FROM_INIT_DIR
+    assertCorrectFile(testDir, IMPORT_WITH_WILDCARD_TEST_FILE, IMPORT_WITH_WILDCARD_FIXTURES_FILE, IMPORT_WITH_WILDCARD_FIXTURES_DIR)
+  }
+
+  fun testImportWithWildCardFromFile() {
+    val testDir = IMPORT_WITH_WILDCARD_DIR + IMPORT_WITH_WILDCARD_FROM_FILE_DIR
+    assertCorrectFile(testDir, IMPORT_WITH_WILDCARD_TEST_FILE, IMPORT_WITH_WILDCARD_FIXTURES_FILE, IMPORT_WITH_WILDCARD_FIXTURES_DIR)
   }
 }

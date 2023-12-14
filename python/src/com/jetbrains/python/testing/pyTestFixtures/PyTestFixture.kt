@@ -52,7 +52,9 @@ internal fun getFixtureLink(element: PyElement, typeEvalContext: TypeEvalContext
 /**
  * If named parameter or reference expression has fixture (and import statement) -- return it
  */
-private fun getFixtureAsExpressionLink(element: PyParameterOrPyReferenceExpression, typeEvalContext: TypeEvalContext, module: Module): NamedFixtureLink? {
+private fun getFixtureAsExpressionLink(element: PyParameterOrPyReferenceExpression,
+                                       typeEvalContext: TypeEvalContext,
+                                       module: Module): NamedFixtureLink? {
   val pyExpression = element.expression
   val func = PsiTreeUtil.getParentOfType(pyExpression, PyFunction::class.java) ?: return null
   val fixtureCandidates = getFixtures(module, func, typeEvalContext).filter { o -> o.name == pyExpression.name }
@@ -62,12 +64,14 @@ private fun getFixtureAsExpressionLink(element: PyParameterOrPyReferenceExpressi
 /**
  * If string literal has fixture (and import statement) -- return it
  */
-private fun getFixtureAsStringLink(element: PyStringLiteralExpression, typeEvalContext: TypeEvalContext, module: Module): NamedFixtureLink? {
+private fun getFixtureAsStringLink(element: PyStringLiteralExpression,
+                                   typeEvalContext: TypeEvalContext,
+                                   module: Module): NamedFixtureLink? {
   val fixtureCandidates = getModuleFixtures(module).filter { o -> o.name == element.stringValue }
   return module.basePath?.let { return findRightFixture(fixtureCandidates, null, element, typeEvalContext, it) }
 }
 
-data class NamedFixtureLink(val fixture: PyTestFixture, val importElement: PyImportElement?)
+data class NamedFixtureLink(val fixture: PyTestFixture, val importElement: PyElement?)
 
 private fun PyTestFixture.getContainingFile(): PsiFile? = function?.containingFile
 
@@ -163,8 +167,12 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
 /**
  * Search fixture or imported fixture in 'constest.py' file
  */
-private fun searchInConftest(fixtureCandidates: List<PyTestFixture>, currentDirectory: PsiDirectory, elementName: String, func: PyFunction?): NamedFixtureLink? {
+private fun searchInConftest(fixtureCandidates: List<PyTestFixture>,
+                             currentDirectory: PsiDirectory,
+                             elementName: String,
+                             func: PyFunction?): NamedFixtureLink? {
   fixtureCandidates.find { it.isInConftestInDir(currentDirectory) }?.let { return NamedFixtureLink(it, null) }
+
   // search in imports and 'pytest_plugins' in "conftest.py" file
   (currentDirectory.findFile(CONFTEST_PY) as? PyFile)?.let { pyFile ->
     getFixtureFromImports(pyFile, elementName, func, fixtureCandidates)?.let { return it }
@@ -174,9 +182,27 @@ private fun searchInConftest(fixtureCandidates: List<PyTestFixture>, currentDire
 }
 
 /**
- * Return fixture from import element
+ * Return fixture from import statements
  */
-private fun getFixtureFromImports(targetFile: PyFile, elementName: String, func: PyFunction?, fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
+private fun getFixtureFromImports(targetFile: PyFile,
+                                  elementName: String,
+                                  func: PyFunction?,
+                                  fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
+  findImportedFixtureInFile(targetFile, elementName, func, fixtureCandidates)?.let { return it }
+  findImportedFixtureWithWildcard(targetFile, elementName, func, fixtureCandidates)?.let { return it }
+  return null
+}
+
+/**
+ * Find fixture from standard import statements
+ *
+ * `from module import some_fixture as sf` or
+ * `import module.some_fixture`
+ */
+private fun findImportedFixtureInFile(targetFile: PyFile,
+                                      elementName: String,
+                                      func: PyFunction?,
+                                      fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
   val importedFixture = targetFile.findExportedName(elementName) as? PyImportElement
   val resolveImportElements = importedFixture?.multiResolve()?.map { it.element }
   if (importedFixture != null) {
@@ -194,6 +220,44 @@ private fun getFixtureFromImports(targetFile: PyFile, elementName: String, func:
   return null
 }
 
+/**
+ * Find fixture from import statements with wildcard
+ *
+ * `from module import *`
+ */
+private fun findImportedFixtureWithWildcard(targetFile: PyFile,
+                                            elementName: String,
+                                            func: PyFunction?,
+                                            fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
+  val starImportElements = targetFile.importBlock.filter { importStatement -> importStatement.children.any { it is PyStarImportElement } }
+  if (starImportElements.isNotEmpty()) {
+    // Map: containing file to fixture
+    val fileToFixture = fixtureCandidates.mapNotNull { candidate -> (candidate.getContainingFile() as? PyFile)?.let { it to candidate } }.toMap()
+    // Map: resolved source file to PyStarImportElement (needs for import reference)
+    val sourceToImport = starImportElements.mapNotNull { elem ->
+      val sourceFile = elem.children.firstOrNull { it is PyReferenceExpression }?.let { it.reference?.resolve() as? PyFile }
+      val starImportElement = elem.children.firstOrNull { it is PyStarImportElement } as? PyStarImportElement
+      if (sourceFile == null || starImportElement == null) {
+        null
+      } else {
+        Pair(sourceFile, starImportElement)
+      }
+    }
+
+    sourceToImport.forEach {( sourceFile, importElement) ->
+      // if a source file is a required file
+      fileToFixture[sourceFile]?.let { return NamedFixtureLink(it, importElement) }
+
+      // if a source file is "__init__.py"
+      if (sourceFile.name == "__init__.py") {
+        findImportedFixtureInFile(sourceFile, elementName, func, fixtureCandidates)?.let {
+          return NamedFixtureLink(it.fixture, importElement)
+        }
+      }
+    }
+  }
+  return null
+}
 /**
  * Return fixture from pytest_plugins
  */
