@@ -18,10 +18,7 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vcs.ex.end
@@ -31,6 +28,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.util.*
 import kotlin.math.abs
@@ -539,6 +537,9 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
   private val mirrorInlays1 = mutableListOf<MirrorInlay>()
   private val mirrorInlays2 = mutableListOf<MirrorInlay>()
 
+  private val rangeHighlighters1 = mutableListOf<RangeHighlighter>()
+  private val rangeHighlighters2 = mutableListOf<RangeHighlighter>()
+
   init {
     val inlayListener = MyInlayModelListener()
     editor1.inlayModel.addListener(inlayListener, viewer)
@@ -598,6 +599,10 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
         createAlignInlay(Side.LEFT, range.end1, false, change.diffType),
         createAlignInlay(Side.RIGHT, range.end2, false, change.diffType)
       )
+
+      createGutterHighlighterIfNeeded(change.diffType, Side.LEFT, changeInlay.bottomInlay1)
+      createGutterHighlighterIfNeeded(change.diffType, Side.RIGHT, changeInlay.bottomInlay2)
+
       changeInlays += changeInlay
       map1[range.start1] = changeInlay
       map2[range.start2] = changeInlay
@@ -649,6 +654,20 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     val inlayPresentation = AlignDiffInlayRenderer(editor, color)
 
     return editor.inlayModel.addBlockElement(offset, properties, inlayPresentation)!!
+  }
+
+  private fun createGutterHighlighterIfNeeded(diffType: TextDiffType,
+                                              side: Side,
+                                              inlay: Inlay<AlignDiffInlayRenderer>) {
+    if (diffType == TextDiffType.MODIFIED) return
+    val highlighter = viewer.getEditor(side).markupModel
+      .addRangeHighlighter(inlay.offset, inlay.offset, HighlighterLayer.SELECTION, TextAttributes(), HighlighterTargetArea.EXACT_RANGE)
+    highlighter.lineMarkerRenderer = DiffInlayGutterMarkerRenderer(diffType, inlay)
+    if (side == Side.LEFT) {
+      rangeHighlighters1 += highlighter
+    } else {
+      rangeHighlighters2 += highlighter
+    }
   }
 
   private fun createMirrorInlay(sourceSide: Side,
@@ -746,6 +765,16 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     disposeAndClear(changeInlays)
     disposeAndClear(mirrorInlays1)
     disposeAndClear(mirrorInlays2)
+
+    for (highlighter in rangeHighlighters1) {
+      editor1.markupModel.removeHighlighter(highlighter)
+    }
+    rangeHighlighters1.clear()
+
+    for (highlighter in rangeHighlighters2) {
+      editor2.markupModel.removeHighlighter(highlighter)
+    }
+    rangeHighlighters2.clear()
   }
 
   private fun disposeAndClear(disposables: MutableCollection<out Disposable>) {
@@ -854,5 +883,28 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     override fun dispose() {
       if (inlay != null) Disposer.dispose(inlay)
     }
+  }
+
+  private class DiffInlayGutterMarkerRenderer(
+    private val type: TextDiffType,
+    private val inlay: Inlay<*>,
+  ) : LineMarkerRendererEx {
+    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+      editor as EditorEx
+      g as Graphics2D
+      if (inlay is RangeMarker) {
+        val gutter = editor.gutterComponentEx
+
+        val inlayHeight = inlay.heightInPixels
+
+        val preservedBackground = g.background
+        val y = inlay.bounds?.y ?: return
+        g.color = getAlignedChangeColor(type, editor)
+        g.fillRect(0, y, gutter.width, inlayHeight)
+        g.color = preservedBackground
+      }
+    }
+
+    override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
   }
 }
