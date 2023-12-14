@@ -21,6 +21,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -171,7 +172,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
         file: PsiFile,
         fileType: FileType
     ): Result {
-        if (file !is KtFile) return Result.CONTINUE
+        if (file.fileType != KotlinFileType.INSTANCE) return Result.CONTINUE
         when (c) {
             ')' -> KotlinTypedHandlerHelper.dataClassValParameterInsert(project, editor, file,  /*beforeType = */true)
             '<' -> {
@@ -237,7 +238,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
     }
 
     override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-        if (file !is KtFile) return Result.CONTINUE
+        if (file.fileType != KotlinFileType.INSTANCE) return Result.CONTINUE
 
         var previousDollarInStringOffset: Int? = null
         if (isGlobalPreviousDollarInString) {

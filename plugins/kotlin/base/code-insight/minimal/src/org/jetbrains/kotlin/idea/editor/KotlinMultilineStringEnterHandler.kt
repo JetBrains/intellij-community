@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
@@ -59,7 +60,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegateAdapter() {
         originalHandler: EditorActionHandler?,
         dataContext: DataContext
     ): Result {
-        if (file !is KtFile) return Result.Continue
+        if (file.fileType != KotlinFileType.INSTANCE) return Result.Continue
 
         val document = editor.document
         val text = document.text
@@ -97,7 +98,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegateAdapter() {
     }
 
     private fun postProcessEnter(file: PsiFile, editor: Editor): Result {
-        if (file !is KtFile) return Result.Continue
+        if (file.fileType != KotlinFileType.INSTANCE) return Result.Continue
 
         if (!wasInMultilineString) return Result.Continue
         wasInMultilineString = false

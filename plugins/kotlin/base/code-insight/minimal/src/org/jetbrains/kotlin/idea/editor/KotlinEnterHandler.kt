@@ -17,9 +17,9 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -51,7 +51,7 @@ class KotlinEnterHandler : EnterHandlerDelegateAdapter() {
         dataContext: DataContext,
         originalHandler: EditorActionHandler?
     ): EnterHandlerDelegate.Result {
-        if (file !is KtFile) return EnterHandlerDelegate.Result.Continue
+        if (file.fileType != KotlinFileType.INSTANCE) return EnterHandlerDelegate.Result.Continue
 
         if (preprocessEnterInStringLiteral(file, editor, caretOffsetRef, caretAdvance)) {
             return EnterHandlerDelegate.Result.DefaultForceIndent

@@ -9,8 +9,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinRawStringTypedHandler : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
@@ -20,7 +20,7 @@ class KotlinRawStringTypedHandler : TypedHandlerDelegate() {
         if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) {
             return Result.CONTINUE
         }
-        if (file !is KtFile) {
+        if (file.fileType != KotlinFileType.INSTANCE) {
             return Result.CONTINUE
         }
 

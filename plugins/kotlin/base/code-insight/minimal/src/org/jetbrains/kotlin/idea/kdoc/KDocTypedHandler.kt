@@ -11,8 +11,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
-import org.jetbrains.kotlin.psi.KtFile
 
 class KDocTypedHandler : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
@@ -28,7 +28,7 @@ class KDocTypedHandler : TypedHandlerDelegate() {
 
     private fun overwriteClosingBracket(c: Char, editor: Editor, file: PsiFile): Boolean {
         if (c != ']' && c != ')') return false
-        if (file !is KtFile) return false
+        if (file.fileType != KotlinFileType.INSTANCE) return false
         if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false
 
         val offset = editor.caretModel.offset
@@ -57,7 +57,7 @@ class KDocTypedHandler : TypedHandlerDelegate() {
 
     private fun handleBracketTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Boolean {
         if (c != '[' && c != '(') return false
-        if (file !is KtFile) return false
+        if (file.fileType != KotlinFileType.INSTANCE) return false
         if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false
 
         val offset = editor.caretModel.offset
