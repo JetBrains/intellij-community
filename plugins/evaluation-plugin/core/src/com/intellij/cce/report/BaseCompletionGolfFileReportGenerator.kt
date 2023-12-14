@@ -58,6 +58,14 @@ abstract class BaseCompletionGolfFileReportGenerator(
               delOption("cg-delimiter-none", "none")
             }
           }
+          div("trigger") {
+            label("labelText") { +"Trigger model " }
+            span("stats-skipped") { +"skipped" }
+          }
+          div("red-code") {
+            label("labelText") { +"Filters check " }
+            span("stats-absent") { +"skipped" }
+          }
           div("thresholds") {
             label("labelText") { +"Threshold grades:" }
             getThresholds().forEach {

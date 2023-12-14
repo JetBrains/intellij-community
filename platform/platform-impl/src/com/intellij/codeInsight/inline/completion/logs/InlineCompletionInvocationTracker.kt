@@ -55,7 +55,7 @@ internal class InlineCompletionInvocationTracker(
     data.add(EventFields.CurrentFile.with(fileLanguage))
     if (application.isEAP) {
       val computationTime = measureNanoTime {
-        InlineContextFeatures.capture(psiFile, editor, offset, contextFeatures)
+        contextFeatures.addAll(InlineContextFeatures.capture(psiFile, editor, offset))
         request.putUserData(InlineContextFeatures.KEY, contextFeatures)
       }
       data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))

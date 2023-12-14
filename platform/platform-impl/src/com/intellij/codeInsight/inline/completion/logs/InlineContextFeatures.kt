@@ -15,12 +15,15 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object InlineContextFeatures {
-  fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
+
+  fun capture(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {
+    val contextFeatures = mutableListOf<EventPair<*>>()
     try {
       doCapture(psiFile, editor, offset, contextFeatures)
     } catch (e: Exception) {
       LOG.error(e)
     }
+    return contextFeatures
   }
 
   private fun doCapture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
@@ -106,7 +109,7 @@ object InlineContextFeatures {
     }
   }
 
-  val KEY: Key<MutableList<EventPair<*>>> = Key.create("inline_context_features")
+  val KEY: Key<List<EventPair<*>>> = Key.create("inline_context_features")
   private val LOG = logger<InlineContextFeatures>()
 
   val LINE_NUMBER = EventFields.Int("line_number")

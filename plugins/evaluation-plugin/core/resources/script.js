@@ -129,6 +129,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
+  addTriggerModelBlock(popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS:", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED:", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED FILTERED:", "analyzed_filtered", popup, lookup)
@@ -152,6 +153,14 @@ function addSuggestions(sessionDiv, popup, lookup) {
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }
+}
+
+function addTriggerModelBlock(popup, lookup) {
+  if (!("trigger_score" in lookup["additionalInfo"] && "trigger_decision" in lookup["additionalInfo"])) return
+  let addInfo = lookup["additionalInfo"]
+  let triggerModelResults = document.createElement("DIV")
+  triggerModelResults.innerHTML = "Trigger model score: " + addInfo["trigger_score"] + ", decision: " + addInfo["trigger_decision"]
+  popup.appendChild(triggerModelResults)
 }
 
 function addDiagnosticsBlock(description, field, popup, lookup) {
