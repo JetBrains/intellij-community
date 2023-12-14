@@ -98,9 +98,11 @@ public class WorkspaceModelTopics : Disposable {
     public fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
+  @Deprecated("This flag should not be used")
   public var modulesAreLoaded: Boolean = false
     private set
 
+  @Deprecated("This flag should not be used")
   public fun notifyModulesAreLoaded() {
     modulesAreLoaded = true
   }
