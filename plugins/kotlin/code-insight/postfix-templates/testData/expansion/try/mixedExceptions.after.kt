@@ -1,9 +1,8 @@
-import java.lang.Integer.parseInt
 import java.lang.NumberFormatException
 
 fun test() {
     try {
-        call(1, 2, parseInt("5"))
+        call(1, 2, Integer.parseInt("5"))
     } catch (e: java.lang.IllegalStateException) {
         throw e
     } catch (e: java.lang.IllegalArgumentException) {
