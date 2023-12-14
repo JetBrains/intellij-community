@@ -69,7 +69,7 @@ public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
     if (docStringExpression != null) {
       final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
       if (myMissingParam != null) {
-        final PyNamedParameter param = updater.getWritable(myMissingParam.getElement());
+        final PyNamedParameter param = myMissingParam.getElement();
         if (param != null) {
           generator.withParam(param);
         }
