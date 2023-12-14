@@ -21,7 +21,7 @@ import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.filePath
 import javax.swing.JComponent
 
-internal class CombinedActivityDiffPreview(project: Project, targetComponent: JComponent, val scope: ActivityScope, parentDisposable: Disposable) :
+internal open class CombinedActivityDiffPreview(project: Project, targetComponent: JComponent, val scope: ActivityScope, parentDisposable: Disposable) :
   CombinedDiffPreview(project, targetComponent, true, parentDisposable) {
 
   override val sourceId: String = targetComponent.id

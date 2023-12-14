@@ -41,7 +41,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private val activityList = ActivityList { model.activityProvider.getPresentation(it) }.apply {
     updateEmptyText(true)
   }
-  private val editorDiffPreview = CombinedActivityDiffPreview(project, activityList, activityScope, this)
+  private val editorDiffPreview = object : CombinedActivityDiffPreview(project, activityList, activityScope, this@ActivityView) {
+    override fun returnFocusToSourceComponent() {
+      IdeFocusManager.getInstance(project).requestFocus(activityList, true)
+    }
+  }
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
