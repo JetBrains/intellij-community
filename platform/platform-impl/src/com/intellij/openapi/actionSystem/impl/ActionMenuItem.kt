@@ -113,7 +113,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     // all items must be visible at this point
     //setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled)
-    val text = ActionPresentationDecorator.decorateTextIfNeeded(actionRef.getAction() ,presentation.getText(enableMnemonics))
+    val text = ActionPresentationDecorator.decorateTextIfNeeded(actionRef.getAction(), presentation.getText(enableMnemonics))
     setText(text)
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
@@ -252,21 +252,20 @@ class ActionMenuItem internal constructor(action: AnAction,
     if (id != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
     }
-    IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
+    IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context) {
+      val presentation = action.getTemplatePresentation().clone()
+      // action items are created for perform-only groups, set performGroup to true
+      if (action is ActionGroup) presentation.isPerformGroup = true
       val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
       val event = AnActionEvent(
-        /* inputEvent = */ if (currentEvent is InputEvent) currentEvent else null,
-        /* dataContext = */ context,
-        /* place = */ place,
-        /* presentation = */ action.getTemplatePresentation().clone(),
-        /* actionManager = */ ActionManager.getInstance(),
-        /* modifiers = */ modifiers,
-        /* isContextMenuAction = */ true,
-        /* isActionToolbar = */ false)
+        currentEvent as? InputEvent, context, place,
+        presentation,
+        ActionManager.getInstance(),
+        modifiers, true, false)
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
         ActionUtil.performActionDumbAwareWithCallbacks(action, event)
       }
-    })
+    }
   }
 }
 
