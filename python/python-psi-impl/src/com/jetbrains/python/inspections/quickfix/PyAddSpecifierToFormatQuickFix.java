@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,7 +23,7 @@ import java.util.List;
 import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
-public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
+public class PyAddSpecifierToFormatQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -32,8 +31,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     if (expression == null) return;
     PyExpression rightExpression = expression.getRightExpression();
