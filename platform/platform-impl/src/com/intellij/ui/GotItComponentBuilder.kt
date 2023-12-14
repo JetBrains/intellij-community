@@ -4,7 +4,6 @@ package com.intellij.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -32,10 +31,13 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.svg.SvgAttributePatcher
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -208,7 +210,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   private fun createLinkLabel(@Nls text: String, foreground: Color, isExternal: Boolean): LinkLabel<Unit> {
-    return object : LinkLabel<Unit>(text, if (isExternal) AllIcons.Ide.External_link_arrow else null) {
+    return object : LinkLabel<Unit>(text,
+                                    if (isExternal) AllIcons.Ide.External_link_arrow.colorizeIfPossible(foreground)
+                                    else null) {
       override fun getNormal(): Color = foreground
       override fun getHover(): Color = foreground
       override fun getVisited(): Color = foreground
@@ -618,7 +622,12 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     // returns dark icon if GotIt tooltip background is dark
     internal fun adjustIcon(icon: Icon, useContrastColors: Boolean): Icon {
-      return if (ColorUtil.isDark(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))) {
+      val fillColor = JBUI.CurrentTheme.GotItTooltip.iconFillColor(useContrastColors)
+      val borderColor = JBUI.CurrentTheme.GotItTooltip.iconBorderColor(useContrastColors)
+      return if (fillColor != null && borderColor != null) {
+        icon.colorizeIfPossible(fillColor, borderColor)
+      }
+      else if (ColorUtil.isDark(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))) {
         IconLoader.getDarkIcon(icon, true)
       }
       else icon
@@ -1032,3 +1041,41 @@ private fun View.getFloatAttribute(key: Any, defaultValue: Float): Float {
 
 private val InlineView.borderColorAttr: Color? get() =
   attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
+
+private fun Icon.colorizeIfPossible(fillColor: Color, borderColor: Color = fillColor): Icon =
+  (this as? CachedImageIcon)?.createWithPatcher(colorPatcher = object : SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
+    private var lastColor = Int.MIN_VALUE
+    private var lastDigest: LongArray? = null
+
+    override fun digest(): LongArray {
+      val color = fillColor.rgb / 2 + borderColor.rgb / 2
+      if (color == lastColor) {
+        lastDigest?.let {
+          return it
+        }
+      }
+
+      val digest = longArrayOf(color.toLong(), 440413911775177385)
+      lastColor = color
+      lastDigest = digest
+      return digest
+    }
+
+    override fun patchColors(attributes: MutableMap<String, String>) {
+      setAttribute(attributes, "fill", fillColor)
+      setAttribute(attributes, "stroke", borderColor)
+    }
+
+    override fun attributeForPath(path: String) = this
+
+    private fun setAttribute(attributes: MutableMap<String, String>, key: String, color: Color) {
+      if (!attributes.containsKey(key) || attributes[key] == "none") return
+
+      attributes[key] = "rgb(${color.red},${color.green},${color.blue})"
+
+      val alpha = color.alpha
+      if (alpha != 255) {
+        attributes["$key-opacity"] = "${alpha / 255f}"
+      }
+    }
+  }) ?: this

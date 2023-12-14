@@ -1880,6 +1880,32 @@ public final class JBUI {
         return base;
       }
 
+      public static @Nullable Color iconBorderColor(boolean useContrastColors) {
+        Color base;
+        if (useContrastColors) {
+          base = JBColor.namedColor("Tooltip.Learning.iconBorderColor", CLEAR);
+        }
+        else {
+          base = JBColor.namedColor("GotItTooltip.iconBorderColor", CLEAR);
+        }
+
+        if (base.getAlpha() == 0) return null;
+        else return base;
+      }
+
+      public static @Nullable Color iconFillColor(boolean useContrastColors) {
+        Color base;
+        if (useContrastColors) {
+          base = JBColor.namedColor("Tooltip.Learning.iconFillColor", CLEAR);
+        }
+        else {
+          base = JBColor.namedColor("GotItTooltip.iconFillColor", CLEAR);
+        }
+
+        if (base.getAlpha() == 0) return null;
+        else return base;
+      }
+
       public static @NotNull Color linkForeground(boolean useContrastColors) {
         if (useContrastColors) return JBColor.namedColor("Tooltip.Learning.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
         else return JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);

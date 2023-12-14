@@ -489,7 +489,9 @@
       "spanBackground": "#1AEBFF",
       "spanForeground": "#000000",
       "foreground": "#FFFFFF",
-      "stepNumberForeground": "#FFFFFF"
+      "stepNumberForeground": "#FFFFFF",
+      "iconFillColor": "#35538F",
+      "iconBorderColor": "#FFFFFF"
     },
 
     "WelcomeScreen": {

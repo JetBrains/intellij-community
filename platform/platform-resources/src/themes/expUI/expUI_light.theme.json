@@ -770,7 +770,9 @@
       "linkForeground": "Grey14",
       "linkUnderlineActive": "#FFFFFF80",
       "linkUnderlinePassive": "#FFFFFF80",
-      "Header.foreground": "Grey14"
+      "Header.foreground": "Grey14",
+      "iconFillColor": "Blue6",
+      "iconBorderColor": "Grey14"
     },
 
     "PackageSearch": {
