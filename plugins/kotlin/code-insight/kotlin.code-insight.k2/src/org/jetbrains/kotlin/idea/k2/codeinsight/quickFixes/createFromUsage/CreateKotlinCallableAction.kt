@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
-import com.intellij.psi.PsiType
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -94,23 +93,16 @@ internal class CreateKotlinCallableAction(
         val container = getContainer() ?: return emptyList()
         return analyze(container) {
             request.returnType.mapNotNull { returnType ->
-                val psiReturnType = returnType.theType as? PsiType
-                psiReturnType?.asKtType(container)?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+                val returnKtType = returnType.theType.toKtType(container) ?: return@mapNotNull null
+                returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
             }
         }
     }
 
     context (KtAnalysisSession)
     private fun ExpectedType.render(container: KtElement): String {
-        val parameterType = theType as? PsiType
-
-        // Note that we have ExpectedKotlinType.INVALID_TYPE that returns false for parameterType.isValid.
-        return if (parameterType?.isValid != true) {
-            "Any"
-        } else {
-            val ktType = parameterType.asKtType(container)
-            ktType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
-        }
+        val parameterType = theType.toKtType(container)
+        return parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
     }
 
     private fun buildCallableAsString(): String? {

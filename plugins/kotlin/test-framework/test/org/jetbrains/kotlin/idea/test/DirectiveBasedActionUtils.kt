@@ -191,6 +191,8 @@ object DirectiveBasedActionUtils {
         assertion(expectedActionsDirectives, actualActionsDirectives)
     }
 
+    // TODO: Some missing K2 actions are missing. We filter out them out to avoid the test failure caused by the exact action list match.
+    //       Remove this list when they are ready. See ACTIONS_NOT_IMPLEMENTED and ACTIONS_DIFFERENT_FROM_K1 in AbstractK2QuickFixTest.
     private fun List<String>.filterOutElementsToExclude(elementsToExclude: List<String>) = if (elementsToExclude.isEmpty()) {
         this
     } else {

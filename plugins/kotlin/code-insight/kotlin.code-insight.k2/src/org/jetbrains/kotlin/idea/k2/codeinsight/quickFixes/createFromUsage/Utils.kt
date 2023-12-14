@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
-import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.findFacadeClass
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
@@ -63,8 +62,7 @@ context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
 context (KtAnalysisSession)
-internal fun KtElement.getExpectedPsiType(): PsiType? =
-    getExpectedType()?.asPsiType(this, allowErrorTypes = false)
+internal fun KtElement.getExpectedJvmType(): JvmType? = getExpectedType()?.let { JvmTypeWrapperForKtType(it) }
 
 context (KtAnalysisSession)
 internal fun KtExpression.getClassOfExpressionType(): KtClassOrObject? = when (val symbol = resolveExpression()) {
@@ -81,20 +79,21 @@ internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): Para
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
     val parameterName = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
-    val parameterType = expectedArgumentType?.asPsiType(argumentExpression, allowErrorTypes = false)
+    val parameterType = expectedArgumentType?.let { JvmTypeWrapperForKtType(it) }
     return ParameterInfo(parameterName?.toMutableList() ?: mutableListOf("p$parameterIndex"), parameterType)
 }
 
 context (KtAnalysisSession)
 internal fun KtSimpleNameExpression.getReceiverOrContainerClass(): JvmClass? {
-    getReceiverExpression()?.getClassOfExpressionType()?.toLightClass()?.let { return it }
+    getReceiverExpression()?.getClassOfExpressionType()?.let { return JvmClassWrapperForKtClass(it) }
     return getContainerClass()
 }
 
 internal fun KtElement.getContainerClass(): JvmClass? {
     val containingClass = getNonStrictParentOfType<KtClassOrObject>()
-    return containingClass?.toLightClass() ?: getContainingFileAsJvmClass()
+    return containingClass?.let { JvmClassWrapperForKtClass(it) } ?: getContainingFileAsJvmClass()
 }
+
 private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
     containingKtFile.findFacadeClass() ?: KtFileClassProviderImpl(project).getFileClasses(containingKtFile).firstOrNull()
 
@@ -117,4 +116,11 @@ val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSourc
     }
     // Listing variances will cause a syntax error.
     typeProjectionRenderer = KtTypeProjectionRenderer.WITHOUT_VARIANCE
+}
+
+context (KtAnalysisSession)
+internal fun JvmType.toKtType(useSitePosition: PsiElement) = when (this) {
+    is JvmTypeWrapperForKtType -> ktType
+    is PsiType -> if (isValid) asKtType(useSitePosition) else null
+    else -> null
 }
