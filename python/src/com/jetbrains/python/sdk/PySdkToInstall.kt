@@ -42,7 +42,7 @@ fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>, cont
  * Generic PySdkToInstall. Compatible with all OS / CpuArch.
  */
 class PySdkToInstall(val installer: ReleaseInstaller, val release: Release)
-  : ProjectJdkImpl(release.title, PythonSdkType.getInstance(), null, release.version.toString()) {
+  : ProjectJdkImpl(release.title, PythonSdkType.getInstance(), "", release.version.toString()) {
 
   /**
    * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].

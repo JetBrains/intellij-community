@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -38,13 +37,9 @@ internal fun createDetectedSdk(name: String,
                                targetEnvironmentConfiguration: TargetEnvironmentConfiguration?,
                                flavor: PythonSdkFlavor<*>? = null): PyDetectedSdk {
   val detectedSdk = PyDetectedSdk(name)
-  val sdkModificator = detectedSdk.sdkModificator
-  sdkModificator.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration, flavor)
-  val application = ApplicationManager.getApplication()
-  application.invokeAndWait {
-    application.runWriteAction {
-      sdkModificator.commitChanges()
-    }
+  with(detectedSdk.sdkModificator) {
+    sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration, flavor)
+    applyChangesWithoutWriteAction()
   }
   return detectedSdk
 }
