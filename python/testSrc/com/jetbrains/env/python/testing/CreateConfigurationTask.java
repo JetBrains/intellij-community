@@ -46,8 +46,10 @@ public abstract class CreateConfigurationTask<T extends AbstractPythonRunConfigu
 
   @Override
   public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
-
-    createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
+    if (!existingSdk.getHomePath().equals(sdkHome)) {
+      // Creates SDK that doesn't exist yet
+      createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
+    }
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
 
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
