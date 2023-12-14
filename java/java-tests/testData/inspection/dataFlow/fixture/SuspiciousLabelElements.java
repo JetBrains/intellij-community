@@ -18,14 +18,14 @@ public class DuplicateLabels {
         break;
       case <error descr="Duplicate unconditional pattern">Object oo</error>:
         break;
-      case <error descr="Duplicate unconditional pattern">Object oo</error> when true:
+      case <error descr="Duplicate unconditional pattern">Object oo</error> when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
 
   void testDominatedPatterns(Object o) {
     switch (o) {
-      case String ss when true:
+      case String ss when <warning descr="Condition is always true">true</warning>:
         break;
       case <error descr="Label is dominated by a preceding case label 'String ss'">String ss</error>:
         break;

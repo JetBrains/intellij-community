@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.JavaTokenType.WHEN_KEYWORD;
+
 public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
 
@@ -87,6 +89,10 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   @NotNull
   public static @IntentionName String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (constantValue && parent instanceof PsiSwitchLabelStatementBase switchLabel &&
+        PsiTreeUtil.isAncestor(switchLabel.getGuardExpression(), expression, false)) {
+      return CommonQuickFixBundle.message("fix.remove.guard");
+    }
     if (parent instanceof PsiIfStatement) {
       return constantValue ?
              CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.IF) :
@@ -350,7 +356,8 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     }
   }
 
-  private static void replaceWithStatements(@NotNull PsiStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(@NotNull PsiStatement orig, @Nullable PsiStatement statement)
+    throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
@@ -439,8 +446,21 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
         parent.delete();
         return;
       }
-      if (parent instanceof PsiSwitchLabelStatementBase label && Boolean.FALSE.equals(value)) {
-        DeleteSwitchLabelFix.deleteLabel(label);
+      if (parent instanceof PsiSwitchLabelStatementBase label && PsiTreeUtil.isAncestor(label.getGuardExpression(), newExpression, false)) {
+        if (Boolean.TRUE.equals(value)) {
+          CommentTracker tracker = new CommentTracker();
+          PsiExpression guardExpression = label.getGuardExpression();
+          PsiKeyword psiKeyword = PsiTreeUtil.getPrevSiblingOfType(guardExpression, PsiKeyword.class);
+          if (psiKeyword != null && psiKeyword.getTokenType() == WHEN_KEYWORD) {
+            tracker.delete(psiKeyword);
+          }
+          tracker.delete(guardExpression);
+          return;
+        }
+        if (Boolean.FALSE.equals(value)) {
+          DeleteSwitchLabelFix.deleteLabel(label);
+          return;
+        }
       }
     }
     if (!simplifyIfOrLoopStatement(newExpression)) {
@@ -574,18 +594,21 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
         }
         if (expressions.isEmpty()) {
           resultExpression = negate ? trueExpression : falseExpression;
-        } else {
+        }
+        else {
           String simplifiedText = StringUtil.join(expressions, PsiElement::getText, " ^ ");
           if (negate) {
             if (expressions.size() > 1) {
               simplifiedText = "!(" + simplifiedText + ")";
-            } else {
+            }
+            else {
               simplifiedText = BoolUtils.getNegatedExpressionText(expressions.get(0));
             }
           }
           resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedText, expression);
         }
-      } else {
+      }
+      else {
         for (int i = 1; i < operands.length; i++) {
           Boolean l = getConstBoolean(lExpr);
           PsiExpression operand = operands[i];
@@ -600,7 +623,8 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
             final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
             if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
               try {
-                resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+                resultExpression = JavaPsiFacade.getElementFactory(expression.getProject())
+                  .createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
               }
               catch (IncorrectOperationException e) {
                 resultExpression = null;

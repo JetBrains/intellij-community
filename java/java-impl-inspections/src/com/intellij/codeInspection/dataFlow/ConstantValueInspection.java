@@ -18,7 +18,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -84,6 +83,25 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
           for (int i = 1; i < operands.length - 1; i++) {
             processAnchor(dfr, new JavaPolyadicPartAnchor(polyadic, i), holder);
           }
+        }
+      }
+
+      @Override
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+        checkSwitchCaseGuard(PsiUtil.skipParenthesizedExprDown(statement.getGuardExpression()));
+      }
+
+      @Override
+      public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
+        checkSwitchCaseGuard(PsiUtil.skipParenthesizedExprDown(statement.getGuardExpression()));
+      }
+
+      private void checkSwitchCaseGuard(@Nullable PsiExpression guard) {
+        if (guard == null) return;
+        if (BoolUtils.isTrue(guard)) {
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(guard, guard.textMatches(PsiKeyword.TRUE));
+          holder.registerProblem(guard, JavaAnalysisBundle
+            .message("dataflow.message.constant.no.ref", guard.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 

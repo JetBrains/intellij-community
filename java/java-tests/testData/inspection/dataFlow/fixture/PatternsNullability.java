@@ -6,7 +6,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -16,7 +16,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -26,7 +26,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -35,7 +35,7 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -45,7 +45,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -64,7 +64,7 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -76,7 +76,7 @@ class Test {
         break;
       case Integer ii when Math.random() > 0.5:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -115,7 +115,7 @@ class Test {
     switch (createValue()) {
       case 1:
         break;
-      case Integer ii when true:
+      case Integer ii when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -124,7 +124,7 @@ class Test {
     switch (createNotNullValue()) {
       case 1, 2:
         break;
-      case Object o when true:
+      case Object o when <warning descr="Condition is always true">true</warning>:
         break;
     }
   }
@@ -134,7 +134,7 @@ class Test {
   int nullableWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
     return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
@@ -142,7 +142,7 @@ class Test {
     i = null;
     return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
@@ -150,14 +150,14 @@ class Test {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
   int unknownWithUnconditionalPatternLabelExpr(Integer i) {
     return switch (i) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
@@ -165,7 +165,7 @@ class Test {
     i = null;
     return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
@@ -180,7 +180,7 @@ class Test {
   int notNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     return switch (i) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
@@ -189,7 +189,7 @@ class Test {
     return switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1 -> 1;
       case Integer ii when Math.random() > 0.5 -> 2;
-      case Integer ii when true -> 3;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 3;
     };
   }
 
@@ -219,14 +219,14 @@ class Test {
   int unknownCallWithUnconditionalPatternLabelExpr() {
     return switch (createValue()) {
       case 1 -> 1;
-      case Integer ii when true -> 2;
+      case Integer ii when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
   int notNullCallWithUnconditionalPatternLabelExpr() {
     return switch (createNotNullValue()) {
       case 1, 2 -> 1;
-      case Object o when true -> 2;
+      case Object o when <warning descr="Condition is always true">true</warning> -> 2;
     };
   }
 
