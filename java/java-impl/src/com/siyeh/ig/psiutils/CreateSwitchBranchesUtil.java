@@ -73,10 +73,13 @@ public final class CreateSwitchBranchesUtil {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
     boolean hasSealedClass = selectorClass != null &&
                              (selectorClass.hasModifierProperty(PsiModifier.SEALED) ||
+                              selectorClass.getPermitsList() != null ||
                               (selectorClass instanceof PsiTypeParameter typeParameter &&
                                ContainerUtil.exists(typeParameter.getExtendsListTypes(), extType -> {
                                  PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(extType);
-                                 return psiClass != null && psiClass.hasModifierProperty(PsiModifier.SEALED);
+                                 return psiClass != null &&
+                                        (psiClass.hasModifierProperty(PsiModifier.SEALED) ||
+                                         psiClass.getPermitsList() != null);
                                })));
     boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && hasSealedClass;
     if (body == null) {
