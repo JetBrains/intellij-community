@@ -40,6 +40,16 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @Nullable Editor editor,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    // Should not be available for injected file, otherwise preview won't work
+    return startElement.getContainingFile() == file;
+  }
+  
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
