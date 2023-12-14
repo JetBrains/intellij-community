@@ -9,15 +9,21 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 internal fun isSyncEnabled(fileSpec: String, roamingType: RoamingType): Boolean {
-  if (roamingType == RoamingType.DISABLED) return false
+  if (!roamingType.isShared)
+    return false
+
   val rawFileSpec = removeOsPrefix(fileSpec)
-  if (rawFileSpec == SettingsSyncSettings.FILE_SPEC) return true
-  val componentClasses = findComponentClasses(rawFileSpec)
-  val category = getSchemeCategory(rawFileSpec) ?: getCategory(componentClasses)
+  if (rawFileSpec == SettingsSyncSettings.FILE_SPEC)
+    return true
+
+  val category = getSchemeCategory(rawFileSpec) ?: getCategory(rawFileSpec) ?: return false
+
   if (category != SettingsCategory.OTHER && SettingsSyncSettings.getInstance().isCategoryEnabled(category)) {
-    val subCategory = getSubCategory(componentClasses)
+    val subCategory = getSubCategory(fileSpec)
     if (subCategory != null) {
       return SettingsSyncSettings.getInstance().isSubcategoryEnabled(category, subCategory)
     }
@@ -48,13 +54,19 @@ private fun getCategory(componentClasses: List<Class<PersistentStateComponent<An
   }
 }
 
-private val categoryCache = mutableMapOf<String, SettingsCategory>()
-fun getCategory(fileName: String): SettingsCategory {
+private val categoryCache: ConcurrentMap<String, SettingsCategory> = ConcurrentHashMap()
+
+internal fun getCategory(fileName: String): SettingsCategory? {
   categoryCache[fileName]?.let { cachedCategory ->
     return cachedCategory
   }
 
   val componentClasses = findComponentClasses(fileName)
+  if (componentClasses.isEmpty()) {
+    // classes are not yet loaded or not available on that IDE. Ignore that file
+    return null
+  }
+
   val category = getSchemeCategory(fileName) ?: getCategory(componentClasses)
 
   categoryCache[fileName] = category
@@ -80,13 +92,11 @@ fun getFileSpec(path: String): String {
   return removeOsPrefix(path)
 }
 
-private fun getSubCategory(componentClasses: List<Class<PersistentStateComponent<Any>>>): String? {
-  for (componentClass in componentClasses) {
-    if (AppEditorFontOptions::class.java.isAssignableFrom(componentClass)) {
-      return EDITOR_FONT_SUBCATEGORY_ID
-    }
-  }
-  return null
+private fun getSubCategory(fileSpec: String): String? {
+  if (fileSpec == AppEditorFontOptions.STORAGE_NAME)
+    return EDITOR_FONT_SUBCATEGORY_ID
+  else
+    return null
 }
 
 private fun findComponentClasses(fileSpec: String): List<Class<PersistentStateComponent<Any>>> {
