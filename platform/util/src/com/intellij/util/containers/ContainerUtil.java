@@ -1900,13 +1900,13 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> sorted(@NotNull Collection<? extends T> list, @NotNull Comparator<? super T> comparator) {
-    return sorted((Iterable<? extends T>)list, comparator);
+  public static @Unmodifiable @NotNull <T, TT extends T> List<T> sorted(@NotNull Collection<TT> list, @NotNull Comparator<? super TT> comparator) {
+    return sorted((Iterable<TT>)list, comparator);
   }
 
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> sorted(@NotNull Iterable<? extends T> list, @NotNull Comparator<? super T> comparator) {
-    List<T> sorted = newArrayList(list);
+  public static @Unmodifiable @NotNull <T, TT extends T> List<T> sorted(@NotNull Iterable<TT> list, @NotNull Comparator<? super TT> comparator) {
+    List<TT> sorted = newArrayList(list);
     sort(sorted, comparator);
     return Collections.unmodifiableList(sorted);
   }
