@@ -48,6 +48,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.lang.IllegalStateException
+import java.lang.Integer.max
+import java.lang.RuntimeException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -98,6 +101,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val threadDumpService = ThreadDumpService.getInstance()
 
   private val preCacheSlowDataKeys = !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
+  private val maxAwaitSharedDataRetries = max(1, Registry.intValue("actionSystem.update.actions.max.await.retries", 500))
 
   private var edtCallsCount: Int = 0 // used only in EDT
   private var edtWaitNanos: Long = 0 // used only in EDT
@@ -354,7 +358,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val operationName = Utils.operationName(group, OP_groupPostProcess, place)
     try {
       val updateSession = asUpdateSession()
-      return retryOnAwaitSharedData(operationName) {
+      return retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         blockingContext { // no data-context hence no RA, just blockingContext
           val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
           spanBuilder.useWithScopeBlocking {
@@ -379,7 +383,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     // use initial presentation if there's no updated presentation (?)
     val event = createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group))
     val children = try {
-      retryOnAwaitSharedData(operationName) {
+      retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
           callAction(group, operationName, group.actionUpdateThread) {
             group.getChildren(event)
@@ -544,7 +548,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     presentation.setEnabledAndVisible(true)
     val event = createActionEvent(presentation)
     val success = try {
-      retryOnAwaitSharedData(operationName) {
+      retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.updateAction(action, event) {
           if (isDefaultImplementationRecursively(OP_actionPresentation, action)) {
             return@updateAction true
@@ -791,9 +795,10 @@ private fun isDefaultImplementationRecursively(op: String, action: AnAction): Bo
 }
 
 private suspend inline fun <R> retryOnAwaitSharedData(operationName: String,
+                                                      maxRetries: Int,
                                                       crossinline block: suspend () -> R): R = withContext(
   OperationName(operationName) + RecursionElement.next()) {
-  while (true) {
+  repeat(maxRetries) {
     try {
       return@withContext block()
     }
@@ -801,7 +806,7 @@ private suspend inline fun <R> retryOnAwaitSharedData(operationName: String,
       ex.job.join()
     }
   }
-  throw AssertionError()
+  throw RuntimeException("max $maxRetries retries reached")
 }
 
 private class AwaitSharedData(val job: Job, message: String) : RuntimeException(message) {
