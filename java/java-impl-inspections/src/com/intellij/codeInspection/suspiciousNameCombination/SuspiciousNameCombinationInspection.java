@@ -33,7 +33,7 @@ public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaL
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
   @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
-  protected final List<String> myNameGroups = new ArrayList<>();
+  private final List<String> myNameGroups = new ArrayList<>();
   final MethodMatcher myIgnoredMethods = new MethodMatcher()
     // parameter name is 'x' which is completely unrelated to coordinates
     .add("java.io.PrintStream", "println")
@@ -74,7 +74,7 @@ public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaL
     return true;
   }
 
-  protected void clearNameGroups() {
+  private void clearNameGroups() {
     myNameGroups.clear();
     myWordToGroupMap.clear();
     myLongestWord = 0;

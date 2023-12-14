@@ -82,7 +82,7 @@ public final class PyIterableVariableMacro extends Macro {
   }
 
   @NotNull
-  protected List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
+  private static List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
     final List<PsiNamedElement> components = new ArrayList<>();
     for (PsiNamedElement namedElement : getVisibleNamedElements(element)) {

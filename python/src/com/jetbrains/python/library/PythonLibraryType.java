@@ -40,7 +40,7 @@ public final class PythonLibraryType extends LibraryType<DummyLibraryProperties>
     }
   };
 
-  protected PythonLibraryType() {
+  private PythonLibraryType() {
     super(LIBRARY_KIND);
   }
 

@@ -46,7 +46,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
  */
 public final class PyPep8NamingInspection extends PyInspection {
 
-  protected static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
+  private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
@@ -76,10 +76,10 @@ public final class PyPep8NamingInspection extends PyInspection {
     );
   }
 
-  protected void addFunctionQuickFixes(ProblemsHolder holder,
-                                       PyClass containingClass,
-                                       ASTNode nameNode,
-                                       List<LocalQuickFix> quickFixes, TypeEvalContext typeEvalContext) {
+  private static void addFunctionQuickFixes(ProblemsHolder holder,
+                                            PyClass containingClass,
+                                            ASTNode nameNode,
+                                            List<LocalQuickFix> quickFixes, TypeEvalContext typeEvalContext) {
     if (holder != null && holder.isOnTheFly()) {
       LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(nameNode.getPsi());
       if (qf != null) {
@@ -92,8 +92,8 @@ public final class PyPep8NamingInspection extends PyInspection {
     }
   }
 
-  protected LocalQuickFix[] createRenameAndIgnoreErrorQuickFixes(@Nullable PsiElement node,
-                                                                 String errorCode) {
+  private LocalQuickFix[] createRenameAndIgnoreErrorQuickFixes(@Nullable PsiElement node,
+                                                               String errorCode) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (node != null) {
       LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(node);

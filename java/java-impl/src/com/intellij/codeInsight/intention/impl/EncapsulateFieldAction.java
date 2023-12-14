@@ -60,7 +60,7 @@ public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction
   }
 
   @Nullable
-  protected static PsiField getField(@Nullable PsiElement element) {
+  private static PsiField getField(@Nullable PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return null;
     }

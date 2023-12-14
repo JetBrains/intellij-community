@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SharedThreadLocalRandomInspection extends BaseInspection {
 
-  protected final MethodMatcher myMethodMatcher;
+  private final MethodMatcher myMethodMatcher;
 
   public SharedThreadLocalRandomInspection() {
     myMethodMatcher = new MethodMatcher(false, "ignoreArgumentToMethods")

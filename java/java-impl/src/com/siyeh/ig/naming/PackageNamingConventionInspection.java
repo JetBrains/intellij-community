@@ -49,7 +49,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
    */
   public int m_maxLength = DEFAULT_MAX_LENGTH;
 
-  protected Pattern m_regexPattern = Pattern.compile(m_regex);
+  private Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,

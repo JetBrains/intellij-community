@@ -59,7 +59,7 @@ public final class PyNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @NotNull
-  protected String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
+  private static String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
     final List<String> strings = StringUtil.split(name, "_");
     if (strings.size() > 0) {
       final StringBuilder buf = new StringBuilder();

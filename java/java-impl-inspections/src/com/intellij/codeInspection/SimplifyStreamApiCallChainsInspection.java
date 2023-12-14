@@ -252,8 +252,8 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
   }
 
   @NotNull
-  protected static TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
-                                               @NotNull PsiMethodCallExpression qualifierExpression) {
+  private static TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
+                                             @NotNull PsiMethodCallExpression qualifierExpression) {
     final PsiReferenceExpression qualifierMethodExpression = qualifierExpression.getMethodExpression();
     final PsiElement qualifierNameElement = qualifierMethodExpression.getReferenceNameElement();
     final int startOffset = (qualifierNameElement != null ? qualifierNameElement : qualifierMethodExpression).getTextOffset();

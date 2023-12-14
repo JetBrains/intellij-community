@@ -489,7 +489,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     return createdFiles;
   }
 
-  protected static boolean isSynthetic(PsiClass aClass) {
+  private static boolean isSynthetic(PsiClass aClass) {
     return aClass instanceof SyntheticElement || !aClass.isPhysical();
   }
 

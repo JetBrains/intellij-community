@@ -47,7 +47,9 @@ public final class CreateCastExpressionFromInstanceofAction implements ModComman
     return ModCommand.psiUpdate(instanceOfExpression, (expr, updater) -> invoke(context, expr, updater));
   }
 
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiInstanceOfExpression instanceOfExpression, @NotNull ModPsiUpdater updater) {
+  private static void invoke(@NotNull ActionContext context,
+                             @NotNull PsiInstanceOfExpression instanceOfExpression,
+                             @NotNull ModPsiUpdater updater) {
     PsiElement decl = createAndInsertCast(context.offset(), instanceOfExpression);
     if (decl == null) return;
     decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);

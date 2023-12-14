@@ -58,8 +58,8 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
     "getLogger," +
     // Log4J 2
     "getLogger";
-  protected final List<String> loggerFactoryClassNames = new ArrayList<>();
-  protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
+  private final List<String> loggerFactoryClassNames = new ArrayList<>();
+  private final List<String> loggerFactoryMethodNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
   public String loggerClassName = DEFAULT_FACTORY_CLASS_NAMES;
   @SuppressWarnings("PublicField")

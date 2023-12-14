@@ -55,7 +55,7 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.EXCEPTION_BREAKPOINTS;
   }
 

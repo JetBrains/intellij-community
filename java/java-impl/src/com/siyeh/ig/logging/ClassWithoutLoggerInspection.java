@@ -41,7 +41,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class ClassWithoutLoggerInspection extends BaseInspection {
 
-  protected final List<String> loggerNames = new ArrayList<>();
+  private final List<String> loggerNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */

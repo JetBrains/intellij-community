@@ -31,7 +31,7 @@ import java.util.Collection;
 
 public final class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule<B, XBreakpointPackageGroup> {
 
-  protected XBreakpointGroupingByPackageRule() {
+  private XBreakpointGroupingByPackageRule() {
     super("XBreakpointGroupingByPackageRule", JavaDebuggerBundle.message("rule.name.group.by.package"));
   }
 

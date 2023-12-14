@@ -44,10 +44,10 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
 
-  protected static final String PACKAGE_LOCAL = "package";
-  protected static final String PUBLIC = PsiModifier.PUBLIC;
-  protected static final String PROTECTED = PsiModifier.PROTECTED;
-  protected static final String PRIVATE = PsiModifier.PRIVATE;
+  private static final String PACKAGE_LOCAL = "package";
+  static final String PUBLIC = PsiModifier.PUBLIC;
+  private static final String PROTECTED = PsiModifier.PROTECTED;
+  private static final String PRIVATE = PsiModifier.PRIVATE;
 
   @Override
   public @NotNull OptPane getOptionsPane() {

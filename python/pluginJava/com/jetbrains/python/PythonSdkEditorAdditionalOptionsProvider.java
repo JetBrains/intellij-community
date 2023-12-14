@@ -21,7 +21,7 @@ import javax.swing.event.AncestorEvent;
 import java.awt.*;
 
 public final class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditionalOptionsProvider {
-  protected PythonSdkEditorAdditionalOptionsProvider() {
+  private PythonSdkEditorAdditionalOptionsProvider() {
     super(PythonSdkType.getInstance());
   }
 

@@ -142,7 +142,7 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return newText;
   }
 
-  protected boolean isSupportedFile(PsiFile file) {
+  private static boolean isSupportedFile(PsiFile file) {
     return file instanceof PyFile;
   }
 

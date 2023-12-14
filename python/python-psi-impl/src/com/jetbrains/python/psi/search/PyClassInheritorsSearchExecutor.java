@@ -22,7 +22,7 @@ public final class PyClassInheritorsSearchExecutor implements QueryExecutor<PyCl
   /**
    * These base classes are to general to look for inheritors list.
    */
-  protected static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
+  private static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
 
   @Override
   public boolean execute(@NotNull final PyClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PyClass> consumer) {

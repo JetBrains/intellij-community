@@ -48,7 +48,7 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.METHOD_BREAKPOINTS;
   }
 

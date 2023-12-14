@@ -78,7 +78,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
-  protected boolean isMovable(PsiExpression expression) {
+  private boolean isMovable(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return true;

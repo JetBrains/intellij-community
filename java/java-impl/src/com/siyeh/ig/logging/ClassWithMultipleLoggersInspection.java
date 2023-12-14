@@ -40,7 +40,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class ClassWithMultipleLoggersInspection extends BaseInspection {
 
-  protected final List<String> loggerNames = new ArrayList<>();
+  private final List<String> loggerNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */

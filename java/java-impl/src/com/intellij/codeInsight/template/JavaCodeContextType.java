@@ -81,7 +81,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
 
   public static final class ConsumerFunction extends JavaCodeContextType {
-    protected ConsumerFunction() {
+    private ConsumerFunction() {
       super(JavaBundle.message("live.template.context.consumer.function"));
     }
 

@@ -42,10 +42,10 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class MethodMayBeStaticInspection extends BaseInspection {
-  @NonNls protected static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
-  @NonNls protected static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
-  @NonNls protected static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
-  @NonNls protected static final String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
+  @NonNls private static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
+  @NonNls private static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
+  @NonNls private static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
+  @NonNls private static final String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
   /**
    * @noinspection PublicField
    */

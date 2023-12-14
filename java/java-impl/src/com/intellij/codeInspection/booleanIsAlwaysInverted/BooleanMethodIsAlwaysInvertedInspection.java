@@ -91,7 +91,7 @@ public final class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBat
     return null;
   }
 
-  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement identifier, boolean onTheFly) {
+  ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement identifier, boolean onTheFly) {
     final InvertBooleanDelegate invertBooleanDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(identifier.getParent());
     return manager.createProblemDescriptor(identifier,
                                            JavaBundle.message("boolean.method.is.always.inverted.problem.descriptor"),

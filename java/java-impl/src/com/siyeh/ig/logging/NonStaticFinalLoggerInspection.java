@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class NonStaticFinalLoggerInspection extends BaseInspection {
 
-  protected final List<String> loggerClassNames = new ArrayList<>();
+  private final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
   public String loggerClassName = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 

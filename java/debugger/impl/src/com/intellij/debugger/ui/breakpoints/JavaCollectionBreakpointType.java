@@ -80,7 +80,7 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.COLLECTION_WATCHPOINTS;
   }
 

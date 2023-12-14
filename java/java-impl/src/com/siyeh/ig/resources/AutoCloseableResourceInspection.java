@@ -60,7 +60,7 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
                   "org.springframework.context.ConfigurableApplicationContext",
                   "io.micronaut.context.ApplicationContext");
 
-  protected final MethodMatcher myMethodMatcher;
+  final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;

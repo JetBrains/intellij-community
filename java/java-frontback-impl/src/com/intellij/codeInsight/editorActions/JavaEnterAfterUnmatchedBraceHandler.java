@@ -16,7 +16,7 @@ import static com.intellij.psi.impl.source.BasicJavaElementType.EXPRESSION_SET;
 
 public final class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBraceHandler {
 
-  protected JavaEnterAfterUnmatchedBraceHandler() {
+  private JavaEnterAfterUnmatchedBraceHandler() {
   }
 
   @Override

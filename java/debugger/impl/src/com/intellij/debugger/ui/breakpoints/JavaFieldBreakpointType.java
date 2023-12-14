@@ -74,7 +74,7 @@ public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<Ja
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;
   }
 

@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 
 public final class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
   @NonNls
-  protected static final Collection<String> regexMethodNames = Set.of(
+  private static final Collection<String> regexMethodNames = Set.of(
     "matches", "replace", "replaceFirst", "replaceAll", "split"
   );
 

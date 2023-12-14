@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SubtractionInCompareToInspection extends BaseInspection {
 
-  protected final MethodMatcher methodMatcher;
+  private final MethodMatcher methodMatcher;
 
   public SubtractionInCompareToInspection() {
     methodMatcher = new MethodMatcher()

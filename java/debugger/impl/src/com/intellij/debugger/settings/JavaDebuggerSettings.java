@@ -26,7 +26,7 @@ import static java.util.Collections.singletonList;
  * because JavaDebuggerSettingsPanelProvider has higher priority than XDebuggerSettingsPanelProviderImpl.
  */
 public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
-  protected JavaDebuggerSettings() {
+  private JavaDebuggerSettings() {
     super("java");
   }
 
