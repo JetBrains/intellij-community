@@ -31,12 +31,15 @@ import kotlin.math.min
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
                                                        private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-                                                       val roamingType: RoamingType,
+                                                       storageRoamingType: RoamingType,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   override val saveStorageDataOnReload: Boolean
     get() {
       return provider == null || provider.saveStorageDataOnReload
     }
+
+  internal val rawRoamingType = storageRoamingType
+  private val effectiveRoamingType = getEffectiveRoamingType(storageRoamingType, fileSpec)
 
   protected abstract fun loadLocalData(): Element?
 
@@ -57,7 +60,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     try {
       val isLoadLocalData: Boolean
       if (useStreamProvider && provider != null) {
-        isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
+        isLoadLocalData = !provider.read(fileSpec, effectiveRoamingType) { inputStream ->
           inputStream?.let {
             element = JDOMUtil.load(inputStream)
             providerDataStateChanged(createDataWriterForElement(element = element!!,
@@ -159,14 +162,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         var isSavedLocally = false
         val provider = storage.provider
         if (elements == null) {
-          if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          if (provider == null || !provider.delete(storage.fileSpec, storage.effectiveRoamingType)) {
             isSavedLocally = true
             saveLocally(writer)
           }
         }
-        else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
+        else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray().toByteArray(), storage.roamingType)
+          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray().toByteArray(), storage.effectiveRoamingType)
         }
         else {
           isSavedLocally = true

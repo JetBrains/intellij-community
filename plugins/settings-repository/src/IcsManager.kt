@@ -169,7 +169,7 @@ class IcsManager @JvmOverloads constructor(
     override val isExclusive: Boolean
       get() = isRepositoryActive
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive && roamingType != RoamingType.DISABLED
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive && roamingType.isRoamable
 
     override fun processChildren(path: String,
                                  roamingType: RoamingType,

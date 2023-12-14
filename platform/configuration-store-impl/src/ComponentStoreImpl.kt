@@ -556,7 +556,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
-    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
+    return (storage as? XmlElementStorage)?.rawRoamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
   }
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null

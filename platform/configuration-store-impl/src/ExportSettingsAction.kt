@@ -227,7 +227,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
     var thereIsExportableStorage = false
     for (storage in storages) {
-      val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
+      val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
       val exportable = isStorageExportable(storage, isRoamable, withExportable)
       LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
       if (exportable) {
@@ -251,7 +251,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
   // must be in the end - because most of the SchemeManager clients specify additionalExportFile in the State spec
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-    if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
+    if (it.roamingType.isRoamable && it.fileSpec.getOrNull(0) != '$') {
       val fileSpec = FileSpec(relativePath = it.fileSpec, rawFileSpec = it.fileSpec, isDirectory = true)
       if (!result.containsKey(fileSpec)) {
         result.putValue(fileSpec, ExportableItem(fileSpec, it.presentableName ?: "", null, it.roamingType))
@@ -378,7 +378,7 @@ private fun getLocalPath(fileSpec: FileSpec, storageManager: StateStorageManager
 private fun loadFileContent(item: ExportableItem, storageManager: StateStorageManagerImpl): ByteArray? {
   var content: ByteArray? = null
   var errorDuringLoadingFromProvider = false
-  val skipProvider = item.roamingType == RoamingType.DISABLED
+  val skipProvider = !item.roamingType.isRoamable
   val handledByProvider = !skipProvider && storageManager.compoundStreamProvider.read(item.fileSpec.rawFileSpec,
                                                                                       item.roamingType) { inputStream ->
     // null stream means empty file which shouldn't be exported

@@ -42,7 +42,7 @@ open class FileBasedStorage(file: Path,
   XmlElementStorage(fileSpec = fileSpec,
                     rootElementName = rootElementName,
                     pathMacroSubstitutor = pathMacroManager,
-                    roamingType = roamingType,
+                    storageRoamingType = roamingType,
                     provider = provider) {
 
   @Volatile

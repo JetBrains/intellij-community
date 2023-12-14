@@ -17,12 +17,13 @@ package com.intellij.openapi.components;
 
 public enum RoamingType {
   /**
-   * Stored only locally, not shared and not exportable
+   * Stored only locally, not shared and not exportable (via Export Settings dialog)
    */
   DISABLED,
 
   /**
-   * Stored locally, not exportable, but can be migrated to another IDE on the same machine (Migrate Settings)
+   * Stored locally, not shared via Settings Sync, not exportable via Export Settings,
+   * but can be migrated to another IDE on the same machine (Migrate Settings)
    */
   LOCAL,
 
@@ -53,7 +54,7 @@ public enum RoamingType {
    * @return <strong>true</strong> if this setting can be exported and shared with other IDEs on other machines,
    *          <br/><strong>false</strong> otherwise
    */
-  public boolean isShared() {
+  public boolean isRoamable() {
     return this == DEFAULT || this == PER_OS;
   }
 
@@ -63,7 +64,7 @@ public enum RoamingType {
    * @return <strong>true</strong> if this setting is shared only between machines with the same OS type
    *          <br/><strong>false</strong> otherwise
    */
-  public boolean isOSSpefic() {
+  public boolean isOsSpecific() {
     return this == PER_OS;
   }
 }

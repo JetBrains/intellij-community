@@ -12,10 +12,7 @@ import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-internal fun isSyncEnabled(fileSpec: String, roamingType: RoamingType): Boolean {
-  if (!roamingType.isShared)
-    return false
-
+internal fun isSyncCategoryEnabled(fileSpec: String): Boolean {
   val rawFileSpec = removeOsPrefix(fileSpec)
   if (rawFileSpec == SettingsSyncSettings.FILE_SPEC)
     return true
@@ -56,7 +53,7 @@ private fun getCategory(componentClasses: List<Class<PersistentStateComponent<An
 
 private val categoryCache: ConcurrentMap<String, SettingsCategory> = ConcurrentHashMap()
 
-internal fun getCategory(fileName: String): SettingsCategory? {
+fun getCategory(fileName: String): SettingsCategory? {
   categoryCache[fileName]?.let { cachedCategory ->
     return cachedCategory
   }

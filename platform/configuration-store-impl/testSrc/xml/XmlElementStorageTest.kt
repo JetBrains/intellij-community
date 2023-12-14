@@ -38,7 +38,7 @@ class XmlElementStorageTest {
   }
 
   private class MyXmlElementStorage(private val element: Element)
-    : XmlElementStorage(fileSpec = "", rootElementName = "root", roamingType = RoamingType.DEFAULT) {
+    : XmlElementStorage(fileSpec = "", rootElementName = "root", storageRoamingType = RoamingType.DEFAULT) {
     var savedElement: Element? = null
 
     override fun loadLocalData() = element

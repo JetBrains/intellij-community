@@ -115,7 +115,8 @@ internal class ChangeRecord(private val commitDetails: VcsFullCommitDetails, isF
       val fileName = change.virtualFile?.name ?: return SettingsCategory.OTHER
       if (fileName == GitSettingsLog.PLUGINS_FILE) return SettingsCategory.PLUGINS
 
-      return getCategory(fileName)
+      //workaround empty category
+      return getCategory(fileName) ?: SettingsCategory.OTHER
     }
 
     val changesCategories = changes.map { getChangeCategory(it) }.distinct().sortedBy { getCategoryOrder(it) }.map { toString(it) }

@@ -46,7 +46,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   // for instance, LaFManager, because the actual theme might be provided by a plugin.
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
-  suspend fun importLastOptions(categories: Set<SettingsCategory>) {
+  suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>) {
     if (!categories.contains(SettingsCategory.KEYMAP) && !categories.contains(SettingsCategory.UI)) {
       return
     }
@@ -251,7 +251,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       if (activeStorage.value == StoragePathMacros.CACHE_FILE || !activeStorage.roamingType.canBeMigrated())
         return@processAllImplementationClasses
 
-      if (activeStorage.roamingType.isOSSpefic && allFiles.contains("$osFolderName/${activeStorage.value}")) {
+      if (activeStorage.roamingType.isOsSpecific && allFiles.contains("$osFolderName/${activeStorage.value}")) {
         retval[state.name] = "$osFolderName/${activeStorage.value}"
       }
       else if (allFiles.contains(activeStorage.value)) {
