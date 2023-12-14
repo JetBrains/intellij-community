@@ -38,6 +38,7 @@ class PresentationAssistant233 {
         }
         val applicationElement = JDOMUtil.load(newSettingsFile)
         val newComponent = applicationElement.getChild("component")
+        var showActionsEnabled = true
         if (pluginSettingsFile.exists()) {
           val component = JDOMUtil.load(pluginSettingsFile).getChild("component")
           val componentOptions = JDOMUtil.getChildren(component, Constants.OPTION)
@@ -74,6 +75,9 @@ class PresentationAssistant233 {
                     setOption(newComponent, "showAlternativeKeymap", "true")
                   }
                 }
+                "showActionDescriptions" -> {
+                  showActionsEnabled = getValue(option)?.toBoolean() ?: true
+                }
               }
             }
           }
@@ -81,7 +85,7 @@ class PresentationAssistant233 {
         val disabledPluginsFile: Path = options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
         val isPluginEnabled = !(if (Files.exists(disabledPluginsFile)) loadDisabledPlugins(disabledPluginsFile) else setOf())
           .contains(pluginDescriptor.pluginId)
-        setOption(newComponent, "showActionDescriptions", isPluginEnabled.toString())
+        setOption(newComponent, "showActionDescriptions", (isPluginEnabled && showActionsEnabled).toString())
         JDOMUtil.write(applicationElement, newSettingsFile)
       }
     }
