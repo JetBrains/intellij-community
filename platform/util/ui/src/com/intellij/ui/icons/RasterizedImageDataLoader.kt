@@ -163,7 +163,7 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
   }
 
   override val url: URL?
-    get() = classLoaderRef.get()?.getResource(path)
+    get() = classLoaderRef.get()?.getResource(normalizePath(path))
 
   override fun patch(transform: IconTransform): ImageDataLoader? = null
 
