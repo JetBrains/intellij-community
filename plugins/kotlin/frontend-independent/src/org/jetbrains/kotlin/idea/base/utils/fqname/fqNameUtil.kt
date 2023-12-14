@@ -12,9 +12,6 @@ import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.types.AbbreviatedType
-import org.jetbrains.kotlin.types.KotlinType
 
 /**
  * Returns FqName for given declaration (either Java or Kotlin)
@@ -51,12 +48,6 @@ private fun ImportPath.isImported(imports: Iterable<ImportPath>): Boolean = impo
 fun ImportPath.isImported(imports: Iterable<ImportPath>, excludedFqNames: Iterable<FqName>): Boolean {
     return isImported(imports) && (isAllUnder || this.fqName !in excludedFqNames)
 }
-
-val KotlinType.fqName: FqName?
-    get() = when (this) {
-        is AbbreviatedType -> abbreviation.fqName
-        else -> constructor.declarationDescriptor?.fqNameOrNull()
-    }
 
 fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
     JavaToKotlinClassMap.isJavaPlatformClass(this) || this in javaToKotlinNameMap

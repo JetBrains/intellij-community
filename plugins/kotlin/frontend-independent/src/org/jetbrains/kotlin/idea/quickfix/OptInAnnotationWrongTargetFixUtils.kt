@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -30,7 +29,7 @@ object OptInAnnotationWrongTargetFixUtils {
                 )
 
             annotatedElement is KtProperty
-                    && (annotatedElement.hasCustomGetter() || annotationUseSiteTarget == AnnotationUseSiteTarget.PROPERTY_GETTER) ->
+                    && (annotatedElement.getter?.hasBody() == true || annotationUseSiteTarget == AnnotationUseSiteTarget.PROPERTY_GETTER) ->
                 return listOf(
                     MoveOptInRequirementToPropertyFix(
                         MoveOptInRequirementToPropertyFix.SourceType.GETTER,
