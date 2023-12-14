@@ -36,6 +36,7 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
+  public static final String IGNORE_LIST_ROW_HEIGHT = "IgnoreListRowHeight";
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
