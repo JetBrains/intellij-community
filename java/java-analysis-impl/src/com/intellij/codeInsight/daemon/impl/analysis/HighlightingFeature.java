@@ -77,10 +77,30 @@ public enum HighlightingFeature {
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == useSiteLevel;
+      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
     }
 
+    @Override
+    boolean isLimited() {
+      return true;
+    }
+  },
+  VIRTUAL_THREADS(LanguageLevel.JDK_20_PREVIEW, "feature.virtual.threads") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
+    }
+
+    @Override
+    boolean isLimited() {
+      return true;
+    }
+  },
+  FOREIGN_FUNCTIONS(LanguageLevel.JDK_20_PREVIEW, "feature.foreign.functions") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
+    }
 
     @Override
     boolean isLimited() {
@@ -95,7 +115,12 @@ public enum HighlightingFeature {
       return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_21_PREVIEW == useSiteLevel;
     }
   },
-  IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes");
+  IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes"),
+  SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
+  STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
+  CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
+  STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
+  ;
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
@@ -158,6 +183,7 @@ public enum HighlightingFeature {
     return convertFromPreviewFeatureName(enumConstant.getName());
   }
 
+  // Should correspond to jdk.internal.javac.PreviewFeature.Feature enum
   @Nullable
   @Contract(pure = true)
   private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
@@ -166,6 +192,14 @@ public enum HighlightingFeature {
       case "TEXT_BLOCKS" -> TEXT_BLOCKS;
       case "RECORDS" -> RECORDS;
       case "SEALED_CLASSES" -> SEALED_CLASSES;
+      case "STRING_TEMPLATES" -> STRING_TEMPLATES;
+      case "UNNAMED_CLASSES", "IMPLICIT_CLASSES" -> IMPLICIT_CLASSES;
+      case "SCOPED_VALUES" -> SCOPED_VALUES;
+      case "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY;
+      case "CLASSFILE_API" -> CLASSFILE_API;
+      case "STREAM_GATHERERS" -> STREAM_GATHERERS;
+      case "FOREIGN" -> FOREIGN_FUNCTIONS;
+      case "VIRTUAL_THREADS" -> VIRTUAL_THREADS;
       default -> null;
     };
   }
