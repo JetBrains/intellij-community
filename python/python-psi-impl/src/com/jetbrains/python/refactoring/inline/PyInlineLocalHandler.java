@@ -78,10 +78,10 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
         refExpr = (PyReferenceExpression)refElement;
       }
     }
-    invoke(project, editor, (PyTargetExpression)element, refExpr);
+    invoke(project, editor, (PyTargetExpression)element, refExpr, false);
   }
 
-  private static boolean stringContentCanBeInlinedIntoFString(@NotNull PyStringElement inlinedStringElement, 
+  private static boolean stringContentCanBeInlinedIntoFString(@NotNull PyStringElement inlinedStringElement,
                                                               @NotNull PyFormattedStringElement targetFString) {
     if (LanguageLevel.forElement(targetFString).isAtLeast(LanguageLevel.PYTHON312)) return true;
     String content = inlinedStringElement.getContent();
@@ -176,7 +176,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
   private static void makeFStringFragmentsReplacements(@NotNull Map<PyFStringFragment, PyStringElement> fStringFragmentsReplacements) {
     var fString2Replacements = new MultiMap<PyFormattedStringElement, Pair<PyFStringFragment, String>>();
 
-    for (var entry: fStringFragmentsReplacements.entrySet()) {
+    for (var entry : fStringFragmentsReplacements.entrySet()) {
       PyFStringFragment fStringFragment = entry.getKey();
       PyFormattedStringElement fString = (PyFormattedStringElement)fStringFragment.getParent();
       String valueProperQuotes = entry.getValue().getContent();
@@ -186,12 +186,13 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     var fStrings = new ArrayList<>(fString2Replacements.keySet());
     fStrings.sort(Comparator.comparingInt(it -> -it.getTextOffset()));
 
-    for (var fString: fStrings) {
+    for (var fString : fStrings) {
       var replacements = fString2Replacements.get(fString);
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(fString.getProject());
 
-      var replacementsSegments = ContainerUtil.sorted(ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second)),
-      Comparator.comparingInt(it -> -it.first.getStartOffset()));
+      var replacementsSegments =
+        ContainerUtil.sorted(ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second)),
+                             Comparator.comparingInt(it -> -it.first.getStartOffset()));
 
       StringBuilder elementStringBuilder = new StringBuilder(fString.getText());
       for (var segment : replacementsSegments) {
@@ -205,10 +206,13 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     }
   }
 
-  private static void invoke(@NotNull final Project project,
-                             @NotNull final Editor editor,
-                             @NotNull final PyTargetExpression local,
-                             @Nullable PyReferenceExpression refExpr) {
+  public static void invoke(
+    @NotNull final Project project,
+    @NotNull final Editor editor,
+    @NotNull final PyTargetExpression local,
+    @Nullable PyReferenceExpression refExpr,
+    boolean replaceJustOneOccurrence
+  ) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -235,7 +239,13 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
       return;
     }
 
-    final PsiElement[] refsToInline = PyDefUseUtil.getPostRefs(containerBlock, local, getObject(def));
+    PsiElement[] refsToInline;
+    if (replaceJustOneOccurrence && refExpr != null) {
+      refsToInline = new PsiElement[] { refExpr };
+    }
+    else {
+      refsToInline = PyDefUseUtil.getPostRefs(containerBlock, local, getObject(def));
+    }
     if (refsToInline.length == 0) {
       final String message = RefactoringBundle.message("variable.is.never.used", localName);
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
@@ -247,7 +257,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
       final int occurrencesCount = refsToInline.length;
       final String occurrencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
       final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + " " + occurrencesString;
-      boolean result = RefactoringUiService.getInstance().showRefactoringMessageDialog(getRefactoringName(), question, HELP_ID, "OptionPane.questionIcon", true, project);
+      boolean result = RefactoringUiService.getInstance()
+        .showRefactoringMessageDialog(getRefactoringName(), question, HELP_ID, "OptionPane.questionIcon", true, project);
       if (!result) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
@@ -306,7 +317,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
         // Return if at least one ref is impossible to inline
         var simpleReplacements = new HashMap<PsiElement, PsiElement>();
         var fStringFragmentsReplacements = new HashMap<PyFStringFragment, PyStringElement>();
-        for (var refToInline: refsToInline) {
+        for (var refToInline : refsToInline) {
           if (!checkPossibleInlineElement(refToInline, value, project, editor, simpleReplacements, fStringFragmentsReplacements)) {
             return;
           }
@@ -323,11 +334,13 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
         }
         makeFStringFragmentsReplacements(fStringFragmentsReplacements);
 
-        final PsiElement next = def.getNextSibling();
-        if (next instanceof PsiWhiteSpace) {
-          PyPsiUtils.removeElements(next);
+        if (!replaceJustOneOccurrence) {
+          final PsiElement next = def.getNextSibling();
+          if (next instanceof PsiWhiteSpace) {
+            PyPsiUtils.removeElements(next);
+          }
+          PyPsiUtils.removeElements(def);
         }
-        PyPsiUtils.removeElements(def);
 
         final List<TextRange> ranges = ContainerUtil.mapNotNull(exprs, element -> {
           final PyStatement parentalStatement = PsiTreeUtil.getParentOfType(element, PyStatement.class, false);
@@ -337,7 +350,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
         CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          highlightManager.addOccurrenceHighlights(editor, exprs.toArray(PsiElement.EMPTY_ARRAY), EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
+          highlightManager.addOccurrenceHighlights(editor, exprs.toArray(PsiElement.EMPTY_ARRAY), EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                   true, null);
           WindowManager.getInstance().getStatusBar(project)
             .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }
