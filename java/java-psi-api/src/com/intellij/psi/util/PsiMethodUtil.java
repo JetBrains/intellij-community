@@ -5,6 +5,7 @@ import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,10 @@ public final class PsiMethodUtil {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
           !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
+      PsiMethod[] constructors = method.getContainingClass().getConstructors();
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+        return false;
+      }
       if (parameters.length == 1) {
         return isJavaLangStringArray(parameters[0]);
       }
