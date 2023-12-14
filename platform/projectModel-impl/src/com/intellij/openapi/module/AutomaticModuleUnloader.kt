@@ -4,9 +4,15 @@ package com.intellij.openapi.module
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface AutomaticModuleUnloader {
   fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage)
+
+  /**
+   * The list of modules should be empty if all modules are loaded.
+   */
   fun setLoadedModules(modules: List<String>)
 
   companion object {
