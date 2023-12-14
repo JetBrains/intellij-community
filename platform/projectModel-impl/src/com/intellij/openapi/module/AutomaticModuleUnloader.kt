@@ -13,7 +13,7 @@ interface AutomaticModuleUnloader {
   /**
    * The list of modules should be empty if all modules are loaded.
    */
-  fun setLoadedModules(modules: List<String>)
+  fun setLoadedModules(modules: Collection<String>)
 
   companion object {
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
@@ -23,5 +23,5 @@ interface AutomaticModuleUnloader {
 internal class DummyAutomaticModuleUnloader : AutomaticModuleUnloader {
   override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {}
 
-  override fun setLoadedModules(modules: List<String>) {}
+  override fun setLoadedModules(modules: Collection<String>) {}
 }

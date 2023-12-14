@@ -147,7 +147,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     }
   }
 
-  override fun setLoadedModules(modules: List<String>) {
+  override fun setLoadedModules(modules: Collection<String>) {
     val list = state.modules
     list.clear()
     list.addAll(modules)
