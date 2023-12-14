@@ -43,11 +43,11 @@ public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsP
         break;
       }
 
-      FileType baseFileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
-      if (baseFileType == null) break;
-      if (super.forFileType(baseFileType) != null) return baseFileType;
+      FileType primaryFileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
+      if (primaryFileType == null) break;
+      if (super.forFileType(primaryFileType) != null) return primaryFileType;
 
-      type = baseFileType;
+      type = primaryFileType;
     }
 
     return null;
