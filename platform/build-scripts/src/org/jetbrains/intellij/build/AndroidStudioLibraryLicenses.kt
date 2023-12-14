@@ -18,9 +18,9 @@ package org.jetbrains.intellij.build
 object AndroidStudioLibraryLicenses {
   @JvmStatic
   val LICENSES_LIST: List<LibraryLicense> = listOf(
-    LibraryLicense(name = "Eclipse LSP4J", libraryName = "org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0", license = "Eclipse Public License 1.0"),
-    LibraryLicense(name = "Eclipse LSP4J", libraryName = "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.12.0", license = "Eclipse Public License 1.0"),
-    LibraryLicense(name = "JTS IO Common", libraryName = "jts-io-common", license = "Eclipse Public License 2.0"),
-    LibraryLicense(name = "Xtext", libraryName = "xtext-xbase", license = "Eclipse Public License 1.0"),
+    LibraryLicense(name = "Eclipse LSP4J", libraryName = "eclipse.lsp4j", url = "https://github.com/eclipse/lsp4j").eplV2(),
+    LibraryLicense(name = "Eclipse LSP4J JSON RPC", libraryName = "eclipse.lsp4j.jsonrpc", url = "https://github.com/eclipse/lsp4j").eplV2(),
+    LibraryLicense(name = "JTS IO Common", libraryName = "jts-io-common", url = "https://github.com/locationtech/jts").eplV2(),
+    LibraryLicense(name = "Xtext", libraryName = "xtext-xbase", url = "https://eclipse.dev/Xtext").eplV1(),
   )
 }
