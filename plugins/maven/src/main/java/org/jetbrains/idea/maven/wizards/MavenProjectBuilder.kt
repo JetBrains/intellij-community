@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -203,20 +204,27 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
     parameters.myOpenModulesConfigurator = on
   }
 
-  private val generalSettings: MavenGeneralSettings?
+  private val generalSettings: MavenGeneralSettings
     get() {
-      if (parameters.myGeneralSettingsCache == null) {
-        ApplicationManager.getApplication().runReadAction {
-          parameters.myGeneralSettingsCache = directProjectsSettings.generalSettings.clone()
+      var settings = parameters.myGeneralSettingsCache
+      if (settings == null) {
+        settings = ApplicationManager.getApplication().runReadAction(Computable {
+          val newSettings = directProjectsSettings.generalSettings.clone()
           var rootFiles = parameters.myFiles
           if (rootFiles == null) {
             rootFiles = listOf(LocalFileSystem.getInstance().findFileByNioFile(
               rootPath!!))
           }
-          parameters.myGeneralSettingsCache!!.updateFromMavenConfig(rootFiles)
-        }
+          newSettings.updateFromMavenConfig(rootFiles)
+          newSettings
+        })
+        parameters.myGeneralSettingsCache = settings;
+        return settings
       }
-      return parameters.myGeneralSettingsCache
+      else {
+        return settings
+      }
+
     }
 
   val importingSettings: MavenImportingSettings?

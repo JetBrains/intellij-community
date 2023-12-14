@@ -365,17 +365,17 @@ class MavenProjectsTree(val project: Project) {
 
 
   @Deprecated("use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead")
-  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: MavenProgressIndicator) {
+  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, process: MavenProgressIndicator) {
     runBlockingMaybeCancellable { updateAll(force, generalSettings, process.indicator) }
   }
 
   @ApiStatus.Internal
-  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
     return updateAll(force, generalSettings, toRawProgressReporter(process))
   }
 
   @ApiStatus.Internal
-  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val managedFiles = existingManagedFiles
     val explicitProfiles = explicitProfiles
 
@@ -392,7 +392,7 @@ class MavenProjectsTree(val project: Project) {
   @ApiStatus.Internal
   suspend fun update(files: Collection<VirtualFile>,
                      force: Boolean,
-                     generalSettings: MavenGeneralSettings?,
+                     generalSettings: MavenGeneralSettings,
                      progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, progressReporter)
   }
@@ -402,7 +402,7 @@ class MavenProjectsTree(val project: Project) {
                              forceRead: Boolean,
                              explicitProfiles: MavenExplicitProfiles,
                              projectReader: MavenProjectReader,
-                             generalSettings: MavenGeneralSettings?,
+                             generalSettings: MavenGeneralSettings,
                              progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val updateContext = MavenProjectsTreeUpdateContext(this)
 
@@ -411,7 +411,7 @@ class MavenProjectsTree(val project: Project) {
       explicitProfiles,
       updateContext,
       projectReader,
-      generalSettings!!,
+      generalSettings,
       progressReporter,
       updateModules)
 
