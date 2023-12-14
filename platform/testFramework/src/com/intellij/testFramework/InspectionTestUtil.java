@@ -33,6 +33,14 @@ public final class InspectionTestUtil {
     List<Element> expectedProblems = new ArrayList<>(expectedDoc.getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<>(doc.getChildren("problem"));
 
+    for (Element problem1 : reportedProblems) {
+      for (Element problem2 : reportedProblems) {
+        if (problem1 != problem2 && compareProblemWithExpected(problem1, problem2, checkRange)) {
+          Assert.fail("Duplicated problems reported: " + JDOMUtil.writeDocument(new Document(problem1), "\n"));
+        }
+      }
+    }
+
     Element[] expectedArray = expectedProblems.toArray(new Element[0]);
 
     List<String> problems = new ArrayList<>();
