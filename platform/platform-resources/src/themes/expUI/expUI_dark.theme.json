@@ -750,7 +750,8 @@
       "linkUnderlineActive": "#FFFFFF65",
       "linkUnderlinePassive": "#FFFFFF65",
       "iconFillColor": "Blue8",
-      "iconBorderColor": "Grey14"
+      "iconBorderColor": "Grey14",
+      "Header.foreground": "Grey14"
     },
 
     "RecentProject": {
