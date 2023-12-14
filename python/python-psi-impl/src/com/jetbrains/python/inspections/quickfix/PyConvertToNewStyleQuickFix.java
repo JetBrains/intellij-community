@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyConvertToNewStyleQuickFix implements LocalQuickFix {
+public class PyConvertToNewStyleQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,8 +33,7 @@ public class PyConvertToNewStyleQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     assert pyClass != null;
 
@@ -50,7 +49,7 @@ public class PyConvertToNewStyleQuickFix implements LocalQuickFix {
       assert list != null;
       final ASTNode node = pyClass.getNameNode();
       assert node != null;
-      final PsiElement oldArgList = node.getPsi().getNextSibling();
+      final PsiElement oldArgList = updater.getWritable(node.getPsi().getNextSibling());
       if (oldArgList instanceof PyArgumentList) {
         oldArgList.replace(list);
       }

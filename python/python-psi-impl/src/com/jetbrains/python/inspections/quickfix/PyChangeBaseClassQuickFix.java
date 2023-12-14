@@ -17,8 +17,8 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyChangeBaseClassQuickFix implements LocalQuickFix {
+public class PyChangeBaseClassQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -37,14 +37,13 @@ public class PyChangeBaseClassQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     assert pyClass != null;
 
     final PyArgumentList expressionList = pyClass.getSuperClassExpressionList();
     if (expressionList != null && expressionList.getArguments().length != 0) {
-      final PyExpression argument = expressionList.getArguments()[0];
+      final PyExpression argument = updater.getWritable(expressionList.getArguments()[0]);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(argument);
       builder.replaceElement(argument, argument.getText());
       PythonTemplateRunner.runTemplate(element.getContainingFile(), builder);
