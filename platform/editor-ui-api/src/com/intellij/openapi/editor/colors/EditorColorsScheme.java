@@ -21,6 +21,8 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
 
   void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes);
 
+  TextAttributes getAttributes(@Nullable TextAttributesKey key, boolean useDefaults);
+
   @NotNull
   Color getDefaultBackground();
   @NotNull
