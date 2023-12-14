@@ -3,7 +3,7 @@ package com.intellij.ae.database.counters.community.events
 
 import com.intellij.ae.database.activities.WritableDatabaseBackedCounterUserActivity
 import com.intellij.ae.database.runUpdateEvent
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.roots.TestSourcesFilter
@@ -14,8 +14,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.validOrNull
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 object TestFileCreatedUserActivity : WritableDatabaseBackedCounterUserActivity() {
   override val id = "test.file.created"
@@ -37,7 +35,7 @@ internal class TestFileCreationListener : AsyncFileListener {
           val isTest = TestSourcesFilter.isTestSources(file, project)
           if (isTest) {
             FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(TestFileCreatedUserActivity) {
-              val psiFile = withContext(Dispatchers.EDT) {
+              val psiFile = readAction {
                 PsiManagerEx.getInstance(project).findFile(file)?.validOrNull()
               }
 
