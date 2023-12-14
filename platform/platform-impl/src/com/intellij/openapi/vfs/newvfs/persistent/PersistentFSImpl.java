@@ -1743,7 +1743,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.warn("Can't find root[#" + rootId + "]");
       return;
     }
-    //for roots 'name' == rootPath:
+    // 'name' == rootPath in case of roots that are not archives
+    // but for archives e.g. jars it will be just name and this method will be unsuccessful (IDEA-341011)
     String rootPath = vfsPeer.getName(rootId);
     ensureRootCached(rootPath, missedRootUrlRef.get());
   }
