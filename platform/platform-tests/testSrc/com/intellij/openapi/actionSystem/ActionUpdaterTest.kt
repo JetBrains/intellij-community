@@ -13,6 +13,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -265,14 +266,64 @@ class ActionUpdaterTest {
       override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
                                               updateSession: UpdateSession): List<AnAction?> {
         updateSession.presentation(extra).isEnabledAndVisible = true
-        return listOf(extra)
+        return visibleChildren + listOf(extra)
       }
     }
     val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
                                      ActionPlaces.UNKNOWN, false, fastTrack = false)
     }
-    assertEquals(1, actions.size)
+    assertEquals(2, actions.size)
+  }
+
+  @Test
+  fun testMaxAwaitRetriesWorksAsExpected() = timeoutRunBlocking {
+    val retries = Registry.get("actionSystem.update.actions.max.await.retries")
+    val prevRetries = retries.asInteger()
+    val quickRetries = 10
+    var currentMethodId = 0
+    var checkedCounts = IntArray(3)
+    fun updateNewInstance(session: UpdateSession, methodId: Int) {
+      if (methodId != currentMethodId) return
+      checkedCounts[currentMethodId]++
+      session.presentation(newAction(ActionUpdateThread.BGT) { awaitWithCheckCanceled(10) })
+    }
+    val actionGroup = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+      override fun update(e: AnActionEvent) {
+        updateNewInstance(e.updateSession, 0)
+      }
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        updateNewInstance(e!!.updateSession, 1)
+        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+      }
+      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
+                                              updateSession: UpdateSession): List<AnAction?> {
+        updateNewInstance(updateSession, 2)
+        return visibleChildren
+      }
+    }
+    repeat(3) {
+      val actions = try {
+        retries.setValue(10)
+        withContext(Dispatchers.EDT) {
+          Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                         ActionPlaces.UNKNOWN, false, fastTrack = false)
+        }
+      }
+      catch (_: TestLoggerAssertionError) {
+        currentMethodId++
+        emptyList()
+      }
+      finally {
+        retries.setValue(prevRetries)
+      }
+      // TODO "postProcess" in production returns original items, it will be 1 when behaviors are unified
+      assertEquals(0, actions.size)
+    }
+    assertEquals(quickRetries, checkedCounts[0], "update retries")
+    assertEquals(quickRetries, checkedCounts[1], "getChildren retries")
+    assertEquals(quickRetries, checkedCounts[2], "postProcessVisibleChildren retries")
   }
 
   @Test
