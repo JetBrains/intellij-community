@@ -16,6 +16,7 @@
 package com.jetbrains.rest.inspections;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.Module;
@@ -31,13 +32,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.PythonRestBundle;
-import com.jetbrains.rest.RestFile;
-import com.jetbrains.rest.RestTokenTypes;
-import com.jetbrains.rest.RestUtil;
+import com.jetbrains.rest.*;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
-import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -134,7 +131,13 @@ public final class RestRoleInspection extends RestInspection {
       if (definedRoles.contains(node.getRoleName())) return;
       registerProblem(
         node, PythonRestBundle.message("python.rest.inspection.message.not.defined.role", node.getRoleName()),
-        new AddIgnoredRoleFix(node.getRoleName(), RestRoleInspection.this));
+        new AddToInspectionOptionListFix<>(
+          RestRoleInspection.this,
+          RestBundle.message("QFIX.ignore.role.0", node.getRoleName()),
+          node.getRoleName(),
+          inspection -> { return inspection.ignoredRoles; }
+        )
+      );
     }
   }
 

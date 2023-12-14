@@ -3,11 +3,9 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PyEncodingUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -54,6 +52,9 @@ public class AddEncodingQuickFix extends PsiUpdateModCommandQuickFix {
     if (encodingComment.getNextSibling() == null || !encodingComment.getNextSibling().textContains('\n')) {
       file.addAfter(elementGenerator.createFromText(languageLevel, PsiWhiteSpace.class, "\n"), encodingComment);
     }
-    updater.moveTo(encodingComment.getTextOffset() + encodingComment.getTextLength() + 1);
+    Document document = file.getFileDocument();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    final int insertedLineNumber = document.getLineNumber(encodingComment.getTextOffset());
+    updater.moveTo(document.getLineStartOffset(insertedLineNumber + 1));
   }
 }
