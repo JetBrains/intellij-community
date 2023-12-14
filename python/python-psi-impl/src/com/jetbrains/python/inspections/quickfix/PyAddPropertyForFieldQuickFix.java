@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
+public class PyAddPropertyForFieldQuickFix extends PsiUpdateModCommandQuickFix {
   private final @IntentionFamilyName String myName;
 
   public PyAddPropertyForFieldQuickFix(@NotNull @IntentionFamilyName String name) {
@@ -28,11 +28,10 @@ public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyReferenceExpression) {
       final PsiReference reference = element.getReference();
-      final PsiElement resolved = reference.resolve();
+      final PsiElement resolved = updater.getWritable(reference.resolve());
       if (resolved instanceof PyTargetExpression target) {
         final PyClass containingClass = target.getContainingClass();
         if (containingClass != null) {
