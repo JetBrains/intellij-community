@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.mapSmartSet
-import com.intellij.util.suspendJava
 
 private const val UNSPECIFIED = "---"
 
@@ -49,107 +48,22 @@ internal class DumpRunConfigurationTypesAction : DumbAwareAction() {
       "Mapping 'Required Modules' to IDEs: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality\n\n"
 
     for (configurationType in configurationTypes.sortedBy { it.id }) {
-      output += "Name:             ${configurationType.displayName}\n"
-      output += "Description:      ${configurationType.configurationTypeDescription}\n"
-      output += "ID:               ${configurationType.id}\n"
-      output += "Implementation:   ${configurationType.javaClass.name}\n"
-      output += "Managed:          ${configurationType.isManaged}\n"
-      output += "Help topic ID:    ${configurationType.helpTopic}\n"
+      output += dumpConfigurationType(configurationType)
 
-      val pluginByClass = PluginManager.getPluginByClass(configurationType::class.java)
-      if (pluginByClass != null) {
-        output += "\n"
-        output += "Plugin:           ${pluginByClass.dump()}\n"
-        output += "Min. IDE Version: ${StringUtil.notNullize(pluginByClass.sinceBuild, UNSPECIFIED)}\n"
-
-        var requiredPlugins: String = ""
-        var requiredModules: String = ""
-        PluginManagerCore.getPlugin(pluginByClass.pluginId)!!
-          .dependencies
-          .filter { !it.isOptional }
-          .mapSmartSet { it.pluginId } // de-duplicate
-          .forEach {
-            val dependency = PluginManagerCore.getPlugin(it)
-            if (dependency == null) return@forEach
-
-            if (dependency.pluginId == PluginManagerCore.CORE_ID) {
-              requiredModules += "\n\t${it.idString}"
-              return@forEach
-            }
-
-            requiredPlugins += "\n\t${dependency.dump()}"
-          }
-        output += "Required Plugins: ${StringUtil.defaultIfEmpty(requiredPlugins, UNSPECIFIED)}\n"
-        output += "Required Modules: ${StringUtil.defaultIfEmpty(requiredModules, UNSPECIFIED)}\n"
-      }
-      else {
-        output += "Plugin:           Builtin (Platform)\n"
-      }
-
-      output += "\n"
+      output += dumpPluginAndDependencies(configurationType)
 
       for (configurationFactory in configurationType.configurationFactories) {
-        output += StringUtil.repeatSymbol('-', 40) + "\n"
-        output += "Factory Name:     ${configurationFactory.name}\n"
-        output += "Factory ID:       ${configurationFactory.id}\n"
-        output += "Implementation:   ${configurationFactory.javaClass.name}\n"
-        output += "Singleton Policy: ${configurationFactory.singletonPolicy}\n"
-        output += "Dumb Mode Edit:   ${configurationFactory.isEditableInDumbMode}\n"
-        output += "\n"
+        output += dumpConfigurationFactory(configurationFactory)
 
         val runConfiguration = configurationFactory.createTemplateConfiguration(project)
-        output += "Run Configuration:    ${runConfiguration.javaClass.name}\n"
-        output += "Create from Context:  ${runConfiguration is LocatableConfiguration}\n"
-        output += "Supports Targets:     ${runConfiguration is TargetEnvironmentAwareRunProfile}\n"
-        output += "Environment Files:    ${runConfiguration is EnvFilesOptions}\n"
-        output += "SearchScope Provider: ${runConfiguration is SearchScopeProvidingRunProfile}\n"
-        output += "Virtual:              ${runConfiguration is VirtualConfigurationType}\n"
-        output += "Make Before Launch:   ${runConfiguration is RunProfileWithCompileBeforeLaunchOption}\n"
-        output += "No Default Debug:     ${runConfiguration is RunConfigurationWithSuppressedDefaultDebugAction}\n"
 
-        output += "\n"
-        for (executor in Executor.EXECUTOR_EXTENSION_NAME.extensionList) {
-          val runners = PROGRAM_RUNNER_EP.extensionList.filter { it.canRun(executor.id, runConfiguration) }
-          if (runners.isEmpty()) continue
+        output += dumpRunConfiguration(runConfiguration)
 
-          output += "Runners (${executor.id} - ${executor.javaClass.name}):\n"
-          for (runner in runners) {
-            output += "\t${runner.runnerId} - ${runner.javaClass.name}\n"
-          }
-        }
-        output += "\n"
+        output += dumpExecutors(runConfiguration)
 
-        val configurationEditor = runConfiguration.configurationEditor
-        if (configurationEditor is SettingsEditorGroup) {
-          output += "Settings Editor Group:\n"
-          for (editor in configurationEditor.editors) {
-            output += "\t${editor.first} - ${editor.second.dump()}"
-          }
-        }
-        else {
-          output += "Settings Editor:      ${configurationEditor.dump()}"
-        }
-        Disposer.dispose(configurationEditor) // todo test
-        output += "\n"
+        output += dumpConfigurationEditor(runConfiguration)
 
-        var optionsClass: Class<*>? = configurationFactory.optionsClass
-        var optionsClassVia = "ConfigurationFactory"
-
-        if (optionsClass == null && runConfiguration is RunConfigurationBase<*>) {
-          val methodDeclaringClass = ReflectionUtil.getMethodDeclaringClass(runConfiguration.javaClass, "getOptionsClass")!!
-          val declaredMethod = methodDeclaringClass.getDeclaredMethod("getOptionsClass")!!
-          declaredMethod.isAccessible = true
-          @Suppress("UNCHECKED_CAST")
-          optionsClass = (declaredMethod.invoke(runConfiguration)) as Class<out RunConfigurationOptions?>?
-          optionsClassVia = "RunConfigurationBase"
-        }
-
-        if (optionsClass != null) {
-          output += "Options class:        ${optionsClass.name} [via ${optionsClassVia}]\n"
-        }
-        else {
-          output += "Options class:        n/a\n"
-        }
+        output += dumpOptionsClass(configurationFactory, runConfiguration)
 
         output += "\n"
       }
@@ -163,8 +77,138 @@ internal class DumpRunConfigurationTypesAction : DumbAwareAction() {
     FileEditorManager.getInstance(project).openEditor(OpenFileDescriptor(project, vf), true)
   }
 
+  private fun dumpPluginAndDependencies(configurationType: ConfigurationType): String {
+    val pluginByClass = PluginManager.getPluginByClass(configurationType::class.java)
+    if (pluginByClass == null) {
+      return "Plugin:           Built-in (Platform)\n\n"
+    }
+
+    var output = "\n"
+    output += "Plugin:           ${pluginByClass.dump()}\n"
+    output += "Min. IDE Version: ${StringUtil.notNullize(pluginByClass.sinceBuild, UNSPECIFIED)}\n"
+
+    var requiredPlugins = ""
+    var requiredModules = ""
+    PluginManagerCore.getPlugin(pluginByClass.pluginId)!!
+      .dependencies
+      .filter { !it.isOptional }
+      .mapSmartSet { it.pluginId } // de-duplicate
+      .forEach {
+        val dependency = PluginManagerCore.getPlugin(it)
+        if (dependency == null) return@forEach
+
+        if (dependency.pluginId == PluginManagerCore.CORE_ID) {
+          requiredModules += "\n\t${it.idString}"
+          return@forEach
+        }
+
+        requiredPlugins += "\n\t${dependency.dump()}"
+      }
+    output += "Required Plugins: ${StringUtil.defaultIfEmpty(requiredPlugins, UNSPECIFIED)}\n"
+    output += "Required Modules: ${StringUtil.defaultIfEmpty(requiredModules, UNSPECIFIED)}\n"
+
+    output += "\n"
+    return output
+  }
+
+  private fun dumpConfigurationType(configurationType: ConfigurationType): String {
+    var output = ""
+    output += "Name:             ${configurationType.displayName}\n"
+    output += "Description:      ${configurationType.configurationTypeDescription}\n"
+    output += "ID:               ${configurationType.id}\n"
+    output += "Implementation:   ${configurationType.javaClass.name}\n"
+    output += "Managed:          ${configurationType.isManaged}\n"
+    output += "Help topic ID:    ${configurationType.helpTopic}\n"
+
+    return output
+  }
+
+  private fun dumpConfigurationFactory(configurationFactory: ConfigurationFactory): String {
+    var output = ""
+    output += StringUtil.repeatSymbol('-', 40) + "\n"
+    output += "Factory Name:     ${configurationFactory.name}\n"
+    output += "Factory ID:       ${configurationFactory.id}\n"
+    output += "Implementation:   ${configurationFactory.javaClass.name}\n"
+    output += "Singleton Policy: ${configurationFactory.singletonPolicy}\n"
+    output += "Dumb Mode Edit:   ${configurationFactory.isEditableInDumbMode}\n"
+
+    output += "\n"
+    return output
+  }
+
+  private fun dumpRunConfiguration(runConfiguration: RunConfiguration): String {
+    var output = ""
+    output += "Run Configuration:    ${runConfiguration.javaClass.name}\n"
+    output += "Create from Context:  ${runConfiguration is LocatableConfiguration}\n"
+    output += "Supports Targets:     ${runConfiguration is TargetEnvironmentAwareRunProfile}\n"
+    output += "Environment Files:    ${runConfiguration is EnvFilesOptions}\n"
+    output += "SearchScope Provider: ${runConfiguration is SearchScopeProvidingRunProfile}\n"
+    output += "Virtual:              ${runConfiguration is VirtualConfigurationType}\n"
+    output += "Make Before Launch:   ${runConfiguration is RunProfileWithCompileBeforeLaunchOption}\n"
+    output += "No Default Debug:     ${runConfiguration is RunConfigurationWithSuppressedDefaultDebugAction}\n"
+
+    output += "\n"
+    return output
+  }
+
+  private fun dumpExecutors(runConfiguration: RunConfiguration): String {
+    var output = ""
+    for (executor in Executor.EXECUTOR_EXTENSION_NAME.extensionList) {
+      val programRunners = PROGRAM_RUNNER_EP.extensionList.filter { it.canRun(executor.id, runConfiguration) }
+      if (programRunners.isEmpty()) continue
+
+      output += "Runners (${executor.id} - ${executor.javaClass.name}):\n"
+      for (runner in programRunners) {
+        output += "\t${runner.runnerId} - ${runner.javaClass.name}\n"
+      }
+    }
+
+    output += "\n"
+    return output
+  }
+
+  private fun dumpConfigurationEditor(runConfiguration: RunConfiguration): String {
+    var output = ""
+
+    val configurationEditor = runConfiguration.configurationEditor
+    if (configurationEditor is SettingsEditorGroup) {
+      output += "Settings Editor Group:\n"
+      for (editor in configurationEditor.editors) {
+        output += "\t${editor.first} - ${editor.second.dump()}"
+      }
+    }
+    else {
+      output += "Settings Editor:      ${configurationEditor.dump()}"
+    }
+
+    Disposer.dispose(configurationEditor)
+
+    output += "\n"
+    return output
+  }
+
+  private fun dumpOptionsClass(configurationFactory: ConfigurationFactory, runConfiguration: RunConfiguration): String {
+    var optionsClass: Class<*>? = configurationFactory.optionsClass
+    var optionsClassVia = "ConfigurationFactory"
+
+    if (optionsClass == null && runConfiguration is RunConfigurationBase<*>) {
+      val methodDeclaringClass = ReflectionUtil.getMethodDeclaringClass(runConfiguration.javaClass, "getOptionsClass")!!
+      val declaredMethod = methodDeclaringClass.getDeclaredMethod("getOptionsClass")
+      declaredMethod.isAccessible = true
+      @Suppress("UNCHECKED_CAST")
+      optionsClass = (declaredMethod.invoke(runConfiguration)) as Class<out RunConfigurationOptions?>?
+      optionsClassVia = "RunConfigurationBase"
+    }
+
+    if (optionsClass != null) {
+      return "Options class:        ${optionsClass.name} [via ${optionsClassVia}]\n"
+    }
+
+    return "Options class:        n/a\n"
+  }
+
   private fun PluginDescriptor.dump(): String {
-    return "${this.name} (${this.vendor}) [${this.pluginId.idString}] ${if (this.isBundled) "[BUNDLED]" else ""} ${if (this.isImplementationDetail) "[IMPLEMENTATION DETAIL]" else ""}"
+    return "${this.name} (Vendor: ${this.vendor} ID: ${this.pluginId.idString} Bundled: ${this.isBundled}${if (this.isImplementationDetail) " [IMPLEMENTATION DETAIL]" else ""})"
   }
 
   private fun SettingsEditor<*>.dump(): String {
