@@ -2,13 +2,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
       serviceInterface="com.intellij.platform.settings.SettingsController"
-      serviceImplementation="com.intellij.platform.settings.local.LocalSettingsController"
+      serviceImplementation="com.intellij.platform.settings.local.SettingsControllerMediator"
     />
-    <applicationService
-      serviceInterface="com.intellij.platform.settings.ObjectSettingValueSerializerFactory"
-      serviceImplementation="com.intellij.platform.settings.local.ProtobufObjectSettingValueSerializerFactory"
-    />
+    <settingsController implementation="com.intellij.platform.settings.local.LocalSettingsController"/>
 
     <cachesInvalidator implementation="com.intellij.platform.settings.local.CacheStateStorageInvalidator"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint name="settingsController"
+                    interface="com.intellij.platform.settings.ChainedSettingsController"/>
+  </extensionPoints>
 </idea-plugin>

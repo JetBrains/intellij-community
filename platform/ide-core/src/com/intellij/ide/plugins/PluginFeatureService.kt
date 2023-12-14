@@ -12,10 +12,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.settings.CacheTag
-import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.mapSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -37,15 +36,10 @@ class PluginFeatureService {
     }
   }
 
-  @Serializable
-  data class FeaturePluginList(
-    @JvmField val featureMap: Map<@NonNls String, FeaturePluginData> = emptyMap(),
-  )
-
   private val factory = settingDescriptorFactory(PluginId.getId("com.intellij"))
 
-  private val serializer = factory.objectSerializer<FeaturePluginList>()
-  private val settingGroup = factory.group(key = "pluginFeature") {
+  private val serializer = factory.mapSerializer<String, FeaturePluginData>()
+  private val settingGroup = factory.group(groupKey = "pluginFeature") {
     tags = listOf(CacheTag)
   }
 
@@ -68,17 +62,17 @@ class PluginFeatureService {
     val setting = settingGroup.setting(featureType, serializer)
     val existingMap = setting.get()
     if (existingMap == null) {
-      setting.set(FeaturePluginList(featureMap))
+      setting.set(featureMap)
     }
     else {
       val newMap = LinkedHashMap<@NonNls String, FeaturePluginData>()
-      newMap.putAll(existingMap.featureMap)
+      newMap.putAll(existingMap)
       newMap.putAll(featureMap)
-      setting.set(FeaturePluginList(newMap))
+      setting.set(newMap)
     }
   }
 
   suspend fun getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
-    return settingGroup.setting(featureType, serializer).get()?.featureMap?.get(implementationName)
+    return settingGroup.setting(featureType, serializer).get()?.get(implementationName)
   }
 }

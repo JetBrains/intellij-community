@@ -40,13 +40,69 @@
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
-    <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module-library">
+      <library name="mvstore" type="repository">
+        <properties maven-id="com.h2database:h2-mvstore:2.2.224">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar">
+              <sha256sum>10c78293cb07bbeeb37b0cc2c919a7909e95c9e4eef0467f21bf961b2492214c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kotlinx-serialization-cbor" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.6.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2.jar">
+              <sha256sum>5e405251ecdca6badb483c94ce22709489fe8a97a4d4ddca5cd43af8449e439f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jackson.dataformat.cbor" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.15.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3.jar">
+              <sha256sum>b8c7ae4a9d82e3fd0aecfd4599f42eaf503d0faf99e2f97abfb8b2c33bc09da7</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-dataformat-yaml" level="project" />
   </component>
 </module>

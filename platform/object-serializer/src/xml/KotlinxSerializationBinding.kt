@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.xml
 
 import com.intellij.util.xml.dom.XmlElement
@@ -27,11 +27,8 @@ internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializ
   private val serializer: KSerializer<Any>
 
   init {
-    // don't use official `::kotlin.get().serializer()` API — avoid kotlin refection wrapper creation
-    // findStaticGetter cannot be used because type of Companion not used
-    val field = aClass.getDeclaredField("Companion")
-    field.isAccessible = true
-    val companion = lookup.unreflectGetter(field).invoke()
+    val findStaticGetter = lookup.findStaticGetter(aClass, "Companion", aClass.classLoader.loadClass(aClass.name + "\$Companion"))
+    val companion = findStaticGetter.invoke()
     @Suppress("UNCHECKED_CAST")
     serializer = lookup.findVirtual(companion.javaClass, "serializer", kotlinMethodType).invoke(companion) as KSerializer<Any>
   }

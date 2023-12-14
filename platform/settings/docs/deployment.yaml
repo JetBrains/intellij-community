@@ -18,7 +18,7 @@ spec:
         - name: space-registry-ij
       containers:
         - name: ij-settings-docs
-          image: registry.jetbrains.team/p/ij/structurizr/settings-docs@sha256:3e000e4e94f269371cc13664e506d64098355f8aa0bf4adffd7c54e94b304055
+          image: registry.jetbrains.team/p/ij/structurizr/settings-docs@sha256:latest
           ports:
             - containerPort: 8080
           resources:

@@ -18,13 +18,13 @@ class SettingDescriptor<T : Any> private constructor(
    */
   // Implementation note: It is declared as `Collection` instead of `List` to imply that the order should not affect the behavior.
   val tags: Collection<SettingTag>,
-  val serializer: SettingValueSerializer<T>,
+  val serializer: SettingSerializerDescriptor<T>,
 ) {
   class Builder @PublishedApi internal constructor() {
     var tags: Collection<SettingTag> = java.util.List.of()
 
     @PublishedApi
-    internal fun <T : Any> build(key: String, pluginId: PluginId, serializer: SettingValueSerializer<T>): SettingDescriptor<T> {
+    internal fun <T : Any> build(key: String, pluginId: PluginId, serializer: SettingSerializerDescriptor<T>): SettingDescriptor<T> {
       return SettingDescriptor(
         key = key,
         pluginId = pluginId,
