@@ -3081,6 +3081,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
             void test(Integer o) {
                 switch (o) {
                     default:
+                        <caret>
                         break;
                 }
             }
