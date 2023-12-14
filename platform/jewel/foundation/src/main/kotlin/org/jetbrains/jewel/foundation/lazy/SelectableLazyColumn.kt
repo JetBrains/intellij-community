@@ -211,7 +211,7 @@ private fun Modifier.selectable(
                         requester?.requestFocus()
                         actionHandler.handlePointerEventPress(
                             pointerEvent = event,
-                            keyBindings = keybindings,
+                            keybindings = keybindings,
                             selectableLazyListState = selectableState,
                             selectionMode = selectionMode,
                             allKeys = allKeys,

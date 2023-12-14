@@ -43,9 +43,12 @@ fun Links() {
                 if (it == "---") {
                     separator()
                 } else {
-                    selectableItem(selected == it, {
-                        selected = it
-                    }) {
+                    selectableItem(
+                        selected = selected == it,
+                        onClick = {
+                            selected = it
+                        },
+                    ) {
                         Text(it)
                     }
                 }

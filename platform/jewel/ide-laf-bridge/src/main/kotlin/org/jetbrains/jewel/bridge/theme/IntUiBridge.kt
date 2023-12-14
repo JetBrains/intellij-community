@@ -533,6 +533,8 @@ private fun readLinkStyle(
 private fun readMenuStyle(): MenuStyle {
     val backgroundSelected = retrieveColorOrUnspecified("MenuItem.selectionBackground")
     val foregroundSelected = retrieveColorOrUnspecified("MenuItem.selectionForeground")
+    val keybindingTint = retrieveColorOrUnspecified("MenuItem.acceleratorForeground")
+    val keybindingTintSelected = Color.Unspecified
 
     val colors = MenuColors(
         background = retrieveColorOrUnspecified("PopupMenu.background"),
@@ -555,6 +557,11 @@ private fun readMenuStyle(): MenuStyle {
             iconTintFocused = Color.Unspecified,
             iconTintPressed = Color.Unspecified,
             iconTintHovered = Color.Unspecified,
+            keybindingTint = keybindingTint,
+            keybindingTintDisabled = keybindingTint,
+            keybindingTintFocused = keybindingTintSelected,
+            keybindingTintPressed = keybindingTintSelected,
+            keybindingTintHovered = keybindingTintSelected,
             separator = retrieveColorOrUnspecified("Menu.separatorColor"),
         ),
     )
@@ -573,6 +580,7 @@ private fun readMenuStyle(): MenuStyle {
                 selectionCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp),
                 outerPadding = PaddingValues(horizontal = 6.dp),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                keybindingsPadding = PaddingValues(start = 36.dp),
                 separatorPadding = PaddingValues(
                     horizontal = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.withToEdge")
                         .takeOrElse { 0.dp },
@@ -581,6 +589,7 @@ private fun readMenuStyle(): MenuStyle {
                 ),
                 separatorThickness = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeWidth")
                     .takeOrElse { 0.dp },
+                iconSize = 16.dp,
             ),
             submenuMetrics = SubmenuMetrics(offset = DpOffset(0.dp, (-8).dp)),
         ),

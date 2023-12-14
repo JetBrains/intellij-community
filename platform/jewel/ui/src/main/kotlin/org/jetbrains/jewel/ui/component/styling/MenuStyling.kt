@@ -58,6 +58,11 @@ public class MenuItemColors(
     public val iconTintFocused: Color,
     public val iconTintPressed: Color,
     public val iconTintHovered: Color,
+    public val keybindingTint: Color,
+    public val keybindingTintDisabled: Color,
+    public val keybindingTintFocused: Color,
+    public val keybindingTintPressed: Color,
+    public val keybindingTintHovered: Color,
     public val separator: Color,
 ) {
 
@@ -100,6 +105,19 @@ public class MenuItemColors(
             ),
         )
 
+    @Composable
+    public fun keybindingTintFor(state: MenuItemState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = keybindingTint,
+                disabled = keybindingTintDisabled,
+                focused = keybindingTintFocused,
+                pressed = keybindingTintPressed,
+                hovered = keybindingTintHovered,
+                active = keybindingTint,
+            ),
+        )
+
     public companion object
 }
 
@@ -126,7 +144,9 @@ public class MenuItemMetrics(
     public val outerPadding: PaddingValues,
     public val contentPadding: PaddingValues,
     public val separatorPadding: PaddingValues,
+    public val keybindingsPadding: PaddingValues,
     public val separatorThickness: Dp,
+    public val iconSize: Dp,
 ) {
 
     public companion object

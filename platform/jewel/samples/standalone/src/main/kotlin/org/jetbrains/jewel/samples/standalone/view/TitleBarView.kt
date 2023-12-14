@@ -32,9 +32,12 @@ fun DecoratedWindowScope.TitleBarView() {
         Row(Modifier.align(Alignment.Start)) {
             Dropdown(Modifier.height(30.dp), menuContent = {
                 MainViewModel.views.forEach {
-                    selectableItem(MainViewModel.currentView == it, {
-                        MainViewModel.currentView = it
-                    }) {
+                    selectableItem(
+                        selected = MainViewModel.currentView == it,
+                        onClick = {
+                            MainViewModel.currentView = it
+                        },
+                    ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,

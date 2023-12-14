@@ -14,6 +14,8 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import kotlin.random.Random
 
 @Composable
 @View(title = "Dropdowns", position = 3)
@@ -36,8 +38,7 @@ fun Dropdowns() {
 
         Dropdown(
             enabled = false,
-            menuContent = {
-            },
+            menuContent = {},
         ) {
             Text("Disabled")
         }
@@ -47,9 +48,10 @@ fun Dropdowns() {
                     if (it == "---") {
                         separator()
                     } else {
-                        selectableItem(selected == it, {
-                            selected = it
-                        }) {
+                        selectableItem(
+                            selected = selected == it,
+                            onClick = { selected = it },
+                        ) {
                             Text(it)
                         }
                     }
@@ -60,9 +62,10 @@ fun Dropdowns() {
                         if (it == "---") {
                             separator()
                         } else {
-                            selectableItem(selected == it, {
-                                selected = it
-                            }) {
+                            selectableItem(
+                                selected = selected == it,
+                                onClick = { selected = it },
+                            ) {
                                 Text(it)
                             }
                         }
@@ -73,9 +76,10 @@ fun Dropdowns() {
                             if (it == "---") {
                                 separator()
                             } else {
-                                selectableItem(selected == it, {
-                                    selected = it
-                                }) {
+                                selectableItem(
+                                    selected = selected == it,
+                                    onClick = { selected = it },
+                                ) {
                                     Text(it)
                                 }
                             }
@@ -97,9 +101,10 @@ fun Dropdowns() {
                     if (it == "---") {
                         separator()
                     } else {
-                        selectableItem(selected == it, {
-                            selected = it
-                        }) {
+                        selectableItem(
+                            selected = selected == it,
+                            onClick = { selected = it },
+                        ) {
                             Text(it)
                         }
                     }
@@ -108,5 +113,79 @@ fun Dropdowns() {
         ) {
             Text(selected)
         }
+        Dropdown(
+            menuContent = {
+                items.forEach {
+                    if (it == "---") {
+                        separator()
+                    } else {
+                        selectableItem(
+                            iconResource = dropdownIconsSample.random(),
+                            iconClass = DropdownStyle::class.java,
+                            keybinding = if (Random.nextBoolean()) {
+                                null
+                            } else {
+                                dropdownKeybindingsSample.shuffled()
+                                    .take(2)
+                                    .toSet()
+                            },
+                            selected = false,
+                            onClick = { },
+                        ) {
+                            Text(it)
+                        }
+                    }
+                }
+                submenu(submenu = {
+                    items.forEach {
+                        if (it == "---") {
+                            separator()
+                        } else {
+                            selectableItem(
+                                iconResource = dropdownIconsSample.random(),
+                                iconClass = DropdownStyle::class.java,
+                                keybinding = if (Random.nextBoolean()) {
+                                    null
+                                } else {
+                                    dropdownKeybindingsSample.shuffled()
+                                        .take(2)
+                                        .toSet()
+                                },
+                                selected = false,
+                                onClick = { },
+                            ) {
+                                Text(it)
+                            }
+                        }
+                    }
+                    separator()
+                    submenu(submenu = {
+                        items.forEach {
+                            if (it == "---") {
+                                separator()
+                            } else {
+                                selectableItem(
+                                    iconResource = dropdownIconsSample.random(),
+                                    iconClass = DropdownStyle::class.java,
+                                    selected = false,
+                                    onClick = { },
+                                ) {
+                                    Text(it)
+                                }
+                            }
+                        }
+                    }) {
+                        Text("Submenu2")
+                    }
+                }) {
+                    Text("Submenu")
+                }
+            },
+        ) {
+            Text("With icons")
+        }
     }
 }
+
+private val dropdownIconsSample = listOf("icons/search.svg", "icons/close.svg", null)
+private val dropdownKeybindingsSample = setOf('A', 'B', '↑', '→', '␡')

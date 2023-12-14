@@ -80,6 +80,11 @@ public fun MenuItemColors.Companion.light(
     iconTintFocused: Color = iconTint,
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
+    keybindingTint: Color = IntUiLightTheme.colors.grey(8),
+    keybindingTintDisabled: Color = keybindingTint,
+    keybindingTintFocused: Color = IntUiLightTheme.colors.grey(1),
+    keybindingTintPressed: Color = keybindingTintFocused,
+    keybindingTintHovered: Color = keybindingTintFocused,
     separator: Color = IntUiLightTheme.colors.grey(12),
 ): MenuItemColors =
     MenuItemColors(
@@ -98,6 +103,11 @@ public fun MenuItemColors.Companion.light(
         iconTintFocused = iconTintFocused,
         iconTintPressed = iconTintPressed,
         iconTintHovered = iconTintHovered,
+        keybindingTint = keybindingTint,
+        keybindingTintDisabled = keybindingTintDisabled,
+        keybindingTintFocused = keybindingTintFocused,
+        keybindingTintPressed = keybindingTintPressed,
+        keybindingTintHovered = keybindingTintHovered,
         separator = separator,
     )
 
@@ -118,6 +128,11 @@ public fun MenuItemColors.Companion.dark(
     iconTintFocused: Color = iconTint,
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
+    keybindingTint: Color = IntUiDarkTheme.colors.grey(7),
+    keybindingTintDisabled: Color = keybindingTint,
+    keybindingTintFocused: Color = IntUiDarkTheme.colors.grey(12),
+    keybindingTintPressed: Color = keybindingTintFocused,
+    keybindingTintHovered: Color = keybindingTintFocused,
     separator: Color = IntUiDarkTheme.colors.grey(3),
 ): MenuItemColors =
     MenuItemColors(
@@ -137,6 +152,11 @@ public fun MenuItemColors.Companion.dark(
         iconTintPressed = iconTintPressed,
         iconTintHovered = iconTintHovered,
         separator = separator,
+        keybindingTint = keybindingTint,
+        keybindingTintDisabled = keybindingTintDisabled,
+        keybindingTintFocused = keybindingTintFocused,
+        keybindingTintPressed = keybindingTintPressed,
+        keybindingTintHovered = keybindingTintHovered,
     )
 
 public fun MenuMetrics.Companion.defaults(
@@ -162,17 +182,21 @@ public fun MenuMetrics.Companion.defaults(
 
 public fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
-    outerPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+    outerPadding: PaddingValues = PaddingValues(horizontal = 6.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
     separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+    keybindingsPadding: PaddingValues = PaddingValues(start = 36.dp),
     separatorThickness: Dp = 1.dp,
+    iconSize: Dp = 16.dp,
 ): MenuItemMetrics =
     MenuItemMetrics(
         selectionCornerSize,
         outerPadding,
         contentPadding,
         separatorPadding,
+        keybindingsPadding,
         separatorThickness,
+        iconSize,
     )
 
 public fun SubmenuMetrics.Companion.defaults(

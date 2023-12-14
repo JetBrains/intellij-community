@@ -35,7 +35,7 @@ public interface PointerEventActions {
 
     public fun handlePointerEventPress(
         pointerEvent: PointerEvent,
-        keyBindings: SelectableColumnKeybindings,
+        keybindings: SelectableColumnKeybindings,
         selectableLazyListState: SelectableLazyListState,
         selectionMode: SelectionMode,
         allKeys: List<SelectableLazyListKey>,
@@ -61,13 +61,13 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
 
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
-        keyBindings: SelectableColumnKeybindings,
+        keybindings: SelectableColumnKeybindings,
         selectableLazyListState: SelectableLazyListState,
         selectionMode: SelectionMode,
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
-        with(keyBindings) {
+        with(keybindings) {
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {
@@ -151,13 +151,13 @@ public class DefaultTreeViewPointerEventAction(
 
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
-        keyBindings: SelectableColumnKeybindings,
+        keybindings: SelectableColumnKeybindings,
         selectableLazyListState: SelectableLazyListState,
         selectionMode: SelectionMode,
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
-        with(keyBindings) {
+        with(keybindings) {
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {

@@ -468,9 +468,8 @@ public final class org/jetbrains/jewel/ui/component/MenuItemState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuKt {
-	public static final fun MenuItem (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun MenuSeparator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuItemColors;Landroidx/compose/runtime/Composer;II)V
-	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLjava/lang/String;Ljava/lang/Class;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PopupMenu (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun items (Lorg/jetbrains/jewel/ui/component/MenuScope;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
 	public static final fun items (Lorg/jetbrains/jewel/ui/component/MenuScope;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
@@ -495,13 +494,13 @@ public final class org/jetbrains/jewel/ui/component/MenuManagerKt {
 
 public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 	public abstract fun passiveItem (Lkotlin/jvm/functions/Function2;)V
-	public abstract fun selectableItem (ZLkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
-	public abstract fun submenu (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public abstract fun selectableItem (ZLjava/lang/String;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
+	public abstract fun submenu (ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
-	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLjava/lang/String;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/RadioButtonKt {
@@ -1477,7 +1476,7 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuIcons$Companion 
 public final class org/jetbrains/jewel/ui/component/styling/MenuItemColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/MenuItemColors$Companion;
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun backgroundFor-VIR8D2g (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public final fun contentFor-VIR8D2g (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
@@ -1496,9 +1495,15 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuItemColors {
 	public final fun getIconTintFocused-0d7_KjU ()J
 	public final fun getIconTintHovered-0d7_KjU ()J
 	public final fun getIconTintPressed-0d7_KjU ()J
+	public final fun getKeybindingTint-0d7_KjU ()J
+	public final fun getKeybindingTintDisabled-0d7_KjU ()J
+	public final fun getKeybindingTintFocused-0d7_KjU ()J
+	public final fun getKeybindingTintHovered-0d7_KjU ()J
+	public final fun getKeybindingTintPressed-0d7_KjU ()J
 	public final fun getSeparator-0d7_KjU ()J
 	public fun hashCode ()I
 	public final fun iconTintFor-VIR8D2g (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun keybindingTintFor-VIR8D2g (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1508,9 +1513,11 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuItemColors$Compa
 public final class org/jetbrains/jewel/ui/component/styling/MenuItemMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getIconSize-D9Ej5fM ()F
+	public final fun getKeybindingsPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getOuterPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getSelectionCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
 	public final fun getSeparatorPadding ()Landroidx/compose/foundation/layout/PaddingValues;
