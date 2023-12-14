@@ -729,6 +729,7 @@
       <action id="Maven.ResetReadStatistic" class="org.jetbrains.idea.maven.internal.MavenResetStatisticsAction"/>
       <action id="Maven.Killall" class="org.jetbrains.idea.maven.internal.MavenKillallConnectors"/>
       <action id="Maven.ShowConnectors" class="org.jetbrains.idea.maven.server.ui.ShowMavenConnectorsAction"/>
+      <action id="Maven.ReReadAll" class="org.jetbrains.idea.maven.internal.MavenReadExistingTreeAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
