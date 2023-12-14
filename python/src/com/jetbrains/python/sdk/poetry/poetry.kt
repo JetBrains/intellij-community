@@ -12,6 +12,8 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -43,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
@@ -380,7 +383,7 @@ class UsePoetryQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
 /**
  * A quick-fix for installing packages specified in Pipfile.lock.
  */
-class PoetryInstallQuickFix : LocalQuickFix {
+class PoetryInstallQuickFix : PsiUpdateModCommandQuickFix() {
   companion object {
     fun poetryInstall(project: Project, module: Module) {
       val sdk = module.pythonSdk ?: return
@@ -394,8 +397,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
 
   override fun getFamilyName() = PyBundle.message("python.sdk.intention.family.name.install.requirements.from.poetry.lock")
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement ?: return
+  override fun applyFix(project: Project, element : PsiElement, updater: ModPsiUpdater) {
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     poetryInstall(project, module)
   }
