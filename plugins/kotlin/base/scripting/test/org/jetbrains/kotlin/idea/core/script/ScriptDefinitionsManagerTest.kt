@@ -103,7 +103,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            managerWithABOrder.getAllDefinitions()
+            managerWithABOrder.allDefinitions
         )
 
         val managerWithBAOrder = ScriptDefinitionsManagerUnderTest(project).apply {
@@ -115,7 +115,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionB, definitionC, definitionA),
-            managerWithBAOrder.reloadScriptDefinitions()
+            managerWithBAOrder.reloadDefinitions()
         )
     }
 
@@ -128,7 +128,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB),
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
 
         manager.definitionSources = listOf(
@@ -138,14 +138,14 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB), /* still the same list */
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
 
-        manager.reloadScriptDefinitions()
+        manager.reloadDefinitions()
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC /* now */),
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
     }
 
@@ -158,7 +158,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
 
         manager.settings = KotlinScriptingSettings(project).apply {
@@ -169,12 +169,12 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC), /* no effect */
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
 
         assertEquals(
             listOf(definitionC, definitionA, definitionB), /* now */
-            manager.reloadScriptDefinitions()
+            manager.reloadDefinitions()
         )
     }
 
@@ -194,7 +194,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.getAllDefinitions()
+            manager.allDefinitions
         )
 
         assertEquals(
@@ -248,7 +248,7 @@ class ScriptDefinitionsManagerTest {
             setOrder(definitionA, 1)
         }
 
-        manager.reorderScriptDefinitions()
+        manager.reorderDefinitions()
 
         assertTrue(manager.findDefinition(script)?.name == "B")
     }
@@ -288,7 +288,7 @@ class ScriptDefinitionsManagerTest {
             sourceA.returning(TestDefinition("A") { false }),
             sourceB.returning(TestDefinition("B") { false })
         )
-        manager.reloadScriptDefinitions()
+        manager.reloadDefinitions()
 
         assertFalse(manager.isScript(script))
     }
@@ -316,7 +316,7 @@ private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDe
 
     override fun getSources(): List<ScriptDefinitionsSource> = definitionSources
 
-    override fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings = settings
+    override fun getKotlinScriptingSettings(): KotlinScriptingSettings = settings
 
     override fun applyDefinitionsUpdate() {}
 

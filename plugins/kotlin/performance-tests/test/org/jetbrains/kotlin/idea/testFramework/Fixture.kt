@@ -231,10 +231,9 @@ class Fixture(
 
             // side effect: to load script definitions"
             val scriptDefinitionsManager = ScriptDefinitionsManager.getInstance(project)
-            scriptDefinitionsManager.getAllDefinitions()
+            scriptDefinitionsManager.allDefinitions
             dispatchAllInvocationEvents()
 
-            assertTrue(scriptDefinitionsManager.isReady())
             //assertFalse(KotlinScriptingSettings.getInstance(project).isAutoReloadEnabled)
         }
 

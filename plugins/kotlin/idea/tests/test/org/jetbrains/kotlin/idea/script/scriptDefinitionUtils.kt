@@ -59,14 +59,14 @@ private fun registerScriptDefinitionsProvider(project: Project, testRootDisposab
 
     addExtensionPointInTest(ScriptDefinitionContributor.EP_NAME, project, provider, testRootDisposable)
 
-    ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitions()
+    ScriptDefinitionsManager.getInstance(project).reloadDefinitions()
 
     // a.kts and b.kts definitions should go before default .kts one
     val scriptingSettings = KotlinScriptingSettings.getInstance(project)
     provider.definitions.forEach {
         scriptingSettings.setOrder(it, 1)
     }
-    ScriptDefinitionsManager.getInstance(project).reorderScriptDefinitions()
+    ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
 }
 
 class TestEnvironment(val env: MutableMap<String, Any>) {

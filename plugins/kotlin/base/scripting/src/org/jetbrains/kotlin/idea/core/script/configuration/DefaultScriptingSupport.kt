@@ -159,7 +159,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     ): Boolean {
         val virtualFile = file.originalFile.virtualFile ?: return false
 
-        if (project.isDisposed || !ScriptDefinitionsManager.getInstance(project).isReady()) return false
+        if (project.isDisposed) return false
         val scriptDefinition = file.findScriptDefinition() ?: return false
 
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
@@ -223,7 +223,6 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     fun runLoader(file: KtFile, loader: ScriptConfigurationLoader): ScriptCompilationConfigurationWrapper? {
         val virtualFile = file.originalFile.virtualFile ?: return null
 
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return null
         val scriptDefinition = file.findScriptDefinition() ?: return null
 
         manager.updater.update {
@@ -436,8 +435,6 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     }
 
     private fun reloadIfOutOfDate(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
-        if (!forceSync && !ScriptDefinitionsManager.getInstance(project).isReady()) return
-
         manager.updater.update {
             file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
@@ -455,18 +452,12 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         }
     }
 
-    fun isLoadedFromCache(file: KtFile): Boolean {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
-
-        return file.originalFile.virtualFile?.let { cache[it] != null } ?: true
-    }
+    fun isLoadedFromCache(file: KtFile): Boolean = file.originalFile.virtualFile?.let { cache[it] != null } ?: true
 
     /**
      * Ensure that any configuration for [files] is loaded from cache
      */
     fun ensureLoadedFromCache(files: List<KtFile>): Boolean {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
-
         var allLoaded = true
         manager.updater.update {
             files.forEach { file ->

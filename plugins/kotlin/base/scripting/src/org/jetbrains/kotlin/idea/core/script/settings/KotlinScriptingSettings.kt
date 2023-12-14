@@ -77,7 +77,7 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
 
         if (scriptDefinitionsList.isNotEmpty()) {
             executeOnPooledThread {
-                ScriptDefinitionsManager.getInstance(project).reorderScriptDefinitions()
+                ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
             }
         }
     }

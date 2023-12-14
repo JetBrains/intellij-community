@@ -35,16 +35,15 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return null
 
-        if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck ||
-            !ScriptDefinitionsManager.getInstance(project).isReady()) return null
+        if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-        val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
-            .getAllDefinitions()
-            .filter {
-              it.asLegacyOrNull<BundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
-              KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
-            }
-            .toList()
+      val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
+        .allDefinitions
+        .filter {
+          it.asLegacyOrNull<BundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
+          KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
+        }
+        .toList()
         if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
 
         return Function { fileEditor: FileEditor ->

@@ -161,7 +161,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         settings = KotlinScriptingSettings.getInstance(project).state
 
-        ScriptDefinitionsManager.getInstance(project).getAllDefinitions().forEach {
+        ScriptDefinitionsManager.getInstance(project).allDefinitions.forEach {
             KotlinScriptingSettings.getInstance(project).setEnabled(it, false)
         }
 
@@ -362,7 +362,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             testRootDisposable
         )
 
-        ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitions()
+        ScriptDefinitionsManager.getInstance(project).reloadDefinitions()
 
         UIUtil.dispatchAllInvocationEvents()
     }

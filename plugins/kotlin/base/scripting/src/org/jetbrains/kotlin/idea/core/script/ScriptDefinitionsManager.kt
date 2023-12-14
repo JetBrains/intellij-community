@@ -73,13 +73,24 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * Definitions disabled via [KotlinScriptingSettings.isScriptDefinitionEnabled] are filtered out.
      * The sequence is ordered according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or, if the latter is missing,
      * conforms default by-source order (see [ScriptDefinitionsManager]).
-     * @see [getAllDefinitions]
+     * @see [allDefinitions]
      */
     public override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
-            val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptySequence()
+            val scriptingSettings = getKotlinScriptingSettings()
             return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
         }
+
+    /**
+     *  Property lists all discovered definitions with no [KotlinScriptingSettings.isScriptDefinitionEnabled] filtering applied.
+     *  If by the moment of the call any of the [ScriptDefinitionsSource]s has not yet contributed to the resulting set of definitions,
+     *  it's called before returning the result.
+     *  @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
+     *  if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
+     *  @see [currentDefinitions]
+     */
+    val allDefinitions: List<ScriptDefinition>
+        get() = getOrLoadDefinitions()
 
     /**
      * Searches script definition that best matches the specified [script].
@@ -91,7 +102,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
 
-        getOrLoadDefinitions()
+        warmupDefinitionsCache()
 
         val definition =
             if (isScratchFile(script)) {
@@ -111,34 +122,13 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
     }
 
-
-    /**
-     *  Lists all discovered definitions with no [KotlinScriptingSettings.isScriptDefinitionEnabled] filtering applied.
-     *  If by the moment of the call any of the [ScriptDefinitionsSource]s has not yet contributed to the resulting set of definitions,
-     *  it's called before returning the result.
-     *  @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
-     *  if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
-     *  @see [currentDefinitions]
-     */
-    fun getAllDefinitions(): List<ScriptDefinition> = getOrLoadDefinitions()
-
-    /**
-     * Launches not yet contributed [ScriptDefinitionsSource]s and returns the whole list of discovered definitions.
-     * Sources that already loaded their definitions are not relaunched.
-     * @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
-     * if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
-     */
-    fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
-
     /**
      * Goes through the list of registered [ScriptDefinitionsSource]s and triggers definitions reload.
      * Result of previous reloads is invalidated including those launched via [reloadDefinitionsBy].
      * @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
      * if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
      */
-    fun reloadScriptDefinitions(): List<ScriptDefinition> = reloadDefinitionsInternal(getSources())
-
-    fun isReady(): Boolean = true
+    fun reloadDefinitions(): List<ScriptDefinition> = reloadDefinitionsInternal(getSources())
 
     /**
      * Reloads definitions from the requested [source] only. Definitions provided by other [ScriptDefinitionsSource]s remain as is
@@ -157,9 +147,9 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      *
      *  @return Reordered definitions known by the moment of the method call.
      */
-    fun reorderScriptDefinitions(): List<ScriptDefinition> {
-        val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptyList()
+    fun reorderDefinitions(): List<ScriptDefinition> {
         if (definitions == null) return emptyList()
+        val scriptingSettings = getKotlinScriptingSettings()
 
         withLocks {
             definitions?.let { list ->
@@ -198,11 +188,11 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         }
     }
 
+    private fun warmupDefinitionsCache() = getOrLoadDefinitions()
+
     private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
 
     private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
-        val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script settings not found")
-
         var loadedDefinitions: List<ScriptDefinition>? = null
 
         val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
@@ -214,6 +204,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         }
 
         scriptingDebugLog { "Definitions loading total time: $ms ms" }
+
+        val scriptingSettings = getKotlinScriptingSettings()
 
         withLocks {
             if (definitionsBySource.isEmpty()) {
@@ -305,11 +297,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
     }
 
-    protected open fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
-        return runReadAction {
-            if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
-        }
-    }
+    protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
 
     protected open fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? {
         return ScriptConfigurationManager.compositeScriptConfigurationManager(project)

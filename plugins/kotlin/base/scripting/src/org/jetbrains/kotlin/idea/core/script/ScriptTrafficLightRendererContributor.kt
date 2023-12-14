@@ -37,9 +37,6 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
                 // services not yet initialized (it should be initialized under the LoadScriptDefinitionsStartupActivity)
                 status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                 status.errorAnalyzingFinished = false
-            } else if (!ScriptDefinitionsManager.getInstance(project).isReady()) {
-                status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.definitions")
-                status.errorAnalyzingFinished = false
             } else if (configurations.isConfigurationLoadingInProgress(file)) {
                 status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                 status.errorAnalyzingFinished = false

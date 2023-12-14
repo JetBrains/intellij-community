@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companio
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.junit.ComparisonFailure
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationTest() {
@@ -19,7 +18,7 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
             ?.map { it.substringBefore(":").trim() to it.substringAfter(":").trim() }
             ?: error("SCRIPT DEFINITIONS directive should be defined")
 
-        val allDefinitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
+        val allDefinitions = ScriptDefinitionsManager.getInstance(project).allDefinitions
         for ((definitionName, action) in definitions) {
             val scriptDefinition = allDefinitions
                 .find { it.name == definitionName }
@@ -30,7 +29,7 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
             }
         }
 
-        ScriptDefinitionsManager.getInstance(project).reorderScriptDefinitions()
+        ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
         updateScriptDependenciesSynchronously(myFile)
         checkHighlighting(editor, false, false)
     }
