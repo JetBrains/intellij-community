@@ -246,7 +246,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             .finishOnUiThread(ModalityState.current(), ts -> {
               if (!ts.isEmpty()) SwingUtilities.invokeLater(comboBox::repaint);
             })
-            .submit(AppExecutorUtil.getAppExecutorService());;
+            .submit(AppExecutorUtil.getAppExecutorService());
           final ListCellRenderer<TemplateResource> renderer =
             SimpleListCellRenderer.create((label, value, index) -> {
               label.setText(value.getName());
