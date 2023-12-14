@@ -32,7 +32,7 @@ import java.util.*;
 public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
   }
 

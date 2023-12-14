@@ -29,7 +29,7 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
 
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return getText();
   }
 

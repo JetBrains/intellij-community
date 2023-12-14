@@ -34,12 +34,12 @@ public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspect
 
   @Override
   @NotNull
-  protected final String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.problem.descriptor");
   }
 
   @Override
-  public final LocalQuickFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new FlipArgumentsFix();
   }
 
@@ -149,7 +149,7 @@ public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspect
   }
 
   @Override
-  public final BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new MisorderedAssertEqualsParametersVisitor();
   }
 

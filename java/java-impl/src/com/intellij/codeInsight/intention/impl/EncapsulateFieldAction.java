@@ -25,7 +25,7 @@ public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction
 
   @NotNull
   @Override
-  public final String getFamilyName() {
+  public String getFamilyName() {
     return getText();
   }
 
