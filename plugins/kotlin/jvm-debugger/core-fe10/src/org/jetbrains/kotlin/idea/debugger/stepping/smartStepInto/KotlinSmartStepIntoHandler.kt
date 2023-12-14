@@ -27,8 +27,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.getContainingBody
-import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.idea.debugger.getContainingBlockOrMethod
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -124,15 +123,15 @@ private fun SourcePosition.getContainingExpression(): KtElement? {
     // Firstly, try to locate an element that starts at the current line
     val result = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
 
-    val body = element.getContainingBody() ?: return result
+    val containingBlock = element.getContainingBlockOrMethod() ?: return result
     // Secondly, try to expand to an expression. It is essential when source position
     // is in the middle of the expression, e.g.
     // A()<line break>
     //    <caret>.foo().boo()
     // In this example, `element == .`, `result == null`, `expression == A().foo().boo()`
     val expression = element.parents(true)
-        // We should stay inside the current method and inside the current block
-        .takeWhile { it !== body && it !is KtBlockExpression }
+        // We must stay inside the current block (and inside the current method).
+        .takeWhile { it.getContainingBlockOrMethod() === containingBlock }
         .filterIsInstance<KtExpression>()
         .lastOrNull() ?: return result
     return if (result == null || expression.textRange.contains(result.textRange)) expression else result

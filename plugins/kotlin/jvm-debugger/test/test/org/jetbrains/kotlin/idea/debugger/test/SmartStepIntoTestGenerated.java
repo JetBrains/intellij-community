@@ -43,6 +43,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/callChain.kt");
     }
 
+    @TestMetadata("classOneLineMethods.kt")
+    public void testClassOneLineMethods() throws Exception {
+        runTest("testData/smartStepInto/classOneLineMethods.kt");
+    }
+
     @TestMetadata("constructor.kt")
     public void testConstructor() throws Exception {
         runTest("testData/smartStepInto/constructor.kt");
