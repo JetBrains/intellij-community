@@ -44,6 +44,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   }
 
   override fun inlineElement(project: Project?, editor: Editor?, element: PsiElement?) {
+    invoke(project, editor, element)
+  }
+
+  fun invoke(project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
+             inlineThisOnly: Boolean = false) {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
@@ -68,10 +73,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       CommonRefactoringUtil.showErrorHint(project, editor, error, PyPsiBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
       return
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode){
+    if (showDialog && !ApplicationManager.getApplication().isUnitTestMode) {
       PyRefactoringUiService.getInstance().showPyInlineFunctionDialog(project, editor, element, findReference(editor))
-    } else {
-      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), false, true)
+    }
+    else {
+      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), inlineThisOnly, true)
       processor.setPreviewUsages(false)
       processor.run()
     }
