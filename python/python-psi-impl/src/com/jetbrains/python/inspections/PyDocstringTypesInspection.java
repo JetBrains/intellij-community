@@ -2,6 +2,8 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -121,9 +123,8 @@ public final class PyDocstringTypesInspection extends PyInspection {
   }
 
 
-  private static final class ChangeTypeQuickFix implements LocalQuickFix {
+  private static final class ChangeTypeQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myParamName;
-    @SafeFieldForPreview
     private final Substring myTypeSubstring;
     private final String myNewType;
 
@@ -146,12 +147,12 @@ public final class PyDocstringTypesInspection extends PyInspection {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       String newValue = myTypeSubstring.getTextRange().replace(myTypeSubstring.getSuperString(), myNewType);
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      final PyStringLiteralExpression stringLiteralExpression = as(descriptor.getPsiElement(), PyStringLiteralExpression.class);
+      final PyStringLiteralExpression stringLiteralExpression = as(updater, PyStringLiteralExpression.class);
       if (stringLiteralExpression != null) {
         stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
       }

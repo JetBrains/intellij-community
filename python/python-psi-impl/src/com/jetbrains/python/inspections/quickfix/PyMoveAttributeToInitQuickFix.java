@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,7 +13,7 @@ import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
+public class PyMoveAttributeToInitQuickFix extends PsiUpdateModCommandQuickFix {
 
   public PyMoveAttributeToInitQuickFix() {
   }
@@ -27,25 +25,15 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof PyTargetExpression targetExpression)) return;
 
     final PyClass containingClass = targetExpression.getContainingClass();
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (containingClass == null || assignment == null) return;
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(containingClass)) return;
-
-    WriteAction.run(() -> {
-      AddFieldQuickFix.addFieldToInit(project, containingClass, ((PyTargetExpression)element).getName(), x -> assignment);
-      removeDefinition(assignment);
-    });
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    AddFieldQuickFix.addFieldToInit(project, containingClass, ((PyTargetExpression)element).getName(), x -> assignment);
+    removeDefinition(assignment);
   }
 
   private static void removeDefinition(PyAssignmentStatement assignment) {
