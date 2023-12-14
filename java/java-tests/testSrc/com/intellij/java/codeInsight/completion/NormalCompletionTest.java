@@ -3061,4 +3061,29 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     LookupElement[] elements = myFixture.completeBasic();
     assertEquals(0, elements.length);
   }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testSwitchUncompletedDefault() {
+    myFixture.configureByText("Test.java", """
+        class Test {
+            void test(Integer o) {
+                switch (o) {
+                    d<caret>:
+                        break;
+                }
+            }
+        }
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+        class Test {
+            void test(Integer o) {
+                switch (o) {
+                    default:
+                        break;
+                }
+            }
+        }
+      """);  }
 }
