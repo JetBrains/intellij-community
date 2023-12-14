@@ -15,7 +15,6 @@ class C : B<String>() {
 }
 
 // WITH_ORDER
-// EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1, *p2)", typeText: "Unit", attributes: "", icon: "Method"}
 // EXIST: { lookupString: "xxx_foo", itemText: "xxx_foo", tailText: "(p1: String, vararg p2: String)", typeText: "Unit", attributes: "", icon: "Method"}
 // EXIST: { lookupString: "xxx_val", itemText: "xxx_val", tailText: null, typeText: "Int", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
 // EXIST: { lookupString: "xxx_bar", itemText: "xxx_bar", tailText: "(p1: Int, p2: String)", typeText: "Unit", attributes: "", icon: "Method"}

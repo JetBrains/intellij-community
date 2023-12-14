@@ -9,5 +9,5 @@ fun test() {
 Text_K1: Text: (<highlight>Consumer<in Int!>!</highlight>), Disabled: false, Strikeout: false, Green: false
 Text_K1: Text: (<highlight>action: (Int) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true
 Text_K2: Text: (<highlight>action: (Int) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true
-Text_K2: Text: (<highlight>p0: (Consumer<in Int!>..Consumer<in Int!>?)</highlight>), Disabled: false, Strikeout: false, Green: false
+Text_K2: Text: (<highlight>p0: Consumer<in Int!>!</highlight>), Disabled: false, Strikeout: false, Green: false
 */
