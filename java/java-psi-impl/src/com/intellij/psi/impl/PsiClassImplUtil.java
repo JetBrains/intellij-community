@@ -1070,13 +1070,18 @@ public final class PsiClassImplUtil {
   public static boolean isClassEquivalentTo(@NotNull PsiClass aClass, PsiElement another) {
     if (aClass == another) return true;
     if (!(another instanceof PsiClass)) return false;
-    String name1 = aClass.getName();
-    if (name1 == null) return false;
     if (!another.isValid()) return false;
-    String name2 = ((PsiClass)another).getName();
-    if (name2 == null) return false;
-    if (name1.hashCode() != name2.hashCode()) return false;
-    if (!name1.equals(name2)) return false;
+    boolean isImplicitClass = aClass instanceof PsiImplicitClass;
+    boolean anotherImplicitClass = another instanceof PsiImplicitClass;
+    if (isImplicitClass != anotherImplicitClass) return false;
+    if (!isImplicitClass) {
+      String name1 = aClass.getName();
+      if (name1 == null) return false;
+      String name2 = ((PsiClass)another).getName();
+      if (name2 == null) return false;
+      if (name1.hashCode() != name2.hashCode()) return false;
+      if (!name1.equals(name2)) return false;
+    }
     String qName1 = aClass.getQualifiedName();
     String qName2 = ((PsiClass)another).getQualifiedName();
     if (qName1 == null || qName2 == null) {

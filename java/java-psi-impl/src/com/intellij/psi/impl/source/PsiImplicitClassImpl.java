@@ -306,6 +306,11 @@ public class PsiImplicitClassImpl extends JavaStubPsiElement<PsiClassStub<?>> im
   }
 
   @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @Override
   public String toString() {
     return "PsiImplicitClass";
   }

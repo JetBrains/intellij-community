@@ -3087,4 +3087,26 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
             }
         }
       """);  }
+
+  @NeedsIndex.Full
+  public void testNestedImplicitClass() {
+    myFixture.configureByText("Test.java", """
+        public static class NestedClass{
+        
+        }
+        
+        public static void main(String[] args) {
+             NestedCla<caret>
+        }
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResult("""
+        public static class NestedClass{
+        
+        }
+        
+        public static void main(String[] args) {
+             NestedClass
+        }
+      """);  }
 }

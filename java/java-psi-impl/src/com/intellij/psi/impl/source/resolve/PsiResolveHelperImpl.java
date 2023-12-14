@@ -131,7 +131,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (accessible && member instanceof PsiClass && !(member instanceof PsiTypeParameter)) {
       accessible = isAccessible(moduleSystem -> moduleSystem.isAccessible(((PsiClass)member), place));
     }
-    if (fromImplicitClass(member, place)) {
+    if (fromImplicitClassOutsideThisClass(member, place)) {
       return false;
     }
     return accessible;
@@ -145,12 +145,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @param place  the place where the check is performed
    * @return true if the member is not from an implicit class or if place and member are both in the same implicit class, false otherwise.
    */
-  private static boolean fromImplicitClass(@NotNull PsiMember member, @NotNull PsiElement place) {
+  private static boolean fromImplicitClassOutsideThisClass(@NotNull PsiMember member, @NotNull PsiElement place) {
     PsiImplicitClass implicitClass = PsiTreeUtil.getParentOfType(member, PsiImplicitClass.class);
     if (implicitClass == null) {
       return false;
     }
-    return !PsiTreeUtil.isAncestor(implicitClass, place, false);
+    PsiImplicitClass placeImplicitClass = PsiTreeUtil.getParentOfType(place, PsiImplicitClass.class);
+    if (placeImplicitClass == null) {
+      return false;
+    }
+    //one of them can be in the copy
+    return !member.getManager().areElementsEquivalent(implicitClass, placeImplicitClass);
   }
 
   @Override
