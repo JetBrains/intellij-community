@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge;
 import org.jdom.Element;
@@ -201,8 +202,10 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     if (modificator == null) {
       LOG.error("Forbidden to call `commitChanges` outside of `SdkModificator`");
     }
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
     modificator.commitChanges();
+    SdkAdditionalData sdkAdditionalData = modificator.getSdkAdditionalData();
+    if (sdkAdditionalData != null) sdkAdditionalData.markAsCommited();
     modificator = null;
   }
 
@@ -217,7 +220,9 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     if (modificator != null) {
       return modificator.getSdkAdditionalData();
     } else {
-      return delegate.getSdkAdditionalData();
+      SdkAdditionalData sdkAdditionalData = delegate.getSdkAdditionalData();
+      if (sdkAdditionalData != null) sdkAdditionalData.markAsCommited();
+      return sdkAdditionalData;
     }
   }
 

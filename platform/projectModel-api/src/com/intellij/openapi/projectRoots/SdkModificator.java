@@ -34,6 +34,7 @@ public interface SdkModificator {
 
   void setVersionString(String versionString);
 
+  @Nullable
   SdkAdditionalData getSdkAdditionalData();
 
   void setSdkAdditionalData(SdkAdditionalData data);

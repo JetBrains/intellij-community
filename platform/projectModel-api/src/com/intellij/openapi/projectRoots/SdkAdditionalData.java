@@ -19,4 +19,5 @@ package com.intellij.openapi.projectRoots;
  * Container for the SDK properties specific to a particular SDK type.
  */
 public interface SdkAdditionalData {
+  default void markAsCommited() { }
 }
