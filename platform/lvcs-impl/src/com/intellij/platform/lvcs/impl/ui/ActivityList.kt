@@ -5,18 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.platform.lvcs.impl.ActivityItem
 import com.intellij.platform.lvcs.impl.ActivityPresentation
 import com.intellij.platform.lvcs.impl.ActivitySelection
-import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.util.EventDispatcher
-import com.intellij.util.text.DateFormatUtil
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
-import javax.swing.JList
 
 internal class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
@@ -101,18 +97,5 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
       if (selectedIndices.isEmpty()) return false
       return eventDispatcher.listeners.first { it.onDoubleClick() } != null
     }
-  }
-}
-
-class ActivityItemRenderer(val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ColoredListCellRenderer<ActivityItem>() {
-  override fun customizeCellRenderer(list: JList<out ActivityItem>,
-                                     value: ActivityItem,
-                                     index: Int,
-                                     selected: Boolean,
-                                     hasFocus: Boolean) {
-    val presentation = presentationFunction(value) ?: return
-    append(presentation.text)
-    if (presentation.text.isNotBlank()) append(", ", SimpleTextAttributes.GRAY_ATTRIBUTES)
-    append(DateFormatUtil.formatPrettyDateTime(value.timestamp), SimpleTextAttributes.GRAY_ATTRIBUTES)
   }
 }
