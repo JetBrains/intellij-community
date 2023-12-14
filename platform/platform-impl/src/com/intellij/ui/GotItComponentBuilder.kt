@@ -701,7 +701,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
                                  ShortcutExtension(),
                                  InlineCodeExtension(),
                                  LineSpacingExtension(lineSpacing))
-      .build()
+      .build().apply {
+        // We need it, because otherwise code block or shortcut "boxes" are cut on the first row
+        border = JBEmptyBorder(1, 0, 0, 0)
+      }
   }
 
   private fun setTextAndUpdateLayout(builder: HtmlBuilder, width: Int? = null) {
@@ -894,8 +897,8 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3.5f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 1f
       private const val DEFAULT_ARC: Float = 8.0f
 
       private val SHORTCUT_PART_REGEX = Regex(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
@@ -1005,7 +1008,7 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
 
     companion object {
       private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
       private const val DEFAULT_ARC: Float = 8.0f
     }
   }
