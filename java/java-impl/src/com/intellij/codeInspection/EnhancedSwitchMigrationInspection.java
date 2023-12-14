@@ -574,7 +574,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       PsiStatement statement = result[i];
       if (statement instanceof PsiReturnStatement returnStatement) {
         PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null) {
+        if (returnValue == null || PsiTreeUtil.hasErrorElements(returnValue)) {
           return null;
         }
         result[i] = createYieldStatement(returnValue);
@@ -585,7 +585,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(copy, PsiReturnStatement.class);
       for (PsiReturnStatement returnStatement : returnStatements) {
         PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null) {
+        if (returnValue == null || PsiTreeUtil.hasErrorElements(returnValue)) {
           return null;
         }
         returnStatement.replace(createYieldStatement(returnValue));
@@ -763,6 +763,9 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
           result = new SwitchRuleExpressionResult(rExpression);
         }
         else {
+          if (PsiTreeUtil.hasErrorElements(rExpression)) {
+            return null;
+          }
           result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, rExpression));
         }
       }
