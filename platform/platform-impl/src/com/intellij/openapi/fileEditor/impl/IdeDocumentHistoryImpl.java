@@ -77,6 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private boolean myBackInProgress;
   private boolean myForwardInProgress;
+  private Object myCurrentCommandGroupId;
   private Reference<Object> myLastGroupId; // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
   private boolean myRegisteredBackPlaceInLastGroup;
 
@@ -113,7 +114,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     busConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
       public void commandStarted(@NotNull CommandEvent event) {
-        onCommandStarted();
+        onCommandStarted(event.getCommandGroupId());
       }
 
       @Override
@@ -278,7 +279,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myCurrentCommandIsNavigation = false;
   }
 
-  final void onCommandStarted() {
+  final void onCommandStarted(Object commandGroupId) {
+    myCurrentCommandGroupId = commandGroupId;
     myCommandStartPlace = getCurrentPlaceInfo();
     myCurrentCommandIsNavigation = false;
     myCurrentCommandHasChanges = false;
@@ -321,7 +323,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       if (!myBackInProgress) {
         if (!myRegisteredBackPlaceInLastGroup) {
           myRegisteredBackPlaceInLastGroup = true;
-          putLastOrMerge(myCommandStartPlace, BACK_QUEUE_LIMIT, false);
+          putLastOrMerge(myCommandStartPlace, BACK_QUEUE_LIMIT, false, commandGroupId);
           registerViewed(myCommandStartPlace.myFile);
         }
         if (!myForwardInProgress) {
@@ -382,7 +384,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       }
     }
 
-    putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true);
+    putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true, myCurrentCommandGroupId);
     myCurrentIndex = myChangePlaces.size();
   }
 
@@ -635,7 +637,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return editor.getDocument().createRangeMarker(offset, offset);
   }
 
-  private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged) {
+  private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged, Object groupId) {
     LinkedList<PlaceInfo> list = isChanged ? myChangePlaces : myBackPlaces;
     MessageBus messageBus = myProject.getMessageBus();
     RecentPlacesListener listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC);
@@ -648,7 +650,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     list.add(next);
-    listener.recentPlaceAdded(next, isChanged);
+    listener.recentPlaceAdded(next, isChanged, groupId);
     if (list.size() > limit) {
       PlaceInfo first = list.removeFirst();
       listener.recentPlaceRemoved(first, isChanged);
@@ -747,7 +749,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
   }
 
-  public static boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
+  @Override
+  public boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
     if (first.getFile().equals(second.getFile())) {
       FileEditorState firstState = first.getNavigationState();
       FileEditorState secondState = second.getNavigationState();
@@ -771,6 +774,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
      * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};
      *                    false if place info was added into the back infos list {@link #myBackPlaces}
      */
+    @Deprecated
     void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged);
 
     /**
@@ -781,5 +785,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
      *                    false if place info was removed from the back infos list {@link #myBackPlaces}
      */
     void recentPlaceRemoved(@NotNull PlaceInfo changePlace, boolean isChanged);
+
+    /**
+     * Fires on new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos a list
+     *
+     * @param changePlace new place info
+     * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};
+     *                    false if place info was added into the back infos list {@link #myBackPlaces}
+     * @param groupId     groupId of the command that caused the change place addition
+     */
+    default void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged, @Nullable Object groupId) {
+      recentPlaceAdded(changePlace, isChanged);
+    }
   }
 }

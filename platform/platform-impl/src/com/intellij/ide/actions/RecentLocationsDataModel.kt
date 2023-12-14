@@ -95,7 +95,7 @@ internal class RecentLocationsDataModel(val project: Project,
       val places = ContainerUtil.reverse(if (changed) IdeDocumentHistory.getInstance(project).changePlaces
                                          else IdeDocumentHistory.getInstance(project).backPlaces)
       for (place in places) {
-        if (result.stream().noneMatch { IdeDocumentHistoryImpl.isSame(place, it.info) }) {
+        if (result.stream().noneMatch { IdeDocumentHistory.getInstance(project).isSame(place, it.info) }) {
           result.add(newLocationItem(place) ?: continue)
         }
         if (result.size >= maxPlaces) break
@@ -130,7 +130,7 @@ internal class RecentLocationsDataModel(val project: Project,
     val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
     for (item in items) {
       ContainerUtil.filter(if (isChanged) ideDocumentHistory.changePlaces else ideDocumentHistory.backPlaces) {
-        IdeDocumentHistoryImpl.isSame(it, item.info)
+        IdeDocumentHistory.getInstance(project).isSame(it, item.info)
       }.forEach {
         if (isChanged) ideDocumentHistory.removeChangePlace(it)
         else ideDocumentHistory.removeBackPlace(it)
