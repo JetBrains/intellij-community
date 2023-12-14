@@ -700,7 +700,7 @@
     <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
                         serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
-                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl"/>
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl" overrides="true"/>
 
     <navbar.item.provider implementation="com.intellij.ide.navbar.impl.DefaultNavBarItemProvider" order="last"/>
 

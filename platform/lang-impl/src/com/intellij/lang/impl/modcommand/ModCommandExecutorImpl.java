@@ -47,7 +47,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -59,7 +58,6 @@ import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -71,16 +69,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
 
-public class ModCommandExecutorImpl implements ModCommandExecutor {
+public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   private static final Key<List<RangeHighlighter>> HIGHLIGHTERS_ON_NAVIGATED_ELEMENTS = Key.create("mod.command.existing.highlighters");
   
   @RequiresEdt
@@ -88,84 +84,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     if (!ensureWritable(context.project(), command)) return;
     doExecuteInteractively(context, command, ModCommand.nop(), editor);
-  }
-
-  private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
-    Collection<VirtualFile> files = ContainerUtil.filter(command.modifiedFiles(), f -> !(f instanceof LightVirtualFile));
-    return files.isEmpty() || ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY));
-  }
-
-  @Override
-  public @NotNull BatchExecutionResult executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
-    if (!ensureWritable(context.project(), command)) {
-      return new Error(LangBundle.message("executor.error.files.are.marked.as.readonly"));
-    }
-    return doExecuteInBatch(context, command);
-  }
-
-  private BatchExecutionResult doExecuteInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
-    Project project = context.project();
-    if (command.isEmpty()) {
-      return Result.NOTHING;
-    }
-    if (command instanceof ModUpdateFileText upd) {
-      return executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
-    }
-    if (command instanceof ModCreateFile create) {
-      String message = executeCreate(project, create);
-      return message == null ? Result.SUCCESS : new Error(message);
-    }
-    if (command instanceof ModDeleteFile deleteFile) {
-      String message = executeDelete(deleteFile);
-      return message == null ? Result.SUCCESS : new Error(message);
-    }
-    if (command instanceof ModCompositeCommand cmp) {
-      BatchExecutionResult result = Result.NOTHING;
-      for (ModCommand subCommand : cmp.commands()) {
-        result = result.compose(doExecuteInBatch(context, subCommand));
-        if (result == Result.ABORT || result instanceof Error) break;
-      }
-      return result;
-    }
-    if (command instanceof ModChooseAction chooser) {
-      return executeChooseInBatch(context, chooser);
-    }
-    if (command instanceof ModChooseMember member) {
-      ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.nonBlocking(() -> member.nextCommand().apply(member.defaultSelection())).executeSynchronously(),
-        member.title(), true, context.project());
-      executeInBatch(context, nextCommand);
-    }
-    if (command instanceof ModNavigate || command instanceof ModHighlight ||
-        command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
-        command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions) {
-      return Result.INTERACTIVE;
-    }
-    if (command instanceof ModShowConflicts) {
-      return Result.CONFLICTS;
-    }
-    if (command instanceof ModDisplayMessage message) {
-      if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
-        return new Error(message.messageText());
-      }
-      return Result.INTERACTIVE;
-    }
-    throw new IllegalArgumentException("Unknown command: " + command);
-  }
-
-  private BatchExecutionResult executeChooseInBatch(@NotNull ActionContext context, ModChooseAction chooser) {
-    ModCommandAction action = StreamEx.of(chooser.actions()).filter(act -> act.getPresentation(context) != null)
-      .findFirst().orElse(null);
-    if (action == null) return Result.NOTHING;
-
-    String name = chooser.title();
-    ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(() -> {
-      if (action.getPresentation(context) == null) return null;
-      return action.perform(context);
-    }).executeSynchronously(), name, true, context.project());
-    if (next == null) return Result.ABORT;
-    return executeInBatch(context, next);
   }
 
   private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @NotNull ModCommand tail,
@@ -391,35 +309,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private @Nls String executeDelete(ModDeleteFile file) {
-    try {
-      WriteAction.run(() -> file.file().delete(this));
-      return null;
-    }
-    catch (IOException e) {
-      return e.getLocalizedMessage();
-    }
-  }
-
-  private @Nls String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
-    FutureVirtualFile file = create.file();
-    VirtualFile parent = actualize(file.getParent());
-    try {
-      return WriteAction.compute(() -> {
-        VirtualFile newFile = parent.createChildData(this, file.getName());
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
-        if (psiFile == null) return LangBundle.message("unable.to.find.the.new.file", file.getName());
-        Document document = psiFile.getViewProvider().getDocument();
-        document.setText(create.text());
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        return null;
-      });
-    }
-    catch (IOException e) {
-      return e.getLocalizedMessage();
-    }
-  }
-
   private static boolean executeRename(@NotNull Project project, @NotNull ModStartRename rename, @Nullable Editor editor) {
     VirtualFile file = actualize(rename.file());
     if (file == null) return false;
@@ -538,10 +427,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     executeInteractively(context, next, editor);
   }
 
-  private static VirtualFile actualize(@NotNull VirtualFile file) {
-    return file instanceof FutureVirtualFile future ? actualize(future.getParent()).findChild(future.getName()) : file;
-  }
-
   private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
     VirtualFile file = actualize(nav.file());
     if (file == null) return false;
@@ -601,54 +486,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   @Override
-  public void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) {
-    for (ModCommand cmd : command.unpack()) {
-      if (cmd instanceof ModUpdateFileText updateFileText) {
-        if (!updateFileText.file().equals(file.getOriginalFile().getVirtualFile())) {
-          throw new UnsupportedOperationException("The command updates non-current file");
-        }
-        updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
-      }
-      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
-        throw new UnsupportedOperationException("Unexpected command: " + command);
-      }
-    }
-  }
-
-  private static void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
-    throws IllegalStateException {
-    String oldText = upd.oldText();
-    if (!document.getText().equals(oldText)) {
-      throw new IllegalStateException("Old text doesn't match");
-    }
-    List<@NotNull Fragment> ranges = calculateRanges(upd);
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    applyRanges(document, ranges, upd.newText());
-    manager.commitDocument(document);
-  }
-
-  private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
-    VirtualFile file = upd.file();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return false;
-    String oldText = upd.oldText();
-    if (!document.getText().equals(oldText)) return false;
-    List<@NotNull Fragment> ranges = calculateRanges(upd);
-    return WriteAction.compute(() -> {
-      applyRanges(document, ranges, upd.newText());
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      return true;
-    });
-  }
-
-  private static void applyRanges(@NotNull Document document, List<@NotNull Fragment> ranges, String newText) {
-    for (Fragment range : ranges) {
-      document.replaceString(range.offset(), range.offset() + range.oldLength(),
-                             newText.substring(range.offset(), range.offset() + range.newLength()));
-    }
-  }
-  
-  private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+  protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     List<@NotNull Fragment> ranges = upd.updatedRanges();
     if (!ranges.isEmpty()) return ranges;
     String oldText = upd.oldText();

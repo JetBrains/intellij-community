@@ -43,6 +43,8 @@
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
