@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -104,6 +105,10 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   public static LocalQuickFix wrapToQuickFix(@Nullable IntentionAction action, @NotNull PsiFile file) {
     if (action == null) return null;
     if (action instanceof LocalQuickFix) return (LocalQuickFix)action;
+    ModCommandAction modCommandAction = action.asModCommandAction();
+    if (modCommandAction != null) {
+      return LocalQuickFix.from(modCommandAction);
+    }
     return new IntentionWrapper(action);
   }
 
