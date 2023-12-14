@@ -24,13 +24,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -309,7 +309,7 @@ public class PerformanceTestInfo {
             Supplier<IterationStatus> operation = () -> {
               CpuUsageData currentData;
               try {
-                AsyncProfiler.startProfiling(iterationType.name() + iterationNumber);
+                Profiler.startProfiling(iterationType.name() + iterationNumber);
                 currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
               }
               catch (Throwable e) {
@@ -317,7 +317,7 @@ public class PerformanceTestInfo {
                 throw new RuntimeException(e);
               }
               finally {
-                AsyncProfiler.stopProfiling();
+                Profiler.stopProfiling();
               }
               int actualUsedCpuCores = usedReferenceCpuCores < 8
                                        ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
@@ -441,52 +441,40 @@ public class PerformanceTestInfo {
     DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
   }
 
-  private static final class AsyncProfiler {
-    private static final Object asyncProfiler = getAsyncProfilerInstance();
+  private static final class Profiler {
+    private static final ProfilerForTests profiler = getProfilerInstance();
 
-    private static Object getAsyncProfilerInstance() {
-      try {
-        Class<?> asyncProfilerExtractorClass = Class.forName("com.intellij.profiler.ultimate.async.extractor.AsyncProfilerExtractor");
-        Field instanceField = asyncProfilerExtractorClass.getField("INSTANCE");
-        Object instance = instanceField.get(null);
-        Method getInstanceMethod = asyncProfilerExtractorClass.getMethod("getAsyncProfilerInstance", String.class);
-        return getInstanceMethod.invoke(instance, new Object[]{null});
+    private static ProfilerForTests getProfilerInstance() {
+      ServiceLoader<ProfilerForTests> loader = ServiceLoader.load(ProfilerForTests.class);
+      for (ProfilerForTests service : loader) {
+        if (service != null) {
+          return service;
+        }
       }
-      catch (ClassNotFoundException e) {
-        System.out.println("Async is not in class loader");
-      }
-      catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-        e.printStackTrace();
-      }
+      System.out.println("No service com.intellij.testFramework.Profiler is found in class path");
       return null;
     }
 
     public static void stopProfiling() {
-      try {
-        execute("stop");
-      }
-      catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-        System.out.println("Can't stop profiling");
+      if (profiler != null) {
+        try {
+          profiler.stopProfiling();
+        }
+        catch (IOException e) {
+          System.out.println("Can't stop profiling");
+        }
       }
     }
 
     public static void startProfiling(String fileName) {
       Path logDir = PathManager.getLogDir();
-      try {
-        String command =
-          String.format("start,interval=5ms,event=wall,jfr,file=%s.jfr,loglevel=DEBUG,log=%s",
-                        logDir.resolve(fileName + ".jfr"), logDir.resolve(fileName + ".log"));
-        execute(command);
-      }
-      catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-        System.out.println("Can't start profiling");
-      }
-    }
-
-    private static void execute(String command) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-      if (asyncProfiler != null) {
-        Method executeMethod = asyncProfiler.getClass().getMethod("execute", String.class);
-        executeMethod.invoke(asyncProfiler, command);
+      if (profiler != null) {
+        try {
+          profiler.startProfiling(logDir, fileName);
+        }
+        catch (IOException e) {
+          System.out.println("Can't start profiling");
+        }
       }
     }
   }
