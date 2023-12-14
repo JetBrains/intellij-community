@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileAttribute
@@ -412,6 +413,31 @@ internal class GitSettingsLogTest {
   fun `use empty name if JBA doesn't provide one`() {
     jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
     checkUsernameEmail("", "")
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-340175"])
+  fun `unlock git refs heads`() {
+    val gitSettingsLog = initializeGitSettingsLog()
+    Disposer.dispose(gitSettingsLog)
+    val headsDir = settingsSyncStorage / ".git" / "refs" / "heads"
+    val branchNames = headsDir.listDirectoryEntries().map { it.name }
+    assertTrue(branchNames.containsAll(listOf("master", "cloud", "ide")))
+    val locks = mutableListOf<Path>()
+    branchNames.forEach { branchName ->
+      locks.add((headsDir / "$branchName.lock").also { path -> path.createFile() })
+    }
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {}
+
+    locks.forEach {
+      it.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    }
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertTrue(locks.none {it.exists()})
+
   }
 
   @Test

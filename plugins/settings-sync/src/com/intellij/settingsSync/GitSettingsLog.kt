@@ -78,9 +78,10 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
       repository.create()
       addInitialCommit(repository)
     } else {
-      val lockEntries = dotGit.listDirectoryEntries("*.lock")
+      val rootLockEntries = dotGit.listDirectoryEntries("*.lock")
+      val headsLockEntries = (dotGit / "refs" / "heads").listDirectoryEntries("*.lock")
       val FIVE_SECONDS = 5000
-      for(lock in lockEntries) {
+      for(lock in rootLockEntries + headsLockEntries) {
         if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
           FileUtil.delete(lock)
         } else {
