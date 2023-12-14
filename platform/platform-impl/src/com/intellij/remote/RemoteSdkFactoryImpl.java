@@ -4,6 +4,7 @@ package com.intellij.remote;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> implements RemoteSdkFactory<T> {
+  private static final Logger LOG = Logger.getInstance(RemoteSdkFactoryImpl.class);
   @Override
   public Sdk createRemoteSdk(@Nullable Project project, @NotNull T data, @Nullable String sdkName, Collection<Sdk> existingSdks)
     throws RemoteSdkException {
@@ -35,6 +37,14 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setVersionString(sdkVersion);
+
+    var modifiableAdditionalData = sdkModificator.getSdkAdditionalData();
+    if (!(modifiableAdditionalData instanceof RemoteSdkAdditionalData<?> remoteSdkAdditionalData)) {
+      LOG.error("Expected remote additional data, got " + modifiableAdditionalData + " in " + sdk);
+      throw new RemoteSdkException("Internal error");
+    }
+    remoteSdkAdditionalData.setValid(true);
+
     Application application = ApplicationManager.getApplication();
     Runnable runnable = () -> sdkModificator.commitChanges();
     if (application.isDispatchThread()) {
@@ -42,8 +52,6 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
     } else {
       application.invokeAndWait(() -> application.runWriteAction(runnable));
     }
-
-    data.setValid(true);
 
     return sdk;
   }
