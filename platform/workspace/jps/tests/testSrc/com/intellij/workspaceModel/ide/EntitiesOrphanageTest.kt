@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -10,11 +11,13 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,7 +27,6 @@ import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 
 @TestApplication
-@RunInEdt(writeIntent = true)
 class EntitiesOrphanageTest {
 
   @JvmField
@@ -41,9 +43,9 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding content root`(orphanBeforeUpdate: Boolean) {
+  fun `adding content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -70,7 +72,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single()
@@ -82,9 +86,9 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding content root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
+  fun `adding content root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -114,7 +118,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single()
@@ -126,10 +132,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding content root to existing one`(orphanBeforeUpdate: Boolean) {
+  fun `adding content root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val url2 = virtualFileManager.fromUrl("/1234")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -158,7 +164,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots
@@ -169,9 +177,9 @@ class EntitiesOrphanageTest {
   }
 
   @Test
-  fun `adding content root to removed module`() {
+  fun `adding content root to removed module`() = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
-    runWriteAction {
+    writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
@@ -188,7 +196,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java)
@@ -200,9 +210,9 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `do not add orphan content root`(orphanBeforeUpdate: Boolean) {
+  fun `do not add orphan content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -230,7 +240,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val roots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots
@@ -243,9 +255,9 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `add content root to existing module`(orphanBeforeUpdate: Boolean) {
+  fun `add content root to existing module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -273,7 +285,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single()
@@ -285,10 +299,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `add content root to existing module and module remain in orphanage`(orphanBeforeUpdate: Boolean) {
+  fun `add content root to existing module and module remain in orphanage`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val url2 = virtualFileManager.fromUrl("/1233")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -318,7 +332,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single()
@@ -332,10 +348,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding source root`(orphanBeforeUpdate: Boolean) {
+  fun `adding source root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -366,7 +382,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
@@ -378,10 +396,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding source root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
+  fun `adding source root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -414,7 +432,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val sourceRoot = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
@@ -426,11 +446,11 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding source root to existing one`(orphanBeforeUpdate: Boolean) {
+  fun `adding source root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl1 = virtualFileManager.fromUrl("/123/source1")
     val sourceUrl2 = virtualFileManager.fromUrl("/123/source2")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -463,7 +483,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots
@@ -475,10 +497,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding source root to removed module`(orphanBeforeUpdate: Boolean) {
+  fun `adding source root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val sourceUrl = virtualFileManager.fromUrl("/123/source1")
-    runWriteAction {
+    writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
@@ -499,7 +521,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java)
@@ -511,10 +535,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding exclude root`(orphanBeforeUpdate: Boolean) {
+  fun `adding exclude root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -545,7 +569,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val excludeUrls = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
@@ -557,10 +583,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding exclude root to existing one duplicate`(orphanBeforeUpdate: Boolean) {
+  fun `adding exclude root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -593,7 +619,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val myExcludeUrl = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
@@ -605,11 +633,11 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding exclude root to existing one`(orphanBeforeUpdate: Boolean) {
+  fun `adding exclude root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl1 = virtualFileManager.fromUrl("/123/exclude1")
     val excludeUrl2 = virtualFileManager.fromUrl("/123/exclude2")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -642,7 +670,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val excludedUrls = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls
@@ -654,10 +684,10 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `adding exclude root to removed module`(orphanBeforeUpdate: Boolean) {
+  fun `adding exclude root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source1")
-    runWriteAction {
+    writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
@@ -678,7 +708,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java)
@@ -690,11 +722,11 @@ class EntitiesOrphanageTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `move both source and exclude root`(orphanBeforeUpdate: Boolean) {
+  fun `move both source and exclude root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.fromUrl("/123")
     val excludeUrl = virtualFileManager.fromUrl("/123/source1")
     val sourceUrl = virtualFileManager.fromUrl("/123/source2")
-    runWriteAction {
+    writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -726,7 +758,9 @@ class EntitiesOrphanageTest {
       }
     }
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    withContext(Dispatchers.EDT) {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(projectModel.project)
+    }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(ModuleEntity::class.java).single().contentRoots.single()
