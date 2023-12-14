@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 fun topLevel() = 1
 
 class A(val prop: Int, arg: Int) {
@@ -10,5 +9,5 @@ class A(val prop: Int, arg: Int) {
     fun foo() = 1
 }
 
-// EXIST: abc, topLevel, prop, another, foo
-// ABSENT: arg, local, x
+// EXIST: abc, topLevel
+// ABSENT: prop, arg, another, local, foo, x

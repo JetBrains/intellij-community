@@ -1,3 +1,4 @@
+// IGNORE_K2
 val someString: String = ""
 val someInt: Int = 1
 
