@@ -31,5 +31,9 @@ abstract class PluginMigration {
     fun removePlugin(pluginIdString: String) {
       options.pluginsToMigrate.removeIf { it.pluginId.idString == pluginIdString }
     }
+
+    fun removePluginToDownload(pluginIdString: String) {
+      options.pluginsToDownload.removeIf { it.pluginId.idString == pluginIdString }
+    }
   }
 }
