@@ -6,7 +6,7 @@ fun localFun() { /// M
 } /// L
 
 fun functionalLiteral() { /// M
-    val local = fun() { /// *, L, λ
+    val local = fun() { /// L
         println() /// L
     } /// L
 } /// L
@@ -16,7 +16,7 @@ fun functionalLiteralOneLiner() { /// M
 } /// L
 
 fun functionalLiteralExpression() { /// M
-    val local = fun() = /// *, L, λ
+    val local = fun() = /// L
         println() /// L
 } /// L
 
@@ -25,7 +25,7 @@ fun functionalLiteralOneLinerExpression() { /// M
 } /// L
 
 fun lambdaLiteral() { /// M
-    val local = { /// *, L, λ
+    val local = { /// L
         println() /// L
     } /// L
 } /// L

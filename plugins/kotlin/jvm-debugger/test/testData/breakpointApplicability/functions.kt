@@ -6,16 +6,25 @@ fun foo2() {} /// M
 // Lambdas should be available if present
 fun foo3() = run { println() } /// *, L, M, λ
 
-fun foo3_1() = run { /// *, L, M, λ
+// No need to suggest lambda breakpoint for multiline lambdas
+fun foo3_1() = run { /// L, M
     println() /// L
 } /// L
 
-// We need to suggest lambda breakpoint when there is some code on the line inside the lambda
+// However, we need to suggest lambda breakpoint when there is some code on the line inside the lambda
 fun foo3_2() = run { println() /// *, L, M, λ
     println() /// L
 } /// L
 
 fun foo3_3() = run { run { println() } /// *, L, M, λ, λ
+    println() /// L
+} /// L
+
+fun foo3_4() = run { /* comment */ println() /// *, L, M, λ
+    println() /// L
+} /// L
+
+fun foo3_5() = run { /* comment */ /// L, M
     println() /// L
 } /// L
 
@@ -39,14 +48,14 @@ fun foo6() = when (2 + 3) { /// M, L
 // Line breakpoint should not be displayed for lambda literal results
 fun foo7() = { println() } /// M, λ
 
-fun foo7_1() = { /// M, λ
+fun foo7_1() = { /// M
     println() /// L
 } /// L
 
 fun foo7_2() = /// M
     { println() } /// λ
 
-fun foo8() = (3 + 5).run { /// *, L, M, λ
+fun foo8() = (3 + 5).run { /// L, M
     println() /// L
 } /// L
 
@@ -66,7 +75,7 @@ fun foo11(a: String = run { "foo" }) = a /// *, L, M, λ
 fun foo12() { /// M
     listOf(1, 2, 3, 4, 5) /// L
         .filter { it % 2 == 0 } /// *, L, λ
-        .map { /// *, L, λ
+        .map { /// L
             it * 2 /// L
         } /// L
         .joinToString() /// L

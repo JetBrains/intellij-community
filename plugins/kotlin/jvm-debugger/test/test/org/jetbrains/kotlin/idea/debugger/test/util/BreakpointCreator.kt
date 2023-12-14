@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
@@ -188,6 +189,13 @@ internal class BreakpointCreator(
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
         val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != JavaLineBreakpointProperties.NO_LAMBDA) it - 1 else it }
+
+        if (updatedLambdaOrdinal != null && updatedLambdaOrdinal != JavaLineBreakpointProperties.NO_LAMBDA) {
+            val sourcePosition = org.jetbrains.debugger.SourceInfo(file.virtualFile, lineIndex)
+            val types = KotlinLineBreakpointType().computeVariants(file.project, sourcePosition)
+            val lambdasCount = types.count { it is JavaLineBreakpointType.LambdaJavaBreakpointVariant }
+            check(updatedLambdaOrdinal < lambdasCount) { "Line ${lineIndex + 1}: Lambda ordinal ${lambdaOrdinal} is incorrect, as there are $lambdasCount lambdas suitable" }
+        }
 
         val javaBreakpoint = createBreakpointOfType(
             breakpointManager,

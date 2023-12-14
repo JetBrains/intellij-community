@@ -16,7 +16,7 @@ fun test() {
     return
 }
 
-// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1 / line / 1
+// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1
 
 // EXPRESSION: s
 // RESULT: "OK": Ljava/lang/String;

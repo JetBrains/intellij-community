@@ -33,7 +33,7 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
 
         // Highlight only lambda body in case of lambda breakpoint.
         val lambda = element.parentOfType<KtFunction>()?.takeIf { it is KtFunctionLiteral || it.name == null } ?: return null
-        val lambdaRange = lambda.textRange
+        val lambdaRange = JavaLineBreakpointType.getTextRangeWithoutTrailingComments(lambda)
 
         if (lambda.isOneLiner()) return lambdaRange
 

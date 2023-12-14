@@ -18,17 +18,17 @@ fun testLambdaWithNestedLambda() {
     //Breakpoint!, lambdaOrdinal = 1
     lambda("first") { nestedLambda("second") { consume("third $it ") } }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     lambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!
         nestedLambda("second", null)
     }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     lambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!, lambdaOrdinal = -1
         nestedLambda("second") { consume("third $it") }
     }
     // RESUME: 1
@@ -39,17 +39,17 @@ fun testInlineLambdaWithNestedLambda() {
     //Breakpoint!, lambdaOrdinal = 1
     inlineLambda("first") { nestedLambda("second") { consume("third $it ") } }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     inlineLambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!
         nestedLambda("second", null)
     }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     inlineLambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!, lambdaOrdinal = -1
         nestedLambda("second") { consume("third $it") }
     }
     // RESUME: 1
@@ -62,10 +62,10 @@ fun testLambdaWithNestedInlineLambda() {
     //Breakpoint!, lambdaOrdinal = 1
     lambda("first") { inlineNestedLambda("second") { consume("third $it ") } }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     lambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!, lambdaOrdinal = -1
         inlineNestedLambda("second") { consume("third $it") }
     }
     // RESUME: 1
@@ -76,10 +76,10 @@ fun testInlineLambdaWithNestedInlineLambda() {
     //Breakpoint!, lambdaOrdinal = 1
     inlineLambda("first") { inlineNestedLambda("second") { consume("third $it ") } }
 
-    // RESUME: 1
-    // STEP_INTO: 1
-    //Breakpoint!, lambdaOrdinal = 1
     inlineLambda("first") {
+        // RESUME: 1
+        // STEP_INTO: 1
+        //Breakpoint!, lambdaOrdinal = -1
         inlineNestedLambda("second") { consume("third $it") }
     }
     // RESUME: 1
