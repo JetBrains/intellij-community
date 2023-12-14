@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -68,6 +68,16 @@ public interface ProjectFileIndex extends FileIndex {
   @RequiresReadLock
   @Nullable
   Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion);
+
+  /**
+   * Returns the list of modules which content roots contain the specified file or an empty list if the file does not belong to the content of any module.
+   *
+   * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @NotNull
+  Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).

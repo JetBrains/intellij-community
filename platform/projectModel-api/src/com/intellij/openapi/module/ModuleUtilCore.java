@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
@@ -89,6 +89,18 @@ public class ModuleUtilCore {
       return null;
     }
     return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
+  }
+
+  /**
+   * @return modules which include the file,
+   *         empty list for project files outside module content roots or library files
+   */
+  @ApiStatus.Internal
+  public static @NotNull Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) {
+      return Collections.emptySet();
+    }
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModulesForFile(file, true));
   }
 
   /**

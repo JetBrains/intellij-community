@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.openapi.module.Module;
@@ -36,6 +36,11 @@ final class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public @Nullable Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     return null;
+  }
+
+  @Override
+  public @NotNull Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+    return Collections.emptySet();
   }
 
   @Override

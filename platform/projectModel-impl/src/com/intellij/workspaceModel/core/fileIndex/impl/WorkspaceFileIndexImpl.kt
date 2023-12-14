@@ -225,6 +225,27 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     }
   }
 
+  override fun findFileSets(file: VirtualFile,
+                            honorExclusion: Boolean,
+                            includeContentSets: Boolean,
+                            includeExternalSets: Boolean,
+                            includeExternalSourceSets: Boolean,
+                            includeCustomKindSets: Boolean): List<WorkspaceFileSet> {
+    val info = getFileInfo(
+      file = file,
+      honorExclusion = honorExclusion,
+      includeContentSets = includeContentSets,
+      includeExternalSets = includeExternalSets,
+      includeExternalSourceSets = includeExternalSourceSets,
+      includeCustomKindSets = includeCustomKindSets
+    )
+    return when (info) {
+      is WorkspaceFileSetImpl -> listOf(info)
+      is MultipleWorkspaceFileSets -> info.fileSets
+      else -> emptyList()
+    }
+  }
+
   override suspend fun initialize() {
     if (indexData is EmptyWorkspaceFileIndexData) {
       val contributors = EP_NAME.extensionList
@@ -255,6 +276,25 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     }
     @Suppress("UNCHECKED_CAST")
     return result as? WorkspaceFileSetWithCustomData<D>
+  }
+
+  override fun <D : WorkspaceFileSetData> findFileSetsWithCustomData(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
+    customDataClass: Class<out D>
+  ): List<WorkspaceFileSetWithCustomData<D>> {
+    val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+    val result = when (info) {
+      is WorkspaceFileSetWithCustomData<*> -> listOfNotNull(info.takeIf { customDataClass.isInstance(it.data) })
+      is MultipleWorkspaceFileSets -> info.fileSets.filter { customDataClass.isInstance(it.data) }
+      else -> emptyList()
+    }
+    @Suppress("UNCHECKED_CAST")
+    return result as List<WorkspaceFileSetWithCustomData<D>>
   }
 
   override fun getFileInfo(file: VirtualFile,

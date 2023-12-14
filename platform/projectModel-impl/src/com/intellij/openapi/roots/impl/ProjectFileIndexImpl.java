@@ -104,6 +104,14 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
+  public @NotNull Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+    List<WorkspaceFileSetWithCustomData<ModuleRelatedRootData>> fileSet = myWorkspaceFileIndex.findFileSetsWithCustomData(
+      file, honorExclusion, true, false, false, false, ModuleRelatedRootData.class
+    );
+    return ContainerUtil.map2LinkedSet(fileSet, s -> s.getData().getModule());
+  }
+
+  @Override
   public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return myDirectoryIndex.getOrderEntries(file);
   }
