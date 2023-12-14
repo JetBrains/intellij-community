@@ -43,6 +43,11 @@
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
+  <item name='java.awt.event.InputEvent int getMaskForButton(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.awt.event.InputEvent int getModifiers()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.ALT_GRAPH_MASK, java.awt.event.InputEvent.BUTTON1_MASK}" />
@@ -63,9 +68,19 @@
       <val name="intValues" val="{java.awt.event.ItemEvent.SELECTED, java.awt.event.ItemEvent.DESELECTED}" />
     </annotation>
   </item>
+  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char) 3">
@@ -73,9 +88,44 @@
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
+  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent char getKeyChar()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent int getExtendedKeyCode()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent int getExtendedKeyCodeForChar(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent int getKeyCode()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent int getKeyLocation()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent java.lang.String getKeyModifiersText(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.awt.event.KeyEvent java.lang.String getKeyModifiersText(int) 0">
@@ -85,10 +135,38 @@
   </item>
   <item name='java.awt.event.KeyEvent java.lang.String getKeyText(int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent java.lang.String paramString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent void setKeyChar(char)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent void setKeyCode(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.KeyEvent void setModifiers(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
   </item>
   <item name="java.awt.event.KeyEvent void setModifiers(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean) 3">
@@ -96,9 +174,19 @@
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
+  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int) 3">
@@ -106,12 +194,76 @@
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseEvent java.awt.Point getPoint()'>
+  <item name='java.awt.event.MouseEvent boolean isPopupTrigger()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getButton()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getClickCount()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getModifiersEx()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getX()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getXOnScreen()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getY()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent int getYOnScreen()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent java.awt.Point getLocationOnScreen()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val name="pure" val="true"/>
+      </annotation>
+    </item>
+    <item name='java.awt.event.MouseEvent java.awt.Point getPoint()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val name="pure" val="true"/>
+      </annotation>
+    </item>
+  <item name='java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent java.lang.String paramString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseEvent void translatePoint(int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, boolean, int, int, int) 3">
