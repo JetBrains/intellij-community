@@ -1,23 +1,21 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 /**
  * Container for the SDK properties specific to a particular SDK type.
  */
 public interface SdkAdditionalData {
+  /**
+   * Invocation of this method indicates that additional data must become read-only and report errors on attempt to make changes. Any changes
+   * made after won't be persisted and going to be discarded after next sdk update.
+   * To make proper additional data modification, you should:<ul>
+   * <li>Obtain sdk modificator using {@link Sdk#getSdkModificator()}</li>
+   * <li>Obtain additional data from the modificator using {@link SdkModificator#getSdkAdditionalData()} / set new additional data using {@link SdkModificator#setSdkAdditionalData(SdkAdditionalData)}</li>
+   * <li>Make any modifications to the additional data</li>
+   * <li>Commit modificator using {@link SdkModificator#commitChanges()}</li>
+   * </ul>
+   *
+   * @implSpec any additional data is expected to be writable after cration and become read only after invoking this method.
+   */
   default void markAsCommited() { }
 }
