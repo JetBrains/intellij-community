@@ -27,7 +27,8 @@ import java.util.List;
 
 abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
 
-  public abstract ActionGroup getDelegate();
+  @Override
+  public abstract @NotNull ActionGroup getDelegate();
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -89,7 +90,7 @@ abstract class WeighingActionGroup extends ActionGroup implements ActionWithDele
     return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 
-  protected boolean shouldBeChosenAnyway(AnAction action) {
+  protected boolean shouldBeChosenAnyway(@NotNull AnAction action) {
     return false;
   }
 

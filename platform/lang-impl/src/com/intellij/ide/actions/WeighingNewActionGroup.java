@@ -12,7 +12,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup implements DumbA
   private ActionGroup myDelegate;
 
   @Override
-  public ActionGroup getDelegate() {
+  public @NotNull ActionGroup getDelegate() {
     if (myDelegate == null) {
       myDelegate = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
     }
@@ -29,7 +29,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup implements DumbA
   }
 
   @Override
-  protected boolean shouldBeChosenAnyway(AnAction action) {
+  protected boolean shouldBeChosenAnyway(@NotNull AnAction action) {
     final Class<? extends AnAction> aClass = action.getClass();
     return aClass == CreateFileAction.class || aClass == CreateDirectoryOrPackageAction.class ||
            "NewModuleInGroupAction".equals(aClass.getSimpleName());
