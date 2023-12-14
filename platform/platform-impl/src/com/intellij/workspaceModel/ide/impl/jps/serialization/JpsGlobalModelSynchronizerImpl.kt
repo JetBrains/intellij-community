@@ -5,8 +5,10 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -14,10 +16,12 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
+import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.seconds
@@ -74,9 +78,33 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     serializers.forEach { serializer ->
       val entities = entityStorage.entities(serializer.mainEntityClass).toList()
       LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
+      if (serializer.mainEntityClass == SdkEntity::class.java) {
+        assertUnexpectedAdditionalDataModification(entityStorage)
+      }
       serializer.saveEntities(entities, emptyMap(), entityStorage, contentWriter)
     }
     contentWriter.saveSession()
+  }
+
+  private fun assertUnexpectedAdditionalDataModification(entityStorage: EntityStorage) {
+    entityStorage.entities(SdkEntity::class.java).forEach { sdkEntity ->
+      val projectJdkImpl = entityStorage.sdkMap.getDataByEntity(sdkEntity) ?: error(
+        "SdkBridge has to be available for the SdkEntity: ${sdkEntity.name}; type: ${sdkEntity.type}; path: ${sdkEntity.homePath}")
+      val additionalData = projectJdkImpl.sdkAdditionalData
+      if (additionalData == null) return@forEach
+      val additionalDataElement = Element(ELEMENT_ADDITIONAL)
+      projectJdkImpl.sdkType.saveAdditionalData(additionalData, additionalDataElement)
+      val additionalDataAsString = JDOMUtil.write(additionalDataElement)
+      if (additionalDataAsString != sdkEntity.additionalData) {
+        val className = additionalData.javaClass.name
+        LOG.error("$className mismatch for SDK: ${sdkEntity.name}; type: ${sdkEntity.type}; path: ${sdkEntity.homePath};\n" +
+                  "$className in entity: \n" +
+                  "${sdkEntity.additionalData}\n" +
+                  "$className in bridge: \n" +
+                  "${additionalDataAsString}\n" +
+                  "Probably inconsistent update of the $className, see the documentation of `SdkAdditionalData#markAsCommited` for more information")
+      }
+    }
   }
 
   private suspend fun delayLoadGlobalWorkspaceModel() {
