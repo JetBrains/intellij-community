@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
 import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
@@ -13,9 +16,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -79,8 +80,17 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   @ApiStatus.Internal
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
   
-  @TestOnly
+  @ApiStatus.Internal
   fun reset()
+}
+
+internal class WorkspaceFileIndexCleaner: PersistentFsConnectionListener {
+  override fun beforeConnectionClosed() {
+    for (p in ProjectManager.getInstanceIfCreated()?.openProjects.orEmpty()) {
+      val fileIndex = p.serviceIfCreated<WorkspaceFileIndex>() as WorkspaceFileIndexEx? ?: continue
+      fileIndex.reset()
+    }
+  }
 }
 
 /**
