@@ -3,6 +3,7 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.application.*
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
@@ -61,6 +62,11 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
     val sdkModificator = sdk.sdkModificator
     sdkModificator.homePath = pythonPath
     sdkModificator.sdkAdditionalData = additionalData
-    sdkModificator.commitChanges()
+    val application = ApplicationManager.getApplication()
+    application.invokeAndWait {
+      application.runWriteAction {
+        sdkModificator.commitChanges()
+      }
+    }
   }
 }
