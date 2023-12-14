@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 public class PropertyKeyLiteralConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    ULiteralExpression literal = UastContextKt.toUElement(contextElement.getParent(), ULiteralExpression.class);
-    return literal != null && !DumbService.isDumb(psiFile.getProject()) && JavaI18nUtil.mustBePropertyKey(literal, null)
+    UInjectionHost injectionHost = UastContextKt.getUastParentOfType(contextElement.getParent(), UInjectionHost.class, false);
+    return injectionHost != null && !DumbService.isDumb(psiFile.getProject()) && JavaI18nUtil.mustBePropertyKey(injectionHost, null)
            ? ThreeState.NO
            : ThreeState.UNSURE;
   }
