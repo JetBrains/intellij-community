@@ -70,7 +70,21 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
                                        "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"),
               "java.lang.NoSuchMethodException")
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
-                                       "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
+                                       "getField", "getDeclaredField"), "java.lang.NoSuchFieldException")
+    .register(CallMatcher.anyOf(
+      CallMatcher.instanceCall("java.time.format.DateTimeFormatter", "parse", "parseBest"),
+      CallMatcher.staticCall("java.time.Duration", "parse"),
+      CallMatcher.staticCall("java.time.Instant", "parse"),
+      CallMatcher.staticCall("java.time.MonthDay", "parse"),
+      CallMatcher.staticCall("java.time.Period", "parse"),
+      CallMatcher.staticCall("java.time.Year", "parse"),
+      CallMatcher.staticCall("java.time.YearMonth", "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_OFFSET_TIME, "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_OFFSET_DATE_TIME, "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_ZONED_DATE_TIME, "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_DATE, "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME, "parse"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_TIME, "parse")), "java.time.format.DateTimeParseException");
   private static final CallMatcher MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
