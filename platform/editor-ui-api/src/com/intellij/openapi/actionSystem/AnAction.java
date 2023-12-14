@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -68,7 +67,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
-  private Boolean myUpdateNotOverridden;
+  @ApiStatus.Internal
+  int myMetaFlags;
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -184,7 +184,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (PossiblyDumbAware.super.isDumbAware()) {
       return true;
     }
-    return updateNotOverridden();
+    return ActionClassMetaData.isDefaultUpdate(this);
   }
 
   @Override
@@ -192,20 +192,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
       return ActionUpdateThread.BGT;
     }
-    if (updateNotOverridden()) {
+    if (ActionClassMetaData.isDefaultUpdate(this)) {
       return ActionUpdateThread.BGT;
     }
     return ActionUpdateThreadAware.super.getActionUpdateThread();
-  }
-
-  @ApiStatus.Internal
-  final boolean updateNotOverridden() {
-    if (myUpdateNotOverridden != null) {
-      return myUpdateNotOverridden;
-    }
-    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-    myUpdateNotOverridden = AnAction.class.equals(declaringClass);
-    return myUpdateNotOverridden;
   }
 
   /** Returns the set of shortcuts associated with this action. */
