@@ -12,6 +12,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -29,7 +30,8 @@ import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationEr
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
-    var holder: HighlightInfoHolder? = null
+    private lateinit var diagnosticRanges: MutableMap<TextRange, List<KtDiagnosticWithPsi<*>>>
+    private var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
     }
@@ -40,30 +42,30 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             return true
         }
         this.holder = holder
+        diagnosticRanges = compileFile(file as KtFile)
         try {
             action.run()
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
-        }
-        finally {
+        } finally {
             // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
             this.holder = null
         }
         return true
     }
 
-    private fun analyze(file: KtFile) {
+    private fun compileFile(file: KtFile): MutableMap<TextRange, List<KtDiagnosticWithPsi<*>>> {
         analyze(file) {
             val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-            for (diagnostic in diagnostics) {
-                addDiagnostic(file, diagnostic, holder!!)
-            }
+                .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
+                .groupBy({ it.first }, { it.second })
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
-                diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
+                diagnostics.values.asSequence().flatten().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
                 file
             )
+            return HashMap(diagnostics)
         }
     }
 
@@ -148,8 +150,21 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     override fun visit(element: PsiElement) {
-        if (element is KtFile) {
-            analyze(element)
+        val elementRange = element.textRange
+        // show diagnostics with textRanges under this element range
+        // assumption: highlight visitors call visit() method in the post-order (children first)
+        // note that after this visitor finished, `diagnosticRanges` will be empty, because all diagnostics are inside the file range, by definition
+        val iterator = diagnosticRanges.iterator()
+        for (entry in iterator) {
+            if (elementRange.contains(entry.key)) {
+                val diagnostics = entry.value
+                for (diagnostic in diagnostics) {
+                    analyze (holder!!.contextFile as KtFile) {
+                        addDiagnostic(holder!!.contextFile as KtFile, diagnostic, holder!!)
+                    }
+                }
+                iterator.remove()
+            }
         }
     }
 
