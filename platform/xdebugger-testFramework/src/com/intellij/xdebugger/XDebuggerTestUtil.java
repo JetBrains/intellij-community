@@ -21,7 +21,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -47,14 +46,18 @@ public class XDebuggerTestUtil {
   XDebuggerTestUtil() {
   }
 
-  @Nullable
-  public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
   computeLineBreakpointVariants(Project project, VirtualFile file, int line) {
+    return computeLineBreakpointVariants(project, file, line, 0);
+  }
+
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
+  computeLineBreakpointVariants(Project project, VirtualFile file, int line, int column) {
     return ReadAction.compute(() -> {
       List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
                                                 .filter(type -> type.canPutAt(file, line, project))
                                                 .collect(Collectors.toCollection(SmartList::new));
-      return XDebuggerUtilImpl.getLineBreakpointVariants(project, types, XSourcePositionImpl.create(file, line));
+      return XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, types, XSourcePositionImpl.create(file, line, column));
     });
   }
 

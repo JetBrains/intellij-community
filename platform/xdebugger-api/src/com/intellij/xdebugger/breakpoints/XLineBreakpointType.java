@@ -178,6 +178,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     public final XLineBreakpointType<P> getType() {
       return XLineBreakpointType.this;
     }
+
+    @Override
+    public String toString() {
+      return getType() + ": " + getText();
+    }
   }
 
   public class XLineBreakpointAllVariant extends XLineBreakpointVariant {
