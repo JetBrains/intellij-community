@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
@@ -25,5 +26,10 @@ public final class InspectionProfileUtil {
 
   public static String[] getGroup() {
     return new String[] {InspectionsBundle.message("group.names.user.defined"), SSRBundle.message("structural.search.group.name")};
+  }
+
+  @SuppressWarnings("unused")
+  public static void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
+    profile.getProfileManager().fireProfileChanged(profile);
   }
 }
