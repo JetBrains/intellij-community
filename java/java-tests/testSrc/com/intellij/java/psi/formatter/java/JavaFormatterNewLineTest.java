@@ -225,8 +225,8 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
   }
 
-  public void testMoveSimpleMethodBodyOnNewLineWhenNonEmpty() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_NON_EMPTY = true;
+  public void testMoveSimpleMethodBodyOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().SPACE_WITHIN_BRACES = true;
     doClassTest("""
@@ -239,8 +239,8 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   """);
   }
 
-  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenEmpty() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_NON_EMPTY = true;
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().SPACE_WITHIN_BRACES = true;
     doClassTest("""
@@ -251,8 +251,8 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   """);
   }
 
-  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenNonEmptyAndSettingsDisabled() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_NON_EMPTY = false;
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().SPACE_WITHIN_BRACES = true;
     doClassTest("""

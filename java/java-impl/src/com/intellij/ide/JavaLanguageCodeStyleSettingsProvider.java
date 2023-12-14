@@ -239,7 +239,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
                                 JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "NEW_LINE_WHEN_BODY_NON_EMPTY",
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "NEW_LINE_WHEN_BODY_IS_PRESENTED",
                                 JavaBundle.message("new.line.when.body.is.presented"),
                                 ApplicationBundle.message("wrapping.method.parentheses"));
 
