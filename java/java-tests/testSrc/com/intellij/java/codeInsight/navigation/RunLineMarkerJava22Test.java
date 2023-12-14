@@ -8,78 +8,102 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
 
-public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase {
+public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase {
 
   public void testImplicitAllowsNonStatic() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      void main<caret>() {
-      }
-      """);
+        void main<caret>() {
+        }
+        """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
+    });
+  }
+
+  public void testImplicitNotAllowsNonStatic() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, () -> {
+      myFixture.configureByText("MainTest.java", """
+        void main<caret>() {
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
     });
   }
 
   public void testClassWithConstructorWithoutParamsAndInstanceMainIsAllowed() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      public class A {
-        A() {}
-        public void main<caret>() {}
-      }
-      """);
+        public class A {
+          A() {}
+          public void main<caret>() {}
+        }
+        """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
     });
   }
 
-  public void testClassWithDefaultConstructorParamsAndInstanceMainIsAllowed() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+  public void testClassWithConstructorWithoutParamsAndInstanceMainIsNotAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, () -> {
       myFixture.configureByText("MainTest.java", """
-      public class A {
-        public void main<caret>() {}
-      }
-      """);
+        public class A {
+          A() {}
+          public void main<caret>() {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+    });
+  }
+
+  public void testClassWithDefaultConstructorParamsAndInstanceMainIsAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+        public class A {
+          public void main<caret>() {}
+        }
+        """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
     });
   }
 
   public void testClassWithConstructorWithParametersAndInstanceMethodIsNotEntryPoint() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      public class A {
-        A(String s) {}
-        public void main<caret>() {}
-      }
-      """);
+        public class A {
+          A(String s) {}
+          public void main<caret>() {}
+        }
+        """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(0, marks.size());
     });
   }
 
   public void testMainInsideInnerClassInImplicitClassHasNoGutter() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      void foo() {
-      }
-      
-      public class A {
-        public void main<caret>() {}
-      }
-      """);
+        void foo() {
+        }
+              
+        public class A {
+          public void main<caret>() {}
+        }
+        """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(0, marks.size());
     });
   }
 
   public void testStaticWithParameterHasHigherPriority() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      static void main<caret>() {}
-      static void main(String[] args) {}
-      """);
+        static void main<caret>() {}
+        static void main(String[] args) {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
       assertEmpty(myFixture.findGuttersAtCaret());
@@ -87,23 +111,23 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testStaticWithNoParametersHasHigherPriorityThanInstance() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      static void main() {}
-      void main<caret>(String[] args) {}
-      """);
+        static void main() {}
+        void main<caret>(String[] args) {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
-      assertEmpty(myFixture.findGuttersAtCaret());
+      assertNotEmpty(myFixture.findGuttersAtCaret());
     });
   }
 
   public void testInstanceWithParameterHasHigherPriority() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      void main<caret>() {}
-      void main(String[] args) {}
-      """);
+        void main<caret>() {}
+        void main(String[] args) {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
       assertEmpty(myFixture.findGuttersAtCaret());
@@ -112,10 +136,10 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testInstanceMainMethodInSuperClass() {
     myFixture.addClass("public class B { void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      class A extends B {}
-      """);
+        class A extends B {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
     });
@@ -123,10 +147,10 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testInstanceMainMethodInSuperInterface() {
     myFixture.addClass("public interface B { default void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      class A implements B {}
-      """);
+        class A implements B {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
     });
@@ -134,12 +158,12 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testStaticMainMethodInSuperInterface() {
     myFixture.addClass("public interface B { static void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      class A implements B {}
-      """);
+        class A implements B {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
-      assertEquals(0, marks.size());
+      assertEquals(1, marks.size());
     });
   }
 
@@ -147,8 +171,8 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
     myFixture.addClass("public interface B {  void main(); }");
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      abstract class A implements B {}
-      """);
+        abstract class A implements B {}
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(0, marks.size());
     });
@@ -157,10 +181,10 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
   public void testAbstractClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      abstract class A {
-        void main(){};
-       }
-      """);
+        abstract class A {
+          void main(){};
+         }
+        """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(0, marks.size());
     });
@@ -179,7 +203,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInstanceMainMethodInInterface() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("Run.java", """
         interface Run {
             public default void main(String[] args) {
@@ -193,7 +217,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testTwoStaticMainMethods() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
       myFixture.configureByText("Run.java", """
         class Main {
             public static void main(String[] args) {

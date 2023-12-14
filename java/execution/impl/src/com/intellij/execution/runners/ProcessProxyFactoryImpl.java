@@ -51,6 +51,12 @@ public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
             vmParametersList.defineProperty(AppMainV2.LAUNCHER_PORT_NUMBER, port);
             vmParametersList.defineProperty(AppMainV2.LAUNCHER_BIN_PATH, binPath);
 
+            boolean isJava21preview = JavaSdkVersion.JDK_21.equals(jdkVersion) &&
+                                      javaParameters.getVMParametersList().getParameters().contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+            if (isJava21preview) {
+              vmParametersList.defineProperty(AppMainV2.LAUNCHER_USE_JDK_21_PREVIEW, Boolean.toString(isJava21preview));
+            }
+
             javaParameters.getProgramParametersList().prepend(mainClass);
             javaParameters.setMainClass(AppMainV2.class.getName());
           }

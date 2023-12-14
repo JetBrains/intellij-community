@@ -5,7 +5,7 @@ import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiMethodUtil {
@@ -33,15 +33,36 @@ public final class PsiMethodUtil {
   @Nullable
   private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
     for (final PsiMethod mainMethod : mainMethods) {
+      if (mainMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        continue;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
       PsiClass containingClass = mainMethod.getContainingClass();
       if (containingClass != null && containingClass != aClass) {
-        if (containingClass.isInterface() && PsiUtil.getLanguageLevel(containingClass).isLessThan(LanguageLevel.JDK_21_PREVIEW)) {
+        if (containingClass.isInterface() && !instanceMainMethodsEnabled(containingClass)) {
+          continue;
+        }
+        if (mainMethod.hasModifierProperty(PsiModifier.STATIC) && !inheritedStaticMainEnabled(containingClass)) {
           continue;
         }
       }
       if (isMainMethod(mainMethod)) return mainMethod;
     }
     return null;
+  }
+
+  private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
+    boolean is21Preview = languageLevel.equals(LanguageLevel.JDK_21_PREVIEW);
+    boolean is22PreviewOrOlder = languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
+    return is21Preview || is22PreviewOrOlder;
+  }
+
+  private static boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
+    return languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
   }
 
   /**
@@ -54,14 +75,10 @@ public final class PsiMethodUtil {
     if (method == null || method.getContainingClass() == null) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+    if (instanceMainMethodsEnabled(method)) {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
           !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
-      PsiMethod[] constructors = method.getContainingClass().getConstructors();
-      if (constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
-        return false;
-      }
       if (parameters.length == 1) {
         return isJavaLangStringArray(parameters[0]);
       }
@@ -93,8 +110,6 @@ public final class PsiMethodUtil {
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
-    PsiMethod method = findMainMethod(aClass);
-    if (method != null && !method.hasModifierProperty(PsiModifier.STATIC) && aClass.isInterface()) return null;
-    return method;
+    return findMainMethod(aClass);
   }
 }

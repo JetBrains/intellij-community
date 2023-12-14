@@ -18,6 +18,7 @@ import java.util.*;
 public final class AppMainV2 {
   public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
+  public static final String LAUNCHER_USE_JDK_21_PREVIEW = "idea.launcher.use.21.preview";
 
   private static native void triggerControlBreak();
 
@@ -90,7 +91,7 @@ public final class AppMainV2 {
     Method m = findMethodToRun(appClass);
     if (m == null) {
       try {
-        // left for compatibility reasons - before Java 21 it was possible to call the static main method placed in the superclass
+        // left for compatibility reasons and as a fallback
         m = appClass.getMethod("main", String[].class);
       } catch (NoSuchMethodException e) {
         if (!startJavaFXApplication(params, appClass)) {
@@ -131,13 +132,24 @@ public final class AppMainV2 {
     }
   }
 
+  private enum MainMethodSearchMode{
+    ALL_METHOD, STATIC_METHOD, NON_STATIC_METHOD
+  }
   /**
-   * @param staticMode searches for static only if true and for instance only if false
+   * Retrieves the status of the main method.
+   *
+   * @param method     method to check
+   * @param mode     indicates which methods are considered
+   * @return the status of the main method. Can be one of the following:
+   * - MainMethodStatus.NotMain: the method is not the main method
+   * - MainMethodStatus.WithArgs: the method is the main method and accepts an array of strings as parameter
+   * - MainMethodStatus.WithoutArgs: the method is the main method and does not accept any parameters
    */
-  private static MainMethodStatus getMainMethodStatus(Method method, boolean staticMode) {
+  private static MainMethodStatus getMainMethodStatus(Method method, MainMethodSearchMode mode) {
     if ("main".equals(method.getName()) ) {
       if (!Modifier.isPrivate(method.getModifiers())) {
-        if (staticMode == Modifier.isStatic(method.getModifiers())) {
+        if (mode == MainMethodSearchMode.ALL_METHOD ||
+            (mode == MainMethodSearchMode.STATIC_METHOD && Modifier.isStatic(method.getModifiers()))) {
           Class<?>[] parameterTypes = method.getParameterTypes();
           if (parameterTypes.length == 1 && parameterTypes[0] == String[].class) {
             return MainMethodStatus.WithArgs;
@@ -151,15 +163,32 @@ public final class AppMainV2 {
     return MainMethodStatus.NotMain;
   }
 
+  /**
+   * @return true if the Java version is "21", false otherwise, because
+   * logic java 21 preview and other versions are not compatible
+   */
+  private static boolean isJava21Preview() {
+    try {
+      return Boolean.parseBoolean(System.getProperty(LAUNCHER_USE_JDK_21_PREVIEW));
+    }
+    catch (Throwable e) {
+      return false;
+    }
+  }
+
   private static Method findMethodToRun(Class<?> aClass) {
+    boolean java21Preview = isJava21Preview();
     Method methodWithoutArgsCandidate = null;
     // static main methods may be only in this class
-    for (Method declaredMethod : aClass.getDeclaredMethods()) {
-      MainMethodStatus status = getMainMethodStatus(declaredMethod, true);
-      if (status == MainMethodStatus.WithArgs) {
-        return declaredMethod;
-      } else if (status == MainMethodStatus.WithoutArgs) {
-        methodWithoutArgsCandidate = declaredMethod;
+    if (java21Preview) {
+      for (Method declaredMethod : aClass.getDeclaredMethods()) {
+        MainMethodStatus status = getMainMethodStatus(declaredMethod, MainMethodSearchMode.STATIC_METHOD);
+        if (status == MainMethodStatus.WithArgs) {
+          return declaredMethod;
+        }
+        else if (status == MainMethodStatus.WithoutArgs && methodWithoutArgsCandidate == null) {
+          methodWithoutArgsCandidate = declaredMethod;
+        }
       }
     }
 
@@ -174,10 +203,11 @@ public final class AppMainV2 {
       Class<?> last = classesToVisit.removeLast();
       Method[] declaredMethods = last.getDeclaredMethods();
       for (Method method : declaredMethods) {
-        MainMethodStatus status = getMainMethodStatus(method, false);
+        MainMethodStatus status = getMainMethodStatus(method, java21Preview ? MainMethodSearchMode.NON_STATIC_METHOD : MainMethodSearchMode.ALL_METHOD);
         if (status == MainMethodStatus.WithArgs) {
           return method;
-        } else if (status == MainMethodStatus.WithoutArgs) {
+        }
+        else if (status == MainMethodStatus.WithoutArgs && methodWithoutArgsCandidate == null) {
           methodWithoutArgsCandidate = method;
         }
       }
