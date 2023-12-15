@@ -2679,6 +2679,7 @@ public final class HighlightUtil {
     PsiClass referencedClass;
     String resolvedName;
     PsiType type;
+    PsiElement parent = expression.getParent();
     if (expression instanceof PsiJavaCodeReferenceElement) {
       // redirected ctr
       if (PsiKeyword.THIS.equals(((PsiJavaCodeReferenceElement)expression).getReferenceName())
@@ -2690,7 +2691,7 @@ public final class HighlightUtil {
       type = qualifier instanceof PsiExpression ? ((PsiExpression)qualifier).getType() : null;
       referencedClass = PsiUtil.resolveClassInType(type);
 
-      boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(expression.getParent());
+      boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(parent);
       if (resolved == null && isSuperCall) {
         if (qualifier instanceof PsiReferenceExpression) {
           resolved = ((PsiReferenceExpression)qualifier).resolve();
@@ -2778,7 +2779,7 @@ public final class HighlightUtil {
       return null;
     }
 
-    PsiElement element = expression.getParent();
+    PsiElement element = parent;
     while (element != null) {
       // check if expression inside super()/this() call
 
@@ -2820,11 +2821,12 @@ public final class HighlightUtil {
             return null;
           }
 
-          if (expression.getParent() instanceof PsiNewExpression newExpression &&
+          if (parent instanceof PsiNewExpression newExpression &&
               newExpression.isArrayCreation() &&
               newExpression.getClassOrAnonymousClassReference() == expression) {
             return null;
           }
+          if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) return null;
         }
 
         HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());

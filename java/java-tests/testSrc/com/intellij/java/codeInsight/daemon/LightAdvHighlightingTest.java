@@ -380,6 +380,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitConstructorInvocation() { doTest(false); }
   public void testExtendFinalClass() { doTest(false); }
   public void testPrivateMethodCalledFromSuper() { doTest(false); }
+  public void testQualifiedThisCalledFromSuper() { doTest(false); }
   public void testReferenceToClassFromSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testThisInInterface() { doTest(false); }
   public void testInnerClassConstantReference() { doTest(false); }
