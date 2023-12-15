@@ -535,7 +535,7 @@ abstract class AlignedDiffModelBase(val diffRequest: DiffRequest,
  *   several inlays with the same priority added to the same offset
  * * Mirror inlays positioning works not so good
  */
-private abstract class NewAlignedDiffModel(
+abstract class NewAlignedDiffModel(
   private val diffRequest: DiffRequest,
   private val diffContext: DiffContext,
   parent: JComponent,

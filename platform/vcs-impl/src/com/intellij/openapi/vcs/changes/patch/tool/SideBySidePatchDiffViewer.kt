@@ -14,7 +14,7 @@ import com.intellij.diff.tools.holders.EditorHolder
 import com.intellij.diff.tools.holders.TextEditorHolder
 import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.simple.AlignedDiffModel
-import com.intellij.diff.tools.simple.AlignedDiffModelBase
+import com.intellij.diff.tools.simple.NewAlignedDiffModel
 import com.intellij.diff.tools.util.*
 import com.intellij.diff.tools.util.FocusTrackerSupport.Twoside
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
@@ -325,7 +325,7 @@ internal class SideBySidePatchDiffViewer(
     }
   }
 
-  private inner class PatchAlignedDiffModel : AlignedDiffModelBase(diffRequest, diffContext, editor1, editor2, syncScrollable) {
+  private inner class PatchAlignedDiffModel : NewAlignedDiffModel(diffRequest, diffContext, component, editor1, editor2, syncScrollable) {
     override fun getDiffChanges(): List<AlignableChange> = patchChanges
   }
 
