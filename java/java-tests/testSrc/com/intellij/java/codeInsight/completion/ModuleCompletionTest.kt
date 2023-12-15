@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
@@ -40,9 +41,12 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
              "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info")
+
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
+
   @NeedsIndex.Full
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+
   @NeedsIndex.ForStandardLibrary
   fun testRequiresQualifiedName() = complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
 
@@ -55,14 +59,24 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
-  fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg.<caret> }")
+  fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg<caret> }")
   fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
-  fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other.<caret> }")
+  fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other<caret> }")
+  fun testExportsQualifiedUnambiguousDot() {
+    myFixture.configureByText("module-info.java", "module M { exports pkg.o<caret> }")
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.type('.')
+    myFixture.checkResult("module M { exports pkg.other.<caret> }")
+  }
+
   fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+
   @NeedsIndex.Full
   fun testExportsToList() =
     variants("module M { exports pkg.other to <caret> }",
-             "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named", "lib.with.module.info")
+             "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named",
+             "lib.with.module.info")
+
   @NeedsIndex.Full
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
@@ -78,10 +92,13 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testProvidesWith() = complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
   fun testProvidesWithPrefixed() =
     complete("module M { provides pkg.main.MySvc with p<caret> }", "module M { provides pkg.main.MySvc with pkg.<caret> }")
+
   fun testProvidesWithQualified() =
     complete("module M { provides pkg.main.MySvc with pkg.o<caret> }", "module M { provides pkg.main.MySvc with pkg.other.<caret> }")
+
   fun testProvidesWithUnambiguous() =
-    complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }", "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
+    complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }",
+             "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
 
   @NeedsIndex.SmartMode(reason = "Smart mode is necessary for optimizing imports; full index is needed for inheritance check")
   fun testProvidesOrder() {
