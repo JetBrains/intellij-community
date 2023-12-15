@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
-import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -27,18 +26,22 @@ import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
 @ApiStatus.Internal
-public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
+open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
   private val selectablePanel = object : SelectablePanel(), KotlinUIDslRenderer {
 
     override fun getBaseline(width: Int, height: Int): Int {
-      val baselineComponents = cells.filter { it.baselineAlign }.map { it.lcrCell.component }
+      val patchedLabels = mutableListOf<Pair<JLabel, String>>()
+      val layout = content.layout as GridLayout
+      val baselineComponents = content.components
+        .filter { layout.getConstraints(it as JComponent)!!.baselineAlign }
 
       // JLabel doesn't have baseline if empty. Workaround similar like in BasicComboBoxUI.getBaseline method
       for (component in baselineComponents) {
         if (component is JLabel && component.text.isNullOrEmpty()) {
+          patchedLabels += component to component.text
           component.text = " "
         }
       }
@@ -52,6 +55,11 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
           result = max(result, content.y + component.y + componentBaseline)
         }
       }
+
+      // Restore values
+      for ((label, text) in patchedLabels) {
+        label.text = text
+      }
       return result
     }
 
@@ -60,13 +68,13 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
       super.setForeground(fg)
 
       @Suppress("SENSELESS_COMPARISON")
-      if (cells == null) {
+      if (content == null) {
         // Called while initialization
         return
       }
 
-      for (cell in cells) {
-        cell.lcrCell.component.foreground = fg
+      for (component in content.components) {
+        component.foreground = fg
       }
     }
 
@@ -80,13 +88,11 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
     }
   }
 
-  private val lcrCellCache = LcrCellCache()
-
   /**
    * Content panel allows to trim components that could go outside of selection. It's better to implement that on layout level later
    */
   private val content = JPanel(GridLayout())
-  private val cells = mutableListOf<CellInfo>()
+  private val cells = mutableListOf<LcrCellBaseImpl<*>>()
   private var gap = LcrRow.Gap.DEFAULT
 
   init {
@@ -145,9 +151,7 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
       initParams.init()
     }
 
-    val result = lcrCellCache.occupyIcon()
-    result.init(icon, initParams)
-    add(result, initParams, false)
+    add(LcrIconImpl(initParams, false, gap, icon))
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
@@ -157,16 +161,12 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
       initParams.init()
     }
 
-    val result = if (initParams.attributes == null) {
-      lcrCellCache.occupyText().apply {
-        init(text, initParams, selected, foreground)
-      }
-    } else {
-      lcrCellCache.occupySimpleColoredText().apply {
-        init(text, initParams, selected, foreground)
-      }
+    if (initParams.attributes == null) {
+      add(LcrTextImpl(initParams, true, gap, text, selected, foreground))
     }
-    add(result, initParams, true)
+    else {
+      add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
+    }
   }
 
   override fun getListCellRendererComponent(list: JList<out T>,
@@ -176,7 +176,6 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
                                             cellHasFocus: Boolean): Component {
     cells.clear()
     content.removeAll()
-    lcrCellCache.release()
     gap = LcrRow.Gap.DEFAULT
 
     val selectionBg = if (isSelected) RenderingUtil.getSelectionBackground(list) else null
@@ -225,24 +224,28 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
 
     renderer()
 
+    // todo use row cache here
     val builder = RowsGridBuilder(content)
     builder.resizableRow()
 
     for (cell in cells) {
+      val component = cell.type.createInstance()
+      cell.apply(component)
+
       // Row height is usually even. If components height is odd the component cannot be placed right in center.
       // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
-      val roundingTopGapPatch = cell.lcrCell.component.preferredSize.height % 2
-      val gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else getGapValue(cell.gap))
-      val horizontalAlign = when (cell.align) {
+      val roundingTopGapPatch = component.preferredSize.height % 2
+      val gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else getGapValue(cell.gapBefore))
+      val horizontalAlign = when (cell.initParams.align) {
         null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
         LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
         LcrInitParams.Align.RIGHT -> HorizontalAlign.RIGHT
       }
 
-      builder.cell(cell.lcrCell.component, gaps = gaps,
+      builder.cell(component, gaps = gaps,
                    horizontalAlign = horizontalAlign,
                    verticalAlign = VerticalAlign.CENTER,
-                   resizableColumn = cell.align != null,
+                   resizableColumn = cell.initParams.align != null,
                    baselineAlign = cell.baselineAlign)
     }
 
@@ -251,8 +254,8 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
     return selectablePanel
   }
 
-  private fun add(lcrCell: LcrCellBaseImpl, initParams: LcrInitParams, baselineAlign: Boolean) {
-    cells.add(CellInfo(lcrCell, initParams.align, baselineAlign, gap))
+  private fun add(lcrCell: LcrCellBaseImpl<*>) {
+    cells.add(lcrCell)
     gap = LcrRow.Gap.DEFAULT
   }
 
@@ -269,8 +272,8 @@ public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : Lc
 
   @Nls
   private fun getAccessibleName(): String {
-    val names = cells
-      .map { it.lcrCell.component.accessibleContext.accessibleName?.trim() }
+    val names = content.components
+      .map { it.accessibleContext.accessibleName?.trim() }
       .filter { !it.isNullOrEmpty() }
 
     // Comma gives a good pause between unrelated text for readers on Windows and macOS
@@ -283,46 +286,3 @@ private data class ListCellRendererParams<T>(val list: JList<out T>,
                                              val index: Int,
                                              val selected: Boolean,
                                              val hasFocus: Boolean)
-
-private data class CellInfo(val lcrCell: LcrCellBaseImpl, val align: LcrInitParams.Align?, val baselineAlign: Boolean, val gap: LcrRow.Gap)
-
-private class LcrCellCache {
-
-  private val availableLcrCells = mutableListOf<LcrCellBaseImpl>()
-  private val occupiedLcrCells = mutableListOf<LcrCellBaseImpl>()
-
-  fun occupyIcon(): LcrIconImpl {
-    return occupy { LcrIconImpl() }
-  }
-
-  fun occupyText(): LcrTextImpl {
-    return occupy { LcrTextImpl() }
-  }
-
-  fun occupySimpleColoredText(): LcrSimpleColoredTextImpl {
-    return occupy { LcrSimpleColoredTextImpl() }
-  }
-
-  fun release() {
-    availableLcrCells.addAll(occupiedLcrCells)
-    occupiedLcrCells.clear()
-  }
-
-  private inline fun <reified T : LcrCellBaseImpl> occupy(factory: Supplier<T>): T {
-    var result: T? = null
-    for ((index, value) in availableLcrCells.withIndex()) {
-      if (value is T) {
-        result = value
-        availableLcrCells.removeAt(index)
-        break
-      }
-    }
-
-    if (result == null) {
-      result = factory.get()
-    }
-
-    occupiedLcrCells.add(result)
-    return result
-  }
-}
