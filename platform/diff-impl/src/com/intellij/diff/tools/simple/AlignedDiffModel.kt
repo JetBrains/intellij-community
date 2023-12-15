@@ -31,6 +31,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.util.*
+import javax.swing.JComponent
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -57,8 +58,20 @@ interface AlignedDiffModel : Disposable {
 
   companion object {
     fun createSimpleAlignModel(viewer: SimpleDiffViewer): AlignedDiffModel {
-      //return SimpleAlignedDiffModel(viewer)
-      return NewAlignedDiffModel(viewer, viewer.request, viewer.context)
+      return object : NewAlignedDiffModel(viewer.request, viewer.context,
+                                          viewer.component,
+                                          viewer.editor1, viewer.editor2,
+                                          viewer.syncScrollable) {
+        init {
+          textSettings.addListener(object : TextDiffSettingsHolder.TextDiffSettings.Listener {
+            override fun alignModeChanged() {
+              viewer.rediff()
+            }
+          }, this)
+        }
+
+        override fun getDiffChanges(): List<AlignableChange> = viewer.diffChanges
+      }
     }
   }
 }
@@ -522,15 +535,16 @@ abstract class AlignedDiffModelBase(val diffRequest: DiffRequest,
  *   several inlays with the same priority added to the same offset
  * * Mirror inlays positioning works not so good
  */
-private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
-                                  private val diffRequest: DiffRequest,
-                                  private val diffContext: DiffContext) : AlignedDiffModel {
-  private val queue = MergingUpdateQueue("SimpleAlignedDiffModel", 300, true, viewer.component, viewer)
+private abstract class NewAlignedDiffModel(
+  private val diffRequest: DiffRequest,
+  private val diffContext: DiffContext,
+  parent: JComponent,
+  private val editor1: EditorEx,
+  private val editor2: EditorEx,
+  private val syncScrollable: SyncScrollSupport.SyncScrollable) : AlignedDiffModel {
+  private val queue = MergingUpdateQueue("SimpleAlignedDiffModel", 300, true, parent, this)
 
-  private val editor1 get() = viewer.editor1
-  private val editor2 get() = viewer.editor2
-
-  private val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
+  protected val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
 
   // sorted by highlighter offset
   private val changeInlays = mutableListOf<ChangeInlay>()
@@ -542,8 +556,8 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
 
   init {
     val inlayListener = MyInlayModelListener()
-    editor1.inlayModel.addListener(inlayListener, viewer)
-    editor2.inlayModel.addListener(inlayListener, viewer)
+    editor1.inlayModel.addListener(inlayListener, this)
+    editor2.inlayModel.addListener(inlayListener, this)
 
     val softWrapListener = MySoftWrapModelListener()
     editor1.softWrapModel.addSoftWrapChangeListener(softWrapListener)
@@ -555,8 +569,6 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     queue.queue(Update.create("update") { realignChanges() })
   }
 
-  override fun getDiffChanges(): List<AlignableChange> = viewer.myModel.allChanges
-
   override fun needAlignChanges(): Boolean {
     val forcedValue: Boolean? = diffRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
     if (forcedValue != null) return forcedValue
@@ -566,7 +578,7 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
 
   override fun realignChanges() {
     if (!needAlignChanges()) return
-    if (viewer.editors.any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
+    if (listOf(editor1, editor2).any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
     RecursionManager.doPreventingRecursion(this, true) {
       clear()
@@ -578,18 +590,18 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
 
   private fun calcPriority(isLastLine: Boolean, isTop: Boolean): Int {
     return if (isLastLine) {
-             if (isTop) Int.MAX_VALUE else Int.MAX_VALUE - 1
-           }
-           else {
-             if (isTop) Int.MAX_VALUE - 1 else Int.MAX_VALUE
-           }
+      if (isTop) Int.MAX_VALUE else Int.MAX_VALUE - 1
+    }
+    else {
+      if (isTop) Int.MAX_VALUE - 1 else Int.MAX_VALUE
+    }
   }
 
   private fun initInlays() {
     val map1 = TreeMap<Int, ChangeInlay>()
     val map2 = TreeMap<Int, ChangeInlay>()
 
-    for (change in viewer.diffChanges) {
+    for (change in getDiffChanges()) {
       val range = change.range
 
       val changeInlay = ChangeInlay(
@@ -642,7 +654,7 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
   }
 
   private fun createAlignInlay(side: Side, line: Int, isTop: Boolean, diffType: TextDiffType): Inlay<AlignDiffInlayRenderer> {
-    val editor = viewer.getEditor(side)
+    val editor = getEditor(side)
     val isLastLine = line == DiffUtil.getLineCount(editor.document)
     val offset = DiffUtil.getOffset(editor.document, line, 0)
 
@@ -660,21 +672,26 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
                                               side: Side,
                                               inlay: Inlay<AlignDiffInlayRenderer>) {
     if (diffType == TextDiffType.MODIFIED) return
-    val highlighter = viewer.getEditor(side).markupModel
+    val highlighter = getEditor(side).markupModel
       .addRangeHighlighter(inlay.offset, inlay.offset, HighlighterLayer.SELECTION, TextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     highlighter.lineMarkerRenderer = DiffInlayGutterMarkerRenderer(diffType, inlay)
     if (side == Side.LEFT) {
       rangeHighlighters1 += highlighter
-    } else {
+    }
+    else {
       rangeHighlighters2 += highlighter
     }
+  }
+
+  private fun getEditor(side: Side): EditorEx {
+    return side.selectNotNull(editor1, editor2)
   }
 
   private fun createMirrorInlay(sourceSide: Side,
                                 sourceInlay: Inlay<*>,
                                 targetLine: Int): Inlay<AlignDiffInlayRenderer>? {
     val side = sourceSide.other()
-    val editor = viewer.getEditor(side)
+    val editor = getEditor(side)
     val offset = DiffUtil.getOffset(editor.document, targetLine, 0)
 
     val inlayProperties = InlayProperties()
@@ -687,10 +704,10 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
   }
 
   private fun getMirrorTargetLine(sourceSide: Side, sourceInlay: Inlay<*>): Int {
-    val sourceEditor = viewer.getEditor(sourceSide)
+    val sourceEditor = getEditor(sourceSide)
 
     val sourceLine = sourceEditor.offsetToLogicalPosition(sourceInlay.offset).line
-    return viewer.transferPosition(sourceSide, LineCol(sourceLine)).line
+    return syncScrollable.transfer(sourceSide, sourceLine)
   }
 
   private fun getChangeBlockFor(sourceSide: Side, changeBlockMap: TreeMap<Int, ChangeInlay>, line: Int): ChangeInlay? {
@@ -758,6 +775,7 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     }
     return editor.lineHeight * count
   }
+
   override fun dispose() {
   }
 
@@ -784,7 +802,7 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
     disposables.clear()
   }
 
-  private val SimpleDiffChange.range: Range
+  private val AlignableChange.range: Range
     get() = Range(
       getStartLine(Side.LEFT),
       getEndLine(Side.LEFT),
@@ -841,7 +859,7 @@ private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
   }
 
   private class ChangeInlay(
-    val change: SimpleDiffChange,
+    val change: AlignableChange,
 
     val topInlay1: Inlay<AlignDiffInlayRenderer>,
     val topInlay2: Inlay<AlignDiffInlayRenderer>,
