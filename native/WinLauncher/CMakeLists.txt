@@ -37,7 +37,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WinLauncher.rc ${CMAKE_CURRENT_BINARY
 add_executable(WinLauncher WIN32 WinLauncher.cpp WinLauncher.manifest ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
 
 set_target_properties(WinLauncher PROPERTIES
-    CXX_STANDARD 14
+    CXX_STANDARD 17
     MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 set(USE_CEF_SANDBOX "ON")
@@ -45,7 +45,7 @@ if(USE_CEF_SANDBOX)
   # Setup linking with CEF sandbox library
   include("DownloadCEF.cmake")
   if(NOT DEFINED CEF_VERSION)
-    set(CEF_VERSION "111.2.1+g870da30+chromium-111.0.5563.64")
+    set(CEF_VERSION "119.4.3+gc76a3b9+chromium-119.0.6045.159")
   endif()
 
   include(CheckSymbolExists)
@@ -80,11 +80,14 @@ if(USE_CEF_SANDBOX)
       SetupAPI.lib
       Shell32.lib
       shlwapi.lib
+      Shcore.lib
       Userenv.lib
       version.lib
       wbemuuid.lib
       winmm.lib
-      ws2_32.lib)
+      ws2_32.lib
+      WindowsApp.lib
+      winmm.lib)
   target_link_libraries(WinLauncher cef_sandbox_lib ${CEF_SANDBOX_STANDARD_LIBS})
 
   set(CEF_COMPILE_DEFS "USE_CEF_SANDBOX")
