@@ -4,14 +4,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.WaitFor
 import junit.framework.TestCase
-import org.jetbrains.concurrency.isPending
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
+  override fun runInDispatchThread() = false
 
   private lateinit var dependencySearchService: DependencySearchService
   override fun setUp() {
@@ -21,7 +21,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
   }
 
 
-  fun testShouldMergeVersionsFromDifferentProviders() {
+  fun testShouldMergeVersionsFromDifferentProviders() = runBlocking {
 
     val testProviderLocal1 = object : TestSearchProvider() {
       override fun isLocal() = true
@@ -70,23 +70,15 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val searchParameters = SearchParameters(false, false)
 
     val result = ConcurrentLinkedDeque<RepositoryArtifactData>()
-    val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
+    dependencySearchService.suggestPrefixAsync("group", "artifact", searchParameters) {
       result.add(it)
     }
-    object : WaitFor(2_000) {
-      override fun condition(): Boolean {
-        return result.last() === PoisonedRepositoryArtifactData.INSTANCE
-      }
-    }
-    TestCase.assertTrue(result.last() === PoisonedRepositoryArtifactData.INSTANCE)
-    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
+    val artifactResults = result.filterIsInstance<MavenRepositoryArtifactInfo>()
     UsefulTestCase.assertSameElements(artifactResults.flatMap { it.items.asList() }.map { it.version },
                                       "0", "1", "2", "3", "4")
   }
 
-  fun testShouldReturnDataFromCache() {
-
-
+  fun testShouldReturnDataFromCache() = runBlocking {
     var requests = 0
 
     val testProvider = object : TestSearchProvider() {
@@ -105,19 +97,11 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
                                      testRootDisposable, false)
     val searchParameters = SearchParameters(true, false)
 
-    val promise = dependencySearchService.fulltextSearch("something", searchParameters) {}
-    object : WaitFor(500) {
-      override fun condition() = !promise.isPending
-    }
-    assertTrue(promise.isSucceeded)
+    dependencySearchService.fulltextSearchAsync("something", searchParameters) {}
     TestCase.assertEquals(1, requests)
-    dependencySearchService.fulltextSearch("something", searchParameters) {}
+    dependencySearchService.fulltextSearchAsync("something", searchParameters) {}
     TestCase.assertEquals(1, requests)
-    val promise1 = dependencySearchService.fulltextSearch("something", SearchParameters(false, false)) {}
-    object : WaitFor(500) {
-      override fun condition() = !promise1.isPending
-    }
-    assertTrue(promise1.isSucceeded)
+    dependencySearchService.fulltextSearchAsync("something", SearchParameters(false, false)) {}
     TestCase.assertEquals(2, requests)
   }
 
