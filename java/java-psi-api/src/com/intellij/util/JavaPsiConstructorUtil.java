@@ -17,7 +17,8 @@ public final class JavaPsiConstructorUtil {
   private static final @NotNull TokenSet CONSTRUCTOR_CALL_TOKENS = TokenSet.create(JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD);
 
   /**
-   * Finds call to another constructor within this constructor (either chained or super)
+   * Finds an explicit call to another constructor within this constructor (either chained or super).
+   * If there are multiple explicit constructor calls (which is incompilable), the first one is returned.
    * @param constructor constructor to search in
    * @return found this/super constructor method call or null if not found or supplied method is null or not a constructor
    */
