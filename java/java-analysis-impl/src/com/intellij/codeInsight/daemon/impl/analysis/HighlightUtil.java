@@ -2789,8 +2789,7 @@ public final class HighlightUtil {
 
         // references to private methods from the outer class are not calls to super methods
         // even if the outer class is the super class
-        if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) &&
-            PsiUtil.isInnerClass(parentClass) && referencedClass == parentClass.getContainingClass()) {
+        if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) {
           return null;
         }
         // field or method should be declared in this class or super

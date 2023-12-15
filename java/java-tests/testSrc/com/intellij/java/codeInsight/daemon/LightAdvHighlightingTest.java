@@ -379,6 +379,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testThisBeforeSuper() { doTest(false); }
   public void testExplicitConstructorInvocation() { doTest(false); }
   public void testExtendFinalClass() { doTest(false); }
+  public void testPrivateMethodCalledFromSuper() { doTest(false); }
   public void testThisInInterface() { doTest(false); }
   public void testInnerClassConstantReference() { doTest(false); }
   public void testIDEA60875() { doTest(false); }
