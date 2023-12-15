@@ -10,7 +10,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -618,11 +617,11 @@ public final class JBUI {
       }
 
       public static @NotNull Font font() {
-        return ObjectUtils.coalesce(getFont(fontKey()), JBFont.label());
+        return getFontWithSizeOffset(fontSizeOffsetKey(), JBFont.label());
       }
 
-      public static String fontKey() {
-        return "DebuggerTabs.font";
+      public static String fontSizeOffsetKey() {
+        return "DebuggerTabs.fontSizeOffset";
       }
     }
 
@@ -720,14 +719,14 @@ public final class JBUI {
       }
 
       public static @NotNull Font font() {
-        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
+        return getFontWithSizeOffset(fontSizeOffsetKey(), defaultFont());
       }
 
-      public static String fontKey() {
-        return "EditorTabs.font";
+      public static String fontSizeOffsetKey() {
+        return "EditorTabs.fontSizeOffset";
       }
 
-      public static @NotNull Font defaultFont() {
+      public static @NotNull JBFont defaultFont() {
         return JBFont.label();
       }
 
@@ -881,11 +880,11 @@ public final class JBUI {
       }
 
       public static @NotNull Font font() {
-        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
+        return getFontWithSizeOffset(fontSizeOffsetKey(), defaultFont());
       }
 
-      public static @NotNull String fontKey() {
-        return "StatusBar.font";
+      public static @NotNull String fontSizeOffsetKey() {
+        return "StatusBar.fontSizeOffset";
       }
 
       public static @NotNull JBFont defaultFont() {
@@ -1074,11 +1073,11 @@ public final class JBUI {
 
 
       public static @NotNull Font headerFont() {
-        return ObjectUtils.coalesce(getFont(headerFontKey()), defaultHeaderFont());
+        return getFontWithSizeOffset(headerFontSizeOffsetKey(), defaultHeaderFont());
       }
 
-      public static @NotNull String headerFontKey() {
-        return "ToolWindow.Header.font";
+      public static @NotNull String headerFontSizeOffsetKey() {
+        return "ToolWindow.Header.fontSizeOffset";
       }
 
       public static @NotNull JBFont defaultHeaderFont() {
@@ -1167,15 +1166,15 @@ public final class JBUI {
         return 20;
       }
 
-      public static Font experimentalToolbarFont() {
-        return ObjectUtils.coalesce(getFont(experimentalToolbarFontKey()), defaultExperimentalToolbarFont());
+      public static @NotNull Font experimentalToolbarFont() {
+        return getFontWithSizeOffset(experimentalToolbarFontSizeOffsetKey(), defaultExperimentalToolbarFont());
       }
 
-      public static @NotNull String experimentalToolbarFontKey() {
-        return "MainToolbar.Button.font";
+      public static @NotNull String experimentalToolbarFontSizeOffsetKey() {
+        return "MainToolbar.fontSizeOffset";
       }
 
-      public static Font defaultExperimentalToolbarFont() {
+      public static @NotNull JBFont defaultExperimentalToolbarFont() {
         return JBFont.label();
       }
 
@@ -2246,14 +2245,14 @@ public final class JBUI {
       }
 
       public static Font configurationSelectorFont() {
-        return ObjectUtils.coalesce(getFont(configurationSelectorFontKey()), defaultConfigurationSelectorFont());
+        return getFontWithSizeOffset(configurationSelectorFontSizeOffsetKey(), defaultConfigurationSelectorFont());
       }
 
-      public static @NotNull String configurationSelectorFontKey() {
-        return "RunWidget.configurationSelectorFont";
+      public static @NotNull String configurationSelectorFontSizeOffsetKey() {
+        return "RunWidget.configurationSelectorFontSizeOffset";
       }
 
-      public static Font defaultConfigurationSelectorFont() {
+      public static JBFont defaultConfigurationSelectorFont() {
         return JBFont.label();
       }
     }
@@ -2336,6 +2335,10 @@ public final class JBUI {
 
   private static @Nullable Font getFont(@NonNls @NotNull String propertyName) {
     return maybeConvertToFont(UIManager.get(propertyName));
+  }
+
+  private static @NotNull Font getFontWithSizeOffset(@NonNls @NotNull String propertyName, @NotNull JBFont baseFont) {
+    return baseFont.biggerOn((float)getInt(propertyName, 0));
   }
 
   private static @Nullable Font maybeConvertToFont(Object maybeFont) {

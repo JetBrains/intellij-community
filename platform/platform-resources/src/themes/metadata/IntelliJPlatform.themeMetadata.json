@@ -301,6 +301,11 @@
       "description": "A breakpoint popup that opens on right-click"
     },
     {
+      "key": "DebuggerTabs.fontSizeOffset",
+      "description": "Debugger tool window tab font size offset",
+      "since": "2024.1"
+    },
+    {
       "key": "DebuggerTabs.selectedBackground",
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground.",
       "deprecated": true
@@ -463,6 +468,11 @@
       "key": "EditorTabs.borderColor",
       "description": "The editor tabs border color. If value isn't specified the value of DefaultTabs.borderColor will be used",
       "since": "2019.2"
+    },
+    {
+      "key": "EditorTabs.fontSizeOffset",
+      "description": "The editor tabs font size offset",
+      "since": "2024.1"
     },
     {
       "key": "EditorTabs.hoverColor",
@@ -1485,6 +1495,11 @@
       "description": "Minimum size of spinners"
     },
     {
+      "key": "StatusBar.fontSizeOffset",
+      "description": "Status bar font size offset",
+      "since": "2024.1"
+    },
+    {
       "key": "StatusBar.Breadcrumbs.navBarInsets",
       "description": "Navigation bar insets when displayed in the status bar",
       "since": "2023.1"
@@ -1754,6 +1769,11 @@
     },
     {
       "key": "ToolWindow.Header.borderColor"
+    },
+    {
+      "key": "ToolWindow.Header.fontSizeOffset",
+      "description": "Tool window header font size offset",
+      "since": "2024.1"
     },
     {
       "key": "ToolWindow.Header.height",
@@ -2185,6 +2205,11 @@
       "since": "2022.3"
     },
     {
+      "key": "MainToolbar.fontSizeOffset",
+      "description": "Main toolbar widgets font size offset",
+      "since": "2024.1"
+    },
+    {
       "key": "MainToolbar.Button.size",
       "description": "Size of buttons on the Main Toolbar",
       "since": "2023.1"
@@ -2203,6 +2228,11 @@
       "key": "MainToolbar.Icon.insets",
       "description": "Insets around buttons on the Main Toolbar",
       "since": "2023.2"
+    },
+    {
+      "key": "RunWidget.configurationSelectorFontSizeOffset",
+      "description": "Run configuration font size offset in the Main Toolbar",
+      "since": "2024.1"
     },
     {
       "key": "RunWidget.foreground",

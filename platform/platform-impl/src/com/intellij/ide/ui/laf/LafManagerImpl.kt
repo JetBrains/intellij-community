@@ -1123,7 +1123,7 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(26, 26))
     defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(3, 4))
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
-    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontSizeOffsetKey(), -1)
     defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 32))
     // tool window stripes
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
@@ -1134,7 +1134,7 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), 26)
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGapKey(), 4)
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 3)
-    defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontSizeOffsetKey(), -1)
     // trees
     defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
     // lists
@@ -1157,7 +1157,7 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     // status bar
     defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
     defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
-    defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.StatusBar.fontSizeOffsetKey(), -1)
     // separate navbar
     defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
     // editor search/replace
@@ -1171,17 +1171,17 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsRightKey(), cmInsets(0))
     defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsLeftKey(), cmInsets(0))
     defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsNoneKey(), cmInsets(0))
-    defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.EditorTabs.fontSizeOffsetKey(), -1)
     defaults.put(JBUI.CurrentTheme.EditorTabs.underlineHeightKey(), 3)
     // banner
     defaults.put(JBUI.CurrentTheme.Editor.Notification.borderInsetsKey(), cmInsets(6, 12))
     defaults.put(JBUI.CurrentTheme.Editor.Notification.borderInsetsKeyWithoutStatus(), cmInsets(6, 16))
     // toolwindows
     defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
-    defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontSizeOffsetKey(), -1)
     // run, debug tabs
     defaults.put(JBUI.CurrentTheme.DebuggerTabs.tabHeightKey(), 32)
-    defaults.put(JBUI.CurrentTheme.DebuggerTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
+    defaults.put(JBUI.CurrentTheme.DebuggerTabs.fontSizeOffsetKey(), -1)
     // VCS log
     defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
     defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
