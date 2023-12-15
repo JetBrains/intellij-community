@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -38,6 +39,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
@@ -53,6 +55,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
@@ -1259,6 +1262,55 @@ public final class EditorUtil {
       }
       return null;
     });
+  }
+
+  /**
+   * Adapts editor to a {@link ModPsiNavigator} interface, so
+   * the code that wants to update editor position can work uniformly
+   * both within {@link com.intellij.modcommand.ModCommand#psiUpdate(PsiElement, Consumer)}
+   * and with a physical editor instance.
+   * 
+   * @param editor editor to adapt
+   * @return new {@code ModPsiNavigator} adapter.
+   */
+  public static @NotNull ModPsiNavigator asPsiNavigator(@NotNull Editor editor) {
+    return new ModPsiNavigator() {
+      @Override
+      public void select(@NotNull PsiElement element) {
+        select(element.getTextRange());
+      }
+
+      @Override
+      public void select(@NotNull TextRange range) {
+        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+
+      @Override
+      public void moveCaretTo(int offset) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public void moveCaretTo(@NotNull PsiElement element) {
+        moveCaretTo(element.getTextRange().getStartOffset());
+      }
+
+      @Override
+      public void moveToPrevious(char ch) {
+        Document document = editor.getDocument();
+        int offset = editor.getCaretModel().getOffset();
+        CharSequence sequence = document.getCharsSequence();
+        while (offset > 0 && sequence.charAt(offset) != ch) {
+          offset--;
+        }
+        editor.getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public int getCaretOffset() {
+        return editor.getCaretModel().getOffset();
+      }
+    };
   }
 
   private static final class EditorNotification {
