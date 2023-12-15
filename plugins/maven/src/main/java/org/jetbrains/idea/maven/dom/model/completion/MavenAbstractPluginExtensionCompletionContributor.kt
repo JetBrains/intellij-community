@@ -5,14 +5,13 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.idea.maven.dom.model.MavenDomExtension
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.SearchParameters
 import java.util.function.Consumer
 
 
-abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionAsyncContributor(tagName) {
+abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionContributor(tagName) {
     override suspend fun find(service: DependencySearchService,
                               coordinates: MavenDomShortArtifactCoordinates,
                               parameters: CompletionParameters,

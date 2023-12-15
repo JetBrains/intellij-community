@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.MAVEN_COORDINATE_COMPLETION_PREFIX_KEY
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
@@ -17,7 +15,7 @@ import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-class MavenGroupIdCompletionContributor : MavenCoordinateCompletionAsyncContributor("groupId") {
+class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("groupId") {
 
   override fun handleEmptyLookup(parameters: CompletionParameters, editor: Editor): @NlsContexts.HintText String? {
     return if (isCorrectPlace(parameters)) {

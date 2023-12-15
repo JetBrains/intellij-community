@@ -3,13 +3,12 @@ package org.jetbrains.idea.maven.dom.model.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 
 
-class MavenDependenciesCompletionContributor : MavenCoordinateCompletionAsyncContributor("dependency") {
+class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
 
   override suspend fun find(service: DependencySearchService,
                             coordinates: MavenDomShortArtifactCoordinates,

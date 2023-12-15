@@ -6,8 +6,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.MAVEN_COORDINATE_COMPLETION_PREFIX_KEY
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
@@ -15,7 +13,7 @@ import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionAsyncContributor("artifactId") {
+class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributor("artifactId") {
 
   override suspend fun find(service: DependencySearchService,
                             coordinates: MavenDomShortArtifactCoordinates,

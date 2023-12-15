@@ -25,8 +25,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.findPluginByArtifactId
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.isPluginOrExtension
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.MAVEN_COORDINATE_COMPLETION_PREFIX_KEY
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -35,7 +33,7 @@ import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 
-open class MavenVersionCompletionContributor : MavenCoordinateCompletionAsyncContributor("version") {
+open class MavenVersionCompletionContributor : MavenCoordinateCompletionContributor("version") {
     override suspend fun find(service: DependencySearchService,
                               coordinates: MavenDomShortArtifactCoordinates,
                               parameters: CompletionParameters,
