@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
@@ -31,6 +33,15 @@ import static java.nio.ByteOrder.nativeOrder;
 public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage,
                                                                          IPersistentFSRecordsStorage,
                                                                          Unmappable {
+
+  /**
+   * How many un-allocated records (i.e. after {@link #maxAllocatedID()}) to check to be empty (all-zero).
+   * Everything in the file after {@link #maxAllocatedID()} should be 0 -- but EA-984945 shows sometimes it
+   * is not 0, so this self-check was introduced: scan first N records in yet-un-allocated region, and check
+   * all the bytes are 0.
+   * Set value to 0 to disable the check altogether.
+   */
+  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED = getIntProperty("vfs.check-unallocated-records-zeroed", 4);
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
   /**
@@ -107,6 +118,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     final int modCount = getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
     globalModCount.set(modCount);
+
+    if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED > 0) {
+      //MAYBE RC: make method public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer, or
+      //          even during quick self-check?
+      checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED);
+    }
   }
 
   @Override
@@ -841,6 +858,80 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                                       final int offsetInBuffer,
                                       final long value) {
     LONG_HANDLE.setVolatile(pageBuffer, offsetInBuffer, value);
+  }
+
+  // ========================== debug/diagnostics ========================================================= //
+
+  private void checkUnAllocatedRegionIsZeroed(int recordsToCheck) throws IOException {
+    int maxAllocatedID = maxAllocatedID();
+    int firstUnAllocatedId = maxAllocatedID + 1;
+    long unallocatedRegionStartingOffsetInFile = recordOffsetInFileUnchecked(firstUnAllocatedId);
+    int unallocatedRegionStartingOffsetOnPage = storage.toOffsetInPage(unallocatedRegionStartingOffsetInFile);
+    long actualFileSize = storage.actualFileSize();
+    if (unallocatedRegionStartingOffsetOnPage >= actualFileSize) {
+      return;//un-allocated file region is definitely empty
+    }
+
+    Page lastPage = storage.pageByOffset(unallocatedRegionStartingOffsetInFile);
+    ByteBuffer lastPageBuffer = lastPage.rawPageBuffer();
+
+    int bytesToCheck = Math.min(
+      recordsToCheck * RecordLayout.RECORD_SIZE_IN_BYTES,
+      lastPageBuffer.limit() - unallocatedRegionStartingOffsetOnPage
+    );
+
+    for (int i = 0; i < bytesToCheck; i++) {
+      byte b = lastPageBuffer.get(unallocatedRegionStartingOffsetOnPage + i);
+      if (b != 0) {
+        throw new CorruptedException(
+          "Non-empty records detected beyond current EOF => storage is corrupted.\n" +
+          "\tmax allocated id(=" + maxAllocatedID + ")\n" +
+          "\tfirst un-allocated offset: " + unallocatedRegionStartingOffsetInFile + "\n" +
+          "\tcontent beyond allocated region(" + recordsToCheck + " records max): \n" +
+          dumpRecordsAsHex(firstUnAllocatedId, firstUnAllocatedId + recordsToCheck)
+        );
+      }
+    }
+  }
+
+  /**
+   * Method is for debugging/monitoring purposes
+   *
+   * @return records [firstRecordId..lastRecordId] (both ends inclusive) hex-formatted, one per line
+   */
+  public String dumpRecordsAsHex(int firstRecordId,
+                                 int lastRecordId) throws IOException {
+    if (firstRecordId > lastRecordId) {
+      return "<no records in range " + firstRecordId + " .. " + lastRecordId + ">";
+    }
+    long actualFileSize = storage.actualFileSize();
+    StringBuilder sb = new StringBuilder();
+    for (int recordId = firstRecordId; recordId <= lastRecordId; recordId++) {
+      String recordAsHex;
+      if (recordId == NULL_ID) {
+        recordAsHex = "<header>";
+      }
+      else {
+        long recordOffsetInFile = recordOffsetInFileUnchecked(recordId);
+
+        if (recordOffsetInFile >= actualFileSize) {
+          recordAsHex = "<EOF: outside of allocated file region>";
+        }
+        else {
+          int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
+
+          Page page = storage.pageByOffset(recordOffsetInFile);
+          ByteBuffer pageBuffer = page.rawPageBuffer();
+          ByteBuffer recordSlice = pageBuffer.slice(recordOffsetInPage, RecordLayout.RECORD_SIZE_IN_BYTES);
+
+          recordAsHex = IOUtil.toHexString(recordSlice);
+        }
+      }
+      sb.append("[#%06d/max=%06d]: ".formatted(recordId, maxAllocatedID()))
+        .append(recordAsHex)
+        .append('\n');
+    }
+    return sb.toString();
   }
 
   @MagicConstant(flagsFromClass = RecordLayout.class)
