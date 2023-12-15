@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -123,11 +124,22 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ConnectException) {
-      String msg = rootCauseMessage;
-      if (msg != null && msg.contains("timed out")) {
-        msg += msg.endsWith(".") ? " " : ". ";
-        msg += SET_UP_HTTP_PROXY;
-        return createUserFriendlyError(msg, null);
+      if (rootCauseMessage != null) {
+        if (rootCauseMessage.contains("timed out")) {
+          String msg = rootCauseMessage;
+          msg += msg.endsWith(".") ? " " : ". ";
+          msg += SET_UP_HTTP_PROXY;
+          return createUserFriendlyError(msg, null);
+        }
+        if (rootCauseMessage.toLowerCase(Locale.ROOT).contains("connection refused")) {
+          String errorMessage = error.getMessage();
+          if (errorMessage != null && errorMessage.startsWith("Could not install Gradle distribution")) {
+            String msg = errorMessage;
+            msg += msg.endsWith(".") ? " " : ". ";
+            msg += rootCauseMessage + EMPTY_LINE + "Please ensure the host name is correct. " + SET_UP_HTTP_PROXY;
+            return createUserFriendlyError(msg, null);
+          }
+        }
       }
     }
 

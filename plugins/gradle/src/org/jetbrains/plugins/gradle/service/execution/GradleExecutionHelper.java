@@ -852,9 +852,7 @@ public class GradleExecutionHelper {
     }
     catch (GradleConnectionException connectionException) {
       LOG.warn("Could not establish the connection with the Gradle Daemon.", connectionException);
-      if (connectionException.getCause() instanceof IOException) {
-        throw connectionException;
-      }
+      throw connectionException;
     }
     catch (Throwable t) {
       LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
