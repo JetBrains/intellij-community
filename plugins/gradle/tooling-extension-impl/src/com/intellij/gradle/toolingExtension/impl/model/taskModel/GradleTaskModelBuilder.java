@@ -34,9 +34,20 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
-    Set<Task> projectTasks = collectProjectTasks(project, context);
-    taskCache.setProjectTasks(project, projectTasks);
+    // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
+    // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
+    boolean skipTasks;
+    try {
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
+    }
+    catch (Throwable ignored) {
+      skipTasks = false;
+    }
+    if (!skipTasks) {
+      GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
+      Set<Task> projectTasks = collectProjectTasks(project, context);
+      taskCache.setProjectTasks(project, projectTasks);
+    }
 
     return new GradleTaskModel() {
     };
