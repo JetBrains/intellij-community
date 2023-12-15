@@ -5,10 +5,10 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 
 class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
@@ -16,14 +16,19 @@ class ProjectModulesCompletionProvider(private val myProject: Project) : Depende
 
   override fun suggestPrefix(groupId: String, artifactId: String) = getLocal()
 
-  private fun getLocal(): CompletableFuture<List<RepositoryArtifactData>> =
-    CompletableFuture.supplyAsync {
-      MavenProjectsManager.getInstance(myProject).projects.asSequence()
+  private fun getLocal(): CompletableFuture<List<RepositoryArtifactData>> {
+    MavenLog.LOG.debug("get local maven artifacts scheduled")
+    return CompletableFuture.supplyAsync {
+      MavenLog.LOG.debug("get local maven artifacts started")
+      val result = MavenProjectsManager.getInstance(myProject).projects.asSequence()
         .map { MavenDependencyCompletionItem(it.mavenId.key) }
         .filter { it.groupId != null && it.artifactId != null }
         .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
         .toList()
+      MavenLog.LOG.debug("get local maven artifacts finished: " + result.size)
+      result
     }
+  }
 
   override fun isLocal() = true
 }
