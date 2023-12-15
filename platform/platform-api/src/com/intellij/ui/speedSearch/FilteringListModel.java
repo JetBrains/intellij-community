@@ -95,11 +95,11 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   protected void replace(int from, int to, List<T> newData) {
     if (to > from) {
       myData.subList(from, to).clear();
-      fireIntervalRemoved(this, from, to);
+      fireIntervalRemoved(this, from, to - 1);
     }
     if (!newData.isEmpty()) {
       myData.addAll(from, newData);
-      fireIntervalAdded(this, from, from + newData.size());
+      fireIntervalAdded(this, from, from + newData.size() - 1);
     }
   }
 
