@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="emulator-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:emulator_java_proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:emulator_java_proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/231.0.1.4/emulator_java_proto-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/231.0.26.0/emulator_java_proto-231.0.26.0.jar">
           <sha256sum>83a0b486182eb35c4ac5494f511ab6b6ed62a2aeba81b23ca7909e61a9c3ccbd</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/231.0.1.4/emulator_java_proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/231.0.26.0/emulator_java_proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

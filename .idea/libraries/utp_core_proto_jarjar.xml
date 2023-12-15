@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="utp-core-proto-jarjar" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:utp-core-proto-jarjar:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:utp-core-proto-jarjar:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/utp-core-proto-jarjar/231.0.1.4/utp-core-proto-jarjar-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/utp-core-proto-jarjar/231.0.26.0/utp-core-proto-jarjar-231.0.26.0.jar">
           <sha256sum>17106e8b6a1333c0101f4d25d675fa23705c0298c2b5e64d7ebc2942f78445d2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/utp-core-proto-jarjar/231.0.1.4/utp-core-proto-jarjar-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/utp-core-proto-jarjar/231.0.26.0/utp-core-proto-jarjar-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
