@@ -3,16 +3,23 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameJavaImplicitClassProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -107,6 +114,15 @@ public class RenameClassTest extends LightMultiFileTestCase {
     verify(listener).refactoringDone(any(String.class), any(RefactoringEventData.class));
     verify(listener).undoRefactoring(any(String.class));
     verify(listener).redoRefactoring(any(String.class));
+  }
+
+  public void testImplicitClassAsFile() {
+    doTest(() -> {
+      VirtualFile fileInTempDir = myFixture.findFileInTempDir("pack1/ImplicitClass.java");
+      Document document = FileDocumentManager.getInstance().getDocument(fileInTempDir);
+      PsiFile psiFile = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
+      PsiElementRenameHandler.rename(psiFile, myFixture.getProject(), null, null, "ImplicitClass2.java", new RenameJavaImplicitClassProcessor());
+    });
   }
 
   private void rename(final String className, final String newName) {
