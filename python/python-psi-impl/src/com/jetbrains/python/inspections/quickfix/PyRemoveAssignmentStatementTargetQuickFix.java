@@ -15,18 +15,29 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PyRemoveAssignmentStatementTargetQuickFix implements LocalQuickFix, HighPriorityAction {
+import java.util.Objects;
+
+public class PyRemoveAssignmentStatementTargetQuickFix extends PsiUpdateModCommandAction<PsiElement> {
+
+  public PyRemoveAssignmentStatementTargetQuickFix(@NotNull PsiElement element) {
+    super(element);
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Objects.requireNonNull(super.getPresentation(context, element)).withPriority(PriorityAction.Priority.HIGH);
+  }
+
   @NotNull
   @Override
   public String getFamilyName() {
@@ -34,14 +45,13 @@ public class PyRemoveAssignmentStatementTargetQuickFix implements LocalQuickFix,
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (assignmentStatement == null) return;
     if (assignmentStatement.getRawTargets().length == 1) {
       final PyExpression expression = assignmentStatement.getAssignedValue();
       if (expression == null) return;
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
       PyExpressionStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
                                                                         expression.getText());
       assignmentStatement.replace(statement);
