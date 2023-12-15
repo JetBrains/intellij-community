@@ -1407,6 +1407,7 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeLoggerFromCompletionLookupActionProvider" id="loggerExcludeFromCompletion"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <fileType fileNames="module-info.java" name="Java module" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaModuleFileType"/>
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
