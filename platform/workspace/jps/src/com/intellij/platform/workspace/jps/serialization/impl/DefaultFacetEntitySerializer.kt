@@ -8,9 +8,10 @@ import com.intellij.platform.workspace.jps.entities.FacetId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.childrenFacets
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.util.containers.Interner
+import com.intellij.util.Functions.identity
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
+import java.util.concurrent.ConcurrentHashMap
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
@@ -18,9 +19,10 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   override val supportedFacetType: String
     get() = ALL_FACETS_TYPES_MARKER
 
-  // On large project we may get a lot of string duplicates from facets
+  // On a large project we may get a lot of string duplicates from facets
   // On test with 50_000 modules such duplicates eat around 25MB of memory
-  private val configurationStringInterner = Interner.createStringInterner()
+  // This class is used in concurrent environment, so the map has to be concurrent.
+  private val configurationStringInterner = ConcurrentHashMap<String, String>()
 
   override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity,
                                           facetState: FacetState,
@@ -35,7 +37,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     facetStates.forEach { facetState ->
       val entitySource = evaluateEntitySource(facetState)
       val configurationXmlTagRaw = facetState.configuration?.let { JDOMUtil.write(it) }
-      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.intern(it) }
+      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.computeIfAbsent(it, identity()) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
       // thus same root facet will be declared in two places
