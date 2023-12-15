@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings
 
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsDialog
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -25,7 +25,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
       val settingsService = SettingsService.getInstance()
       async { settingsService.getExternalService().warmUp() }
 
-      ImportSettingsDialog.show(
+      OnboardingController.getInstance().startImport(
         { settingsService.importCancelled.fire() },
         title = ApplicationNamesInfo.getInstance().fullProductName
       )
