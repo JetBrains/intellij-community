@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.ide.bootstrap.DirectoryLock.CannotActivateException;
+import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -74,6 +75,7 @@ public abstract sealed class DirectoryLockTest {
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
   @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
+  @Rule public final ApplicationRule app = new ApplicationRule();
 
   private Path testDir;
   private final List<DirectoryLock> activeLocks = new ArrayList<>();
