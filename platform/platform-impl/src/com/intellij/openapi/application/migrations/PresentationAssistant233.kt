@@ -27,8 +27,8 @@ class PresentationAssistant233 {
       if (pluginDescriptor != null) {
         val pluginSettingsFile = options.oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant.xml")
         val disabledPluginsFile: Path = options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-        val isPluginEnabled = !(if (Files.exists(disabledPluginsFile)) loadDisabledPlugins(disabledPluginsFile) else setOf())
-          .contains(pluginDescriptor.pluginId)
+        val isPluginEnabled = if (Files.exists(disabledPluginsFile)) pluginDescriptor.pluginId !in loadDisabledPlugins(disabledPluginsFile)
+        else true
         if (!pluginSettingsFile.exists() && !isPluginEnabled) return
         var newSettingsFile = options.newConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant-ij.xml")
         if (!newSettingsFile.exists()) {
