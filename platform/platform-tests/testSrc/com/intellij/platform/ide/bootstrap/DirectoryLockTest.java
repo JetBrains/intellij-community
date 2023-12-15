@@ -12,6 +12,7 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.Suppressions;
+import com.intellij.util.TimeoutUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -229,5 +231,17 @@ public abstract sealed class DirectoryLockTest {
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
+  }
+
+  @Test
+  public void responseTimeout() throws Exception {
+    var timeoutMs = 300;
+    var lock = new DirectoryLock(testDir.resolve("c"), testDir.resolve("s"), args -> { TimeoutUtil.sleep(10_000L); return CliResult.OK; })
+      .withConnectTimeout(timeoutMs);
+    activeLocks.add(lock);
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
+    var t = System.nanoTime();
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
+    assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)).isGreaterThanOrEqualTo(timeoutMs);
   }
 }
