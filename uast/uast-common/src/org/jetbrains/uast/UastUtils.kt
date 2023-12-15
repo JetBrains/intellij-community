@@ -217,6 +217,8 @@ fun getUParentForIdentifier(identifier: PsiElement): UElement? {
 }
 
 /**
+ * @see UCallExpression.getArgumentForParameter
+ *
  * @param arg expression in call arguments list of [this]
  * @return parameter that corresponds to the [arg] in declaration to which [this] resolves
  */
