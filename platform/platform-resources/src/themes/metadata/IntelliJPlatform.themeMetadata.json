@@ -125,6 +125,26 @@
       "description": "Minimum size of ComboBox"
     },
     {
+      "key": "CombinedDiff.mainToolbarInsets",
+      "description": "Main toolbar insets of the Combined (All in One) Diff",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.fileToolbarInsets",
+      "description": "File toolbar insets of the Combined (All in One) Diff",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.gapBetweenBlocks",
+      "description": "Vertical gap between the Combined (All in One) Diff blocks",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.leftRightBlockInset",
+      "description": "Horizontal insets around the Combined (All in One) Diff blocks",
+      "since": "2023.3"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -214,6 +234,16 @@
       "since": "2022.2"
     },
     {
+      "key": "FindPopup.scopesPanelInsets",
+      "description": "Inner insets of the scope selection panel in the Find in Files / Replace in Files popups",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "FindPopup.bottomPanelInsets",
+      "description": "Inner insets of the bottom panel in the Find in Files / Replace in Files popups",
+      "since": "2023.1.1"
+    },
+    {
       "key": "PresentationAssistant.Bright.Popup.foreground",
       "description": "Presentation Assistant popup bright foreground (experimental UI only)",
       "since": "2023.3"
@@ -274,6 +304,11 @@
       "key": "DebuggerTabs.selectedBackground",
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground.",
       "deprecated": true
+    },
+    {
+      "key": "DebuggerTabs.tabHeight",
+      "description": "Debugger tab height",
+      "since": "2023.1"
     },
     {
       "key": "DebuggerTabs.underlineHeight",
@@ -383,12 +418,37 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "Editor.Notification.borderInsets",
+      "description": "Editor notification banner insets with a status icon",
+      "since": "2023.2"
+    },
+    {
+      "key": "Editor.Notification.borderInsetsWithoutStatus",
+      "description": "Editor notification banner insets without a status icon",
+      "since": "2023.2"
+    },
+    {
       "key": "Editor.SearchField.borderInsets",
       "description": "Additional insets around editor search/replace fields in Experimental UI"
     },
     {
       "key": "Editor.SearchField.background",
       "description": "Editor inplace search/replace fields background color"
+    },
+    {
+      "key": "Editor.ReplaceToolbar.borderInsets",
+      "description": "Insets around editor replace panel",
+      "since": "2023.3.1"
+    },
+    {
+      "key": "Editor.SearchReplaceModePanel.borderInsets",
+      "description": "Insets around the button that toggles search/replace mode in the editor",
+      "since": "2023.3.1"
+    },
+    {
+      "key": "Editor.SearchToolbar.borderInsets",
+      "description": "Insets around editor search panel",
+      "since": "2023.3.1"
     },
     {
       "key": "Editor.Toolbar.borderColor",
@@ -463,6 +523,21 @@
       "key": "EditorTabs.underlinedTabBackground",
       "description": "Background for the selected tab. If value isn't specified the value of DefaultTabs.underlinedTabBackground will be used",
       "since": "2019.2"
+    },
+    {
+      "key": "EditorTabs.tabContentInsetsActionsLeft",
+      "description": "Editor tab label insets when the tab actions buttons are on the left",
+      "since": "2023.2"
+    },
+    {
+      "key": "EditorTabs.tabContentInsetsActionsRight",
+      "description": "Editor tab label insets when the tab actions buttons are on the right",
+      "since": "2023.2"
+    },
+    {
+      "key": "EditorTabs.tabContentInsetsActionsNone",
+      "description": "Editor tab label insets when there are no action buttons",
+      "since": "2023.2"
     },
     {
       "key": "EditorTabs.tabInsets",
@@ -881,6 +956,11 @@
       "description": "Border above the navbar, visible when the toolbar is on"
     },
     {
+      "key": "NavBar.Breadcrumbs.itemInsets",
+      "description": "Navigation bar insets when displayed in the top location",
+      "since": "2023.1"
+    },
+    {
       "key": "NewUiOnboarding.Dialog.background",
       "description": "Background of the dialog with proposal to start the onboarding to the New UI",
       "since": "2023.2.1"
@@ -1116,6 +1196,11 @@
       "key": "ProgressIcon.color",
       "description": "Color of the spinning icon",
       "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.innerBorderInsets",
+      "description": "Complex popup (like Show Usages) header inner insets",
+      "since": "2023.1.1"
     },
     {
       "key": "ComplexPopup.Header.background",
@@ -1400,6 +1485,31 @@
       "description": "Minimum size of spinners"
     },
     {
+      "key": "StatusBar.Breadcrumbs.navBarInsets",
+      "description": "Navigation bar insets when displayed in the status bar",
+      "since": "2023.1"
+    },
+    {
+      "key": "StatusBar.Widget.widgetInsets",
+      "description": "Insets around status bar widgets",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.size",
+      "description": "Tool window stripe button size",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.iconSize",
+      "description": "Tool window stripe button icon size",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.iconPadding",
+      "description": "Tool window stripe button icon padding",
+      "since": "2023.1"
+    },
+    {
       "key": "List.hoverBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in a focused list if hover is allowed."
@@ -1443,6 +1553,11 @@
       "key": "List.Tag.foreground",
       "since": "2022.3",
       "description": "Foreground for tags in list items"
+    },
+    {
+      "key": "TabbedPane.tabHeight",
+      "since": "2023.1.1",
+      "description": "TabbedPane tab height"
     },
     {
       "key": "TabbedPane.tabSelectionArc",
@@ -1516,6 +1631,11 @@
       "key": "TitlePane.Button.hoverBackground",
       "description": "Borderless mode. Window buttons (close, minimize, maximize, restore) hover color",
       "since": "2019.3"
+    },
+    {
+      "key": "TitlePane.Button.preferredSize",
+      "description": "Borderless mode. Window buttons (close, minimize, maximize, restore) size",
+      "since": "2023.1"
     },
     {
       "key": "TitlePane.inactiveBackground",
@@ -1634,6 +1754,11 @@
     },
     {
       "key": "ToolWindow.Header.borderColor"
+    },
+    {
+      "key": "ToolWindow.Header.height",
+      "description": "Tool window header height",
+      "since": "2023.1"
     },
     {
       "key": "ToolWindow.Header.inactiveBackground",
@@ -1830,6 +1955,11 @@
     {
       "key": "VersionControl.Log.Commit.Reference.foreground",
       "description": "Foreground color for reference labels in log (experimental UI only)",
+      "since": "2023.1"
+    },
+    {
+      "key": "VersionControl.Log.Commit.verticalPadding",
+      "description": "Vertical padding that is added to the calculated height of a commit log row",
       "since": "2023.1"
     },
     {
@@ -2055,9 +2185,24 @@
       "since": "2022.3"
     },
     {
+      "key": "MainToolbar.Button.size",
+      "description": "Size of buttons on the Main Toolbar",
+      "since": "2023.1"
+    },
+    {
+      "key": "MainToolbar.Button.iconSize",
+      "description": "Size of button icons on the Main Toolbar",
+      "since": "2023.1"
+    },
+    {
       "key": "MainToolbar.Dropdown.maxWidth",
       "description": "Max width for Combo Widgets",
       "since": "2023.1"
+    },
+    {
+      "key": "MainToolbar.Icon.insets",
+      "description": "Insets around buttons on the Main Toolbar",
+      "since": "2023.2"
     },
     {
       "key": "RunWidget.foreground",
@@ -2097,6 +2242,26 @@
     {
       "key": "RunWidget.stopBackground",
       "description": "Background for the stop button in the run widget",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.toolbarHeight",
+      "description": "The height of the run widget toolbar and its buttons",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.actionButtonWidth",
+      "description": "The width of the run widget buttons",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.toolbarBorderDirectionalGap",
+      "description": "The horizontal gap between run widget buttons",
+      "since": "2024.1"
+    },
+    {
+      "key": "RunWidget.toolbarBorderHeight",
+      "description": "The gaps above and below run widget buttons",
       "since": "2023.1"
     },
     {

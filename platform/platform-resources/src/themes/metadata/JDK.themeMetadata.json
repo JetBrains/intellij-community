@@ -535,6 +535,10 @@
       "description": "Also used for ActionMenuItem (used in context and main menus) as default"
     },
     {
+      "key": "List.rowHeight",
+      "description": "Line height for a regular list in pixels (zero or less means that a row calculates its height by itself)"
+    },
+    {
       "key": "List.selectionForeground"
     },
     {
