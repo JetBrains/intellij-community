@@ -42,12 +42,6 @@ public interface ModPsiNavigator {
   void moveCaretTo(@NotNull PsiElement element);
 
   /**
-   * Moves caret to a previous occurrence of character ch. Do nothing if no such occurrence is found 
-   * @param ch character to find
-   */
-  void moveToPrevious(char ch);
-
-  /**
    * @return current caret offset
    */
   int getCaretOffset();

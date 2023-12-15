@@ -38,7 +38,8 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
     TextRange finallyBlockRange = block.getTextRange();
     int newLineOffset = finallyBlockRange.getStartOffset() + 2;
     CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
-    updater.moveToPrevious('\n');
+    int lineEndOffset = document.getLineEndOffset(document.getLineNumber(updater.getCaretOffset()) - 1);
+    updater.moveCaretTo(lineEndOffset);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

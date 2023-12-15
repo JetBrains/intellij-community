@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +35,11 @@ public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiEx
     PsiJavaToken rBrace = body == null ? null : body.getRBrace();
     if (rBrace != null) {
       updater.moveCaretTo(rBrace);
-      updater.moveToPrevious('\n');
+      PsiFile file = body.getContainingFile();
+      Document document = file.getFileDocument();
+      PsiDocumentManager.getInstance(context.project()).doPostponedOperationsAndUnblockDocument(document);
+      int lineEndOffset = document.getLineEndOffset(document.getLineNumber(updater.getCaretOffset()) - 1);
+      updater.moveCaretTo(lineEndOffset);
     }
   }
 

@@ -178,16 +178,6 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void moveCaretTo(@NotNull PsiElement element);
 
   /**
-   * Moves caret to a previous occurrence of character ch in the current file. Do nothing if no such occurrence is found,
-   * or when executed non-interactively.
-   *
-   * @param ch character to find
-   */
-  @Override
-  @ApiStatus.Experimental
-  void moveToPrevious(char ch);
-
-  /**
    * @return current caret offset inside the current file. It may be based on the previous result of {@link #moveCaretTo(int)} 
    * or similar methods. The initial caret offset is taken from {@link ActionContext} 
    * if {@link ModCommand#psiUpdate(ActionContext, Consumer)} was used. Otherwise, it's zero. 

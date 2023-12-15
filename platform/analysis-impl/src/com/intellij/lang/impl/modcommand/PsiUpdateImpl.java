@@ -439,16 +439,6 @@ final class PsiUpdateImpl {
     }
 
     @Override
-    public void moveToPrevious(char ch) {
-      myPositionUpdated = true;
-      myTracker.unblock();
-      String text = myTracker.myPositionDocument.getText();
-      int idx = text.lastIndexOf(ch, myCaretOffset);
-      if (idx == -1) return;
-      myCaretOffset = myCaretVirtualEnd = idx;
-    }
-
-    @Override
     public void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames) {
       rename(element, element.getNameIdentifier(), suggestedNames);
     }

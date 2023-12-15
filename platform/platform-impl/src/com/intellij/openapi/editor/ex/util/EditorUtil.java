@@ -1296,17 +1296,6 @@ public final class EditorUtil {
       }
 
       @Override
-      public void moveToPrevious(char ch) {
-        Document document = editor.getDocument();
-        int offset = editor.getCaretModel().getOffset();
-        CharSequence sequence = document.getCharsSequence();
-        while (offset > 0 && sequence.charAt(offset) != ch) {
-          offset--;
-        }
-        editor.getCaretModel().moveToOffset(offset);
-      }
-
-      @Override
       public int getCaretOffset() {
         return editor.getCaretModel().getOffset();
       }
