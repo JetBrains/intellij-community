@@ -128,7 +128,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
-    LOG.assertTrue(!myOnProjectOpen || myPredefinedIndexableFilesIterators == null, "Should request full scanning on project open");
+    LOG.assertTrue(!myOnProjectOpen ||
+                   myPredefinedIndexableFilesIterators == null ||
+                   TestModeFlags.get(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY) == Boolean.TRUE,
+                   "Should request full scanning on project open");
     myFutureScanningRequestToken = project.getService(ProjectIndexingDependenciesService.class).newFutureScanningToken();
 
     if (isFullIndexUpdate()) {
