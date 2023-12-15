@@ -1,10 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
-import org.junit.platform.engine.FilterResult;
-import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.TestEngine;
-import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.ClassSource;
@@ -18,7 +15,13 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
@@ -38,9 +41,11 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       // PostDiscoveryFilter runs on already discovered classes and methods (TestDescriptors), so we could run more complex checks,
       // like determining whether it belongs to the current bucket.
       PostDiscoveryFilter postDiscoveryFilter;
+      Set<Path> classPathRoots;
       try {
         nameFilter = createClassNameFilter(classLoader);
         postDiscoveryFilter = createPostDiscoveryFilter(classLoader);
+        classPathRoots = getClassPathRoots(classLoader);
       }
       catch (Throwable e) {
         e.printStackTrace();
@@ -49,9 +54,16 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       }
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
+      List<? extends DiscoverySelector> selectors;
+      if (classPathRoots != null) {
+        selectors = DiscoverySelectors.selectClasspathRoots(classPathRoots);
+      }
+      else {
+        selectors = Collections.singletonList(DiscoverySelectors.selectPackage(""));
+      }
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-        .selectors(DiscoverySelectors.selectPackage(""))
+        .selectors(selectors)
         .filters(nameFilter, postDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
@@ -65,6 +77,17 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     finally {
       System.exit(0);
     }
+  }
+
+  private static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
+    //noinspection unchecked
+    List<Path> paths = (List<Path>)MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
+                  "getClassRoots", MethodType.methodType(List.class))
+      .invokeExact();
+    if (paths == null) return null;
+    // Skip jars and any other archives, otherwise we will end up with test classes from dependencies.
+    return paths.stream().filter(Files::isDirectory).collect(Collectors.toSet());
   }
 
   private static ClassNameFilter createClassNameFilter(ClassLoader classLoader)
