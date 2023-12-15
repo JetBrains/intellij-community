@@ -6,6 +6,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.module.Module
@@ -14,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
@@ -108,15 +111,15 @@ class PyRelativeImportInspection : PyInspection() {
     }
   }
 
-  private class PyChangeToSameDirectoryImportQuickFix : LocalQuickFix {
+  private class PyChangeToSameDirectoryImportQuickFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String = PyBundle.message("QFIX.change.to.same.directory.import")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val oldImport = descriptor.psiElement as? PyFromImportStatement ?: return
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val oldImport = element as? PyFromImportStatement ?: return
       assert(oldImport.relativeLevel == 1)
       val qualifier = oldImport.importSource
       if (qualifier != null) {
-        val possibleDot = PsiTreeUtil.prevVisibleLeaf(qualifier)
+        val possibleDot = updater.getWritable(PsiTreeUtil.prevVisibleLeaf(qualifier))
         assert(possibleDot != null && possibleDot.node.elementType == PyTokenTypes.DOT)
         possibleDot?.delete()
       }
