@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains.kotlin.jps.plugin.classpath" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-plugin-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

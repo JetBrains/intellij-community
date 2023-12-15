@@ -27,23 +27,23 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
     static void setUpTests() {
         System.setProperty("kotlin.jps.workaround.tests", "true");
 
-        // Use custom compiler for tests
+        //// Use custom compiler for tests
         //File distJar = KotlinArtifactsDownloader.INSTANCE.downloadArtifactForIdeFromSources(
         //        "kotlin-dist-for-ide",
-        //        "2.0.0-dev-9013"
+        //        "2.0.0-dev-10535"
         //);
-        //File unpackedDistDir = new File(PathManager.getSystemPath(), "kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources-testing");
+        //File unpackedDistDir = new File(PathManager.getSystemPath(), "kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources-testing2");
         //new LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar);
         //File kotlincFolder = unpackedDistDir;
 
         File kotlincFolder = KotlinPluginLayout.getKotlinc();
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
+
         // enable graph implementation
         System.setProperty("jps.use.dependency.graph", "true");
 
-        // Disable JPS
-        //System.setProperty(INCREMENTAL_COMPILATION_JVM_PROPERTY, "false");
-        //System.setProperty(INCREMENTAL_COMPILATION_JS_PROPERTY, "false");
+        // Disabe Kotlin JPS IC
+        //System.setProperty("kotlin.jps.dumb.mode", "true");
     }
 
     @TestMetadata("pureKotlin")
