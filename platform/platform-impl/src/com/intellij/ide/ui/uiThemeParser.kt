@@ -23,14 +23,15 @@ internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoade
   }
 
   try {
+    val baseKey = key.removeSuffix(".compact")
     return when {
       value.endsWith(".png") || value.endsWith(".svg") -> parseImageFile(value, classLoader)
-      key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
+      baseKey.endsWith("Border") || baseKey.endsWith("border") -> parseBorder(value, classLoader)
       // not a part of parseStringValue - doesn't make sense, the value must be specified as number in JSON
-      key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value = value, key = key)
+      baseKey.endsWith("Width") || baseKey.endsWith("Height") -> getIntegerOrFloat(value = value, key = key)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
       // do not try to parse as number values that definitely should be a UI class name
-      key.endsWith("UI") -> value
+      baseKey.endsWith("UI") -> value
       else -> {
         // ShowUIDefaultsContent can call parseUiThemeValue directly, that's why value maybe not yet parsed
         parseStringValue(value = value, key = key, warn = warn).let {
@@ -159,10 +160,11 @@ internal fun createColorResource(color: Color, key: String): Color {
 
 internal fun parseStringValue(value: String, key: String, warn: (String, Throwable?) -> Unit): Any? {
   try {
+    val baseKey = key.removeSuffix(".compact")
     return when {
-      key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
-      key.endsWith("Size") -> parseSize(value)
-      key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader = null)
+      baseKey.endsWith("Insets") || baseKey.endsWith(".insets") || baseKey.endsWith("padding") -> parseInsets(value)
+      baseKey.endsWith("Size") || baseKey.endsWith(".size") -> parseSize(value)
+      baseKey.endsWith("Border") || baseKey.endsWith("border") -> parseBorder(value, classLoader = null)
       isColorLike(value) -> {
         val color = parseColorOrNull(value, null)
         if (color == null) {
@@ -173,7 +175,7 @@ internal fun parseStringValue(value: String, key: String, warn: (String, Throwab
           createColorResource(color, key)
         }
       }
-      key.endsWith("grayFilter") -> {
+      baseKey.endsWith("grayFilter") -> {
         val numbers = parseMultiValue(value).iterator()
         GrayFilter.asUIResource(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt())
       }
