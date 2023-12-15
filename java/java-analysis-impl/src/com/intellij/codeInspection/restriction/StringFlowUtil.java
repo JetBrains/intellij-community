@@ -169,7 +169,7 @@ public final class StringFlowUtil {
         parameters = method.getParameterList().getParameters();
       }
       else {
-        PsiParameter parameter = AnnotationContext.getParameter(method, call, arg);
+        PsiParameter parameter = AnnotationContext.getParameter(call, arg);
         if (parameter == null) return false;
         PsiType parameterType = parameter.getType();
         PsiElement psi = call.getSourcePsi();

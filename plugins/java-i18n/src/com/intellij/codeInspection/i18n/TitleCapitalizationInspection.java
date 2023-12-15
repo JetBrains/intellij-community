@@ -89,12 +89,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           }
           UCallExpression call = ObjectUtils.tryCast(parent, UCallExpression.class);
           if (call != null) {
-            PsiMethod method = call.resolve();
-            if (method != null) {
-              PsiParameter parameter = AnnotationContext.getParameter(method, call, usage);
-              if (parameter != null) {
-                capitalization = getSupplierCapitalization(parameter);
-              }
+            PsiParameter parameter = AnnotationContext.getParameter(call, usage);
+            if (parameter != null) {
+              capitalization = getSupplierCapitalization(parameter);
             }
           }
         }
