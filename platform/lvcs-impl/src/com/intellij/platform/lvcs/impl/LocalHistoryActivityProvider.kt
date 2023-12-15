@@ -89,7 +89,9 @@ private fun LocalHistoryFacade.onChangeSetFinished(): Flow<Unit> {
 }
 
 private fun Revision.createPresentation(): ActivityPresentation {
-  val text = if (isLabel) label ?: ""
-  else changeSetName ?: (StringUtil.shortenTextWithEllipsis(affectedFileNames.first.joinToString(), 80, 0))
-  return ActivityPresentation(text)
+  if (isLabel) {
+    return ActivityPresentation(label ?: "", showBackground = false, labelColor)
+  }
+  val text = changeSetName ?: (StringUtil.shortenTextWithEllipsis(affectedFileNames.first.joinToString(), 80, 0))
+  return ActivityPresentation(text, showBackground = true, null)
 }

@@ -5,4 +5,4 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
-data class ActivityPresentation(@Nls val text: String)
+data class ActivityPresentation(@Nls val text: String, val showBackground: Boolean, val highlightColor: Int?)
