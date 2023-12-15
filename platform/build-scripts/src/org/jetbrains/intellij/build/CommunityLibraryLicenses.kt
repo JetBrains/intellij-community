@@ -302,7 +302,7 @@ object CommunityLibraryLicenses {
                    url = "https://coverage.readthedocs.io/")
       .apache("https://github.com/nedbat/coveragepy/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Cucumber-Core", libraryName = "cucumber-core-1.2",
-                   url = "https://github.com/cucumber/cucumber-jvm/tree/main/core")
+                   url = "https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-core")
       .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENCE")
       .suppliedByOrganizations("SmartBear Software"),
     LibraryLicense(name = "Cucumber-Expressions", libraryName = "cucumber-expressions",
@@ -680,7 +680,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "JSch", url = "http://www.jcraft.com/jsch/").newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
-    LibraryLicense(name = "jsch", libraryName = "eclipse.jgit.ssh.jsch", url = "https://www.jcraft.com/jsch/")
+    LibraryLicense(name = "jsch", libraryName = "eclipse.jgit.ssh.jsch", url = "http://www.jcraft.com/jsch/")
       .newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
     LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
@@ -845,7 +845,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
-                   url = "git://github.com/mathjax/MathJax",
+                   url = "https://github.com/mathjax/MathJax",
                    licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
 
 
@@ -1116,7 +1116,7 @@ object CommunityLibraryLicenses {
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-protos"),
     LibraryLicense(name = "Trang", libraryName = "trang-core.jar",
-                   url = "https://www.thaiopensource.com/relaxng/trang.html",
+                   url = "https://relaxng.org/jclark/trang.html",
                    version = LibraryLicense.CUSTOM_REVISION)
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
     androidDependency(name = "Transport Pipeline", libraryName = "transport-proto"),
