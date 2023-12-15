@@ -156,11 +156,12 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         // note that after this visitor finished, `diagnosticRanges` will be empty, because all diagnostics are inside the file range, by definition
         val iterator = diagnosticRanges.iterator()
         for (entry in iterator) {
-            if (elementRange.contains(entry.key)) {
+            if (entry.key in elementRange) {
                 val diagnostics = entry.value
                 for (diagnostic in diagnostics) {
-                    analyze (holder!!.contextFile as KtFile) {
-                        addDiagnostic(holder!!.contextFile as KtFile, diagnostic, holder!!)
+                    val contextFile = holder!!.contextFile as? KtFile ?: error("KtFile files expected but got ${holder!!.contextFile}")
+                    analyze (contextFile) {
+                        addDiagnostic(contextFile, diagnostic, holder!!)
                     }
                 }
                 iterator.remove()
