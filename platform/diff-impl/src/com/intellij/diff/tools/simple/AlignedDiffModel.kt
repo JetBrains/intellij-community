@@ -30,10 +30,10 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.math.max
 
-class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): NewAlignedDiffModel(viewer.request, viewer.context,
-                                                                                viewer.component,
-                                                                                viewer.editor1, viewer.editor2,
-                                                                                viewer.syncScrollable) {
+class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): AlignedDiffModelBase(viewer.request, viewer.context,
+                                                                                 viewer.component,
+                                                                                 viewer.editor1, viewer.editor2,
+                                                                                 viewer.syncScrollable) {
   init {
     textSettings.addListener(object : TextDiffSettingsHolder.TextDiffSettings.Listener {
       override fun alignModeChanged() {
@@ -81,7 +81,7 @@ interface AlignableChange {
  *   several inlays with the same priority added to the same offset
  * * Mirror inlays positioning works not so good
  */
-abstract class NewAlignedDiffModel(
+abstract class AlignedDiffModelBase(
   private val diffRequest: DiffRequest,
   private val diffContext: DiffContext,
   parent: JComponent,
