@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 
 // TODO docs
+// TODO renaming
 interface InlineCompletionSuggestion {
 
   suspend fun getVariants(): List<Variant>
@@ -45,6 +46,8 @@ interface InlineCompletionSuggestion {
   object Empty : InlineCompletionSuggestion {
     override suspend fun getVariants(): List<Variant> = emptyList()
   }
+
+  companion object
 }
 
 // TODO maybe class, not interface

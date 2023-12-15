@@ -3,37 +3,80 @@ package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsProvider
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionJob
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.util.concurrent.atomic.AtomicReference
+import org.jetbrains.annotations.ApiStatus
 
 class InlineCompletionSession private constructor(
-  val context: InlineCompletionContext,
+  editor: Editor,
   val provider: InlineCompletionProvider,
   val request: InlineCompletionRequest
 ) : Disposable {
+
+  private var job: InlineCompletionJob? = null
+  private var variantsProvider: InlineCompletionVariantsProvider? = null
+
+  val context = InlineCompletionContext(editor, request.file.language)
 
   init {
     Disposer.register(this, context)
   }
 
-  private val myJob = AtomicReference<InlineCompletionJob?>()
+  @RequiresEdt
+  @ApiStatus.Experimental
+  fun useNextVariant() {
+    ThreadingAssertions.assertEventDispatchThread()
+    variantsProvider?.nextVariant()
+  }
 
-  internal val job: InlineCompletionJob?
-    get() = myJob.get()
+  @RequiresEdt
+  @ApiStatus.Experimental
+  fun usePrevVariant() {
+    ThreadingAssertions.assertEventDispatchThread()
+    variantsProvider?.prevVariant()
+  }
 
-  internal fun assignJob(job: InlineCompletionJob) {
-    val currentJob = myJob.getAndSet(job)
-    check(currentJob == null) { "Job is already assigned to a session." }
-    Disposer.register(this, job)
+  @RequiresEdt
+  @ApiStatus.Experimental
+  fun getVariantsNumber(): Int {
+    return variantsProvider?.getVariantsNumber() ?: 0
+  }
+
+  @RequiresEdt
+  @ApiStatus.Experimental
+  fun estimateNonEmptyVariantsNumber(): IntRange {
+    ThreadingAssertions.assertEventDispatchThread()
+    return variantsProvider?.estimateNonEmptyVariantsNumber() ?: IntRange.EMPTY
   }
 
   override fun dispose() = Unit
+
+  @RequiresEdt
+  internal fun assignJob(job: InlineCompletionJob) {
+    ThreadingAssertions.assertEventDispatchThread()
+    check(this.job == null) {
+      "Inline Completion Session job is already assigned."
+    }
+    this.job = job
+    Disposer.register(this, job)
+  }
+
+  @RequiresEdt
+  internal fun assignVariants(variantsProvider: InlineCompletionVariantsProvider) {
+    ThreadingAssertions.assertEventDispatchThread()
+    check(this.variantsProvider == null) {
+      "Inline Completion variants provider is already assigned."
+    }
+    this.variantsProvider = variantsProvider
+    Disposer.register(this, variantsProvider)
+  }
 
   companion object {
     private val LOG = thisLogger()
@@ -51,7 +94,7 @@ class InlineCompletionSession private constructor(
     ): InlineCompletionSession {
       val currentSession = getOrNull(editor)
       check(currentSession == null) { "Inline completion session already exists." }
-      return InlineCompletionSession(InlineCompletionContext(editor, request.file.language), provider, request).also {
+      return InlineCompletionSession(editor, provider, request).also {
         Disposer.register(parentDisposable, it)
         editor.putUserData(INLINE_COMPLETION_SESSION, it)
       }

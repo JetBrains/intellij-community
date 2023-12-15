@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +65,7 @@ interface InlineCompletionProvider {
    * startOffset, endOffset, and lookupElement.
    * @return The inline completion suggestion. Use [InlineCompletionSuggestion.empty] to return empty suggestion
    */
-  suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSingleSuggestion
+  suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
   /**
    * Determines whether the given inline completion event enables the feature.
@@ -108,7 +108,7 @@ interface InlineCompletionProvider {
 
   object DUMMY : InlineCompletionProvider {
     override val id = InlineCompletionProviderID("DUMMY")
-    override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion = InlineCompletionSuggestion.empty()
+    override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion = InlineCompletionSuggestion.Empty
     override fun isEnabled(event: InlineCompletionEvent): Boolean = false
   }
 }

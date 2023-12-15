@@ -2,13 +2,15 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
@@ -31,7 +33,6 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -160,28 +161,39 @@ class InlineCompletionHandler(
     val offset = request.endOffset
 
     val result = Result.runCatching {
-      val variant = request(session.provider, request).getVariant()
+      val variants = request(session.provider, request).getVariants()
+      if (variants.isEmpty()) {
+        traceAsync(InlineCompletionEventType.NoVariants)
+        return@runCatching
+      }
+
+      coroutineScope {
+        withContext(Dispatchers.EDT) {
+          val variantsComputer = getVariantsComputer(variants, context, offset, this@coroutineScope)
+          session.assignVariants(variantsComputer)
+        }
+      }
 
       // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
-      withContext(Dispatchers.EDT) {
-        variant.elements.flowOn(Dispatchers.Default)
-          .onEmpty {
-            coroutineToIndicator {
-              trace(InlineCompletionEventType.Empty)
-              hide(context, FinishType.EMPTY)
-            }
-          }
-          .onCompletion {
-            val data = variant.data
-            if (it == null && !data.isUserDataEmpty) {
-              data.copyUserDataTo(context)
-            }
-          }
-          .collectIndexed { index, it ->
-            ensureActive()
-            showInlineElement(it, index, offset, context)
-          }
-      }
+      //withContext(Dispatchers.EDT) {
+      //  variant.elements.flowOn(Dispatchers.Default)
+      //    .onEmpty {
+      //      coroutineToIndicator {
+      //        trace(InlineCompletionEventType.Empty)
+      //        hide(context, FinishType.EMPTY)
+      //      }
+      //    }
+      //    .onCompletion {
+      //      val data = variant.data
+      //      if (it == null && !data.isUserDataEmpty) {
+      //        data.copyUserDataTo(context)
+      //      }
+      //    }
+      //    .collectIndexed { index, it ->
+      //      ensureActive()
+      //      showInlineElement(it, index, offset, context)
+      //    }
+      //}
     }
 
     val exception = result.exceptionOrNull()
@@ -245,11 +257,9 @@ class InlineCompletionHandler(
   private suspend fun request(
     provider: InlineCompletionProvider,
     request: InlineCompletionRequest
-  ): InlineCompletionSingleSuggestion {
+  ): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
-      coroutineToIndicator {
-        trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
-      }
+      traceAsync(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
     }
     return provider.getSuggestion(request)
   }
@@ -273,13 +283,15 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  private suspend fun showInlineElement(
+  @RequiresBlockingContext
+  private fun showInlineElement(
     element: InlineCompletionElement,
     index: Int,
     offset: Int,
     context: InlineCompletionContext
   ) {
-    coroutineToIndicator { trace(InlineCompletionEventType.Show(element, index)) }
+    ThreadingAssertions.assertEventDispatchThread()
+    trace(InlineCompletionEventType.Show(element, index))
     context.renderElement(element, offset)
   }
 
@@ -293,6 +305,8 @@ class InlineCompletionHandler(
   private fun createSessionManager(): InlineCompletionSessionManager {
     return object : InlineCompletionSessionManager() {
       override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
+        ThreadingAssertions.assertEventDispatchThread()
+
         val context = session.context
         when (result) {
           is UpdateSessionResult.Overtyped -> {
@@ -315,6 +329,49 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
+  private fun getVariantsComputer(
+    variants: List<InlineCompletionSuggestion.Variant>,
+    context: InlineCompletionContext,
+    offset: Int,
+    scope: CoroutineScope
+  ): InlineCompletionVariantsComputer {
+    // TODO tracing
+    // TODO make searching for the first non-empty result
+    return object : InlineCompletionVariantsComputer(variants) {
+      private val job = scope.launch(Dispatchers.EDT) {
+        for ((variantIndex, variant) in variants.withIndex()) {
+          variantStartedComputing(variantIndex)
+          variant.elements.flowOn(Dispatchers.Default)
+            .onEmpty {
+              traceAsync(InlineCompletionEventType.Empty)
+            }
+            .collectIndexed { elementIndex, element ->
+              ensureActive()
+              elementComputed(variantIndex, elementIndex, element)
+              traceAsync(InlineCompletionEventType.Computed(element, elementIndex))
+            }
+
+          variantComputed(variantIndex)
+          traceAsync(InlineCompletionEventType.VariantComputed(variantIndex))
+        }
+      }
+
+      override fun elementProposed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
+        showInlineElement(element, elementIndex, offset, context)
+      }
+
+      override fun beforeVariantChanged(variantIndex: Int) {
+        context.clear()
+      }
+
+      override fun dispose() {
+        super.dispose()
+        job.cancel()
+      }
+    }
+  }
+
+  @RequiresEdt
   private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
     val expectedOffset = {
       // This caret listener might be disposed after context: ML-1438
@@ -331,7 +388,13 @@ class InlineCompletionHandler(
   @RequiresBlockingContext
   @RequiresEdt
   private fun trace(event: InlineCompletionEventType) {
-    eventListeners.getMulticaster().on(event)
+    ThreadingAssertions.assertEventDispatchThread()
+    //eventListeners.getMulticaster().on(event)
+  }
+
+  @RequiresEdt
+  private suspend fun traceAsync(event: InlineCompletionEventType) {
+    coroutineToIndicator { trace(event) }
   }
 
   @TestOnly
