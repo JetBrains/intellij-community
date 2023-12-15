@@ -15,7 +15,8 @@ internal object StyledTextPaneUtils {
                                              needColor: Color,
                                              textFont: Font,
                                              delimiterFont: Font,
-                                             fill: Boolean) {
+                                             fill: Boolean,
+                                             verticalIndent: Float) {
     val g2d = g as Graphics2D
     val startRect = modelToView2D(startOffset)
     val endRect = modelToView2D(endOffset)
@@ -26,11 +27,11 @@ internal object StyledTextPaneUtils {
     g2d.color = needColor
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    val verticalIndent = JBUIScale.scale(1.5f).toDouble()
+    val scaledVerticalIndent = JBUIScale.scale(verticalIndent).toDouble()
     val horizontalIndent = delimiterFontMetrics.stringWidth(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR) * 4 / 11.0
     val arc = JBUIScale.scale(8f).toDouble()
-    val r2d = RoundRectangle2D.Double(startRect.x - horizontalIndent, startRect.y - verticalIndent,
-                                      endRect.x - startRect.x + 2 * horizontalIndent, textFontMetrics.height + 2 * verticalIndent,
+    val r2d = RoundRectangle2D.Double(startRect.x - horizontalIndent, startRect.y - scaledVerticalIndent,
+                                      endRect.x - startRect.x + 2 * horizontalIndent, textFontMetrics.height + 2 * scaledVerticalIndent,
                                       arc, arc)
 
     if (fill) g2d.fill(r2d) else g2d.draw(r2d)

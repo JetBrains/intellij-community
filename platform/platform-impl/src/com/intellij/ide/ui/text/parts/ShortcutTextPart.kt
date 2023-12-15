@@ -63,7 +63,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean) : TextPart(text) {
       val partEnd = curOffset
 
       textPane.highlighter.addHighlight(partStart, partEnd) { g, _, _, _, c ->
-        c.drawRectangleAroundText(partStart, partEnd, g, backgroundColor, fontGetter(), fontGetter(), fill = true)
+        c.drawRectangleAroundText(partStart, partEnd, g, backgroundColor, fontGetter(), fontGetter(), fill = true, 0.5f)
       }
       start = part.last + 1
     }
