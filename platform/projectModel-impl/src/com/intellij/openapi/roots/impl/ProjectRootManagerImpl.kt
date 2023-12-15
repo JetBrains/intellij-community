@@ -94,7 +94,7 @@ open class ProjectRootManagerImpl(val project: Project,
             changes = initiateChangelist(genericChange)
           }
           pendingRootsChanged--
-          ApplicationManager.getApplication().runWriteAction { fireRootsChanged(changes!!) }
+          ApplicationManager.getApplication().runWriteAction { fireRootsChanged(copy(changes!!)) }
         }
         finally {
           if (pendingRootsChanged == 0) {
@@ -118,7 +118,7 @@ open class ProjectRootManagerImpl(val project: Project,
       changes = if (changes == null) initiateChangelist(change) else accumulate(changes!!, change)
       if (batchLevel == 0 && isChanged) {
         pendingRootsChanged--
-        if (fireRootsChanged(changes!!) && pendingRootsChanged == 0) {
+        if (fireRootsChanged(copy(changes!!)) && pendingRootsChanged == 0) {
           isChanged = false
           changes = null
         }
@@ -130,6 +130,8 @@ open class ProjectRootManagerImpl(val project: Project,
     protected abstract fun initiateChangelist(change: Change): ChangeList
 
     protected abstract fun accumulate(current: ChangeList, change: Change): ChangeList
+
+    protected abstract fun copy(changes: ChangeList): ChangeList
 
     protected abstract val genericChange: Change
   }
@@ -150,6 +152,10 @@ open class ProjectRootManagerImpl(val project: Project,
       get() = RootsChangeRescanningInfo.TOTAL_RESCAN
 
     override fun initiateChangelist(change: RootsChangeRescanningInfo) = SmartList(change)
+
+    override fun copy(changes: MutableList<RootsChangeRescanningInfo>): MutableList<RootsChangeRescanningInfo> {
+      return ArrayList(changes)
+    }
   }
 
   protected val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
@@ -165,6 +171,8 @@ open class ProjectRootManagerImpl(val project: Project,
       get() = true
 
     override fun initiateChangelist(change: Boolean): Boolean = change
+
+    override fun copy(changes: Boolean): Boolean = changes
   }
   open val rootsValidityChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {}
   override fun getFileIndex(): ProjectFileIndex {
