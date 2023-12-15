@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.nio.file.Path;
 import java.util.List;
 
 
@@ -47,10 +46,8 @@ public abstract class CreateConfigurationTask<T extends AbstractPythonRunConfigu
 
   @Override
   public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
-    if (!Path.of(existingSdk.getHomePath()).equals(Path.of(sdkHome))) {
-      // Creates SDK that doesn't exist yet
-      createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
-    }
+
+    createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
 
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {

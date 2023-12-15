@@ -4,9 +4,7 @@ package com.jetbrains.env;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ActionsKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -16,7 +14,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +25,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PyNames;
@@ -46,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -299,11 +297,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * @return sdk
    */
   @NotNull
-  protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
-    throws InvalidSdkException {
+  protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType) throws InvalidSdkException {
 
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
+
+    // There can't be two SDKs with same path
+    removeSdkIfExists(sdkHomeFile.toNioPath());
+
     CompletableFuture<Sdk> sdkRef = new CompletableFuture<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
@@ -333,6 +334,19 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       ((PyCondaPackageManagerImpl)packageManager).useConda = false;
     }
     return sdk;
+  }
+
+  private static void removeSdkIfExists(@NotNull Path sdkHomePath) {
+    var sdkTable = ProjectJdkTable.getInstance();
+    var existingSdk =
+      ContainerUtil.find(sdkTable.getAllJdks(), sdk -> sdkHomePath.equals(Path.of(sdk.getHomePath().trim())));
+    if (existingSdk != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        WriteAction.run(() -> {
+          sdkTable.removeJdk(existingSdk);
+        });
+      });
+    }
   }
 
 
