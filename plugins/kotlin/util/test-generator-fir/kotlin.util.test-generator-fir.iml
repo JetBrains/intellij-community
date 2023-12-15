@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="TEST" />

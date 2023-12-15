@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 
-internal class KotlinFirImportOptimizer : ImportOptimizer {
+class KotlinFirImportOptimizer : ImportOptimizer {
     private val optimizeImportsFacility: KotlinOptimizeImportsFacility
         get() = KotlinOptimizeImportsFacility.getInstance()
 
