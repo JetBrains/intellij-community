@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
 class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private val enabled: Boolean
     private val deadCodeKey: HighlightDisplayKey?
@@ -75,6 +74,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         }
     }
 
+    context(KtAnalysisSession)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -140,6 +140,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         }
     }
 
+    context(KtAnalysisSession)
     private fun handleDeclaration(declaration: KtNamedDeclaration,
                                   deadCodeInspection: LocalInspectionTool,
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
