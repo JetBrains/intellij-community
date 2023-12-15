@@ -116,7 +116,7 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
     }
   }
 
-  private class Visitor extends PyInspectionVisitor {
+  private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredNames;
 
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context, @NotNull Collection<String> ignoredNames) {
