@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="kotlin-multiplatform-android-models-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:kotlin_multiplatform_android_models_proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:kotlin_multiplatform_android_models_proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/kotlin_multiplatform_android_models_proto/231.0.1.4/kotlin_multiplatform_android_models_proto-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/kotlin_multiplatform_android_models_proto/231.0.26.0/kotlin_multiplatform_android_models_proto-231.0.26.0.jar">
           <sha256sum>3c5c023ff60bcb06a79041114f63d0d2337bcb77810d49f8bd37249f4294686b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/kotlin_multiplatform_android_models_proto/231.0.1.4/kotlin_multiplatform_android_models_proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/kotlin_multiplatform_android_models_proto/231.0.26.0/kotlin_multiplatform_android_models_proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
