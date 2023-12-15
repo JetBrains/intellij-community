@@ -26,7 +26,10 @@ class PresentationAssistant233 {
       options.pluginsToDownload.removeIf { it.pluginId.idString == pluginId }
       if (pluginDescriptor != null) {
         val pluginSettingsFile = options.oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant.xml")
-        if (!pluginSettingsFile.exists() && !pluginDescriptor.isEnabled) return
+        val disabledPluginsFile: Path = options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+        val isPluginEnabled = !(if (Files.exists(disabledPluginsFile)) loadDisabledPlugins(disabledPluginsFile) else setOf())
+          .contains(pluginDescriptor.pluginId)
+        if (!pluginSettingsFile.exists() && !isPluginEnabled) return
         var newSettingsFile = options.newConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant-ij.xml")
         if (!newSettingsFile.exists()) {
           newSettingsFile = newSettingsFile.findOrCreateFile()
@@ -82,9 +85,6 @@ class PresentationAssistant233 {
             }
           }
         }
-        val disabledPluginsFile: Path = options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-        val isPluginEnabled = !(if (Files.exists(disabledPluginsFile)) loadDisabledPlugins(disabledPluginsFile) else setOf())
-          .contains(pluginDescriptor.pluginId)
         setOption(newComponent, "showActionDescriptions", (isPluginEnabled && showActionsEnabled).toString())
         JDOMUtil.write(applicationElement, newSettingsFile)
       }
