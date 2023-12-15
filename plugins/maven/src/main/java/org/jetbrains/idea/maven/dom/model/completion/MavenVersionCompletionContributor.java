@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -83,11 +82,6 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
         }
       )
     );
-  }
-
-  @Override
-  protected boolean validate(String groupId, String artifactId) {
-    return !StringUtil.isEmptyOrSpaces(artifactId);
   }
 
   @NotNull

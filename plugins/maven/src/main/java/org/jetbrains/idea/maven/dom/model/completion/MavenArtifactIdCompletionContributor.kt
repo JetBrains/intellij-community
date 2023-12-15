@@ -19,10 +19,6 @@ import java.util.function.Predicate
 
 class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributor("artifactId") {
 
-  override fun validate(groupId: String, artifactId: String): Boolean {
-    return true
-  }
-
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,

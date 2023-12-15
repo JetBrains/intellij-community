@@ -90,11 +90,6 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
                                            @NotNull CompletionParameters parameters,
                                            @NotNull Consumer<RepositoryArtifactData> consumer);
 
-
-  protected boolean validate(String groupId, String artifactId) {
-    return true;
-  }
-
   protected void fillAfter(CompletionResultSet result) {
   }
 
