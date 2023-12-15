@@ -25,7 +25,7 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionAsyncContr
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactIdAsync(service, artifactId, searchParameters, consumer)
+      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer)
     }
     return service.suggestPrefixAsync(
       groupId, artifactId, searchParameters,

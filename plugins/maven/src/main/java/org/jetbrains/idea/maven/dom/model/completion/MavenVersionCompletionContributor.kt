@@ -21,11 +21,12 @@ import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.findPluginByArtifactId
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.isPluginOrExtension
+import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.MAVEN_COORDINATE_COMPLETION_PREFIX_KEY
+import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -34,21 +35,21 @@ import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 
-open class MavenVersionCompletionContributor : MavenCoordinateCompletionContributor("version") {
-  override fun find(service: DependencySearchService,
-                    coordinates: MavenDomShortArtifactCoordinates,
-                    parameters: CompletionParameters,
-                    consumer: Consumer<RepositoryArtifactData>): Promise<Int> {
+open class MavenVersionCompletionContributor : MavenCoordinateCompletionAsyncContributor("version") {
+    override suspend fun find(service: DependencySearchService,
+                              coordinates: MavenDomShortArtifactCoordinates,
+                              parameters: CompletionParameters,
+                              consumer: Consumer<RepositoryArtifactData>) {
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
 
+    val artifactDataConsumer = RepositoryArtifactDataConsumer(artifactId, groupId, consumer)
     if (isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return findPluginByArtifactId(service, artifactId, searchParameters, RepositoryArtifactDataConsumer(artifactId, groupId, consumer))
+      return findPluginByArtifactId(service, artifactId, searchParameters, artifactDataConsumer)
     }
 
-
-    return service.suggestPrefix(groupId, artifactId, searchParameters, RepositoryArtifactDataConsumer(artifactId, groupId, consumer))
+    return service.suggestPrefixAsync(groupId, artifactId, searchParameters, artifactDataConsumer)
   }
 
   override fun fillAfter(result: CompletionResultSet) {

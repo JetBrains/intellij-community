@@ -201,6 +201,21 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
   }
 
+  suspend fun fulltextSearchAsync(searchString: String,
+                                  parameters: SearchParameters,
+                                  consumer: Consumer<RepositoryArtifactData>) = fulltextSearchAsync(searchString, parameters) {
+    consumer.accept(it)
+  }
+
+  suspend fun fulltextSearchAsync(searchString: String,
+                                  parameters: SearchParameters,
+                                  consumer: ResultConsumer) {
+    performSearchAsync(searchString, parameters, consumer) { p, c ->
+      p.fulltextSearch(searchString).get()
+        .forEach(c) // TODO A consumer here is used synchronously...
+    }
+  }
+
   fun getGroupIds(pattern: String?): Set<String> {
     val result = mutableSetOf<String>()
     fulltextSearch(pattern ?: "", SearchParameters(true, true)) {
