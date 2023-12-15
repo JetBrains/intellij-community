@@ -164,11 +164,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   }
 
   @Override
-  protected JBPopupFactory.ActionSelectionAid getAidMethod() {
-    return JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
-  }
-
-  @Override
   protected boolean isEnabled() {
     return UiThemeProviderListManager.Companion.getInstance().getLaFListSize() > 1 && !LafManager.getInstance().getAutodetect();
   }
