@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
@@ -6,22 +6,19 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
+import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import java.io.File
 
-@RunWith(JUnit38ClassRunner::class)
 @TestRoot("idea/tests")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath("/")
 @TestMetadata("testData/handlers/multifile")
-open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
+abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
     fun testExtensionFunctionImport() = doTest()
     fun testExtensionPropertyImport() = doTest()
     fun testImportAlreadyImportedObject() = doTest()
