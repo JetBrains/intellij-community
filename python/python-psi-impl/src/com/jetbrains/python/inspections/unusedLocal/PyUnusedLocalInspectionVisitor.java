@@ -6,6 +6,8 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -420,17 +422,30 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
           final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
           if (assignmentStatement != null && !PsiTreeUtil.isAncestor(assignmentStatement.getAssignedValue(), element, false)) {
-            if (assignmentStatement.getLeftHandSideExpression() == element) {
-              // Single assignment target (unused = value)
-              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
-            }
-            else if (ArrayUtil.contains(element, assignmentStatement.getRawTargets())) {
-              // Chained assignment target (used = unused = value)
-              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix());
-            }
-            else {
-              // Unpacking (used, unused = value)
-              registerWarning(element, warningMsg, new ReplaceWithWildCard());
+            ProblemsHolder holder = getHolder();
+            if (holder != null) {
+              if (assignmentStatement.getLeftHandSideExpression() == element) {
+                // Single assignment target (unused = value)
+                holder.problem(element, warningMsg)
+                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+                  .fix(new PyRemoveAssignmentStatementTargetQuickFix(element))
+                  .fix(new PyRemoveStatementQuickFix())
+                  .register();
+              }
+              else if (ArrayUtil.contains(element, assignmentStatement.getRawTargets())) {
+                // Chained assignment target (used = unused = value)
+                holder.problem(element, warningMsg)
+                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+                  .fix(new PyRemoveAssignmentStatementTargetQuickFix(element))
+                  .register();
+              }
+              else {
+                // Unpacking (used, unused = value)
+                holder.problem(element, warningMsg)
+                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+                  .fix(new ReplaceWithWildCard())
+                  .register();
+              }
             }
             continue;
           }
@@ -503,7 +518,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 
-  private static class ReplaceWithWildCard implements LocalQuickFix {
+  private static class ReplaceWithWildCard extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -511,14 +526,13 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
-      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(element.getProject()).createDummyFile(LanguageLevel.getDefault(),
                                                                                                              "for _ in tuples:\n  pass"
       );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
       if (target != null) {
-        psiElement.replace(target);
+        element.replace(target);
       }
     }
   }
