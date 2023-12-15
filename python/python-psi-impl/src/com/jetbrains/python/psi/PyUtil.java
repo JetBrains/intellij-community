@@ -367,11 +367,11 @@ public final class PyUtil {
   }
 
   public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(e1.getProject());
-    final Document document = documentManager.getDocument(e1.getContainingFile());
-    if (document == null || document != documentManager.getDocument(e2.getContainingFile())) {
-      return false;
-    }
+    PsiFile firstFile = e1.getContainingFile();
+    PsiFile secondFile = e2.getContainingFile();
+    if (firstFile == null || secondFile == null) return false;
+    Document document = firstFile.getFileDocument();
+    if (document != secondFile.getFileDocument()) return false;
     return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
   }
 

@@ -87,9 +87,8 @@ public final class PyPsiRefactoringUtil {
     final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
     // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
     if (prevElem != null && PyUtil.onSameLine(statementList, prevElem)) {
-      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
-      final Document document = manager.getDocument(statementList.getContainingFile());
-      if (document != null) {
+        final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+        final Document document = statementList.getContainingFile().getFileDocument();
         final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
         manager.doPostponedOperationsAndUnblockDocument(document);
         final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
@@ -99,7 +98,6 @@ public final class PyPsiRefactoringUtil {
         document.insertString(statementList.getTextRange().getStartOffset(), text);
         manager.commitDocument(document);
         statementList = container.getStatementList();
-      }
     }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
