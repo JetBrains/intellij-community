@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
@@ -52,9 +51,9 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
     return service.suggestPrefix(groupId, artifactId, searchParameters, RepositoryArtifactDataConsumer(artifactId, groupId, consumer))
   }
 
-  override fun fillAfter(result: CompletionResultSet?) {
+  override fun fillAfter(result: CompletionResultSet) {
     if (MavenServerManager.getInstance().isUseMaven2) {
-      result!!.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.ReleaseVersionId).withStrikeoutness(true))
+      result.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.ReleaseVersionId).withStrikeoutness(true))
       result.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.LatestVersionId).withStrikeoutness(true))
     }
   }
@@ -64,9 +63,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
                           item: MavenRepositoryArtifactInfo,
                           completionPrefix: String) {
     result.addAllElements(
-      ContainerUtil.map(
-        item.items
-      ) { dci: MavenDependencyCompletionItem ->
+      item.items.map { dci: MavenDependencyCompletionItem ->
         val lookup: LookupElement = MavenDependencyCompletionUtil.lookupElement(dci, dci.version)
         lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
         lookup
@@ -75,8 +72,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
   }
 
   override fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
-    return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-      MavenVersionNegatingWeigher()))
+    return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(MavenVersionNegatingWeigher()))
   }
 
   private class RepositoryArtifactDataConsumer(private val myArtifactId: String,

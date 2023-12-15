@@ -30,7 +30,7 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     var result = result
     if (parameters.completionType != CompletionType.BASIC) return
-    val placeChecker = PlaceChecker(parameters).checkPlace()
+    val placeChecker = MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace()
 
     if (placeChecker.isCorrectPlace) {
       val coordinates = placeChecker.coordinates
@@ -71,7 +71,7 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
                               parameters: CompletionParameters,
                               consumer: Consumer<RepositoryArtifactData>): Promise<Int>
 
-  protected open fun fillAfter(result: CompletionResultSet?) {
+  protected open fun fillAfter(result: CompletionResultSet) {
   }
 
   protected open fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
@@ -98,81 +98,8 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
     }
   }
 
-  protected inner class PlaceChecker(private val myParameters: CompletionParameters) {
-    private var badPlace = false
-    var project: Project? = null
-      private set
-    var coordinates: MavenDomShortArtifactCoordinates? = null
-      private set
-
-    val isCorrectPlace: Boolean
-      get() = !badPlace
-
-    fun checkPlace(): PlaceChecker {
-      if (myParameters.completionType != CompletionType.BASIC) {
-        badPlace = true
-        return this
-      }
-
-      val element = myParameters.position
-
-      val xmlText = element.parent
-      if (xmlText !is XmlText) {
-        badPlace = true
-        return this
-      }
-
-      val tagElement = xmlText.getParent()
-
-      if (tagElement !is XmlTag) {
-        badPlace = true
-        return this
-      }
-
-      if (myTagId != tagElement.name) {
-        badPlace = true
-        return this
-      }
-
-      project = element.project
-
-      when (myTagId) {
-        "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tagElement)
-        "dependency", "extension", "plugin" -> checkPlaceForParentTags(tagElement)
-        else -> badPlace = true
-      }
-      return this
-    }
-
-    private fun checkPlaceForChildrenTags(tag: XmlTag) {
-      val domElement = DomManager.getDomManager(project).getDomElement(tag)
-
-      if (domElement !is GenericDomValue<*>) {
-        badPlace = true
-        return
-      }
-
-      val parent = domElement.getParent()
-      if (parent is MavenDomShortArtifactCoordinates) {
-        coordinates = parent
-      }
-      else {
-        badPlace = true
-      }
-    }
-
-    private fun checkPlaceForParentTags(tag: XmlTag) {
-      val domElement = DomManager.getDomManager(project).getDomElement(tag)
-
-      if (domElement is MavenDomShortArtifactCoordinates) {
-        coordinates = domElement
-      }
-      else {
-        badPlace = true
-      }
-    }
-  }
-
+  protected fun isCorrectPlace(parameters: CompletionParameters) =
+    MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace().isCorrectPlace
 
   companion object {
     val MAVEN_COORDINATE_COMPLETION_PREFIX_KEY: Key<String> = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY")
@@ -183,6 +110,80 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
       }
       return StringUtil.trim(value.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
     }
+  }
+}
 
+internal class MavenCoordinateCompletionPlaceChecker(private val myTagId: String, private val myParameters: CompletionParameters) {
+  private var badPlace = false
+  var project: Project? = null
+    private set
+  var coordinates: MavenDomShortArtifactCoordinates? = null
+    private set
+
+  val isCorrectPlace: Boolean
+    get() = !badPlace
+
+  fun checkPlace(): MavenCoordinateCompletionPlaceChecker {
+    if (myParameters.completionType != CompletionType.BASIC) {
+      badPlace = true
+      return this
+    }
+
+    val element = myParameters.position
+
+    val xmlText = element.parent
+    if (xmlText !is XmlText) {
+      badPlace = true
+      return this
+    }
+
+    val tagElement = xmlText.getParent()
+
+    if (tagElement !is XmlTag) {
+      badPlace = true
+      return this
+    }
+
+    if (myTagId != tagElement.name) {
+      badPlace = true
+      return this
+    }
+
+    project = element.project
+
+    when (myTagId) {
+      "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tagElement)
+      "dependency", "extension", "plugin" -> checkPlaceForParentTags(tagElement)
+      else -> badPlace = true
+    }
+    return this
+  }
+
+  private fun checkPlaceForChildrenTags(tag: XmlTag) {
+    val domElement = DomManager.getDomManager(project).getDomElement(tag)
+
+    if (domElement !is GenericDomValue<*>) {
+      badPlace = true
+      return
+    }
+
+    val parent = domElement.getParent()
+    if (parent is MavenDomShortArtifactCoordinates) {
+      coordinates = parent
+    }
+    else {
+      badPlace = true
+    }
+  }
+
+  private fun checkPlaceForParentTags(tag: XmlTag) {
+    val domElement = DomManager.getDomManager(project).getDomElement(tag)
+
+    if (domElement is MavenDomShortArtifactCoordinates) {
+      coordinates = domElement
+    }
+    else {
+      badPlace = true
+    }
   }
 }
