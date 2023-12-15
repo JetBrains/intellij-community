@@ -2747,6 +2747,7 @@ public final class HighlightUtil {
         }
       }
       else if (resolved instanceof PsiClass aClass) {
+        if (expression instanceof PsiReferenceExpression) return null;
         if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
         referencedClass = aClass.getContainingClass();
         if (referencedClass == null) return null;
