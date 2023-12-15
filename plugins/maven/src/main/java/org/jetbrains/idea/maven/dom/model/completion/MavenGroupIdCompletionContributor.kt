@@ -48,4 +48,6 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
       )
     }
   }
+
+  override fun resultFilter(): MavenCoordinateCompletionResultFilter = MavenCoordinateCompletionResultFilter.uniqueProperty { it.groupId }
 }

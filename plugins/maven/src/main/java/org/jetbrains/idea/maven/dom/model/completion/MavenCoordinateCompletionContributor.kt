@@ -20,6 +20,7 @@ import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.DependencySearchService.Companion.getInstance
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.SearchParameters
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 
@@ -34,13 +35,18 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
       val amendedResult = amendResultSet(result)
 
       runBlockingCancellable {
+        val resultFilter = resultFilter()
         find(getInstance(placeChecker.project!!), coordinates, parameters) {
-          fillResults(amendedResult, coordinates, it, completionPrefix)
+          if (resultFilter.accept(it)) {
+            fillResults(amendedResult, coordinates, it, completionPrefix)
+          }
         }
         fillAfter(amendedResult)
       }
     }
   }
+
+  protected open fun resultFilter(): MavenCoordinateCompletionResultFilter = MavenCoordinateCompletionResultFilter.ACCEPT_ALL
 
   protected open fun fillResults(result: CompletionResultSet,
                                  coordinates: MavenDomShortArtifactCoordinates,
@@ -98,6 +104,26 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
         return ""
       }
       return StringUtil.trim(value.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
+    }
+  }
+}
+
+interface MavenCoordinateCompletionResultFilter {
+  fun accept(item: RepositoryArtifactData): Boolean
+
+  companion object {
+    val ACCEPT_ALL: MavenCoordinateCompletionResultFilter = object : MavenCoordinateCompletionResultFilter {
+      override fun accept(item: RepositoryArtifactData) = true
+    }
+
+    fun uniqueProperty(property: (MavenRepositoryArtifactInfo) -> String): MavenCoordinateCompletionResultFilter {
+      return object : MavenCoordinateCompletionResultFilter {
+        val existing = ConcurrentHashMap<String, Boolean>()
+
+        override fun accept(item: RepositoryArtifactData): Boolean {
+          return item is MavenRepositoryArtifactInfo && null == existing.putIfAbsent(property(item), true)
+        }
+      }
     }
   }
 }

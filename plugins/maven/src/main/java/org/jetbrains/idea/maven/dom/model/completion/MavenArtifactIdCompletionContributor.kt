@@ -42,4 +42,6 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
       )
     }
   }
+
+  override fun resultFilter(): MavenCoordinateCompletionResultFilter = MavenCoordinateCompletionResultFilter.uniqueProperty { it.artifactId }
 }
