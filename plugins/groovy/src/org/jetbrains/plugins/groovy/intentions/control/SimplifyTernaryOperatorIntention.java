@@ -80,7 +80,7 @@ public class SimplifyTernaryOperatorIntention extends GrPsiUpdateIntention {
 
     expressionFromText = (GrExpression)condExp.replace(expressionFromText);
 
-    updater.moveTo(expressionFromText.getTextOffset() + caretOffset); // just past operation sign
+    updater.moveCaretTo(expressionFromText.getTextOffset() + caretOffset); // just past operation sign
   }
 
   /**

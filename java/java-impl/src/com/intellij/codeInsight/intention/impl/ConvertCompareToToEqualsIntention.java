@@ -38,7 +38,7 @@ public final class ConvertCompareToToEqualsIntention extends PsiUpdateModCommand
     text.append("equals(").append(argument.getText()).append(')');
     final PsiExpression newExpression = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(text.toString(), null);
     final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
-    updater.moveTo(result.getTextOffset() + result.getTextLength());
+    updater.moveCaretTo(result.getTextOffset() + result.getTextLength());
   }
 
   @Override

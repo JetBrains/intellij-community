@@ -106,7 +106,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
       }
       CodeStyleManager.getInstance(project).reformat(packageInfoFile);
       xmlFile.delete();
-      updater.moveTo(packageInfoFile);
+      updater.moveCaretTo(packageInfoFile);
     }
 
     @NotNull

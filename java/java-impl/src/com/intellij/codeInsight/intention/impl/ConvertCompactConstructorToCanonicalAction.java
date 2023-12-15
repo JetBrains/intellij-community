@@ -36,7 +36,7 @@ public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateM
       offset += body.getTextRangeInParent().getStartOffset() - oldBody.getTextRangeInParent().getStartOffset();
     }
     method.replace(prototype);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 
   /**

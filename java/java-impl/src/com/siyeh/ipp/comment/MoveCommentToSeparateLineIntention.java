@@ -78,6 +78,6 @@ public final class MoveCommentToSeparateLineIntention extends MCIntention {
     final int offset = anchor.getTextRange().getStartOffset();
     document.insertString(offset, newline);
     document.insertString(offset, comment.getText());
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 }

@@ -182,7 +182,7 @@ final class ImmutableCollectionModelUtils {
         String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : call.getText());
         PsiElement anchor = addUpdates(assignedVariable, model, statement);
         PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
-        myUpdater.moveTo(anchor.getTextRange().getEndOffset());
+        myUpdater.moveCaretTo(anchor.getTextRange().getEndOffset());
       }
       else {
         createVariable(statement, model);

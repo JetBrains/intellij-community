@@ -206,7 +206,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
         new CommentTracker().deleteAndRestoreComments(iterator);
       }
       PsiElement result = ct.replaceAndRestoreComments(whileStatement, newStatement.toString());
-      updater.moveTo(result);
+      updater.moveCaretTo(result);
     }
   }
 

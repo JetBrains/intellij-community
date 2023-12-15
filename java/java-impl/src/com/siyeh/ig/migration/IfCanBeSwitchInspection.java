@@ -296,7 +296,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
-    updater.moveTo(replacement);
+    updater.moveCaretTo(replacement);
     if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {

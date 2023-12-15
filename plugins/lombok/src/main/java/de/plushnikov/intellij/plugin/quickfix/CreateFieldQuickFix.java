@@ -62,7 +62,7 @@ public class CreateFieldQuickFix extends PsiUpdateModCommandAction<PsiClass> {
       List.of(new PsiGenerationInfo<>(psiField)));
     if (!generationInfos.isEmpty()) {
       PsiField psiMember = Objects.requireNonNull(generationInfos.iterator().next().getPsiMember());
-      updater.moveTo(psiMember.getTextRange().getEndOffset());
+      updater.moveCaretTo(psiMember.getTextRange().getEndOffset());
     }
   }
 }

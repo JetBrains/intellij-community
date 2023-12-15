@@ -157,7 +157,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
       inserted = (PsiStatement)methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
     }
     if (updater != null) {
-      updater.moveTo(inserted.getTextRange().getEndOffset());
+      updater.moveCaretTo(inserted.getTextRange().getEndOffset());
     }
     return inserted;
   }

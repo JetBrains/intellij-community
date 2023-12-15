@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,6 +174,7 @@ public sealed interface ModCommand
    * @return a command that updates the given option
    * @see OptionControllerProvider for details
    */
+  @ApiStatus.Experimental
   static @NotNull ModCommand updateOption(
     @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull Object newValue) {
     Object oldValue = OptionControllerProvider.getOption(context, bindId);
@@ -186,6 +188,7 @@ public sealed interface ModCommand
    * @return a command that updates the given option
    * @see OptionControllerProvider for details
    */
+  @ApiStatus.Experimental
   static @NotNull ModCommand updateOptionList(
     @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull Consumer<@NotNull List<@NotNull String>> listUpdater) {
     @SuppressWarnings("unchecked") 
@@ -325,6 +328,7 @@ public sealed interface ModCommand
    * @param leanRight if true, lean to right side when the text was inserted right at the caret position
    * @return an updated command which tries to navigate inside the specified file, taking into account the modifications inside that file
    */
+  @ApiStatus.Experimental
   static @NotNull ModCommand moveCaretAfter(@NotNull ModCommand command, @NotNull PsiFile file, int offset, boolean leanRight) {
     VirtualFile virtualFile = file.getVirtualFile();
     ModCommand finalCommand = nop();
@@ -351,6 +355,7 @@ public sealed interface ModCommand
    * @param elements all elements to select from
    * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
    */
+  @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
                                                    @NotNull List<? extends @NotNull MemberChooserElement> elements,
                                                    @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
@@ -366,6 +371,7 @@ public sealed interface ModCommand
    * @param defaultSelection default selection
    * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
    */
+  @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
                                                    @NotNull List<? extends @NotNull MemberChooserElement> elements,
                                                    @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,

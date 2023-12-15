@@ -34,14 +34,14 @@ public interface ModPsiNavigator {
    *
    * @param offset offset to move to
    */
-  void moveTo(int offset);
+  void moveCaretTo(int offset);
 
   /**
    * Navigates to a given element
    *
    * @param element element to navigate to
    */
-  void moveTo(@NotNull PsiElement element);
+  void moveCaretTo(@NotNull PsiElement element);
 
   /**
    * Moves caret to a previous occurrence of character ch. Do nothing if no such occurrence is found 
@@ -67,13 +67,13 @@ public interface ModPsiNavigator {
       }
 
       @Override
-      public void moveTo(int offset) {
+      public void moveCaretTo(int offset) {
         editor.getCaretModel().moveToOffset(offset);
       }
 
       @Override
-      public void moveTo(@NotNull PsiElement element) {
-        moveTo(element.getTextRange().getStartOffset());
+      public void moveCaretTo(@NotNull PsiElement element) {
+        moveCaretTo(element.getTextRange().getStartOffset());
       }
 
       @Override

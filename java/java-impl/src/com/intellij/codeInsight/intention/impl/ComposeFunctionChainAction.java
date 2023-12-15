@@ -85,7 +85,7 @@ public final class ComposeFunctionChainAction extends PsiUpdateModCommandAction<
     result = CodeStyleManager.getInstance(context.project()).reformat(result);
     PsiElement applyElement = ((PsiMethodCallExpression)result).getMethodExpression().getReferenceNameElement();
     if(applyElement != null) {
-      updater.moveTo(applyElement.getTextOffset() + applyElement.getTextLength());
+      updater.moveCaretTo(applyElement.getTextOffset() + applyElement.getTextLength());
     }
   }
 

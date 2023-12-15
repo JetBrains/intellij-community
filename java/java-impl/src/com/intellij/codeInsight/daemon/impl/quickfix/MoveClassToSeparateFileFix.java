@@ -49,7 +49,7 @@ public class MoveClassToSeparateFileFix extends PsiUpdateModCommandAction<PsiCla
     PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
     PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
     myClass.delete();
-    updater.moveTo(newClass.getContainingFile());
+    updater.moveCaretTo(newClass.getContainingFile());
   }
 
   @Override

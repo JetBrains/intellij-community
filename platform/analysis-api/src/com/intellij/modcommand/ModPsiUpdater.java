@@ -104,6 +104,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * 
    * @param declaration declaration to track
    */
+  @ApiStatus.Experimental
   void trackDeclaration(@NotNull PsiElement declaration);
 
   /**
@@ -165,7 +166,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param offset offset to move to
    */
   @Override
-  void moveTo(int offset);
+  void moveCaretTo(int offset);
 
   /**
    * Navigates to a given element. Does nothing when executed non-interactively.
@@ -174,7 +175,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param element element to navigate to
    */
   @Override
-  void moveTo(@NotNull PsiElement element);
+  void moveCaretTo(@NotNull PsiElement element);
 
   /**
    * Moves caret to a previous occurrence of character ch in the current file. Do nothing if no such occurrence is found,
@@ -183,10 +184,11 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param ch character to find
    */
   @Override
+  @ApiStatus.Experimental
   void moveToPrevious(char ch);
 
   /**
-   * @return current caret offset inside the current file. It may be based on the previous result of {@link #moveTo(int)} 
+   * @return current caret offset inside the current file. It may be based on the previous result of {@link #moveCaretTo(int)} 
    * or similar methods. The initial caret offset is taken from {@link ActionContext} 
    * if {@link ModCommand#psiUpdate(ActionContext, Consumer)} was used. Otherwise, it's zero. 
    */

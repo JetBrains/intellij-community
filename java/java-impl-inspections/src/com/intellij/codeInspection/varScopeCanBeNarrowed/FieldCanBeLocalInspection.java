@@ -438,7 +438,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       if (variable == null) return;
       final List<PsiElement> newDeclarations = moveDeclaration(variable);
       if (newDeclarations.isEmpty()) return;
-      updater.moveTo(newDeclarations.get(newDeclarations.size() - 1));
+      updater.moveCaretTo(newDeclarations.get(newDeclarations.size() - 1));
       newDeclarations.forEach(declaration -> inlineRedundant(declaration));
     }
 

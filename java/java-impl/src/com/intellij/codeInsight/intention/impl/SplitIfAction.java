@@ -68,7 +68,7 @@ public final class SplitIfAction extends PsiUpdateModCommandAction<PsiJavaToken>
     if (result instanceof PsiIfStatement resultingIf) {
       PsiExpression resultCondition = resultingIf.getCondition();
       if (resultCondition != null) {
-        updater.moveTo(resultCondition);
+        updater.moveCaretTo(resultCondition);
       }
     }
   }

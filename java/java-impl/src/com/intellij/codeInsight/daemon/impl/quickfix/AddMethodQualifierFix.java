@@ -88,7 +88,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
           PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
           if (call == null) return;
           replaceWithQualifier(var, call);
-          updater.moveTo(call.getTextOffset() + call.getTextLength());
+          updater.moveCaretTo(call.getTextOffset() + call.getTextLength());
         }, var -> requireNonNullElse(var.getNameIdentifier(), var).getTextRange())
       .withPresentation(p -> p.withIcon(candidate.getIcon(0)));
   }

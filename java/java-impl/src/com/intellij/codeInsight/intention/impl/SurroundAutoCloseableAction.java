@@ -156,7 +156,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
       if (tryBlock != null) {
         PsiJavaToken brace = tryBlock.getLBrace();
         if (brace != null) {
-          updater.moveTo(brace.getTextOffset() + 1);
+          updater.moveCaretTo(brace.getTextOffset() + 1);
         }
       }
     }

@@ -45,7 +45,7 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
     if (PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) {
       PsiFile modifiedPackageInfoFile = moveAnnotationsAndGetFile(packageStatement, updater.getWritable(packageInfoFile));
       if (modifiedPackageInfoFile != null) {
-        updater.moveTo(modifiedPackageInfoFile);
+        updater.moveCaretTo(modifiedPackageInfoFile);
       }
     }
     deleteAnnotations(packageStatement);

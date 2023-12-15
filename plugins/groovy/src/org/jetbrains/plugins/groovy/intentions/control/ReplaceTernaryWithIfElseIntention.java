@@ -51,7 +51,7 @@ public class ReplaceTernaryWithIfElseIntention extends GrPsiUpdateIntention {
     String text = "if (" + condition + ") { \nreturn " + thenText + "\n} else {\n return " + elseText + "\n}";
     GrIfStatement ifStatement = (GrIfStatement)groovyPsiElementFactory.createStatementFromText(text);
     ifStatement = parentReturn.replaceWithStatement(ifStatement);
-    updater.moveTo(ifStatement.getRParenth().getTextRange().getEndOffset());
+    updater.moveCaretTo(ifStatement.getRParenth().getTextRange().getEndOffset());
   }
 
   @NotNull

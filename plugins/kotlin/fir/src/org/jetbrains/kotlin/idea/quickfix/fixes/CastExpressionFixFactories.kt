@@ -30,7 +30,7 @@ object CastExpressionFixFactories {
             val newExpression = psi.replaced(expressionToInsert)
 
             shortenReferences(newExpression)
-            updater.moveTo(newExpression.endOffset)
+            updater.moveCaretTo(newExpression.endOffset)
         }
     }
 

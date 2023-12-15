@@ -93,7 +93,7 @@ public class ConvertMultilineStringToSingleLineIntention extends GrPsiUpdateInte
       old.replaceWithExpression(newLiteral, true);
 
       if (shift != 0) {
-        updater.moveTo(offset + shift);
+        updater.moveCaretTo(offset + shift);
       }
     }
     catch (IncorrectOperationException e) {

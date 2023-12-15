@@ -146,7 +146,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
       }
     }
     if (result != null) {
-      updater.moveTo(result);
+      updater.moveCaretTo(result);
     }
   }
 

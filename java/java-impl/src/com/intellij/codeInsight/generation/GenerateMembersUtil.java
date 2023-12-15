@@ -182,7 +182,7 @@ public final class GenerateMembersUtil {
       if (body != null) {
         PositionInfo info = getPositionInfo(body);
 
-        updater.moveTo(Math.min(info.start(), info.end()));
+        updater.moveCaretTo(Math.min(info.start(), info.end()));
         if (info.start() < info.end()) {
           //Not an empty body
           updater.select(TextRange.create(info.start(), info.end()));
@@ -199,7 +199,7 @@ public final class GenerateMembersUtil {
     }
 
     int offset = getOffsetInMethod(firstMember);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 
   @NotNull

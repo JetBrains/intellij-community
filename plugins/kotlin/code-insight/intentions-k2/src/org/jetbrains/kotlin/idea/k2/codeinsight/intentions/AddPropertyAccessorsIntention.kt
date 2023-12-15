@@ -58,7 +58,7 @@ internal abstract class AbstractAddAccessorIntention(
     }
 
     override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
-        addAccessors(element, addGetter, addSetter, updater::moveTo)
+        addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
 }
 

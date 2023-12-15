@@ -87,6 +87,6 @@ public final class FlipExpressionIntention extends MCIntention {
     newExpression.append(prevOperand);
 
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 }

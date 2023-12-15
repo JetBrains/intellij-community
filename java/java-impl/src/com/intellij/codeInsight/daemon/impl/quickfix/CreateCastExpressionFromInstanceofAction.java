@@ -55,7 +55,7 @@ public final class CreateCastExpressionFromInstanceofAction implements ModComman
     decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
     if (decl == null) return;
     decl = CodeStyleManager.getInstance(context.project()).reformat(decl);
-    updater.moveTo(decl.getTextRange().getEndOffset());
+    updater.moveCaretTo(decl.getTextRange().getEndOffset());
   }
 
   @Nullable

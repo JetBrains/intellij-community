@@ -132,7 +132,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
     String replacementBlock = generateReplacementBlock(callTexts, targetText, firstStatement);
     PsiVariable variable = appendStatements(appendStatement, tracker, introduceVariable, replacementBlock, updater);
     if (keepLastStatement) {
-      updater.moveTo(tracker.replaceAndRestoreComments(toReplace, targetText));
+      updater.moveCaretTo(tracker.replaceAndRestoreComments(toReplace, targetText));
     } else {
       tracker.deleteAndRestoreComments(appendStatement);
     }
@@ -157,7 +157,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
     for (int i = 0, length = statements.length; i < length; i++) {
       final PsiElement insertedStatement = parent.addBefore(tracker.markUnchanged(statements[i]), anchor);
       if (i == 0) {
-        updater.moveTo(insertedStatement);
+        updater.moveCaretTo(insertedStatement);
         if (introduceVariable) {
           variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
         }

@@ -415,7 +415,7 @@ final class PsiUpdateImpl {
     }
 
     @Override
-    public void moveTo(int offset) {
+    public void moveCaretTo(int offset) {
       myPositionUpdated = true;
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {
@@ -428,7 +428,7 @@ final class PsiUpdateImpl {
     }
 
     @Override
-    public void moveTo(@NotNull PsiElement element) {
+    public void moveCaretTo(@NotNull PsiElement element) {
       TextRange range = getRange(element);
       if (range != null) {
         range = mapRange(range);

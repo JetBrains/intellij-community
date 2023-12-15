@@ -49,7 +49,7 @@ public class JavaDocFixes {
         }
         PsiElement sibling = addedTag.getNextSibling();
         if (sibling != null) {
-          updater.moveTo(sibling);
+          updater.moveCaretTo(sibling);
         }
       }
     }

@@ -106,7 +106,7 @@ internal class InvertIfConditionIntention :
             }
         }
 
-        updater.moveTo(newIf)
+        updater.moveCaretTo(newIf)
     }
 
     private fun handleSpecialCases(ifExpression: KtIfExpression, context: Context): KtIfExpression? {

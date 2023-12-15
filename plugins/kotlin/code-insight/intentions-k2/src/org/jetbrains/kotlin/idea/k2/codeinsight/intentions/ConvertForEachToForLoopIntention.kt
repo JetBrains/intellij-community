@@ -131,7 +131,7 @@ internal class ConvertForEachToForLoopIntention
         } else {
             val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
             forExpression.loopParameter?.let {
-                updater.moveTo(it)
+                updater.moveCaretTo(it)
             }
         }
     }

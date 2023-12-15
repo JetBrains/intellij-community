@@ -140,7 +140,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
         int end = tag.getTextOffset() + tag.getTextLength();
         updater.select(TextRange.create(start, end));
       } else {
-        updater.moveTo(sibling);
+        updater.moveCaretTo(sibling);
       }
     }
   }

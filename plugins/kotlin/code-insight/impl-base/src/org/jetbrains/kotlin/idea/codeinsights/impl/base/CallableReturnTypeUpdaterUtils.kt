@@ -53,7 +53,7 @@ object CallableReturnTypeUpdaterUtils {
             if (returnTypeReference != null && !typeInfo.defaultType.isUnit) {
                 val typeRef = shortenReferences(returnTypeReference.replace(KtPsiFactory(project).createType(typeInfo.defaultType.longTypeRepresentation)) as KtElement)
                 if (typeRef != null) {
-                    updater?.moveTo(typeRef.endOffset)
+                    updater?.moveCaretTo(typeRef.endOffset)
                 }
             }
 
@@ -73,7 +73,7 @@ object CallableReturnTypeUpdaterUtils {
         typeReference = newTypeRef
         typeReference?.let {
             shortenReferences(it)
-            updater?.moveTo(it.endOffset)
+            updater?.moveCaretTo(it.endOffset)
         }
     }
 

@@ -33,7 +33,7 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
     PsiFile file = block.getContainingFile();
     Document document = file.getViewProvider().getDocument();
     Project project = file.getProject();
-    updater.moveTo(Objects.requireNonNull(block.getRBrace()));
+    updater.moveCaretTo(Objects.requireNonNull(block.getRBrace()));
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     TextRange finallyBlockRange = block.getTextRange();
     int newLineOffset = finallyBlockRange.getStartOffset() + 2;

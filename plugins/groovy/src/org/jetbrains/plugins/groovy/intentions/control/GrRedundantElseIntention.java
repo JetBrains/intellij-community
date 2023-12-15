@@ -56,7 +56,7 @@ public class GrRedundantElseIntention extends GrPsiUpdateIntention {
     }
     branch.delete();
 
-    updater.moveTo(ifStatement.getTextRange().getEndOffset());
+    updater.moveCaretTo(ifStatement.getTextRange().getEndOffset());
   }
 
   private static PsiElement inferFirst(PsiElement lbrace) {

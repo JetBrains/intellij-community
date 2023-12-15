@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.List;
  * 
  * @param options list of options to update
  */
+@ApiStatus.Experimental
 public record ModUpdateSystemOptions(@NotNull List<@NotNull ModifiedOption> options) implements ModCommand {
   @Override
   public boolean isEmpty() {

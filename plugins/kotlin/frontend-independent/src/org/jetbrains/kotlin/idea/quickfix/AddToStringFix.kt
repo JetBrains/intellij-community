@@ -30,6 +30,6 @@ class AddToStringFix(element: KtExpression, private val useSafeCallOperator: Boo
         val pattern = if (useSafeCallOperator) "$0?.toString()" else "$0.toString()"
         val expressionToInsert = KtPsiFactory(element.project).createExpressionByPattern(pattern, element)
         val newExpression = element.replaced(expressionToInsert)
-        updater.moveTo(newExpression.endOffset)
+        updater.moveCaretTo(newExpression.endOffset)
     }
 }

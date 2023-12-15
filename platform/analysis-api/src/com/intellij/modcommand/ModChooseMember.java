@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.function.Function;
  * @param mode selection mode
  * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
  */
+@ApiStatus.Experimental
 public record ModChooseMember(@NotNull @NlsContexts.PopupTitle String title,
                               @NotNull List<? extends @NotNull MemberChooserElement> elements,
                               @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,

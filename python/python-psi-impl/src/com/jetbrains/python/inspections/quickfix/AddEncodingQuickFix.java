@@ -55,6 +55,6 @@ public class AddEncodingQuickFix extends PsiUpdateModCommandQuickFix {
     Document document = file.getFileDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     final int insertedLineNumber = document.getLineNumber(encodingComment.getTextOffset());
-    updater.moveTo(document.getLineStartOffset(insertedLineNumber + 1));
+    updater.moveCaretTo(document.getLineStartOffset(insertedLineNumber + 1));
   }
 }

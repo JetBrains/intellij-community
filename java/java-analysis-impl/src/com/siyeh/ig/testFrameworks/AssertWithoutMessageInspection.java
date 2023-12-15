@@ -89,7 +89,7 @@ public final class AssertWithoutMessageInspection extends BaseInspection {
         createdMessageExpr = methodArgs.add(newMessageExpr);
       }
 
-      updater.moveTo(createdMessageExpr.getTextRange().getStartOffset() + 1);
+      updater.moveCaretTo(createdMessageExpr.getTextRange().getStartOffset() + 1);
     }
 
     @Override

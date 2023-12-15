@@ -33,7 +33,7 @@ public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiEx
     PsiCodeBlock body = switchStatement.getBody();
     PsiJavaToken rBrace = body == null ? null : body.getRBrace();
     if (rBrace != null) {
-      updater.moveTo(rBrace);
+      updater.moveCaretTo(rBrace);
       updater.moveToPrevious('\n');
     }
   }

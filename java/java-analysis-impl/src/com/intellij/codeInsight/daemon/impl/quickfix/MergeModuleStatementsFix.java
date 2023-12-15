@@ -52,7 +52,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
     }
     commentTracker.insertCommentsBefore(resultingStatement);
 
-    updater.moveTo(resultingStatement.getTextRange().getEndOffset());
+    updater.moveCaretTo(resultingStatement.getTextRange().getEndOffset());
   }
 
   @NotNull

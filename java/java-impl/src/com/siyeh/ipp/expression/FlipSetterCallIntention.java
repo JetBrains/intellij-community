@@ -41,7 +41,7 @@ public final class FlipSetterCallIntention extends MCIntention {
           PsiMethodCallExpression flipped = flipCall(call);
           if (flipped != null) {
             updater.highlight(flipped);
-            updater.moveTo(flipped);
+            updater.moveCaretTo(flipped);
           }
         }
         return;
