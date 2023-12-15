@@ -657,6 +657,8 @@ public final class HighlightClassUtil {
       }
       return null;
     }
+
+    // no need to distract with missing constructor error when there is already a "Cannot inherit from final class" error message
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return null;
 
     String description = JavaErrorBundle.message("no.default.constructor.available", HighlightUtil.formatClass(baseClass));
