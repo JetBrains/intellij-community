@@ -60,15 +60,15 @@ data class Lookup(
       latency: Long,
       features: Features? = null,
       isNew: Boolean = false,
-      caretPosition: Int = 0,
+      startOffset: Int = 0,
       comparator: (String, String) -> Boolean,
       additionalInfo: Map<String, Any> = emptyMap()
     ): Lookup {
-      suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(caretPosition - prefix.length)) }
+      suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(startOffset - prefix.length)) }
 
       return Lookup(
         prefix = prefix,
-        offset = caretPosition,
+        offset = startOffset,
         suggestions = suggestions,
         latency = latency,
         features = features,
