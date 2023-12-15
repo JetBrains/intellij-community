@@ -30,7 +30,12 @@ internal class CombinedActivityDiffPreview(project: Project, targetComponent: JC
     return CombinedActivityDiffPreviewModel(project, scope, parentDisposable)
   }
 
-  override fun getCombinedDiffTabTitle(): String = LocalHistoryBundle.message("activity.diff.tab.title")
+  override fun getCombinedDiffTabTitle(): String {
+    val filePath = model.selected?.filePath
+    if (filePath != null) return LocalHistoryBundle.message("activity.diff.tab.title.file", filePath.name)
+    if (scope == ActivityScope.Recent) return LocalHistoryBundle.message("activity.diff.tab.title.recent")
+    return LocalHistoryBundle.message("activity.diff.tab.title")
+  }
 
   fun setDiffData(diffData: ActivityDiffData?) {
     (model as? CombinedActivityDiffPreviewModel)?.diffData = diffData
