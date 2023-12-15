@@ -25,6 +25,8 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     private val enhanceStackTraceWithThreadDumpMethod by MethodMirrorDelegate("enhanceStackTraceWithThreadDump", javaLangListMirror)
     private val dumpMethod by MethodMirrorDelegate("dumpCoroutinesInfo", javaLangListMirror, "()Ljava/util/List;")
 
+    private val currentThreadCoroutineIdMethod by MethodDelegate<LongValue>("getCurrentThreadCoroutineId", "()J")
+
     private val dumpCoroutinesInfoAsJsonAndReferences by MethodDelegate<ArrayReference>("dumpCoroutinesInfoAsJsonAndReferences", "()[Ljava/lang/Object;")
     private val enhanceStackTraceWithThreadDumpAsJsonMethod by MethodDelegate<StringReference>(
         "enhanceStackTraceWithThreadDumpAsJson",
@@ -80,6 +82,10 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         instance ?: return emptyList()
         val referenceList = dumpMethod.mirror(instance, context) ?: return emptyList()
         return referenceList.values.mapNotNull { coroutineInfo.mirror(it, context) }
+    }
+
+    fun getCurrentThreadCoroutineId(context: DefaultExecutionContext): Long? {
+        return instance?.let { currentThreadCoroutineIdMethod.value(it, context)?.longValue() }
     }
 
     fun canDumpCoroutinesInfoAsJsonAndReferences() =

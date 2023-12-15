@@ -10,7 +10,9 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.ObjectReference
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.idea.debugger.core.stepping.ContinuationFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -51,12 +54,33 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
     }
 
     override fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? {
+        val defaultExecutionContext = suspendContext.executionContext() ?: return null
+
+        if (!useContinuationObjectFilter.get(suspendContext.debugProcess, false)) {
+            val coroutineId = DebugProbesImpl.instance(defaultExecutionContext)?.getCurrentThreadCoroutineId(defaultExecutionContext)
+            if (coroutineId != null) {
+                if (coroutineId == 0L) return null
+                return ContinuationIdFilter(coroutineId)
+            }
+            else {
+                useContinuationObjectFilter.set(suspendContext.debugProcess, true)
+                //TODO: IDEA-341142 show nice notification about this
+                thisLogger().warn("No ThreadLocal coroutine tracking is found")
+            }
+
+        }
+        return continuationObjectFilter(suspendContext, defaultExecutionContext)
+    }
+
+    private fun continuationObjectFilter(
+        suspendContext: SuspendContextImpl,
+        defaultExecutionContext: DefaultExecutionContext
+    ): ContinuationObjectFilter? {
         val frameProxy = suspendContext.frameProxy ?: return null
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
 
         val continuation = extractContinuation(suspendExitMode, frameProxy) ?: return null
 
-        val defaultExecutionContext = suspendContext.executionContext() ?: return null
         val baseContinuation = extractBaseContinuation(continuation, defaultExecutionContext) ?: return null
 
         return ContinuationObjectFilter(baseContinuation)
@@ -84,5 +108,13 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
         }
     }
 
+    private data class ContinuationIdFilter(val id: Long) : ContinuationFilter
+
+    // Is used when there is no debug information about unique Continuation ID (for example, for the old versions)
     private data class ContinuationObjectFilter(val reference: ObjectReference) : ContinuationFilter
+
+    companion object {
+        @JvmStatic
+        private val useContinuationObjectFilter = Key.create<Boolean>("useContinuationObjectFilter")
+    }
 }
