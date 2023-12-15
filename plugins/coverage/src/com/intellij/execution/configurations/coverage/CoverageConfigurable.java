@@ -35,7 +35,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Base {@link com.intellij.openapi.options.Configurable} for configuring code coverage
@@ -84,19 +83,6 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
     CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
       myCoverageRunnerCb.setSelectedItem(new CoverageRunnerItem(runner));
-    } else {
-      final String runnerId = configuration.getRunnerId();
-      if (runnerId != null){
-        final CoverageRunnerItem runnerItem = new CoverageRunnerItem(runnerId);
-        final DefaultComboBoxModel<CoverageRunnerItem> model = (DefaultComboBoxModel<CoverageRunnerItem>)myCoverageRunnerCb.getModel();
-        if (model.getIndexOf(runnerItem) == -1) {
-          model.addElement(runnerItem);
-        }
-        myCoverageRunnerCb.setSelectedItem(runnerItem);
-      } else {
-        myCoverageRunnerCb.setSelectedIndex(0);
-      }
-      runner = ((CoverageRunnerItem)Objects.requireNonNull(myCoverageRunnerCb.getSelectedItem())).getRunner();
     }
     myRunnerPanel.setEnabled(isJre50);
 

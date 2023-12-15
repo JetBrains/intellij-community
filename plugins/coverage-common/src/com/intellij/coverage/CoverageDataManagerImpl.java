@@ -89,11 +89,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         List<RunConfiguration> configurations = runManager.getAllConfigurationsList();
         for (RunConfiguration configuration : configurations) {
           if (configuration instanceof RunConfigurationBase<?> runConfiguration) {
-            CoverageEnabledConfiguration coverageEnabledConfiguration =
-              runConfiguration.getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
-            if (coverageEnabledConfiguration != null && Objects.equals(coverageRunner.getId(), coverageEnabledConfiguration.getRunnerId())) {
-              coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
-              runConfiguration.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
+            var coverageConfiguration = CoverageEnabledConfiguration.getOrNull(runConfiguration);
+            if (coverageConfiguration != null) {
+              coverageConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
             }
           }
         }

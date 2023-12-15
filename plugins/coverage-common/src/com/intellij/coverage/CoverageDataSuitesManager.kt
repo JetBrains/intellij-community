@@ -71,7 +71,7 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
     val path = config.getCoverageFilePath()
     LOG.assertTrue(path != null, "Configuration coverage report file is not configured ${config.name}")
     val runner = config.coverageRunner
-    LOG.assertTrue(runner != null, "Cannot find coverage runner id = ${config.runnerId}")
+    LOG.assertTrue(runner != null, "Cannot find coverage runner for ${path}")
     if (runner == null || path == null) return null
 
     val fileProvider = DefaultCoverageFileProvider(File(path))
