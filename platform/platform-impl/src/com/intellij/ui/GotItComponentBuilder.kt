@@ -645,8 +645,9 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
     val lineSpacing = htmlBuilder.toString().let {
-      if (it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")) 0.3f
-      else if (it.contains("""<icon src=""")) 0.2f
+      if (it.contains("""<span class="code">""")
+          || it.contains("""<span class="shortcut">""")
+          || it.contains("""<icon src=""")) 0.2f
       else 0.1f
     }
     editorKit = createEditorKit(useContrastColors, lineSpacing, iconsMap)
@@ -898,7 +899,7 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
 
     companion object {
       private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 1f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
       private const val DEFAULT_ARC: Float = 8.0f
 
       private val SHORTCUT_PART_REGEX = Regex(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
@@ -1008,7 +1009,7 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
 
     companion object {
       private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
-      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
+      private const val DEFAULT_VERTICAL_INDENT: Float = -0.5f
       private const val DEFAULT_ARC: Float = 8.0f
     }
   }
