@@ -54,3 +54,8 @@ fun checkKotlinPluginKind(expectedPluginKind: KotlinPluginKind) {
         "Invalid Kotlin plugin detected: $pluginKind, but $expectedPluginKind was expected"
     }
 }
+
+fun checkKotlinPluginKind(isK2Plugin: Boolean) {
+    val pluginKind = if (isK2Plugin) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+    checkKotlinPluginKind(pluginKind)
+}
