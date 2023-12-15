@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.ManifestUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -167,7 +167,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
         if (sourceRoots.length > 0) {
-          String virtualAutoModuleName = VirtualManifestProvider.getAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
+          String virtualAutoModuleName = ManifestUtil.lightManifestAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
           if (moduleName.equals(virtualAutoModuleName)) {
             results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
             break;

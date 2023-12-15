@@ -36,7 +36,6 @@
     <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.virtualManifestProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.injectedLanguageJavaReferenceSupplier"
                     beanClass="com.intellij.codeInsight.daemon.impl.analysis.InjectedLanguageJavaReferenceSupplier" dynamic="true"/>
@@ -333,7 +332,5 @@
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
     <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
     <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
-
-    <virtualManifestProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProviderImpl"/>
   </extensions>
 </idea-plugin>

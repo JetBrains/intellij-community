@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
-import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
@@ -11,16 +10,20 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -597,11 +600,21 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  private fun addVirtualManifest(moduleName: String, attributes: Map<String, String>) {
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(myFixture.project).updateProjectModel { storage ->
+        val moduleEntity = storage.resolve(ModuleId(moduleName)) ?: return@updateProjectModel
+        val javaSettings = JavaModuleSettingsEntity(false, false, moduleEntity.entitySource) {
+          module = moduleEntity
+          manifestAttributes = attributes
+        }
+        storage.addEntity(javaSettings)
+      }
+    }
+  }
+
   fun testAutomaticModuleFromVirtualManifest() {
-    val m6Attributes = mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar")
-    val attributesMap = mapOf(M6.moduleName to m6Attributes)
-    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(attributesMap)),
-                                     testRootDisposable)
+    addVirtualManifest(M6.moduleName, mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar"))
     highlight("module-info.java", "module M { requires m6.bar; }")
 
     addFile("p/B.java", "package p; public class B {}", module = M6)
@@ -614,7 +627,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testAutomaticModuleWithoutVirtualManifest() {
-    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(emptyMap())), testRootDisposable)
+    addVirtualManifest(M6.moduleName, emptyMap())
     highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; }")
 
     addFile("p/B.java", "package p; public class B {}", module = M6)
