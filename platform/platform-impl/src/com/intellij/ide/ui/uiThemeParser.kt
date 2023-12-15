@@ -173,7 +173,6 @@ internal fun parseStringValue(value: String, key: String, warn: (String, Throwab
           createColorResource(color, key)
         }
       }
-      key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
       key.endsWith("grayFilter") -> {
         val numbers = parseMultiValue(value).iterator()
         GrayFilter.asUIResource(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt())
