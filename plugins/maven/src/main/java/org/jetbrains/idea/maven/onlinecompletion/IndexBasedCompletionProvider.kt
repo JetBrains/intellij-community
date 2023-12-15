@@ -3,10 +3,9 @@ package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.indices.MavenGAVIndex
-import org.jetbrains.idea.maven.indices.MavenIndex
-import org.jetbrains.idea.maven.indices.MavenSearchIndex
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.CompletableFuture
@@ -23,22 +22,29 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) 
   override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(groupId, artifactId, null))
 
-  private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
-    buildList {
-      for (groupId in myIndex.groupIds) {
-        if (groupId == null) continue
-        if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
-          continue
-        }
-        for (artifactId in myIndex.getArtifactIds(groupId)) {
-          if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
+  private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> {
+    MavenLog.LOG.debug("Index: get local maven artifacts scheduled")
+    return CompletableFuture.supplyAsync {
+      MavenLog.LOG.debug("Index: get local maven artifacts started")
+      val result = buildList {
+        for (groupId in myIndex.groupIds) {
+          if (groupId == null) continue
+          if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
             continue
           }
-          if (artifactId == null) continue
-          val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
-          add(info)
+          for (artifactId in myIndex.getArtifactIds(groupId)) {
+            if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
+              continue
+            }
+            if (artifactId == null) continue
+            val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
+            add(info)
+            MavenLog.LOG.debug("Index: local maven artifact found ${info.groupId}:${info.artifactId}, completions: ${info.items.size}")
+          }
         }
       }
+      MavenLog.LOG.debug("Index: get local maven artifacts finished")
+      result
     }
   }
 
