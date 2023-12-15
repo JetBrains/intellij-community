@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom.model.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
@@ -14,6 +15,7 @@ import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.MAVEN_COORDINATE_COMPLETION_PREFIX_KEY
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -28,22 +30,21 @@ import java.util.function.Predicate
 
 abstract class MavenCoordinateCompletionContributor protected constructor(private val myTagId: String) : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    var result = result
     if (parameters.completionType != CompletionType.BASIC) return
     val placeChecker = MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace()
 
     if (placeChecker.isCorrectPlace) {
       val coordinates = placeChecker.coordinates
       val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
-      result = amendResultSet(result)
+      val amendedResult = amendResultSet(result)
       val cld = ConcurrentLinkedDeque<RepositoryArtifactData>()
       val promise = find(
         getInstance(placeChecker.project!!),
         coordinates!!, parameters
       ) { mdci: RepositoryArtifactData -> cld.add(mdci) }
 
-      fillResults(result, coordinates, cld, promise, completionPrefix)
-      fillAfter(result)
+      fillResults(amendedResult, coordinates, cld, promise, completionPrefix)
+      fillAfter(amendedResult)
     }
   }
 
@@ -111,6 +112,74 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
       return StringUtil.trim(value.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
     }
   }
+}
+
+abstract class MavenCoordinateCompletionAsyncContributor protected constructor(private val myTagId: String) : CompletionContributor() {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (parameters.completionType != CompletionType.BASIC) return
+    val placeChecker = MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace()
+
+    if (placeChecker.isCorrectPlace) {
+      val coordinates = placeChecker.coordinates!!
+      val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
+      val amendedResult = amendResultSet(result)
+
+      runBlockingCancellable {
+        find(getInstance(placeChecker.project!!), coordinates, parameters) {
+          fillResults(amendedResult, coordinates, it, completionPrefix)
+        }
+        fillAfter(amendedResult)
+      }
+    }
+  }
+
+  protected open fun fillResults(result: CompletionResultSet,
+                                 coordinates: MavenDomShortArtifactCoordinates,
+                                 item: RepositoryArtifactData,
+                                 completionPrefix: String) {
+    if (item is MavenRepositoryArtifactInfo) {
+      fillResult(coordinates, result, item, completionPrefix)
+    }
+  }
+
+  protected fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
+    return SearchParameters(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
+  }
+
+  protected abstract suspend fun find(service: DependencySearchService,
+                                      coordinates: MavenDomShortArtifactCoordinates,
+                                      parameters: CompletionParameters,
+                                      consumer: Consumer<RepositoryArtifactData>)
+
+  protected open fun fillAfter(result: CompletionResultSet) {
+  }
+
+  protected open fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
+                                result: CompletionResultSet,
+                                item: MavenRepositoryArtifactInfo,
+                                completionPrefix: String) {
+    val lookup: LookupElement = MavenDependencyCompletionUtil.lookupElement(item)
+      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
+    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+    result.addElement(lookup)
+  }
+
+  protected open fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
+    result.restartCompletionWhenNothingMatches()
+    return result
+  }
+
+  protected fun <T> withPredicate(consumer: Consumer<in T>,
+                                  predicate: Predicate<in T>): Consumer<T> {
+    return Consumer { it: T ->
+      if (predicate.test(it)) {
+        consumer.accept(it)
+      }
+    }
+  }
+
+  protected fun isCorrectPlace(parameters: CompletionParameters) =
+    MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace().isCorrectPlace
 }
 
 internal class MavenCoordinateCompletionPlaceChecker(private val myTagId: String, private val myParameters: CompletionParameters) {

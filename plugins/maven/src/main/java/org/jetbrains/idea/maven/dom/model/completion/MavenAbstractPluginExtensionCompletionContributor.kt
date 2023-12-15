@@ -50,7 +50,17 @@ abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String
         consumer.accept(PoisonedRepositoryArtifactData.INSTANCE)
         result.setResult(null)
       }
-      return result;
+      return result
+    }
+
+    @JvmStatic
+    suspend fun findPluginByArtifactIdAsync(service: DependencySearchService,
+                                            text: String,
+                                            searchParameters: SearchParameters,
+                                            consumer: Consumer<RepositoryArtifactData>) {
+      //todo: read groups from maven settings.xml
+      service.suggestPrefixAsync("org.apache.maven.plugins", text, searchParameters, consumer)
+      service.suggestPrefixAsync("org.codehaus.mojo", text, searchParameters, consumer)
     }
 
     @JvmStatic
