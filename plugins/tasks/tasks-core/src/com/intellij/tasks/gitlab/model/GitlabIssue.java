@@ -11,6 +11,11 @@ import java.util.Date;
  */
 @SuppressWarnings("unused")
 public class GitlabIssue {
+
+  public static class TimeStats {
+    private int total_time_spent;
+  }
+
   private int id;
   @SerializedName("iid")
   private int localId;
@@ -23,6 +28,8 @@ public class GitlabIssue {
   @SerializedName("created_at")
   private Date createdAt;
   private String state;
+  @SerializedName("time_stats")
+  private TimeStats timeStats;
 
 
   public int getId() {
@@ -61,4 +68,6 @@ public class GitlabIssue {
   public int getLocalId() {
     return localId;
   }
+
+  public int getTimeSpent() { return timeStats.total_time_spent; }
 }
