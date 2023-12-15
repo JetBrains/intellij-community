@@ -53,7 +53,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   private @Nullable List<VirtualFile> myResults;
 
   NewFileChooserDialogImpl(FileChooserDescriptor descriptor, @Nullable Component parent, @Nullable Project project) {
-    super(project, parent, true, IdeModalityType.PROJECT);
+    super(project, parent, true, IdeModalityType.IDE);
     myDescriptor = descriptor;
     myProject = project;
     setTitle(requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title")));
