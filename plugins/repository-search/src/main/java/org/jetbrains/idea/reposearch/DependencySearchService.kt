@@ -106,10 +106,12 @@ class DependencySearchService(private val project: Project) : Disposable {
   }
 
 
+  @Deprecated("prefer async method", ReplaceWith("suggestPrefixAsync(groupId, artifactId, parameters, consumer) }"))
   fun suggestPrefix(groupId: String, artifactId: String,
                     parameters: SearchParameters,
                     consumer: Consumer<RepositoryArtifactData>) = suggestPrefix(groupId, artifactId, parameters) { consumer.accept(it) }
 
+  @Deprecated("prefer async method", ReplaceWith("suggestPrefixAsync(groupId, artifactId, parameters, consumer) }"))
   fun suggestPrefix(groupId: String, artifactId: String,
                     parameters: SearchParameters,
                     consumer: ResultConsumer): Promise<Int> {
@@ -187,11 +189,13 @@ class DependencySearchService(private val project: Project) : Disposable {
   }
 
 
+  @Deprecated("prefer async method", ReplaceWith("fulltextSearchAsync(searchString, parameters, consumer) }"))
   fun fulltextSearch(searchString: String,
                      parameters: SearchParameters,
                      consumer: Consumer<RepositoryArtifactData>) = fulltextSearch(searchString, parameters) { consumer.accept(it) }
 
 
+  @Deprecated("prefer async method", ReplaceWith("fulltextSearchAsync(searchString, parameters, consumer) }"))
   fun fulltextSearch(searchString: String,
                      parameters: SearchParameters,
                      consumer: ResultConsumer): Promise<Int> {
