@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationEr
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
-    private lateinit var diagnosticRanges: MutableMap<TextRange, List<KtDiagnosticWithPsi<*>>>
+    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<KtDiagnosticWithPsi<*>>>
     private var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
@@ -42,7 +42,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             return true
         }
         this.holder = holder
-        diagnosticRanges = compileFile(file as KtFile)
+        diagnosticRanges = analyzeFile(file as KtFile)
         try {
             action.run()
         } catch (e: Throwable) {
@@ -56,16 +56,16 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         return true
     }
 
-    private fun compileFile(file: KtFile): MutableMap<TextRange, List<KtDiagnosticWithPsi<*>>> {
+    private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<KtDiagnosticWithPsi<*>>> {
         analyze(file) {
             val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
-                .groupBy({ it.first }, { it.second })
+                .groupByTo(HashMap(), { it.first }, { it.second })
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
                 diagnostics.values.asSequence().flatten().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
                 file
             )
-            return HashMap(diagnostics)
+            return diagnostics
         }
     }
 
