@@ -4,8 +4,10 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.namedChildScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
 
 @Service(Service.Level.PROJECT)
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
@@ -16,15 +18,35 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
       method.invoke(collection.first())
     }
     else {
-      val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
-      collection.map {
-        runScope.async {
+      val maxParallel = getMaxParallel()
+      if (maxParallel == 1) {
+        collection.forEach {
           method(it)
         }
-      }.awaitAll()
-      runScope.cancel()
+      }
+      else {
+        val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
+        val semaphore = Semaphore(maxParallel)
+        collection.map {
+          semaphore.acquire()
+          runScope.async {
+            method(it)
+            semaphore.release()
+          }
+        }.awaitAll()
+        runScope.cancel()
+      }
+
     }
 
+  }
+
+  private fun getMaxParallel(): Int {
+    val registryValue = Registry.intValue("maven.max.parallel.tasks")
+    if (registryValue <= 0) {
+      return Math.max(Runtime.getRuntime().availableProcessors() - 1, 1)
+    }
+    return registryValue
   }
 
   companion object {
