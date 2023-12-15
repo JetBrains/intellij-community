@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.concurrency.NonUrgentExecutor
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +41,7 @@ internal class DiagramReportingFactoryListener: EditorFactoryListener {
 
   private fun report(project: Project, document: Document) {
     val service = project.serviceOrNull<MermaidPlugin>() ?: return
-    service.coroutineScope().launch {
+    service.coroutineScope().launch(start = CoroutineStart.UNDISPATCHED) {
       withContext(NonUrgentExecutor.getInstance().asCoroutineDispatcher()) {
         readAction {
           val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@readAction
