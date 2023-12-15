@@ -6,4 +6,12 @@
   <actions resource-bundle="messages.SettingsSyncBundle">
     <action class="com.intellij.settingsSync.git.SettingsSyncHistoryAction" id="settingsSync.history" icon="AllIcons.Vcs.History" />
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="settingsSync.ui.new.toolwindow.show" defaultValue="false"
+                 description="Use new toolwindow to display Settings Sync history."/>
+    <toolWindow id="Settings Sync History" secondary="false" icon="AllIcons.Toolwindows.SettingSync" anchor="left"
+                factoryClass="com.intellij.settingsSync.git.SettingsHistoryToolWindowFactory"/>
+  </extensions>
+
 </idea-plugin>
