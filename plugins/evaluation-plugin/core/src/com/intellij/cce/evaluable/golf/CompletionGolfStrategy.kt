@@ -35,8 +35,6 @@ data class CompletionGolfStrategy(
   val completionType: CompletionType) : EvaluationStrategy {
   override val filters: Map<String, EvaluationFilter> = emptyMap()
 
-  fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER
-
   companion object {
     const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
