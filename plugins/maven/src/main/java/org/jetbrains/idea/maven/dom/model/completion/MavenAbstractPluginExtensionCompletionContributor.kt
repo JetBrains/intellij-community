@@ -19,7 +19,7 @@ abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
-                    consumer: Consumer<RepositoryArtifactData>): Promise<Int>? {
+                    consumer: Consumer<RepositoryArtifactData>): Promise<Int> {
 
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')

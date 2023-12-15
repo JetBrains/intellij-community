@@ -5,14 +5,13 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.trimDummy
+import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenTopLevelDependencyInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil

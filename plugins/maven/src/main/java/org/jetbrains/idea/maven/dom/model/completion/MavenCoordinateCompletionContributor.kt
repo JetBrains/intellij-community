@@ -1,212 +1,188 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom.model.completion;
+package org.jetbrains.idea.maven.dom.model.completion
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.GenericDomValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.reposearch.DependencySearchService;
-import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData;
-import org.jetbrains.idea.reposearch.RepositoryArtifactData;
-import org.jetbrains.idea.reposearch.SearchParameters;
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlText
+import com.intellij.util.xml.DomManager
+import com.intellij.util.xml.GenericDomValue
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.DependencySearchService.Companion.getInstance
+import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import org.jetbrains.idea.reposearch.SearchParameters
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.function.Consumer
+import java.util.function.Predicate
 
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+abstract class MavenCoordinateCompletionContributor protected constructor(private val myTagId: String) : CompletionContributor() {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    var result = result
+    if (parameters.completionType != CompletionType.BASIC) return
+    val placeChecker = PlaceChecker(parameters).checkPlace()
 
-import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
-import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
-import static org.jetbrains.concurrency.Promise.State.PENDING;
+    if (placeChecker.isCorrectPlace) {
+      val coordinates = placeChecker.coordinates
+      val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
+      result = amendResultSet(result)
+      val cld = ConcurrentLinkedDeque<RepositoryArtifactData>()
+      val promise = find(
+        getInstance(placeChecker.project!!),
+        coordinates!!, parameters
+      ) { mdci: RepositoryArtifactData -> cld.add(mdci) }
 
-public abstract class MavenCoordinateCompletionContributor extends CompletionContributor {
-
-  public static final Key<String> MAVEN_COORDINATE_COMPLETION_PREFIX_KEY = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY");
-
-  private final String myTagId;
-
-  protected MavenCoordinateCompletionContributor(String id) {
-    myTagId = id;
-  }
-
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return;
-    PlaceChecker placeChecker = new PlaceChecker(parameters).checkPlace();
-
-    if (placeChecker.isCorrectPlace()) {
-
-      MavenDomShortArtifactCoordinates coordinates = placeChecker.getCoordinates();
-      String completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters);
-      result = amendResultSet(result);
-      ConcurrentLinkedDeque<RepositoryArtifactData> cld = new ConcurrentLinkedDeque<>();
-      Promise<Integer> promise = find(
-        DependencySearchService.getInstance(placeChecker.getProject()),
-        coordinates, parameters,
-        mdci -> cld.add(mdci)
-      );
-
-      fillResults(result, coordinates, cld, promise, completionPrefix);
-      fillAfter(result);
+      fillResults(result, coordinates, cld, promise, completionPrefix)
+      fillAfter(result)
     }
   }
 
-  protected void fillResults(@NotNull CompletionResultSet result,
-                             @NotNull MavenDomShortArtifactCoordinates coordinates,
-                             @NotNull ConcurrentLinkedDeque<RepositoryArtifactData> cld,
-                             @NotNull Promise<Integer> promise,
-                             @NotNull String completionPrefix) {
-    while (promise.getState() == PENDING || !cld.isEmpty()) {
-      ProgressManager.checkCanceled();
-      RepositoryArtifactData item = cld.poll();
-      if (item instanceof MavenRepositoryArtifactInfo) {
-        fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item, completionPrefix);
+  protected open fun fillResults(result: CompletionResultSet,
+                                 coordinates: MavenDomShortArtifactCoordinates,
+                                 cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
+                                 promise: Promise<Int>,
+                                 completionPrefix: String) {
+    while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
+      ProgressManager.checkCanceled()
+      val item = cld.poll()
+      if (item is MavenRepositoryArtifactInfo) {
+        fillResult(coordinates, result, item, completionPrefix)
       }
-      if (item == PoisonedRepositoryArtifactData.INSTANCE) break;
+      if (item === PoisonedRepositoryArtifactData.INSTANCE) break
     }
   }
 
-  protected SearchParameters createSearchParameters(CompletionParameters parameters) {
-    return new SearchParameters(parameters.getInvocationCount() < 2, MavenUtil.isMavenUnitTestModeEnabled());
+  protected fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
+    return SearchParameters(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
   }
 
-  protected abstract Promise<Integer> find(@NotNull DependencySearchService service,
-                                           @NotNull MavenDomShortArtifactCoordinates coordinates,
-                                           @NotNull CompletionParameters parameters,
-                                           @NotNull Consumer<RepositoryArtifactData> consumer);
+  protected abstract fun find(service: DependencySearchService,
+                              coordinates: MavenDomShortArtifactCoordinates,
+                              parameters: CompletionParameters,
+                              consumer: Consumer<RepositoryArtifactData>): Promise<Int>
 
-  protected void fillAfter(CompletionResultSet result) {
+  protected open fun fillAfter(result: CompletionResultSet?) {
   }
 
-  protected void fillResult(@NotNull MavenDomShortArtifactCoordinates coordinates,
-                            @NotNull CompletionResultSet result,
-                            @NotNull MavenRepositoryArtifactInfo item,
-                            @NotNull String completionPrefix) {
-    final LookupElement lookup = MavenDependencyCompletionUtil.lookupElement(item)
-      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE);
-    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix);
-    result.addElement(lookup);
+  protected open fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
+                                result: CompletionResultSet,
+                                item: MavenRepositoryArtifactInfo,
+                                completionPrefix: String) {
+    val lookup: LookupElement = MavenDependencyCompletionUtil.lookupElement(item)
+      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
+    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+    result.addElement(lookup)
   }
 
-  @NotNull
-  protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
-    result.restartCompletionWhenNothingMatches();
-    return result;
+  protected open fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
+    result.restartCompletionWhenNothingMatches()
+    return result
   }
 
-  @NotNull
-  protected static String trimDummy(@Nullable String value) {
-    if (value == null) {
-      return "";
-    }
-    return StringUtil.trim(value.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
-  }
-
-  protected static <T> Consumer<T> withPredicate(Consumer<? super T> consumer,
-                                                 Predicate<? super T> predicate) {
-    return it -> {
+  protected fun <T> withPredicate(consumer: Consumer<in T>,
+                                  predicate: Predicate<in T>): Consumer<T> {
+    return Consumer { it: T ->
       if (predicate.test(it)) {
-        consumer.accept(it);
+        consumer.accept(it)
       }
-    };
+    }
   }
 
-  protected class PlaceChecker {
-    private boolean badPlace;
-    private CompletionParameters myParameters;
-    private Project myProject;
-    private MavenDomShortArtifactCoordinates domCoordinates;
+  protected inner class PlaceChecker(private val myParameters: CompletionParameters) {
+    private var badPlace = false
+    var project: Project? = null
+      private set
+    var coordinates: MavenDomShortArtifactCoordinates? = null
+      private set
 
-    public PlaceChecker(CompletionParameters parameters) { myParameters = parameters; }
+    val isCorrectPlace: Boolean
+      get() = !badPlace
 
-    boolean isCorrectPlace() { return !badPlace; }
+    fun checkPlace(): PlaceChecker {
+      if (myParameters.completionType != CompletionType.BASIC) {
+        badPlace = true
+        return this
+      }
 
-    Project getProject() {
-      return myProject;
+      val element = myParameters.position
+
+      val xmlText = element.parent
+      if (xmlText !is XmlText) {
+        badPlace = true
+        return this
+      }
+
+      val tagElement = xmlText.getParent()
+
+      if (tagElement !is XmlTag) {
+        badPlace = true
+        return this
+      }
+
+      if (myTagId != tagElement.name) {
+        badPlace = true
+        return this
+      }
+
+      project = element.project
+
+      when (myTagId) {
+        "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tagElement)
+        "dependency", "extension", "plugin" -> checkPlaceForParentTags(tagElement)
+        else -> badPlace = true
+      }
+      return this
     }
 
-    MavenDomShortArtifactCoordinates getCoordinates() {
-      return domCoordinates;
-    }
+    private fun checkPlaceForChildrenTags(tag: XmlTag) {
+      val domElement = DomManager.getDomManager(project).getDomElement(tag)
 
-    public PlaceChecker checkPlace() {
-      if (myParameters.getCompletionType() != CompletionType.BASIC) {
-        badPlace = true;
-        return this;
+      if (domElement !is GenericDomValue<*>) {
+        badPlace = true
+        return
       }
 
-      PsiElement element = myParameters.getPosition();
-
-      PsiElement xmlText = element.getParent();
-      if (!(xmlText instanceof XmlText)) {
-        badPlace = true;
-        return this;
-      }
-
-      PsiElement tagElement = xmlText.getParent();
-
-      if (!(tagElement instanceof XmlTag tag)) {
-        badPlace = true;
-        return this;
-      }
-
-      if (!myTagId.equals(tag.getName())) {
-        badPlace = true;
-        return this;
-      }
-
-      myProject = element.getProject();
-
-      switch (myTagId) {
-        case "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tag);
-        case "dependency", "extension", "plugin" -> checkPlaceForParentTags(tag);
-        default -> badPlace = true;
-      }
-
-      return this;
-    }
-
-    private void checkPlaceForChildrenTags(XmlTag tag) {
-      DomElement domElement = DomManager.getDomManager(myProject).getDomElement(tag);
-
-      if (!(domElement instanceof GenericDomValue)) {
-        badPlace = true;
-        return;
-      }
-
-      DomElement parent = domElement.getParent();
-      if (parent instanceof MavenDomShortArtifactCoordinates) {
-        domCoordinates = (MavenDomShortArtifactCoordinates)parent;
+      val parent = domElement.getParent()
+      if (parent is MavenDomShortArtifactCoordinates) {
+        coordinates = parent
       }
       else {
-        badPlace = true;
+        badPlace = true
       }
     }
 
-    private void checkPlaceForParentTags(XmlTag tag) {
-      DomElement domElement = DomManager.getDomManager(myProject).getDomElement(tag);
+    private fun checkPlaceForParentTags(tag: XmlTag) {
+      val domElement = DomManager.getDomManager(project).getDomElement(tag)
 
-      if (domElement instanceof MavenDomShortArtifactCoordinates) {
-        domCoordinates = (MavenDomShortArtifactCoordinates)domElement;
+      if (domElement is MavenDomShortArtifactCoordinates) {
+        coordinates = domElement
       }
       else {
-        badPlace = true;
+        badPlace = true
       }
     }
+  }
+
+
+  companion object {
+    val MAVEN_COORDINATE_COMPLETION_PREFIX_KEY: Key<String> = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY")
+
+    fun trimDummy(value: String?): String {
+      if (value == null) {
+        return ""
+      }
+      return StringUtil.trim(value.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
+    }
+
   }
 }
