@@ -91,7 +91,7 @@ class GlobalWorkspaceModel : Disposable {
   fun updateModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ThreadingAssertions.assertWriteAccess()
     if (modelVersionUpdate.get() == entityStorage.pointer.version) {
-      LOG.error("Trying to update global model twice from the same version. Maybe recursive call of 'updateModel'?")
+      LOG.error("Trying to update global model twice from the same version. Maybe recursive call of 'updateModel'? Action:$description")
     }
     modelVersionUpdate.set(entityStorage.pointer.version)
 
