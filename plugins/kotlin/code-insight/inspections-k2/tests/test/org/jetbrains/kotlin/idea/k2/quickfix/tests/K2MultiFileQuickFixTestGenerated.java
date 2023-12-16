@@ -87,4 +87,17 @@ public abstract class K2MultiFileQuickFixTestGenerated extends AbstractK2MultiFi
             runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromJava/topLevel.before.Main.java");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromKotlinToJava")
+    public static class FromKotlinToJava extends AbstractK2MultiFileQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("classMember.before.Main.kt")
+        public void testClassMember() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/classMember.before.Main.kt");
+        }
+    }
 }

@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.Variance
 /**
  * This class is an IntentionAction that creates Kotlin callables based on the given [request]. In order to create Kotlin
  * callables from Java/Groovy/... (i.e., cross language support), we can create a request from the usage in each language
- * like Java and Groovy. See [CreateKotlinCallableFromKotlinUsageRequest] for the request from the usage in Kotlin.
+ * like Java and Groovy. See [CreateMethodFromKotlinUsageRequest] for the request from the usage in Kotlin.
  */
 internal class CreateKotlinCallableAction(
     override val request: CreateMethodRequest,

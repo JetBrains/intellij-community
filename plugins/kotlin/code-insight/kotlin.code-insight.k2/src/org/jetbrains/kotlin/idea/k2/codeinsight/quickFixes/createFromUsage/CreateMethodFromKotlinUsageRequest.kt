@@ -14,13 +14,14 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 /**
  * A request to create Kotlin callable from the usage in Kotlin.
  */
-internal class CreateKotlinCallableFromKotlinUsageRequest (
+internal class CreateMethodFromKotlinUsageRequest (
     private val functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
     val receiverExpression: KtExpression? = null,
+    private val forKtCallableCreation: Boolean = true,
     val isExtension: Boolean = false,
     val isAbstractClassOrInterface: Boolean = false,
-) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
+) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers, forKtCallableCreation), CreateMethodRequest {
     private val returnType = mutableListOf<ExpectedType>()
 
     init {
@@ -31,7 +32,7 @@ internal class CreateKotlinCallableFromKotlinUsageRequest (
 
     context (KtAnalysisSession)
     private fun initializeReturnType() {
-        val returnJvmType = functionCall.getExpectedJvmType() ?: return
+        val returnJvmType = functionCall.getExpectedJvmType(forKtCallableCreation) ?: return
         returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
     }
 

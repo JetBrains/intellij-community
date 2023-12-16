@@ -16,18 +16,22 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class KotlinElementActionsFactory : JvmElementActionsFactory() {
-    private fun JvmClass.toKtClassOrFile(): KtElement? = when (val psi = sourceElement) {
-        is KtClassOrObject -> psi
-        is KtLightClassForFacade -> psi.files.firstOrNull()
-        is KtLightElement<*, *> -> psi.kotlinOrigin
-        is KtFile -> psi
-        else -> null
+    private fun JvmClass.toKtClassOrFile(): KtElement? = if (this is JvmClassWrapperForKtClass<*>) {
+        ktClassOrFile
+    } else {
+        when (val psi = sourceElement) {
+            is KtClassOrObject -> psi
+            is KtLightClassForFacade -> psi.files.firstOrNull()
+            is KtLightElement<*, *> -> psi.kotlinOrigin
+            is KtFile -> psi
+            else -> null
+        }
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
         var container = targetClass.toKtClassOrFile() ?: return emptyList()
         return when (request) {
-            is CreateKotlinCallableFromKotlinUsageRequest -> {
+            is CreateMethodFromKotlinUsageRequest -> {
                 val isExtension = request.isExtension
                 if (isExtension) {
                     container = container.containingKtFile
