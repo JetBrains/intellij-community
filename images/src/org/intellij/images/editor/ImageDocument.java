@@ -29,90 +29,91 @@ import java.util.function.BiFunction;
  * @author tav
  */
 public interface ImageDocument {
-    /**
-     * A scaled image provider.
-     */
-    interface ScaledImageProvider extends BiFunction<Double/* scale */, Component, BufferedImage> {}
+  /**
+   * A scaled image provider.
+   */
+  interface ScaledImageProvider extends BiFunction<Double/* scale */, Component, BufferedImage> {
+  }
 
-    /**
-     * A scaled image provider with caching strategy.
-     */
-    interface CachedScaledImageProvider extends ScaledImageProvider {
-        default void clearCache() {}
-    }
+  /**
+   * A scaled image provider with caching strategy.
+   */
+  interface CachedScaledImageProvider extends ScaledImageProvider {
+    default void clearCache() { }
+  }
 
-    /**
-     * Return image for rendering
-     *
-     * @return Image renderer
-     */
-    Image getRenderer();
+  /**
+   * Return image for rendering
+   *
+   * @return Image renderer
+   */
+  Image getRenderer();
 
-    /**
-     * Returns an image in the provided scale for rendering
-     *
-     * @return Image renderer
-     */
-    Image getRenderer(double scale);
+  /**
+   * Returns an image in the provided scale for rendering
+   *
+   * @return Image renderer
+   */
+  Image getRenderer(double scale);
 
-    /**
-     * Return current image.
-     *
-     * @return Return current buffered image
-     */
-    BufferedImage getValue();
+  /**
+   * Return current image.
+   *
+   * @return Return current buffered image
+   */
+  BufferedImage getValue();
 
-    /**
-     * Returns an image represented in the provided scale.
-     */
-    BufferedImage getValue(double scale);
+  /**
+   * Returns an image represented in the provided scale.
+   */
+  BufferedImage getValue(double scale);
 
-    /**
-     * Returns the bounds of the current image.
-     */
-    @Nullable
-    default Rectangle getBounds() {
-        return getBounds(1d);
-    }
+  /**
+   * Returns the bounds of the current image.
+   */
+  @Nullable
+  default Rectangle getBounds() {
+    return getBounds(1d);
+  }
 
-    /**
-     * Returns the bounds of the image represented in the provided scale.
-     */
-    @Nullable
-    default Rectangle getBounds(double scale) {
-        BufferedImage image = getValue(scale);
-        return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
-    }
+  /**
+   * Returns the bounds of the image represented in the provided scale.
+   */
+  @Nullable
+  default Rectangle getBounds(double scale) {
+    BufferedImage image = getValue(scale);
+    return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
+  }
 
-    /**
-     * Set image value
-     *
-     * @param image Value
-     */
-    void setValue(BufferedImage image);
+  /**
+   * Set image value
+   *
+   * @param image Value
+   */
+  void setValue(BufferedImage image);
 
-    /**
-     * Sets the scaled image provider.
-     *
-     * @param imageProvider the image provider
-     */
-    void setValue(ScaledImageProvider imageProvider);
+  /**
+   * Sets the scaled image provider.
+   *
+   * @param imageProvider the image provider
+   */
+  void setValue(ScaledImageProvider imageProvider);
 
-    /**
-     * Return image format.
-     *
-     * @return Format name
-     */
-    String getFormat();
+  /**
+   * Return image format.
+   *
+   * @return Format name
+   */
+  String getFormat();
 
-    /**
-     * Set image format.
-     *
-     * @param format Format from ImageIO (GIF, PNG, JPEG etc)
-     */
-    void setFormat(String format);
+  /**
+   * Set image format.
+   *
+   * @param format Format from ImageIO (GIF, PNG, JPEG etc)
+   */
+  void setFormat(String format);
 
-    void addChangeListener(ChangeListener listener);
+  void addChangeListener(ChangeListener listener);
 
-    void removeChangeListener(ChangeListener listener);
+  void removeChangeListener(ChangeListener listener);
 }

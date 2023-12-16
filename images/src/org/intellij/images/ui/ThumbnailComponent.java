@@ -26,118 +26,118 @@ import javax.swing.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ThumbnailComponent extends JComponent {
-    @NonNls
-    private static final String FORMAT_PROP = "format";
-    @NonNls
-    private static final String FILE_SIZE_PROP = "fileSize";
-    @NonNls
-    private static final String FILE_NAME_PROP = "fileName";
-    @NonNls
-    private static final String DIRECTORY_PROP = "directory";
-    @NonNls
-    private static final String IMAGES_COUNT_PROP = "imagesCount";
+  @NonNls
+  private static final String FORMAT_PROP = "format";
+  @NonNls
+  private static final String FILE_SIZE_PROP = "fileSize";
+  @NonNls
+  private static final String FILE_NAME_PROP = "fileName";
+  @NonNls
+  private static final String DIRECTORY_PROP = "directory";
+  @NonNls
+  private static final String IMAGES_COUNT_PROP = "imagesCount";
 
-    /**
-     * @see #getUIClassID
-     * @see #readObject
-     */
-    @NonNls
-    private static final String uiClassID = "ThumbnailComponentUI";
+  /**
+   * @see #getUIClassID
+   * @see #readObject
+   */
+  @NonNls
+  private static final String uiClassID = "ThumbnailComponentUI";
 
-    static {
-        UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI.class.getName());
+  static {
+    UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI.class.getName());
+  }
+
+  /**
+   * Image component for rendering thumbnail image.
+   */
+  private final ImageComponent imageComponent = new ImageComponent();
+
+  private String format;
+  private long fileSize;
+  private String fileName;
+  private boolean directory;
+  private int imagesCount;
+
+  public ThumbnailComponent() {
+    updateUI();
+  }
+
+  public ImageComponent getImageComponent() {
+    return imageComponent;
+  }
+
+  public String getFormat() {
+    return format;
+  }
+
+  public void setFormat(String format) {
+    String oldValue = this.format;
+    if (oldValue != null && !oldValue.equals(format) || oldValue == null && format != null) {
+      this.format = format;
+      firePropertyChange(FORMAT_PROP, oldValue, this.format);
     }
+  }
 
-    /**
-     * Image component for rendering thumbnail image.
-     */
-    private final ImageComponent imageComponent = new ImageComponent();
+  public long getFileSize() {
+    return fileSize;
+  }
 
-    private String format;
-    private long fileSize;
-    private String fileName;
-    private boolean directory;
-    private int imagesCount;
-
-    public ThumbnailComponent() {
-        updateUI();
+  public void setFileSize(long fileSize) {
+    long oldValue = this.fileSize;
+    if (oldValue != fileSize) {
+      this.fileSize = fileSize;
+      firePropertyChange(FILE_SIZE_PROP, Long.valueOf(oldValue), Long.valueOf(this.fileSize));
     }
+  }
 
-    public ImageComponent getImageComponent() {
-        return imageComponent;
-    }
+  public String getFileName() {
+    return fileName;
+  }
 
-    public String getFormat() {
-        return format;
+  public void setFileName(String fileName) {
+    String oldValue = this.fileName;
+    if (oldValue != null && !oldValue.equals(fileName) || oldValue == null && fileName != null) {
+      this.fileName = fileName;
+      firePropertyChange(FILE_NAME_PROP, oldValue, this.fileName);
     }
+  }
 
-    public void setFormat(String format) {
-        String oldValue = this.format;
-        if (oldValue != null && !oldValue.equals(format) || oldValue == null && format != null) {
-            this.format = format;
-            firePropertyChange(FORMAT_PROP, oldValue, this.format);
-        }
-    }
+  public boolean isDirectory() {
+    return directory;
+  }
 
-    public long getFileSize() {
-        return fileSize;
+  public void setDirectory(boolean directory) {
+    boolean oldValue = this.directory;
+    if (oldValue != directory) {
+      this.directory = directory;
+      firePropertyChange(DIRECTORY_PROP, oldValue, this.directory);
     }
+  }
 
-    public void setFileSize(long fileSize) {
-        long oldValue = this.fileSize;
-        if (oldValue != fileSize) {
-            this.fileSize = fileSize;
-            firePropertyChange(FILE_SIZE_PROP, Long.valueOf(oldValue), Long.valueOf(this.fileSize));
-        }
-    }
+  public int getImagesCount() {
+    return imagesCount;
+  }
 
-    public String getFileName() {
-        return fileName;
+  public void setImagesCount(int imagesCount) {
+    int oldValue = this.imagesCount;
+    if (oldValue != imagesCount) {
+      this.imagesCount = imagesCount;
+      firePropertyChange(IMAGES_COUNT_PROP, oldValue, this.imagesCount);
     }
+  }
 
-    public void setFileName(String fileName) {
-        String oldValue = this.fileName;
-        if (oldValue != null && !oldValue.equals(fileName) || oldValue == null && fileName != null) {
-            this.fileName = fileName;
-            firePropertyChange(FILE_NAME_PROP, oldValue, this.fileName);
-        }
-    }
+  public String getFileSizeText() {
+    return StringUtil.formatFileSize(fileSize);
+  }
 
-    public boolean isDirectory() {
-        return directory;
-    }
+  @Override
+  public void updateUI() {
+    setUI(UIManager.getUI(this));
+  }
 
-    public void setDirectory(boolean directory) {
-        boolean oldValue = this.directory;
-        if (oldValue != directory) {
-            this.directory = directory;
-            firePropertyChange(DIRECTORY_PROP, oldValue, this.directory);
-        }
-    }
-
-    public int getImagesCount() {
-        return imagesCount;
-    }
-
-    public void setImagesCount(int imagesCount) {
-        int oldValue = this.imagesCount;
-        if (oldValue != imagesCount) {
-            this.imagesCount = imagesCount;
-            firePropertyChange(IMAGES_COUNT_PROP, oldValue, this.imagesCount);
-        }
-    }
-
-    public String getFileSizeText() {
-        return StringUtil.formatFileSize(fileSize);
-    }
-
-    @Override
-    public void updateUI() {
-        setUI(UIManager.getUI(this));
-    }
-
-    @Override
-    public String getUIClassID() {
-        return uiClassID;
-    }
+  @Override
+  public String getUIClassID() {
+    return uiClassID;
+  }
 }

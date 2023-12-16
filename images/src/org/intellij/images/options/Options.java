@@ -26,27 +26,27 @@ import java.beans.PropertyChangeListener;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface Options extends Cloneable {
-    @NotNull
-    EditorOptions getEditorOptions();
+  @NotNull
+  EditorOptions getEditorOptions();
 
-    @NotNull
-    ExternalEditorOptions getExternalEditorOptions();
+  @NotNull
+  ExternalEditorOptions getExternalEditorOptions();
 
-    /**
-     * Option injection from other options.
-     *
-     * @param options Other options
-     */
-    void inject(@NotNull Options options);
+  /**
+   * Option injection from other options.
+   *
+   * @param options Other options
+   */
+  void inject(@NotNull Options options);
 
-    void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parent);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parent);
 
-    /**
-     * Set option by string representation.
-     *
-     * @param name  Name of option
-     * @param value Value
-     * @return {@code true} if option is matched and setted.
-     */
-    boolean setOption(@NotNull String name, Object value);
+  /**
+   * Set option by string representation.
+   *
+   * @param name  Name of option
+   * @param value Value
+   * @return {@code true} if option is matched and setted.
+   */
+  boolean setOption(@NotNull String name, Object value);
 }

@@ -31,9 +31,10 @@ public final class ImageEditorManagerImpl {
   }
 
   @NotNull
-  public static ImageEditorUI createImageEditorUI(BufferedImage image){
+  public static ImageEditorUI createImageEditorUI(BufferedImage image) {
     return createImageEditorUI(image, null);
   }
+
   @NotNull
   public static ImageEditorUI createImageEditorUI(BufferedImage image, @Nullable String format) {
     ImageEditorUI ui = new ImageEditorUI(null);

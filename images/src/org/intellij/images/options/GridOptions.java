@@ -26,30 +26,25 @@ import java.awt.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface GridOptions extends Cloneable {
-    @NonNls
-    String ATTR_PREFIX = "Editor.Grid.";
-    @NonNls
-    String ATTR_SHOW_DEFAULT = ATTR_PREFIX + "showDefault";
-    @NonNls
-    String ATTR_LINE_ZOOM_FACTOR = ATTR_PREFIX + "lineZoomFactor";
-    @NonNls
-    String ATTR_LINE_SPAN = ATTR_PREFIX + "lineSpan";
-    @NonNls
-    String ATTR_LINE_COLOR = ATTR_PREFIX + "lineColor";
+  @NonNls String ATTR_PREFIX = "Editor.Grid.";
+  @NonNls String ATTR_SHOW_DEFAULT = ATTR_PREFIX + "showDefault";
+  @NonNls String ATTR_LINE_ZOOM_FACTOR = ATTR_PREFIX + "lineZoomFactor";
+  @NonNls String ATTR_LINE_SPAN = ATTR_PREFIX + "lineSpan";
+  @NonNls String ATTR_LINE_COLOR = ATTR_PREFIX + "lineColor";
 
-    int DEFAULT_LINE_ZOOM_FACTOR = 3;
-    int DEFAULT_LINE_SPAN = 1;
-    Color DEFAULT_LINE_COLOR = JBColor.DARK_GRAY;
+  int DEFAULT_LINE_ZOOM_FACTOR = 3;
+  int DEFAULT_LINE_SPAN = 1;
+  Color DEFAULT_LINE_COLOR = JBColor.DARK_GRAY;
 
-    boolean isShowDefault();
+  boolean isShowDefault();
 
-    int getLineZoomFactor();
+  int getLineZoomFactor();
 
-    int getLineSpan();
+  int getLineSpan();
 
-    Color getLineColor();
+  Color getLineColor();
 
-    void inject(GridOptions options);
+  void inject(GridOptions options);
 
-    boolean setOption(String name, Object value);
+  boolean setOption(String name, Object value);
 }
