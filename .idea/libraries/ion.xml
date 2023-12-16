@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="ion" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:ion-java:1.8.2-4">
+    <properties maven-id="com.amazon.ion:ion-java:1.11.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ion-java/1.8.2-4/ion-java-1.8.2-4.jar">
-          <sha256sum>d7e6ae22a82bf0c99bb3cfbf5090f112d94acf6bc5353c90414428f4b9b854d9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.0/ion-java-1.11.0.jar">
+          <sha256sum>edfe41ebf7e3c460ab9127578a92874126e93b5732eab7115ceeb568031ee348</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/ion" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ion-java/1.8.2-4/ion-java-1.8.2-4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.0/ion-java-1.11.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ion-java/1.8.2-4/ion-java-1.8.2-4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.0/ion-java-1.11.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

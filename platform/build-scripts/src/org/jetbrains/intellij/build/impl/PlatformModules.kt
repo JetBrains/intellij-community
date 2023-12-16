@@ -187,7 +187,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.rt",
     "intellij.platform.util.trove",
   ), productLayout = productLayout, layout = layout)
-  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
+  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
 
   // skiko-runtime needed for Compose
   layout.withModuleLibrary(
