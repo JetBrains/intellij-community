@@ -538,22 +538,16 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return thumbnailView.getProject();
     }
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VirtualFile[] selectedFiles = getSelectedFiles();
+      return (DataProvider)slowId -> getSlowData(slowId, selectedFiles);
+    }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       VirtualFile[] selectedFiles = getSelectedFiles();
       return selectedFiles.length > 0 ? selectedFiles[0] : null;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getSelectedFiles();
-    }
-    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return getData(CommonDataKeys.PSI_ELEMENT.getName());
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      VirtualFile[] selectedFiles = getSelectedFiles();
-      return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
-    }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return getSelectedElements();
     }
     else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile[] selectedFiles = getSelectedFiles();
@@ -588,6 +582,19 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
       return thumbnailView;
     }
 
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, VirtualFile @NotNull [] selectedFiles) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return getData(CommonDataKeys.PSI_ELEMENT.getName());
+    }
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return getSelectedElements();
+    }
     return null;
   }
 
@@ -632,7 +639,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   private final class ThumbnailNavigatable implements Navigatable {
     private final VirtualFile file;
 
-    ThumbnailNavigatable(VirtualFile file) {
+    ThumbnailNavigatable(@Nullable VirtualFile file) {
       this.file = file;
     }
 
