@@ -310,6 +310,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt K",         "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
       {"shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt UP",        "MoveStatementUp", "ResizeToolWindowUp"},
+      {"ctrl SLASH",               "AIAssistant.Editor.GenerateCodeInplace", "Graph.ActualSize"},
+      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "HippieCompletion"},
     }),
     Map.entry("Visual Studio OSX", new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
@@ -348,6 +350,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "SECOND_STROKE_SHORTCUT", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta E",                   "SECOND_STROKE_SHORTCUT", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
       {"meta T",                   "SearchEverywhere", "Terminal.NewTab"},
+      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "HippieCompletion"},
     }),
     Map.entry("Default for XWin", new String[][]{
       {"ctrl SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},
