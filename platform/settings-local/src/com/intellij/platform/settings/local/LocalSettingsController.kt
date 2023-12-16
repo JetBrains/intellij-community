@@ -8,6 +8,7 @@ import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.settings.*
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.TestOnly
 
 private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
+
+private val delegateToSettingsController = System.getProperty("idea.settings.cache.delegate.to.controller", "false").toBoolean()
 
 private class SettingsControllerMediator : SettingsController, SettingsSavingComponent {
   private val first: ChainedSettingsController
@@ -36,8 +39,12 @@ private class SettingsControllerMediator : SettingsController, SettingsSavingCom
   }
 
   override fun createStateStorage(collapsedPath: String): Any? {
-    //return StateStorageBackedByController()
-    return null
+    if (delegateToSettingsController && collapsedPath == StoragePathMacros.CACHE_FILE) {
+      return StateStorageBackedByController(first)
+    }
+    else {
+      return null
+    }
   }
 
   override suspend fun save() {
@@ -54,7 +61,7 @@ internal fun clearCacheStore() {
   SETTINGS_CONTROLLER_EP_NAME.findExtensionOrFail(LocalSettingsController::class.java).clear()
 }
 
-private class LocalSettingsController(coroutineScope: CoroutineScope) : ChainedSettingsController, SettingsSavingComponent {
+internal class LocalSettingsController(coroutineScope: CoroutineScope) : ChainedSettingsController, SettingsSavingComponent {
   private val componentManager: ComponentManager = ApplicationManager.getApplication()
 
   private val cacheStore = CacheStateStorageService(MvStoreStorage(coroutineScope))

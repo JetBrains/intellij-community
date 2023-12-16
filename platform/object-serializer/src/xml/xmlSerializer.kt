@@ -8,6 +8,7 @@ import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.*
 import kotlinx.serialization.Serializable
 import org.jdom.Element
@@ -23,6 +24,7 @@ import kotlin.concurrent.write
 
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
 
+@Suppress("TestOnlyProblems")
 private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
   var result = skipDefaultsSerializationFilter.get()?.get()
   if (result == null) {
@@ -46,12 +48,12 @@ private class JdomSerializerImpl : JdomSerializer {
   override fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
     try {
       val binding = serializer.getRootBinding(obj.javaClass)
-      return if (binding is BeanBinding) {
-        // top level expects not null (null indicates error, empty element will be omitted)
-        binding.serialize(obj, createElementIfEmpty, filter)
+      if (binding is BeanBinding) {
+        // top level expects not null (null indicates error, an empty element will be omitted)
+        return binding.serialize(obj, createElementIfEmpty, filter)
       }
       else {
-        binding.serialize(obj, null, filter) as Element
+        return binding.serialize(obj, null, filter) as Element
       }
     }
     catch (e: SerializationException) {
@@ -82,6 +84,19 @@ private class JdomSerializerImpl : JdomSerializer {
     beanBinding.serializeInto(obj, target, filter ?: getDefaultSerializationFilter())
   }
 
+  override fun <T> deserialize(element: XmlElement, clazz: Class<T>): T {
+    try {
+      @Suppress("UNCHECKED_CAST")
+      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
+    }
+    catch (e: SerializationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      throw XmlSerializationException("Cannot deserialize class ${clazz.name}", e)
+    }
+  }
+
   override fun <T> deserialize(element: Element, clazz: Class<T>): T {
     if (clazz == Element::class.java) {
       @Suppress("UNCHECKED_CAST")
@@ -102,6 +117,18 @@ private class JdomSerializerImpl : JdomSerializer {
 
   override fun clearSerializationCaches() {
     clearBindingCache()
+  }
+
+  override fun deserializeInto(obj: Any, element: XmlElement) {
+    try {
+      (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)
+    }
+    catch (e: SerializationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      throw XmlSerializationException(e)
+    }
   }
 
   override fun deserializeInto(obj: Any, element: Element) {
@@ -154,7 +181,7 @@ private abstract class OldBindingProducer<ROOT_BINDING> {
         return it
       }
 
-      createRootBinding(aClass, originalType, cacheKey, cache)
+      createRootBinding(aClass = aClass, type = originalType, cacheKey = cacheKey, map = cache)
     }
   }
 
@@ -199,7 +226,7 @@ private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
 }
 
 /**
- * used by MPS. Do not use if not approved.
+ * Used by MPS. Do not use if not approved.
  */
 fun clearBindingCache() {
   serializer.bindingProducer.clearBindingCache()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.xml
 
 import com.intellij.openapi.components.BaseState
@@ -11,8 +11,10 @@ import com.intellij.util.xmlb.SerializationFilter
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
+@Internal
+class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
   private val beanBinding = BaseBeanBinding(beanClass)
 
   // only for accessor, not field
@@ -40,7 +42,10 @@ internal class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanCla
     }
   }
 
-  fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?, excludedPropertyNames: Collection<String>? = null): Element? {
+  fun serializeBaseStateInto(o: BaseState,
+                             @Suppress("LocalVariableName") _element: Element?,
+                             filter: SerializationFilter?,
+                             excludedPropertyNames: Collection<String>? = null): Element? {
     var element = _element
     // order of bindings must be used, not order of properties
     var bindingIndices: IntList? = null

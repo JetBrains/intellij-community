@@ -235,7 +235,7 @@ open class StateStorageManagerImpl(
                                             usePathMacroManager: Boolean,
                                             rootTagName: String?): StateStorage {
     compoundStreamProvider.deleteIfObsolete(collapsedPath, roamingType)
-    if (roamingType == RoamingType.DISABLED && settingsController != null && collapsedPath == StoragePathMacros.CACHE_FILE) {
+    if (roamingType == RoamingType.DISABLED && settingsController != null) {
       settingsController.createStateStorage(collapsedPath)?.let {
         return it  as StateStorage
       }

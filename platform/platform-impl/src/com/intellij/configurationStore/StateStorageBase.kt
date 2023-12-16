@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
@@ -20,19 +20,26 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected open val saveStorageDataOnReload: Boolean
     get() = true
 
-  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
-    return getState(component, componentName, stateClass, reload, mergeInto)
+  final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+    return deserializeState(
+      serializedState = getSerializedState(storageData = getStorageData(reload),
+                                           component = component,
+                                           componentName = componentName,
+                                           archive = false),
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+    )
   }
 
   fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, reload: Boolean = false, mergeInto: T? = null): T? {
-    return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive = false), stateClass, mergeInto)
+    return getState(component, componentName, stateClass, mergeInto, reload)
   }
 
   @ApiStatus.Internal
   fun getStorageData(): T = getStorageData(false)
 
-  open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
-    return com.intellij.configurationStore.deserializeState(serializedState, stateClass, mergeInto)
+  fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
+    return deserializeState(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
   }
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.writeAction
@@ -20,7 +20,7 @@ private suspend fun StateStorageBase<*>.setStateAndSave(componentName: String, s
   val saveSessionProducer = createSaveSessionProducer()!!
   saveSessionProducer.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
   writeAction {
-    saveSessionProducer.createSaveSession()!!.save()
+    saveSessionProducer.createSaveSession()!!.saveBlocking()
   }
 }
 

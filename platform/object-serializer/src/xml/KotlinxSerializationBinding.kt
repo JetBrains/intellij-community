@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
@@ -23,7 +24,8 @@ private val json = Json {
 private val lookup = MethodHandles.lookup()
 private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 
-internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding() {
+@Internal
+class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding() {
   private val serializer: KSerializer<Any>
 
   init {
@@ -35,12 +37,14 @@ internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializ
 
   override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any {
     val element = Element("state")
-    val json = json.encodeToString(serializer, o)
+    val json = encodeToJson(o)
     if (!json.isEmpty() && json != "{\n}") {
       element.addContent(CDATA(json))
     }
     return element
   }
+
+  fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
 
   override fun isBoundTo(element: Element): Boolean {
     throw UnsupportedOperationException("Only root object is supported")

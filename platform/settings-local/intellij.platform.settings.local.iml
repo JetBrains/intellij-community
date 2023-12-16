@@ -104,5 +104,9 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
   </component>
 </module>

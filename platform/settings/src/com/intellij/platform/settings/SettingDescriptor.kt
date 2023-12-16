@@ -5,6 +5,7 @@ package com.intellij.platform.settings
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class SettingDescriptor<T : Any> private constructor(
   /**
@@ -58,6 +59,12 @@ class SettingDescriptor<T : Any> private constructor(
   }
 
   override fun toString() = "SettingDescriptor(key=$key, pluginId=$pluginId, tags=$tags, serializer=$serializer)"
+
+  @Internal
+  // impl note - even for a internal usage, we do not allow providing arbitrary name here; that's why "sub"
+  fun withSubName(name: String): SettingDescriptor<T> {
+    return SettingDescriptor(key = "$key.$name", pluginId = pluginId, tags = tags, serializer = serializer)
+  }
 }
 
 sealed interface Setting<T : Any> {

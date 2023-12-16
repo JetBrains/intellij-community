@@ -4,7 +4,7 @@
       serviceInterface="com.intellij.platform.settings.SettingsController"
       serviceImplementation="com.intellij.platform.settings.local.SettingsControllerMediator"
     />
-    <settingsController implementation="com.intellij.platform.settings.local.LocalSettingsController"/>
+    <settingsController id="local" implementation="com.intellij.platform.settings.local.LocalSettingsController"/>
 
     <cachesInvalidator implementation="com.intellij.platform.settings.local.CacheStateStorageInvalidator"/>
   </extensions>

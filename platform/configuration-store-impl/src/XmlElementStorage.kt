@@ -155,7 +155,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     private inner class SaveExecutor(private val elements: MutableList<Element>?,
                                      private val writer: DataWriter?,
                                      private val stateMap: StateMap) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
-      override fun save() {
+      override fun saveBlocking() {
         var isSavedLocally = false
         val provider = storage.provider
         if (elements == null) {

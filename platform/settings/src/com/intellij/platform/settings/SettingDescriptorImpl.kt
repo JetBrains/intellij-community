@@ -117,7 +117,8 @@ private class SettingImpl<T : Any>(
   override suspend fun set(value: T?) = controller.setItem(settingDescriptor, value)
 }
 
-internal object StringSettingSerializerDescriptor : SettingSerializerDescriptor<String>, SettingValueSerializerImpl<String> {
+@Internal
+object StringSettingSerializerDescriptor : SettingSerializerDescriptor<String>, SettingValueSerializerImpl<String> {
   override val serializer: KSerializer<String> = serializer()
 
   override fun toString(): String = "StringSettingValueSerializer"

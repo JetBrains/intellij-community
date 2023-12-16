@@ -340,8 +340,12 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
     throw ReadOnlyModificationException(file, object : SaveSession {
-      override fun save() {
-        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
+      override fun saveBlocking() {
+        doWrite(requestor = requestor,
+                file = file,
+                dataWriterOrByteArray = byteArray,
+                lineSeparator = lineSeparator,
+                prependXmlProlog = prependXmlProlog)
       }
     })
   }
@@ -389,7 +393,7 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
     }
     else {
       throw ReadOnlyModificationException(virtualFile, object : SaveSession {
-        override fun save() {
+        override fun saveBlocking() {
           // caller must wrap into undo transparent and write action
           virtualFile.delete(requestor)
         }

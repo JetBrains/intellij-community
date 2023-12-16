@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import org.jdom.Element
@@ -59,7 +60,11 @@ interface JdomSerializer {
 
   fun <T> deserialize(element: Element, clazz: Class<T>): T
 
+  fun <T> deserialize(element: XmlElement, clazz: Class<T>): T
+
   fun deserializeInto(obj: Any, element: Element)
+
+  fun deserializeInto(obj: Any, element: XmlElement)
 
   fun <T> deserialize(url: URL, aClass: Class<T>): T
 

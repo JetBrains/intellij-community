@@ -15,7 +15,7 @@ import java.nio.file.Path
 object DevIdea {
   @JvmStatic
   fun main(args: Array<String>) {
-    DbConverter.main(arrayOf(SystemProperties.getUserHome() + "/projects/idea/out/dev-data/idea/system/app-cache.db"))
+    DbConverter.main(arrayOf(SystemProperties.getUserHome() + "/projects/idea/out/dev-data/idea/system/app-cache-settings.db"))
   }
 }
 

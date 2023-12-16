@@ -84,6 +84,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return serializeInto(object, createElementIfEmpty ? new Element(myTagName) : null, filter);
   }
 
+  public NestedBinding[] getBindings() {
+    return bindings;
+  }
+
   public @Nullable Element serializeInto(@NotNull Object o, @Nullable Element element, @Nullable SerializationFilter filter) {
     for (NestedBinding binding : bindings) {
       if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(binding.getAccessor(), o)) {
@@ -95,11 +99,11 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return element;
   }
 
-  protected final @Nullable Element serializePropertyInto(@NotNull NestedBinding binding,
-                                                          @NotNull Object o,
-                                                          @Nullable Element element,
-                                                          @Nullable SerializationFilter filter,
-                                                          boolean isFilterPropertyItself) {
+  public final @Nullable Element serializePropertyInto(@NotNull NestedBinding binding,
+                                                       @NotNull Object o,
+                                                       @Nullable Element element,
+                                                       @Nullable SerializationFilter filter,
+                                                       boolean isFilterPropertyItself) {
     Accessor accessor = binding.getAccessor();
     Property property = accessor.getAnnotation(Property.class);
     if (property == null || !property.alwaysWrite()) {

@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Internal
 public final class XmlSerializerImpl {
   public abstract static class XmlSerializerBase implements Serializer {
     @Override
@@ -33,7 +35,7 @@ public final class XmlSerializerImpl {
 
     @Override
     public final synchronized @NotNull Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor) {
-      // do not cache because client will cache it in any case
+      // do not cache because a client will cache it in any case
       Binding binding = createClassBinding(aClass, accessor, originalType);
       if (binding == null) {
         // BeanBinding doesn't depend on accessor, get from cache or compute
@@ -132,7 +134,7 @@ public final class XmlSerializerImpl {
       Class<?> aClass = object.getClass();
       Binding binding = serializer.getRootBinding(aClass, aClass);
       if (binding instanceof BeanBinding) {
-        // top level expects not null (null indicates error, empty element will be omitted)
+        // top level expects not null (null indicates error, an empty element will be omitted)
         return ((BeanBinding)binding).serialize(object, true, filter);
       }
       else {

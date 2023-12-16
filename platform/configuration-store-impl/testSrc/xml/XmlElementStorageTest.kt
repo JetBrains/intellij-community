@@ -31,7 +31,7 @@ class XmlElementStorageTest {
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
     val externalizationSession = storage.createSaveSessionProducer()!!
     externalizationSession.setState(null, "test", newState)
-    externalizationSession.createSaveSession()!!.save()
+    externalizationSession.createSaveSession()!!.saveBlocking()
     assertThat(storage.savedElement).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()

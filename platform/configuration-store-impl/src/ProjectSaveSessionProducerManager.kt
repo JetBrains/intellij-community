@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
@@ -22,8 +22,8 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val saveResult = writeAction {
       val r = SaveResult()
-      saveSessions(extraSessions, r)
-      saveSessions(saveSessions, r)
+      blockingSaveSessions(extraSessions, r)
+      blockingSaveSessions(saveSessions, r)
       r
     }
     validate(saveResult)
@@ -55,7 +55,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     writeAction {
       val r = SaveResult()
       for (entry in oldList) {
-        executeSave(entry.session, r)
+        executeSaveBlocking(entry.session, r)
       }
       r
     }.appendTo(saveResult)
