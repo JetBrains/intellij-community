@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo
-import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -28,7 +27,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 import javax.swing.JComponent
-import kotlin.io.path.isRegularFile
 
 sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
@@ -99,11 +97,12 @@ sealed interface K2MoveTargetModel {
         override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
             super.buildPanel(project, onError)
             fun updateFileChooser() {
-                (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper)?.directory?.virtualFile?.path?.let { dirPath ->
-                    val currentFileName = fileChooser.text.substringAfterLast("/")
-                    val fullPath = "$dirPath/$currentFileName"
-                    if (fullPath != fileChooser.text) fileChooser.text = fullPath
-                }
+                val itemWrapper = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper) ?: return
+                val existingPath = itemWrapper.directory?.virtualFile?.path ?: return
+                val postFix = itemWrapper.postfix?.removePrefix("\\") ?: "" // post fix in case real directory doesn't exist yet
+                val fileName = fileChooser.text.substringAfterLast("/")
+                val fullPath = "$existingPath/$postFix/$fileName"
+                if (fullPath != fileChooser.text) fileChooser.text = fullPath
             }
             destinationChooser.comboBox.addActionListener {
                 updateFileChooser()
