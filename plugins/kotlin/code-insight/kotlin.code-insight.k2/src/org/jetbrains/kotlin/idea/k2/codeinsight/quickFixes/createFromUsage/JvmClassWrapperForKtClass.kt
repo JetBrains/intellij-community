@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
  * For the cross language support, we use [JvmClass]. However, for K2K, the conversion between [KtClassOrObject] and [JvmClass] is not
  * unnecessary because both the request and creation sides use [KtClassOrObject]. This class helps us to avoid the unnecessary conversion.
  */
-class JvmClassWrapperForKtClass(private val ktClass: KtClassOrObject) : JvmClass {
+internal class JvmClassWrapperForKtClass(private val ktClass: KtClassOrObject) : JvmClass {
     override fun getSourceElement(): PsiElement = ktClass
 
     override fun getAnnotations(): Array<JvmAnnotation> = emptyArray()

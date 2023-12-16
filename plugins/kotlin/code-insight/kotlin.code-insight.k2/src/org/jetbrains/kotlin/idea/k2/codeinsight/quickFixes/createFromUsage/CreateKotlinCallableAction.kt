@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -73,7 +74,7 @@ internal class CreateKotlinCallableAction(
                 containerClassFqName,
             )
             CreateKotlinCallablePsiEditor(
-                project, editor, pointerToContainer, callableInfo,
+                project, pointerToContainer, callableInfo,
             ).execute()
         }
     }
@@ -126,7 +127,7 @@ internal class CreateKotlinCallableAction(
     }
 
     private fun KtElement.getModifierListAsString(): String =
-        KotlinModifierBuilder(this).apply { addJvmModifiers(request.modifiers) }.modifierList.text
+        KotlinModifierBuilder(this).apply { addJvmModifiers(request.modifiers.filterNot { it == JvmModifier.PUBLIC }) }.modifierList.text
 
     private fun renderParameterList(): String {
         assert(candidatesOfParameterNames.size == candidatesOfRenderedParameterTypes.size)

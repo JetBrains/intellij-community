@@ -16,6 +16,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
  * unnecessary because both the request and creation sides use [KtType]. This class helps us to avoid the unnecessary conversion.
  */
 context (KtAnalysisSession)
-class JvmTypeWrapperForKtType(val ktType: KtType) : JvmType {
+internal class JvmTypeWrapperForKtType(val ktType: KtType) : JvmType {
     override fun getAnnotations(): Array<JvmAnnotation> = emptyArray()
 }
