@@ -5,6 +5,7 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -40,8 +41,7 @@ internal suspend fun setSavedBuildNumber(value: BuildNumber?,
   settingsController.setItem(settingDescriptor, value?.asString())
 }
 
-@ApiStatus.Internal
-class BundledPluginsState : ApplicationInitializedListener {
+private class BundledPluginsState : ApplicationInitializedListener {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -53,7 +53,9 @@ class BundledPluginsState : ApplicationInitializedListener {
       // postpone avoiding getting PropertiesComponent and writing to disk too early
       delay(1.minutes)
 
-      saveBundledPluginsState()
+      if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+        saveBundledPluginsState()
+      }
     }
   }
 }
