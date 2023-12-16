@@ -4,6 +4,7 @@
 package com.intellij.platform.settings
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 class SettingDescriptor<T : Any> private constructor(
   /**
@@ -60,7 +61,8 @@ class SettingDescriptor<T : Any> private constructor(
 }
 
 sealed interface Setting<T : Any> {
-  suspend fun get(): T?
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun get(): T?
 
   suspend fun set(value: T?)
 }

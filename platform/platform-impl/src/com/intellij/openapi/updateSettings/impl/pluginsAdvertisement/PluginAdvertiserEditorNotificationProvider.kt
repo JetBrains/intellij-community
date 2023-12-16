@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -20,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
@@ -47,12 +45,10 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return null
     }
 
-    val suggestionData = runBlockingCancellable {
-      getSuggestionData(project = project,
-                        activeProductCode = serviceAsync<ApplicationInfo>().build.productCode,
-                        fileName = file.name,
-                        fileType = file.fileType)
-    }
+    val suggestionData = getSuggestionData(project = project,
+                                           activeProductCode = service<ApplicationInfo>().build.productCode,
+                                           fileName = file.name,
+                                           fileType = file.fileType)
 
     if (suggestionData == null) {
       project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
@@ -218,20 +214,20 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName("com.intellij.pluginSuggestionProvider")
 
 @VisibleForTesting
-suspend fun getSuggestionData(
+fun getSuggestionData(
   project: Project,
   activeProductCode: String,
   fileName: String,
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
-  return serviceAsync<PluginAdvertiserExtensionsStateService>()
+  return service<PluginAdvertiserExtensionsStateService>()
     .createExtensionDataProvider(project)
     .requestExtensionData(fileName, fileType)?.let {
       getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType)
     }
 }
 
-private suspend fun getSuggestionData(
+private fun getSuggestionData(
   project: Project,
   extensionsData: PluginAdvertiserExtensionsData,
   activeProductCode: String,

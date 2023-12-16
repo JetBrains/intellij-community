@@ -41,7 +41,6 @@ internal class MvStoreStorage(coroutineScope: CoroutineScope) : Storage {
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       coroutineScope.coroutineContext.job.invokeOnCompletion {
-        // on completion
         map.store.close()
       }
     }

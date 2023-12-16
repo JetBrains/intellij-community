@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
@@ -78,9 +77,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   }
 
   init {
-    pluginCache = runBlockingCancellable {
-      serviceAsync<SettingsController>().getItem(settingDescriptor)
-    }?.plugins ?: LinkedHashMap()
+    pluginCache = service<SettingsController>().getItem(settingDescriptor)?.plugins ?: LinkedHashMap()
   }
 
   override suspend fun save() {
@@ -167,7 +164,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
      * The return value of null indicates that the locally available data is not enough to produce a suggestion,
      * and we need to fetch up-to-date data from the marketplace.
      */
-    internal suspend fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
+    internal fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
       fun noSuggestions() = PluginAdvertiserExtensionsData(fileName, emptySet())
 
       val fullExtension = getFullExtension(fileName)

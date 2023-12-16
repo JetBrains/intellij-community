@@ -29,7 +29,7 @@ private val LOG: Logger
 @ApiStatus.Internal
 const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
 
-private suspend fun getSavedBuildNumber(settingsController: SettingsController,
+private fun getSavedBuildNumber(settingsController: SettingsController,
                                         settingDescriptor: SettingDescriptor<String>): BuildNumber? {
   return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
 }

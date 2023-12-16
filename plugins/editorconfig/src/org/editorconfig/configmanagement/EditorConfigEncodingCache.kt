@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
@@ -41,9 +40,7 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
   }
 
   init {
-    charsetMap = runBlockingCancellable {
-      ConcurrentHashMap(serviceAsync<SettingsController>().getItem(setting) ?: emptyMap())
-    }
+    charsetMap = ConcurrentHashMap(service<SettingsController>().getItem(setting) ?: emptyMap())
   }
 
   override suspend fun save() {

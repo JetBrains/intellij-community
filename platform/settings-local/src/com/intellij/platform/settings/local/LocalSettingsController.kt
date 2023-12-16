@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly
 private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
 
-private class SettingsControllerMediator : SettingsController {
+private class SettingsControllerMediator : SettingsController, SettingsSavingComponent {
   private val first: ChainedSettingsController
   private val chain: List<ChainedSettingsController>
 
@@ -27,7 +27,7 @@ private class SettingsControllerMediator : SettingsController {
     chain = extensions.subList(1, extensions.size)
   }
 
-  override suspend fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
+  override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
     return first.getItem(key, chain)
   }
 
@@ -38,6 +38,14 @@ private class SettingsControllerMediator : SettingsController {
   override fun createStateStorage(collapsedPath: String): Any? {
     //return StateStorageBackedByController()
     return null
+  }
+
+  override suspend fun save() {
+    for (controller in SETTINGS_CONTROLLER_EP_NAME.extensionList) {
+      if (controller is SettingsSavingComponent) {
+        controller.save()
+      }
+    }
   }
 }
 
@@ -60,7 +68,7 @@ private class LocalSettingsController(coroutineScope: CoroutineScope) : ChainedS
     cacheStore.save()
   }
 
-  override suspend fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T? {
+  override fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T? {
     for (tag in key.tags) {
       if (tag is PropertyManagerAdapterTag) {
         val propertyManager = componentManager.getService(PropertiesComponent::class.java)

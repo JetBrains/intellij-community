@@ -7,10 +7,8 @@ import com.intellij.ide.plugins.advertiser.FeaturePluginData
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.mapSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
@@ -30,9 +28,7 @@ class PluginFeatureService {
     @Suppress("FunctionName")
     @RequiresBlockingContext
     fun __getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
-      return runBlockingCancellable {
-        serviceAsync<PluginFeatureService>().getPluginForFeature(featureType, implementationName)
-      }
+      return getInstance().getPluginForFeature(featureType, implementationName)
     }
   }
 
@@ -72,7 +68,7 @@ class PluginFeatureService {
     }
   }
 
-  suspend fun getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
+  fun getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
     return settingGroup.setting(featureType, serializer).get()?.get(implementationName)
   }
 }

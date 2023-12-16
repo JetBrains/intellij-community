@@ -112,7 +112,7 @@ private class SettingImpl<T : Any>(
     group.createSettingDescriptor(subKey = subKey, serializer = serializer)
   }
 
-  override suspend fun get(): T? = controller.getItem(settingDescriptor)
+  override fun get(): T? = controller.getItem(settingDescriptor)
 
   override suspend fun set(value: T?) = controller.setItem(settingDescriptor, value)
 }
