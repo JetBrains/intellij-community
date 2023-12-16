@@ -250,7 +250,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -265,7 +265,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -280,7 +280,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
@@ -295,7 +295,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             LOG.info(e);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            LOG.error(new Exception("error when processing " + event + " by " + listener.getClass(), e));
           }
         }
       }
