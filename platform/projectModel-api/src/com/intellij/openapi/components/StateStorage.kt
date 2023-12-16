@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.configurationStore.SaveSessionProducer
@@ -9,8 +9,8 @@ interface StateStorage {
 
   /**
    * You can call this method only once.
-   * If state exists and not archived - not-null result.
-   * If doesn't exists or archived - null result.
+   * If the state exists and is not archived - not-null result.
+   * If it doesn't exist or archived - null result.
    */
   fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T?
 
@@ -30,6 +30,7 @@ interface StateStorage {
     return StateStorageChooserEx.Resolution.DO
   }
 }
+
 interface StateStorageChooserEx {
   enum class Resolution {
     DO,

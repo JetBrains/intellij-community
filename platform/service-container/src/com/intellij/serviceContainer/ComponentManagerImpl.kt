@@ -47,7 +47,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -241,6 +240,9 @@ abstract class ComponentManagerImpl(
 
   override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
+
+  @Suppress("FunctionName")
+  open suspend fun _getComponentStore(): IComponentStore = getServiceAsync(IComponentStore::class.java)
 
   internal fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()

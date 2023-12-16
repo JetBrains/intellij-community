@@ -2,7 +2,7 @@
 @file:JvmName("PathManagerEx")
 package com.intellij.openapi.application
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -19,7 +19,7 @@ val appSystemDir: Path
     catch (ignore: NoSuchFileException) {
     }
     catch (e: IOException) {
-      Logger.getInstance(PathManager::class.java).warn(e)
+      logger<PathManager>().warn(e)
     }
     return path
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -209,6 +210,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   final override val componentStore: IProjectStore
     get() = componentStoreValue.value
+
+  final override suspend fun _getComponentStore(): IComponentStore = componentStoreValue.value
 
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
 

@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -267,7 +266,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
 
   span("init app store") {
     // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-    app.stateStore.setPath(configDir)
+    app._getComponentStore().setPath(configDir)
     LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   }
 }

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.*
 import java.util.*
 
-@ApiStatus.NonExtendable
+@NonExtendable
 interface SettingsController {
   suspend fun <T : Any> getItem(key: SettingDescriptor<T>): T?
 
@@ -14,9 +14,12 @@ interface SettingsController {
    */
   @Throws(ReadOnlySettingException::class)
   suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?)
+
+  @Internal
+  fun createStateStorage(collapsedPath: String): Any?
 }
 
-@ApiStatus.Internal
+@Internal
 interface ChainedSettingsController {
   suspend fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T?
 

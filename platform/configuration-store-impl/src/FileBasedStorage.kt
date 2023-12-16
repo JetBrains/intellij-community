@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SafeStAXStreamBuilder
-import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -22,6 +21,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.io.readCharSequence
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.NonNls
@@ -85,7 +85,7 @@ open class FileBasedStorage(file: Path,
   override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(states, this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorage.XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
+    XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
 
     final override fun isSaveAllowed(): Boolean {
       if (!super.isSaveAllowed()) {
@@ -263,6 +263,7 @@ open class FileBasedStorage(file: Path,
       val action = if (blockSaving == null)
         ConfigurationStoreBundle.message("notification.load.settings.action.content.will.be.recreated")
         else ConfigurationStoreBundle.message("notification.load.settings.action.please.correct.file.content")
+      @Suppress("removal", "DEPRECATION")
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                    ConfigurationStoreBundle.message("notification.load.settings.title"),
                    "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
@@ -333,7 +334,7 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
   LOG.debug { "Save ${file.presentableUrl}" }
 
   if (!file.isWritable) {
-    // may be element is not long-lived, so, we must write it to byte array
+    // may be element is not long-lived, so, we must write it to a byte array
     val byteArray = when (dataWriterOrByteArray) {
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
@@ -389,7 +390,7 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
     else {
       throw ReadOnlyModificationException(virtualFile, object : SaveSession {
         override fun save() {
-          // caller must wraps into undo transparent and write action
+          // caller must wrap into undo transparent and write action
           virtualFile.delete(requestor)
         }
       })

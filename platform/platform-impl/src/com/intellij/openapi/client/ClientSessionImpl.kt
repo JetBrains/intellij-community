@@ -149,6 +149,8 @@ abstract class ClientSessionImpl(
   override val componentStore: IComponentStore
     get() = sharedComponentManager.componentStore
 
+  final override suspend fun _getComponentStore(): IComponentStore = componentStore
+
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
   final override fun getMessageBus(): MessageBus {
     error("Not supported")

@@ -34,6 +34,11 @@ private class SettingsControllerMediator : SettingsController {
   override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     return first.setItem(key, value, chain)
   }
+
+  override fun createStateStorage(collapsedPath: String): Any? {
+    //return StateStorageBackedByController()
+    return null
+  }
 }
 
 @TestOnly

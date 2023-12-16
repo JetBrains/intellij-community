@@ -60,7 +60,8 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
             element = JDOMUtil.load(inputStream)
-            providerDataStateChanged(createDataWriterForElement(element!!, toString()), DataStateChanged.LOADED)
+            providerDataStateChanged(createDataWriterForElement(element = element!!,
+                                                                storageFilePathForDebugPurposes = toString()), DataStateChanged.LOADED)
           }
         }
       }

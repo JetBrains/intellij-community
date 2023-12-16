@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.PathMacroManager
@@ -13,6 +14,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
+import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
@@ -24,7 +26,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
-internal class ApplicationPathMacroManager : PathMacroManager(null)
+private class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
@@ -93,7 +95,8 @@ internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfigur
 class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null)
   : StateStorageManagerImpl(rootTagName = "application",
                             macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
-                            componentManager = null) {
+                            componentManager = null,
+                            settingsController = ApplicationManager.getApplication().getService(SettingsController::class.java)) {
   override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
