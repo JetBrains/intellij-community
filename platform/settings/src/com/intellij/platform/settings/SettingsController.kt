@@ -21,18 +21,15 @@ interface SettingsController {
   fun createStateStorage(collapsedPath: String): Any?
 }
 
+/**
+ * Caveat: do not touch telemetry API during init, it is not ready yet.
+ */
 @Internal
 interface ChainedSettingsController {
   fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T?
 
   @Throws(ReadOnlySettingException::class)
   suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>)
-
-  /**
-   * See [com.intellij.ide.caches.CachesInvalidator]
-   */
-  @Suppress("KDocUnresolvedReference")
-  fun invalidateCaches()
 }
 
 class ReadOnlySettingException(val key: SettingDescriptor<*>) : IllegalStateException()

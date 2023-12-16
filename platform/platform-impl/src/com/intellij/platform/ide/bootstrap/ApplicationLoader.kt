@@ -40,6 +40,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.ideFingerprint
+import com.intellij.platform.settings.SettingsController
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
@@ -256,18 +257,24 @@ private suspend fun preInitApp(app: ApplicationImpl,
 suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
-  span("beforeApplicationLoaded") {
-    for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
-      extension.useOrLogError {
-        it.beforeApplicationLoaded(app, configDir)
+  coroutineScope {
+    launch(CoroutineName("preload SettingsController")) {
+      // preload
+      app.serviceAsync<SettingsController>()
+    }
+
+    span("beforeApplicationLoaded") {
+      for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+        extension.useOrLogError {
+          it.beforeApplicationLoaded(app, configDir)
+        }
       }
     }
-  }
 
-  span("init app store") {
-    // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-    app._getComponentStore().setPath(configDir)
-    LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+    span("init app store") {
+      // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
+      app._getComponentStore().setPath(configDir)
+    }
   }
 }
 

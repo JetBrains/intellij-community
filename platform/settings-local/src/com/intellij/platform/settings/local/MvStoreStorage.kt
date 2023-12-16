@@ -3,15 +3,12 @@
 
 package com.intellij.platform.settings.local
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ArrayUtilRt
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
@@ -33,17 +30,13 @@ import kotlin.time.toDuration
  * * Several maps in a one file (so, we can store several versions in a one file).
  */
 // see DbConverter
-internal class MvStoreStorage(coroutineScope: CoroutineScope) : Storage {
+internal class MvStoreStorage : Storage {
   private val map: MVMap<String, ByteArray> = createOrResetStore(getDatabaseFile())
 
   private var lastSaved: Duration = Duration.ZERO
 
-  init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        map.store.close()
-      }
-    }
+  override fun close() {
+    map.store.close()
   }
 
   override fun get(key: String): ByteArray? = map.get(key)

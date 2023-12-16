@@ -74,28 +74,28 @@ import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-private var applicationInitializationResult: Result<Unit>? = null
+private var appInitResult: Result<Unit>? = null
 const val LEAKED_PROJECTS: String = "leakedProjects"
 
 val isApplicationInitialized: Boolean
-  get() = applicationInitializationResult?.isSuccess == true
+  get() = appInitResult?.isSuccess == true
 
 @TestOnly
 @Internal
 fun initTestApplication(): Result<Unit> {
-  return (applicationInitializationResult ?: doInitTestApplication())
+  return (appInitResult ?: doInitTestApplication())
 }
 
 @TestOnly
 @Synchronized
 private fun doInitTestApplication(): Result<Unit> {
-  applicationInitializationResult?.let {
+  appInitResult?.let {
     return it
   }
   val result = runCatching {
     loadApp()
   }
-  applicationInitializationResult = result
+  appInitResult = result
   return result
 }
 
@@ -109,7 +109,7 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
-  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside open-telemetry-metrics.*.csv)
   System.setProperty("idea.diagnostic.opentelemetry.file",
                      PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
 
@@ -141,16 +141,16 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   val app = ApplicationImpl(isHeadless)
+  Disposer.register(app) {
+    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
+  }
+
   BundleBase.assertOnMissedKeys(true)
   // do not crash AWT on exceptions
   AWTExceptionHandler.register()
   Disposer.setDebugMode(true)
   Logger.setUnitTestMode()
   WalkingState.setUnitTestMode()
-
-  Disposer.register(app) {
-    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
-  }
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)
@@ -345,5 +345,5 @@ fun disposeTestApplication() {
   EDT.assertIsEdt()
   val app = ApplicationManager.getApplication() as ApplicationImpl
   app.disposeContainer() // `ApplicationManager#ourApplication` will be automatically set to `null`
-  applicationInitializationResult = null
+  appInitResult = null
 }

@@ -7,64 +7,46 @@ import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.ChainedSettingsController
+import com.intellij.platform.settings.PropertyManagerAdapterTag
+import com.intellij.platform.settings.SettingDescriptor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.TestOnly
-
-private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
-  ExtensionPointName("com.intellij.settingsController")
-
-private val delegateToSettingsController = System.getProperty("idea.settings.cache.delegate.to.controller", "false").toBoolean()
-
-private class SettingsControllerMediator : SettingsController, SettingsSavingComponent {
-  private val first: ChainedSettingsController
-  private val chain: List<ChainedSettingsController>
-
-  init {
-    val extensions = SETTINGS_CONTROLLER_EP_NAME.extensionList
-    first = extensions.first()
-    chain = extensions.subList(1, extensions.size)
-  }
-
-  override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
-    return first.getItem(key, chain)
-  }
-
-  override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    return first.setItem(key, value, chain)
-  }
-
-  override fun createStateStorage(collapsedPath: String): Any? {
-    if (delegateToSettingsController && collapsedPath == StoragePathMacros.CACHE_FILE) {
-      return StateStorageBackedByController(first)
-    }
-    else {
-      return null
-    }
-  }
-
-  override suspend fun save() {
-    for (controller in SETTINGS_CONTROLLER_EP_NAME.extensionList) {
-      if (controller is SettingsSavingComponent) {
-        controller.save()
-      }
-    }
-  }
-}
 
 @TestOnly
 internal fun clearCacheStore() {
-  SETTINGS_CONTROLLER_EP_NAME.findExtensionOrFail(LocalSettingsController::class.java).clear()
+  service<LocalSettingsControllerService>().clear()
 }
 
-internal class LocalSettingsController(coroutineScope: CoroutineScope) : ChainedSettingsController, SettingsSavingComponent {
-  private val componentManager: ComponentManager = ApplicationManager.getApplication()
+private class LocalSettingsController : ChainedSettingsController {
+  private val service = service<LocalSettingsControllerService>()
 
-  private val cacheStore = CacheStateStorageService(MvStoreStorage(coroutineScope))
+  override fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T? {
+    return service.getItem(key)
+  }
+
+  override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
+    service.setItem(key, value)
+  }
+}
+
+@Service(Service.Level.APP)
+private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : SettingsSavingComponent {
+  // Telemetry is not ready at this point yet
+  private val cacheStore by lazy { CacheStateStorageService(MvStoreStorage()) }
+
+  init {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        cacheStore.storage.close()
+      }
+    }
+  }
 
   @TestOnly
   fun clear() {
@@ -72,13 +54,13 @@ internal class LocalSettingsController(coroutineScope: CoroutineScope) : Chained
   }
 
   override suspend fun save() {
-    cacheStore.save()
+    cacheStore.storage.save()
   }
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T? {
+  fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
     for (tag in key.tags) {
       if (tag is PropertyManagerAdapterTag) {
-        val propertyManager = componentManager.getService(PropertiesComponent::class.java)
+        val propertyManager = PropertiesComponent.getInstance()
         @Suppress("UNCHECKED_CAST")
         return propertyManager.getValue(tag.oldKey) as T?
       }
@@ -91,7 +73,7 @@ internal class LocalSettingsController(coroutineScope: CoroutineScope) : Chained
     return null
   }
 
-  override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
+  fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (tag in key.tags) {
       if (tag is CacheTag) {
         cacheStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
@@ -102,7 +84,7 @@ internal class LocalSettingsController(coroutineScope: CoroutineScope) : Chained
     thisLogger().error("Saving of $key is not supported")
   }
 
-  override fun invalidateCaches() {
+  fun invalidateCaches() {
     cacheStore.invalidate()
   }
 
@@ -111,8 +93,6 @@ internal class LocalSettingsController(coroutineScope: CoroutineScope) : Chained
 
 private class CacheStateStorageInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
-    for (controller in SETTINGS_CONTROLLER_EP_NAME.extensionList) {
-      controller.invalidateCaches()
-    }
+    service<LocalSettingsControllerService>().invalidateCaches()
   }
 }

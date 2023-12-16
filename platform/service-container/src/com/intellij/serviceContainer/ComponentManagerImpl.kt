@@ -634,19 +634,23 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    if (serviceDescriptor == null || !isPreInitialized(component)) {
-      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
-        componentStore.initComponent(component, serviceDescriptor, pluginId)
+  internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
+    @Suppress("DEPRECATION")
+    if ((serviceDescriptor == null || !isPreInitialized(component)) &&
+        (component is PersistentStateComponent<*> || component is com.intellij.openapi.util.JDOMExternalizable)) {
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        if (!getApplication()!!.isUnitTestMode) {
+          throw IllegalStateException("You cannot get $component before component store is initialized")
+        }
+        return
       }
-      else {
-        check(component !is PersistentStateComponent<*> || getApplication()!!.isUnitTestMode)
-      }
+
+      componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
     }
   }
 
-  protected open fun isPreInitialized(component: Any): Boolean {
-    return component is PathMacroManager || component is IComponentStore || component is MessageBusFactory
+  protected open fun isPreInitialized(service: Any): Boolean {
+    return service is PathMacroManager || service is IComponentStore || service is MessageBusFactory
   }
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor

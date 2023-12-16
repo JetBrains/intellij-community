@@ -9,8 +9,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface JpsGlobalModelSynchronizer {
-  fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
+  fun loadInitialState(mutableStorage: MutableEntityStorage,
+                       initialEntityStorage: VersionedEntityStorage,
                        loadedFromCache: Boolean): () -> Unit
+
   companion object {
     fun getInstance(): JpsGlobalModelSynchronizer = ApplicationManager.getApplication().service()
   }

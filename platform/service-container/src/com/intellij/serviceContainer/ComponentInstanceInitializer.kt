@@ -20,7 +20,7 @@ internal abstract class ComponentInstanceInitializer(
       if (instance is Disposable) {
         Disposer.register(componentManager.serviceParentDisposable, instance)
       }
-      componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
+      componentManager.initializeService(instance, serviceDescriptor = null, pluginId = pluginId)
       @Suppress("DEPRECATION")
       if (instance is com.intellij.openapi.components.BaseComponent) {
         @Suppress("DEPRECATION")

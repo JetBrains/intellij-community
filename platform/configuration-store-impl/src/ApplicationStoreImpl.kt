@@ -3,8 +3,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.PathMacroManager
@@ -12,8 +12,8 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSync
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
@@ -33,7 +34,8 @@ private class ApplicationPathMacroManager : PathMacroManager(null)
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application)
   : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(app))
+  override val storageManager = ApplicationStorageManager(pathMacroManager = PathMacroManager.getInstance(app),
+                                                          settingsController = app.getService(SettingsController::class.java))
 
   override val serviceContainer: ComponentManagerImpl
     get() = app as ComponentManagerImpl
@@ -44,16 +46,21 @@ open class ApplicationStoreImpl(private val app: Application)
 
   override fun setPath(path: Path) {
     storageManager.setMacros(listOf(
-      // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
+      // app config must be first, because collapseMacros collapse from fist to last, so,
+      // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
       Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
       Macro(ROOT_CONFIG, path),
       Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("app-cache.xml"))
     ))
+
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+      LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+    }
   }
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
+    (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
     coroutineScope {
@@ -62,7 +69,7 @@ open class ApplicationStoreImpl(private val app: Application)
       }
 
       @Suppress("TestOnlyProblems")
-      if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      if ((serviceAsync<ProjectManager>() as ProjectManagerEx).isDefaultProjectInitialized) {
         launch {
           // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
           val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
@@ -74,10 +81,7 @@ open class ApplicationStoreImpl(private val app: Application)
     }
   }
 
-  override fun createContentWriter(): JpsAppFileContentWriter {
-    val saveSessionManager = createSaveSessionProducerManager()
-    return AppStorageContentWriter(saveSessionManager)
-  }
+  override fun createContentWriter(): JpsAppFileContentWriter = AppStorageContentWriter(createSaveSessionProducerManager())
 
   override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
 
@@ -92,16 +96,18 @@ internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfigur
     get() = false
 }
 
-class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null)
+@VisibleForTesting
+class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
   : StateStorageManagerImpl(rootTagName = "application",
                             macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
                             componentManager = null,
-                            settingsController = ApplicationManager.getApplication().getService(SettingsController::class.java)) {
+                            settingsController = settingsController) {
   override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
+    @Suppress("DEPRECATION")
     return when (component) {
-      is NamedJDOMExternalizable -> "${component.externalFileName}${PathManager.DEFAULT_EXT}"
+      is com.intellij.openapi.util.NamedJDOMExternalizable -> "${component.externalFileName}${PathManager.DEFAULT_EXT}"
       else -> StoragePathMacros.NON_ROAMABLE_FILE
     }
   }
@@ -110,7 +116,8 @@ class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null)
     get() = false
 
   override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
-    // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
+    // IDEA-144052 When "Settings repository" is enabled changes in Path Variables'
+    // aren't saved to default path.macros.xml file causing errors in a build process
     if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
       LOG.runAndLogException {
         writer.writeTo(storage.file, null)

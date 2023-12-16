@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -47,7 +47,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)), project)
 
   override fun setPath(path: Path) {
-    setPath(path, true, null)
+    setPath(file = path, isRefreshVfsNeeded = true, template = null)
   }
 
   override fun getProjectName(): String {

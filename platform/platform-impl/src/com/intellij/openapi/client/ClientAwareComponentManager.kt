@@ -89,7 +89,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun isPreInitialized(component: Any): Boolean {
-    return super.isPreInitialized(component) || component is ClientSessionsManager<*>
+  override fun isPreInitialized(service: Any): Boolean {
+    return super.isPreInitialized(service) || service is ClientSessionsManager<*>
   }
 }

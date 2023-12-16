@@ -53,7 +53,7 @@ internal class LightServiceInstanceSupport(
       if (instance is Disposable) {
         Disposer.register(componentManager.serviceParentDisposable, instance)
       }
-      componentManager.initializeComponent(instance, serviceDescriptor = null, instanceClass.pluginId)
+      componentManager.initializeService(instance, serviceDescriptor = null, instanceClass.pluginId)
       return instance
     }
   }

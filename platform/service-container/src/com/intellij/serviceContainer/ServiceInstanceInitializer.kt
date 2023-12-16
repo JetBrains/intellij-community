@@ -67,7 +67,7 @@ internal abstract class ServiceInstanceInitializer(
     Cancellation.withNonCancelableSection().use {
       // loadState may invokeLater => don't capture the context
       installTemporaryThreadContext(currentCoroutineContext()).use {
-        componentManager.initializeComponent(instance, serviceDescriptor, pluginId)
+        componentManager.initializeService(instance, serviceDescriptor, pluginId)
       }
     }
     return instance

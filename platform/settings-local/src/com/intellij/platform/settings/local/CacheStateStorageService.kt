@@ -27,7 +27,7 @@ private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
  * ION used instead of CBOR - efficient implementation (to be checked, but ION is quite a mature library).
  * And
  */
-internal class CacheStateStorageService(private val storage: Storage) {
+internal class CacheStateStorageService(@JvmField val storage: Storage) {
   private val meter: Meter = TelemetryManager.getMeter(cacheScope)
 
   private val getMeasurer = Measurer(meter, "get")
@@ -116,14 +116,12 @@ internal class CacheStateStorageService(private val storage: Storage) {
   fun invalidate() {
     storage.invalidate()
   }
-
-  suspend fun save() {
-    storage.save()
-  }
 }
 
 sealed interface Storage {
   suspend fun save()
+
+  fun close()
 
   fun invalidate()
 
