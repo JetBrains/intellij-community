@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.modcommand.ModCommandAction
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
 
@@ -102,7 +102,7 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun doTest(text: String, fix: (PsiJavaModule) -> ModCommandAction, expected: String) {
     val file = myFixture.configureByText("module-info.java", text) as PsiJavaFile
     val action = fix(file.moduleDeclaration!!).asIntention()
-    WriteCommandAction.writeCommandAction(file).run<RuntimeException> { action.invoke(project, editor, file) }
+    CommandProcessor.getInstance().executeCommand(project, { action.invoke(project, editor, file) }, null, null)
     assertEquals(expected, file.text)
   }
 }
