@@ -22,6 +22,7 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
+import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -53,6 +54,7 @@ public final class BuildDataManager {
   private final Mappings myMappings;
   private final Object myGraphManagementLock = new Object();
   private DependencyGraph myDepGraph;
+  private final NodeSourcePathMapper myDepGraphPathMapper;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
@@ -92,6 +94,7 @@ public final class BuildDataManager {
       myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
     }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
+    myDepGraphPathMapper = relativizer != null? new PathSourceMapper(relativizer::toFull, relativizer::toRelative) : new PathSourceMapper();
     myRelativizer = relativizer;
   }
 
@@ -137,9 +140,21 @@ public final class BuildDataManager {
     return myMappings;
   }
 
-  public DependencyGraph getDependencyGraph() {
+  @Nullable
+  public GraphConfiguration getDependencyGraph() {
     synchronized (myGraphManagementLock) {
-      return myDepGraph;
+      DependencyGraph depGraph = myDepGraph;
+      return depGraph == null? null : new GraphConfiguration() {
+        @Override
+        public @NotNull NodeSourcePathMapper getPathMapper() {
+          return myDepGraphPathMapper;
+        }
+
+        @Override
+        public @NotNull DependencyGraph getGraph() {
+          return depGraph;
+        }
+      };
     }
   }
 

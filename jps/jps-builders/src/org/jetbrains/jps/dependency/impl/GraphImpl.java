@@ -25,7 +25,7 @@ abstract class GraphImpl implements Graph {
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
 
     // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
-    Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(FileSource::new);
+    Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new);
     myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
     mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
   }

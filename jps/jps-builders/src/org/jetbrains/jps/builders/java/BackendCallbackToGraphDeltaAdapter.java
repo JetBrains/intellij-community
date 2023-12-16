@@ -4,14 +4,13 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import java.nio.file.Path;
 import java.util.*;
 
 class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
@@ -21,6 +20,12 @@ class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
+  private final GraphConfiguration myGraphConfig;
+
+  BackendCallbackToGraphDeltaAdapter(GraphConfiguration graphConfig) {
+    myGraphConfig = graphConfig;
+  }
+
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
@@ -34,7 +39,7 @@ class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
     var node = builder.getResult();
     if (!node.isPrivate()) {
-      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, s -> new FileSource(Path.of(s))), new SmartList<>())));
+      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>())));
     }
   }
 

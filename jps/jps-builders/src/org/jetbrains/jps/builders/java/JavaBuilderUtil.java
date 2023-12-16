@@ -18,12 +18,8 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.Delta;
-import org.jetbrains.jps.dependency.DependencyGraph;
-import org.jetbrains.jps.dependency.DifferentiateParameters;
-import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
-import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -47,7 +43,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 public final class JavaBuilderUtil {
@@ -107,10 +102,11 @@ public final class JavaBuilderUtil {
   }
 
   public static @NotNull Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
-    if (isDepGraphEnabled()) {
+    GraphConfiguration graphConfig = context.getProjectDescriptor().dataManager.getDependencyGraph();
+    if (isDepGraphEnabled() && graphConfig != null) {
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
       if (callback == null) {
-        GRAPH_DELTA_CALLBACK_KEY.set(context, callback = new BackendCallbackToGraphDeltaAdapter());
+        GRAPH_DELTA_CALLBACK_KEY.set(context, callback = new BackendCallbackToGraphDeltaAdapter(graphConfig));
       }
       return callback;
     }
@@ -127,7 +123,9 @@ public final class JavaBuilderUtil {
   public static boolean updateMappingsOnRoundCompletion(
     CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
 
-    if(isDepGraphEnabled()) {
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    GraphConfiguration graphConfig = dataManager.getDependencyGraph();
+    if(isDepGraphEnabled() && graphConfig != null) {
       Delta delta = null;
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
       
@@ -141,10 +139,10 @@ public final class JavaBuilderUtil {
         // so the next compilation might compile much more files than is actually needed.
         Iterable<File> inputFiles = Utils.errorsDetected(context)? Collections.emptyList() : Iterators.filter(getFilesContainer(context, FILES_TO_COMPILE_KEY), f -> !compiledWithErrors.contains(f));
 
-        DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
-        delta = graph.createDelta(
-          Iterators.map(inputFiles, f -> new FileSource(f)),
-          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), p -> new FileSource(Path.of(p)))
+        NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+        delta = graphConfig.getGraph().createDelta(
+          Iterators.map(inputFiles, pathMapper::toNodeSource),
+          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource)
         );
         for (var nodeData : callback.getNodes()) {
           delta.associate(nodeData.getFirst(), nodeData.getSecond());
@@ -208,15 +206,17 @@ public final class JavaBuilderUtil {
 
   public static void markDirtyDependenciesForInitialRound(CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dfh, ModuleChunk chunk) throws IOException {
     if (hasRemovedPaths(chunk, dfh)) {
-      if (isDepGraphEnabled()) {
-        Delta delta = context.getProjectDescriptor().dataManager.getDependencyGraph().createDelta(
-          Collections.emptyList(),
-          Iterators.map(getRemovedPaths(chunk, dfh), p -> new FileSource(Path.of(p)))
+      BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+      GraphConfiguration graphConfig = dataManager.getDependencyGraph();
+      if (isDepGraphEnabled() && graphConfig != null) {
+        NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+        Delta delta = graphConfig.getGraph().createDelta(
+          Collections.emptyList(), Iterators.map(getRemovedPaths(chunk, dfh), mapper::toNodeSource)
         );
         updateDependencyGraph(context, delta, chunk, CompilationRound.CURRENT, null);
         return;
       }
-      final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
+      final Mappings delta = dataManager.getMappings().createDelta();
       final Set<File> empty = Collections.emptySet();
       updateMappings(context, delta, dfh, chunk, empty, empty, CompilationRound.CURRENT, null);
     }
@@ -420,21 +420,24 @@ public final class JavaBuilderUtil {
     boolean additionalPassRequired = false;
     final boolean errorsDetected = Utils.errorsDetected(context);
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-    DependencyGraph graph = dataManager.getDependencyGraph();
+    GraphConfiguration graphConfig = Objects.requireNonNull(dataManager.getDependencyGraph());
+    DependencyGraph dependencyGraph = graphConfig.getGraph();
+    NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+    
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(s.getPath().toFile()))
-      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(s.getPath().toFile()));
+      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()))
+      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()));
     DifferentiateParameters differentiateParams = params.get();
-    DifferentiateResult diffResult = graph.differentiate(delta, differentiateParams);
+    DifferentiateResult diffResult = dependencyGraph.differentiate(delta, differentiateParams);
 
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
     if (diffResult.isIncremental()) {
       final Set<File> affectedFiles = Iterators.collect(
-        Iterators.filter(Iterators.map(diffResult.getAffectedSources(), src -> src.getPath().toFile()), f -> skipMarkDirtyFilter == null || !skipMarkDirtyFilter.accept(f)),
+        Iterators.filter(Iterators.map(diffResult.getAffectedSources(), src -> pathMapper.toPath(src).toFile()), f -> skipMarkDirtyFilter == null || !skipMarkDirtyFilter.accept(f)),
         new HashSet<>()
       );
 
@@ -527,7 +530,7 @@ public final class JavaBuilderUtil {
     }
 
     if (performIntegrate) {
-      graph.integrate(diffResult);
+      dependencyGraph.integrate(diffResult);
     }
 
     return additionalPassRequired;

@@ -75,7 +75,7 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
           msg.append("Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ");
           for (NodeSource candidate : candidates) {
             context.affectNodeSource(candidate);
-            msg.append(candidate.getPath()).append("; ");
+            msg.append(candidate).append("; ");
           }
           debug(msg.toString());
           continue; // if duplicates are found, do not perform further checks for classes with the same short name
@@ -630,7 +630,7 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
           }))) {
             if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
               for (NodeSource source : filter(sources, context.getParams().affectionFilter()::test)) {
-                debug("Affecting file due to local overriding: ", source.getPath());
+                debug("Affecting file due to local overriding: ", source);
                 context.affectNodeSource(source);
               }
             }
@@ -972,7 +972,7 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
     for (NodeSource source : filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
       if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
-        debug(affectReason, source.getPath());
+        debug(affectReason, source);
       }
     }
   }
@@ -981,7 +981,7 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
     debug("Affecting module ", mod.getName());
     for (NodeSource source : utils.getNodeSources(mod.getReferenceID())) {
       context.affectNodeSource(source);
-      debug("Affected source ", source.getPath());
+      debug("Affected source ", source);
     }
   }
 

@@ -15,7 +15,7 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.dependencyView.Mappings
 import org.jetbrains.jps.builders.storage.StorageProvider
-import org.jetbrains.jps.dependency.DependencyGraph
+import org.jetbrains.jps.dependency.GraphConfiguration
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
@@ -67,9 +67,12 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
         mappings.getClassSources(mappings.getName(qName))
       }
       else {
-        val graph: DependencyGraph = context.projectDescriptor.dataManager.dependencyGraph
         val files = mutableListOf<File>()
-        graph.getSources(JvmNodeReferenceID(qName)).forEach { files.add(it.path.toFile()) }
+        val graphConfig: GraphConfiguration? = context.projectDescriptor.dataManager.dependencyGraph
+        if (graphConfig != null) {
+          val mapper = graphConfig.pathMapper
+          graphConfig.graph.getSources(JvmNodeReferenceID(qName)).forEach { files.add(mapper.toPath(it).toFile()) }
+        }
         files
       }
     }
