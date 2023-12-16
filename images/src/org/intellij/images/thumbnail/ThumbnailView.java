@@ -57,7 +57,7 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
 
   void setRecursive(boolean recursive);
 
-  void setSelected(@NotNull VirtualFile file, boolean selected);
+  void setSelected(@NotNull VirtualFile file);
 
   boolean isSelected(@NotNull VirtualFile file);
 

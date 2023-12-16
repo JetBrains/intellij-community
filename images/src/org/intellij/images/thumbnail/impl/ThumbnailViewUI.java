@@ -47,10 +47,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -65,7 +64,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   private final CopyPasteSupport copyPasteSupport;
   private final DeleteProvider deleteProvider;
   private ThumbnailListCellRenderer cellRenderer;
-  private JList list;
+  private JBList<VirtualFile> list;
   private JPanel tagsPanel;
   private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = (o1, o2) -> {
     if (o1.isDirectory() && !o2.isDirectory()) {
@@ -109,8 +108,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
       options.addPropertyChangeListener(new OptionsChangeListener(), this);
 
-      list = new JBList();
-      list.setModel(new DefaultListModel());
+      list = new JBList<>();
+      list.setModel(new DefaultListModel<>());
       list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
       list.setVisibleRowCount(-1);
       list.setCellRenderer(cellRenderer);
@@ -239,7 +238,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   public void refresh() {
     createUI();
     if (list != null) {
-      DefaultListModel model = (DefaultListModel)list.getModel();
+      DefaultListModel<VirtualFile> model = (DefaultListModel<VirtualFile>)list.getModel();
       model.clear();
       VirtualFile root = thumbnailView.getRoot();
       if (root != null && root.isValid() && root.isDirectory()) {
@@ -252,12 +251,12 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         TagFilter[] tagFilters = thumbnailView.getTagFilters();
         for (VirtualFile virtualFile : virtualFiles) {
           if (filter == null || filter.accepts(virtualFile)) {
-            if (tagFilters == null || Arrays.stream(tagFilters).anyMatch(tagFilter -> tagFilter.accepts(virtualFile))) {
+            if (tagFilters == null || ContainerUtil.exists(tagFilters, tagFilter -> tagFilter.accepts(virtualFile))) {
               model.addElement(virtualFile);
             }
           }
         }
-        if (model.size() > 0) {
+        if (!model.isEmpty()) {
           list.setSelectedIndex(0);
         }
       }
@@ -300,7 +299,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     return cellRenderer.getImageComponent().isFileSizeVisible();
   }
 
-  public void setSelected(VirtualFile file, boolean selected) {
+  public void setSelected(VirtualFile file) {
     createUI();
     list.setSelectedValue(file, false);
   }
@@ -319,28 +318,17 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   }
 
   public VirtualFile @NotNull [] getSelection() {
-    if (list != null) {
-      Object[] selectedValues = list.getSelectedValues();
-      if (selectedValues != null) {
-        VirtualFile[] files = new VirtualFile[selectedValues.length];
-        for (int i = 0; i < selectedValues.length; i++) {
-          files[i] = (VirtualFile)selectedValues[i];
-        }
-        return files;
-      }
-    }
-    return VirtualFile.EMPTY_ARRAY;
+    return getSelectedFiles();
   }
 
   private final class ThumbnailListCellRenderer extends ThumbnailComponent
-    implements ListCellRenderer {
+    implements ListCellRenderer<VirtualFile> {
     private final ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
 
     @Override
     public Component getListCellRendererComponent(
-      JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
-    ) {
-      if (value instanceof VirtualFile file) {
+      JList list, VirtualFile file, int index, boolean isSelected, boolean cellHasFocus) {
+      if (file != null) {
         setFileName(file.getName());
         String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
         if (!isFileSizeVisible()) {
@@ -449,33 +437,24 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     return false;
   }
 
-  private final class ThumbnailsMouseAdapter extends MouseAdapter implements MouseMotionListener {
+  private final class ThumbnailsMouseAdapter extends MouseAdapter {
     @Override
     public void mouseDragged(MouseEvent e) {
+      clearSelectionOutsideIfNotWithControl(e);
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      clearSelectionOutsideIfNotWithControl(e);
+    }
+
+    private void clearSelectionOutsideIfNotWithControl(@NotNull MouseEvent e) {
       Point point = e.getPoint();
       int index = list.locationToIndex(point);
       if (index != -1) {
         Rectangle cellBounds = list.getCellBounds(index, index);
         if (!cellBounds.contains(point) &&
-            (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
-          list.clearSelection();
-          e.consume();
-        }
-      }
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-    }
-
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-      Point point = e.getPoint();
-      int index = list.locationToIndex(point);
-      if (index != -1) {
-        Rectangle cellBounds = list.getCellBounds(index, index);
-        if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+            (InputEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != InputEvent.CTRL_DOWN_MASK) {
           list.clearSelection();
           e.consume();
         }
@@ -488,7 +467,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
       int index = list.locationToIndex(point);
       if (index != -1) {
         Rectangle cellBounds = list.getCellBounds(index, index);
-        if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+        if (!cellBounds.contains(point) && (InputEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != InputEvent.CTRL_DOWN_MASK) {
           index = -1;
           list.clearSelection();
         }
@@ -511,7 +490,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         }
         if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
           // Ensure that we have selection
-          if ((KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+          if ((InputEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != InputEvent.CTRL_DOWN_MASK) {
             // Ctrl is not pressed
             list.setSelectedIndex(index);
           }
@@ -614,17 +593,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   }
 
   private VirtualFile @NotNull [] getSelectedFiles() {
-    if (list != null) {
-      Object[] selectedValues = list.getSelectedValues();
-      if (selectedValues != null) {
-        VirtualFile[] files = new VirtualFile[selectedValues.length];
-        for (int i = 0; i < selectedValues.length; i++) {
-          files[i] = (VirtualFile)selectedValues[i];
-        }
-        return files;
-      }
-    }
-    return VirtualFile.EMPTY_ARRAY;
+    List<VirtualFile> selection = list == null ? Collections.emptyList() : list.getSelectedValuesList();
+    return selection.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -738,6 +708,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
+      if (project == null) return EMPTY_ARRAY;
       ImageTagManager tagManager = ImageTagManager.getInstance(project);
       List<String> tags = tagManager.getAllTags();
       int tagsNumber = tags.size();

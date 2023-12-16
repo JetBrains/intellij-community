@@ -43,7 +43,7 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
       ThumbnailView thumbnailView = ThumbnailManager.getManager(project).getThumbnailView();
       thumbnailView.setRoot(parent);
       thumbnailView.setVisible(true);
-      thumbnailView.setSelected(virtualFile, true);
+      thumbnailView.setSelected(virtualFile);
       thumbnailView.scrollToSelection();
     }
   }
