@@ -66,7 +66,10 @@ public final class InspectionTestUtil {
     }
 
     if (!problems.isEmpty()) {
-      Assert.fail(String.join("\n", problems));
+      Assert.fail(String.join("\n", problems) +
+                  "\n where all reported are: " + JDOMUtil.writeElement(doc) +
+                  "\n all expected are: " + JDOMUtil.writeElement(expectedDoc)
+      );
     }
   }
 
