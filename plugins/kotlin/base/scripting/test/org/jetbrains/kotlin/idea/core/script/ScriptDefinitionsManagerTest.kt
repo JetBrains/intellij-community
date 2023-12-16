@@ -292,6 +292,22 @@ class ScriptDefinitionsManagerTest {
 
         assertFalse(manager.isScript(script))
     }
+
+    @Test
+    fun `Initial definition sources order is always preserved`() {
+        val defA = TestDefinition("A") { true }
+
+        manager.definitionSources = listOf(
+            sourceA.returning(defA),
+            sourceB.returning(TestDefinition("B") { true })
+        ) // ... definitions are not yet loaded
+
+        manager.reloadDefinitionsBy(sourceB) // def "B" becomes available
+
+        // [sourceA, sourceB] order is expected to be preserved (sourceA is triggered at search)
+        val foundDefinition = manager.findDefinition(script)
+        assertEquals(defA, foundDefinition)
+    }
 }
 
 private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDefinitionsManager(project) {

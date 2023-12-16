@@ -137,7 +137,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
 
     private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
-        val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")
+        val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script settings not found")
 
         var loadedDefinitions: List<ScriptDefinition>? = null
 
@@ -151,10 +151,14 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         scriptingDebugLog { "Definitions loading total time: $ms ms" }
 
-        if (newDefinitionsBySource.isEmpty())
-            return emptyList()
-
         withLocks {
+            if (definitionsBySource.isEmpty()) {
+                // Keeping definition sources' order is a crucial contract.
+                // Here we initialize our preserve-insertion-order-map with all known sources-in-desired-order.
+                // Values are updated later accordingly.
+                getSources().forEach { definitionsBySource[it] = emptyList() }
+            }
+
             definitionsBySource.putAll(newDefinitionsBySource)
 
             loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
