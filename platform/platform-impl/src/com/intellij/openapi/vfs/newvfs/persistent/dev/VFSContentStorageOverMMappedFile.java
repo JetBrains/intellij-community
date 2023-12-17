@@ -353,6 +353,9 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     byte[] bufferForDecompression = new byte[uncompressedSize];
     int contentSize = buffer.remaining();
 
+    //MAYBE RC: use thread-local Inflater/Deflater instances?
+    //MAYBE RC: use lz4 compression (lz4.kt)? Pure java impl, already utilized in
+    //          indexes, less compression ratio, but much faster...
     Inflater inflater = new Inflater();
     try {
       inflater.setInput(buffer);

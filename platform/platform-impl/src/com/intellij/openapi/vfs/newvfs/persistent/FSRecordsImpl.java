@@ -588,6 +588,7 @@ public final class FSRecordsImpl implements Closeable {
     ids.add(fileId);
     for (int i = 0; i < ids.size(); i++) {
       int id = ids.getInt(i);
+      //FiXME RC: what if id is already deleted -> listIds(id) fails with 'attribute already deleted'?
       ids.addElements(ids.size(), listIds(id));
     }
     PersistentFSRecordsStorage records = connection.getRecords();
