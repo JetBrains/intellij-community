@@ -153,7 +153,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                         editor = EditorTextField(document, project, fileType)
                         component = editor
                     } else if (KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) && isDefaultColumnEnabled()) {
-                        defaultParameterCheckbox.isSelected = item.parameter.defaultValue != null
+                        defaultParameterCheckbox.isSelected = item.parameter.defaultValue != null || item.parameter.defaultValueAsDefaultParameter
                         defaultParameterCheckbox.addItemListener(
                             disposable,
                             ItemListener {
@@ -225,7 +225,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                     KotlinCallableParameterTableModel.isTypeColumn(columnInfo) -> item.typeCodeFragment
                     KotlinCallableParameterTableModel.isNameColumn(columnInfo) -> (components[column] as EditorTextField).text
                     KotlinCallableParameterTableModel.isDefaultValueColumn(columnInfo) -> item.defaultValueCodeFragment
-                    KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) -> item.parameter.defaultValue != null
+                    KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) -> item.parameter.defaultValue != null || item.parameter.defaultValueAsDefaultParameter
                     else -> null
                 }
             }

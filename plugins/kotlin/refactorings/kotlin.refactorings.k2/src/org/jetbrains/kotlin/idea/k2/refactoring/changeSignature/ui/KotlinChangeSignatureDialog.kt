@@ -142,13 +142,11 @@ internal class KotlinChangeSignatureDialog(
 
             val oldDefaultValue = parameterInfo.defaultValueForCall
             if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {
-                if (parameter.parameter.defaultValueAsDefaultParameter) {
-                    parameterInfo.defaultValue = codeFragment.getContentElement()
-                } else {
-                    parameterInfo.defaultValueForCall = codeFragment.getContentElement()
-                }
+                parameterInfo.defaultValueForCall = codeFragment.getContentElement()
             }
-
+            if (parameter.parameter.defaultValueAsDefaultParameter) {
+                parameterInfo.defaultValue = codeFragment.getContentElement()
+            }
             parameterInfo
         }
 
