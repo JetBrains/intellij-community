@@ -49,3 +49,19 @@ class BuilderWithPredefinedClassAnnotation {
   }
 
 }
+
+public class BuilderOnAnonymousClass {
+  interface HelloWorld {
+    void greet();
+  }
+
+  HelloWorld myWorld = new <error descr="'@lombok.Builder' not applicable to type use"><error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error></error> HelloWorld() {
+    public void greet() {
+      System.out.println("Hello World");
+    }
+
+  };
+
+  public static void main(String[] args) {
+  }
+}

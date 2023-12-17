@@ -40,7 +40,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
   @Override
   boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
+    if (isNotSupported(psiClass) || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.superbuilder.can.be.used.on.classes.only");
       return false;
     }

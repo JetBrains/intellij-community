@@ -287,11 +287,15 @@ public class BuilderHandler {
   }
 
   boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
+    if (isNotSupported(psiClass)) {
       builder.addErrorMessage("inspection.message.builder.can.be.used.only");
       return false;
     }
     return true;
+  }
+
+  protected static boolean isNotSupported(@NotNull PsiClass psiClass) {
+    return psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass;
   }
 
   private static boolean validateObtainViaAnnotations(Stream<BuilderInfo> builderInfos, @NotNull ProblemSink problemSink) {
@@ -379,11 +383,16 @@ public class BuilderHandler {
     }
 
     String relevantReturnType = psiClass.getName();
+    if(psiClass instanceof PsiAnonymousClass psiAnonymousClass) {
+      relevantReturnType = psiAnonymousClass.getBaseClassType().getClassName();
+    }
 
     if (null != psiMethod && !psiMethod.isConstructor()) {
       final PsiType psiMethodReturnType = psiMethod.getReturnType();
-      if (null != psiMethodReturnType) {
-        relevantReturnType = PsiNameHelper.getQualifiedClassName(psiMethodReturnType.getPresentableText(), false);
+      if (psiMethodReturnType instanceof PsiClassType psiClassType) {
+        relevantReturnType = psiClassType.getClassName();
+      }else if (null != psiMethodReturnType) {
+        relevantReturnType = PsiNameHelper.getShortClassName(psiMethodReturnType.getPresentableText());
       }
     }
 
