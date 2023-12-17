@@ -99,6 +99,9 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
   abstract val appName: String
 
   private fun readFile(request: FullHttpRequest, channel: Channel, file: String): Boolean {
+    //Ignore this one because it is used for Widget support
+    if (file.contains("BASE_EXTENSION_PATH"))
+      return false
     val appName = appName
     val resource = getResource("$appName/$file")
     val bytes = resource.readBytes()
