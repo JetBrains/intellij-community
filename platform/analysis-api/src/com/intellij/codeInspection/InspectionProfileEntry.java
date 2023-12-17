@@ -330,6 +330,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return getShortName(getClass().getSimpleName());
   }
 
+  public @Nullable String getLanguage() {
+    return null;
+  }
+
   public static @NotNull String getShortName(@NotNull String className) {
     return StringUtil.trimEnd(StringUtil.trimEnd(className, "Inspection"), "InspectionBase");
   }

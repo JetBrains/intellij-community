@@ -97,7 +97,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
    * @see #isApplicable(Language)
    */
   public @Nullable String getLanguage() {
-    return myEP == null ? null : myEP.language;
+    return myEP == null ? myTool.getLanguage() : myEP.language;
   }
 
   public boolean applyToDialects() {
