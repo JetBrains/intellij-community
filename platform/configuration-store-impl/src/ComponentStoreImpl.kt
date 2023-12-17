@@ -297,12 +297,23 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
-
-        if (!saveResult.isChanged) {
-          LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
-        }
       }
     }
+  }
+
+  @TestOnly
+  suspend fun saveNonVfsComponent(component: PersistentStateComponent<*>): Boolean {
+    val stateSpec = getStateSpec(component)
+    val saveManager = createSaveSessionProducerManager()
+
+    commitComponent(session = saveManager,
+                    info = getComponents().entries.first { it.key == stateSpec.name }.value,
+                    componentName = null,
+                    modificationCountChanged = false)
+
+    val saveResult = saveManager.save()
+    saveResult.throwIfErrored()
+    return saveResult != SaveResult.EMPTY
   }
 
   open fun createSaveSessionProducerManager() = SaveSessionProducerManager()

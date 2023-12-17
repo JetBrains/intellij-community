@@ -70,6 +70,11 @@ Cloud Env -- settingsController: Forbid some settings (e.g. keychain)
 ```
 
 ## Remote Dev
+
+To ensure that a network request isn't performed for each setting,
+a setting storage blob may initially be prepared and sent to the remote setting controller.
+The default IJ Platform local setting controller is designed with that in mind.
+
 ### Process per Connection
 Local Only.
 We do not want to clone the configuration directory for each connection. The same configuration directory is reused for all clients.

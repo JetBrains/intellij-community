@@ -33,6 +33,9 @@ class LocalSettingsControllerTest {
     assertThat(controller.getItem(settingsDescriptor)).isNull()
     controller.setItem(settingsDescriptor, "test")
     assertThat(controller.getItem(settingsDescriptor)).isEqualTo("test")
+
+    // test compact
+    compactCacheStore()
   }
 
   @Test

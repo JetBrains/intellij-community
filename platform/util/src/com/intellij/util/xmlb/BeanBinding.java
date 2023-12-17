@@ -155,7 +155,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return instance;
   }
 
-  protected @NotNull Object newInstance() {
+  public @NotNull Object newInstance() {
     return ReflectionUtil.newInstance(myBeanClass, false);
   }
 
@@ -266,10 +266,15 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
   }
 
-  // binding value will be not set if no data
   public final void deserializeInto(@NotNull Object result, @NotNull XmlElement element) {
+    deserializeInto(result, element, bindings, 0, bindings.length);
+  }
+
+  // binding value will be not set if no data
+  public static void deserializeInto(@NotNull Object result, @NotNull XmlElement element, NestedBinding[] bindings, int start, int end) {
     int attributeBindingCount = 0;
-    for (NestedBinding binding : bindings) {
+    for (int i = start; i < end; i++) {
+      NestedBinding binding = bindings[i];
       if (binding instanceof AttributeBinding) {
         attributeBindingCount++;
         AttributeBinding attributeBinding = (AttributeBinding)binding;

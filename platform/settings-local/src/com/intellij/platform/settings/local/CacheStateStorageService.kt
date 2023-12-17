@@ -12,7 +12,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingSerializerDescriptor
-import com.intellij.platform.settings.SettingValueSerializerImpl
+import com.intellij.platform.settings.SettingValueSerializer
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -27,7 +27,7 @@ private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
  * ION used instead of CBOR - efficient implementation (to be checked, but ION is quite a mature library).
  * And
  */
-internal class CacheStateStorageService(@JvmField val storage: Storage) {
+internal class CacheStateStorageService(@JvmField val storage: MvStoreStorage) {
   private val meter: Meter = TelemetryManager.getMeter(cacheScope)
 
   private val getMeasurer = Measurer(meter, "get")
@@ -53,7 +53,7 @@ internal class CacheStateStorageService(@JvmField val storage: Storage) {
           bytes as T
         }
         else {
-          cbor.decodeFromByteArray((serializer as SettingValueSerializerImpl<T>).serializer, bytes)
+          cbor.decodeFromByteArray((serializer as SettingValueSerializer<T>).serializer, bytes)
         }
       }
       getMeasurer.add(System.nanoTime() - start)
@@ -98,7 +98,33 @@ internal class CacheStateStorageService(@JvmField val storage: Storage) {
       }
       else {
         @Suppress("UNCHECKED_CAST")
-        storage.put(key, cbor.encodeToByteArray((serializer as SettingValueSerializerImpl<T>).serializer, value))
+        storage.put(key, cbor.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
+      }
+      setMeasurer.add(System.nanoTime() - start)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      thisLogger().error(PluginException(e, pluginId))
+    }
+  }
+
+  fun <T : Any> putIfDiffers(key: String, value: T?, serializer: SettingSerializerDescriptor<T>, pluginId: PluginId) {
+    val start = System.nanoTime()
+    try {
+      if (value == null) {
+        storage.remove(key)
+      }
+      else if (serializer === RawSettingSerializerDescriptor) {
+        storage.putIfDiffers(key, value as ByteArray)
+      }
+      else {
+        @Suppress("UNCHECKED_CAST")
+        storage.putIfDiffers(key, cbor.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
       }
       setMeasurer.add(System.nanoTime() - start)
     }

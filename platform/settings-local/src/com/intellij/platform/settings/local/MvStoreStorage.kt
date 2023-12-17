@@ -6,22 +6,29 @@ package com.intellij.platform.settings.local
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.h2.mvstore.type.ByteArrayDataType
-import org.h2.mvstore.type.StringDataType
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+
+private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
 /**
  * * Faster than PHM (`kv-store-benchmark` project).
@@ -33,7 +40,10 @@ import kotlin.time.toDuration
 internal class MvStoreStorage : Storage {
   private val map: MVMap<String, ByteArray> = createOrResetStore(getDatabaseFile())
 
-  private var lastSaved: Duration = Duration.ZERO
+  // yes - save is ignored first 5 minutes
+  private var lastSaved: Duration = nowAsDuration()
+  // compact only once per-app launch
+  private var isCompacted = AtomicBoolean(false)
 
   override fun close() {
     map.store.close()
@@ -46,19 +56,42 @@ internal class MvStoreStorage : Storage {
   }
 
   override fun put(key: String, bytes: ByteArray?) {
-    map.put(key, bytes)
+    // do not write if existing value equals to the old one
+    putIfDiffers(key, bytes)
   }
 
   override suspend fun save() {
-    if ((System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS) - lastSaved) < 5.minutes) {
+    if ((nowAsDuration() - lastSaved) < 5.minutes) {
       return
     }
 
     // tryCommit - do not commit if store is locked (e.g., another commit for some reason is called or another write operation)
     withContext(Dispatchers.IO) {
       map.store.tryCommit()
+
+      ensureActive()
+
+      if (isCompacted.compareAndSet(false, true)) {
+        compactStore()
+      }
     }
-    lastSaved = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
+
+    lastSaved = nowAsDuration()
+  }
+
+  @VisibleForTesting
+  suspend fun compactStore() {
+    runInterruptible {
+      try {
+        map.store.compactFile(30.seconds.inWholeMilliseconds.toInt())
+      }
+      catch (e: RuntimeException) {
+        /** see [org.h2.mvstore.FileStore.compact] */
+        if (e.cause !is InterruptedException) {
+          thisLogger().warn("Cannot compact", e)
+        }
+      }
+    }
   }
 
   override fun invalidate() {
@@ -71,6 +104,24 @@ internal class MvStoreStorage : Storage {
   @TestOnly
   override fun clear() {
     map.clear()
+  }
+
+  fun hasKeyStartsWith(key: String): Boolean {
+    val ceilingKey = map.ceilingKey(key)
+    return ceilingKey != null && ceilingKey.startsWith(key)
+  }
+
+  fun putIfDiffers(key: String, value: ByteArray?) {
+    map.operate(key, value, object : MVMap.DecisionMaker<ByteArray?>() {
+      override fun decide(existingValue: ByteArray?, providedValue: ByteArray?): MVMap.Decision {
+        if (existingValue.contentEquals(providedValue)) {
+          return MVMap.Decision.ABORT
+        }
+        else {
+          return MVMap.Decision.PUT
+        }
+      }
+    })
   }
 }
 
@@ -109,9 +160,11 @@ private fun openStore(file: Path): MVMap<String, ByteArray> {
   storeErrorHandler.isStoreOpened = true
 
   val mapBuilder = MVMap.Builder<String, ByteArray>()
-  mapBuilder.setKeyType(StringDataType.INSTANCE)
+  mapBuilder.setKeyType(ModernStringDataType)
   mapBuilder.setValueType(ByteArrayDataType.INSTANCE)
 
+  // versioning isn't required, otherwise the file size will be larger than needed
+  store.setVersionsToKeep(0)
   return store.openMap("cache_v1", mapBuilder)
 }
 

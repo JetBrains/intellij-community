@@ -73,8 +73,6 @@ open class ApplicationStoreImpl(private val app: Application)
         launch {
           // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
           val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
-          // ignore
-          r.isChanged = false
           r.appendTo(result)
         }
       }

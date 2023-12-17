@@ -25,11 +25,19 @@ interface SettingsController {
  * Caveat: do not touch telemetry API during init, it is not ready yet.
  */
 @Internal
-interface ChainedSettingsController {
+interface ChainedSettingsController : SettingsControllerInternal {
   fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T?
 
   @Throws(ReadOnlySettingException::class)
   suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>)
+
+  // advanced API
+  fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>)
+}
+
+@Internal
+interface SettingsControllerInternal {
+  fun hasKeyStartsWith(key: String): Boolean
 }
 
 class ReadOnlySettingException(val key: SettingDescriptor<*>) : IllegalStateException()

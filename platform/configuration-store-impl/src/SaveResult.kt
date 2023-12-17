@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
@@ -8,16 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 class SaveResult {
   companion object {
     @JvmField
-    internal val EMPTY = SaveResult()
+    internal val EMPTY: SaveResult = SaveResult()
   }
 
   private var error: Throwable? = null
 
   @JvmField
   internal val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
-
-  @JvmField
-  internal var isChanged = false
 
   @Synchronized
   internal fun addError(error: Throwable) {
@@ -51,10 +48,6 @@ class SaveResult {
         }
       }
       saveResult.readonlyFiles.addAll(readonlyFiles)
-
-      if (isChanged) {
-        saveResult.isChanged = true
-      }
     }
   }
 

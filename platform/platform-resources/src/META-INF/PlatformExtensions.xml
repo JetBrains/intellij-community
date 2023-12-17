@@ -1323,11 +1323,6 @@
     <obsoleteStorage file="$CACHE_FILE$">
       <components>
         <component>KnownExtensionsService</component>
-        <component>PluginFeatureCacheService</component>
-        <component>ErrorReportConfigurable</component>
-        <component>PluginAdvertiserExtensions</component>
-        <component>PluginFeatureService</component>
-        <component>editorConfigEncodings</component>
       </components>
     </obsoleteStorage>
 

@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.local.clearCacheStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -16,6 +18,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
@@ -132,7 +135,7 @@ internal class ApplicationStoreTest {
     assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
-      assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map[item.fileSpec])
+      assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map.get(item.fileSpec))
     }
 
     test(ExportableItem(FileSpec("filetypes", "filetypes", true), "File types (schemes)"))
@@ -516,10 +519,10 @@ internal class ApplicationStoreTest {
   @Test
   fun `reload components`() {
     @State(name = "A", storages = [Storage(value = "a.xml")])
-    class Comp : FooComponent()
+    class Component : FooComponent()
 
-    val component = Comp()
-    componentStore.initComponent(component, null, null)
+    val component = Component()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
 
     writeConfig("a.xml", "")
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
@@ -538,8 +541,33 @@ internal class ApplicationStoreTest {
     assertEquals("defaultValue", component.foo)
   }
 
-  private fun createComponentFileContent(fooValue: String, componentName: String = "A") =
-    """<application>${createComponentData(fooValue, componentName)}</application>"""
+  @Test
+  fun `settingsController - cache storage`() = runBlocking<Unit>(Dispatchers.Default) {
+    clearCacheStore()
+
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
+    class Component : SerializablePersistentStateComponent<TestState>(TestState())
+
+    val component = Component()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+
+    assertThat(component.state.foo).isEmpty()
+    assertThat(component.state.bar).isEmpty()
+
+
+    component.state = TestState(bar = "42")
+    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+    // test double save
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  private fun createComponentFileContent(fooValue: String, componentName: String = "A"): String {
+    return """<application>${createComponentData(fooValue, componentName)}</application>"""
+  }
 
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()
@@ -575,7 +603,7 @@ internal class ApplicationStoreTest {
     override val serviceContainer: ComponentManagerImpl
       get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
-    override val storageManager = ApplicationStorageManager(pathMacroManager = null, settingsController = null)
+    override val storageManager = ApplicationStorageManager(pathMacroManager = null, settingsController = service<SettingsController>())
 
     init {
       setPath(testAppConfigPath)

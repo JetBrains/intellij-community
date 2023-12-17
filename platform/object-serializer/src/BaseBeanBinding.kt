@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import java.lang.reflect.Constructor
@@ -37,9 +37,9 @@ internal open class BaseBeanBinding(internal val beanClass: Class<*>) {
 }
 
 // ReflectionUtil uses another approach to do it - unreliable because located in the util module, where Kotlin cannot be used.
-// Here we use Kotlin reflection and this approach is more reliable because we are prepared for future Kotlin versions.
+// Here we use Kotlin reflection, and this approach is more reliable because we are prepared for future Kotlin versions.
 private fun createUsingKotlin(clazz: Class<*>): Any {
-  // if we cannot create data class
+  // if we cannot create a data class
   val kClass = clazz.kotlin
   val kFunction = kClass.primaryConstructor ?: kClass.constructors.first()
   try {

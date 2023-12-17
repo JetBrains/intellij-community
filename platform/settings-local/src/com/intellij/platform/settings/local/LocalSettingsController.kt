@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.ChainedSettingsController
@@ -19,8 +20,13 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
-internal fun clearCacheStore() {
-  service<LocalSettingsControllerService>().clear()
+fun clearCacheStore() {
+  service<LocalSettingsControllerService>().storage.clear()
+}
+
+@TestOnly
+internal suspend fun compactCacheStore() {
+  service<LocalSettingsControllerService>().storage.compactStore()
 }
 
 private class LocalSettingsController : ChainedSettingsController {
@@ -33,12 +39,21 @@ private class LocalSettingsController : ChainedSettingsController {
   override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
     service.setItem(key, value)
   }
+
+  override fun hasKeyStartsWith(key: String) = service.storage.hasKeyStartsWith(key)
+
+  override fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
+    service.putIfDiffers(key, value)
+  }
 }
 
 @Service(Service.Level.APP)
 private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : SettingsSavingComponent {
+  @JvmField
+  val storage: MvStoreStorage = MvStoreStorage()
+
   // Telemetry is not ready at this point yet
-  private val cacheStore by lazy { CacheStateStorageService(MvStoreStorage()) }
+  val cacheStore by lazy { CacheStateStorageService(storage) }
 
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -46,11 +61,6 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
         cacheStore.storage.close()
       }
     }
-  }
-
-  @TestOnly
-  fun clear() {
-    cacheStore.clear()
   }
 
   override suspend fun save() {
@@ -65,7 +75,7 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
         return propertyManager.getValue(tag.oldKey) as T?
       }
       else if (tag is CacheTag) {
-        return cacheStore.getValue(getEffectiveKey(key = key), key.serializer, key.pluginId)
+        return cacheStore.getValue(key = getEffectiveKey(key = key), serializer = key.serializer, pluginId = key.pluginId)
       }
     }
 
@@ -74,14 +84,15 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
   }
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    for (tag in key.tags) {
-      if (tag is CacheTag) {
-        cacheStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
-        return
-      }
-    }
+    operate(key, cacheOperation = {
+      cacheStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+    })
+  }
 
-    thisLogger().error("Saving of $key is not supported")
+  fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) {
+    operate(key, cacheOperation = {
+      cacheStore.putIfDiffers(key = getEffectiveKey(key = key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+    })
   }
 
   fun invalidateCaches() {
@@ -89,6 +100,17 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
   }
 
   private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
+}
+
+private inline fun <R : Any, T: Any> operate(key: SettingDescriptor<T>, cacheOperation: () -> R): R? {
+  for (tag in key.tags) {
+    if (tag is CacheTag) {
+      return cacheOperation()
+    }
+  }
+
+  logger<LocalSettingsController>().error("Saving of $key is not supported")
+  return null
 }
 
 private class CacheStateStorageInvalidator : CachesInvalidator() {

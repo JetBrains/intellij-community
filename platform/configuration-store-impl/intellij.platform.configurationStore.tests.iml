@@ -19,6 +19,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.local" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />
 </module>

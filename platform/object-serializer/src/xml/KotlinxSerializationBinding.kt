@@ -46,6 +46,8 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding(
 
   fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
 
+  fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
+
   override fun isBoundTo(element: Element): Boolean {
     throw UnsupportedOperationException("Only root object is supported")
   }
@@ -60,7 +62,7 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding(
       LOG.debug("incorrect data (old format?) for $serializer")
       return json.decodeFromString(serializer, "{}")
     }
-    return json.decodeFromString(serializer, cdata.text)
+    return decodeFromJson(cdata.text)
   }
 
   override fun deserialize(context: Any?, element: XmlElement): Any {

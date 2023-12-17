@@ -23,7 +23,7 @@ inline fun <reified K : Any, reified V : Any?> SettingDescriptorFactory.mapSeria
 }
 
 @Internal
-object RawSettingSerializerDescriptor : SettingSerializerDescriptor<ByteArray>, SettingValueSerializerImpl<ByteArray> {
+object RawSettingSerializerDescriptor : SettingSerializerDescriptor<ByteArray>, SettingValueSerializer<ByteArray> {
   override val serializer: KSerializer<ByteArray>
     get() = throw UnsupportedOperationException()
 }

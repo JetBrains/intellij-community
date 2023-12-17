@@ -64,8 +64,6 @@ interface JdomSerializer {
 
   fun deserializeInto(obj: Any, element: Element)
 
-  fun deserializeInto(obj: Any, element: XmlElement)
-
   fun <T> deserialize(url: URL, aClass: Class<T>): T
 
   @ApiStatus.Internal

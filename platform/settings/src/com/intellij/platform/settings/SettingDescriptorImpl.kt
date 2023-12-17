@@ -45,7 +45,7 @@ private class SettingDescriptorFactoryImpl(
 }
 
 @Internal
-interface SettingValueSerializerImpl<T : Any> {
+interface SettingValueSerializer<T : Any> {
   val serializer: KSerializer<T>
 }
 
@@ -70,7 +70,7 @@ private fun <T> resolveKotlinSerializer(aClass: Class<T>): KSerializer<T> {
 }
 
 private class ObjectSettingSerializerDescriptor<T : Any>(private val aClass: Class<T>) : SettingSerializerDescriptor<T>,
-                                                                                         SettingValueSerializerImpl<T> {
+                                                                                         SettingValueSerializer<T> {
   override val serializer by lazy(LazyThreadSafetyMode.NONE) {
     resolveKotlinSerializer(aClass)
   }
@@ -79,7 +79,7 @@ private class ObjectSettingSerializerDescriptor<T : Any>(private val aClass: Cla
 private class MapSettingSerializerDescriptor<K : Any, V : Any?>(
   private val keyClass: Class<K>,
   private val valueClass: Class<V>,
-) : SettingSerializerDescriptor<Map<K, V>>, SettingValueSerializerImpl<Map<K, V>> {
+) : SettingSerializerDescriptor<Map<K, V>>, SettingValueSerializer<Map<K, V>> {
   override val serializer by lazy(LazyThreadSafetyMode.NONE) {
     MapSerializer(resolveKotlinSerializer(keyClass), resolveKotlinSerializer(valueClass))
   }
@@ -118,7 +118,7 @@ private class SettingImpl<T : Any>(
 }
 
 @Internal
-object StringSettingSerializerDescriptor : SettingSerializerDescriptor<String>, SettingValueSerializerImpl<String> {
+object StringSettingSerializerDescriptor : SettingSerializerDescriptor<String>, SettingValueSerializer<String> {
   override val serializer: KSerializer<String> = serializer()
 
   override fun toString(): String = "StringSettingValueSerializer"

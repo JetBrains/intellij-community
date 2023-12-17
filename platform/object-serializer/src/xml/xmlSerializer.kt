@@ -119,18 +119,6 @@ private class JdomSerializerImpl : JdomSerializer {
     clearBindingCache()
   }
 
-  override fun deserializeInto(obj: Any, element: XmlElement) {
-    try {
-      (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)
-    }
-    catch (e: SerializationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      throw XmlSerializationException(e)
-    }
-  }
-
   override fun deserializeInto(obj: Any, element: Element) {
     try {
       (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)
