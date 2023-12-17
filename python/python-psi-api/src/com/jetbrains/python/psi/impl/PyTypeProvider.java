@@ -72,4 +72,7 @@ public interface PyTypeProvider {
   @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
                                                                    @NotNull PyCallExpression call,
                                                                    @NotNull TypeEvalContext context);
+
+  @Nullable Ref<@Nullable PyCallableType> getAnnotationType(@NotNull PyExpression typeHint,
+                                                            @NotNull TypeEvalContext context);
 }
