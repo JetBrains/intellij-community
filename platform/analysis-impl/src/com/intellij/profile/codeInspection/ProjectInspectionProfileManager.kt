@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.Disposable
@@ -59,7 +60,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
                                 name: String,
                                 attributeProvider: (String) -> String?,
                                 isBundled: Boolean): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
+        val profile = InspectionProfileImpl(name, ProjectInspectionToolRegistrar.getInstance(project), this@ProjectInspectionProfileManager, dataHolder)
         profile.isProjectLevel = true
         return profile
       }
@@ -239,7 +240,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
-        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this)
+        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, ProjectInspectionToolRegistrar.getInstance(project), this)
         currentScheme.copyFrom(InspectionProfileManager.getInstance().currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
