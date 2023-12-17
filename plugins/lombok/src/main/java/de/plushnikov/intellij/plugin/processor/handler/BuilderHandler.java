@@ -103,7 +103,7 @@ public class BuilderHandler {
   }
 
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink problemSink) {
-    boolean result = validateAnnotationOnRightType(psiClass, psiAnnotation, problemSink);
+    boolean result = validateAnnotationOnRightType(psiClass, problemSink);
     if (result) {
       final Project project = psiAnnotation.getProject();
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
@@ -246,14 +246,16 @@ public class BuilderHandler {
     return true;
   }
 
-  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass,
-                                                       @NotNull PsiAnnotation psiAnnotation,
-                                                       @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addErrorMessage("inspection.message.s.can.be.used.on.classes.only", psiAnnotation.getQualifiedName());
+  boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+    if (isNotSupported(psiClass)) {
+      builder.addErrorMessage("inspection.message.builder.can.be.used.only");
       return false;
     }
     return true;
+  }
+
+  protected static boolean isNotSupported(@NotNull PsiClass psiClass) {
+    return psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass;
   }
 
   private static boolean validateObtainViaAnnotations(Stream<BuilderInfo> builderInfos, @NotNull ProblemSink problemSink) {
@@ -341,11 +343,16 @@ public class BuilderHandler {
     }
 
     String relevantReturnType = psiClass.getName();
+    if(psiClass instanceof PsiAnonymousClass psiAnonymousClass) {
+      relevantReturnType = psiAnonymousClass.getBaseClassType().getClassName();
+    }
 
     if (null != psiMethod && !psiMethod.isConstructor()) {
       final PsiType psiMethodReturnType = psiMethod.getReturnType();
-      if (null != psiMethodReturnType) {
-        relevantReturnType = PsiNameHelper.getQualifiedClassName(psiMethodReturnType.getPresentableText(), false);
+      if (psiMethodReturnType instanceof PsiClassType psiClassType) {
+        relevantReturnType = psiClassType.getClassName();
+      }else if (null != psiMethodReturnType) {
+        relevantReturnType = PsiNameHelper.getShortClassName(psiMethodReturnType.getPresentableText());
       }
     }
 
