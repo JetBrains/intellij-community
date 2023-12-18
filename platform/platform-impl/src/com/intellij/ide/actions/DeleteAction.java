@@ -73,6 +73,6 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 }
