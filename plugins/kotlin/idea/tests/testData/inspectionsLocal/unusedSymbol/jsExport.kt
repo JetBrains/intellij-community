@@ -12,5 +12,3 @@ fun hello() {
 fun <caret>hello(greeting: String) {
     println("$greeting $name!")
 }
-
-// IGNORE_K2
