@@ -26,7 +26,7 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
         textArea()
           .bindText(::myProperty)
           .rows(myTextAreaRowSize)
-          .columns(myTextAreaColumnSize)
+          .align(Align.FILL)
           .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
           .applyToComponent {
             adjustBehaviourForFeedbackForm()

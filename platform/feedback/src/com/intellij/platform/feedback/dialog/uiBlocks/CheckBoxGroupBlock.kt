@@ -6,9 +6,16 @@ import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 class CheckBoxGroupBlock(
   @NlsContexts.Label private val myGroupLabel: String,
@@ -19,9 +26,11 @@ class CheckBoxGroupBlock(
   private var myIncludeOtherTextField = false
   private var myOtherProperty: String = ""
 
+  private var otherCheckBox: JBCheckBox? = null
+  private var otherTextField: JBTextField? = null
+
   override fun addToPanel(panel: Panel) {
     val allCheckBoxes: ArrayList<JBCheckBox> = arrayListOf()
-    var otherTextField: JBTextField? = null
 
     panel.apply {
       buttonsGroup(indent = false) {
@@ -31,7 +40,9 @@ class CheckBoxGroupBlock(
               !it.isSelected
             }
             if (myIncludeOtherTextField) {
-              return@errorOnApply isAllCheckboxEmpty && otherTextField?.text?.isBlank() ?: false
+              return@errorOnApply isAllCheckboxEmpty &&
+                                  (otherCheckBox?.isSelected == false ||
+                                   (otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == true))
             }
             else {
               return@errorOnApply isAllCheckboxEmpty
@@ -55,11 +66,62 @@ class CheckBoxGroupBlock(
 
         if (myIncludeOtherTextField) {
           row {
-            textField().applyToComponent {
-              emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
-            }.bindText(::myOtherProperty.toMutableProperty())
-              .columns(COLUMNS_MEDIUM)
-              .applyToComponent { otherTextField = this }
+            cell(JBCheckBox())
+              .gap(RightGap.SMALL)
+              .applyToComponent {
+                isOpaque = false
+                otherCheckBox = this
+              }
+            textField()
+              .bindText(::myOtherProperty.toMutableProperty())
+              .align(Align.FILL)
+              .enabledIf(otherCheckBox!!.selected)
+              .applyToComponent {
+                emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
+                otherTextField = this
+
+                addFocusListener(object : FocusListener {
+                  override fun focusGained(e: FocusEvent?) {
+                  }
+
+                  override fun focusLost(e: FocusEvent?) {
+                    if (e?.oppositeComponent == otherCheckBox) {
+                      return
+                    }
+                    if (text.isBlank()) {
+                      otherCheckBox?.setSelected(false)
+                    }
+                  }
+                })
+                addMouseListener(object : MouseListener {
+                  override fun mouseClicked(e: MouseEvent?) {
+                    otherCheckBox?.setSelected(true)
+                    requestFocusInWindow()
+                  }
+
+                  override fun mousePressed(e: MouseEvent?) {
+                  }
+
+                  override fun mouseReleased(e: MouseEvent?) {
+                  }
+
+                  override fun mouseEntered(e: MouseEvent?) {
+                  }
+
+                  override fun mouseExited(e: MouseEvent?) {
+                  }
+                })
+              }
+            otherCheckBox?.apply {
+              addChangeListener(object : ChangeListener {
+                override fun stateChanged(e: ChangeEvent?) {
+                  val sourceState = e?.source ?: return
+                  if (sourceState is JBCheckBox && sourceState.selected()) {
+                    otherTextField?.requestFocusInWindow()
+                  }
+                }
+              })
+            }
           }.bottomGap(BottomGap.MEDIUM)
         }
       }
@@ -73,7 +135,7 @@ class CheckBoxGroupBlock(
         appendLine(" ${itemData.label} - ${itemData.property}")
       }
 
-      if (myIncludeOtherTextField) {
+      if (myIncludeOtherTextField && otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == false) {
         appendLine(" Other: ${myOtherProperty}")
       }
       appendLine()
@@ -86,7 +148,7 @@ class CheckBoxGroupBlock(
         myItemsData.forEach { itemData ->
           put(itemData.jsonElementName, itemData.property)
         }
-        if (myIncludeOtherTextField) {
+        if (myIncludeOtherTextField && otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == false) {
           put("other", myOtherProperty)
         }
       })
