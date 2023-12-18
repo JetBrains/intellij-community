@@ -1,0 +1,31 @@
+Index: platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesGroupingSupport.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesGroupingSupport.kt b/platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesGroupingSupport.kt
+--- a/platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesGroupingSupport.kt	(revision d7e4a8608153f1dd707d911ca91233238ac2a2a6)
++++ b/platform/vcs-impl/src/com/intellij/openapi/vcs/changes/ui/ChangesGroupingSupport.kt	(date 1702541927247)
+@@ -9,12 +9,13 @@
+ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
+ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.MODULE_GROUPING
+ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
++import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.EXTENSION_GROUPING
+ import org.jetbrains.annotations.NonNls
+ import java.beans.PropertyChangeListener
+ import java.beans.PropertyChangeSupport
+ import javax.swing.tree.DefaultTreeModel
+
+-private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUPING to 20, REPOSITORY_GROUPING to 30)
++private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUPING to 20, EXTENSION_GROUPING to 25, REPOSITORY_GROUPING to 30)
+
+ open class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
+   private val changeSupport = PropertyChangeSupport(source)
+@@ -81,6 +82,7 @@
+     const val DIRECTORY_GROUPING = "directory" // NON-NLS
+     const val MODULE_GROUPING = "module" // NON-NLS
+     const val REPOSITORY_GROUPING = "repository" // NON-NLS
++    const val EXTENSION_GROUPING = "extension" // NON-NLS
+     const val NONE_GROUPING = "none" // NON-NLS
+
+     private val FACTORIES = ClearableLazyValue.create { buildFactories() }
