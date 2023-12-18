@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.enumerator;
 
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,9 +34,7 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
   }
 
   @Override
-  public long saveToLog(@NotNull String key,
-                        @NotNull AppendOnlyLog log) throws IOException {
-    byte[] stringBytes = key.getBytes(UTF_8);
-    return log.append(stringBytes);
+  public KnownSizeRecordWriter writerFor(@NotNull String key) throws IOException {
+    return KeyDescriptorEx.fromBytes(key.getBytes(UTF_8));
   }
 }

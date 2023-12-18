@@ -8,7 +8,6 @@ import com.intellij.util.io.DurableDataEnumerator
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentEnumerator
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
@@ -100,10 +99,9 @@ class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
     return TimestampsImmutable.readTimestamps(input)
   }
 
-  override fun saveToLog(timestamps: TimestampsImmutable,
-                         log: AppendOnlyLog): Long {
+  override fun writerFor(timestamps: TimestampsImmutable): KeyDescriptorEx.KnownSizeRecordWriter {
     val outStream = ByteArrayOutputStream(64)
     DataOutputStream(outStream).use { timestamps.writeToStream(it) }
-    return log.append(outStream.toByteArray())
+    return KeyDescriptorEx.fromBytes(outStream.toByteArray())
   }
 }

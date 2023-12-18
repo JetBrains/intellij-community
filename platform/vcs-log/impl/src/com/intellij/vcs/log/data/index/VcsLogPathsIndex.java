@@ -13,7 +13,6 @@ import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -364,18 +363,26 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
 
     @Override
-    public long saveToLog(@NotNull LightFilePath key, @NotNull AppendOnlyLog log) throws IOException {
+    public KnownSizeRecordWriter writerFor(@NotNull LightFilePath key) throws IOException {
       VirtualFile root = key.getRoot();
       if (!myRootsReversed.containsKey(root)) {
         throw new IOException("Unknown root " + root.getPath() + " for path " + key.getRelativePath() + ". All roots " + myRoots);
       }
 
       byte[] relativePathBytes = key.getRelativePath().getBytes(UTF_8);
-      return log.append(buffer -> {
-        return buffer
-          .putInt(myRootsReversed.getInt(root))
-          .put(relativePathBytes);
-      }, relativePathBytes.length + 4);
+      int rootIndex = myRootsReversed.getInt(root);
+      return new KnownSizeRecordWriter(){
+        @Override
+        public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+          return data.putInt(rootIndex)
+            .put(relativePathBytes);
+        }
+
+        @Override
+        public int recordSize() {
+          return relativePathBytes.length + Integer.BYTES;
+        }
+      };
     }
   }
 }

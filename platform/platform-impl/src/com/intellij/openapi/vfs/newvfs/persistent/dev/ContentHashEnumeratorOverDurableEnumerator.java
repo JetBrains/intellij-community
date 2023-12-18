@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerat
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,9 +198,8 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
 
     @Override
-    public long saveToLog(byte @NotNull [] hash,
-                          @NotNull AppendOnlyLog log) throws IOException {
-      return log.append(hash);
+    public KnownSizeRecordWriter writerFor(byte @NotNull [] hash) throws IOException {
+      return KeyDescriptorEx.fromBytes(hash);
     }
 
     @Override

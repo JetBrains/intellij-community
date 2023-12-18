@@ -9,6 +9,7 @@ import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
+import com.intellij.util.io.dev.enumerator.KeyDescriptorEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +184,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
         return valueDescriptor.isEqual(candidateValue, value);
       },
       _valueHash_ -> {
-        long logRecordId = valueDescriptor.saveToLog(value, valuesLog);
+        KnownSizeRecordWriter writer = valueDescriptor.writerFor(value);
+        long logRecordId = valuesLog.append(writer, writer.recordSize());
         return convertLogIdToEnumeratorId(logRecordId);
       });
   }

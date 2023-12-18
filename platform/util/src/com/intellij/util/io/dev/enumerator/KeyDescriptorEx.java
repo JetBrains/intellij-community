@@ -2,11 +2,8 @@
 package com.intellij.util.io.dev.enumerator;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
-import com.intellij.util.io.UnsyncByteArrayOutputStream;
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,25 +29,16 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
   K read(@NotNull ByteBuffer input) throws IOException;
 
 
-  /**
-   * Implementation should append the key to the log as single record, and return appended record id.
-   * E.g.
-   * <pre>
-   *   int recordSize = sizeOf(key); //calculate size of K's serialized form
-   *   long appendedRecordId = log.append(
-   *    buffer -> {
-   *      buffer.putInt(...);
-   *      buffer.put(...);
-   *      buffer.putShort(...);
-   *      ...
-   *    },
-   *    recordSize
-   *   );
-   *   return appendedRecordId;
-   * </pre>
-   */
-  long saveToLog(@NotNull K key,
-                 @NotNull AppendOnlyLog log) throws IOException;
+
+  KnownSizeRecordWriter writerFor(@NotNull K key) throws IOException;
+
+  interface KnownSizeRecordWriter extends ByteBufferWriter {
+    @Override
+    ByteBuffer write(@NotNull ByteBuffer data) throws IOException;
+
+    /** @return size of the record to be written by {@link #write(ByteBuffer)} */
+    int recordSize();
+  }
 
   /**
    * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
@@ -83,16 +71,15 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
         return oldSchoolDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(contentAsArray)));
       }
 
+
       @Override
-      public long saveToLog(@NotNull K key,
-                            @NotNull AppendOnlyLog log) throws IOException {
+      public KnownSizeRecordWriter writerFor(@NotNull K key) throws IOException {
         UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream(64);
         try (DataOutputStream os = new DataOutputStream(stream)) {
           oldSchoolDescriptor.save(os, key);
         }
 
-        long appendedRecordId = log.append(stream.toByteArray());
-        return appendedRecordId;
+        return new ByteArrayWriter(stream.toByteArray());
       }
 
       @Override
@@ -100,5 +87,36 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
         return "KeyDescriptorAdapter[adapted: " + oldSchoolDescriptor + "]";
       }
     };
+  }
+
+  static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes) {
+    return new ByteArrayWriter(bytes);
+  }
+
+  //MAYBE RC: append marker-interface, like ByteArrayExposingWriter,
+  //          so implementation could use appendOnlyLog.append(byte[])
+  //          method for such writers, which is slightly faster/cheaper
+  /** Simplest implementation: writer over the record already serialized into a byte[] */
+  class ByteArrayWriter implements KnownSizeRecordWriter {
+    private final byte[] bytes;
+
+    public ByteArrayWriter(byte @NotNull [] bytes) {
+      this.bytes = bytes;
+    }
+
+    @Override
+    public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+      return data.put(bytes);
+    }
+
+    @Override
+    public int recordSize() {
+      return bytes.length;
+    }
+
+    @Override
+    public String toString(){
+      return "ByteArrayWriter[" + IOUtil.toHexString(bytes) + "]";
+    }
   }
 }
