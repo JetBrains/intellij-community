@@ -3,11 +3,9 @@ package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -27,6 +25,7 @@ import com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
@@ -36,6 +35,7 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
@@ -147,11 +147,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       HintManager.getInstance().hideAllHints()  // to close the context menu of line marker
     }
 
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Commit")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.COMMIT)
 
     task("CheckinProject") {
       openCommitWindow(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))

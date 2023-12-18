@@ -4,10 +4,8 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -37,6 +35,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -74,11 +73,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       val gitWindowName = GitBundle.message("git4idea.vcs.name")
