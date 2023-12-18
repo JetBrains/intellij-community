@@ -424,6 +424,29 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
+  @Test
+  fun testImportSourceDirectoryWithBasedirProp() = runBlocking {
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <kotlin.version>1.9.21</kotlin.version>
+                    </properties>
+                    <build>
+                      <sourceDirectory>${'$'}{basedir}/src/main/somedir</sourceDirectory>
+                    </build>
+                    """.trimIndent())
+
+
+
+
+    readAction {
+      assertSources("project", "src/main/somedir")
+    }
+  }
+
 
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {

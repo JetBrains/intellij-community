@@ -189,7 +189,9 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     projectData.mavenProject.updater()
       .setDependencies(dependencies)
       .setPlugins(projectData.plugins.values.toList())
-      .setProperties(Properties().apply { this.putAll(projectData.properties) })
+      .setProperties(Properties().apply {
+        putAll(projectData.properties)
+      })
   }
 
   private fun CoroutineScope.interpolate(project: MavenProjectData,
@@ -366,7 +368,11 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       this.plugins.putAll(plugins)
       this.dependencyManagement.addAll(dependencyManagement)
       this.declaredDependencies.addAll(declaredDependencies)
-      this.properties.putAll(properties)
+      this.properties.apply {
+        this["basedir"] = parentFolder.toString()
+        this["project.basedir"] = parentFolder.toString()
+        putAll(properties)
+      }
     }
 
   }
