@@ -441,6 +441,48 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
+  @Test
+  fun testImportSourceDirectoryWithDefinedProp() = runBlocking {
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <our.src.dir>src/main/somedir</our.src.dir>
+                    </properties>
+
+                    <build>
+                      <sourceDirectory>${'$'}{our.src.dir}</sourceDirectory>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      assertSources("project", "src/main/somedir")
+    }
+  }
+
+
+  @Test
+  fun testImportSourceDirectoryWithUndefinedPropShouldNotToAddRootPathAsASource() = runBlocking {
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+
+                    <build>
+                      <sourceDirectory>${'$'}{some.unknown.property}/some/path</sourceDirectory>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      assertSources("project")
+    }
+  }
+
 
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {

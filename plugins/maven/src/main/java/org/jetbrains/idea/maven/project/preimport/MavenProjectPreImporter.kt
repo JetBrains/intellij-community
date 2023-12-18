@@ -228,7 +228,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         if (version == null) return@forEach
         if (version.startsWith("$")) {
           val versionResolved = resolveProperty(project, version)
-          if (versionResolved.isNotBlank()) {
+          if (!versionResolved.isNullOrBlank()) {
             project.resolvedDependencyManagement[trimVersion(it)] = MavenId(it.groupId, it.artifactId, versionResolved)
           }
         }
@@ -261,7 +261,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       }
       else if (version.startsWith("$")) {
         val versionResolved = resolveProperty(project, version)
-        if (versionResolved.isNotBlank()) {
+        if (!versionResolved.isNullOrBlank()) {
           project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved))
         }
       }
@@ -272,13 +272,17 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     }
   }
 
-  private fun resolveProperty(project: MavenProjectData, value: String): String {
+  /**
+   * resolves property recursively. If any resolution failed returns null.
+   * This helps to avoid situation whem root directory will be added as source root in complex case
+   */
+  private fun resolveProperty(project: MavenProjectData, value: String): String? {
     val start = value.indexOf("${'$'}{")
     if (start == -1) return value
     val end = value.indexOf("}")
-    if (start + 2 >= end) return value
+    if (start + 2 >= end) return null // some syntax error probably
     val variable = value.substring(start + 2, end)
-    val resolvedValue = project.properties[variable] ?: ""
+    val resolvedValue = project.properties[variable] ?: return null
     if (start == 0 && end == value.length - 1) {
       return resolveProperty(project, resolvedValue)
     }
@@ -412,11 +416,11 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
     mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
     mavenProjectData.mavenModel.build.sources = sources
-      .map { resolveProperty(mavenProjectData, it) }
+      .mapNotNull { resolveProperty(mavenProjectData, it) }
       .map(parentFolder::resolve)
       .map(Path::toString)
     mavenProjectData.mavenModel.build.testSources = testSources
-      .map { resolveProperty(mavenProjectData, it) }
+      .mapNotNull { resolveProperty(mavenProjectData, it) }
       .map(parentFolder::resolve)
       .map(Path::toString)
   }
