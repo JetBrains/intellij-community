@@ -142,11 +142,15 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
 
   fun applyChangesFrom(sdkBridge: SdkBridgeImpl) {
+    applyChangesFrom(sdkBridge.sdkEntityBuilder)
+  }
+
+  internal fun applyChangesFrom(sdkEntity: SdkEntity.Builder) {
     val modifiableEntity = sdkEntityBuilder as ModifiableWorkspaceEntityBase<*, *>
     if (modifiableEntity.diff != null && !modifiableEntity.modifiable.get()) {
       sdkEntityBuilder = createEmptySdkEntity("", "", "")
     }
-    sdkEntityBuilder.applyChangesFrom(sdkBridge.sdkEntityBuilder)
+    sdkEntityBuilder.applyChangesFrom(sdkEntity)
     reloadAdditionalData()
   }
 

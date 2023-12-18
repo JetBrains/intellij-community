@@ -128,9 +128,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
         }
       }
     }
-
-    originalEntity.applyChangesFrom(modifiedSdkEntity)
-    originalSdkDelegate.reloadAdditionalData()
+    originalSdkDelegate.applyChangesFrom(modifiedSdkEntity)
 
     if (existingEntity != null) {
       originalSdkDelegate.fireRootSetChanged()
@@ -156,8 +154,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
       JDOMUtil.write(additionalDataElement)
     } else ""
 
-    originalEntity.applyChangesFrom(modifiedSdkEntity)
-    originalSdkDelegate.reloadAdditionalData()
+    originalSdkDelegate.applyChangesFrom(modifiedSdkEntity)
     isCommitted = true
   }
 
