@@ -14,7 +14,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
 
-class CreateKotlinCallableActionTextBuilder(
+// We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
+private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT = KtTypeRendererForSource.WITH_SHORT_NAMES
+
+/**
+ * A class to build an IntentionAction text. It is used by [CreateKotlinCallableAction].
+ */
+internal class CreateKotlinCallableActionTextBuilder(
     private val callableKindAsString: String,
     private val nameOfUnresolvedSymbol: String,
     private val receiverExpression: KtExpression?,
@@ -52,7 +58,7 @@ class CreateKotlinCallableActionTextBuilder(
             // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and
             // its type rendering.
             val receiverTypeText = receiverSymbol?.renderAsReceiver() ?: receiverExpression.getKtType()
-                ?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT) ?: receiverExpression.text
+                ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT) ?: receiverExpression.text
             if (isExtension && receiverSymbol is KtCallableSymbol) {
                 val receiverType = receiverSymbol.returnType
                 if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText."
@@ -65,7 +71,7 @@ class CreateKotlinCallableActionTextBuilder(
     context (KtAnalysisSession)
     private fun KtSymbol.renderAsReceiver(): String? = when (this) {
         is KtCallableSymbol -> returnType.selfOrSuperTypeWithAbstractMatch()
-            ?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+            ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
 
         is KtClassLikeSymbol -> classIdIfNonLocal?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
         else -> null

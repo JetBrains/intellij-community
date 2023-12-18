@@ -26,8 +26,8 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
 
     init {
         analyze(call) {
-            call.valueArgumentList?.arguments?.forEach { valueArgument ->
-                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo())
+            call.valueArgumentList?.arguments?.forEachIndexed { index, valueArgument ->
+                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo(index))
             }
         }
     }
@@ -46,9 +46,10 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
     override fun getExpectedParameters(): List<ExpectedParameter> = expectedParameterInfo.map { parameterInfo ->
         object : ExpectedParameter {
             override fun getExpectedTypes(): MutableList<ExpectedType> =
-                mutableListOf(parameterInfo.type?.let { ExpectedKotlinType.createExpectedKotlinType(it) } ?: ExpectedKotlinType.NULL)
+                mutableListOf(parameterInfo.type?.let { ExpectedKotlinType.createExpectedKotlinType(it) }
+                                  ?: ExpectedKotlinType.INVALID_TYPE)
 
-            override fun getSemanticNames(): MutableCollection<String> = mutableListOf(parameterInfo.name)
+            override fun getSemanticNames(): MutableCollection<String> = parameterInfo.nameCandidates
         }
     }
 }

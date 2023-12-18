@@ -26,10 +26,14 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-fun generateCreateKotlinCallableActions(ref: PsiReference): List<IntentionAction> {
+/**
+ * This function uses [buildRequestsAndActions] below to prepare requests for creating Kotlin callables from usage in Kotlin
+ * and create `IntentionAction`s for the requests.
+ */
+internal fun generateCreateKotlinCallableActions(ref: PsiReference): List<IntentionAction> {
     val callExpression = getCallExpressionToCreate(ref) ?: return emptyList()
     val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
-    if (calleeExpression.getReferencedNameElementType() != KtTokens.IDENTIFIER) return emptyList()
+    if (!calleeExpression.referenceNameOfElement()) return emptyList()
     return buildRequestsAndActions(callExpression)
 }
 
@@ -39,6 +43,8 @@ private fun getCallExpressionToCreate(ref: PsiReference): KtCallExpression? {
     val parent = element.parent
     return if (parent is KtCallExpression && parent.calleeExpression == element) parent else null
 }
+
+private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
 private fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
     val methodRequests = buildRequests(callExpression)
@@ -50,36 +56,33 @@ private fun buildRequestsAndActions(callExpression: KtCallExpression): List<Inte
     }.groupActionsByType(KotlinLanguage.INSTANCE)
 }
 
-fun buildRequests(callExpression: KtCallExpression): Map<JvmClass, CreateMethodRequest> {
+internal fun buildRequests(callExpression: KtCallExpression): Map<JvmClass, CreateMethodRequest> {
     val requests = LinkedHashMap<JvmClass, CreateMethodRequest>()
     val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return requests
+    val receiverExpression = calleeExpression.getReceiverExpression()
+
+    // Register default create-from-usage request.
     analyze(callExpression) {
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
-        val receiverExpression = calleeExpression.getReceiverExpression()
         val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass()
         defaultClassForReceiverOrFile?.let {
             requests[it] = CreateKotlinCallableFromKotlinUsageRequest(callExpression, mutableSetOf(), receiverExpression)
         }
+    }
 
+    // Register create-abstract/extension-callable-from-usage request.
+    val abstractContainerClass = analyze(callExpression) {
         val abstractTypeOfContainer = calleeExpression.getAbstractTypeOfReceiver()
-        val abstractContainerClass = abstractTypeOfContainer?.convertToClass()
-        when {
-            abstractContainerClass != null -> abstractContainerClass.toLightClass()?.let { lightClass ->
-                requests[lightClass] = CreateKotlinCallableFromKotlinUsageRequest(
-                    callExpression, mutableSetOf(), receiverExpression, isAbstractClassOrInterface = true
-                )
-            }
+        abstractTypeOfContainer?.convertToClass()
+    }
+    when {
+        abstractContainerClass != null -> requests.registerCreateAbstractCallableFromUsage(
+            abstractContainerClass, callExpression, receiverExpression
+        )
 
-            receiverExpression != null -> {
-                val containerClassForExtension = calleeExpression.getContainerClass()
-                containerClassForExtension?.let { jvmClass ->
-                    requests[jvmClass] =
-                        CreateKotlinCallableFromKotlinUsageRequest(callExpression, mutableSetOf(), receiverExpression, isExtension = true)
-                }
-            }
-
-            else -> {}
-        }
+        receiverExpression != null -> requests.registerCreateExtensionCallableFromUsage(
+            callExpression, calleeExpression, receiverExpression
+        )
     }
     return requests
 }
@@ -125,4 +128,21 @@ private fun KtSimpleNameExpression.getAbstractTypeOfReceiver(): KtType? {
     // If no explicit receiver exists, the containing class can be an implicit receiver.
     val receiver = getReceiverExpression() ?: return getAbstractTypeOfContainingClass()
     return receiver.getTypeOfAbstractSuperClass()
+}
+
+private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateAbstractCallableFromUsage(
+    abstractContainerClass: KtClass, callExpression: KtCallExpression, receiverExpression: KtExpression?
+) = abstractContainerClass.toLightClass()?.let { lightClass ->
+    this[lightClass] = CreateKotlinCallableFromKotlinUsageRequest(
+        callExpression, mutableSetOf(), receiverExpression, isAbstractClassOrInterface = true
+    )
+}
+
+private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateExtensionCallableFromUsage(
+    callExpression: KtCallExpression, calleeExpression: KtSimpleNameExpression, receiverExpression: KtExpression?
+) {
+    val containerClassForExtension = calleeExpression.getContainerClass()
+    containerClassForExtension?.let { jvmClass ->
+        this[jvmClass] = CreateKotlinCallableFromKotlinUsageRequest(callExpression, mutableSetOf(), receiverExpression, isExtension = true)
+    }
 }

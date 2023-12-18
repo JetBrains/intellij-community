@@ -25,26 +25,33 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
         var container = targetClass.toKtClassOrFile() ?: return emptyList()
-        val requestForCreateKtCallable = request as? CreateKotlinCallableFromKotlinUsageRequest ?: return emptyList()
-        val isExtension = requestForCreateKtCallable.isExtension
-        if (isExtension) {
-            container = container.containingKtFile
+        return when (request) {
+            is CreateKotlinCallableFromKotlinUsageRequest -> {
+                val isExtension = request.isExtension
+                if (isExtension) {
+                    container = container.containingKtFile
+                }
+                val actionText = CreateKotlinCallableActionTextBuilder(
+                    KotlinBundle.message("text.function.0", 1),
+                    request.methodName,
+                    request.receiverExpression,
+                    request.isAbstractClassOrInterface,
+                    isExtension = isExtension,
+                ).build()
+                listOf(
+                    CreateKotlinCallableAction(
+                        request = request,
+                        targetClass = targetClass,
+                        abstract = container.isAbstractClass(),
+                        needFunctionBody = !request.isAbstractClassOrInterface,
+                        myText = actionText,
+                        pointerToContainer = container.createSmartPointer(),
+                    )
+                )
+            }
+
+            else -> TODO("Handle requests from other languages e.g., Java and Groovy.")
         }
-        val actionText = CreateKotlinCallableActionTextBuilder(
-            KotlinBundle.message("text.function.0", 1),
-            requestForCreateKtCallable.methodName,
-            requestForCreateKtCallable.receiverExpression,
-            requestForCreateKtCallable.isAbstractClassOrInterface,
-            isExtension = isExtension,
-        ).build()
-        return listOf(CreateKotlinCallableAction(
-            request = request,
-            targetClass = targetClass,
-            abstract = container.isAbstractClass(),
-            needFunctionBody = !requestForCreateKtCallable.isAbstractClassOrInterface,
-            myText = actionText,
-            pointerToContainer = container.createSmartPointer(),
-        ))
     }
 }
 
