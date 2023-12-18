@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtFile
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<KtDiagnosticWithPsi<*>>>
     private var holder: HighlightInfoHolder? = null
+    private lateinit var contextFile: KtFile
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
     }
@@ -42,7 +43,8 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             return true
         }
         this.holder = holder
-        diagnosticRanges = analyzeFile(file as KtFile)
+        contextFile = holder.contextFile as? KtFile ?: error("KtFile files expected but got ${holder.contextFile}")
+        diagnosticRanges = analyzeFile(contextFile)
         try {
             action.run()
         } catch (e: Throwable) {
@@ -159,7 +161,6 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             if (entry.key in elementRange) {
                 val diagnostics = entry.value
                 for (diagnostic in diagnostics) {
-                    val contextFile = holder!!.contextFile as? KtFile ?: error("KtFile files expected but got ${holder!!.contextFile}")
                     analyze (contextFile) {
                         addDiagnostic(contextFile, diagnostic, holder!!)
                     }
