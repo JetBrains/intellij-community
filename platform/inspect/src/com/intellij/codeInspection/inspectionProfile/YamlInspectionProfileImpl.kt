@@ -129,8 +129,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
 
 
-
-      return loadFrom(configFile.reader(), includeProvider, toolsSupplier, profileManager)
+      return configFile.reader().use { reader ->
+        loadFrom(reader, includeProvider, toolsSupplier, profileManager)
+      }
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
