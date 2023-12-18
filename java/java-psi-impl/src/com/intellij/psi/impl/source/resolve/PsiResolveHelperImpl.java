@@ -152,7 +152,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
     PsiImplicitClass placeImplicitClass = PsiTreeUtil.getParentOfType(place, PsiImplicitClass.class);
     if (placeImplicitClass == null) {
-      return false;
+      return true;
     }
     //one of them can be in the copy
     return !member.getManager().areElementsEquivalent(implicitClass, placeImplicitClass);
