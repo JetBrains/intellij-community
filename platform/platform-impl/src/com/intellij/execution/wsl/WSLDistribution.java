@@ -228,19 +228,17 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     if (mustRunCommandLineWithIjent(options)) {
       commandLine.withEscapingForLocalRun(false);
-      if (commandLine instanceof PtyCommandLine) {
-        commandLine.setProcessCreator((processBuilder) -> {
-          var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
-          var ijentPty = new IjentExecApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
-
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
-        });
+      IjentExecApi.Pty ijentPty;
+      if (commandLine instanceof PtyCommandLine ptyCommandLine) {
+        var ptyOptions = ptyCommandLine.getPtyOptions();
+        ijentPty = new IjentExecApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
       }
       else {
-        commandLine.setProcessCreator((processBuilder) -> {
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, null, options.isSudo());
-        });
+        ijentPty = null;
       }
+      commandLine.setProcessCreator((processBuilder) -> {
+        return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
+      });
     }
     else {
       doPatchCommandLine(commandLine, project, options);
