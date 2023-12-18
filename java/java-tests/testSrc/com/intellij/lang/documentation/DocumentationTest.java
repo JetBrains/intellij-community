@@ -3,9 +3,12 @@ package com.intellij.lang.documentation;
 
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -28,6 +31,17 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 
   private void doTestDocumentationTargetsCanBeObtainedFromPreCachedContext(boolean asyncDataContext) {
     DataContext editorContext = configureJavaEditorAndGetItsContext(false, asyncDataContext, "class <caret>A {}");
+
+    getAndCheckTargets(editorContext);
+  }
+
+  public void testInjectedCachingIsNotHarmfulForObtainingTopLevelEditor() {
+    DataContext editorContext = configureJavaEditorAndGetItsContext(true, false, "class <caret>A {}");
+
+    Editor editor = CommonDataKeys.EDITOR.getData(editorContext);
+    assertInstanceOf(editor, EditorImpl.class);
+    Editor editor2 = CommonDataKeys.EDITOR.getData(editorContext);
+    assertSame(editor, editor2);
 
     getAndCheckTargets(editorContext);
   }
