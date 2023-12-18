@@ -467,7 +467,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     executions.filter { it.goals.contains("add-test-source") }
       .mapNotNull { it.configurationElement }
       .flatMap { it.getChildrenText("sources", "source") }
-      .forEach { sources.add(it) }
+      .forEach { testSources.add(it) }
   }
 
   private fun findPlugin(mavenProjectData: MavenProjectData, groupId: String, artifactId: String) =

@@ -336,7 +336,7 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
                           <version>3.2.0</version>
                           <executions>
                             <execution>
-                              <id>add-source</id>
+                              <id>add-source-exec</id>
                               <phase>generate-sources</phase>
                               <goals>
                                 <goal>add-source</goal>
@@ -344,6 +344,18 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
                               <configuration>
                                 <sources>
                                     <source>src/main/anothersrc/</source>
+                                </sources>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>add-test-source-exec</id>
+                              <phase>generate-test-sources</phase>
+                              <goals>
+                                <goal>add-test-source</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                    <source>src/main/sometestdir/</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -356,6 +368,7 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
     readAction {
       assertSources("project", "src/main/java", "src/main/anothersrc")
+      assertTestSources("project", "src/test/java", "src/main/sometestdir")
     }
   }
 
