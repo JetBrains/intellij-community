@@ -36,6 +36,10 @@ class GridLayout : LayoutManager2 {
     (checkedConstraints.grid as GridImpl).register(checkedComponent, checkedConstraints)
   }
 
+  fun setComponentConstrains(comp: JComponent, constraints: Constraints) {
+    (constraints.grid as GridImpl).setConstraints(comp, constraints)
+  }
+
   /**
    * Creates sub grid in the specified cell
    */

@@ -37,6 +37,19 @@ internal class GridImpl : Grid {
     cells.add(ComponentCell(constraints, component))
   }
 
+  fun setConstraints(component: JComponent, constraints: Constraints) {
+    for ((i, cell) in cells.withIndex()) {
+      if (cell is ComponentCell && cell.component === component) {
+        if (!isEmpty(constraints, cell.constraints)) {
+          throw UiDslException("Some cells are occupied already: $constraints")
+        }
+
+        cells[i] = ComponentCell(constraints, component)
+        return
+      }
+    }
+  }
+
   fun registerSubGrid(constraints: Constraints): Grid {
     if (!isEmpty(constraints)) {
       throw UiDslException("Some cells are occupied already: $constraints")
@@ -452,10 +465,11 @@ internal class GridImpl : Grid {
            }
   }
 
-  private fun isEmpty(constraints: Constraints): Boolean {
+  private fun isEmpty(constraints: Constraints, skipConstraints: Constraints? = null): Boolean {
     for (cell in cells) {
       with(cell.constraints) {
-        if (constraints.x + constraints.width > x &&
+        if (this !== skipConstraints &&
+            constraints.x + constraints.width > x &&
             x + width > constraints.x &&
             constraints.y + constraints.height > y &&
             y + height > constraints.y
