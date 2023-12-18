@@ -32,8 +32,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CoverageSuiteChooserDialog extends DialogWrapper {
@@ -298,8 +298,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
             continue;
           }
 
-          CoverageSuite coverageSuite = myCoverageManager.addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,
-                                                                                   new DefaultCoverageFileProvider(file.getPath()));
+          CoverageSuite coverageSuite = myCoverageManager.addExternalCoverageSuite(VfsUtilCore.virtualToIoFile(file), coverageRunner);
 
           List<CoverageSuite> currentlySelected = collectSelectedSuites();
           currentlySelected.add(coverageSuite);

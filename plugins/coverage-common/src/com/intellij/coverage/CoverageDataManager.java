@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,10 +40,18 @@ public abstract class CoverageDataManager {
                                                  @NotNull CoverageRunner coverageRunner,
                                                  boolean coverageByTestEnabled, boolean branchCoverage);
 
+  /**
+   * @deprecated Use {@link CoverageDataManager#addExternalCoverageSuite(File, CoverageRunner)}
+   */
+  @Deprecated
   public abstract CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
                                                          long timeStamp,
                                                          @NotNull CoverageRunner coverageRunner,
                                                          @NotNull CoverageFileProvider fileProvider);
+
+  public final CoverageSuite addExternalCoverageSuite(@NotNull File file, @NotNull CoverageRunner coverageRunner) {
+    return addExternalCoverageSuite(file.getName(), file.lastModified(), coverageRunner, new DefaultCoverageFileProvider(file.getAbsolutePath()));
+  }
 
 
   public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);

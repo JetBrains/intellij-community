@@ -9,10 +9,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.io.File
 
 private val LOG = logger<CoverageDataSuitesManager>()
 private const val SUITE: @NonNls String = "SUITE"
@@ -36,19 +34,6 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
     fun getInstance(project: Project): CoverageDataSuitesManager = project.service()
   }
 
-  fun addSuite(coverageRunner: CoverageRunner,
-               name: String,
-               fileProvider: CoverageFileProvider,
-               filters: Array<String?>?,
-               lastCoverageTimeStamp: Long,
-               suiteToMergeWith: String?,
-               coverageByTestEnabled: Boolean,
-               branchCoverage: Boolean): CoverageSuite? {
-    return createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith,
-                               coverageByTestEnabled, branchCoverage)
-      ?.also { addSuite(it, suiteToMergeWith) }
-  }
-
   fun addSuite(suite: CoverageSuite, suiteToMergeWith: String?) {
     if (suiteToMergeWith == null || suite.getPresentableName() != suiteToMergeWith) {
       deleteSuite(suite)
@@ -57,29 +42,21 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
     suites.add(suite) // add new instance
   }
 
-  fun addExternalCoverageSuite(coverageRunner: CoverageRunner,
-                               fileName: String,
+  fun addExternalCoverageSuite(fileName: String,
+                               runner: CoverageRunner,
                                fileProvider: CoverageFileProvider,
-                               timeStamp: Long): CoverageSuite? {
-    return createCoverageSuite(coverageRunner, fileName, fileProvider, ArrayUtilRt.EMPTY_STRING_ARRAY,
-                               timeStamp, null, false, false)
+                               timestamp: Long): CoverageSuite? {
+    return createCoverageSuite(fileName, runner, fileProvider, timestamp)
       ?.also { suites.add(it) }
   }
 
   fun addSuite(config: CoverageEnabledConfiguration): CoverageSuite? {
-    val name = CoverageBundle.message("coverage.results.suite.name", config.name)
-    val path = config.getCoverageFilePath()
-    LOG.assertTrue(path != null, "Configuration coverage report file is not configured ${config.name}")
-    val runner = config.coverageRunner
-    LOG.assertTrue(runner != null, "Cannot find coverage runner for ${path}")
-    if (runner == null || path == null) return null
-
-    val fileProvider = DefaultCoverageFileProvider(File(path))
-    return createCoverageSuite(config, runner, name, fileProvider)
-      ?.also {
-        deleteSuite(it)
-        suites.add(it)
-      }
+    val suite = createCoverageSuite(config)
+    if (suite != null) {
+      deleteSuite(suite)
+      suites.add(suite)
+    }
+    return suite
   }
 
   fun deleteSuite(suite: CoverageSuite) {
@@ -93,31 +70,36 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
 
   fun getSuites(): Array<CoverageSuite> = suites.toTypedArray()
 
-  override fun loadState(element: Element) {
-    for (suiteElement in element.getChildren(SUITE)) {
-      val coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement)
-      // skip unknown runners
-      if (coverageRunner == null) continue
-
-      var suite: CoverageSuite? = null
-      for (engine in CoverageEngine.EP_NAME.extensions) {
-        if (coverageRunner.acceptsCoverageEngine(engine)) {
-          suite = engine.createEmptyCoverageSuite(coverageRunner)
-          if (suite != null) {
-            if (suite is BaseCoverageSuite) {
-              suite.project = project
-            }
-            break
-          }
+  fun createCoverageSuite(name: String,
+                          runner: CoverageRunner,
+                          fileProvider: CoverageFileProvider,
+                          timestamp: Long): CoverageSuite? {
+    return CoverageEngine.EP_NAME.extensionList
+      .filter(runner::acceptsCoverageEngine)
+      .firstNotNullOfOrNull { it.createCoverageSuite(name, project, runner, fileProvider, timestamp) }
+      .also {
+        if (it == null) {
+          LOG.error("Cannot create coverage suite for runner: " + runner.getPresentableName())
         }
       }
-      if (suite != null) {
-        try {
-          suite.readExternal(suiteElement)
-          suites.add(suite)
-        }
-        catch (e: NumberFormatException) { // try next suite
-        }
+  }
+
+  override fun loadState(element: Element) {
+    for (suiteElement in element.getChildren(SUITE)) {
+      val coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement) ?: continue // skip unknown runners
+
+      val suite = CoverageEngine.EP_NAME.extensionList.asSequence()
+                    .filter { coverageRunner.acceptsCoverageEngine(it) }
+                    .firstNotNullOfOrNull { it.createEmptyCoverageSuite(coverageRunner) } ?: continue
+      if (suite is BaseCoverageSuite) {
+        suite.project = project
+      }
+
+      try {
+        suite.readExternal(suiteElement)
+        suites.add(suite)
+      }
+      catch (e: NumberFormatException) { // try next suite
       }
     }
   }
@@ -132,49 +114,18 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
     return element
   }
 
-  private fun createCoverageSuite(config: CoverageEnabledConfiguration,
-                                  runner: CoverageRunner,
-                                  name: String,
-                                  fileProvider: DefaultCoverageFileProvider): CoverageSuite? {
-    for (engine in CoverageEngine.EP_NAME.extensions) {
-      if (runner.acceptsCoverageEngine(engine) && engine.isApplicableTo(config.configuration)) {
-        val suite = engine.createCoverageSuite(runner, name, fileProvider, config)
-        if (suite != null) return suite
+  private fun createCoverageSuite(config: CoverageEnabledConfiguration): CoverageSuite? {
+    return CoverageEngine.EP_NAME.extensionList
+      .filter { it.isApplicableTo(config.configuration) }
+      .firstNotNullOfOrNull { it.createCoverageSuite(config) }.also {
+        LOG.assertTrue(it != null, "Cannot create coverage suite for run config: ${config.javaClass.name}")
       }
-    }
-    LOG.error("Cannot create coverage suite for runner: " + runner.getPresentableName())
-    return null
-  }
-
-  private fun createCoverageSuite(runner: CoverageRunner,
-                                  name: String,
-                                  fileProvider: CoverageFileProvider,
-                                  filters: Array<String?>?,
-                                  lastCoverageTimeStamp: Long,
-                                  suiteToMergeWith: String?,
-                                  coverageByTestEnabled: Boolean,
-                                  branchCoverage: Boolean): CoverageSuite? {
-    for (engine in CoverageEngine.EP_NAME.extensions) {
-      if (!runner.acceptsCoverageEngine(engine)) continue
-      val suite = engine.createCoverageSuite(runner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith,
-                                             coverageByTestEnabled, branchCoverage, false, project)
-      if (suite != null) return suite
-    }
-
-    LOG.error("Cannot create coverage suite for runner: " + runner.getPresentableName())
-    return null
   }
 
   private fun setUpRunnerEPRemovedCallback() {
     CoverageRunner.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<CoverageRunner> {
       override fun extensionRemoved(extension: CoverageRunner, pluginDescriptor: PluginDescriptor) {
-        for (suite in suites) {
-          if (suite is BaseCoverageSuite) {
-            if (suite.getRunner() === extension) {
-              suite.runner = null
-            }
-          }
-        }
+        suites.removeIf { suite -> suite.runner === extension }
       }
     }, this)
   }

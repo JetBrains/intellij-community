@@ -58,7 +58,7 @@ public abstract class CoverageEngine {
 
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
-   *  with no more than one coverage engine.
+   * with no more than one coverage engine.
    *
    * @param conf Run Configuration
    * @return Coverage enabled configuration with engine-specific settings
@@ -66,75 +66,72 @@ public abstract class CoverageEngine {
   @NotNull
   public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
+
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
-   *
-   * @param covRunner                Coverage Runner
-   * @param name                     Suite name
-   * @param coverageDataFileProvider Coverage raw data file provider
-   * @param filters                  Coverage data filters
-   * @param lastCoverageTimeStamp    timestamp
-   * @param suiteToMerge             Suite to merge this coverage data with
-   * @param coverageByTestEnabled    Collect coverage per test
-   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders         Track test folders option
-   * @return Suite
+   * Create a suite from an external report.
    */
-  @Nullable
-  public CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                           @NotNull final String name,
-                                           @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                           final String @Nullable [] filters,
-                                           final long lastCoverageTimeStamp,
-                                           @Nullable final String suiteToMerge,
-                                           final boolean coverageByTestEnabled,
-                                           final boolean branchCoverage,
-                                           final boolean trackTestFolders) {
-    return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
+  public final @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                           @NotNull Project project,
+                                                           @NotNull CoverageRunner runner,
+                                                           @NotNull CoverageFileProvider fileProvider,
+                                                           long timestamp) {
+    return createCoverageSuite(runner, name, fileProvider, null, timestamp, null, false, false, false, project);
+  }
+
+
+  /**
+   * Create a suite from a run configuration.
+   */
+  public final @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
+    CoverageRunner runner = config.getCoverageRunner();
+    if (runner == null) return null;
+    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
   }
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
+   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
    *
-   * @param covRunner                Coverage Runner
-   * @param name                     Suite name
-   * @param coverageDataFileProvider Coverage raw data file provider
-   * @param filters                  Coverage data filters
-   * @param lastCoverageTimeStamp    timestamp
-   * @param suiteToMerge             Suite to merge this coverage data with
-   * @param coverageByTestEnabled    Collect coverage per test
-   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders         Track test folders option
+   * @param runner                Coverage Runner
+   * @param name                  Suite name
+   * @param fileProvider          Coverage raw data file provider
+   * @param filters               Coverage data filters
+   * @param lastCoverageTimeStamp timestamp
+   * @param suiteToMerge          Suite to merge this coverage data with
+   * @param coverageByTestEnabled Collect coverage per test
+   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
+   * @param trackTestFolders      Track test folders option
    * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
    */
+  @Deprecated
   @Nullable
-  public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                                    @NotNull final String name,
-                                                    @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    final String @Nullable [] filters,
-                                                    final long lastCoverageTimeStamp,
-                                                    @Nullable final String suiteToMerge,
-                                                    final boolean coverageByTestEnabled,
-                                                    final boolean branchCoverage,
-                                                    final boolean trackTestFolders, Project project);
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+                                                    @NotNull String name,
+                                                    @NotNull CoverageFileProvider fileProvider,
+                                                    String @Nullable [] filters,
+                                                    long lastCoverageTimeStamp,
+                                                    @Nullable String suiteToMerge,
+                                                    boolean coverageByTestEnabled,
+                                                    boolean branchCoverage,
+                                                    boolean trackTestFolders, Project project);
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner
-   *
-   * @param covRunner Coverage Runner
-   * @param name      Suite name
-   * @param config    Coverage engine configuration
-   * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
+   */
+  @Deprecated
+  @Nullable
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+                                                    @NotNull String name,
+                                                    @NotNull CoverageFileProvider coverageDataFileProvider,
+                                                    @NotNull CoverageEnabledConfiguration config);
+
+  /**
+   * Create a new suite with no parameters set.
+   * <p/>
+   * This method is used to read a suite from persistent storage.
    */
   @Nullable
-  public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                                    @NotNull final String name,
-                                                    @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    @NotNull final CoverageEnabledConfiguration config);
-
-  @Nullable
-  public abstract CoverageSuite createEmptyCoverageSuite(@NotNull final CoverageRunner coverageRunner);
+  public abstract CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner);
 
   /**
    * Coverage annotator which annotates smth(e.g. Project view nodes / editor) with coverage information
@@ -396,5 +393,23 @@ public abstract class CoverageEngine {
   @Deprecated(forRemoval = true)
   public boolean wasTestDataCollected(Project ignoredProject) {
     return false;
+  }
+
+  /**
+   * @deprecated Is not used
+   */
+  @Deprecated
+  @Nullable
+  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+                                           @NotNull String name,
+                                           @NotNull CoverageFileProvider coverageDataFileProvider,
+                                           String @Nullable [] filters,
+                                           long lastCoverageTimeStamp,
+                                           @Nullable String suiteToMerge,
+                                           boolean coverageByTestEnabled,
+                                           boolean branchCoverage,
+                                           boolean trackTestFolders) {
+    return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
+                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
   }
 }

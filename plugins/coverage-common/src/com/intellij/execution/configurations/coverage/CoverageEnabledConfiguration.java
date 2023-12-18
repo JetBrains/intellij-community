@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.coverage.CoverageEngine;
-import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Date;
 
 /**
  * Base class for run configurations with enabled code coverage
@@ -111,6 +110,18 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   @SuppressWarnings("unused")
   public void setTrackPerTestCoverage(final boolean testTracking) {
     myTrackPerTestCoverage = testTracking;
+  }
+
+  public String createSuiteName() {
+    return CoverageBundle.message("coverage.results.suite.name", getName());
+  }
+
+  public CoverageFileProvider createFileProvider() {
+    return new DefaultCoverageFileProvider(getCoverageFilePath());
+  }
+
+  public long createTimestamp() {
+    return new Date().getTime();
   }
 
 

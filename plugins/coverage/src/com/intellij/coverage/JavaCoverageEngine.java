@@ -273,7 +273,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
-                         new Date().getTime(),
+                         javaConfig.createTimestamp(),
                          javaConfig.isTrackPerTestCoverage() && javaConfig.isBranchCoverageEnabled(),
                          javaConfig.isBranchCoverageEnabled(),
                          javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
@@ -698,7 +698,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return hasDefault;
   }
 
-  protected JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
+  public JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
                                           String name, CoverageFileProvider coverageDataFileProvider,
                                           String[] filters,
                                           String[] excludePatterns,

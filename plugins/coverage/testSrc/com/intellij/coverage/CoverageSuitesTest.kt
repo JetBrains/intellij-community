@@ -14,7 +14,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
     val path = SIMPLE_IJ_REPORT_PATH
     val runner = CoverageRunner.getInstance(IDEACoverageRunner::class.java)
-    val suite = manager.addExternalCoverageSuite(path, -1, runner, createCoverageFileProvider(path))
+    val suite = manager.addExternalCoverageSuite(File(path), runner)
 
     manager.suites.run {
       Assert.assertEquals(1, size)

@@ -51,17 +51,22 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final CoverageRunner coverageRunner,
                            @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
-    super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
-          branchCoverage, trackTestFolders,
-          coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class), project);
-
+    super(name, project, coverageRunner, coverageDataFileProvider, lastCoverageTimeStamp);
     myCoverageEngine = coverageEngine;
+    myBranchCoverage = branchCoverage;
+    myTrackTestFolders = trackTestFolders;
+    myCoverageByTestEnabled = coverageByTestEnabled;
     myIncludeFilters = includeFilters;
     myExcludePatterns = excludePatterns;
 
     if (coverageRunner instanceof JaCoCoCoverageRunner) {
       setSkipUnloadedClassesAnalysis(true);
     }
+  }
+
+  @Override
+  public final @NotNull CoverageEngine getCoverageEngine() {
+    return myCoverageEngine;
   }
 
   public final String @NotNull [] getFilteredPackageNames() {
@@ -133,8 +138,8 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myIncludeFilters = readFilters(element, FILTER);
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
 
-    if (getRunner() == null) {
-      setRunner(CoverageRunner.getInstance(IDEACoverageRunner.class)); //default
+    if (myRunner == null) {
+      myRunner = CoverageRunner.getInstance(IDEACoverageRunner.class); //default
     }
   }
 
@@ -166,12 +171,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
         element.addContent(filterElement);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public final CoverageEngine getCoverageEngine() {
-    return myCoverageEngine;
   }
 
   public final boolean isClassFiltered(final String classFQName) {

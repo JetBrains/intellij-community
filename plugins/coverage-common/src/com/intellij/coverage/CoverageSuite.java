@@ -16,7 +16,7 @@ import java.io.File;
 
 /**
  * Represents coverage data collected by {@link CoverageRunner}.
- * 
+ *
  * @see BaseCoverageSuite
  */
 public interface CoverageSuite extends JDOMExternalizable {
@@ -25,33 +25,32 @@ public interface CoverageSuite extends JDOMExternalizable {
    */
   boolean isValid();
 
+  @NlsSafe
+  String getPresentableName();
+
+  Project getProject();
+
   @NotNull
-  String getCoverageDataFileName();
+  CoverageEngine getCoverageEngine();
 
-  @NlsSafe String getPresentableName();
-
-  long getLastCoverageTimeStamp();
+  CoverageRunner getRunner();
 
   @NotNull
   CoverageFileProvider getCoverageDataFileProvider();
 
-  boolean isCoverageByTestApplicable();
-
-  boolean isCoverageByTestEnabled();
-
-  @Nullable
-  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
+  long getLastCoverageTimeStamp();
 
   boolean isTrackTestFolders();
 
   boolean isBranchCoverage();
 
-  CoverageRunner getRunner();
+  boolean isCoverageByTestEnabled();
 
-  @NotNull
-  CoverageEngine getCoverageEngine();
-
-  Project getProject();
+  /**
+   * Get coverage data, of load it if it has not been loaded
+   */
+  @Nullable
+  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
 
   /**
    * Caches loaded coverage data on soft reference.
@@ -63,6 +62,12 @@ public interface CoverageSuite extends JDOMExternalizable {
    */
   void restoreCoverageData();
 
+
+  @NotNull
+  default String getCoverageDataFileName() {
+    return getCoverageDataFileProvider().getCoverageDataFilePath();
+  }
+
   /**
    * @return true if engine can provide means to remove coverage data.
    */
@@ -73,7 +78,7 @@ public interface CoverageSuite extends JDOMExternalizable {
   }
 
   /**
-   * Called to cleanup gathered coverage on explicit user's action in settings dialog or e.g. during rerun of the same configuration.
+   * Cleans gathered coverage on explicit user's action in the settings dialog or e.g., during rerun of the same configuration.
    */
   default void deleteCachedCoverageData() {
     final String fileName = getCoverageDataFileName();
@@ -88,5 +93,11 @@ public interface CoverageSuite extends JDOMExternalizable {
       FileUtil.delete(file);
     }
     getCoverageEngine().deleteAssociatedTraces(this);
+  }
+
+  default boolean isCoverageByTestApplicable() {
+    CoverageRunner runner = getRunner();
+    if (runner == null) return false;
+    return runner.isCoverageByTestApplicable();
   }
 }

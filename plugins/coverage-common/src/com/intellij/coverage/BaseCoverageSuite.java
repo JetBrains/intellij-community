@@ -20,94 +20,71 @@ import java.io.File;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.TimeUnit;
 
-public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternalizable {
+public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(BaseCoverageSuite.class.getName());
 
-  @NonNls
-  private static final String FILE_PATH = "FILE_PATH";
-
-  @NonNls
-  private static final String SOURCE_PROVIDER = "SOURCE_PROVIDER";
-
-  @NonNls
-  private static final String MODIFIED_STAMP = "MODIFIED";
-
-  @NonNls
-  private static final String NAME_ATTRIBUTE = "NAME";
-
-  @NonNls
-  private static final String COVERAGE_RUNNER = "RUNNER";
-
-  @NonNls
-  private static final String COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME = "COVERAGE_BY_TEST_ENABLED";
-
-  @NonNls
-  private static final String BRANCH_COVERAGE_ATTRIBUTE_NAME = "COVERAGE_TRACING_ENABLED";
+  private static final @NonNls String FILE_PATH = "FILE_PATH";
+  private static final @NonNls String SOURCE_PROVIDER = "SOURCE_PROVIDER";
+  private static final @NonNls String MODIFIED_STAMP = "MODIFIED";
+  private static final @NonNls String NAME_ATTRIBUTE = "NAME";
+  private static final @NonNls String COVERAGE_RUNNER = "RUNNER";
+  private static final @NonNls String COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME = "COVERAGE_BY_TEST_ENABLED";
+  private static final @NonNls String BRANCH_COVERAGE_ATTRIBUTE_NAME = "COVERAGE_TRACING_ENABLED";
 
   private SoftReference<ProjectData> myCoverageData = new SoftReference<>(null);
 
   private String myName;
-  private long myLastCoverageTimeStamp;
-  private boolean myCoverageByTestEnabled;
-  private CoverageRunner myRunner;
-  private CoverageFileProvider myCoverageDataFileProvider;
-  private boolean myTrackTestFolders;
-  private boolean myBranchCoverage;
   private Project myProject;
+  protected CoverageRunner myRunner;
+  private CoverageFileProvider myCoverageDataFileProvider;
+  private long myTimestamp;
 
-  private RunConfigurationBase myConfiguration;
+  private RunConfigurationBase<?> myConfiguration;
 
-  protected BaseCoverageSuite() {
-  }
+  protected boolean myTrackTestFolders = false;
+  protected boolean myBranchCoverage = false;
+  protected boolean myCoverageByTestEnabled = false;
 
-  public BaseCoverageSuite(final String name,
-                           @Nullable final CoverageFileProvider fileProvider,
-                           final long lastCoverageTimeStamp,
-                           final boolean coverageByTestEnabled,
-                           final boolean branchCoverage,
-                           final boolean trackTestFolders,
-                           final CoverageRunner coverageRunner) {
-    this(name, fileProvider, lastCoverageTimeStamp, coverageByTestEnabled, branchCoverage, trackTestFolders, coverageRunner, null);
-  }
 
-  public BaseCoverageSuite(final String name,
-                           @Nullable final CoverageFileProvider fileProvider,
-                           final long lastCoverageTimeStamp,
-                           final boolean coverageByTestEnabled,
-                           final boolean branchCoverage,
-                           final boolean trackTestFolders,
-                           final CoverageRunner coverageRunner,
-                           Project project) {
-    myCoverageDataFileProvider = fileProvider;
+  protected BaseCoverageSuite() { }
+
+  public BaseCoverageSuite(@NotNull String name,
+                           @Nullable Project project,
+                           @Nullable CoverageRunner runner,
+                           @Nullable CoverageFileProvider fileProvider,
+                           long timestamp) {
     myName = name;
-    myLastCoverageTimeStamp = lastCoverageTimeStamp;
-    myCoverageByTestEnabled = coverageByTestEnabled;
+    myProject = project;
+    myRunner = runner;
+    myCoverageDataFileProvider = fileProvider;
+    myTimestamp = timestamp;
+  }
+
+  /**
+   * @deprecated Use {@link BaseCoverageSuite#BaseCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   */
+  @Deprecated
+  public BaseCoverageSuite(String name,
+                           @Nullable CoverageFileProvider fileProvider,
+                           long timestamp,
+                           boolean coverageByTestEnabled,
+                           boolean branchCoverage,
+                           boolean trackTestFolders,
+                           CoverageRunner coverageRunner,
+                           @Nullable Project project) {
+    this(name, project, coverageRunner, fileProvider, timestamp);
     myTrackTestFolders = trackTestFolders;
     myBranchCoverage = branchCoverage;
-    myRunner = coverageRunner;
-    myProject = project;
+    myCoverageByTestEnabled = coverageByTestEnabled;
   }
 
-  @Nullable
-  public static CoverageRunner readRunnerAttribute(Element element) {
-    final String runner = element.getAttributeValue(COVERAGE_RUNNER);
-    if (runner != null) {
-      for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
-        if (Comparing.strEqual(coverageRunner.getId(), runner)) {
-          return coverageRunner;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static CoverageFileProvider readDataFileProviderAttribute(Element element) {
-    final String sourceProvider = element.getAttributeValue(SOURCE_PROVIDER);
-    final String relativePath = FileUtil.toSystemDependentName(element.getAttributeValue(FILE_PATH));
-    final File file = new File(relativePath);
-    return new DefaultCoverageFileProvider(file.exists() ? file
-                                                         : new File(PathManager.getSystemPath(), relativePath),
-                                            sourceProvider != null ? sourceProvider : DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
+  /**
+   * @deprecated Use {@link BaseCoverageSuite#BaseCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   */
+  @Deprecated
+  public BaseCoverageSuite(String name, @Nullable CoverageFileProvider fileProvider, long timestamp,
+                           boolean coverageByTestEnabled, boolean branchCoverage, boolean trackTestFolders, CoverageRunner coverageRunner) {
+    this(name, fileProvider, timestamp, coverageByTestEnabled, branchCoverage, trackTestFolders, coverageRunner, null);
   }
 
   @Override
@@ -116,26 +93,32 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   }
 
   @Override
-  @NotNull
-  public String getCoverageDataFileName() {
-    return myCoverageDataFileProvider.getCoverageDataFilePath();
-  }
-
-  @Override
-  public
-  @NotNull
-  CoverageFileProvider getCoverageDataFileProvider() {
-    return myCoverageDataFileProvider;
-  }
-
-  @Override
   public String getPresentableName() {
     return myName;
   }
 
   @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
+  @Override
+  public CoverageRunner getRunner() {
+    return myRunner;
+  }
+
+  @Override
+  public @NotNull CoverageFileProvider getCoverageDataFileProvider() {
+    return myCoverageDataFileProvider;
+  }
+
+  @Override
   public long getLastCoverageTimeStamp() {
-    return myLastCoverageTimeStamp;
+    return myTimestamp;
   }
 
   @Override
@@ -149,73 +132,17 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    myCoverageDataFileProvider = readDataFileProviderAttribute(element);
-
-    // name
-    myName = element.getAttributeValue(NAME_ATTRIBUTE);
-    if (myName == null) myName = generateName();
-
-    // tc
-    myLastCoverageTimeStamp = Long.parseLong(element.getAttributeValue(MODIFIED_STAMP));
-
-    // runner
-    myRunner = readRunnerAttribute(element);
-
-    // coverage per test
-    final String collectedLineInfo = element.getAttributeValue(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME);
-    myCoverageByTestEnabled = collectedLineInfo != null && Boolean.valueOf(collectedLineInfo).booleanValue();
-
-
-    // line/branch coverage
-    final String branchCoverage = element.getAttributeValue(BRANCH_COVERAGE_ATTRIBUTE_NAME);
-    myBranchCoverage = branchCoverage != null && Boolean.valueOf(branchCoverage).booleanValue();
-  }
-
-  @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
-    final String fileName =
-      FileUtil.getRelativePath(new File(PathManager.getSystemPath()), new File(myCoverageDataFileProvider.getCoverageDataFilePath()));
-    element.setAttribute(FILE_PATH, fileName != null ? FileUtil.toSystemIndependentName(fileName) : myCoverageDataFileProvider.getCoverageDataFilePath());
-    element.setAttribute(NAME_ATTRIBUTE, myName);
-    element.setAttribute(MODIFIED_STAMP, String.valueOf(myLastCoverageTimeStamp));
-    element.setAttribute(SOURCE_PROVIDER, myCoverageDataFileProvider instanceof DefaultCoverageFileProvider defaultProvider
-                                          ? defaultProvider.getSourceProvider()
-                                          : myCoverageDataFileProvider.getClass().getName());
-    // runner
-    if (getRunner() != null) {
-      element.setAttribute(COVERAGE_RUNNER, myRunner.getId());
-    }
-
-    // cover by test
-    element.setAttribute(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME, String.valueOf(myCoverageByTestEnabled));
-
-    // line/branch coverage
-    element.setAttribute(BRANCH_COVERAGE_ATTRIBUTE_NAME, String.valueOf(myBranchCoverage));
-  }
-
-  @Override
-  public void setCoverageData(final ProjectData projectData) {
-    myCoverageData = new SoftReference<>(projectData);
-  }
-
-  public ProjectData getCoverageData() {
-    return myCoverageData.get();
-  }
-
-  @Override
-  public void restoreCoverageData() {
-    setCoverageData(loadProjectInfo());
-  }
-
-  @Override
-  public boolean isCoverageByTestApplicable() {
-    return getRunner().isCoverageByTestApplicable();
-  }
-
-  @Override
   public boolean isCoverageByTestEnabled() {
     return myCoverageByTestEnabled;
+  }
+
+  @Nullable
+  public RunConfigurationBase<?> getConfiguration() {
+    return myConfiguration;
+  }
+
+  public void setConfiguration(RunConfigurationBase<?> configuration) {
+    myConfiguration = configuration;
   }
 
   @Override
@@ -229,17 +156,21 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return data;
   }
 
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final String thisName = myCoverageDataFileProvider.getCoverageDataFilePath();
-    final String thatName = ((BaseCoverageSuite)o).myCoverageDataFileProvider.getCoverageDataFilePath();
-    return thisName.equals(thatName);
+  /**
+   * @return Cached coverage data without loading
+   */
+  public ProjectData getCoverageData() {
+    return myCoverageData.get();
   }
 
-  public int hashCode() {
-    return myCoverageDataFileProvider.getCoverageDataFilePath().hashCode();
+  @Override
+  public void setCoverageData(final ProjectData projectData) {
+    myCoverageData = new SoftReference<>(projectData);
+  }
+
+  @Override
+  public void restoreCoverageData() {
+    setCoverageData(loadProjectInfo());
   }
 
   @Nullable
@@ -262,16 +193,70 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   }
 
   @Override
-  public CoverageRunner getRunner() {
-    return myRunner;
+  public void readExternal(Element element) throws InvalidDataException {
+    myCoverageDataFileProvider = readDataFileProviderAttribute(element);
+
+    // name
+    myName = element.getAttributeValue(NAME_ATTRIBUTE);
+    if (myName == null) {
+      myName = generateName(myCoverageDataFileProvider.getCoverageDataFilePath());
+    }
+
+    // tc
+    myTimestamp = Long.parseLong(element.getAttributeValue(MODIFIED_STAMP));
+
+    // runner
+    myRunner = readRunnerAttribute(element);
+
+    // coverage per test
+    final String collectedLineInfo = element.getAttributeValue(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME);
+    myCoverageByTestEnabled = collectedLineInfo != null && Boolean.valueOf(collectedLineInfo).booleanValue();
+
+
+    // line/branch coverage
+    final String branchCoverage = element.getAttributeValue(BRANCH_COVERAGE_ATTRIBUTE_NAME);
+    myBranchCoverage = branchCoverage != null && Boolean.valueOf(branchCoverage).booleanValue();
   }
 
-  protected void setRunner(CoverageRunner runner) {
-    myRunner = runner;
+  @Override
+  public void writeExternal(final Element element) throws WriteExternalException {
+    String absolutePath = getCoverageDataFileName();
+    String pathInSystemDir = FileUtil.getRelativePath(new File(PathManager.getSystemPath()), new File(absolutePath));
+    element.setAttribute(FILE_PATH, pathInSystemDir != null ? FileUtil.toSystemIndependentName(pathInSystemDir) : absolutePath);
+    element.setAttribute(NAME_ATTRIBUTE, myName);
+    element.setAttribute(MODIFIED_STAMP, String.valueOf(myTimestamp));
+    element.setAttribute(SOURCE_PROVIDER, myCoverageDataFileProvider instanceof DefaultCoverageFileProvider defaultProvider
+                                          ? defaultProvider.getSourceProvider()
+                                          : myCoverageDataFileProvider.getClass().getName());
+    // runner
+    if (myRunner != null) {
+      element.setAttribute(COVERAGE_RUNNER, myRunner.getId());
+    }
+
+    // cover by test
+    element.setAttribute(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME, String.valueOf(myCoverageByTestEnabled));
+
+    // line/branch coverage
+    element.setAttribute(BRANCH_COVERAGE_ATTRIBUTE_NAME, String.valueOf(myBranchCoverage));
   }
 
-  private String generateName() {
-    String text = myCoverageDataFileProvider.getCoverageDataFilePath();
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final String thisName = myCoverageDataFileProvider.getCoverageDataFilePath();
+    final String thatName = ((BaseCoverageSuite)o).myCoverageDataFileProvider.getCoverageDataFilePath();
+    return thisName.equals(thatName);
+  }
+
+  @Override
+  public int hashCode() {
+    return myCoverageDataFileProvider.getCoverageDataFilePath().hashCode();
+  }
+
+  private static String generateName(String path) {
+    String text = path;
     int i = text.lastIndexOf(File.separatorChar);
     if (i >= 0) text = text.substring(i + 1);
     i = text.lastIndexOf('.');
@@ -279,21 +264,38 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return text;
   }
 
-  @Override
-  public Project getProject() {
-    return myProject;
-  }
-
-  public void setProject(Project project) {
-    myProject = project;
-  }
-
-  public void setConfiguration(RunConfigurationBase configuration) {
-    myConfiguration = configuration;
-  }
-
   @Nullable
-  public RunConfigurationBase getConfiguration() {
-    return myConfiguration;
+  public static CoverageRunner readRunnerAttribute(Element element) {
+    final String runner = element.getAttributeValue(COVERAGE_RUNNER);
+    if (runner != null) {
+      for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
+        if (Comparing.strEqual(coverageRunner.getId(), runner)) {
+          return coverageRunner;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static @NotNull CoverageFileProvider readDataFileProviderAttribute(Element element) {
+    String sourceProvider = element.getAttributeValue(SOURCE_PROVIDER);
+    if (sourceProvider == null) {
+      sourceProvider = DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY;
+    }
+
+    String relativeOrAbsolutePath = FileUtil.toSystemDependentName(element.getAttributeValue(FILE_PATH));
+    File file = new File(relativeOrAbsolutePath);
+    if (!file.exists()) {
+      file = new File(PathManager.getSystemPath(), relativeOrAbsolutePath);
+    }
+    return new DefaultCoverageFileProvider(file, sourceProvider);
+  }
+
+  /**
+   * @deprecated Is not used
+   */
+  @Deprecated
+  protected void setRunner(CoverageRunner runner) {
+    myRunner = runner;
   }
 }
