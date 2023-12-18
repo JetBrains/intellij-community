@@ -155,6 +155,7 @@
 
     <notificationGroup id="Mermaid"
                        displayType="BALLOON"
+                       bundle="messages.MermaidBundle"
                        key="notification.group.mermaid"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
