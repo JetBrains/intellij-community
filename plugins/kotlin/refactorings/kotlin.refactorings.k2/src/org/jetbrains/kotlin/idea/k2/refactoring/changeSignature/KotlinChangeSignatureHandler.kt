@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
@@ -32,7 +33,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     }
 
     override fun invokeChangeSignature(
-        element: KtElement, context: KtElement, project: Project, editor: Editor?
+        element: KtElement, context: PsiElement, project: Project, editor: Editor?
     ) {
         val callableDeclaration = findDeclaration(element, context, project, editor) ?: return
         runChangeSignature(project, editor, callableDeclaration, context)
@@ -40,10 +41,11 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     fun findDeclaration(
-        element: KtElement, context: KtElement, project: Project, editor: Editor?
+        element: KtElement, context: PsiElement, project: Project, editor: Editor?
     ): KtNamedDeclaration? {
+        val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
         return allowAnalysisOnEdt {
-            analyze(context) {
+            analyze(ktModule) {
                 val ktSymbol = when (element) {
                     is KtParameter -> if (element.hasValOrVar()) element.getSymbol() else null
                     is KtCallableDeclaration -> element.getSymbol()

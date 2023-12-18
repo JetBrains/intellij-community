@@ -35,7 +35,7 @@ class KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
     override fun invokeChangeSignature(
         element: KtElement,
-        context: KtElement,
+        context: PsiElement,
         project: Project,
         editor: Editor?
     ){

@@ -29,7 +29,7 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
     }
 
     abstract fun asInvokeOperator(call: KtCallElement?): PsiElement?
-    abstract fun invokeChangeSignature(element: KtElement, context: KtElement, project: Project, editor: Editor?)
+    abstract fun invokeChangeSignature(element: KtElement, context: PsiElement, project: Project, editor: Editor?)
 
     override fun findTargetMember(element: PsiElement) = findTargetForRefactoring(element)
 
@@ -52,7 +52,8 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
         }
 
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
-        invokeChangeSignature(element, element, project, editor)
+        val context = dataContext?.let { CommonDataKeys.PSI_FILE.getData(it) } ?: element
+        invokeChangeSignature(element, context, project, editor)
     }
 
     override fun getTargetNotFoundMessage() = KotlinBundle.message("error.wrong.caret.position.function.or.constructor.name")
