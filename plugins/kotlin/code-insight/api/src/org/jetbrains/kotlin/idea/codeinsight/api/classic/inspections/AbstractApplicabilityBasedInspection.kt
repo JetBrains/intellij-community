@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
+private val LOG = Logger.getInstance(AbstractApplicabilityBasedInspection::class.java.name)
 abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     val elementType: Class<TElement>
 ) : AbstractKotlinInspection() {
@@ -31,13 +33,25 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     // This function should be called from visitor built by a derived inspection
     protected fun visitTargetElement(element: TElement, holder: ProblemsHolder, isOnTheFly: Boolean) {
         if (!isApplicable(element)) return
+        val description = inspectionText(element)
+        val range = inspectionHighlightRangeInElement(element)
+        if (LOG.isDebugEnabled) {
+            val existingDescriptor = holder.results.find {
+                it.psiElement == element && it.descriptionTemplate == description && it.textRangeInElement == range
+            }
+
+            if (existingDescriptor != null) {
+                LOG.debug("Duplicated problem registered for $element in $range with text $description")
+                return
+            }
+        }
 
         holder.registerProblemWithoutOfflineInformation(
             element,
-            inspectionText(element),
+            description,
             isOnTheFly,
             inspectionHighlightType(element),
-            inspectionHighlightRangeInElement(element),
+            range,
             LocalFix(this, fixText(element))
         )
     }
