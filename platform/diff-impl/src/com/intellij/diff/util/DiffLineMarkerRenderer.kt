@@ -12,16 +12,16 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class DiffLineMarkerRenderer internal constructor(
-  private val highlighter: RangeHighlighter,
+open class DiffLineMarkerRenderer(
+  val highlighter: RangeHighlighter,
   val diffType: TextDiffType,
   val editorMode: PaintMode,
   val gutterMode: PaintMode,
-  private val hideWithoutLineNumbers: Boolean,
+  val hideWithoutLineNumbers: Boolean,
   val isEmptyRange: Boolean,
   val isFirstLine: Boolean,
   val isLastLine: Boolean,
-  private val alignedSides: Boolean
+  val alignedSides: Boolean
 ) : LineMarkerRendererEx {
 
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
@@ -72,9 +72,9 @@ class DiffLineMarkerRenderer internal constructor(
     }
   }
 
-  private fun drawMarker(editor: Editor, g: Graphics2D,
-                         x1: Int, x2: Int, y1: Int, y2: Int,
-                         alignedSides: Boolean, mode: PaintMode) {
+  fun drawMarker(editor: Editor, g: Graphics2D,
+                 x1: Int, x2: Int, y1: Int, y2: Int,
+                 alignedSides: Boolean, mode: PaintMode) {
     if (x1 >= x2) return
 
     val dottedLine = mode.border == BorderType.DOTTED
