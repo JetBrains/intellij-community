@@ -61,5 +61,12 @@ function _jedi_precmd_hook() {
 builtin typeset -ga precmd_functions
 precmd_functions+=(_jedi_precmd_hook)
 
+# Disable p10k Instant Prompt feature: https://github.com/romkatv/powerlevel10k#instant-prompt
+# because it breaks our command blocks integration by showing the prompt immediately before '.zshrc' is fully sourced
+if [ -n "${INTELLIJ_TERMINAL_COMMAND_BLOCKS:-}" ]
+then
+  builtin typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+fi
+
 (( _jedi_restore_aliases )) && builtin setopt aliases
 'builtin' 'unset' '_jedi_restore_aliases'
