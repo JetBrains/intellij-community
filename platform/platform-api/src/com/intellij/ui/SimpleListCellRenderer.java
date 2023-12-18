@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -9,7 +9,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.DefaultLookup;
 
 import javax.swing.*;
@@ -24,7 +23,7 @@ import java.awt.*;
  * @author gregsh
  */
 public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListCellRenderer<T> {
-  public static @NotNull <T> SimpleListCellRenderer<@Nullable T> create(@NotNull @NlsContexts.Label String nullValue,
+  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue,
                                                                         @NotNull Function<? super T, @NlsContexts.Label String> getText) {
     return new SimpleListCellRenderer<>() {
       @Override
