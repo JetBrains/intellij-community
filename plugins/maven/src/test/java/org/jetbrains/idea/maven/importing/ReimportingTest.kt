@@ -189,7 +189,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() = runBlocking {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    mavenImporterSettings.setCreateModulesForAggregators(false)
+    waitForImportWithinTimeout {
+      mavenImporterSettings.setCreateModulesForAggregators(false)
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
