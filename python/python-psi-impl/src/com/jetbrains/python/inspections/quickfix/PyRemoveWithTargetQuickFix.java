@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveWithTargetQuickFix implements LocalQuickFix {
+public class PyRemoveWithTargetQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,8 +33,7 @@ public class PyRemoveWithTargetQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyWithItem withItem = PsiTreeUtil.getParentOfType(element, PyWithItem.class);
     if (withItem == null) return;
     final PyExpression withTarget = withItem.getTarget();
