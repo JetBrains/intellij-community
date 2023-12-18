@@ -20,6 +20,7 @@
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter id="update" implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
+    <appStarter id="migrateConfig" implementation="com.intellij.openapi.application.MigrateConfigApp"/>
     <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
