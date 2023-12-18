@@ -21,7 +21,8 @@ abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightE
     internal val RECENT_PROJECT_TREE_KEY: DataKey<Tree> = DataKey.create("RECENT_PROJECT_TREE")
 
     internal fun getSelectedItems(event: AnActionEvent): List<RecentProjectTreeItem>? {
-      return event.getData(RECENT_PROJECT_SELECTED_ITEMS_KEY)
+      return event.getData(RECENT_PROJECT_SELECTED_ITEMS_KEY)?.takeIf { it.isNotEmpty() }
+             ?: getSelectedItem(event)?.let { listOf(it) }
     }
 
     internal fun getSelectedItem(event: AnActionEvent): RecentProjectTreeItem? {
