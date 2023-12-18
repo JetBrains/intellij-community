@@ -6,6 +6,7 @@ import com.intellij.diff.tools.util.DiffDataKeys.DIFF_CONTEXT
 import com.intellij.diff.tools.util.DiffDataKeys.DIFF_VIEWER
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF
+import com.intellij.diff.util.DiffUserDataKeys.ALIGNING_VIEW_NOT_SUPPORTED
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,6 +19,7 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
     val available = e.project != null
                     && viewer is SimpleDiffViewer
                     && !DiffUtil.isUserDataFlagSet(ALIGNED_TWO_SIDED_DIFF, viewer.request)
+                    && !DiffUtil.isUserDataFlagSet(ALIGNING_VIEW_NOT_SUPPORTED, viewer.request)
     if (!available) {
       e.presentation.isEnabledAndVisible = false
       return
