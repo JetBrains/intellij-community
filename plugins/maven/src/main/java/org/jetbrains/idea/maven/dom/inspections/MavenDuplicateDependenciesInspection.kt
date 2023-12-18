@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.utils.MavenLog
 
 class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
   override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
@@ -47,30 +48,34 @@ class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProje
       if (id != null) {
         val dependencies = allDuplicates[id]
         if (dependencies.size > 1) {
-          val duplicatedDependencies: MutableList<MavenDomDependency> = ArrayList()
+          val duplicateDependencies: MutableList<MavenDomDependency> = ArrayList()
 
           for (d in dependencies) {
             if (d === dependency) continue
 
             if (d.parent === dependency.parent) {
               // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
-              duplicatedDependencies.add(d)
+              MavenLog.LOG.debug("Duplicate dependencies in the same file: ${dependencyToString(d)}")
+              duplicateDependencies.add(d)
             }
             else {
               if (scope(d) == scope(dependency) && d.version.stringValue == dependency.version.stringValue) {
                 // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
-                duplicatedDependencies.add(d)
+                MavenLog.LOG.debug("Duplicate dependencies in different files: ${dependencyToString(d)}")
+                duplicateDependencies.add(d)
               }
             }
           }
 
-          if (duplicatedDependencies.size > 0) {
-            addProblem(dependency, duplicatedDependencies, holder)
+          if (duplicateDependencies.size > 0) {
+            addProblem(dependency, duplicateDependencies, holder)
           }
         }
       }
     }
   }
+
+  private fun dependencyToString(d: MavenDomDependency) = "${d.groupId.stringValue}:${d.artifactId.stringValue}:${d.version.stringValue}"
 
   private fun scope(dependency: MavenDomDependency): String {
     val res = dependency.scope.rawText
