@@ -809,6 +809,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(declaration.getProject()).getControlFlow(declaration.getParent(), policy);
       final int switchStart = controlFlow.getStartOffset(statement);
+      if (switchStart <= 0) {
+        return null;
+      }
       final ControlFlow beforeFlow = new ControlFlowSubRange(controlFlow, 0, switchStart);
       if (!ControlFlowUtil.isVariableDefinitelyAssigned(assignedVariable, beforeFlow)) {
         return null;
