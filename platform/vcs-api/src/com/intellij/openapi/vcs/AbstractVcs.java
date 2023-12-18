@@ -81,6 +81,9 @@ public abstract class AbstractVcs extends StartedActivated {
    * Called when VCS gets a configured mapping.
    * <p/>
    * This is a good place to install project-wide listeners and perform generic initialization.
+   * <p>
+   * Implementations are encouraged to offload work to a pooled thread if necessary
+   * and not perform {@link com.intellij.openapi.application.Application#invokeAndWait(Runnable)} calls inside.
    *
    * @see #deactivate
    */

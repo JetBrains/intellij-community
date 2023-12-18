@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -694,23 +695,25 @@ public final class NewMappings implements Disposable {
     }
 
     public boolean activate() {
-      for (AbstractVcs vcs : myAddVcses) {
-        try {
-          vcs.doActivate();
+      return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+        for (AbstractVcs vcs : myAddVcses) {
+          try {
+            vcs.doActivate();
+          }
+          catch (VcsException e) {
+            LOG.error(e);
+          }
         }
-        catch (VcsException e) {
-          LOG.error(e);
+        for (AbstractVcs vcs : myRemoveVcses) {
+          try {
+            vcs.doDeactivate();
+          }
+          catch (VcsException e) {
+            LOG.error(e);
+          }
         }
-      }
-      for (AbstractVcs vcs : myRemoveVcses) {
-        try {
-          vcs.doDeactivate();
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-        }
-      }
-      return !myAddVcses.isEmpty() || !myRemoveVcses.isEmpty();
+        return !myAddVcses.isEmpty() || !myRemoveVcses.isEmpty();
+      });
     }
   }
 
