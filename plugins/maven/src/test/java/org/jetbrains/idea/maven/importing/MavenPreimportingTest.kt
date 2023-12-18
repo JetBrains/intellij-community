@@ -186,6 +186,184 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
+  @Test
+  fun testImportProjectWithCompilerConfig() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                            <source>14</source>
+                            <target>14</target>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      val module = getModule("project")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+  @Test
+  fun testImportProjectWithCompilerConfigOfParent() = runBlocking {
+
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                            <source>14</source>
+                            <target>14</target>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+
+
+    readAction {
+      val module = getModule("m1")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+  @Test
+  fun testImportProjectWithTargetVersionOfParent() = runBlocking {
+
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                        <maven.compiler.target>14</maven.compiler.target>
+                        <maven.compiler.source>14</maven.compiler.source>
+                    </properties>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    
+                    """.trimIndent())
+
+
+
+
+    readAction {
+      val module = getModule("m1")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+
+  @Test
+  fun testImportProjectWithKotlinConfig() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <kotlin.version>1.9.21</kotlin.version>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.jetbrains.kotlin</groupId>
+                          <artifactId>kotlin-maven-plugin</artifactId>
+                          <version>${'$'}{kotlin.version}</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      assertSources("project", "src/main/java", "src/main/kotlin")
+    }
+  }
+
+  @Test
+  fun testImportProjectWithKotlinConfigInParent() = runBlocking {
+
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <properties>
+                        <kotlin.version>1.9.21</kotlin.version>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.jetbrains.kotlin</groupId>
+                          <artifactId>kotlin-maven-plugin</artifactId>
+                          <version>${'$'}{kotlin.version}</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+
+
+    readAction {
+      assertSources("m1", "src/main/java", "src/main/kotlin")
+    }
+  }
+
+
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)

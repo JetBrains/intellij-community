@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -154,6 +155,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         tree.forEachProject {
           launch {
             resolveDependencies(it)
+            resolveDirectories(it)
+            applyChangesToProject(it)
           }
         }
       }
@@ -172,6 +175,23 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
   }
 
+
+  private fun applyChangesToProject(projectData: MavenProjectData) {
+    val dependencies = projectData.resolvedDependencies.map {
+      val file = MavenUtil.makeLocalRepositoryFile(it, localRepo, MavenConstants.TYPE_JAR, null)
+      MavenArtifact(it.groupId, it.artifactId, it.version, null, MavenConstants.TYPE_JAR, null, null, false, MavenConstants.TYPE_JAR,
+                    file, localRepo, true, false);
+
+    }
+
+    applyReadStateToMavenProject(projectData.mavenModel, projectData.mavenProject)
+
+    projectData.mavenProject.updater()
+      .setDependencies(dependencies)
+      .setPlugins(projectData.plugins.values.toList())
+      .setProperties(Properties().apply { this.putAll(projectData.properties) })
+  }
+
   private fun CoroutineScope.interpolate(project: MavenProjectData,
                                          tree: ProjectTree,
                                          interpolatedCache: ConcurrentHashMap<VirtualFile, Deferred<MavenProjectData>>): Deferred<MavenProjectData> = async {
@@ -188,17 +208,18 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         myDeferred.complete(project)
         return@async project
       }
-      val projectInReactor = tree.project(parentId)
-      if (projectInReactor == null) {
+      val parentInReactor = tree.project(parentId)
+      if (parentInReactor == null) {
         myDeferred.complete(project)
         return@async project
       }
 
 
-      val parentInterpolated = interpolate(projectInReactor, tree, interpolatedCache).await()
+      val parentInterpolated = interpolate(parentInReactor, tree, interpolatedCache).await()
       project.resolvedDependencyManagement.putAll(parentInterpolated.resolvedDependencyManagement)
-      project.allPlugins.putAll(parentInterpolated.allPlugins)
-      project.allPlugins.putAll(project.declaredPlugins)
+      parentInterpolated.plugins.forEach { (id, plugin) ->
+        project.plugins.putIfAbsent(id, plugin)
+      }
       project.properties.putAll(parentInterpolated.properties)
       project.dependencyManagement.forEach {
         val version = it.version
@@ -227,6 +248,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
   private fun resolveDependencies(project: MavenProjectData) {
 
+
     project.declaredDependencies.forEach {
       val version = it.version
       if (version == null) {
@@ -246,13 +268,6 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       }
 
     }
-
-    project.mavenProject.updater().setDependencies(
-      project.resolvedDependencies.map {
-        val file = MavenUtil.makeLocalRepositoryFile(it, localRepo, MavenConstants.TYPE_JAR, null)
-        MavenArtifact(it.groupId, it.artifactId, it.version, null, MavenConstants.TYPE_JAR, null, null, false, MavenConstants.TYPE_JAR,
-                      file, localRepo, true, false)
-      })
   }
 
   private fun resolveProperty(project: MavenProjectData, value: String): String {
@@ -299,14 +314,16 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
   }
 
   private fun readProject(rootModel: Element, file: VirtualFile): MavenProjectData {
-    val parentFolder = file.parent.toNioPath()
     val mavenModel = MavenModel()
     val mavenProject = MavenProject(file)
-    val mavenProjectData = MavenProjectData(mavenProject)
+
+    val dependencyManagement = ArrayList<MavenId>()
+    val declaredDependencies = ArrayList<MavenId>()
+    val properties = HashMap<String, String>()
 
     rootModel.getChild("properties")?.children?.forEach {
       mavenModel.properties.setProperty(it.name, it.textTrim)
-      mavenProjectData.properties[it.name] = it.textTrim
+      properties[it.name] = it.textTrim
     }
 
 
@@ -319,49 +336,63 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val id = MavenId(MavenJDOMUtil.findChildValueByPath(rootModel, "groupId", parent.mavenId.groupId),
                      MavenJDOMUtil.findChildValueByPath(rootModel, "artifactId", null),
                      MavenJDOMUtil.findChildValueByPath(rootModel, "version", parent.mavenId.version))
+    val parentFolder = file.parent.toNioPath()
     mavenModel.mavenId = id
     mavenModel.name = file.parent.name
     mavenModel.build.finalName = file.parent.name
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
+    mavenModel.build.directory = parentFolder.resolve("target").toString()
+    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
+    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+
     MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency")?.map { extractId(it) }
-    mavenProjectData.declaredDependencies.addAll(
+    declaredDependencies.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map { extractId(it) }
     )
 
-    mavenProjectData.dependencyManagement.addAll(
+    dependencyManagement.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel.getChild("dependencyManagement"), "dependencies", "dependency")
         .map { extractId(it) }
     )
 
+    applyReadStateToMavenProject(mavenModel, mavenProject)
+
+    val plugins = readPlugins(rootModel)
+
+
+    return MavenProjectData(mavenProject, mavenModel, rootModel).apply {
+      this.plugins.putAll(plugins)
+      this.dependencyManagement.addAll(dependencyManagement)
+      this.declaredDependencies.addAll(declaredDependencies)
+      this.properties.putAll(properties)
+    }
+
+  }
+
+  private fun applyReadStateToMavenProject(mavenModel: MavenModel, mavenProject: MavenProject) {
     val modelMap = HashMap<String, String>()
     mavenModel.mavenId.groupId?.let { modelMap.put("groupId", it) }
     mavenModel.mavenId.artifactId?.let { modelMap.put("artifactId", it) }
     mavenModel.mavenId.version?.let { modelMap.put("version", it) }
-
-    readPlugins(mavenProjectData, rootModel)
-
-    resolveDirectories(mavenProjectData, mavenModel, parentFolder, rootModel)
-
     modelMap["build.outputDirectory"] = mavenModel.build.outputDirectory
     modelMap["build.testOutputDirectory"] = mavenModel.build.testOutputDirectory
     modelMap["build.finalName"] = mavenModel.build.finalName
     modelMap["build.directory"] = mavenModel.build.directory
-
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, null, emptyList(), emptySet())
     mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true)
-    return mavenProjectData
-
   }
 
-  private fun resolveDirectories(mavenProjectData: MavenProjectData, mavenModel: MavenModel, parentFolder: Path, rootModel: Element) {
+  private fun resolveDirectories(mavenProjectData: MavenProjectData) {
     val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
     val sources = ArrayList<String>()
     val testSources = ArrayList<String>()
 
-    val sourceDirectory = resolveProperty(mavenProjectData, rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
-    val testSourceDirectory = resolveProperty(mavenProjectData, rootModel.getChildText("build.testSourceDirectory") ?: "src/test/java")
+    val sourceDirectory = resolveProperty(mavenProjectData,
+                                          mavenProjectData.rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
+    val testSourceDirectory = resolveProperty(mavenProjectData,
+                                              mavenProjectData.rootModel.getChildText("build.testSourceDirectory") ?: "src/test/java")
 
     sources.add(sourceDirectory)
     testSources.add(testSourceDirectory)
@@ -370,26 +401,28 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       testSources.add("src/test/kotlin")
     }
 
-    mavenModel.build.directory = parentFolder.resolve("target").toString()
+    val parentFolder = mavenProjectData.file.parent.toNioPath()
 
 
-
-    mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
-    mavenModel.build.sources = sources.map(parentFolder::resolve).map(Path::toString)
-    mavenModel.build.testSources = testSources.map(parentFolder::resolve).map(Path::toString)
+    mavenProjectData.mavenModel.build.directory = parentFolder.resolve("target").toString()
+    mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
+    mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    mavenProjectData.mavenModel.build.sources = sources.map(parentFolder::resolve).map(Path::toString)
+    mavenProjectData.mavenModel.build.testSources = testSources.map(parentFolder::resolve).map(Path::toString)
   }
 
   private fun findPlugin(mavenProjectData: MavenProjectData, groupId: String, artifactId: String) =
-    mavenProjectData.allPlugins[MavenId(groupId, artifactId, null)]
+    mavenProjectData.plugins[MavenId(groupId, artifactId, null)]
 
-  private fun readPlugins(mavenProjectData: MavenProjectData, rootModel: Element) {
+
+  private fun readPlugins(rootModel: Element): Map<MavenId, MavenPlugin> {
+    val plugins = HashMap<MavenId, MavenPlugin>()
     MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
       val id = extractId(it)
       val plugin = MavenPlugin(id.groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), emptyList(), emptyList())
-      mavenProjectData.declaredPlugins[trimVersion(id)] = plugin
+      plugins[trimVersion(id)] = plugin
     }
+    return plugins
   }
 
 
@@ -486,15 +519,14 @@ class ProjectTree {
   }
 }
 
-class MavenProjectData(val mavenProject: MavenProject) {
+class MavenProjectData(val mavenProject: MavenProject, val mavenModel: MavenModel, val rootModel: Element) {
   val dependencyManagement = ArrayList<MavenId>()
   val declaredDependencies = ArrayList<MavenId>()
   val resolvedDependencyManagement = HashMap<MavenId, MavenId>()
   val properties = HashMap<String, String>()
   val resolvedDependencies = ArrayList<MavenId>()
 
-  val allPlugins = HashMap<MavenId, MavenPlugin>()
-  val declaredPlugins = HashMap<MavenId, MavenPlugin>()
+  val plugins = HashMap<MavenId, MavenPlugin>()
 
   val mavenId by lazy { mavenProject.mavenId }
   val parentId by lazy { mavenProject.parentId }

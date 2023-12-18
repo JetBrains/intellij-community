@@ -1270,9 +1270,10 @@ public class MavenProject {
       return this;
     }
 
-    public void setPlugins(@NotNull List<MavenPlugin> plugins) {
+    public Updater setPlugins(@NotNull List<MavenPlugin> plugins) {
       myState.myPlugins.clear();
       myState.myPlugins.addAll(plugins);
+      return this;
     }
   }
 
