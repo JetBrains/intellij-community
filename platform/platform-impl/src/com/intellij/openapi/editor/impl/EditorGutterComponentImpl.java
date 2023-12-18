@@ -115,6 +115,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.diff.util.DiffUserDataKeys.LINE_MARKER_ALWAYS_VISIBLE;
 import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getStandardLineNumberConverter;
 
 /**
@@ -1299,9 +1300,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private boolean isLineMarkerVisible(RangeHighlighter highlighter) {
+    if (Boolean.TRUE.equals(myEditor.getUserData(LINE_MARKER_ALWAYS_VISIBLE))) { return true; }
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
-
     FoldRegion startFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
     FoldRegion endFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
     return startFoldRegion == null || !startFoldRegion.equals(endFoldRegion);
