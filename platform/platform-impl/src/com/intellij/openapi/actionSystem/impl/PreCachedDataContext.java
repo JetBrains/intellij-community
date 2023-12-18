@@ -383,11 +383,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return InjectedDataKeys.getInjectedData(dataId, (key) -> super.getData(key));
-    }
-
-    @Override
     protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
       return InjectedDataKeys.getInjectedData(dataId, (key) -> super.getDataInner(key, rulesAllowedBase, ruleValuesAllowed));
     }
