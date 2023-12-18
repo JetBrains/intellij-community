@@ -214,6 +214,17 @@ fun getProjectCacheFileName(presentableUrl: String?,
          "$hashSeparator$locationHash$extensionWithDot"
 }
 
+@Internal
+fun doGetProjectFileName(presentableUrl: String?,
+                         name: String,
+                         hashSeparator: String,
+                         extensionWithDot: String): String {
+  // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended)
+  val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
+  // trim name to avoid "File name too long"
+  return "${name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)}$hashSeparator$locationHash$extensionWithDot"
+}
+
 /**
  * Returns the path to a directory which can be used to store project-specific caches. Note that directory structure used by this 
  * function doesn't allow automatic cleaning of all caches related to a given project if it was deleted, so consider using [getProjectDataPath] 
