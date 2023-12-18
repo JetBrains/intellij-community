@@ -1,4 +1,3 @@
-
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.readAndWriteAction
@@ -225,8 +224,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
   @RequiresReadLock
   private fun collectInlays(document: Document,
-                                    line: Int,
-                                    breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
+                            line: Int,
+                            breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
     if (!DocumentUtil.isValidLine(line, document)) return emptyList()
 
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
@@ -248,7 +247,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     if (!shouldAlwaysShowAllInlays() &&
         breakpoints.size == 1 &&
         (variants.isEmpty() ||
-         variants.size == 1 && areMatching(variants[0], breakpoints[0], codeStartOffset))) {
+         variants.size == 1 && areMatching(variants[0], breakpoints[0]))) {
       // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
       return emptyList()
     }
@@ -256,7 +255,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     return buildList {
       val remainingBreakpoints = breakpoints.toMutableSmartList()
       for (variant in variants) {
-        val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it, codeStartOffset) }
+        val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it) }
         if (!breakpointsHere.isEmpty()) {
           for (breakpointHere in breakpointsHere) {
             remainingBreakpoints.remove(breakpointHere)
@@ -281,9 +280,14 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     }
   }
 
-  private fun areMatching(variant: XLineBreakpointType<*>.XLineBreakpointVariant, breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Boolean {
-    return variant.type == breakpoint.type &&
-           getBreakpointVariantRangeStartOffset(variant, codeStartOffset) == getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
+  @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
+  private fun areMatching(variant: XLineBreakpointType<*>.XLineBreakpointVariant,
+                          breakpoint: XLineBreakpointImpl<*>): Boolean {
+    val type = breakpoint.type as XLineBreakpointType<XBreakpointProperties<*>>
+    val b = breakpoint as XLineBreakpointImpl<XBreakpointProperties<*>>
+    val v = variant as XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant
+
+    return type == variant.type && type.variantAndBreakpointMatch(b, v)
   }
 
   private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointType<*>.XLineBreakpointVariant, codeStartOffset: Int): Int {
@@ -291,10 +295,12 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     return getLineRangeStartNormalized(variantRange, codeStartOffset)
   }
 
-  @Suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
   private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Int {
     val type: XLineBreakpointType<XBreakpointProperties<*>> = breakpoint.type as XLineBreakpointType<XBreakpointProperties<*>>
-    val breakpointRange = type.getHighlightRange(breakpoint as XLineBreakpoint<XBreakpointProperties<*>>)
+    val b = breakpoint as XLineBreakpoint<XBreakpointProperties<*>>
+
+    val breakpointRange = type.getHighlightRange(b)
     return getLineRangeStartNormalized(breakpointRange, codeStartOffset)
   }
 

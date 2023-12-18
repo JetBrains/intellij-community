@@ -167,7 +167,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-    showTooltip(event)
+    showTooltip()
   }
 
   override fun mouseExited() {
@@ -178,17 +178,12 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   private fun setCursor(cursor: Cursor?) =
     (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java, cursor)
 
-  private fun showTooltip(event: MouseEvent) {
+  private fun showTooltip() {
     if (tooltipHint?.isVisible == true) return
     if (!inlay.editor.contentComponent.isShowing) return
 
     // FIXME[inline-bp]: use some better texts here
-    val text =
-      if (breakpoint != null) {
-        breakpoint.description
-      } else {
-        variant!!.text
-      }
+    val text = breakpoint?.description ?: variant!!.text
     val hint = LightweightHint(HintUtil.createInformationLabel(text))
 
     // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.

@@ -61,6 +61,13 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     return encodedInlinePosition == null || encodedInlinePosition == BASIC_LINE_POSITION;
   }
 
+  /**
+   * @see #isLinePosition(Integer)
+   */
+  public boolean isLinePosition() {
+    return isLinePosition(encodedInlinePosition);
+  }
+
   public boolean isInLambda() {
     Integer lambdaOrdinal = getLambdaOrdinal();
     return lambdaOrdinal != null && lambdaOrdinal != NO_LAMBDA;

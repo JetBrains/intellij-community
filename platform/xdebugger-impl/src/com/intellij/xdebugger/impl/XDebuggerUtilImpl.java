@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -76,6 +77,8 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 public class XDebuggerUtilImpl extends XDebuggerUtil {
+  private static final Logger LOG = Logger.getInstance(XDebuggerUtilImpl.class);
+  
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
 
   public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
@@ -464,7 +467,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                        Boolean temporary) {
     var properties = variant.createProperties();
     var type = variant.getType();
-    return addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
+    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
+    LOG.assertTrue(type.variantAndBreakpointMatch(breakpoint, variant), type + ": " + variant.getClass());
+    return breakpoint;
   }
 
   private static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,

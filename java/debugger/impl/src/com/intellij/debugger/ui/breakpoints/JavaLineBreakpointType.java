@@ -31,6 +31,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -50,6 +51,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -317,6 +319,19 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       visitor.returnOffsets.remove(visitor.returnOffsets.size() - 1);
     }
     return visitor.returnOffsets.stream().map(offs -> method.locationOfCodeIndex(offs));
+  }
+
+  @Override
+  public boolean variantAndBreakpointMatch(@NotNull XLineBreakpoint<JavaLineBreakpointProperties> breakpoint,
+                                           @NotNull XLineBreakpointType<JavaLineBreakpointProperties>.XLineBreakpointVariant variant) {
+    var props = breakpoint.getProperties();
+    if (variant instanceof ExactJavaBreakpointVariant exactJavaVariant) {
+      return Objects.equals(props.getEncodedInlinePosition(), exactJavaVariant.myEncodedInlinePosition);
+
+    } else {
+      // variant is a default line breakpoint variant or explicit "all" variant
+      return props.isLinePosition();
+    }
   }
 
   public class JavaBreakpointVariant extends XLineBreakpointAllVariant {

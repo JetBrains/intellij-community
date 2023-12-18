@@ -161,6 +161,30 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return Promises.resolvedPromise(computeVariants(project, position));
   }
 
+  /**
+   * Return whether given {@code breakpoint} corresponds to given {@code variant}.
+   * I.e., this breakpoint was created using this variant.
+   */
+  public boolean variantAndBreakpointMatch(@NotNull XLineBreakpoint<P> breakpoint, @NotNull XLineBreakpointVariant variant) {
+    // By default, we only compare highlight ranges, however, feel free to override and implement more sophisticated logic
+    // (i.e., it may be required if there are different breakpoint variants starting at the same location,
+    // e.g., to resolve issues like IDEA-337165).
+
+    var r1 = getHighlightRange(breakpoint);
+    var r2 = variant.getHighlightRange();
+
+    if (r1 == null && r2 == null) {
+      // null means "whole line"
+      return true;
+    }
+
+    if (r1 != null && r2 != null) {
+      return r1.getStartOffset() == r2.getStartOffset();
+    }
+
+    return false;
+  }
+
   public abstract class XLineBreakpointVariant {
     @NotNull
     @Nls
