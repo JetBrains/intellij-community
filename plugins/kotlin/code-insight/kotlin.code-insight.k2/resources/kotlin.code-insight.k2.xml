@@ -103,7 +103,7 @@
     <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
                                                    implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTargetProvider"/>
     <platform.backend.documentation.inlineDocumentationProvider
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinInlineDocumentationProvider"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinInlineDocumentationProvider" order="before defaultInlineDocumentationProvider"/>
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinElementActionsFactory"/>
 
