@@ -5,19 +5,38 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal class CreateKotlinCallableFromKotlinUsageRequest (
-    functionCall: KtCallExpression,
-    modifiers: Collection<JvmModifier>
+    private val functionCall: KtCallExpression,
+    modifiers: Collection<JvmModifier>,
+    val receiverExpression: KtExpression? = null,
+    val isExtension: Boolean = false,
+    val isAbstractClassOrInterface: Boolean = false,
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
+    private val returnType = mutableListOf<ExpectedType>()
+
+    init {
+      analyze(functionCall) {
+          initializeReturnType()
+      }
+    }
+
+    context (KtAnalysisSession)
+    private fun initializeReturnType() {
+        val returnPsiType = functionCall.getExpectedPsiType() ?: return
+        returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnPsiType))
+    }
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null
 
     override fun getMethodName(): @NlsSafe String = getReferenceName()!!
 
-    override fun getReturnType(): List<ExpectedType> = emptyList() //todo guess return type
+    override fun getReturnType(): List<ExpectedType> = returnType
 
     private fun getReferenceName(): String? = (call.calleeExpression as? KtSimpleNameExpression)?.getReferencedName()
 }

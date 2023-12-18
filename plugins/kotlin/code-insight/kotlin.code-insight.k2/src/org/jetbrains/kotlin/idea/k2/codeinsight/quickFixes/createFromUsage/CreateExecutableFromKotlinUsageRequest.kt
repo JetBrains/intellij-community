@@ -5,9 +5,11 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateExecutableRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
@@ -19,6 +21,17 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
     private val psiManager = call.manager
     private val project = psiManager.project
     private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer()
+
+    private val expectedParameterInfo = mutableListOf<ParameterInfo>()
+
+    init {
+        analyze(call) {
+            call.valueArgumentList?.arguments?.forEach { valueArgument ->
+                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo())
+            }
+        }
+    }
+
     internal val call: T get() = callPointer.element ?: error("dead pointer")
 
     override fun isValid(): Boolean = callPointer.element != null
@@ -30,18 +43,12 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
     //todo substitutor
     override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
 
-    override fun getExpectedParameters(): List<ExpectedParameter> {
-        //todo guess parameters
-        //val argumentList = call.argumentList ?: return emptyList()
-        //val scope = call.resolveScope
-        //val codeStyleManager = JavaCodeStyleManager.getInstance(project)
-        //return argumentList.expressions.map { expression ->
-        //    val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
-        //    val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)
-        //    val names = codeStyleManager.suggestSemanticNames(expression, VariableKind.PARAMETER)
-        //    val expectedTypes = expectedTypes(type, ExpectedType.Kind.SUPERTYPE)
-        //    expectedParameter(expectedTypes, names)
-        //}
-        return emptyList()
+    override fun getExpectedParameters(): List<ExpectedParameter> = expectedParameterInfo.map { parameterInfo ->
+        object : ExpectedParameter {
+            override fun getExpectedTypes(): MutableList<ExpectedType> =
+                mutableListOf(parameterInfo.type?.let { ExpectedKotlinType.createExpectedKotlinType(it) } ?: ExpectedKotlinType.NULL)
+
+            override fun getSemanticNames(): MutableCollection<String> = mutableListOf(parameterInfo.name)
+        }
     }
 }

@@ -125,10 +125,17 @@ object DirectiveBasedActionUtils {
     }
 
     fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
+        checkAvailableActionsAreExpected(file, availableActions, emptyList())
+    }
+
+    fun checkAvailableActionsAreExpected(
+        file: File, availableActions: Collection<IntentionAction>, actionsToExclude: List<String>,
+    ) {
         val fileText = file.readText()
         checkAvailableActionsAreExpected(
             fileText,
             availableActions,
+            actionsToExclude,
         ) { expectedActionsDirectives, actualActionsDirectives ->
             if (expectedActionsDirectives != actualActionsDirectives) {
                 assertEqualsToFile(
@@ -164,6 +171,7 @@ object DirectiveBasedActionUtils {
     private fun checkAvailableActionsAreExpected(
         fileText: String,
         availableActions: Collection<IntentionAction>,
+        actionsToExclude: List<String> = emptyList(),
         assertion: (expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
     ) {
         val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
@@ -177,10 +185,16 @@ object DirectiveBasedActionUtils {
             return
         }
 
-        val actualActions = availableActions.map { it.text }.sorted()
+        val actualActions = availableActions.map { it.text }.filterOutElementsToExclude(actionsToExclude).sorted()
         val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" }
-        val expectedActionsDirectives = expectedActions.map { "$ACTION_DIRECTIVE $it" }
+        val expectedActionsDirectives = expectedActions.filterOutElementsToExclude(actionsToExclude).map { "$ACTION_DIRECTIVE $it" }
         assertion(expectedActionsDirectives, actualActionsDirectives)
+    }
+
+    private fun List<String>.filterOutElementsToExclude(elementsToExclude: List<String>) = if (elementsToExclude.isEmpty()) {
+        this
+    } else {
+        filter { element -> !elementsToExclude.any { element == it } }
     }
 
     //TODO: hack, implemented because irrelevant actions behave in different ways on build server and locally
