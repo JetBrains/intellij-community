@@ -40,11 +40,9 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.light.LightRecordMethod;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
@@ -2841,22 +2839,6 @@ public final class HighlightUtil {
         }
 
         return builder;
-      }
-
-      if (element instanceof PsiReferenceExpression ref) {
-        PsiElement resolve;
-        if (element instanceof PsiReferenceExpressionImpl referenceExpression) {
-          JavaResolveResult[] results = JavaResolveUtil
-            .resolveWithContainingFile(referenceExpression, PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE, true, false,
-                                       containingFile);
-          resolve = results.length == 1 ? results[0].getElement() : null;
-        }
-        else {
-          resolve = ref.resolve();
-        }
-        if (resolve instanceof PsiField field && field.hasModifierProperty(PsiModifier.STATIC)) {
-          return null;
-        }
       }
 
       element = element.getParent();
