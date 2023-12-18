@@ -99,9 +99,9 @@ sealed interface K2MoveTargetModel {
             fun updateFileChooser() {
                 val itemWrapper = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper) ?: return
                 val existingPath = itemWrapper.directory?.virtualFile?.path ?: return
-                val postFix = itemWrapper.postfix?.removePrefix("\\") ?: "" // post fix in case real directory doesn't exist yet
+                val postFix = itemWrapper.postfix?.removePrefix("\\")?.replace("\\", "/")?.plus("/") ?: "" // post fix in case real directory doesn't exist yet
                 val fileName = fileChooser.text.substringAfterLast("/")
-                val fullPath = "$existingPath/$postFix/$fileName"
+                val fullPath = "$existingPath/$postFix$fileName"
                 if (fullPath != fileChooser.text) fileChooser.text = fullPath
             }
             destinationChooser.comboBox.addActionListener {
