@@ -136,6 +136,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticOverride() { doTest(false); }
   public void testCyclicInheritance() { doTest(false); }
   public void testReferenceMemberBeforeCtrCalled() { doTest(false); }
+  public void testQualifiedThisBeforeCtrCalled() { doTest(false); }
   public void testLabels() { doTest(false); }
   public void testUnclosedBlockComment() { doTest(false); }
   public void testUnclosedComment() { doTest(false); }

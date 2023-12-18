@@ -2842,7 +2842,13 @@ public final class HighlightUtil {
       }
 
       element = element.getParent();
-      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, referencedClass, true)) return null;
+      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, referencedClass, true)) {
+        if ((expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) &&
+            ((PsiQualifiedExpression)expression).getQualifier() != null) {
+          continue;
+        }
+        return null;
+      }
     }
     return null;
   }
