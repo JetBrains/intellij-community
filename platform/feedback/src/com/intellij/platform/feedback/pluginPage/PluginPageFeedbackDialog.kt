@@ -12,6 +12,7 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import com.intellij.ui.dsl.builder.BottomGap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -55,7 +56,8 @@ internal abstract class PluginPageFeedbackDialog(private val pluginId: String,
   )
 
   override val myBlocks: List<FeedbackBlock> = listOf(
-    TopLabelBlock(PluginPageFeedbackBundle.message("dialog.title", pluginNameCapitalized)),
+    TopLabelBlock(PluginPageFeedbackBundle.message("dialog.title", pluginNameCapitalized))
+      .setBottomGap(BottomGap.MEDIUM),
     CheckBoxGroupBlock(PluginPageFeedbackBundle.message("$messageIdPrefixForCase.dialog.checkbox.group.label"),
                        reasonsItems, "reasons").addOtherTextField().requireAnswer(),
     TextAreaBlock(PluginPageFeedbackBundle.message("dialog.textarea.label"), "what_to_improve")
