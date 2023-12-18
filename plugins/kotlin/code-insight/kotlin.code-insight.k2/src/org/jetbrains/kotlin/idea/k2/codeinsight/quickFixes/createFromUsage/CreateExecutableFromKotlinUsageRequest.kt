@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallElement>(
     call: T,
-    private val modifiers: Collection<JvmModifier>
+    private val modifiers: Collection<JvmModifier>,
+    private val forKtCallableCreation: Boolean,
 ) : CreateExecutableRequest {
 
     private val psiManager = call.manager
@@ -27,7 +28,7 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
     init {
         analyze(call) {
             call.valueArgumentList?.arguments?.forEachIndexed { index, valueArgument ->
-                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo(index))
+                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo(index, forKtCallableCreation))
             }
         }
     }

@@ -11,7 +11,7 @@ class KotlinCreateFromUsageQuickFixProvider: UnresolvedReferenceQuickFixProvider
         when (val element = ref.element) {
             // Currently, we only support creating Kotlin functions from usage in Kotlin. We can add more cases here like
             // creating Kotlin functions from usage in Java, creating Kotlin classes, and so on.
-            is KtElement -> generateCreateKotlinCallableActions(element).forEach(registrar::register)
+            is KtElement -> generateCreateMethodActions(element).forEach(registrar::register)
         }
     }
 

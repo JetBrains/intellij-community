@@ -1636,6 +1636,19 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createFunction/fromJava/topLevel.before.Main.java");
                 }
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava")
+            public static class FromKotlinToJava extends AbstractQuickFixMultiFileTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("classMember.before.Main.kt")
+                public void testClassMember() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/classMember.before.Main.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
