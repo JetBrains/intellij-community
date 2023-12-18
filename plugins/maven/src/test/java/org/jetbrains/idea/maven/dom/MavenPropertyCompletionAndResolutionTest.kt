@@ -383,7 +383,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolutionToInheritedModelPropertiesForRelativeParent() = runBlocking {
-    createProjectPom("""
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -396,8 +397,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>project.build.directory}</name>
                        """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
+      val parent = createModulePom("parent",
+                                   """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
@@ -406,14 +407,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                            </build>
                                            """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
       assertResolved(myProjectPom, findTag(parent, "project.build.directory"))
     }
   }
 
   @Test
   fun testResolutionToInheritedPropertiesForNonManagedParent() = runBlocking {
-    createProjectPom("""
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -426,8 +427,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
+      val parent = createModulePom("parent",
+                                   """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
@@ -436,7 +437,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                            </properties>
                                            """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
       assertResolved(myProjectPom, findTag(parent, "project.properties.foo"))
     }
   }
@@ -878,7 +878,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolvingInheritedProperties() = runBlocking {
-    createProjectPom("""
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -891,8 +892,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
+      val parent = createModulePom("parent",
+                                   """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
@@ -900,8 +901,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                              <foo>value</foo>
                                            </properties>
                                            """.trimIndent())
-
-    withContext(Dispatchers.EDT) {
       assertResolved(myProjectPom, findTag(parent, "project.properties.foo"))
     }
   }
