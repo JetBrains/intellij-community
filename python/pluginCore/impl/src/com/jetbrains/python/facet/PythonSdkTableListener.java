@@ -19,7 +19,17 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   public void jdkAdded(@NotNull final Sdk sdk) {
     if (sdk.getSdkType() instanceof PythonSdkType) {
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        addLibrary(sdk);
+        final ModifiableModelsProvider provider = ModifiableModelsProvider.getInstance();
+        final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
+        Library library = libraryTableModifiableModel.getLibraryByName(PythonFacetUtil.getFacetLibraryName(sdk.getName()));
+        provider.disposeLibraryTableModifiableModel(libraryTableModifiableModel);
+        if (library == null) {
+          addLibrary(sdk);
+        }
+        else {
+          // Library might already be created before listener invocation, e.g. by PythonFacetUtil.updateLibrary
+          updateLibrary(sdk);
+        }
       }));
     }
   }
