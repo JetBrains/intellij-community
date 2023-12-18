@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -242,7 +243,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
     }
 
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
     return result;
   }
 
