@@ -231,6 +231,19 @@
             <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
 
+        <property name="patchChangeGroupingSupport"
+                  value="${basedir}/patches/ChangeGroupingSupport.patch"/>
+        <echo message="Applying ${patchChangeGroupingSupport}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchChangeGroupingSupport}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchChangeGroupingSupport}"/>
+        </exec>
+
         <property name="patchFileApplicationNamesInfo"
                   value="${basedir}/patches/ApplicationNamesInfo.patch"/>
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>
