@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiImplicitClass;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +59,15 @@ public class RenameJavaImplicitClassProcessor extends RenamePsiFileProcessor {
       myExtension = Optional.ofNullable(((PsiJavaFile)element).getVirtualFile())
         .map(file -> file.getExtension())
         .orElse(null);
+    }
+
+    @Override
+    protected void canRun() throws ConfigurationException {
+      String name = super.getNewName();
+      if (Comparing.strEqual(name, myImplicitClass.getQualifiedName())) throw new ConfigurationException(null);
+      if (!PsiNameHelper.getInstance(myImplicitClass.getProject()).isQualifiedName(name)) {
+        throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
+      }
     }
 
     @Override
