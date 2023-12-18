@@ -31,8 +31,8 @@ internal class CreateKotlinCallableFromKotlinUsageRequest (
 
     context (KtAnalysisSession)
     private fun initializeReturnType() {
-        val returnPsiType = functionCall.getExpectedPsiType() ?: return
-        returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnPsiType))
+        val returnJvmType = functionCall.getExpectedJvmType() ?: return
+        returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
     }
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null

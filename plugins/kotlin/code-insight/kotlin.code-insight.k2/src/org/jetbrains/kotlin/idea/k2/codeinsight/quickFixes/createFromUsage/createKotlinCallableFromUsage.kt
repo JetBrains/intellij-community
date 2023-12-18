@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
-import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -30,15 +29,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * This function uses [buildRequestsAndActions] below to prepare requests for creating Kotlin callables from usage in Kotlin
  * and create `IntentionAction`s for the requests.
  */
-internal fun generateCreateKotlinCallableActions(ref: PsiReference): List<IntentionAction> {
-    val callExpression = getCallExpressionToCreate(ref) ?: return emptyList()
+internal fun generateCreateKotlinCallableActions(element: KtElement): List<IntentionAction> {
+    val callExpression = getCallExpressionToCreate(element) ?: return emptyList()
     val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
     if (!calleeExpression.referenceNameOfElement()) return emptyList()
     return buildRequestsAndActions(callExpression)
 }
 
-private fun getCallExpressionToCreate(ref: PsiReference): KtCallExpression? {
-    val element = ref.element as? KtElement ?: return null
+private fun getCallExpressionToCreate(element: KtElement): KtCallExpression? {
     if (element.isPartOfImportDirectiveOrAnnotation()) return null
     val parent = element.parent
     return if (parent is KtCallExpression && parent.calleeExpression == element) parent else null
