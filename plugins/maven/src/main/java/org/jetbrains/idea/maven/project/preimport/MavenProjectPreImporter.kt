@@ -385,7 +385,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
   }
 
   private fun resolveDirectories(mavenProjectData: MavenProjectData) {
-    val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
+
     val sources = ArrayList<String>()
     val testSources = ArrayList<String>()
 
@@ -418,8 +418,19 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
   private fun readPlugins(rootModel: Element): Map<MavenId, MavenPlugin> {
     val plugins = HashMap<MavenId, MavenPlugin>()
     MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
+      val executions = it.getChild("executions")
+                         ?.getChildren("execution")
+                         ?.map { execution ->
+                           MavenPlugin.Execution(
+                             execution.getChildText("id"),
+                             execution.getChildText("phase"),
+                             execution.getChildrenText("goals", "goal"),
+                             execution.getChild("configuration")
+                           )
+                         } ?: emptyList()
+
       val id = extractId(it)
-      val plugin = MavenPlugin(id.groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), emptyList(), emptyList())
+      val plugin = MavenPlugin(id.groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), executions, emptyList())
       plugins[trimVersion(id)] = plugin
     }
     return plugins
