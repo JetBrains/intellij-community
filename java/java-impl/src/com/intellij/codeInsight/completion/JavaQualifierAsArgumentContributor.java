@@ -199,6 +199,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     @NotNull
     private static final CallMatcher MY_SKIP_METHODS =
       CallMatcher.anyOf(
+        //See FormatPostfixTemplate. It can be called with first invocation
         CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "format")
       );
 
