@@ -4,14 +4,18 @@ package com.intellij.pom.java;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
@@ -50,7 +54,7 @@ public enum LanguageLevel {
   // Unsupported
   // Marked as obsolete to draw attention, as they should not be normally used in code or in tests,
   // except the tests that explicitly test the obsolete levels
-  
+
   @ApiStatus.Obsolete
   JDK_17_PREVIEW(17, JDK_20_PREVIEW),
   @ApiStatus.Obsolete
@@ -68,6 +72,9 @@ public enum LanguageLevel {
   private final JavaVersion myVersion;
   private final boolean myPreview;
   private final @Nullable LanguageLevel myAlias;
+  private static final Map<Integer, LanguageLevel> ourStandardVersions =
+    Stream.of(values()).filter(ver -> !ver.isPreview())
+      .collect(Collectors.toMap(ver -> ver.myVersion.feature, Function.identity()));
 
   LanguageLevel(Supplier<@Nls String> presentableTextSupplier, int major) {
     this(presentableTextSupplier, major, null);
@@ -127,7 +134,7 @@ public enum LanguageLevel {
    */
   public @NotNull LanguageLevel getNonPreviewLevel() {
     if (!myPreview) return this;
-    return valueOf(StringUtil.substringBefore(name(), "_PREVIEW"));
+    return Objects.requireNonNull(ourStandardVersions.get(myVersion.feature));
   }
 
   @NotNull
@@ -159,6 +166,16 @@ public enum LanguageLevel {
       }
     }
     return null;
+  }
+
+  /**
+   * @param feature major Java language level number
+   * @return a {@link LanguageLevel} constant that correspond to the specified level (non-preview).
+   * Returns null for unknown/unsupported input. May return {@link #JDK_X} if language level is one level
+   * higher than maximal supported.
+   */
+  public static @Nullable LanguageLevel forFeature(int feature) {
+    return ourStandardVersions.get(feature);
   }
 
   public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
