@@ -15,15 +15,12 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -44,9 +41,7 @@ public class PyChangeBaseClassQuickFix extends PsiUpdateModCommandQuickFix {
     final PyArgumentList expressionList = pyClass.getSuperClassExpressionList();
     if (expressionList != null && expressionList.getArguments().length != 0) {
       final PyExpression argument = updater.getWritable(expressionList.getArguments()[0]);
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(argument);
-      builder.replaceElement(argument, argument.getText());
-      PythonTemplateRunner.runTemplate(element.getContainingFile(), builder);
+      updater.templateBuilder().field(argument, argument.getText());
     }
   }
 }

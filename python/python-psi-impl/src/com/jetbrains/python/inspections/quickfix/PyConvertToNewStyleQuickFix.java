@@ -49,7 +49,7 @@ public class PyConvertToNewStyleQuickFix extends PsiUpdateModCommandQuickFix {
       assert list != null;
       final ASTNode node = pyClass.getNameNode();
       assert node != null;
-      final PsiElement oldArgList = updater.getWritable(node.getPsi().getNextSibling());
+      final PsiElement oldArgList = node.getPsi().getNextSibling();
       if (oldArgList instanceof PyArgumentList) {
         oldArgList.replace(list);
       }
