@@ -199,7 +199,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       private static boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
         return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
-          .allMatch(call -> condition.isValueAccess(call));
+          .allMatch(call -> call != null && condition.isValueAccess(call));
       }
 
       private static boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {

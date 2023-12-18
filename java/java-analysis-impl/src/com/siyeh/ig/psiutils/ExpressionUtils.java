@@ -851,6 +851,7 @@ public final class ExpressionUtils {
    * @param qualifier for method call
    * @return a method call expression or null if the supplied expression is not a method call qualifier
    */
+  @Nullable
   @Contract(value = "null -> null", pure = true)
   public static PsiMethodCallExpression getCallForQualifier(PsiExpression qualifier) {
     if (qualifier != null &&
