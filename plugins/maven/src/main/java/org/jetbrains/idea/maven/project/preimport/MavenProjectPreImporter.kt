@@ -389,10 +389,9 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val sources = ArrayList<String>()
     val testSources = ArrayList<String>()
 
-    val sourceDirectory = resolveProperty(mavenProjectData,
-                                          mavenProjectData.rootModel.getChildText("build.sourceDirectory") ?: "src/main/java")
-    val testSourceDirectory = resolveProperty(mavenProjectData,
-                                              mavenProjectData.rootModel.getChildText("build.testSourceDirectory") ?: "src/test/java")
+    val sourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.sourceDirectory", "src/main/java")
+    val testSourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.testSourceDirectory", "src/test/java")
+
 
     sources.add(sourceDirectory)
     testSources.add(testSourceDirectory)
@@ -406,8 +405,14 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenProjectData.mavenModel.build.directory = parentFolder.resolve("target").toString()
     mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
     mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
-    mavenProjectData.mavenModel.build.sources = sources.map(parentFolder::resolve).map(Path::toString)
-    mavenProjectData.mavenModel.build.testSources = testSources.map(parentFolder::resolve).map(Path::toString)
+    mavenProjectData.mavenModel.build.sources = sources
+      .map { resolveProperty(mavenProjectData, it) }
+      .map(parentFolder::resolve)
+      .map(Path::toString)
+    mavenProjectData.mavenModel.build.testSources = testSources
+      .map { resolveProperty(mavenProjectData, it) }
+      .map(parentFolder::resolve)
+      .map(Path::toString)
   }
 
   private fun resolveKotlinPlugin(mavenProjectData: MavenProjectData,
