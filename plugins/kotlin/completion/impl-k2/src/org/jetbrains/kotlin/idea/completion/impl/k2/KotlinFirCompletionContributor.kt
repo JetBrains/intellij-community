@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
@@ -73,6 +74,11 @@ class KotlinFirCompletionContributor : CompletionContributor() {
 private object KotlinFirCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
+
+        if (!Registry.`is`("kotlin.k2.scripting.enabled")) {
+            val ktFile = parameters.ijParameters.originalFile as? KtFile
+            if (ktFile?.isScript() == true) return
+        }
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
