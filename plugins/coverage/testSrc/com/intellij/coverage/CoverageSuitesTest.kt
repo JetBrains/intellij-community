@@ -11,6 +11,7 @@ import java.io.File
 
 class CoverageSuitesTest : CoverageIntegrationBaseTest() {
   fun `test external suite adding`() {
+    assertNoSuites()
     val path = SIMPLE_IJ_REPORT_PATH
     val runner = CoverageRunner.getInstance(IDEACoverageRunner::class.java)
     val suite = manager.addExternalCoverageSuite(path, -1, runner, createCoverageFileProvider(path))
@@ -21,12 +22,13 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     }
 
     manager.unregisterCoverageSuite(suite)
-    Assert.assertTrue(manager.suites.isEmpty())
+    assertNoSuites()
   }
 
   fun `test coverage is closed when a suite is deleted`(): Unit = runBlocking {
-    val ijSuite = loadIJSuite().suites[0]
+    assertNoSuites()
 
+    val ijSuite = loadIJSuite().suites[0]
     registerSuite(ijSuite)
 
     manager.suites.run {
@@ -41,12 +43,12 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
 
     manager.unregisterCoverageSuite(ijSuite)
 
-    Assert.assertEquals(0, manager.suites.size)
-    Assert.assertNull(manager.currentSuitesBundle)
+    assertNoSuites()
   }
 
 
   fun `test coverage reopen if one of the suites is deleted`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
 
@@ -79,10 +81,11 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     Assert.assertNull(manager.currentSuitesBundle)
     Assert.assertEquals(1, manager.suites.size)
     manager.unregisterCoverageSuite(ijSuite)
-    Assert.assertEquals(0, manager.suites.size)
+    assertNoSuites()
   }
 
   fun `test suite removal with deletion asks for approval from user`() {
+    assertNoSuites()
     val suite = loadIJSuiteCopy().suites[0]
     val file = File(suite.coverageDataFileName)
 
@@ -96,20 +99,23 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     catch (e: RuntimeException) {
       Assert.assertTrue(e.message!!.contains(file.absolutePath))
     }
+    manager.unregisterCoverageSuite(suite)
+    assertNoSuites()
   }
 
   fun `test suite is not opened if the report file does not exist`() {
+    assertNoSuites()
     val suite = loadIJSuiteCopy()
     val file = File(suite.suites[0].coverageDataFileName)
     Assert.assertTrue(file.exists())
     file.delete()
 
     manager.chooseSuitesBundle(suite)
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.suites.size)
+    assertNoSuites()
   }
 
   fun `test opening several suites`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()
 
@@ -132,11 +138,11 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     }
 
     closeSuite(ijSuite)
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.activeSuites().size)
+    assertNoSuites()
   }
 
-  fun `test hide coverage action closes all suites`() : Unit = runBlocking {
+  fun `test hide coverage action closes all suites`(): Unit = runBlocking {
+    assertNoSuites()
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()
 
@@ -159,12 +165,16 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
       hideAction.actionPerformed(actionEvent)
     }
 
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertEquals(0, manager.activeSuites().size)
+    assertNoSuites()
   }
 
   private fun registerSuite(suite: CoverageSuite) {
     // Use 'presentableName' parameter to avoid report file deletion
     manager.addCoverageSuite(suite, suite.presentableName)
+  }
+
+  private fun assertNoSuites() {
+    Assert.assertNull(manager.currentSuitesBundle)
+    Assert.assertTrue(manager.suites.isEmpty())
   }
 }

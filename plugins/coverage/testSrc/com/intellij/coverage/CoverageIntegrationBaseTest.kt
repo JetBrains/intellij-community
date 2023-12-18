@@ -8,24 +8,23 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaModuleTestCase
-import com.intellij.testFramework.PlatformTestUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   override fun runInDispatchThread() = false
 
-  override fun tearDown(): Unit = runBlocking {
-    withContext(Dispatchers.EDT) {
-      super.tearDown()
-    }
+  override fun tearDown(): Unit = runBlocking(Dispatchers.EDT) {
+    super.tearDown()
   }
 
-  override fun setUpProject() {
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable())
-  }
+  override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path = Paths.get(getTestDataPath())
 
   val manager get() = CoverageDataManager.getInstance(myProject) as CoverageDataManagerImpl
 
@@ -39,8 +38,8 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     loadCoverageSuite(JavaCoverageEngine::class.java, JaCoCoCoverageRunner::class.java, path, includeFilters)
 
   @JvmOverloads
-  protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH)
-    = loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
+  protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH) =
+    loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
   protected fun closeSuite(bundle: CoverageSuitesBundle) {
     manager.closeSuitesBundle(bundle)
