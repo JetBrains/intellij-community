@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -78,6 +81,10 @@ object TestKotlinArtifacts {
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
 
+    /**
+     * @throws org.jetbrains.kotlin.konan.target.TargetSupportException on access from an inappropriate host.
+     * See KT-36871, KTIJ-28066.
+     */
     @JvmStatic val kotlinStdlibNative: File by lazy { getNativeLib(library = "klib/common/stdlib") }
 
     @JvmStatic
@@ -122,11 +129,15 @@ object TestKotlinArtifacts {
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
+    @Throws(TargetSupportException::class)
     private fun getNativeLib(
         version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
         platform: String = HostManager.platformName(),
         library: String
     ): File {
+        if (!isNativeHostSupported())
+            throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
+
         val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
         if (!baseDir.exists()) {
             baseDir.mkdirs()
@@ -149,7 +160,30 @@ object TestKotlinArtifacts {
         return if (libFile.exists()) libFile else
             throw IOException("Library doesn't exist: $libPath")
     }
+
+    private fun isNativeHostSupported(): Boolean {
+        val currentHost = HostManager.host
+        if (currentHost !in supportedNativeHosts) return false
+        // Because of the workaround in org.jetbrains.kotlin.konan.target.HostManager,
+        // returned host architecture can be incorrect and should be checked separately.
+        // E.g., on Linux ARM64 hosts HostManager.host currently falls back to Linux X64.
+        if (currentHost.architecture != expectedArchitectureByHostArchString[HostManager.hostArchOrNull()]) return false
+        return true
+    }
 }
+
+// Set of hosts for which K/N prebuilt can be downloaded
+private val supportedNativeHosts: Set<KonanTarget> = setOf(
+    KonanTarget.MACOS_X64,
+    KonanTarget.MACOS_ARM64,
+    KonanTarget.LINUX_X64,
+    KonanTarget.MINGW_X64,
+)
+
+private val expectedArchitectureByHostArchString: Map<String, Architecture> = mapOf(
+    "x86_64" to Architecture.X64,
+    "aarch64" to Architecture.ARM64,
+)
 
 @JvmOverloads
 fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =

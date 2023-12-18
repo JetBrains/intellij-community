@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.jetbrains.kotlin.konan.target.TargetSupportException
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
@@ -62,6 +63,17 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
         vfsDisposable = allowProjectRootAccess(this)
         checkPluginIsCorrect(isFirPlugin())
+    }
+
+    // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
+    // The test should be ignored in such cases, but since JUnit3 doesn't provide such an option, we make them pass instead.
+    // If KT-36871 is fixed and no platform-specific artifacts are used in tests, this hack should be removed.
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        try {
+            super.runTestRunnable(testRunnable)
+        } catch (e: TargetSupportException) {
+            LOG.warn(e)
+        }
     }
 
     fun module(name: String, hasTestRoot: Boolean = false, sdkFactory: () -> Sdk = { IdeaTestUtil.getMockJdk18() }): Module {
