@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.uiDesigner.UIFormXmlConstants
@@ -55,11 +56,14 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
   var isCodeCell = false
 
   fun initialize(actions: Array<AnAction>, isCodeCell: Boolean) {
+    if (editor.editorKind == EditorKind.DIFF) return
+
     this.actions.addAll(actions)
     this.isCodeCell = isCodeCell
 
     val backgroundColor = editor.colorsScheme.defaultBackground
     val cellRoofColor = if (isCodeCell) editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme) else backgroundColor
+
     val leftPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
     val rightPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
 
@@ -83,6 +87,7 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       centerPanel.add(button, JLayeredPane.DEFAULT_LAYER)
       buttons.add(button)
     }
+
     centerPanel.preferredSize = Dimension(xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT)
     delimiterPanel.setBounds(0, 0, xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
     codeRoofPanel.setBounds(0, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2, xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)

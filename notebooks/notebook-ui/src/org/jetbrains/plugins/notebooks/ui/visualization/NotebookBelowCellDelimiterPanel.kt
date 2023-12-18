@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBFont
@@ -9,6 +10,7 @@ import org.jetbrains.plugins.notebooks.ui.editor.ui.JupyterProgressBarUI
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridLayout
+import java.awt.GridBagConstraints
 import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -30,11 +32,33 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     }
   }
 
+  private fun setupForDiffEditor() {
+    preferredSize = Dimension(preferredSize.width, getJupyterCellSpacing(editor))
+    val basicPanel = JPanel().apply {
+      background = editor.colorsScheme.defaultBackground
+    }
+
+    val c = GridBagConstraints().apply {
+      weightx = 1.0
+      fill = GridBagConstraints.HORIZONTAL
+      gridx = 0
+      gridy = 0
+    }
+
+    add(basicPanel, c)
+  }
+
   fun initialize(@Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
     val notebookAppearance = editor.notebookAppearance
+    background = editor.colorsScheme.defaultBackground
+
+    if (editor.editorKind == EditorKind.DIFF) {
+      setupForDiffEditor()
+      return
+    }
+
     val customHeight = if (executionTimeDetails != null) notebookAppearance.EXECUTION_TIME_HEIGHT else notebookAppearance.SPACER_HEIGHT
     preferredSize = Dimension(preferredSize.width, customHeight)
-    background = editor.colorsScheme.defaultBackground
 
     if (executionTimeDetails != null) {
       val label = JLabel(executionTimeDetails)
