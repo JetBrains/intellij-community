@@ -181,7 +181,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val dependencies = projectData.resolvedDependencies.map {
       val file = MavenUtil.makeLocalRepositoryFile(it, localRepo, MavenConstants.TYPE_JAR, null)
       MavenArtifact(it.groupId, it.artifactId, it.version, null, MavenConstants.TYPE_JAR, null, null, false, MavenConstants.TYPE_JAR,
-                    file, localRepo, true, false);
+                    file, localRepo, true, false)
 
     }
 
@@ -274,8 +274,9 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
   }
 
   /**
-   * resolves property recursively. If any resolution failed returns null.
-   * This helps to avoid situation whem root directory will be added as source root in complex case
+   * Resolves properties recursively. If any resolution fails, it returns null.
+   * This helps avoid a situation where the root directory is added as a source root
+   * in complex cases involving variables and properties
    */
   private fun resolveProperty(project: MavenProjectData, value: String): String? {
     val start = value.indexOf("${'$'}{")
@@ -457,7 +458,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                                        sources: ArrayList<String>,
                                        testSources: ArrayList<String>) {
     val executions = findPlugin(mavenProjectData, "org.codehaus.mojo", "build-helper-maven-plugin")?.executions
-    if (executions.isNullOrEmpty()) return;
+    if (executions.isNullOrEmpty()) return
 
     executions.filter { it.goals.contains("add-source") }
       .mapNotNull { it.configurationElement }
