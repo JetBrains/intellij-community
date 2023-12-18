@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,9 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
     return myFix.getFamilyName();
   }
 
+  @ApiStatus.Internal
   @NotNull
-  LocalQuickFix getFix() {
+  public LocalQuickFix getFix() {
     return myFix;
   }
 

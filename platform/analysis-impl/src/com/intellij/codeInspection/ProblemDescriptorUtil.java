@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -337,10 +338,7 @@ public final class ProblemDescriptorUtil {
     List<LocalQuickFix> quickFixes = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       IntentionAction intention = descriptor.getAction();
-      LocalQuickFix fix =
-        intention instanceof LocalQuickFix ? (LocalQuickFix)intention :
-        intention instanceof LocalQuickFixAsIntentionAdapter ?
-        ((LocalQuickFixAsIntentionAdapter)intention).getFix() : null;
+      LocalQuickFix fix = intention instanceof LocalQuickFix localFix ? localFix : QuickFixWrapper.unwrap(intention);
       if (fix != null) {
         quickFixes.add(fix);
       }

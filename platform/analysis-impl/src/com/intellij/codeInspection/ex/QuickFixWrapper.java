@@ -9,10 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,6 +60,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   public static @Nullable LocalQuickFix unwrap(@NotNull CommonIntentionAction action) {
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
+    }
+    if (action instanceof LocalQuickFixAsIntentionAdapter adapter) {
+      return adapter.getFix();
     }
     if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
