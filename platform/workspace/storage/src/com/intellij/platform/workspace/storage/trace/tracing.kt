@@ -171,7 +171,7 @@ internal sealed interface ReadTrace {
       get() {
         return Objects.hash(
           433, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          ofClass
+          ofClass.toClassId(), // toClassId makes hashing more stable as the hash won't depend on class loading
         ).traceWithDebug(this.toString())
       }
   }
@@ -185,7 +185,7 @@ internal sealed interface ReadTrace {
         return Objects.hash(
           569, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
           linkTo,
-          inClass
+          inClass.toClassId(), // toClassId makes hashing more stable as the hash won't depend on class loading
         ).traceWithDebug(this.toString())
       }
   }
