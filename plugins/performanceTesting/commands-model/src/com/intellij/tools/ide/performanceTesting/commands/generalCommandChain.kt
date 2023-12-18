@@ -18,6 +18,14 @@ fun <T : CommandChain> T.waitForSmartMode(): T = apply {
   addCommand("${CMD_PREFIX}waitForSmart")
 }
 
+fun <T : CommandChain> T.replaceBrowser(): T = apply {
+  addCommand("${CMD_PREFIX}replaceBrowser")
+}
+
+fun <T : CommandChain> T.action(id: String): T = apply {
+  addCommand("${CMD_PREFIX}action $id")
+}
+
 @Suppress("unused")
 fun <T : CommandChain> T.waitForDumbMode(maxWaitingTimeInSec: Int): T = apply {
   addCommand("${CMD_PREFIX}waitForDumb ${maxWaitingTimeInSec}")

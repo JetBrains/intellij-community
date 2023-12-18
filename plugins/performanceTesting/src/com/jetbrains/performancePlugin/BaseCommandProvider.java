@@ -100,7 +100,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CaptureMemoryMetricsCommand.PREFIX, CaptureMemoryMetricsCommand::new),
       Map.entry(SleepCommand.PREFIX, SleepCommand::new),
       Map.entry(AssertEncodingFileCommand.PREFIX, AssertEncodingFileCommand::new),
-      Map.entry(SetModuleJdkCommand.PREFIX, SetModuleJdkCommand::new)
+      Map.entry(SetModuleJdkCommand.PREFIX, SetModuleJdkCommand::new),
+      Map.entry(ReplaceBrowser.PREFIX, ReplaceBrowser::new)
     );
   }
 }
