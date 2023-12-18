@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
@@ -78,7 +79,7 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
             val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager()
             breakpoints.mapNotNull { variant ->
                 val type = BREAKPOINT_TYPES[variant::class.java]!!
-                val breakpoint = breakpointManager.addLineBreakpoint(variant.type, file.virtualFile.url, line, variant.createProperties())
+                val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file.virtualFile, line)
                 val highlightingRange = variant.type.getHighlightRange(breakpoint)
                 val previewHighlightingRange = variant.highlightRange
                 if ((type == BreakpointChecker.BreakpointType.Line || type == BreakpointChecker.BreakpointType.All)

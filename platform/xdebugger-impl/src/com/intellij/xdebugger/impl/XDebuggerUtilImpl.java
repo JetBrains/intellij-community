@@ -311,7 +311,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         } else {
           variant = variants.get(0);
         }
-        return insertBreakpoint(variant.createProperties(), breakpointManager, file, line, variant.getType(), temporary);
+        return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
       });
       // FIXME[inline-bp]: review code below, I was able to loose something non-trivial there
     }
@@ -401,8 +401,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               @Override
               public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
                 selectionListener.clearHighlighter();
-                insertBreakpoint(selectedValue.createProperties(), res, breakpointManager, file, line, selectedValue.getType(),
-                                 temporary);
+                addLineBreakpoint(res, breakpointManager, selectedValue, file, line, temporary);
                 return FINAL_CHOICE;
               }
 
@@ -425,29 +424,55 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         else {
           XLineBreakpointType.XLineBreakpointVariant variant = variants.get(0);
-          insertBreakpoint(variant.createProperties(), res, breakpointManager, file, line, variant.getType(), temporary);
+          addLineBreakpoint(res, breakpointManager, variant, file, line, temporary);
         }
       });
       return res;
     });
   }
 
-  private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
-                                                                         AsyncPromise<? super XLineBreakpoint> res,
-                                                                         XBreakpointManager breakpointManager,
-                                                                         VirtualFile file,
-                                                                         int line,
-                                                                         XLineBreakpointType<P> type,
-                                                                         Boolean temporary) {
-    res.setResult(insertBreakpoint(properties, breakpointManager, file, line, type, temporary));
+  private static <P extends XBreakpointProperties> void addLineBreakpoint(AsyncPromise<? super XLineBreakpoint> res,
+                                                                          XBreakpointManager breakpointManager,
+                                                                          XLineBreakpointType<P>.XLineBreakpointVariant variant,
+                                                                          VirtualFile file,
+                                                                          int line,
+                                                                          Boolean temporary) {
+    res.setResult(addLineBreakpoint(breakpointManager, variant, file, line, temporary));
   }
 
-  private static <P extends XBreakpointProperties> XLineBreakpoint insertBreakpoint(P properties,
-                                                                         XBreakpointManager breakpointManager,
-                                                                         VirtualFile file,
-                                                                         int line,
-                                                                         XLineBreakpointType<P> type,
-                                                                         Boolean temporary) {
+  private static <P extends XBreakpointProperties> void addLineBreakpoint(AsyncPromise<? super XLineBreakpoint> res,
+                                                                          XBreakpointManager breakpointManager,
+                                                                          XLineBreakpointType<P> type,
+                                                                          P properties,
+                                                                          VirtualFile file,
+                                                                          int line,
+                                                                          Boolean temporary) {
+    res.setResult(addLineBreakpoint(breakpointManager, type, properties, file, line, temporary));
+  }
+
+  public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
+                                                                                       XLineBreakpointType<P>.XLineBreakpointVariant variant,
+                                                                                       VirtualFile file,
+                                                                                       int line) {
+    return addLineBreakpoint(breakpointManager, variant, file, line, false);
+  }
+
+  public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
+                                                                                       XLineBreakpointType<P>.XLineBreakpointVariant variant,
+                                                                                       VirtualFile file,
+                                                                                       int line,
+                                                                                       Boolean temporary) {
+    var properties = variant.createProperties();
+    var type = variant.getType();
+    return addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
+  }
+
+  private static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
+                                                                                        XLineBreakpointType<P> type,
+                                                                                        P properties,
+                                                                                        VirtualFile file,
+                                                                                        int line,
+                                                                                        Boolean temporary) {
     return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
   }
 

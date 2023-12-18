@@ -154,10 +154,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
         // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
         val line = editor.document.getLineNumber(offset)
-        breakpointManager.addLineBreakpoint(variant!!.type as XLineBreakpointType<XBreakpointProperties<*>>,
-                                            file.url, line,
-                                            variant.createProperties(),
-                                            false)
+        XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
       }
       ClickAction.ENABLE_DISABLE -> {
         breakpoint!!.isEnabled = !breakpoint.isEnabled
