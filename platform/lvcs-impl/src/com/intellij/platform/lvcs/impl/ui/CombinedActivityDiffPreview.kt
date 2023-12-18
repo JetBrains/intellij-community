@@ -8,6 +8,7 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -53,7 +54,7 @@ private class CombinedActivityDiffPreviewModel(project: Project, private val sco
 private class EmptyChangeWrapper(private val project: Project, private val scope: ActivityScope) : Wrapper() {
   private val message get() = LocalHistoryBundle.message("activity.diff.empty.text")
 
-  override fun getFilePath(): FilePath = (scope as? ActivityScope.File)?.filePath ?: LocalFilePath(project.projectFilePath!!,
+  override fun getFilePath(): FilePath = (scope as? ActivityScope.File)?.filePath ?: LocalFilePath(project.guessProjectDir()!!.path,
                                                                                                    project.projectFile?.isDirectory == true)
 
   override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
