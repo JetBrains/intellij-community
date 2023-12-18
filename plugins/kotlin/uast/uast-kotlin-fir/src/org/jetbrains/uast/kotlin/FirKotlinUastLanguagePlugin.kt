@@ -33,7 +33,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     override fun isFileSupported(fileName: String): Boolean = when {
         fileName.endsWith(".kt", false) -> true
-        fileName.endsWith(".kts", false) -> Registry.`is`("kotlin.k2.scripting.enabled", false)
+        fileName.endsWith(".kts", false) -> isK2ScriptingEnabled
         else -> false
     }
 
@@ -46,8 +46,11 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
             // Disable UAST for script files in K2 until scripting support is properly implemented in the K2 plugin.
             // UAST should not analyze script files.
-            return !ktFile.isScript() || Registry.`is`("kotlin.k2.scripting.enabled", false)
+            return !ktFile.isScript() || isK2ScriptingEnabled
         }
+
+    private val isK2ScriptingEnabled: Boolean
+        get() = Registry.`is`("kotlin.k2.scripting.enabled", true)
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (parent == null && !element.isSupportedElement) return null

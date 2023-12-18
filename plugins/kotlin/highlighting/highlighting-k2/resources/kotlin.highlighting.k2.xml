@@ -15,6 +15,8 @@
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingVisitor"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighting.K2ScriptSupportNotificationProvider"/>
   </extensions>
 
 </idea-plugin>

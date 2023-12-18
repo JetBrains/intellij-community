@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -26,7 +27,9 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
             psiFile is KtFile ->
                 when {
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
-                    psiFile.isScript() -> null
+                    psiFile.isScript() -> FileHighlightingSetting.SKIP_HIGHLIGHTING.takeIf {
+                        Registry.`is`("kotlin.k2.scripting.enabled", true) == false
+                    }
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
                     else -> null
                 }
