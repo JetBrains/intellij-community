@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for java run configurations with enabled code coverage
@@ -41,8 +42,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
 
 
   public JavaCoverageEnabledConfiguration(RunConfigurationBase configuration) {
-    super(configuration);
-    setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
+    super(configuration, Objects.requireNonNull(CoverageRunner.getInstance(IDEACoverageRunner.class)));
   }
 
   public void downloadReport(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator indicator) throws IOException {

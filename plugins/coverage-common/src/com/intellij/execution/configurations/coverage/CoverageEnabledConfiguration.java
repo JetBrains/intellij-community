@@ -41,8 +41,18 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   protected @NonNls String myCoverageFilePath;
   private CoverageSuite myCurrentCoverageSuite;
 
+  /**
+   *
+   * @deprecated Use {@link CoverageEnabledConfiguration#CoverageEnabledConfiguration(RunConfigurationBase, CoverageRunner)}
+   */
+  @Deprecated
   public CoverageEnabledConfiguration(@NotNull RunConfigurationBase<?> configuration) {
     myConfiguration = configuration;
+  }
+
+  public CoverageEnabledConfiguration(@NotNull RunConfigurationBase<?> configuration, @NotNull CoverageRunner runner) {
+    myConfiguration = configuration;
+    myCoverageRunner = runner;
   }
 
   public @NotNull RunConfigurationBase<?> getConfiguration() {
@@ -57,7 +67,11 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return myCoverageRunner;
   }
 
-  public void setCoverageRunner(final @Nullable CoverageRunner coverageRunner) {
+  /**
+   * @deprecated Use {@link CoverageEnabledConfiguration#CoverageEnabledConfiguration(RunConfigurationBase, CoverageRunner)}
+   */
+  @Deprecated
+  public void setCoverageRunner(@Nullable CoverageRunner coverageRunner) {
     myCoverageRunner = coverageRunner;
     myCoverageFilePath = null;
   }
