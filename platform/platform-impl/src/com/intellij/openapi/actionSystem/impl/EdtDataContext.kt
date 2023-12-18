@@ -193,10 +193,6 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
                                                                       userData = userData,
                                                                       dataManager = manager,
                                                                       eventCount = eventCount) {
-    override fun getData(dataId: String): Any? {
-      return InjectedDataKeys.getInjectedData(dataId) { key -> super.getData(key) }
-    }
-
     override fun getDataInner(dataId: String, cacheable: Boolean): Any? {
       return InjectedDataKeys.getInjectedData(dataId) { key -> super.getDataInner(key, cacheable) }
     }
