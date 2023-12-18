@@ -70,7 +70,7 @@ internal fun buildRequests(callExpression: KtCallExpression): Map<JvmClass, Crea
             if (packageNameOfReceiver != null && packageNameOfReceiver == callExpression.containingKtFile.packageFqName) {
                 modifiers.add(JvmModifier.PUBLIC)
             }
-            requests[it] = CreateMethodFromKotlinUsageRequest(callExpression, modifiers, receiverExpression, forKtCallableCreation = false)
+            requests[it] = CreateMethodFromKotlinUsageRequest(callExpression, modifiers, receiverExpression)
         }
     }
 

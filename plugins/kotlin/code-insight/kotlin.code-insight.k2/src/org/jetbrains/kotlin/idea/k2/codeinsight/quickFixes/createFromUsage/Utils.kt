@@ -68,16 +68,12 @@ context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
 context (KtAnalysisSession)
-internal fun KtElement.getExpectedJvmType(usedForOnlyKotlin: Boolean): JvmType? = getExpectedType()?.let { expectedType ->
-    expectedType.convertToJvmType(usedForOnlyKotlin, this)
+internal fun KtElement.getExpectedJvmType(): JvmType? = getExpectedType()?.let { expectedType ->
+    expectedType.convertToJvmType(this)
 }
 
 context (KtAnalysisSession)
-private fun KtType.convertToJvmType(usedForOnlyKotlin: Boolean, useSitePosition: PsiElement) = if (usedForOnlyKotlin) {
-    JvmTypeWrapperForKtType(this)
-} else {
-    asPsiType(useSitePosition, allowErrorTypes = false)
-}
+private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
 context (KtAnalysisSession)
 internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
@@ -89,12 +85,12 @@ internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val sy
 internal data class ParameterInfo(val nameCandidates: MutableList<String>, val type: JvmType?)
 
 context (KtAnalysisSession)
-internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int, usedForOnlyKotlin: Boolean): ParameterInfo {
+internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ParameterInfo {
     val parameterNameAsString = getArgumentName()?.asName?.asString()
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
     val parameterName = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
-    val parameterType = expectedArgumentType?.convertToJvmType(usedForOnlyKotlin, argumentExpression)
+    val parameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
     return ParameterInfo(parameterName?.toMutableList() ?: mutableListOf("p$parameterIndex"), parameterType)
 }
 
@@ -145,8 +141,6 @@ val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSourc
 
 context (KtAnalysisSession)
 internal fun JvmType.toKtType(useSitePosition: PsiElement) = when (this) {
-    is JvmTypeWrapperForKtType -> ktType
-
     is PsiType -> if (isValid) {
         try {
             asKtType(useSitePosition)

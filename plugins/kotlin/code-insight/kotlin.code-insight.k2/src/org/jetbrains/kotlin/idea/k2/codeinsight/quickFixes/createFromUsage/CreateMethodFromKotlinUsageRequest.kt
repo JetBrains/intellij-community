@@ -18,10 +18,9 @@ internal class CreateMethodFromKotlinUsageRequest (
     private val functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
     val receiverExpression: KtExpression? = null,
-    private val forKtCallableCreation: Boolean = true,
     val isExtension: Boolean = false,
     val isAbstractClassOrInterface: Boolean = false,
-) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers, forKtCallableCreation), CreateMethodRequest {
+) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
     private val returnType = mutableListOf<ExpectedType>()
 
     init {
@@ -32,7 +31,7 @@ internal class CreateMethodFromKotlinUsageRequest (
 
     context (KtAnalysisSession)
     private fun initializeReturnType() {
-        val returnJvmType = functionCall.getExpectedJvmType(forKtCallableCreation) ?: return
+        val returnJvmType = functionCall.getExpectedJvmType() ?: return
         returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
     }
 
