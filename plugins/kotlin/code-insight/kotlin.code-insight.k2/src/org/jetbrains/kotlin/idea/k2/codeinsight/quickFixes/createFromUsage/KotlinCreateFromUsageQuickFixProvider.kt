@@ -13,7 +13,7 @@ class KotlinCreateFromUsageQuickFixProvider: UnresolvedReferenceQuickFixProvider
         val parent = ktElement.parent
         if (parent is KtCallExpression) {
             //todo create dedicated fix if all accessible targets are kotlin kotlin KTIJ-27789
-            generateCreateMethodActions(parent).forEach(registrar::register)
+            generateCreateKotlinCallableActions(parent).forEach(registrar::register)
         }
     }
 

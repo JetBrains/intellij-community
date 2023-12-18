@@ -21,7 +21,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val result = mutableListOf<IntentionAction>()
 
         result.add(
-            CreateMethodAction(
+            CreateKotlinCallableAction(
                 request = request,
                 targetClass = targetClass,
                 abstract = false
@@ -30,7 +30,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         if (targetClass.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
             result.add(
-                CreateMethodAction(
+                CreateKotlinCallableAction(
                     request = request,
                     targetClass = targetClass,
                     abstract = true

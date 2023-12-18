@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.getOrCreateBody
 
-internal class CreateMethodAction(
+internal class CreateKotlinCallableAction(
     targetClass: KtClassOrObject,
     override val request: CreateMethodRequest,
     private val abstract: Boolean
-) : CreateMemberAction(targetClass, request), JvmGroupIntentionAction {
+) : CreateKotlinElementAction(targetClass, request), JvmGroupIntentionAction {
 
     override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
@@ -29,9 +29,9 @@ internal class CreateMethodAction(
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-        val method = MethodRenderer(project, abstract, target, request).renderMethod()
+        val function = KtFunctionRenderer(project, abstract, target, request).render()
         val className = myTargetPointer.element?.name
-        return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, className, "", method.text)
+        return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, className, "", function.text)
     }
 
     override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
@@ -45,11 +45,11 @@ internal class CreateMethodAction(
     }
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        MethodRenderer(project, abstract, target, request).execute()
+        KtFunctionRenderer(project, abstract, target, request).execute()
     }
 }
 
-private class MethodRenderer(
+private class KtFunctionRenderer(
     val project: Project,
     val abstract: Boolean,
     val targetClass: KtClassOrObject,
@@ -57,13 +57,16 @@ private class MethodRenderer(
 ) {
 
     fun execute() {
-        var method = renderMethod()
-        method = insertMethod(method)
-        method = forcePsiPostprocessAndRestoreElement(method) ?: return
-        setupTemplate(method)
+        var function = render()
+        function = insertFunction(function)
+        function = forcePsiPostprocessAndRestoreElement(function) ?: return
+        setupTemplate(function)
     }
 
-    private fun setupTemplate(method: KtNamedFunction) {
+    private fun setupTemplate(function: KtNamedFunction) {
+        request.expectedParameters.forEach { param ->
+            param.expectedTypes.first().theType
+        }
         //val parameters = request.expectedParameters
         //val typeExpressions = setupParameters(method, parameters).toTypedArray()
         //val nameExpressions = setupNameExpressions(parameters, project).toTypedArray()
@@ -71,11 +74,11 @@ private class MethodRenderer(
         //createTemplateForMethod(typeExpressions, nameExpressions, method, targetClass, returnExpression, false, null)
     }
 
-    fun renderMethod(): KtNamedFunction {
+    fun render(): KtNamedFunction {
         val factory = KtPsiFactory(project)
         val modifierList = KotlinModifierBuilder(targetClass).apply { addJvmModifiers(request.modifiers) }.modifierList.text
         //todo insert annotations
-        val methodPrototype = buildString {
+        val functionPrototype = buildString {
             append(modifierList)
             if (isNotEmpty()) append(" ")
             append(KtTokens.FUN_KEYWORD)
@@ -85,13 +88,13 @@ private class MethodRenderer(
             if (!abstract) append("{}")
         }
 
-        return factory.createFunction(methodPrototype)
+        return factory.createFunction(functionPrototype)
     }
 
-    private fun insertMethod(method: KtNamedFunction): KtNamedFunction {
+    private fun insertFunction(function: KtNamedFunction): KtNamedFunction {
         val body = targetClass.getOrCreateBody()
 
         //todo guess anchor
-        return body.addBefore(method, body.rBrace) as KtNamedFunction
+        return body.addBefore(function, body.rBrace) as KtNamedFunction
     }
 }

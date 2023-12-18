@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
-internal abstract class CreateMemberAction(
+internal abstract class CreateKotlinElementAction(
     target: KtClassOrObject,
     protected open val request: ActionRequest
 ) : IntentionAction {

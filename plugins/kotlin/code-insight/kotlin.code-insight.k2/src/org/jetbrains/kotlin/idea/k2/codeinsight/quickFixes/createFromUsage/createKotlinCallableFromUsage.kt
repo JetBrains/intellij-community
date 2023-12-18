@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
-fun generateCreateMethodActions(call: KtCallExpression): List<IntentionAction> {
+fun generateCreateKotlinCallableActions(call: KtCallExpression): List<IntentionAction> {
     val methodRequests = MethodRequestsBuilder(call).buildRequests()
     val extensions = EP_NAME.extensions
     return methodRequests.flatMap { (clazz, request) ->
@@ -46,7 +46,7 @@ class MethodRequestsBuilder(private val myCall: KtCallExpression) {
                 targetClasses.add(jvmClass)
             }
         }
-
+        val request = CreateKotlinCallableFromKotlinUsageRequest(myCall, mutableSetOf<JvmModifier>())
         if (parent is KtDotQualifiedExpression) {
             analyze(myCall) {
                 val call = parent.receiverExpression.resolveCall()
@@ -69,7 +69,7 @@ class MethodRequestsBuilder(private val myCall: KtCallExpression) {
         }
 
         targetClasses.forEach {
-            myRequests[it] = CreateMethodFromKotlinUsageRequest(myCall, mutableSetOf<JvmModifier>())
+            myRequests[it] = request
         }
 
         return myRequests
