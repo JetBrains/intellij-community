@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 /**
@@ -42,7 +43,7 @@ sealed class K2MoveModel {
 
     val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
-    abstract fun toDescriptor(): K2MoveDescriptor
+    abstract fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor?
 
     enum class Setting(private val text: @NlsContexts.Checkbox String, val setting: KMutableProperty0<Boolean>) {
         SEARCH_FOR_TEXT(
@@ -80,8 +81,8 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(): K2MoveDescriptor {
-            val srcDescr = source.toDescriptor()
+        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor? {
+            val srcDescr = source.toDescriptor(onError) ?: return null
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
             return K2MoveDescriptor.Files(
@@ -104,8 +105,8 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(): K2MoveDescriptor {
-            val srcDescr = source.toDescriptor()
+        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor? {
+            val srcDescr = source.toDescriptor(onError) ?: return null
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
             return K2MoveDescriptor.Members(
