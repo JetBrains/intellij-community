@@ -19,6 +19,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -282,7 +283,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val end = value.indexOf("}")
     if (start + 2 >= end) return null // some syntax error probably
     val variable = value.substring(start + 2, end)
-    val resolvedValue = project.properties[variable] ?: return null
+    val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
     if (start == 0 && end == value.length - 1) {
       return resolveProperty(project, resolvedValue)
     }
@@ -293,6 +294,18 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       value.substring(end + 1, value.length)
     }
     return resolveProperty(project, value.substring(0, start) + resolvedValue + tail)
+  }
+
+  private fun doResolveVariable(properties: HashMap<String, String>, variable: String): String? {
+    properties[variable]?.let { return it }
+    if (variable.startsWith("env.")) {
+      val env = variable.substring(4)
+      return when {
+        env.isNotBlank() -> System.getenv(env).nullize(true)
+        else -> null
+      }
+    }
+    return System.getProperty(variable).nullize(true)
   }
 
 
@@ -373,8 +386,13 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       this.dependencyManagement.addAll(dependencyManagement)
       this.declaredDependencies.addAll(declaredDependencies)
       this.properties.apply {
-        this["basedir"] = parentFolder.toString()
-        this["project.basedir"] = parentFolder.toString()
+        val basedir = parentFolder.toString()
+        val baseUri = parentFolder.toUri().toString()
+        this["basedir"] = basedir
+        this["baseUri"] = baseUri
+
+        this["project.basedir"] = basedir
+        this["project.baseUri"] = baseUri
         putAll(properties)
       }
     }

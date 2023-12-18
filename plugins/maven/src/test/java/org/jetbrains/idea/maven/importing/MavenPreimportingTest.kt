@@ -483,6 +483,24 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
+  @Test
+  fun testImportSourceDirectoryWithSystemVariable() = runBlocking {
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+
+                    <build>
+                      <sourceDirectory>${'$'}{user.home}/some/path</sourceDirectory>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      assertContentRootSources("project", "${System.getProperty("user.home")}/some/path", "")
+    }
+  }
 
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
@@ -496,7 +514,6 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 }
-
 
 class NoRealMavenServerManager : MavenServerManager {
   override fun dispose() {
