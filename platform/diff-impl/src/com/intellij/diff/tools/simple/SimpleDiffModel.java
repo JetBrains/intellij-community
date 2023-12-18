@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleDiffModel {
-  @NotNull private final SimpleDiffViewer myViewer;
+  @NotNull protected final SimpleDiffViewer myViewer;
 
   @NotNull private final List<SimpleDiffChange> myValidChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
   @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull private final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+  @NotNull protected final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
@@ -104,15 +104,15 @@ public class SimpleDiffModel {
     myValidChanges.removeAll(invalidated);
   }
 
-  public void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
+  protected void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
     MyPaintable paintable = new MyPaintable(myPresentations);
     DiffDividerDrawUtil.paintPolygons(g, divider.getWidth(), myViewer.getEditor1(), myViewer.getEditor2(), paintable);
   }
 
-  private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
+  protected static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
     private final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations;
 
-    private MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
+    protected MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
       myPresentations = presentations;
     }
 

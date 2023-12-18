@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -250,11 +250,11 @@ public final class DiffDrawUtil {
   public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
     int y1;
     int y2;
+
     if (startLine == endLine) {
       if (startLine == 0) {
         y1 = lineToY(editor, 0, true, true) + 1;
-      }
-      else {
+      } else {
         y1 = lineToY(editor, startLine - 1, false, true);
       }
       y2 = y1;
@@ -689,7 +689,7 @@ public final class DiffDrawUtil {
       this(editor, line, placement, 0);
     }
 
-    private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement, int layerPriority) {
+    public LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement, int layerPriority) {
       this.editor = editor;
       this.placement = placement;
 
@@ -719,7 +719,6 @@ public final class DiffDrawUtil {
       this.stripeAttributes = stripeAttributes;
       return this;
     }
-
 
     @NotNull
     public LineMarkerBuilder withDefaultRenderer(@NotNull TextDiffType type, boolean doubleLine, boolean dottedLine,
@@ -854,7 +853,7 @@ public final class DiffDrawUtil {
     private final @NotNull TextDiffType myType;
     private final @Nullable Editor myEditor;
 
-    DiffTextAttributes(@NotNull BackgroundType background, @NotNull TextDiffType type, @Nullable Editor editor) {
+    public DiffTextAttributes(@NotNull BackgroundType background, @NotNull TextDiffType type, @Nullable Editor editor) {
       myBackground = background;
       myType = type;
       myEditor = editor;
@@ -870,11 +869,11 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class DiffStripeMarkerTextAttributes extends TextAttributes {
+  public static class DiffStripeMarkerTextAttributes extends TextAttributes {
     private final @NotNull TextDiffType myType;
     private final @NotNull Editor myEditor;
 
-    DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
+    public DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
       myType = type;
       myEditor = editor;
     }
@@ -925,7 +924,7 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class DiffDefaultBorderRenderer implements LineSeparatorRenderer {
+  public static class DiffDefaultBorderRenderer implements LineSeparatorRenderer {
     private final @Nullable RangeHighlighter myParentHighlighter;
     private final @NotNull Editor myEditor;
     private final @NotNull SeparatorPlacement myPlacement;

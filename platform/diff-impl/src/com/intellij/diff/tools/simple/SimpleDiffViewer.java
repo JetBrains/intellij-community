@@ -54,10 +54,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected SimpleDiffModel myModel = new SimpleDiffModel(this);
   @NotNull private final AlignedDiffModel myAlignedDiffModel;
 
-  @NotNull private final MyFoldingModel myFoldingModel;
+  @NotNull protected final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final ModifierProvider myModifierProvider;
 
@@ -94,6 +94,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   protected void onDispose() {
     Disposer.dispose(myAlignedDiffModel);
     super.onDispose();
+  }
+
+  protected void setModel(@NotNull SimpleDiffModel model) {
+    this.myModel = model;
   }
 
   @NotNull
@@ -746,7 +750,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
   }
 
-  private class MyDividerPainter implements DiffSplitter.Painter {
+  protected class MyDividerPainter implements DiffSplitter.Painter {
     @DirtyUI
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
@@ -792,14 +796,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
   }
 
-  private static class MyFoldingModel extends FoldingModelSupport {
-    private final MyPaintable myPaintable = new MyPaintable(0, 1);
+  protected static class MyFoldingModel extends FoldingModelSupport {
+    protected final MyPaintable myPaintable = new MyPaintable(0, 1);
     private final TwosideContentPanel myContentPanel;
 
-    MyFoldingModel(@Nullable Project project,
-                   @NotNull List<? extends EditorEx> editors,
-                   @NotNull TwosideContentPanel contentPanel,
-                   @NotNull Disposable disposable) {
+    protected MyFoldingModel(@Nullable Project project,
+                             @NotNull List<? extends EditorEx> editors,
+                             @NotNull TwosideContentPanel contentPanel,
+                             @NotNull Disposable disposable) {
       super(project, editors.toArray(new EditorEx[0]), disposable);
       myContentPanel = contentPanel;
     }
