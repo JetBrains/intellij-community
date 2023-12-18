@@ -5,6 +5,7 @@ package com.intellij.ae.database.dbs
 
 import com.intellij.ae.database.IdService
 import com.intellij.ae.database.utils.InstantUtils
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -20,10 +21,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.sqlite.SqliteConnection
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isWritable
 import kotlin.time.Duration.Companion.minutes
@@ -42,6 +43,9 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     internal suspend fun getInstanceAsync() = serviceAsync<SqliteLazyInitializedDatabase>()
     internal fun getInstance() = ApplicationManager.getApplication().service<SqliteLazyInitializedDatabase>()
   }
+
+  private val databasePath by lazy { createDatabasePath() }
+
   private val connectionMutex = Mutex()
   private var connectionAttempts = 0
   private var lastConnectionAt: Instant = InstantUtils.Now
@@ -55,8 +59,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   init {
     cs.launch {
-      if (ApplicationManager.getApplication().isUnitTestMode) return@launch
-      cs.awaitCancellationAndInvoke {
+      awaitCancellationAndInvoke {
         logger.info("Database disposal started, ${actionsBeforeDatabaseDisposal.size} actions to perform")
         logger.runAndLogException {
           withTimeout(4.seconds) {
@@ -74,8 +77,6 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
 
     cs.launch {
-      if (ApplicationManager.getApplication().isUnitTestMode) return@launch
-
       logger.runAndLogException {
         while (isActive) {
           // Close database connection after five minutes of inactivity or 10 minutes of last save
@@ -139,9 +140,12 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
    */
   override suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
     val myConnectionAttempts = connectionMutex.withLock { connectionAttempts }
-    if (myConnectionAttempts >= MAX_CONNECTION_RETRIES_ALLOWED && !retryMessageLogged) {
-      logger.error("Max retries reached to init db")
-      retryMessageLogged = true
+    if (myConnectionAttempts >= MAX_CONNECTION_RETRIES_ALLOWED) {
+      if (!retryMessageLogged) {
+        logger.error("Max retries reached to init db")
+        retryMessageLogged = true
+      }
+
       return null
     }
     val myPair = connectionMutex.withLock {
@@ -171,11 +175,17 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
+  /**
+   * Must run under [connectionMutex]
+   */
   private fun getOrInitConnection(): Pair<SqliteConnection, SqliteDatabaseMetadata> {
     val currentConnection = connection
     val currentMetadata = metadata
     if (currentConnection != null && currentMetadata == null) {
       logger.error("Metadata is null while connection is not")
+    }
+    else if (currentConnection == null && currentMetadata != null) {
+      logger.error("Connection is null while metadata is not")
     }
     return if (currentConnection != null && currentMetadata != null) {
       lastConnectionAt = InstantUtils.Now
@@ -185,9 +195,9 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       logger.info("Initializing database connection")
       logger.trace(ExceptionUtil.currentStackTrace())
       ++connectionAttempts
-      val path = getDatabasePath()
-      val isNewFile = path == null || !path.exists()
-      val newConnection = SqliteConnection(path, false)
+      val dbPath = databasePath
+      val isNewFile = dbPath == null || !dbPath.exists()
+      val newConnection = SqliteConnection(dbPath, false)
       val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
 
       connection = newConnection
@@ -201,27 +211,96 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   private fun SqliteConnection.isOpen() = !isClosed
 
-  private fun getDatabasePath(): Path? {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      val tempPath = System.getProperty("ae.database.path")
-      assert(tempPath != null) { "No path set to temp database" }
+  private fun createDatabasePath(): Path? {
+    val tempPath = System.getProperty("ae.database.path")
+    if (tempPath != null) {
       return Path.of(tempPath)
     }
 
-    val fileName = "ae_${IdService.getInstance().id}.db"
+    val majorVersion = ApplicationInfo.getInstance().build.baselineVersion
+    val fileName = "ae_${IdService.getInstance().id}-$majorVersion.db"
+    val fileMask = "ae_${IdService.getInstance().id}-*.db"
 
-    val folder = PathManager.getCommonDataPath().resolve("IntelliJ")
-    val desiredDatabasePath = folder.resolve(fileName)
-
-    // javadoc for Files.isWritable(): "Checks if the **file located by this path exists** and is writable"
-    if ((desiredDatabasePath.exists() && !desiredDatabasePath.isWritable())
-        || !desiredDatabasePath.exists() && !folder.isWritable()
-        || System.getProperty("ae.database.forceConfigFolder")?.toBoolean() == true) {
-      logger.warn("Requested file {${folder.absolutePathString()} is not writable")
-      return PathManager.getConfigDir().resolve(fileName)
+    // Attempt 1: store db file in common folder for all ides
+    val attempt1 = try {
+      createDatabasePathStoreInCommonFolder(fileName, fileMask)
+    }
+    catch (t: Throwable) {
+      logger.error("Could not get path in common folder", t)
+      null
+    }
+    if (attempt1 != null) {
+      return attempt1
     }
 
+    // Attempt 2: store db file in IDE's `config` directory
+    val attempt2 = createDatabasePathStoreInConfigFolder(fileName, fileMask)
+
+    return attempt2
+  }
+
+  private fun createDatabasePathStoreInCommonFolder(fileName: String, mask: String): Path? {
+    val commonFolder = PathManager.getCommonDataPath()
+    val folder = commonFolder.resolve("IntelliJ")
+    val desiredDatabasePath = folder.resolve(fileName)
+
+    if (System.getProperty("ae.database.forceConfigFolder")?.toBoolean() == true) {
+      return null
+    }
+
+    if (desiredDatabasePath.exists() && !desiredDatabasePath.isWritable()) {
+      logger.error("Desired file $desiredDatabasePath exists, but not writable")
+      return null
+    }
+
+    if (!desiredDatabasePath.exists() && !commonFolder.isWritable()) {
+      logger.error("Desired file $desiredDatabasePath does not exist and $commonFolder is not writable")
+      return null
+    }
+
+    performMigrationIfNeeded(folder, fileName, mask)
+
     folder.createDirectories()
+
     return desiredDatabasePath
+  }
+
+  private fun createDatabasePathStoreInConfigFolder(fileName: String, mask: String): Path {
+    val configFolder = PathManager.getConfigDir()
+    performMigrationIfNeeded(configFolder, fileName, mask)
+
+    return configFolder.resolve(fileName)
+  }
+
+  // should be executed before dir creation
+  private fun performMigrationIfNeeded(parentDir: Path, currentFileName: String, mask: String) {
+    if (!parentDir.exists() || parentDir.resolve(currentFileName).exists()) {
+      return
+    }
+
+    val fileToMigrate = Files.newDirectoryStream(parentDir, mask).use { paths ->
+      paths.maxByOrNull { p1 ->
+        getBuildNumber(mask, p1.fileName.toString())
+      }
+    }
+
+    if (fileToMigrate == null) {
+      return
+    }
+
+    logger.info("Found file to migrate: $fileToMigrate")
+  }
+
+  private fun getBuildNumber(mask: String, fileName: String): Int {
+    return try {
+      val prefix = mask.substringBefore('*')
+      val suffix = mask.substringAfter('*')
+
+      fileName.removePrefix(prefix).removeSuffix(suffix).toInt()
+    }
+    catch (t: Throwable) {
+      logger.error("Failed to parse file version")
+      -1
+    }
   }
 }

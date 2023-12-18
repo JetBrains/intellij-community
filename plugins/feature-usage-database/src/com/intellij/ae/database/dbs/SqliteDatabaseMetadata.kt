@@ -5,7 +5,6 @@ import com.intellij.ae.database.IdService
 import com.intellij.ae.database.dbs.migrations.LAST_DB_VERSION
 import com.intellij.ae.database.dbs.migrations.MIGRATIONS
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.sqlite.ObjectBinderFactory
 import org.jetbrains.sqlite.SqliteConnection
@@ -24,7 +23,7 @@ private val logger = logger<SqliteDatabaseMetadata>()
 class SqliteDatabaseMetadata internal constructor(private val connection: SqliteConnection, isNewFile: Boolean) {
   /**
    * ID from database that represents a pair of IDE ID [IdService.id]
-   * and machine ID [IdService.machineId] and IDE family [BuildNumber.currentVersion.productCode]
+   * and machine ID [IdService.machineId] and IDE family [ApplicationInfo]
    */
   val ideId: Int
 
