@@ -35,13 +35,13 @@ internal class ExportDiagramAction: AnAction(), DumbAware {
             title = message("mermaid.notification.empty.file.to.export.title"),
             message = message("mermaid.notification.empty.file.to.export.message")
           )
-        } else {
-          val content = performConversion(diagramSource)
-          val directory = file.parent
-          val result = directory.toNioPath().resolve("${file.nameWithoutExtension}.svg").write(content)
-          val svgFile = VfsUtil.findFile(result, true)
-          VfsUtil.markDirtyAndRefresh(false, false, true, svgFile)
+          return@runBlockingCancellable
         }
+        val content = performConversion(diagramSource)
+        val directory = file.parent
+        val result = directory.toNioPath().resolve("${file.nameWithoutExtension}.svg").write(content)
+        val svgFile = VfsUtil.findFile(result, true)
+        VfsUtil.markDirtyAndRefresh(false, false, true, svgFile)
       }
     }
   }
@@ -64,9 +64,41 @@ internal class ExportDiagramAction: AnAction(), DumbAware {
   }
 }
 
+private const val DefaultMermaidCliViewportWidth = 800
+private const val DefaultMermaidCliViewportHeight = 600
+
+private suspend fun forceDimensions(browser: JBCefBrowser, width: Int, height: Int) {
+  // language=JavaScript
+  val code = """
+  (function () {
+    const style = `@page {
+      size: ${width}px ${height}px;
+    }`;
+    const element = window.document.createElement("style");
+    element.innerHTML += style;
+    window.document.head.appendChild(element);
+    const body = window.document.body;
+    body.style.width = "${width}px";
+    body.style.height = "${height}px";
+    return Promise.resolve();
+  })();
+  """.trimIndent()
+  browser.executeCancellableJavaScript(code)
+}
+
 private suspend fun loadDiagram(browser: JBCefBrowser, diagramSource: String) {
   val url = MermaidPreviewStaticServer.obtainStaticIndexUrl()
   browser.waitForPageLoad(url)
+  // It turns out that some diagrams (namely pie chart) have their dimensions hardcoded.
+  // It seems that such hardcoded dimensions were only tested with the default viewport dimensions
+  // provided by the Puppeteer (800x600).
+  // So, to fix most of the issues with positioning, we have to explicitly set the page dimensions
+  // to match the defaults from the Puppeteer.
+  forceDimensions(
+    browser,
+    width = DefaultMermaidCliViewportWidth,
+    height = DefaultMermaidCliViewportHeight
+  )
   val content = PreviewEncodingUtil.encodeContent(diagramSource)
   // language=JavaScript
   val code = """
