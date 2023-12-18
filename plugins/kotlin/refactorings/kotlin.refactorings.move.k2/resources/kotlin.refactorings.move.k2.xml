@@ -5,6 +5,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.moveHandler order="first" implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
     <moveFileHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
+    <!--Comment extensions above and uncomment the following extension to disable smart move but enable move as file from the project view-->
     <!--<refactoring.moveHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.KotlinMoveFilesOrDirectoriesHandler"/>-->
   </extensions>
 </idea-plugin>

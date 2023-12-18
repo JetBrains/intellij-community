@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * Currently not registered, requited for the case we would like to disable smart move in the last moment
+ * Currently not registered, required for the case we have to disable smart move at the last moment
  */
 class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
     private fun adjustElements(elements: Array<out PsiElement>): Array<PsiFileSystemItem>? {
