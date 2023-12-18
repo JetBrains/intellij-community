@@ -520,6 +520,20 @@ object EventFields {
     }
   }
 
+  @JvmStatic
+  fun Language(@NonNls @EventFieldName name: String): PrimitiveEventField<Language?> {
+    return object: PrimitiveEventField<Language?>() {
+      override val name = name
+      override val validationRule: List<String>
+        get() = listOf("{util#lang}")
+
+      override fun addData(fuData: FeatureUsageData, value: Language?) {
+        fuData.addLanguage(this.name, value)
+      }
+    }
+  }
+
+
   @JvmField
   val LanguageById = object : PrimitiveEventField<String?>() {
     override val name = "lang"
