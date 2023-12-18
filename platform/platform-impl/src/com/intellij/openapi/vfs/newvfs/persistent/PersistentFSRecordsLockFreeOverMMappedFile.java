@@ -17,7 +17,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -104,35 +103,25 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
-  public PersistentFSRecordsLockFreeOverMMappedFile(final @NotNull Path path,
-                                                    final int mappedChunkSize) throws IOException {
-    if (mappedChunkSize < HEADER_SIZE) {
-      throw new IllegalArgumentException("pageSize(=" + mappedChunkSize + ") must fit header(=" + HEADER_SIZE + " b)");
+  public PersistentFSRecordsLockFreeOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
+    final int pageSize = storage.pageSize();
+    if (pageSize < HEADER_SIZE) {
+      throw new IllegalArgumentException("pageSize(=" + pageSize + ") must fit header(=" + HEADER_SIZE + " b)");
     }
-    this.storage = new MMappedFileStorage(path, mappedChunkSize);
-    try {
+    this.storage = storage;
 
-      this.pageSize = mappedChunkSize;
-      recordsPerPage = mappedChunkSize / RecordLayout.RECORD_SIZE_IN_BYTES;
+    this.pageSize = pageSize;
+    recordsPerPage = pageSize / RecordLayout.RECORD_SIZE_IN_BYTES;
 
-      headerPage = storage.pageByOffset(0);
+    headerPage = this.storage.pageByOffset(0);
 
-      final int modCount = getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
-      globalModCount.set(modCount);
+    final int modCount = getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
+    globalModCount.set(modCount);
 
-      if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED > 0) {
-        //MAYBE RC: make method public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer, or
-        //          even during quick self-check?
-        checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED);
-      }
-    }
-    catch (Throwable t) {
-      //TODO RC: extract storage creation upper the stack, and use
-      //         MMappedFileStorageFactory.withDefaults()
-      //                                  .pageSize(mappedChunkSize)
-      //                                  .wrapStorageSafely(path, s->new PersistentFSRecordsLockFreeOverMMappedFile(s));
-      storage.close();
-      throw t;
+    if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED > 0) {
+      //MAYBE RC: make method public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer, or
+      //          even during quick self-check?
+      checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED);
     }
   }
 

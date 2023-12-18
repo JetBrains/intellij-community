@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.io.*
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -76,10 +77,11 @@ object PersistentFSRecordsStorageFactory {
             throw IOException("Legacy records file detected (${legacyLengthFile} exists): VFS rebuild required")
           }
         }
-        PersistentFSRecordsLockFreeOverMMappedFile(
-          file,
-          PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE
-        )
+        MMappedFileStorageFactory.withDefaults()
+          .pageSize(PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
+          .wrapStorageSafely<PersistentFSRecordsLockFreeOverMMappedFile, IOException>(file) { storage ->
+            PersistentFSRecordsLockFreeOverMMappedFile(storage)
+          }
       }
     }
   }
