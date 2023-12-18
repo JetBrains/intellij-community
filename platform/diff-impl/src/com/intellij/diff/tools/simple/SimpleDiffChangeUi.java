@@ -72,7 +72,7 @@ public class SimpleDiffChangeUi {
     myOperations.add(createAcceptOperation(Side.RIGHT));
   }
 
-  private void createHighlighter(@NotNull Side side) {
+  protected void createHighlighter(@NotNull Side side) {
     Editor editor = myViewer.getEditor(side);
 
     TextDiffType type = myChange.getDiffType();

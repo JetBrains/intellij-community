@@ -93,7 +93,7 @@ public final class DiffDividerDrawUtil {
     return handler.getPolygons();
   }
 
-  private static boolean isIntervalFolded(@NotNull Editor editor, int startLine, int endLine) {
+  public static boolean isIntervalFolded(@NotNull Editor editor, int startLine, int endLine) {
     TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
     return FoldingUtil.isTextRangeFolded(editor, range);
   }
@@ -125,7 +125,7 @@ public final class DiffDividerDrawUtil {
     return separators;
   }
 
-  private static int getEditorTopOffset(@NotNull final Editor editor) {
+  public static int getEditorTopOffset(@NotNull final Editor editor) {
     final JComponent header = editor.getHeaderComponent();
     int headerOffset = header == null ? 0 : header.getHeight();
     return -editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
@@ -157,7 +157,7 @@ public final class DiffDividerDrawUtil {
   }
 
   @NotNull
-  private static LineRange getVisibleInterval(Editor editor) {
+  public static LineRange getVisibleInterval(Editor editor) {
     return ReadAction.compute(() -> {
       Rectangle area = editor.getScrollingModel().getVisibleArea();
       if (area.height < 0) return new LineRange(0, 0);
@@ -185,7 +185,7 @@ public final class DiffDividerDrawUtil {
     }
   }
 
-  private static class DividerPaintableHandlerImpl implements DividerPaintable.Handler {
+  public static class DividerPaintableHandlerImpl implements DividerPaintable.Handler {
     private final Editor myEditor1;
     private final Editor myEditor2;
 
@@ -193,7 +193,7 @@ public final class DiffDividerDrawUtil {
     private final LineRange myRightInterval;
     private final List<DividerPolygon> myPolygons = new ArrayList<>();
 
-    private DividerPaintableHandlerImpl(@NotNull Editor editor1,
+    public DividerPaintableHandlerImpl(@NotNull Editor editor1,
                                         @NotNull Editor editor2) {
       myEditor1 = editor1;
       myEditor2 = editor2;
@@ -235,12 +235,12 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter) {
       return process(startLine1, endLine1, startLine2, endLine2, painter, false);
     }
 
-    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter, boolean withAlignedHeight) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
@@ -255,7 +255,7 @@ public final class DiffDividerDrawUtil {
       return true;
     }
 
-    private static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
+    public static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
                                       int startLine1, int startLine2,
                                       @NotNull TextDiffType type) {
       int visualStartLine1 = EditorUtil.logicalToVisualLine(editor1, startLine1);
@@ -294,6 +294,7 @@ public final class DiffDividerDrawUtil {
                                      : DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
       MarkerRange range2 = isFolded2 ? getDividerMarkerPaintRange(editor2, startLine2, endLine2)
                                      : DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
+
       return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
                                 range1.y2 + topOffset1, range2.y2 + topOffset2,
                                 painter.getFillColor(editor2, isFolded),
@@ -307,10 +308,10 @@ public final class DiffDividerDrawUtil {
       return type;
     }
 
-    private static class DefaultPainter implements Painter {
+    public static class DefaultPainter implements Painter {
       private final TextDiffType myType;
 
-      private DefaultPainter(@NotNull TextDiffType type) {
+      public DefaultPainter(@NotNull TextDiffType type) {
         myType = type;
       }
 
@@ -340,11 +341,11 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    private static class ResolvablePainter implements Painter {
+    public static class ResolvablePainter implements Painter {
       private final TextDiffType myType;
       private final boolean myResolved;
 
-      private ResolvablePainter(@NotNull TextDiffType type, boolean resolved) {
+      public ResolvablePainter(@NotNull TextDiffType type, boolean resolved) {
         myType = type;
         myResolved = resolved;
       }
@@ -375,12 +376,12 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    private static class ExcludablePainter implements Painter {
+    public static class ExcludablePainter implements Painter {
       private final TextDiffType myType;
       private final boolean myExcluded;
       private final boolean mySkipped;
 
-      private ExcludablePainter(@NotNull TextDiffType type, boolean excluded, boolean skipped) {
+      public ExcludablePainter(@NotNull TextDiffType type, boolean excluded, boolean skipped) {
         myType = type;
         myExcluded = excluded;
         mySkipped = skipped;
@@ -413,7 +414,7 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    private interface Painter {
+    public interface Painter {
       @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded);
 
       @Nullable Color getBorderColor(@NotNull Editor editor, boolean isFolded);
@@ -542,7 +543,7 @@ public final class DiffDividerDrawUtil {
   }
 
   public static class DividerSeparator {
-    // pixels from the top of editor
+    // pixels from the top of the editor
     private final int myStart1;
     private final int myStart2;
     private final int myEnd1;
