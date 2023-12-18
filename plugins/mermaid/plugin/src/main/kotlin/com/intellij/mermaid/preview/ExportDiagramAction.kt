@@ -23,7 +23,11 @@ import com.intellij.util.io.write
 internal class ExportDiagramAction: AnAction(), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
     val file = event.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
-    runBackgroundableTask(title = "Performing conversion", event.project, cancellable = true) {
+    runBackgroundableTask(
+      title = message("export.diagram.task.title", file.name),
+      project = event.project,
+      cancellable = true
+    ) {
       runBlockingCancellable {
         val diagramSource = readAction {
           FileDocumentManager.getInstance().getDocument(file)?.text.orEmpty()
