@@ -53,6 +53,14 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
     return new ProtectedMemberInFinalClassVisitor();
   }
 
+  public static boolean canBePrivate(@NotNull PsiMember member, @NotNull PsiModifierList modifierList) {
+    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+    modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+    return ReferencesSearch.search(member, member.getUseScope()).allMatch(
+      reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
+                                                WeakenVisibilityFix.findAccessObjectClass(reference, member), null));
+  }
+
   private static class WeakenVisibilityFix extends ModCommandBatchQuickFix {
 
     @Override
@@ -76,11 +84,7 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
       if (!(grandParent instanceof PsiMember member)) return null;
       final PsiModifierList modifierList = member.getModifierList();
       if (modifierList == null) return null;
-      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-      final boolean canBePrivate = ReferencesSearch.search(member, member.getUseScope()).allMatch(
-        reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
-                                                  findAccessObjectClass(reference, member), null));
+      boolean canBePrivate = canBePrivate(member, modifierList);
       return new FixData(canBePrivate, updater.getWritable(modifierList));
     }
 

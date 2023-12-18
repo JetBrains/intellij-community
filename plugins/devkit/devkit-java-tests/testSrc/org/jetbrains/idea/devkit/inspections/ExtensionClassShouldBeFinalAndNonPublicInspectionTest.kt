@@ -35,4 +35,8 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : Extension
   fun testVisibleForTestingAnnotation() {
     doTest()
   }
+
+  fun testProtectedMembers() {
+    doTest("Make 'MyInspection' final")
+  }
 }

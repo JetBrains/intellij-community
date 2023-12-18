@@ -4,9 +4,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -16,6 +20,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.classlayout.ProtectedMemberInFinalClassInspection;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -205,6 +211,23 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
         }
       }
     }
+    else if (PsiModifier.FINAL.equals(myModifier) && owner instanceof PsiClass aClass) {
+      adjustVisibilityOfProtectedMembers(aClass);
+    }
+  }
+
+  private static void adjustVisibilityOfProtectedMembers(PsiClass aClass) {
+    StreamEx.<PsiMember>of(aClass.getMethods()).append(aClass.getFields()).forEach(member -> {
+      if (!member.hasModifierProperty(PsiModifier.PROTECTED)) return;
+      if (member instanceof PsiMethod method && !method.isConstructor() &&
+          !PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method).getSuperSignatures().isEmpty()) {
+        return;
+      }
+      PsiModifierList memberModifierList = member.getModifierList();
+      if (memberModifierList == null) return;
+      boolean canBePrivate = ProtectedMemberInFinalClassInspection.canBePrivate(member, memberModifierList);
+      memberModifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+    });
   }
 
   private @NotNull ModCommand updateAccessInHierarchy(@NotNull PsiMethod method) {
