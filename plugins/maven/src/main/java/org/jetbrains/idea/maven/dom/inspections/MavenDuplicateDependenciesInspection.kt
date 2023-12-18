@@ -1,166 +1,144 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom.inspections;
+package org.jetbrains.idea.maven.dom.inspections
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.ide.nls.NlsMessages;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
-import com.intellij.util.xml.highlighting.DomElementsInspection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.DependencyConflictId;
-import org.jetbrains.idea.maven.dom.MavenDomBundle;
-import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.ide.nls.NlsMessages
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.util.Processor
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.xml.DomFileElement
+import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
+import com.intellij.util.xml.highlighting.DomElementsInspection
+import org.jetbrains.idea.maven.dom.DependencyConflictId
+import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
+import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 
-import java.util.*;
+class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
+  override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
+    val projectModel = domFileElement.rootElement
 
-import static org.jetbrains.idea.maven.dom.MavenDomUtil.getProjectName;
-
-public class MavenDuplicateDependenciesInspection extends DomElementsInspection<MavenDomProjectModel> {
-  public MavenDuplicateDependenciesInspection() {
-    super(MavenDomProjectModel.class);
+    checkManagedDependencies(projectModel, holder)
+    checkDependencies(projectModel, holder)
   }
 
-  @Override
-  public void checkFileElement(@NotNull DomFileElement<MavenDomProjectModel> domFileElement,
-                               @NotNull DomElementAnnotationHolder holder) {
-    MavenDomProjectModel projectModel = domFileElement.getRootElement();
-
-    checkManagedDependencies(projectModel, holder);
-    checkDependencies(projectModel, holder);
+  override fun getGroupDisplayName(): String {
+    return MavenDomBundle.message("inspection.group")
   }
 
-  private static void checkDependencies(@NotNull MavenDomProjectModel projectModel,
-                                        @NotNull DomElementAnnotationHolder holder) {
-    MultiMap<DependencyConflictId, MavenDomDependency> allDuplicates = getDuplicateDependenciesMap(projectModel);
+  override fun getShortName(): String {
+    return "MavenDuplicateDependenciesInspection"
+  }
 
-    for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
-      DependencyConflictId id = DependencyConflictId.create(dependency);
+  override fun getDefaultLevel(): HighlightDisplayLevel {
+    return HighlightDisplayLevel.WARNING
+  }
+
+  private fun checkDependencies(projectModel: MavenDomProjectModel,
+                                holder: DomElementAnnotationHolder) {
+    val allDuplicates = getDuplicateDependenciesMap(projectModel)
+
+    for (dependency in projectModel.dependencies.dependencies) {
+      val id = DependencyConflictId.create(dependency)
       if (id != null) {
-        Collection<MavenDomDependency> dependencies = allDuplicates.get(id);
-        if (dependencies.size() > 1) {
+        val dependencies = allDuplicates[id]
+        if (dependencies.size > 1) {
+          val duplicatedDependencies: MutableList<MavenDomDependency> = ArrayList()
 
-          List<MavenDomDependency> duplicatedDependencies = new ArrayList<>();
+          for (d in dependencies) {
+            if (d === dependency) continue
 
-          for (MavenDomDependency d : dependencies) {
-            if (d == dependency) continue;
-
-            if (d.getParent() == dependency.getParent()) {
-              duplicatedDependencies.add(d); // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
+            if (d.parent === dependency.parent) {
+              // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
+              duplicatedDependencies.add(d)
             }
             else {
-              if (scope(d).equals(scope(dependency))
-                  && Objects.equals(d.getVersion().getStringValue(), dependency.getVersion().getStringValue())) {
-                duplicatedDependencies.add(d); // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
+              if (scope(d) == scope(dependency) && d.version.stringValue == dependency.version.stringValue) {
+                // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
+                duplicatedDependencies.add(d)
               }
             }
           }
 
-          if (duplicatedDependencies.size() > 0) {
-            addProblem(dependency, duplicatedDependencies, holder);
+          if (duplicatedDependencies.size > 0) {
+            addProblem(dependency, duplicatedDependencies, holder)
           }
         }
       }
     }
   }
 
-  private static String scope(MavenDomDependency dependency) {
-    String res = dependency.getScope().getRawText();
-    if (StringUtil.isEmpty(res)) return "compile";
+  private fun scope(dependency: MavenDomDependency): String {
+    val res = dependency.scope.rawText
+    if (res.isNullOrEmpty()) return "compile"
 
-    return res;
+    return res
   }
 
-  private static void addProblem(@NotNull MavenDomDependency dependency,
-                                 @NotNull Collection<MavenDomDependency> dependencies,
-                                 @NotNull DomElementAnnotationHolder holder) {
-    Set<MavenDomProjectModel> processed = new HashSet<>();
-    List<String> links = new ArrayList<>();
-    for (MavenDomDependency domDependency : dependencies) {
-      if (dependency.equals(domDependency)) continue;
-      MavenDomProjectModel model = domDependency.getParentOfType(MavenDomProjectModel.class, false);
+  private fun addProblem(dependency: MavenDomDependency, dependencies: Collection<MavenDomDependency>, holder: DomElementAnnotationHolder) {
+    val processed: MutableSet<MavenDomProjectModel> = HashSet()
+    val links: MutableList<String> = ArrayList()
+    for (domDependency in dependencies) {
+      if (dependency == domDependency) continue
+      val model = domDependency.getParentOfType(MavenDomProjectModel::class.java, false)
       if (model != null && !processed.contains(model)) {
-        links.add(createLinkText(model, domDependency));
-        processed.add(model);
+        links.add(createLinkText(model, domDependency))
+        processed.add(model)
       }
     }
-    links.sort(null);
+    links.sort()
     holder.createProblem(dependency, HighlightSeverity.WARNING,
-                         MavenDomBundle.message("MavenDuplicateDependenciesInspection.has.duplicates", NlsMessages.formatAndList(links)));
+                         MavenDomBundle.message("MavenDuplicateDependenciesInspection.has.duplicates", NlsMessages.formatAndList(links)))
   }
 
-  private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
-    XmlTag tag = dependency.getXmlTag();
-    if (tag == null) return getProjectName(model);
-    VirtualFile file = tag.getContainingFile().getVirtualFile();
-    if (file == null) return getProjectName(model);
+  private fun createLinkText(model: MavenDomProjectModel, dependency: MavenDomDependency): String {
+    val projectName = MavenDomUtil.getProjectName(model)
 
-    return "<a href ='#navigation/" + file.getPath() + ":" + tag.getTextRange().getStartOffset() + "'>" + getProjectName(model) + "</a>";
+    val tag = dependency.xmlTag
+    val file = tag?.containingFile?.virtualFile
+
+    if (file == null) return projectName
+
+    return "<a href ='#navigation/${file.path}:${tag.textRange.startOffset}'>$projectName</a>"
   }
 
-  @NotNull
-  private static MultiMap<DependencyConflictId, MavenDomDependency> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = MultiMap.createSet();
+  private fun getDuplicateDependenciesMap(projectModel: MavenDomProjectModel): MultiMap<DependencyConflictId, MavenDomDependency> {
+    val allDependencies = MultiMap.createSet<DependencyConflictId, MavenDomDependency>()
 
-    Processor<MavenDomProjectModel> collectProcessor = model -> {
-      collect(allDependencies, model.getDependencies());
-      return false;
-    };
+    val collectProcessor = Processor { model: MavenDomProjectModel ->
+      collect(allDependencies, model.dependencies)
+      false
+    }
 
-    MavenDomProjectProcessorUtils.processChildrenRecursively(projectModel, collectProcessor, true);
-    MavenDomProjectProcessorUtils.processParentProjects(projectModel, collectProcessor);
+    MavenDomProjectProcessorUtils.processChildrenRecursively(projectModel, collectProcessor, true)
+    MavenDomProjectProcessorUtils.processParentProjects(projectModel, collectProcessor)
 
-    return allDependencies;
+    return allDependencies
   }
 
-  private static void collect(MultiMap<DependencyConflictId, MavenDomDependency> duplicates, @NotNull MavenDomDependencies dependencies) {
-    for (MavenDomDependency dependency : dependencies.getDependencies()) {
-      DependencyConflictId mavenId = DependencyConflictId.create(dependency);
-      if (mavenId == null) continue;
+  private fun collect(duplicates: MultiMap<DependencyConflictId, MavenDomDependency>, dependencies: MavenDomDependencies) {
+    for (dependency in dependencies.dependencies) {
+      val mavenId = DependencyConflictId.create(dependency)
+      if (mavenId == null) continue
 
-      duplicates.putValue(mavenId, dependency);
+      duplicates.putValue(mavenId, dependency)
     }
   }
 
-  private static void checkManagedDependencies(@NotNull MavenDomProjectModel projectModel,
-                                               @NotNull DomElementAnnotationHolder holder) {
-    MultiMap<DependencyConflictId, MavenDomDependency> duplicates = MultiMap.createSet();
-    collect(duplicates, projectModel.getDependencyManagement().getDependencies());
+  private fun checkManagedDependencies(projectModel: MavenDomProjectModel, holder: DomElementAnnotationHolder) {
+    val duplicates = MultiMap.createSet<DependencyConflictId, MavenDomDependency>()
+    collect(duplicates, projectModel.dependencyManagement.dependencies)
 
-    for (Map.Entry<DependencyConflictId, Collection<MavenDomDependency>> entry : duplicates.entrySet()) {
-      Collection<MavenDomDependency> set = entry.getValue();
-      if (set.size() <= 1) continue;
+    for ((_, set) in duplicates.entrySet()) {
+      if (set.size <= 1) continue
 
-      for (MavenDomDependency dependency : set) {
-        holder.createProblem(dependency, HighlightSeverity.WARNING, MavenProjectBundle.message("inspection.message.duplicated.dependency"));
+      for (dependency in set) {
+        holder.createProblem(dependency, HighlightSeverity.WARNING, MavenProjectBundle.message("inspection.message.duplicated.dependency"))
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return MavenDomBundle.message("inspection.group");
-  }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return "MavenDuplicateDependenciesInspection";
-  }
-
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 }
