@@ -47,7 +47,7 @@ public final class PersistentMapBasedForwardIndex implements ForwardIndex, Measu
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     myPersistentMap.force();
   }
 
