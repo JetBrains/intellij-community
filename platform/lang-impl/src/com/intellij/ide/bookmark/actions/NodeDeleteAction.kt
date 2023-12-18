@@ -8,6 +8,7 @@ import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.FileNode
+import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -58,7 +59,8 @@ internal class NodeDeleteAction : DumbAwareAction() {
             fileNode && nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.node",
                                                                   nodes.first().children.size,
                                                                   (nodes.first().value as FileBookmark).file.name)
-            nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.list", (nodes.first { it is GroupNode }.value as BookmarkGroup).name)
+            nodes.size == 1 && nodes.first() is GroupNode ->
+              BookmarkBundle.message("dialog.message.delete.single.list", (nodes.first { it is GroupNode }.value as BookmarkGroup).name)
             nodes.all { it is GroupNode } -> BookmarkBundle.message("dialog.message.delete.multiple.lists")
             else -> BookmarkBundle.message("dialog.message.delete.multiple.nodes")
           }
@@ -86,6 +88,7 @@ internal class NodeDeleteAction : DumbAwareAction() {
     if (!bookmarksViewState.askBeforeDeletingLists || nodes.isEmpty()) return false
     if (nodes.size > 1) return true
     val firstNode = nodes.first()
+    if (firstNode is FolderNode) return false
     return when (firstNode.children.size) {
       0 -> false
       1 -> firstNode.children.first().children.size > 1
