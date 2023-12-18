@@ -85,7 +85,7 @@ internal class CacheMetadata(
       val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(metadataStorage, clazz.name)
 
       val metadataByFqn = metadataById.getOrPut(Id(pluginId, metadataStorage::class.java.name)) { hashMapOf() }
-      typeMetadata.collectTypesByFqn(metadataByFqn)
+      typeMetadata.collectTypesByFqn(metadataByFqn, metadataStorage)
     }
 
     fun addAll(classes: Iterable<Class<*>>) = classes.forEach(::add)

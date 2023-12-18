@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.storage.metadata.impl
 
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
-import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataException
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
 
@@ -14,12 +13,12 @@ public abstract class MetadataStorageBase(
   private var metadataIsInitialized: Boolean = false
   private var hashMetadataIsInitialized: Boolean = false
 
-  override fun getMetadataByTypeFqn(fqName: String): StorageTypeMetadata {
+  override fun getMetadataByTypeFqnOrNull(fqName: String): StorageTypeMetadata? {
     if (!metadataIsInitialized) {
       metadataIsInitialized = true
       initializeMetadata()
     }
-    return metadataByTypeFqn[fqName] ?: throw MissingTypeMetadataException(fqName)
+    return metadataByTypeFqn[fqName]
   }
 
   override fun getMetadataHashByTypeFqnOrNull(fqName: String): MetadataHash? {

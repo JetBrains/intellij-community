@@ -16,6 +16,9 @@ internal class TestTypeMetadataResolver(
   override fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata =
     typeMetadataResolver.resolveTypeMetadata(metadataStorage, processTypeFqn(typeFqn))
 
+  override fun resolveTypeMetadataOrNull(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata? =
+    typeMetadataResolver.resolveTypeMetadataOrNull(metadataStorage, processTypeFqn(typeFqn))
+
   override fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash =
     typeMetadataResolver.resolveTypeMetadataHash(metadataStorage, processTypeFqn(typeFqn))
 

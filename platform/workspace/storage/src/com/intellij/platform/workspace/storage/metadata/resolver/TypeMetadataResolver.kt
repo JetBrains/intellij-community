@@ -17,6 +17,8 @@ import org.jetbrains.annotations.TestOnly
 internal interface TypeMetadataResolver {
   fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata
 
+  fun resolveTypeMetadataOrNull(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata?
+
   fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash
 
   fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash?
@@ -39,6 +41,9 @@ internal interface TypeMetadataResolver {
 internal object TypeMetadataResolverImpl: TypeMetadataResolver {
   override fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata =
     metadataStorage.getMetadataByTypeFqn(typeFqn)
+
+  override fun resolveTypeMetadataOrNull(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata? =
+    metadataStorage.getMetadataByTypeFqnOrNull(typeFqn)
 
   override fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash =
     metadataStorage.getMetadataHashByTypeFqn(typeFqn)
