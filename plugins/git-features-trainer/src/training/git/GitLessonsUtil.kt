@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
@@ -272,6 +273,16 @@ object GitLessonsUtil {
     restoreChangedSettingsInformer {
       if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
       if (enabledStagingArea) enableStagingArea(true)
+    }
+  }
+
+  fun LessonContext.highlightToolWindowStripe(toolWindowId: String) {
+    task {
+      val titleProvider = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.stripeTitleProvider
+                          ?: error("No tool window with id: $toolWindowId")
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == titleProvider.get()
+      }
     }
   }
 
