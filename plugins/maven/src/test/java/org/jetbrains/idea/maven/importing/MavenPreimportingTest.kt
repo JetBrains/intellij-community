@@ -322,6 +322,44 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  fun testImportProjectWithBuildHelperPlugin() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+        
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.mojo</groupId>
+                          <artifactId>build-helper-maven-plugin</artifactId>
+                          <version>3.2.0</version>
+                          <executions>
+                            <execution>
+                              <id>add-source</id>
+                              <phase>generate-sources</phase>
+                              <goals>
+                                <goal>add-source</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                    <source>src/main/anothersrc/</source>
+                                </sources>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      assertSources("project", "src/main/java", "src/main/anothersrc")
+    }
+  }
+
+  @Test
   fun testImportProjectWithKotlinConfigInParent() = runBlocking {
 
     createModulePom("m1", """

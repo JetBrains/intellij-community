@@ -396,10 +396,9 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
     sources.add(sourceDirectory)
     testSources.add(testSourceDirectory)
-    if (kotlinPlugin != null) {
-      sources.add("src/main/kotlin")
-      testSources.add("src/test/kotlin")
-    }
+
+    resolveKotlinPlugin(mavenProjectData, sources, testSources)
+    resolveBuildHelperPlugin(mavenProjectData, sources, testSources)
 
     val parentFolder = mavenProjectData.file.parent.toNioPath()
 
@@ -409,6 +408,33 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
     mavenProjectData.mavenModel.build.sources = sources.map(parentFolder::resolve).map(Path::toString)
     mavenProjectData.mavenModel.build.testSources = testSources.map(parentFolder::resolve).map(Path::toString)
+  }
+
+  private fun resolveKotlinPlugin(mavenProjectData: MavenProjectData,
+                                  sources: ArrayList<String>,
+                                  testSources: ArrayList<String>) {
+    val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
+    if (kotlinPlugin != null) {
+      sources.add("src/main/kotlin")
+      testSources.add("src/test/kotlin")
+    }
+  }
+
+  private fun resolveBuildHelperPlugin(mavenProjectData: MavenProjectData,
+                                       sources: ArrayList<String>,
+                                       testSources: ArrayList<String>) {
+    val executions = findPlugin(mavenProjectData, "org.codehaus.mojo", "build-helper-maven-plugin")?.executions
+    if (executions.isNullOrEmpty()) return;
+
+    executions.filter { it.goals.contains("add-source") }
+      .mapNotNull { it.configurationElement }
+      .flatMap { it.getChildrenText("sources", "source") }
+      .forEach { sources.add(it) }
+
+    executions.filter { it.goals.contains("add-test-source") }
+      .mapNotNull { it.configurationElement }
+      .flatMap { it.getChildrenText("sources", "source") }
+      .forEach { sources.add(it) }
   }
 
   private fun findPlugin(mavenProjectData: MavenProjectData, groupId: String, artifactId: String) =
