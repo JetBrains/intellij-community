@@ -56,15 +56,6 @@ public final class InjectedDataKeys {
 
   @ApiStatus.Internal
   public static @Nullable Object getInjectedData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
-    return getInjectedData(dataId, dataProvider, dataProvider);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Object getInjectedData(
-    @NotNull String dataId,
-    @NotNull DataProvider normalDataProvider,
-    @NotNull DataProvider injectedDataProvider
-  ) {
     @Nullable String injectedId;
     @NotNull String normalId;
     if (isInjected(dataId)) {
@@ -74,7 +65,7 @@ public final class InjectedDataKeys {
       normalId = dataId;
       injectedId = injectedId(dataId);
     }
-    Object injected = injectedId == null ? null : injectedDataProvider.getData(injectedId);
-    return injected == null ? normalDataProvider.getData(normalId) : injected;
+    Object injected = injectedId == null ? null : dataProvider.getData(injectedId);
+    return (injected == null || injected == CustomizedDataContext.EXPLICIT_NULL) ? dataProvider.getData(normalId) : injected;
   }
 }

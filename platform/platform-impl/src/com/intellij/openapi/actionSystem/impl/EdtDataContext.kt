@@ -198,11 +198,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
     }
 
     override fun getDataInner(dataId: String, cacheable: Boolean): Any? {
-      return InjectedDataKeys.getInjectedData(
-        dataId,
-        { normalKey -> super.getDataInner(normalKey, cacheable) },
-        { injectedKey -> super.getDataInner(injectedKey, false) }
-      )
+      return InjectedDataKeys.getInjectedData(dataId) { key -> super.getDataInner(key, cacheable) }
     }
   }
 }
