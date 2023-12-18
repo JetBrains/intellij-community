@@ -25,7 +25,7 @@ class XMLReportEngine : CoverageEngine() {
                                    trackTestFolders: Boolean,
                                    project: Project?): CoverageSuite? {
     if (covRunner !is XMLReportRunner) return null
-    return XMLReportSuite(this, name, coverageDataFileProvider, lastCoverageTimeStamp, trackTestFolders, covRunner, project)
+    return XMLReportSuite(name, project, covRunner, coverageDataFileProvider, lastCoverageTimeStamp, this)
   }
 
   override fun createCoverageSuite(covRunner: CoverageRunner,
@@ -35,7 +35,7 @@ class XMLReportEngine : CoverageEngine() {
 
   override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): XMLReportSuite? {
     if (coverageRunner !is XMLReportRunner) return null
-    return XMLReportSuite(this, coverageRunner)
+    return XMLReportSuite(this)
   }
 
   override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile) = psiFile is PsiClassOwner

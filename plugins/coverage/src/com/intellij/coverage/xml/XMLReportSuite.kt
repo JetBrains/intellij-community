@@ -11,16 +11,16 @@ import com.intellij.rt.coverage.report.XMLProjectData
 import com.intellij.rt.coverage.report.XMLProjectData.FileInfo
 import java.io.File
 
-class XMLReportSuite(engine: XMLReportEngine,
-                     name: String?,
-                     fileProvider: CoverageFileProvider?,
-                     lastCoverageTimeStamp: Long,
-                     trackTestFolders: Boolean,
-                     coverageRunner: XMLReportRunner,
-                     project: Project?) : JavaCoverageSuite(name, fileProvider, emptyArray(), emptyArray(), lastCoverageTimeStamp, false,
-                                                            true, trackTestFolders,
-                                                            coverageRunner, engine, project) {
-  constructor(engine: XMLReportEngine, coverageRunner: XMLReportRunner) : this(engine, null, null, 0, false, coverageRunner, null)
+class XMLReportSuite : JavaCoverageSuite {
+  constructor(name: String?,
+              project: Project?,
+              coverageRunner: XMLReportRunner,
+              fileProvider: CoverageFileProvider?,
+              lastCoverageTimeStamp: Long,
+              engine: XMLReportEngine) : super(name, fileProvider, emptyArray(), emptyArray(), lastCoverageTimeStamp, false, true, false,
+                                               coverageRunner, engine, project)
+
+  constructor(engine: XMLReportEngine) : super(engine)
 
   private var data: XMLProjectData? = null
 

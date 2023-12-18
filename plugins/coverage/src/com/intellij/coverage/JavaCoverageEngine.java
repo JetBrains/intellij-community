@@ -245,7 +245,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @NotNull
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase conf) {
-    return new JavaCoverageEnabledConfiguration(conf, this);
+    return new JavaCoverageEnabledConfiguration(conf);
   }
 
   @Nullable
@@ -265,10 +265,10 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                           @NotNull final String name,
-                                           @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                           @NotNull final CoverageEnabledConfiguration config) {
+  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+                                           @NotNull String name,
+                                           @NotNull CoverageFileProvider coverageDataFileProvider,
+                                           @NotNull CoverageEnabledConfiguration config) {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),

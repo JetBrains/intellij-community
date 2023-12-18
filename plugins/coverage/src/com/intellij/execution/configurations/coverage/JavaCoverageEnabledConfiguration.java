@@ -40,8 +40,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
 
-  public JavaCoverageEnabledConfiguration(final RunConfigurationBase configuration,
-                                          final JavaCoverageEngine coverageProvider) {
+  public JavaCoverageEnabledConfiguration(RunConfigurationBase configuration) {
     super(configuration);
     setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
   }
