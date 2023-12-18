@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -21,6 +22,8 @@ fun EditorEx.addComponentInlay(
   priority: Int,
   offset: Int,
 ): Inlay<*> {
+  // see DS-5614
+  val fullWidthArg: Boolean = this.editorKind != EditorKind.DIFF
   val inlay = EditorEmbeddedComponentManager.getInstance().addComponent(
     this,
     component,
@@ -30,7 +33,7 @@ fun EditorEx.addComponentInlay(
       isRelatedToPrecedingText,
       showAbove,
       showWhenFolded,
-      true,
+      fullWidthArg,
       priority,
       offset,
     )
