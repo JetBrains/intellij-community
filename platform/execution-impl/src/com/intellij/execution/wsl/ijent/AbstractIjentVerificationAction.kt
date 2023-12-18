@@ -60,6 +60,20 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
 
               coroutineScope {
                 launch {
+                  val info = ijent.info()
+                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                    Messages.showInfoMessage(
+                      """
+                      Architecture: ${info.architecture}
+                      Remote PID:   ${info.remotePid}
+                      Version:      ${info.version}
+                      """.trimIndent(),
+                      title
+                    )
+                  }
+                }
+
+                launch {
                   val process = when (val p = ijent.exec.executeProcess("uname", "-a")) {
                     is IjentExecApi.ExecuteProcessResult.Failure -> error(p)
                     is IjentExecApi.ExecuteProcessResult.Success -> p.process

@@ -54,9 +54,13 @@ interface IjentApi : AutoCloseable {
   }
 
   /**
+   * [architecture] is the remote architecture of the built binary. Intended to be used for debugging purposes.
    * [remotePid] is a process ID of IJent running on the remote machine.
+   * [version] is the version of the IJent binary. Intended to be used for debugging purposes.
    */
   interface Info {
+    val architecture: String
     val remotePid: Pid
+    val version: String
   }
 }
