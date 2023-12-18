@@ -36,11 +36,7 @@ public final class InjectedDataKeys {
 
   @ApiStatus.Internal
   public static @Nullable String uninjectedId(@NotNull String dataId) {
-    return isInjected(dataId) ? normalId(dataId) : null;
-  }
-
-  private static @NotNull String normalId(@NotNull String dataId) {
-    return dataId.substring(ourInjectedPrefix.length());
+    return isInjected(dataId) ? dataId.substring(ourInjectedPrefix.length()) : null;
   }
 
   private static boolean isInjected(@NotNull String dataId) {
@@ -56,16 +52,8 @@ public final class InjectedDataKeys {
 
   @ApiStatus.Internal
   public static @Nullable Object getInjectedData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
-    @Nullable String injectedId;
-    @NotNull String normalId;
-    if (isInjected(dataId)) {
-      normalId = normalId(dataId);
-      injectedId = dataId;
-    } else {
-      normalId = dataId;
-      injectedId = injectedId(dataId);
-    }
+    @Nullable String injectedId = injectedId(dataId);
     Object injected = injectedId == null ? null : dataProvider.getData(injectedId);
-    return (injected == null || injected == CustomizedDataContext.EXPLICIT_NULL) ? dataProvider.getData(normalId) : injected;
+    return (injected == null || injected == CustomizedDataContext.EXPLICIT_NULL) ? dataProvider.getData(dataId) : injected;
   }
 }
