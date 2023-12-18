@@ -3,11 +3,15 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.utils.io.createFile
 import org.gradle.util.GradleVersion
+import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.junit.Test
 import java.io.File
+import java.net.URI
 
 class GradleUtilTest: UsefulTestCase() {
 
@@ -73,5 +77,47 @@ class GradleUtilTest: UsefulTestCase() {
     assertEquals(GradleVersion.version("5.2-rc-1"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2-rc-1-bin.zip"))
 
     assertNull(GradleInstallationManager.parseDistributionVersion("abc/gradle-unexpected-bin.zip"))
+  }
+
+  fun `test project gradle wrapper properties parsing`() {
+    val expected = getTestWrapperConfiguration()
+    val gradlePropertiesRoot = rootDir.resolve("gradle")
+      .resolve("wrapper")
+      .resolve("gradle-wrapper.properties")
+      .toPath()
+    NioFiles.createParentDirectories(gradlePropertiesRoot).createFile()
+
+    GradleUtil.writeWrapperConfiguration(gradlePropertiesRoot, expected)
+    val actual = GradleUtil.getWrapperConfiguration(rootDir.path)
+    assertWrapperConfigurationsEquals(expected, actual!!)
+  }
+
+  fun `test gradle wrapper properties parsing`() {
+    val expected = getTestWrapperConfiguration()
+    val wrapperPropertiesFile = rootDir.resolve("gradle-wrapper.properties")
+    wrapperPropertiesFile.createNewFile()
+    val wrapperPropertiesPath = wrapperPropertiesFile.toPath()
+    GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath, expected)
+    val actual = GradleUtil.readWrapperConfiguration(wrapperPropertiesPath)
+    assertWrapperConfigurationsEquals(expected, actual!!)
+  }
+
+  @Suppress("NonAsciiCharacters")
+  private fun getTestWrapperConfiguration(): WrapperConfiguration {
+    val configuration = WrapperConfiguration()
+    configuration.distribution = URI("https://127.0.0.1/gradle.zip")
+    configuration.distributionBase = "distributionBase/üüü"
+    configuration.distributionPath = "distributionPath/üüü"
+    configuration.zipBase = "zipBase/ßßß"
+    configuration.zipPath = "zipPath/ßßß"
+    return configuration
+  }
+
+  private fun assertWrapperConfigurationsEquals(expected: WrapperConfiguration, actual: WrapperConfiguration) {
+    assertEquals(expected.distribution, actual.distribution)
+    assertEquals(expected.distributionBase, actual.distributionBase)
+    assertEquals(expected.distributionPath, actual.distributionPath)
+    assertEquals(expected.zipBase, actual.zipBase)
+    assertEquals(expected.zipPath, actual.zipPath)
   }
 }

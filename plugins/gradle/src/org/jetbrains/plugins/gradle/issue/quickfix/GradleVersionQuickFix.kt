@@ -23,10 +23,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.outputStream
-import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.util.GradleVersion
-import org.gradle.wrapper.WrapperExecutor
+import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
@@ -35,13 +33,12 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.io.OutputStreamWriter
+import java.net.URI
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import kotlin.io.path.createFile
-import kotlin.io.path.inputStream
 
 /**
  * @author Vladislav.Soroka
@@ -84,33 +81,35 @@ class GradleVersionQuickFix(private val projectPath: String,
       }
   }
 
+  /**
+   * This is only a fallback, because immediately after updating `gradle-wrapper.properties` the `wrapper` task will be executed explicitly.
+   * The fallback is necessary because if the `wrapper` task fails for some unknown reason, the next interaction with Gradle will download
+   * the correct Gradle version.
+   */
   private fun updateOrCreateWrapper(): CompletableFuture<*> {
     return CompletableFuture.supplyAsync {
-      val wrapperProperties: Properties
-      var wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
+      var wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
+      val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath)
       val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
-      if (wrapperPropertiesFile == null) {
-        val wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
+      wrapperConfiguration.distribution = URI(distributionUrl)
+
+      if (wrapperPropertiesPath == null) {
+        wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
         wrapperPropertiesPath.createParentDirectories().createFile()
-        wrapperPropertiesFile = wrapperPropertiesPath
-        wrapperProperties = getDefaultGradleProperties(distributionUrl)
-      }
-      else {
-        wrapperProperties = wrapperPropertiesFile.inputStream().use { stream ->
-          Properties().also { it.load(stream) }
-        }
-        wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
       }
 
-      wrapperPropertiesFile?.outputStream()?.use { out ->
-        OutputStreamWriter(out, Charsets.ISO_8859_1).use { writer ->
-          wrapperProperties.store(writer, null)
-        }
-      }
-      LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesFile))
+      GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath!!, wrapperConfiguration)
+      LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesPath))
     }
   }
 
+  /**
+   * The recommended way to update the Gradle version. There are several reasons to use the `wrapper` task:
+   * 1) The wrapper task results in recreation for all Gradle wrapper related files such as `gradlew.bat`, `gradlew` and `gradle-wrapper.jar`,
+   *  so, CLI can use the updated wrappers around the Gradle wrapper.
+   * 2) If the user has explicitly configured the wrapper task in the `build.gradle` file, a quick fix will install the version that was
+   *  required by user.
+   */
   private fun runWrapperTask(project: Project): CompletableFuture<Nothing> {
     val userData = UserDataHolderBase()
     val initScript = "gradle.projectsEvaluated { g ->\n" +
@@ -143,12 +142,13 @@ class GradleVersionQuickFix(private val projectPath: String,
     return future
   }
 
-  private fun getDefaultGradleProperties(distributionUrl: String): Properties = Properties().apply {
-    this[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
-    this[WrapperExecutor.DISTRIBUTION_BASE_PROPERTY] = "GRADLE_USER_HOME"
-    this[WrapperExecutor.DISTRIBUTION_PATH_PROPERTY] = "wrapper/dists"
-    this[WrapperExecutor.ZIP_STORE_BASE_PROPERTY] = "GRADLE_USER_HOME"
-    this[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
+  private fun getWrapperConfiguration(wrapperPropertiesPath: Path?): WrapperConfiguration {
+    return if (wrapperPropertiesPath == null) {
+      WrapperConfiguration()
+    }
+    else {
+      GradleUtil.readWrapperConfiguration(wrapperPropertiesPath) ?: WrapperConfiguration()
+    }
   }
 
   companion object {
