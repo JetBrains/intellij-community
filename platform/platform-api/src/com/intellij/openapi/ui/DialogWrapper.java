@@ -74,6 +74,12 @@ public abstract class DialogWrapper {
 
   public enum IdeModalityType {
     IDE,
+    /**
+     * Effectively the same as {@link IDE}.
+     *
+     * @deprecated use {@link IDE} instead
+     */
+    @Deprecated
     PROJECT,
     MODELESS;
 
