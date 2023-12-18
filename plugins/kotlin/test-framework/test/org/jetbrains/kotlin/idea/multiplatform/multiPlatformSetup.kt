@@ -77,10 +77,10 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
             transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
         )
 
-        if (resolveModule.testRoot != null) {
+        resolveModule.testRoot?.let { testRoot ->
             addRoot(
                 ideaModule,
-                resolveModule.testRoot,
+                testRoot,
                 isTestRoot = true,
                 transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
             )
