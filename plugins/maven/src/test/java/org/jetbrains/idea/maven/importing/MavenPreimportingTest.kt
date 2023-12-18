@@ -408,9 +408,6 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    <properties>
-                        <kotlin.version>1.9.21</kotlin.version>
-                    </properties>
                     <build>
                       <sourceDirectory>src/main/somedir</sourceDirectory>
                     </build>
@@ -431,9 +428,6 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    <properties>
-                        <kotlin.version>1.9.21</kotlin.version>
-                    </properties>
                     <build>
                       <sourceDirectory>${'$'}{basedir}/src/main/somedir</sourceDirectory>
                     </build>
