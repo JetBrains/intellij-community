@@ -16,10 +16,6 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
   private final String myFilePath;
   private final String myActualFilePath;
 
-  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual) {
-    this(message, expected, actual, null, null);
-  }
-
   public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath) {
     this(message, expected, actual, expectedFilePath, null);
   }

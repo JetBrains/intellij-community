@@ -1852,7 +1852,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (!Objects.equals(expectedText, actualText)) {
       if (loader.filePath == null) {
-        throw new FileComparisonFailure(expectedFile, expectedText, actualText);
+        throw new FileComparisonFailure(expectedFile, expectedText, actualText, null);
       }
 
       if (loader.caretState.hasExplicitCaret()) {
