@@ -40,22 +40,31 @@ public final class X11UiUtil {
   private static final long NET_WM_STATE_TOGGLE = 2;
 
   /**
-   * List of all known tile WM, can be updated later
+   * List of all known tile WM in lower case, can be updated later
    */
   private static final Set<String> TILE_WM = Set.of(
     "awesome",
     "bspwm",
+    "cagebreak",
+    "compiz",
+    "dwl",
     "dwm",
     "frankenwm",
     "herbstluftwm",
+    "hyprland",
     "i3",
+    "ion",
+    "larswm",
     "leftwm",
     "notion",
     "qtile",
     "ratpoison",
+    "river",
     "snapwm",
     "spectrwm",
     "stumpwm",
+    "sway",
+    "wmii",
     "xmonad"
   );
 
