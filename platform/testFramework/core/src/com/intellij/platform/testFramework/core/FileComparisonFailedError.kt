@@ -38,7 +38,7 @@ class FileComparisonFailedError @JvmOverloads constructor(
   }
 
   override fun getActualStringPresentation(): String {
-    return getFileText(expected)
+    return getFileText(actual)
   }
 
   override fun getExpectedStringPresentation(): String {
