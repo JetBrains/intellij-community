@@ -14,8 +14,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -46,7 +44,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
@@ -288,7 +285,7 @@ class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
 /**
  * A quick-fix for installing packages specified in Pipfile.lock.
  */
-class PipEnvInstallQuickFix : PsiUpdateModCommandQuickFix() {
+class PipEnvInstallQuickFix : LocalQuickFix {
   companion object {
     fun pipEnvInstall(project: Project, module: Module) {
       val sdk = module.pythonSdk ?: return
@@ -301,7 +298,8 @@ class PipEnvInstallQuickFix : PsiUpdateModCommandQuickFix() {
 
   override fun getFamilyName() = PyBundle.message("python.sdk.install.requirements.from.pipenv.lock")
 
-  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val element = descriptor.psiElement ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     pipEnvInstall(project, module)
   }
