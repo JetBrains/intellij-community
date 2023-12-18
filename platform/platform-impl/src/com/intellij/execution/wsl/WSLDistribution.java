@@ -228,6 +228,7 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     if (mustRunCommandLineWithIjent(options)) {
       commandLine.withEscapingForLocalRun(false);
+      String wslSpecificWorkingDirectory = options.getRemoteWorkingDirectory();
       IjentExecApi.Pty ijentPty;
       if (commandLine instanceof PtyCommandLine ptyCommandLine) {
         var ptyOptions = ptyCommandLine.getPtyOptions();
@@ -237,7 +238,14 @@ public class WSLDistribution implements AbstractWslDistribution {
         ijentPty = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
+        return WslIjentManager.getInstance().runProcessBlocking(
+          this,
+          project,
+          processBuilder,
+          ijentPty,
+          options.isSudo(),
+          wslSpecificWorkingDirectory
+        );
       });
     }
     else {

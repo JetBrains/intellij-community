@@ -21,7 +21,10 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.computeDetached
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -81,6 +84,9 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
    *
    * [isSudo] allows to start IJent inside WSL through sudo. It implies that all children processes, including [processBuilder] will run
    * from the root user as well.
+   *
+   * [wslSpecificWorkingDirectory] takes precedence over [ProcessBuilder.directory]. This option is required because
+   * [ProcessBuilder.directory] is a Windows path, and the constructor of [java.io.File] can corrupt the path.
    */
   @RequiresBackgroundThread
   @RequiresBlockingContext
@@ -90,16 +96,20 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     processBuilder: ProcessBuilder,
     pty: IjentExecApi.Pty?,
     isSudo: Boolean,
+    wslSpecificWorkingDirectory: String?,
   ): Process {
     return runBlocking {
       val command = processBuilder.command()
+      val directory =
+        wslSpecificWorkingDirectory
+        ?: processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
 
       val ijentApi = getIjentApi(wslDistribution, project, isSudo)
       when (val processResult = ijentApi.exec.executeProcess(FileUtil.toSystemIndependentName(command.first())) {
         args += command.toList().drop(1)
         env += processBuilder.environment()
         this.pty = pty
-        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
+        workingDirectory = directory
       }) {
         is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
         is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
