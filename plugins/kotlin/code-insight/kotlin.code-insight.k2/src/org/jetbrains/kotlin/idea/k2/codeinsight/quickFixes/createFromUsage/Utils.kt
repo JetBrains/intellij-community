@@ -11,11 +11,19 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.calls
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -32,11 +40,6 @@ fun PsiElement.isPartOfImportDirectiveOrAnnotation() = PsiTreeUtil.getParentOfTy
     this,
     KtTypeReference::class.java, KtAnnotationEntry::class.java, KtImportDirective::class.java
 ) != null
-
-fun KtExpression.getReceiverExpression(): KtExpression? {
-    val nameExpression = this as? KtSimpleNameExpression ?: return null
-    return nameExpression.getReceiverExpression()
-}
 
 fun KtModifierList?.hasAbstractModifier() = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
 
@@ -60,12 +63,6 @@ internal fun KtExpression.resolveExpression(): KtSymbol? {
 
 context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
-
-context (KtAnalysisSession)
-internal fun KtType.isInterface(): Boolean {
-    val classSymbol = expandedClassSymbol ?: return false
-    return classSymbol.classKind == KtClassKind.INTERFACE
-}
 
 context (KtAnalysisSession)
 internal fun KtElement.getExpectedPsiType(): PsiType? =
@@ -93,7 +90,7 @@ internal fun KtValueArgument.getExpectedParameterInfo(): ParameterInfo {
 context (KtAnalysisSession)
 internal fun CreateMethodRequest.getRenderedType(context: KtElement) = returnType.singleOrNull()?.let { returnType ->
     val psiReturnType = returnType.theType as? PsiType
-    psiReturnType?.asKtType(context)?.render(position = Variance.INVARIANT)
+    psiReturnType?.asKtType(context)?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
 }
 
 context (KtAnalysisSession)
@@ -110,3 +107,22 @@ private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
     containingKtFile.findFacadeClass() ?: KtFileClassProviderImpl(project).getFileClasses(containingKtFile).firstOrNull()
 
 private val NAME_SUGGESTER = KotlinNameSuggester()
+
+val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+    // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
+    flexibleTypeRenderer = object : KtFlexibleTypeRenderer {
+        context(KtAnalysisSession, KtTypeRenderer)
+        override fun renderType(type: KtFlexibleType, printer: PrettyPrinter) {
+            renderType(type.lowerBound, printer)
+        }
+    }
+    // Without this, it can render `kotlin.String & kotlin.Any`, which causes a syntax error.
+    definitelyNotNullTypeRenderer = object : KtDefinitelyNotNullTypeRenderer {
+        context(KtAnalysisSession, KtTypeRenderer)
+        override fun renderType(type: KtDefinitelyNotNullType, printer: PrettyPrinter) {
+            renderType(type.original, printer)
+        }
+    }
+    // Listing variances will cause a syntax error.
+    typeProjectionRenderer = KtTypeProjectionRenderer.WITHOUT_VARIANCE
+}

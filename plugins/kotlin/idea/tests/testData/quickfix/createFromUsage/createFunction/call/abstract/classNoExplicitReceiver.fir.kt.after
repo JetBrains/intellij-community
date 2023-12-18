@@ -6,7 +6,7 @@ abstract class A {
         bar(foo(1, "2"))
     }
 
-    abstract fun foo(i: kotlin.Int, string: kotlin.String!): kotlin.Boolean
+    abstract fun foo(i: kotlin.Int, string: kotlin.String): kotlin.Boolean
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
