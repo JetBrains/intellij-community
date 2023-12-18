@@ -1,18 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestFixtures
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.psi.PyDecorator
-import com.jetbrains.python.psi.PyElementGenerator
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -86,11 +87,11 @@ class PyTestUnpassedFixtureInspection : PyInspection() {
     }
   }
 
-  private inner class AddFixtureToFuncParametersQuickFix : LocalQuickFix {
+  private inner class AddFixtureToFuncParametersQuickFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName() = PyPsiBundle.message("QFIX.add.fixture.to.test.function.parameters.list")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement as? PyReferenceExpression ?: return
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      if (element !is PyReferenceExpression) return
       val newParameter = PyElementGenerator.getInstance(project).createParameter(element.text)
       findTestFunc(element)?.parameterList?.addParameter(newParameter)
     }
