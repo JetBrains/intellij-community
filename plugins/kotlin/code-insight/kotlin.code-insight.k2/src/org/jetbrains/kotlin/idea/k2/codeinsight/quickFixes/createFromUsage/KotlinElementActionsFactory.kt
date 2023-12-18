@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -50,7 +51,19 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                 )
             }
 
-            else -> TODO("Handle requests from other languages e.g., Java and Groovy.")
+            else -> {
+                val isContainerAbstract = container.isAbstractClass()
+                listOf(
+                    CreateKotlinCallableAction(
+                        request = request,
+                        targetClass = targetClass,
+                        abstract = isContainerAbstract,
+                        needFunctionBody = !isContainerAbstract && !container.isInterfaceClass(),
+                        myText = KotlinBundle.message("add.method.0.to.1", request.methodName, targetClass.name.toString()),
+                        pointerToContainer = container.createSmartPointer(),
+                    )
+                )
+            }
         }
     }
 }

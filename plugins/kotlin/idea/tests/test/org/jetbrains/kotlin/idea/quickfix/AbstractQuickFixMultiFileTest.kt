@@ -125,8 +125,14 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             }
         )
 
-        val afterFile = subFiles.firstOrNull { file -> file.path.contains(".after") }
-        val beforeFile = subFiles.firstOrNull { file -> file.path.contains(".before") }!!
+        fun firstFileWith(subStringInName: String) = subFiles.firstOrNull { file -> file.path.contains(subStringInName) }
+
+        val afterFile = if (isFirPlugin) {
+            firstFileWith(".after.fir") ?: firstFileWith(".after")
+        } else {
+            firstFileWith(".after")
+        }
+        val beforeFile = firstFileWith(".before")!!
 
         subFiles.remove(beforeFile)
         if (afterFile != null) {
@@ -238,9 +244,19 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     )
 
                     if (actionShouldBeAvailable) {
-                        val afterFilePath = beforeFileName.replace(".before.Main.", ".after.")
+                        fun replaceBeforeFileName(newValue: String) = beforeFileName.replace(".before.Main.", newValue)
+
+                        val afterFilePathToken = if (isFirPlugin) {
+                            val afterFirFilePath = replaceBeforeFileName(".after.fir.")
+                            if (FileUtil.exists(afterFirFilePath)) ".after.fir."
+                            else ".after."
+                        } else {
+                            ".after."
+                        }
+
+                        val afterFilePath = replaceBeforeFileName(afterFilePathToken)
                         try {
-                            myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", ".after."))
+                            myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", afterFilePathToken))
                         } catch (e: AssertionError) {
                             if (e !is FileComparisonData) throw e
                             KotlinTestUtils.assertEqualsToFile(File(afterFilePath), editor)
@@ -257,7 +273,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                             ) continue
 
                             val extraFileFullPath = beforeFileName.replace(myFixture.file.name, fileName)
-                            val afterFile = File(extraFileFullPath.replace(".before.", ".after."))
+                            val afterFile = File(extraFileFullPath.replace(".before.", afterFilePathToken))
                             if (afterFile.exists()) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, file.text)
                             } else {

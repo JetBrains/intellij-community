@@ -121,6 +121,18 @@ val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSourc
 context (KtAnalysisSession)
 internal fun JvmType.toKtType(useSitePosition: PsiElement) = when (this) {
     is JvmTypeWrapperForKtType -> ktType
-    is PsiType -> if (isValid) asKtType(useSitePosition) else null
+    is PsiType -> if (isValid) {
+        try {
+            asKtType(useSitePosition)
+        } catch (e: Error) {
+            // Some requests from Java side does not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
+            // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
+            // API cannot get a KtType from this weird type. We return `Any?` for this case.
+            builtinTypes.NULLABLE_ANY
+        }
+    } else {
+        null
+    }
+
     else -> null
 }

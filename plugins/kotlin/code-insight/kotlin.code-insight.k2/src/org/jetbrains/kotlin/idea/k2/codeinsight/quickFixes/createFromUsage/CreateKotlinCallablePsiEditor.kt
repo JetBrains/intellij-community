@@ -7,8 +7,8 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
@@ -46,7 +46,6 @@ internal data class NewCallableInfo(
  */
 internal class CreateKotlinCallablePsiEditor(
     private val project: Project,
-    private val editor: Editor?,
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
@@ -55,7 +54,7 @@ internal class CreateKotlinCallablePsiEditor(
         var function = factory.createFunction(callableInfo.definitionAsString)
         function = pointerToContainer.element?.let { function.addToContainer(it) } as? KtNamedFunction ?: return
         function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return
-        editor?.document?.let { document -> runTemplate(editor, document, function) }
+        runTemplate(function)
     }
 
     private fun moveCaretToCallable(editor: Editor, function: KtCallableDeclaration) {
@@ -65,13 +64,14 @@ internal class CreateKotlinCallablePsiEditor(
 
     private fun getDocumentManager() = PsiDocumentManager.getInstance(project)
 
-    private fun runTemplate(editor: Editor, document: Document, function: KtNamedFunction) {
+    private fun runTemplate(function: KtNamedFunction) {
         val file = function.containingKtFile
-        val functionMarker = document.createRangeMarker(function.textRange)
+        val editor = EditorHelper.openInEditor(file)
+        val functionMarker = editor.document.createRangeMarker(function.textRange)
         moveCaretToCallable(editor, function)
         val templateImpl = setupTemplate(function)
         TemplateManager.getInstance(project)
-            .startTemplate(editor, templateImpl, buildTemplateListener(editor, file, document, functionMarker))
+            .startTemplate(editor, templateImpl, buildTemplateListener(editor, file, functionMarker))
     }
 
     private fun setupTemplate(function: KtNamedFunction): TemplateImpl {
@@ -106,10 +106,10 @@ internal class CreateKotlinCallablePsiEditor(
         else -> container.add(this)
     }
 
-    private fun buildTemplateListener(editor: Editor, file: KtFile, document: Document, functionMarker: RangeMarker): TemplateEditingAdapter {
+    private fun buildTemplateListener(editor: Editor, file: KtFile, functionMarker: RangeMarker): TemplateEditingAdapter {
         return object : TemplateEditingAdapter() {
             private fun finishTemplate(brokenOff: Boolean) {
-                getDocumentManager().commitDocument(document)
+                getDocumentManager().commitDocument(editor.document)
                 if (brokenOff && !isUnitTestMode()) return
                 updateCallableBody()
             }
