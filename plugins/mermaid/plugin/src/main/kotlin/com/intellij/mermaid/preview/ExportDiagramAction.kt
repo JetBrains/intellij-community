@@ -20,7 +20,7 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.util.io.write
 
-internal class ExportDiagramAction: AnAction(message("action.Mermaid.ExportDiagram.text")), DumbAware {
+internal class ExportDiagramAction: AnAction(), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
     val file = event.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
     runBackgroundableTask(title = "Performing conversion", event.project, cancellable = true) {

@@ -168,7 +168,7 @@
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.FrontmatterYamlSchemaProviderFactory"/>
   </extensions>
-  <actions>
+  <actions resource-bundle="messages.MermaidBundle">
     <action id="Mermaid.ExportDiagram"
             icon="AllIcons.ToolbarDecorator.Export"
             class="com.intellij.mermaid.preview.ExportDiagramAction">
