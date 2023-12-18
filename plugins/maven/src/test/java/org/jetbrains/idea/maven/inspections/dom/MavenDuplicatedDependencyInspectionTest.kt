@@ -167,11 +167,11 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
       <artifactId>child</artifactId>
       <version>1.0</version>
         
-          <parent>
-      <groupId>mavenParent</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0</version>
-          </parent>
+      <parent>
+        <groupId>mavenParent</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0</version>
+      </parent>
         
       <dependencies>
         <dependency>
