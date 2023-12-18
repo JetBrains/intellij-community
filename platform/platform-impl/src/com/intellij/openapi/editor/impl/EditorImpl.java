@@ -3973,6 +3973,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               doc.deleteString(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
             }
           });
+          if (composedRangeMarker.isValid()) {
+            // IDEA-331578: Deleting a string from a document may move the range marker to the left (i.e. during inline rename)
+            // We must use the new `startOffset` value here if the range marker is still valid
+            composedStartIndex = composedRangeMarker.getStartOffset();
+          }
         }
         composedRangeMarker.dispose();
         composedRangeMarker = null;
