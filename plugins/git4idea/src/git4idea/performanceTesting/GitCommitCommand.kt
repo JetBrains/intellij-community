@@ -4,14 +4,17 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.vcs.commit.LocalChangesCommitter
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import com.jetbrains.performancePlugin.commands.Waiter
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
+import java.time.temporal.ChronoUnit
 
 /**
  * Command for committing file changes to git
@@ -29,7 +32,8 @@ class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
     val changeList = ChangeListManager.getInstance(context.project).defaultChangeList
 
     val projectDir = context.project.guessProjectDir() ?: throw RuntimeException("Project dir is null")
-    val virtualFile = (projectDir.findFileByRelativePath(filePath) ?: throw RuntimeException("Specified file $filePath wasn't found")).toNioPath()
+    val virtualFile = (projectDir.findFileByRelativePath(filePath) ?: throw RuntimeException(
+      "Specified file $filePath wasn't found")).toNioPath()
 
     val beforeRevision = GitContentRevision.createRevision(
       LocalFilePath(virtualFile, false),
@@ -39,7 +43,10 @@ class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
 
     val change = Change(beforeRevision, beforeRevision, FileStatus.MODIFIED)
     val listCommitState = ChangeListCommitState(changeList, listOf(change), commitMessage)
-    LocalChangesCommitter(context.project, listCommitState, CommitContext()).runCommit("", true)
+
+    //TODO Return sync=false and remove Waiter when IDEA-337260 will be fixed
+    LocalChangesCommitter(context.project, listCommitState, CommitContext()).runCommit("", false)
+    Waiter.waitOrThrow(5, ChronoUnit.MINUTES) { ProjectLevelVcsManager.getInstance(context.project).isBackgroundVcsOperationRunning }
   }
 
   override fun getName(): String = NAME
