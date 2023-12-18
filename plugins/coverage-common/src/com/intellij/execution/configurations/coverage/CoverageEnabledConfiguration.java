@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Base class for run configurations with enabled code coverage
@@ -192,17 +192,16 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
       return null;
     }
 
-    final @NonNls String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
-    final String path = coverageRootPath +
-                        File.separator +
-                        FileUtil.sanitizeFileName(myConfiguration.getProject().getName()) +
-                        coverageFileNameSeparator() +
-                        FileUtil.sanitizeFileName(myConfiguration.getName()) +
-                        "." +
-                        myCoverageRunner.getDataFileExtension();
+    Path coverageRootPath = Path.of(PathManager.getSystemPath(), "coverage");
+    coverageRootPath.toFile().mkdirs();
 
-    new File(coverageRootPath).mkdirs();
-    return path;
+    String projectName = FileUtil.sanitizeFileName(myConfiguration.getProject().getName());
+    String configName = FileUtil.sanitizeFileName(myConfiguration.getName());
+    String separator = coverageFileNameSeparator();
+    String extension = myCoverageRunner.getDataFileExtension();
+    String path = String.format("%s%s%s.%s", projectName, separator, configName, extension);
+
+    return coverageRootPath.resolve(path).toString();
   }
 
   protected String coverageFileNameSeparator() {
