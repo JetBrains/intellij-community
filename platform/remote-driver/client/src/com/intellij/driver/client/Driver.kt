@@ -20,6 +20,13 @@ interface Driver : AutoCloseable {
    */
   fun exitApplication()
 
+  /**
+   * Screenshots and saves images of application windows to the test output folder.
+   *
+   * @param outFolder name of the test output folder relative to logs directory
+   */
+  fun takeScreenshot(outFolder: String?)
+
   @Contract(pure = true)
   fun <T : Any> service(clazz: KClass<T>): T
 

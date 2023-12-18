@@ -4,7 +4,6 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.Timed
-import com.intellij.driver.client.screenshot.TakeScreenshot
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
@@ -49,6 +48,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
   override fun exitApplication() {
     invoker.exit()
+  }
+
+  override fun takeScreenshot(outFolder: String?) {
+    invoker.takeScreenshot(outFolder)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -300,7 +303,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       this.code()
     }
     catch (t: Throwable) {
-      new(TakeScreenshot::class).takeScreenshot("beforeKill")
+      invoker.takeScreenshot("beforeKill")
       throw t
     }
     finally {
@@ -371,6 +374,8 @@ internal interface Invoker : AutoCloseable {
   fun newSession(): Int
 
   fun cleanup(sessionId: Int)
+
+  fun takeScreenshot(folder: String?)
 }
 
 class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)

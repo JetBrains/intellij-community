@@ -48,11 +48,14 @@ fun <T : UiComponent> T.should(seconds: Int = DEFAULT_FIND_TIMEOUT_SECONDS, cond
   return should(timeout = seconds.seconds, condition = condition)
 }
 
-fun <T : UiComponent> T.should(message: String, seconds: Int = DEFAULT_FIND_TIMEOUT_SECONDS, condition: T.() -> Boolean): T {
+fun <T : UiComponent> T.should(message: String,
+                               seconds: Int = DEFAULT_FIND_TIMEOUT_SECONDS,
+                               condition: T.() -> Boolean): T {
   return should(message = message, timeout = seconds.seconds, condition = condition)
 }
 
-fun <T : UiComponent> T.should(message: String = "", timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
+fun <T : UiComponent> T.should(message: String = "",
+                               timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
                                condition: T.() -> Boolean): T {
   waitFor(timeout, errorMessage = message) {
     try {

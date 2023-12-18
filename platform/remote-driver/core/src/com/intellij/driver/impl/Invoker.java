@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -52,9 +53,12 @@ public class Invoker implements InvokerMBean {
   private final Map<Integer, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
   private final ClearableLazyValue<IJTracer> tracer;
+  private final Consumer<String> screenshotAction;
   private final Supplier<? extends Context> timedContextSupplier;
 
-  public Invoker(@NotNull Supplier<? extends IJTracer> tracerSupplier, @NotNull Supplier<? extends Context> timedContextSupplier) {
+  public Invoker(@NotNull Supplier<? extends IJTracer> tracerSupplier,
+                 @NotNull Supplier<? extends Context> timedContextSupplier,
+                 @NotNull Consumer<String> screenshotAction) {
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
       @Override
@@ -62,6 +66,7 @@ public class Invoker implements InvokerMBean {
         return tracerSupplier.get();
       }
     };
+    this.screenshotAction = screenshotAction;
   }
 
   @Override
@@ -553,6 +558,11 @@ public class Invoker implements InvokerMBean {
   @Override
   public void cleanup(int sessionId) {
     sessions.remove(sessionId);
+  }
+
+  @Override
+  public void takeScreenshot(@Nullable String outFolder) {
+    this.screenshotAction.accept(outFolder);
   }
 }
 

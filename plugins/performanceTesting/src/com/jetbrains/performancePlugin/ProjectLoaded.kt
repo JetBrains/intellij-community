@@ -36,6 +36,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
+import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindowsBlocking
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -181,7 +182,9 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
-      InvokerMBean.register({ PerformanceTestSpan.TRACER }, { PerformanceTestSpan.getContext() })
+      InvokerMBean.register({ PerformanceTestSpan.TRACER },
+                            { PerformanceTestSpan.getContext() },
+                            { takeScreenshotOfAllWindowsBlocking(it) })
     }
 
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
