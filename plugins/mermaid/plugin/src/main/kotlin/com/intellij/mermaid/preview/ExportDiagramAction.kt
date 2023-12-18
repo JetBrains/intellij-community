@@ -18,7 +18,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
-import com.intellij.util.io.writeChild
+import com.intellij.util.io.write
 
 internal class ExportDiagramAction: AnAction(message("action.Mermaid.ExportDiagram.text")), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
@@ -38,7 +38,7 @@ internal class ExportDiagramAction: AnAction(message("action.Mermaid.ExportDiagr
         } else {
           val content = performConversion(diagramSource)
           val directory = file.parent
-          val result = directory.toNioPath().writeChild("${file.nameWithoutExtension}.svg", content)
+          val result = directory.toNioPath().resolve("${file.nameWithoutExtension}.svg").write(content)
           val svgFile = VfsUtil.findFile(result, true)
           VfsUtil.markDirtyAndRefresh(false, false, true, svgFile)
         }
