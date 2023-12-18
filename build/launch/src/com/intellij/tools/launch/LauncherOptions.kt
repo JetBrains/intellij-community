@@ -24,7 +24,7 @@ data class DockerNetworkEntry(
 }
 
 interface DockerLauncherOptions : LauncherOptions {
-  val exposedPorts: List<Int> get() = debugPort?.let { listOf(it) }.orEmpty()
+  val exposedPorts: List<Int>
   val runBashBeforeJava: List<String>?
   val runBashBackgroundBeforeJava: List<String>?
   val address: InetAddress get() = InetAddress.getLoopbackAddress()
