@@ -119,7 +119,7 @@ class PyRelativeImportInspection : PyInspection() {
       assert(oldImport.relativeLevel == 1)
       val qualifier = oldImport.importSource
       if (qualifier != null) {
-        val possibleDot = updater.getWritable(PsiTreeUtil.prevVisibleLeaf(qualifier))
+        val possibleDot = PsiTreeUtil.prevVisibleLeaf(qualifier)
         assert(possibleDot != null && possibleDot.node.elementType == PyTokenTypes.DOT)
         possibleDot?.delete()
       }

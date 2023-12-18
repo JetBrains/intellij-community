@@ -33,7 +33,7 @@ public class PyMoveExceptQuickFix extends PsiUpdateModCommandQuickFix {
     final var resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(project));
     final PsiElement exceptClass = ((PyReferenceExpression)exceptClassExpression).followAssignmentsChain(resolveContext).getElement();
     if (exceptClass instanceof PyClass) {
-      final PyTryExceptStatement statement = updater.getWritable(PsiTreeUtil.getParentOfType(part, PyTryExceptStatement.class));
+      final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(part, PyTryExceptStatement.class);
       if (statement == null) return;
 
       PyExceptPart prevExceptPart = PsiTreeUtil.getPrevSiblingOfType(part, PyExceptPart.class);

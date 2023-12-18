@@ -152,7 +152,7 @@ public final class PyDocstringTypesInspection extends PyInspection {
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      final PyStringLiteralExpression stringLiteralExpression = as(updater, PyStringLiteralExpression.class);
+      final PyStringLiteralExpression stringLiteralExpression = as(element, PyStringLiteralExpression.class);
       if (stringLiteralExpression != null) {
         stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
       }

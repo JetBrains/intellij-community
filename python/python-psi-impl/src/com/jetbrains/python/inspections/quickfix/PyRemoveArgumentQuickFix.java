@@ -23,8 +23,8 @@ public class PyRemoveArgumentQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (!(element instanceof PyExpression expression)) return;
-    final PsiElement nextSibling = updater.getWritable(PsiTreeUtil.skipWhitespacesForward(expression));
-    final PsiElement prevSibling = updater.getWritable(PsiTreeUtil.skipWhitespacesBackward(expression));
+    final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(expression);
+    final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(expression);
     expression.delete();
     if (nextSibling != null && nextSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
       nextSibling.delete();
