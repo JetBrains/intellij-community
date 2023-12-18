@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,17 +44,19 @@ public final class FinalMethodInFinalClassInspection extends BaseInspection impl
     return new RemoveModifierFix(PsiModifier.FINAL);
   }
 
+  public static boolean isApplicableFor(@NotNull PsiMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
+    return method.hasModifierProperty(PsiModifier.STATIC) ||
+           AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_SAFE_VARARGS) == null;
+  }
+
   private static class FinalMethodInFinalClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!method.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_SAFE_VARARGS) != null) {
-        return;
-      }
+      if (!isApplicableFor(method)) return;
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null || containingClass.isEnum()) {
         return;

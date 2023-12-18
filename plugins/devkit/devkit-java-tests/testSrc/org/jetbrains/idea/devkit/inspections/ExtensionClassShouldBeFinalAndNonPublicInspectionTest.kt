@@ -39,4 +39,8 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : Extension
   fun testProtectedMembers() {
     doTest("Make 'MyInspection' final")
   }
+
+  fun testFinalMethod() {
+    doTest("Make 'MyInspection' final")
+  }
 }

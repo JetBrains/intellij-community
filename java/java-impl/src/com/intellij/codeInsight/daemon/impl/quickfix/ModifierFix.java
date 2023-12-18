@@ -20,6 +20,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.classlayout.FinalMethodInFinalClassInspection;
 import com.siyeh.ig.classlayout.ProtectedMemberInFinalClassInspection;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -213,6 +214,7 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
     }
     else if (PsiModifier.FINAL.equals(myModifier) && owner instanceof PsiClass aClass) {
       adjustVisibilityOfProtectedMembers(aClass);
+      removeFinalModifierFromMethods(aClass);
     }
   }
 
@@ -227,6 +229,14 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
       if (memberModifierList == null) return;
       boolean canBePrivate = ProtectedMemberInFinalClassInspection.canBePrivate(member, memberModifierList);
       memberModifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+    });
+  }
+
+  private static void removeFinalModifierFromMethods(PsiClass aClass) {
+    StreamEx.of(aClass.getMethods()).forEach(method -> {
+      if (FinalMethodInFinalClassInspection.isApplicableFor(method)) {
+        method.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+      }
     });
   }
 
