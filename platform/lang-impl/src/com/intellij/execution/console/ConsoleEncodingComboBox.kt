@@ -125,7 +125,9 @@ class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>()
       (selectedItem as CharsetItem).reference
     }
     else {
-      LOG.error("Encoding should be either DEFAULT or an actual Charset. Got $selectedItem")
+      if (selectedItem != null) {
+        LOG.error("Encoding should be either DEFAULT or an actual Charset. Got $selectedItem")
+      }
       EncodingReference.DEFAULT
     }
   }
