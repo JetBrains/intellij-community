@@ -55,15 +55,15 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module-library">
       <library name="terminal-completion-db-with-extensions" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.2.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.3.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.2.0/completion-db-with-extensions-0.2.0.jar">
-              <sha256sum>42df3779d3d2b80e6e1aa6226fd0b02e3b06eeeb05c8103b65737ccc2889df41</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.3.0/completion-db-with-extensions-0.3.0.jar">
+              <sha256sum>29247a80b69e221bb0601dedefb154ad05d6aa8d397e163c7228dafd76a9e668</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.2.0/completion-db-with-extensions-0.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.3.0/completion-db-with-extensions-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

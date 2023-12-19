@@ -34,7 +34,7 @@ class CommandSpecCompletion(
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()
-    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
+    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             command, commandSpec, completeArguments)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
@@ -47,7 +47,7 @@ class CommandSpecCompletion(
       files  // cur token contains path delimiter, so it is a path, and we should not propose commands
     }
     else {
-      val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
+      val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
       val commands = suggestionsProvider.getAvailableCommands()
       files + commands
     }
@@ -60,7 +60,7 @@ class CommandSpecCompletion(
     if (commandTokens.isEmpty() || commandTokens.singleOrNull()?.isBlank() == true) {
       return null
     }
-    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
+    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
     val fakeArgument = ShellArgument(templates = listOf("filepaths"))
     val lastArgument = commandTokens.last()
     return suggestionsProvider.getFileSuggestions(fakeArgument, lastArgument, onlyDirectories = false).filterEmptyNames()

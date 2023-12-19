@@ -302,8 +302,10 @@ class CommandSpecSuggestionsTest {
   }
 
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
-    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
-    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(commandMap),
+    val commandSpecManager = FakeCommandSpecManager(commandMap)
+    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager,
+                                                             FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
+    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             commandName, spec, arguments.asList())
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: rootNode

@@ -11,19 +11,19 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="terminal-completion-spec" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-spec:0.2.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-spec:0.3.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0.jar">
-              <sha256sum>90f13cbc2f8080f4324bd23ec2aca4943ea884eaa29fcfb84f27667384f7addd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.3.0/completion-spec-0.3.0.jar">
+              <sha256sum>12e904227e5e4ec298a40358d6edc5dd37a9b94e62ab2f01bdbf2ee74c0998b5</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.3.0/completion-spec-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.3.0/completion-spec-0.3.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

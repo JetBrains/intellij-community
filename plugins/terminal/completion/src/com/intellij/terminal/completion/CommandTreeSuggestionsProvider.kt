@@ -5,7 +5,10 @@ import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import org.jetbrains.terminal.completion.*
 
-internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
+internal class CommandTreeSuggestionsProvider(
+  private val commandSpecManager: CommandSpecManager,
+  private val runtimeDataProvider: ShellRuntimeDataProvider
+) {
   suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
       is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
@@ -22,7 +25,7 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
 
   /**
    * Returns the list of the commands and aliases available in the Shell.
-   * Returned [ShellCommand] objects contain only names, and a 'loadSpec' reference to load full command spec (if it exists).
+   * Returned [ShellCommand] objects contain only names, descriptions, and a 'loadSpec' reference to load full command spec (if it exists).
    */
   suspend fun getAvailableCommands(): List<ShellCommand> {
     val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
@@ -32,7 +35,7 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
       yieldAll(shellEnv.functions)
       yieldAll(shellEnv.commands)
     }.map {
-      ShellCommand(names = listOf(it), loadSpec = it)
+      commandSpecManager.getShortCommandSpec(it) ?: ShellCommand(names = listOf(it))
     }
     val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
       ShellCommand(names = listOf(alias), description = """Alias for "${command}"""")
