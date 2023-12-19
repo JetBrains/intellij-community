@@ -22,6 +22,7 @@
     <java.changeSignature.converter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinJavaChangeInfoConverter"/>
     <changeSignature.usageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProvider"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
   </extensions>
 
   <actions>
