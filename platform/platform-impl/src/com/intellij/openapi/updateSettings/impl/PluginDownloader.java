@@ -379,9 +379,10 @@ public final class PluginDownloader {
   public static @NotNull PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                            @Nullable String host,
                                                            @Nullable BuildNumber buildNumber) throws IOException {
+    IdeaPluginDescriptor currentVersion = PluginManagerCore.getPlugin(descriptor.getPluginId());
     String url = descriptor instanceof PluginNode && host != null ?
                  toAbsoluteUrl(((PluginNode)descriptor).getDownloadUrl(), host) :
-                 MarketplaceUrls.getPluginDownloadUrl(descriptor, getMarketplaceDownloadsUUID(), buildNumber);
+                 MarketplaceUrls.getPluginDownloadUrl(descriptor, getMarketplaceDownloadsUUID(), buildNumber, currentVersion);
 
     return new PluginDownloader(descriptor,
                                 url,

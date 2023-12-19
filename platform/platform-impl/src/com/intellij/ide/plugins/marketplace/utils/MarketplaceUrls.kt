@@ -85,11 +85,18 @@ internal object MarketplaceUrls {
   }
 
   @JvmStatic
-  fun getPluginDownloadUrl(descriptor: IdeaPluginDescriptor, uuid: String, buildNumber: BuildNumber?): String {
+  fun getPluginDownloadUrl(
+    descriptor: IdeaPluginDescriptor,
+    uuid: String,
+    buildNumber: BuildNumber?,
+    currentVersion: IdeaPluginDescriptor?
+  ): String {
+    val updatedFrom = currentVersion?.version ?: ""
     val parameters = hashMapOf(
       "id" to descriptor.pluginId.idString,
       "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
-      "uuid" to uuid
+      "uuid" to uuid,
+      "updatedFrom" to updatedFrom
     )
     (descriptor as? PluginNode)?.channel?.let {
       parameters["channel"] = it

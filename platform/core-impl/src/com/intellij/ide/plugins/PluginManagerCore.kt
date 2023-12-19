@@ -842,7 +842,7 @@ object PluginManagerCore {
   @Internal
   @JvmStatic
   fun findPlugin(id: PluginId): IdeaPluginDescriptorImpl? {
-    val pluginSet = getPluginSet()
+    val pluginSet = nullablePluginSet ?: return null
     return pluginSet.findEnabledPlugin(id) ?: pluginSet.findInstalledPlugin(id)
   }
 
