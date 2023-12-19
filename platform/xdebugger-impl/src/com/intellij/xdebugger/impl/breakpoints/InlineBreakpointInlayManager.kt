@@ -249,8 +249,11 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     if (!shouldAlwaysShowAllInlays() &&
         breakpoints.size == 1 &&
         (variants.isEmpty() ||
-         variants.size == 1 && areMatching(variants[0], breakpoints[0]))) {
+         variants.size == 1 && areMatching(variants.first(), breakpoints.first()))) {
       // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
+      if (variants.isEmpty()) {
+        reportBreakpointWithoutVariants(document, line, breakpoints.first())
+      }
       return emptyList()
     }
 
@@ -341,6 +344,12 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   private fun reportSingleVariantMultipleBreakpoints(document: Document, line: Int,
                                                      variant: XLineBreakpointType<*>.XLineBreakpointVariant,
                                                      breakpoints: List<XLineBreakpointImpl<*>>) {
+    if (true) {
+      // There are a lot of false positives, due to data races with breakpoints update, outdated state,
+      // FIXME[inline-bp]: get rid of reporting or make it more relieable
+      return
+    }
+
     logger.error("single variant (${formatTextRangeForErrors(variant.highlightRange)}) " +
                  "matches ${breakpoints.size} breakpoints " +
                  "${breakpoints.map { formatTextRangeForErrors(getBreakpointHighlightRange(it)) }} " +
@@ -351,6 +360,12 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   private fun reportSingleBreakpointMultipleVariants(document: Document, line: Int,
                                                      breakpoint: XLineBreakpointImpl<*>,
                                                      variants: List<XLineBreakpointType<*>.XLineBreakpointVariant>) {
+    if (true) {
+      // There are a lot of false positives, due to data races with breakpoints update, outdated state,
+      // FIXME[inline-bp]: get rid of reporting or make it more relieable
+      return
+    }
+
     logger.error("single breakpoint (${formatTextRangeForErrors(getBreakpointHighlightRange(breakpoint))}) " +
                  "matches ${variants.size} variants " +
                  "${variants.map { formatTextRangeForErrors(it.highlightRange) }} " +
@@ -360,6 +375,12 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
   private fun reportBreakpointWithoutVariants(document: Document, line: Int,
                                               breakpoint: XLineBreakpointImpl<*>) {
+    if (true) {
+      // There are a lot of false positives, due to data races with breakpoints update, outdated state,
+      // FIXME[inline-bp]: get rid of reporting or make it more relieable
+      return
+    }
+
     logger.error("breakpoint (${formatTextRangeForErrors(getBreakpointHighlightRange(breakpoint))}) " +
                  "matches no variants " +
                  "at line ${line + 1}",
