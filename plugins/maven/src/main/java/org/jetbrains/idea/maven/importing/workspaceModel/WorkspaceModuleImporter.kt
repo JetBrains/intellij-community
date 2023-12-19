@@ -98,7 +98,7 @@ internal class WorkspaceModuleImporter(
 
   private fun collectDependencies(moduleName: String,
                                   originalModule: ModuleEntity?,
-                                  dependencies: List<Any>,
+                                  dependencies: List<MavenImportDependency<*>>,
                                   moduleLibrarySource: EntitySource): List<ModuleDependencyItem> {
     val result = ArrayList<ModuleDependencyItem>(2 + dependencies.size)
 
