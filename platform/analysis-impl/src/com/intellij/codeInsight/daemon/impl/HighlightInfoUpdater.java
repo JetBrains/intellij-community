@@ -95,11 +95,10 @@ class HighlightInfoUpdater {
 
       TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange());
       TextRange updateRange = ObjectUtils.chooseNotNull(hostRange.intersection(restrictRange), hostRange);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("updateInspectionResult: tool:" + shortName + "; infos:" + infos + "; oldInfos:" + oldInfos + "; psiFile:" + psiFile);
-      }
       List<HighlightInfo> resultInfos = setHighlightersInRange(updateRange, newInfos, oldInfos, markup, session);
-
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("updateInspectionResult: tool:" + shortName + "; psiFile:" + psiFile+ "; \ninfos:" + infos + "; \noldInfos:" + oldInfos +";results:\n"+resultInfos);
+      }
       data.put(Pair.create(shortName, psiFile), resultInfos);
     }
   }
