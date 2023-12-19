@@ -141,7 +141,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       else {
         scope.launch {
           writeAction {
-            collectAllInlays(editor.inlayModel).forEach { Disposer.dispose(it) }
+            getAllExistingInlays(editor.inlayModel).forEach { Disposer.dispose(it) }
           }
         }
       }
@@ -181,20 +181,20 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
         val breakpoints = allBreakpoints.filter { it.line == onlyLine }
         if (!breakpoints.isEmpty()) {
-          inlays += collectInlays(document, onlyLine, breakpoints)
+          inlays += collectInlayData(document, onlyLine, breakpoints)
         }
       }
       else {
         for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
           // We could process lines concurrently, but it doesn't seem to be really required.
-          inlays += collectInlays(document, line, breakpoints)
+          inlays += collectInlayData(document, line, breakpoints)
         }
       }
 
       if (postponeOnChanged()) return@readAndWriteAction value(Unit)
 
       if (onlyLine != null && inlays.isEmpty() &&
-          allEditorsFor(document).all { collectInlays(it.inlayModel, document, onlyLine).isEmpty() }
+          allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
       ) {
         // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
         // It's required to prevent performance degradations due to IDEA-339224,
@@ -225,9 +225,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   )
 
   @RequiresReadLock
-  private fun collectInlays(document: Document,
-                            line: Int,
-                            breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
+  private fun collectInlayData(document: Document,
+                               line: Int,
+                               breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
     if (!DocumentUtil.isValidLine(line, document)) return emptyList()
 
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
@@ -394,7 +394,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
                            onlyLine: Int?,
                            inlays: List<SingleInlayDatum>) {
     // remove previous inlays
-    collectInlays(inlayModel, document, onlyLine).forEach { Disposer.dispose(it) }
+    getExistingInlays(inlayModel, document, onlyLine).forEach { Disposer.dispose(it) }
 
     // draw new ones
     for ((breakpoint, variant, offset) in inlays) {
@@ -404,19 +404,19 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     }
   }
 
-  private fun collectAllInlays(inlayModel: InlayModel): List<Inlay<out InlineBreakpointInlayRenderer>> {
-    return collectInlays(inlayModel, Int.MIN_VALUE, Int.MAX_VALUE)
+  private fun getAllExistingInlays(inlayModel: InlayModel): List<Inlay<out InlineBreakpointInlayRenderer>> {
+    return getExistingInlays(inlayModel, Int.MIN_VALUE, Int.MAX_VALUE)
   }
 
-  private fun collectInlays(inlayModel: InlayModel, document: Document, onlyLine: Int?): List<Inlay<out InlineBreakpointInlayRenderer>> {
-    if (onlyLine == null) return collectAllInlays(inlayModel)
+  private fun getExistingInlays(inlayModel: InlayModel, document: Document, onlyLine: Int?): List<Inlay<out InlineBreakpointInlayRenderer>> {
+    if (onlyLine == null) return getAllExistingInlays(inlayModel)
 
-    return collectInlays(inlayModel,
-                         document.getLineStartOffset(onlyLine),
-                         document.getLineEndOffset(onlyLine))
+    return getExistingInlays(inlayModel,
+                             document.getLineStartOffset(onlyLine),
+                             document.getLineEndOffset(onlyLine))
   }
 
-  private fun collectInlays(inlayModel: InlayModel, startOffset: Int, endOffset: Int): List<Inlay<out InlineBreakpointInlayRenderer>> {
+  private fun getExistingInlays(inlayModel: InlayModel, startOffset: Int, endOffset: Int): List<Inlay<out InlineBreakpointInlayRenderer>> {
     return inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)
   }
 
