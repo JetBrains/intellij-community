@@ -21,11 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.Function;
 
 public class DynamicBundle extends AbstractBundle {
@@ -62,7 +60,10 @@ public class DynamicBundle extends AbstractBundle {
     return resolveResourceBundle(
       getBundleClassLoader(),
       baseLoader,
-      loader -> super.findBundle(pathToBundle, loader, control)
+      loader -> {
+        getLocale();
+        return super.findBundle(pathToBundle, loader, control, getLocale());
+      }
     );
   }
 
@@ -101,14 +102,75 @@ public class DynamicBundle extends AbstractBundle {
       return true;
     }
     try {
-      if (DynamicBundleInternal.SET_PARENT != null) {
-        DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
-      }
+      Map<Integer, ResourceBundle> bundles = new HashMap<>();
+      addBundleWithParents(pluginBundle, true, bundles);
+      addBundleWithParents(base, false, bundles);
+      reorderParents(bundles);
       return true;
     }
     catch (Throwable e) {
       LOG.warn(e);
       return false;
+    }
+  }
+
+  private static void addBundleWithParents(ResourceBundle bundle, boolean isPluginBundle, Map<Integer, ResourceBundle> bundles)
+    throws IllegalAccessException {
+    bundles.put(getPriority(bundle, isPluginBundle), bundle);
+    ResourceBundle parent = getParent(bundle);
+    while (parent != null) {
+      bundles.put(getPriority(parent, isPluginBundle), parent);
+      parent = getParent(parent);
+    }
+  }
+
+  private static ResourceBundle getParent(ResourceBundle bundle) throws IllegalAccessException {
+    if (DynamicBundleInternal.PARENT_FIELD != null) {
+      return (ResourceBundle)DynamicBundleInternal.PARENT_FIELD.get(bundle);
+    }
+    return null;
+  }
+
+  /* 5 - plugin region localization
+   * 4 - platform region localization
+   * 3 - plugin language localization
+   * 2 - platform language localization
+   * 1 - plugin default localization
+   * 0 - platform default localization
+   * */
+  private static int getPriority(ResourceBundle bundle, Boolean isPluginBundle) {
+    int result = isPluginBundle ? 1 : 0;
+    if (isRegionBundle(bundle)) {
+      result += 4;
+    }
+    else if (!isDefaultBundle(bundle)) {
+      result += 2;
+    }
+    return result;
+  }
+
+  private static boolean isRegionBundle(ResourceBundle bundle) {
+    return !bundle.getLocale().getCountry().isEmpty();
+  }
+
+  private static boolean isDefaultBundle(ResourceBundle bundle) {
+    return bundle.getLocale().getLanguage().isEmpty();
+  }
+
+  private static void reorderParents(Map<Integer, ResourceBundle> bundlesWithPriority) throws Throwable {
+    int currentValue = 0;
+    ResourceBundle parentBundle = null;
+    while (currentValue <= 5) {
+      ResourceBundle resourceBundle = bundlesWithPriority.get(currentValue);
+      if (resourceBundle != null && resourceBundle != parentBundle) {
+        if (parentBundle != null) {
+          if (DynamicBundleInternal.SET_PARENT != null) {
+            DynamicBundleInternal.SET_PARENT.bindTo(resourceBundle).invoke(parentBundle);
+          }
+        }
+        parentBundle = resourceBundle;
+      }
+      currentValue++;
     }
   }
 
@@ -119,14 +181,19 @@ public class DynamicBundle extends AbstractBundle {
   private static class DynamicBundleInternal {
 
     private static final MethodHandle SET_PARENT;
+    private static final Field PARENT_FIELD;
 
     static {
       try {
         Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
         method.setAccessible(true);
         SET_PARENT = MethodHandles.lookup().unreflect(method);
+
+        Field parentField = ResourceBundle.class.getDeclaredField("parent");
+        parentField.setAccessible(true);
+        PARENT_FIELD = parentField;
       }
-      catch (NoSuchMethodException | IllegalAccessException e) {
+      catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
     }
@@ -213,7 +280,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static @NotNull Function<@NotNull ClassLoader, @NotNull ResourceBundle> bundleResolver(@NonNls @NotNull String pathToBundle) {
-    return l -> AbstractBundle.resolveBundle(l, pathToBundle);
+    return l -> AbstractBundle.resolveBundle(l, getLocale(), pathToBundle);
   }
 
   /**

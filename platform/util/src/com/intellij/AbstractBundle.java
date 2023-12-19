@@ -170,6 +170,13 @@ public class AbstractBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 
+  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle,
+                                               @NotNull ClassLoader loader,
+                                               @NotNull ResourceBundle.Control control,
+                                               @NotNull Locale locale) {
+    return ResourceBundle.getBundle(pathToBundle, locale, loader, control);
+  }
+
   public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
@@ -177,8 +184,10 @@ public class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
-    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, MyResourceControl.INSTANCE);
+  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader,
+                                                         @NonNls @NotNull Locale locale,
+                                                         @NonNls @NotNull String pathToBundle) {
+    return ResourceBundle.getBundle(pathToBundle, locale, loader, MyResourceControl.INSTANCE);
   }
 
   // UTF-8 control for Java <= 1.8.
