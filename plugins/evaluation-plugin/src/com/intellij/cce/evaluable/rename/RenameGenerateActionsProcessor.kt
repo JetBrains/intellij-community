@@ -27,5 +27,5 @@ class RenameGenerateActionsProcessor(
     }
   }
 
-  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token.properties) }
+  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token) }
 }

@@ -86,5 +86,5 @@ class CompletionGenerateActionsProcessor(private val strategy: CompletionStrateg
     }
   }
 
-  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token.properties) }
+  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token) }
 }

@@ -3,26 +3,22 @@ package com.intellij.cce.filter.impl
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
+import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 import com.intellij.cce.core.PropertyAdapters
-import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterConfiguration
 
 class StaticFilter(private val expectedValue: Boolean) : EvaluationFilter {
-  override fun shouldEvaluate(properties: TokenProperties): Boolean {
-    return PropertyAdapters.Jvm.adapt(properties)?.isStatic == expectedValue
+  override fun shouldEvaluate(code: CodeToken): Boolean {
+    return PropertyAdapters.Jvm.adapt(code.properties)?.isStatic == expectedValue
   }
 
   override fun toJson(): JsonElement = JsonPrimitive(expectedValue)
 }
 
 class StaticFilterConfiguration : EvaluationFilterConfiguration {
-  companion object {
-    const val id = "isStatic"
-  }
-
-  override val id: String = StaticFilterConfiguration.id
+  override val id: String = "isStatic"
   override val description: String = "Filter out token if it's static member access"
   override val hasUI: Boolean = true
 

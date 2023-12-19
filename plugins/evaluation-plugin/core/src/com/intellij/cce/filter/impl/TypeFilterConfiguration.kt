@@ -4,14 +4,15 @@ package com.intellij.cce.filter.impl
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
+import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
-import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterConfiguration
 
 class TypeFilter(val values: List<TypeProperty>) : EvaluationFilter {
-  override fun shouldEvaluate(properties: TokenProperties): Boolean = values.contains(properties.tokenType)
+  override fun shouldEvaluate(code: CodeToken): Boolean =
+    code.properties.tokenType == TypeProperty.UNKNOWN || values.contains(code.properties.tokenType)
   override fun toJson(): JsonElement {
     val json = JsonArray()
     for (value in values)
@@ -21,11 +22,7 @@ class TypeFilter(val values: List<TypeProperty>) : EvaluationFilter {
 }
 
 class TypeFilterConfiguration : EvaluationFilterConfiguration {
-  companion object {
-    const val id = "statementTypes"
-  }
-
-  override val id: String = TypeFilterConfiguration.id
+  override val id: String = "statementTypes"
   override val description: String = "Filter out tokens by statement type"
   override val hasUI: Boolean = true
 
