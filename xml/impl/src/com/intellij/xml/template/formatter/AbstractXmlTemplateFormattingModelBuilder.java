@@ -131,8 +131,14 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       }
     }
     if (templateBlocks.size() == 0) return null;
-    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : new CompositeTemplateBlock(templateBlocks);
+    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : createCompositeTemplateBlock(templateBlocks, xmlFormattingPolicy);
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
+  }
+
+  @NotNull
+  protected Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
+                                                                XmlFormattingPolicy xmlFormattingPolicy) {
+    return new CompositeTemplateBlock(templateBlocks);
   }
 
   /**
