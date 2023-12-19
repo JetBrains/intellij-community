@@ -4,7 +4,7 @@
 package com.intellij.ae.database.dbs
 
 import com.intellij.ae.database.IdService
-import com.intellij.ae.database.utils.InstantUtils
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -12,27 +12,23 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.util.ExceptionUtil
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.sqlite.SqliteConnection
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 import kotlin.io.path.isWritable
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<SqliteLazyInitializedDatabase>()
 
-private const val MAX_CONNECTION_RETRIES_ALLOWED = 4
+private const val MAX_CONNECTION_RETRIES_ALLOWED = 5
 
 /**
  * This service provides access to an instance of [SqliteConnection]
@@ -44,59 +40,55 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     internal fun getInstance() = ApplicationManager.getApplication().service<SqliteLazyInitializedDatabase>()
   }
 
+  private class ConnectionHolder(val connection: SqliteConnection, val metadata: SqliteDatabaseMetadata)
+  private sealed class State {
+    data object NotInitialized : State()
+    class Active(val def: Deferred<ConnectionHolder>) : State()
+    class Cancelling(val def: Deferred<ConnectionHolder>, val job: Job) : State()
+    data object Locked : State()
+  }
+
   private val databasePath by lazy { createDatabasePath() }
-
-  private val connectionMutex = Mutex()
-  private var connectionAttempts = 0
-  private var lastConnectionAt: Instant = InstantUtils.Now
-  private var lastSaveAt: Instant = InstantUtils.Now
-  private var connection: SqliteConnection? = null
-  private var metadata: SqliteDatabaseMetadata? = null
-
-  private var retryMessageLogged = false
-
+  private val connectionAttempts = AtomicInteger(0)
+  // private val lastAccessTime = MutableStateFlow<Long>(0)
+  private val myConnection = AtomicReference<State>(State.NotInitialized)
   private val actionsBeforeDatabaseDisposal = mutableListOf<suspend () -> Unit>()
 
   init {
+    if (System.getProperty("ae.database.fullLock")?.toBoolean() == true) {
+      myConnection.set(State.Locked)
+    }
+
     cs.launch {
-      awaitCancellationAndInvoke {
-        logger.info("Database disposal started, ${actionsBeforeDatabaseDisposal.size} actions to perform")
-        logger.runAndLogException {
-          withTimeout(4.seconds) {
-            @Suppress("TestOnlyProblems")
-            doExecuteBeforeConnectionClosed()
-          }
-        }
-        logger.runAndLogException {
-          connectionMutex.withLock {
-            closeConnection()
-          }
-        }
-        logger.info("Database disposal finished")
+      while (true) {
+        delay(6.minutes)
+        mainClosingLogic(15.seconds, "every 6 min")
       }
     }
 
     cs.launch {
-      logger.runAndLogException {
-        while (isActive) {
-          // Close database connection after five minutes of inactivity or 10 minutes of last save
-          delay(3.minutes)
-          connectionMutex.withLock {
-            if (connection != null) {
-              val lastConnectionNn = lastConnectionAt
-              val lastSaveNn = lastSaveAt
-
-              val timeDiffLastInit = Duration.between(lastConnectionNn, InstantUtils.Now)
-              val timeDiffLastSave = Duration.between(lastSaveNn, InstantUtils.Now)
-              if (timeDiffLastInit >= Duration.ofMinutes(5) || timeDiffLastSave >= Duration.ofMinutes(10)) {
-                logger.info("Closing connection due to inactivity")
-                closeConnection()
-                lastSaveAt = InstantUtils.Now
-              }
-            }
-          }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable) {
+          mainClosingLogic(6.seconds, "scope cancellation")
         }
       }
+    }
+  }
+
+  private suspend fun CoroutineScope.mainClosingLogic(timeout: Duration, reason: String) {
+    logger.info("Starting saving database (reason: $reason)")
+    try {
+      withTimeout(timeout) {
+        closeDatabaseImpl()?.join()
+        logger.info("Saving completed (reason: $reason)")
+      }
+    }
+    catch (t: Throwable) {
+      logger.error("Saving failed (saving reason: $reason)", t)
+      println(dumpCoroutines(this))
     }
   }
 
@@ -104,11 +96,39 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     actionsBeforeDatabaseDisposal.add(action)
   }
 
-  @TestOnly
-  suspend fun closeDatabaseInTest() {
-    doExecuteBeforeConnectionClosed()
-    connectionMutex.withLock {
-      closeConnection()
+  @VisibleForTesting
+  suspend fun closeDatabase() {
+    coroutineScope {
+      mainClosingLogic(16.seconds, "in test")
+    }
+  }
+
+  private fun closeDatabaseImpl(): Job? {
+    while (true) {
+      when (val state = myConnection.get()) {
+        is State.NotInitialized -> {
+          return null
+        }
+        is State.Active -> {
+          val job = close(state)
+          val newState = State.Cancelling(state.def, job)
+          if (myConnection.compareAndSet(state, newState)) {
+            job.invokeOnCompletion {
+              check(myConnection.compareAndSet(newState, State.NotInitialized))
+            }
+            return job
+          }
+          else {
+            job.cancel()
+          }
+        }
+        is State.Cancelling -> {
+          return state.job
+        }
+        is State.Locked -> {
+          return null
+        }
+      }
     }
   }
 
@@ -119,54 +139,61 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   }
 
   /**
-   * Must run under [connectionMutex]
-   */
-  private fun closeConnection(shouldLog: Boolean = true) {
-    assert(connectionMutex.isLocked)
-
-    val conn = connection
-    if (conn != null) {
-      conn.close()
-      connectionAttempts = 0
-      connection = null
-      metadata = null
-    }
-    else if (shouldLog) {
-      logger.info("Connection was null, so didn't close it")
-    }
-  }
-
-  /**
    * Allows executing code with [SqliteConnection]
    */
   override suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
-    val myConnectionAttempts = connectionMutex.withLock { connectionAttempts }
-    if (myConnectionAttempts >= MAX_CONNECTION_RETRIES_ALLOWED) {
-      if (!retryMessageLogged) {
-        logger.error("Max retries reached to init db")
-        retryMessageLogged = true
-      }
+    val conn = withContext(Dispatchers.IO) {
+      getConn2()
+    }
 
+    if (conn == null) {
       return null
     }
-    val myPair = connectionMutex.withLock {
-      try {
-        getOrInitConnection()
+
+    return action(conn.connection, conn.metadata)
+  }
+
+  private suspend fun getConn2(): ConnectionHolder? {
+    while (true) {
+      when (val state = myConnection.get()) {
+        State.NotInitialized -> {
+          val connectionHolderDeferred = CompletableDeferred<ConnectionHolder>(parent = cs.coroutineContext.job)
+          if (!myConnection.compareAndSet(state, State.Active(connectionHolderDeferred))) {
+            connectionHolderDeferred.cancel()
+            continue
+          }
+          val conn = kotlin.runCatching {
+            val dbPath = databasePath
+            logger.info("Database path: $dbPath")
+            val isNewFile = dbPath == null || !dbPath.exists()
+            val newConnection = SqliteConnection(dbPath, false)
+            val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
+            //error("Testing")
+            ConnectionHolder(newConnection, newMetadata)
+          }
+          if (!connectionHolderDeferred.completeWith(conn)) {
+            if (conn.isSuccess) {
+              conn.getOrThrow().connection.close()
+            }
+            else {
+              if (connectionAttempts.getAndIncrement() >= MAX_CONNECTION_RETRIES_ALLOWED) {
+                myConnection.compareAndSet(state, State.Locked)
+              }
+            }
+          }
+          return connectionHolderDeferred.await()
+        }
+        is State.Active -> {
+          return state.def.await()
+        }
+        is State.Cancelling -> {
+          // during cancellation there might be calls to DB
+          return state.def.await()
+        }
+        is State.Locked -> {
+          return null
+        }
       }
-      catch (t: Throwable) {
-        logger.error(t)
-        null
-      }
-    }
-
-    if (myPair == null) return null
-
-    val (myConnection, myMetadata) = myPair
-
-    check(myConnection.isOpen()) { "Database is not open" }
-
-    return withContext(Dispatchers.IO) {
-      action(myConnection, myMetadata)
     }
   }
 
@@ -176,41 +203,19 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
-  /**
-   * Must run under [connectionMutex]
-   */
-  private fun getOrInitConnection(): Pair<SqliteConnection, SqliteDatabaseMetadata> {
-    val currentConnection = connection
-    val currentMetadata = metadata
-    if (currentConnection != null && currentMetadata == null) {
-      logger.error("Metadata is null while connection is not (not a fatal error)")
-    }
-    else if (currentConnection == null && currentMetadata != null) {
-      logger.error("Connection is null while metadata is not (not a fatal error)")
-    }
-    return if (currentConnection != null && currentMetadata != null) {
-      lastConnectionAt = InstantUtils.Now
-      currentConnection to currentMetadata
-    }
-    else {
-      logger.info("Initializing database connection")
-      logger.trace(ExceptionUtil.currentStackTrace())
-      ++connectionAttempts
-      val dbPath = databasePath
-      val isNewFile = dbPath == null || !dbPath.exists()
-      val newConnection = SqliteConnection(dbPath, false)
-      val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
-
-      connection = newConnection
-      metadata = newMetadata
-      lastConnectionAt = InstantUtils.Now
-      lastSaveAt = InstantUtils.Now
-
-      return newConnection to newMetadata
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun close(state: State.Active): Job {
+    // service scope is dead at this point, need to use GlobalScope
+    return GlobalScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+      val kek = state.def.await()
+      logger.info("close start")
+      kek.connection.use {
+        doExecuteBeforeConnectionClosed()
+      }
+      check(kek.connection.isClosed)
+      logger.info("close end")
     }
   }
-
-  private fun SqliteConnection.isOpen() = !isClosed
 
   private fun createDatabasePath(): Path? {
     val tempPath = System.getProperty("ae.database.path")
@@ -219,8 +224,11 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
 
     val majorVersion = ApplicationInfo.getInstance().build.baselineVersion
+    // todo if settings are migrated, hash is the same
     val fileName = "ae_${IdService.getInstance().id}-$majorVersion.db"
     val fileMask = "ae_${IdService.getInstance().id}-*.db"
+
+    // todo write path to file somewhere in the settings
 
     // Attempt 1: store db file in common folder for all ides
     val attempt1 = try {
@@ -279,11 +287,15 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       return
     }
 
+    // todo check version
+
     val fileToMigrate = Files.newDirectoryStream(parentDir, mask).use { paths ->
       paths.maxByOrNull { p1 ->
         getBuildNumber(mask, p1.fileName.toString())
       }
     }
+
+    // todo delete old file?? idk?
 
     if (fileToMigrate == null) {
       return

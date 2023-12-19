@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
+// todo record plugins during shutdown that were not recorded
+
 /**
  * Plugin is considered to be installed if it wasn't uninstalled in 2 minutes after installation.
  * Plugin updates are ignored

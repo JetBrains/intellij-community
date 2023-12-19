@@ -20,6 +20,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.sqlite.ObjectBinderFactory
 import java.time.Instant
 
+// todo check all run configurations (run with profile, run coverage)
+
 /**
  * Writes events related to run configurations.
  */

@@ -24,6 +24,8 @@ import java.math.BigInteger
 import java.time.Instant
 import java.util.*
 
+// todo check phantom changes not by user
+
 /**
  * Coding activity. Stores language of the file and file hash
  */

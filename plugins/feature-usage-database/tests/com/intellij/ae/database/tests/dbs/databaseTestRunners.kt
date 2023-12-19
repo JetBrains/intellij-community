@@ -31,7 +31,7 @@ private fun runInitializedDatabaseTestInternal(action: suspend (CoroutineScope, 
     withContext(Dispatchers.IO) {
       val db = SqliteLazyInitializedDatabase.getInstanceAsync()
       action(this, db)
-      db.closeDatabaseInTest()
+      db.closeDatabase()
       //cancel()
     }
   }
