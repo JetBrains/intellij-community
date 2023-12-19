@@ -18,24 +18,16 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.CellBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Component
-import javax.swing.JComponent
 import kotlin.math.max
 
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
-  @Deprecated("Replaced by EP_NAME")
-  @ScheduledForRemoval
-  private val EP_NAME_OLD = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
-
   private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurableProvider>("com.intellij.trustedHostsConfigurableProvider")
 
   override fun createPanel(): DialogPanel {
-    val deprecatedPanels = mutableListOf<DialogPanel>()
     val result = panel {
       row {
         label(IdeBundle.message("trusted.folders.settings.label"))
@@ -47,26 +39,9 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
                                     getNewValueFromUser = { getPathFromUser(it) })
       }.resizableRow()
 
-      // Remove this loop with EP_NAME_OLD
-      for (additionalPanel in EP_NAME_OLD.extensionList) {
-        // RIDER-92645 Port TrustedSolutionConfigurablePanelProvider to Kotlin UI DSL 2
-        val panel = com.intellij.ui.layout.panel {
-          row {
-            additionalPanel.getCellBuilder(this)
-          }
-        }
-        deprecatedPanels.add(panel)
-        row {
-          cell(panel)
-        }
-      }
-
       for (additionalPanel in EP_NAME.extensionList) {
         additionalPanel.buildContent(this)
       }
-    }
-    for (panel in deprecatedPanels) {
-      result.registerIntegratedPanel(panel)
     }
     return result
   }
@@ -117,13 +92,6 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   override fun getId(): String {
     return "trusted.hosts"
   }
-}
-
-@ApiStatus.Internal
-@Deprecated("Replace by TrustedHostsConfigurableProvider")
-@ScheduledForRemoval
-interface TrustedHostsConfigurablePanelProvider {
-  fun getCellBuilder(row: com.intellij.ui.layout.Row) : CellBuilder<JComponent>
 }
 
 /**
