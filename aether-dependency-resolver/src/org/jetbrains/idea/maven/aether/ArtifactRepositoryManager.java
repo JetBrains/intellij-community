@@ -162,11 +162,8 @@ public final class ArtifactRepositoryManager {
       // Disable transfer errors caching to force re-request missing artifacts and metadata on network failures.
       // Despite this, some errors are still cached in session data, and for proper retries work we must reset this data after failure
       // what's performed by retryWithClearSessionData()
-      //
-      // a note: ResolutionErrorPolicy.CACHE_NOT_FOUND is not suitable because 5xx response is still cached in local repository and
-      // not re-requested, see IJI-1457
-      var artifactCachePolicy = ResolutionErrorPolicy.CACHE_DISABLED;
-      var metadataCachePolicy = ResolutionErrorPolicy.CACHE_DISABLED;
+      var artifactCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
+      var metadataCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
       session.setResolutionErrorPolicy(new SimpleResolutionErrorPolicy(artifactCachePolicy, metadataCachePolicy));
 
       session.setCache(new DefaultRepositoryCache());
