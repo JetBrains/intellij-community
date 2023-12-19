@@ -574,6 +574,10 @@ fun <T : CommandChain> T.importGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}importGradleProject")
 }
 
+fun <T : CommandChain> T.setGradleJdk(jdk: SdkObject): T = apply {
+  addCommand("${CMD_PREFIX}setGradleJdk ${jdk.sdkName}|${jdk.sdkType}|${jdk.sdkPath}")
+}
+
 fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
                                                 performEvaluateCount: Int = 0,
                                                 warmup: Boolean = false): T = apply {
