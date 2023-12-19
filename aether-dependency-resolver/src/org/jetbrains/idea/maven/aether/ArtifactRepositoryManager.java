@@ -552,9 +552,14 @@ public final class ArtifactRepositoryManager {
   public static RemoteRepository createRemoteRepository(String id, String url, ArtifactAuthenticationData authenticationData, boolean allowSnapshots) {
     // for maven repos repository type should be 'default'
     RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
-    if (!allowSnapshots) {
-      builder.setSnapshotPolicy(new RepositoryPolicy(false, null, null));
-    }
+
+    // explicitly set UPDATE_POLICY_ALWAYS, because default setting is UPDATE_POLICY_DAILY, and 5xx resolution errors are cached
+    // in local repository for one day and retry does not work
+    RepositoryPolicy enabledRepositoryPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, null);
+    RepositoryPolicy disabledRepositoryPolicy = new RepositoryPolicy(false, null, null);
+    builder.setReleasePolicy(enabledRepositoryPolicy);
+    builder.setSnapshotPolicy(allowSnapshots ? enabledRepositoryPolicy : disabledRepositoryPolicy);
+
     if (authenticationData != null) {
       AuthenticationBuilder authenticationBuilder = new AuthenticationBuilder();
       authenticationBuilder.addUsername(authenticationData.getUsername());
