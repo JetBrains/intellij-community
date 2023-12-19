@@ -65,11 +65,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
             runTest("testData/script/definition/highlighting/customLibrary/");
         }
 
-        @TestMetadata("customLibraryInModuleDeps")
-        public void testCustomLibraryInModuleDeps() throws Exception {
-            runTest("testData/script/definition/highlighting/customLibraryInModuleDeps/");
-        }
-
         @TestMetadata("doNotSpeakAboutJava")
         public void testDoNotSpeakAboutJava() throws Exception {
             runTest("testData/script/definition/highlighting/doNotSpeakAboutJava/");

@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 
@@ -24,6 +26,9 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
         - dependencies are analysed first, .kts file itself goes last
         - multiple editors can be opened (selected is only one of them)
         */
+
+        if (RootKindMatcher.matches(project, file, RootKindFilter.libraryFiles.copy(includeScriptDependencies = false)))
+            return null
 
         if (ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles().isEmpty()) return null
 
