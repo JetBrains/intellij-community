@@ -104,10 +104,17 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         totalBytesAllocatedCounter,
         totalCpuTimeCounterMs
       )
+
+      //We intentionally don't unregister batchCallback registered above -- because we register OTel.shutdown()
+      // in a ShutDownTracker, and expect it to squeeze the last reading from all Metrics registered at the very
+      // end of app lifecycle. If we unregister the callback here -- it prevents this batchCallback from participate
+      // in that last reading. It doesn't matter much for real-life app runs (which usually hours long, so single
+      // last reading is not that important) -- but it seems like we need this last reading of JVM stats for the
+      // performance dashboard?
     }
   }
 
-  /***
+  /**
    * JMX bean provides per-thread allocations -- but threads come and go, and with thread termination all the
    * memory allocated by it also disappears from data reported by [ThreadMXBean]. To keep the total allocated
    * memory metric continuous, we need to compensate for that disappearing 'memory allocated by threads now dead'.
