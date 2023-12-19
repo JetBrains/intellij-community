@@ -163,11 +163,25 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             if (e !is EvaluateException && !isUnitTestMode()) {
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
                 if (isApplicationInternalMode()) {
-                    reportErrorWithAttachments(context, codeFragment, e, "Can't perform evaluation")
+                    reportErrorWithAttachments(context, codeFragment, e,
+                                               prepareBytecodes(compiledData),
+                                               "Can't perform evaluation")
                 }
             }
             throw e
         }
+    }
+
+    private fun prepareBytecodes(compiledData: CompiledCodeFragmentData): List<Pair<String, String>> {
+        // TODO run javap, if found valid java home?
+        val result = buildString {
+            for ((className, relativeFileName, bytes) in compiledData.classes) {
+                appendLine("Bytecode for $className in $relativeFileName:")
+                appendLine(bytes.joinToString())
+                appendLine()
+            }
+        }
+        return listOf("bytecodes.txt" to result)
     }
 
     private fun runEvaluation(

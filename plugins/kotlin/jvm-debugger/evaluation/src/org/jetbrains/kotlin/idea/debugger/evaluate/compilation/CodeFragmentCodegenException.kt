@@ -16,6 +16,7 @@ internal fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
     reason: Throwable,
+    additionalAttachments: List<Pair<String, String>> = emptyList(),
     headerMessage: @NlsSafe String = "Error when compiling code fragment with IR evaluator"
 ) {
     val evaluationContext = executionContext.evaluationContext
@@ -56,6 +57,9 @@ internal fun reportErrorWithAttachments(
         }
         fileContents?.let {
             add(Attachment("opened_file_contents.txt", it).apply { isIncluded = true })
+        }
+        for ((name, contents) in additionalAttachments) {
+            add(Attachment(name, contents).apply { isIncluded = true })
         }
     }
 
