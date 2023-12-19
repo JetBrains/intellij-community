@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.util.function.Predicate
@@ -30,6 +31,7 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var disposable: Disposable
   override fun setUp() {
     super.setUp()
+    Assume.assumeTrue(isWorkspaceImport)
 
     disposable = Disposer.newDisposable("Real maven protector for MavenPreimportingTest")
     val syncViewManager = object : SyncViewManager(myProject) {
