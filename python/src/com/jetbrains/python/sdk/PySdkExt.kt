@@ -388,7 +388,8 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val application = ApplicationManager.getApplication()
   if (application.isDispatchThread) {
     application.runWriteAction { modificator.commitChanges() }
-  } else {
+  }
+  else {
     application.invokeLater {
       application.runWriteAction { modificator.commitChanges() }
     }
