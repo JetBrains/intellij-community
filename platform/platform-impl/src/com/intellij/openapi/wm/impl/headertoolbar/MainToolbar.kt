@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
@@ -482,23 +481,21 @@ private class HeaderIconUpdater {
 private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: HorizontalLayout.Group)
 
 @Internal
-@Suppress("HardCodedStringLiteral")
+@Suppress("HardCodedStringLiteral", "ActionPresentationInstantiatedInCtor")
 class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Remove Actions From Main Toolbar") {
   override fun actionPerformed(e: AnActionEvent) {
-    runBlockingCancellable {
-      val schema = CustomActionsSchema.getInstanceAsync()
-      val groups = computeMainActionGroups(schema)
+    val schema = CustomActionsSchema.getInstance()
+    val groups = blockingComputeMainActionGroups(schema)
 
-      val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID)!!
-      val mainToolbarPath = listOf("root", mainToolbarName)
+    val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID)!!
+    val mainToolbarPath = listOf("root", mainToolbarName)
 
-      for (group in groups) {
-        val actionsToRemove = group.first.getChildren(null)
-        val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
-        for (action in actionsToRemove) {
-          val actionId = ActionManager.getInstance().getId(action)
-          schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
-        }
+    for (group in groups) {
+      val actionsToRemove = group.first.getChildren(null)
+      val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
+      for (action in actionsToRemove) {
+        val actionId = ActionManager.getInstance().getId(action)
+        schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
       }
     }
 
