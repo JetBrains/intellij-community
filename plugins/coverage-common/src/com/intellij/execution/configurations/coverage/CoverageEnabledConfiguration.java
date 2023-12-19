@@ -69,12 +69,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   public @Nullable CoverageRunner getCoverageRunner() {
     if (myCachedRunner == null && myRunnerId != null) {
-      for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
-        if (myRunnerId.equals(runner.getId())) {
-          myCachedRunner = runner;
-          break;
-        }
-      }
+      myCachedRunner = CoverageRunner.getInstanceById(myRunnerId);
     }
     return myCachedRunner;
   }

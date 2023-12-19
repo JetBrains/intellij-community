@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -267,14 +266,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
   @Nullable
   public static CoverageRunner readRunnerAttribute(Element element) {
     final String runner = element.getAttributeValue(COVERAGE_RUNNER);
-    if (runner != null) {
-      for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
-        if (Comparing.strEqual(coverageRunner.getId(), runner)) {
-          return coverageRunner;
-        }
-      }
-    }
-    return null;
+    return runner == null ? null : CoverageRunner.getInstanceById(runner);
   }
 
   public static @NotNull CoverageFileProvider readDataFileProviderAttribute(Element element) {

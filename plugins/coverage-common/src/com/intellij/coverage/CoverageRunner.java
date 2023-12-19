@@ -83,4 +83,13 @@ public abstract class CoverageRunner {
   public boolean isCoverageByTestApplicable() {
     return false;
   }
+
+  public static @Nullable CoverageRunner getInstanceById(@NotNull String id) {
+    for (CoverageRunner coverageRunner : EP_NAME.getExtensionList()) {
+      if (coverageRunner.getId().equals(id)) {
+        return coverageRunner;
+      }
+    }
+    return null;
+  }
 }
