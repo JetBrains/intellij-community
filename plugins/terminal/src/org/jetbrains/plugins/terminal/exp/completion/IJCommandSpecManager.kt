@@ -59,23 +59,7 @@ class IJCommandSpecManager : CommandSpecManager {
   }
 
   private fun loadCommandSpecs(bean: CommandSpecsBean, destination: MutableMap<String, ShellCommandInfo>) {
-    val specsUrl = bean.pluginDesc.classLoader.getResource(bean.path)
-    if (specsUrl == null) {
-      LOG.warn("Failed to find spec resource for: $bean")
-      return
-    }
-    val commands: List<ShellCommand> = try {
-      val specsJson = specsUrl.readText()
-      json.decodeFromString(specsJson)
-    }
-    catch (ex: IOException) {
-      LOG.warn("Failed to load spec by url: $specsUrl", ex)
-      return
-    }
-    catch (t: Throwable) {
-      LOG.warn("Failed to parse spec by url: $specsUrl", t)
-      return
-    }
+    val commands: List<ShellCommand> = loadAndParseJson(bean.path, bean.pluginDesc.classLoader) ?: return
     for (command in commands) {
       for (name in command.names) {
         destination[name] = ShellCommandInfo(command, bean)
@@ -108,30 +92,29 @@ class IJCommandSpecManager : CommandSpecManager {
       commandInfo to "${commandInfo.bean.basePath}${commandInfo.command.loadSpec}.json"
     }
 
-    val specUrl = commandInfo.bean.pluginDesc.classLoader.getResource(path)
-    if (specUrl == null) {
-      LOG.warn("Failed to find spec resource for command: $commandName")
+    val command: ShellCommand = loadAndParseJson(path, commandInfo.bean.pluginDesc.classLoader) ?: return null
+    commandSpecsCache.put(commandName, command)
+    return command
+  }
+
+  private inline fun <reified T> loadAndParseJson(path: String, classLoader: ClassLoader): T? {
+    val url = classLoader.getResource(path)
+    if (url == null) {
+      LOG.warn("Failed to find resource for path: $path with classLoader: $classLoader")
       return null
     }
-
-    val subcommand: ShellCommand? = try {
-      val specJson = specUrl.readText()
-      json.decodeFromString(specJson)
+    return try {
+      val resultJson = url.readText()
+      json.decodeFromString<T>(resultJson)
     }
     catch (ex: IOException) {
-      LOG.warn("Failed to load spec by url: $specUrl", ex)
+      LOG.warn("Failed to load resource by URL: $url", ex)
       null
     }
     catch (t: Throwable) {
-      LOG.warn("Failed to parse spec by url: $specUrl", t)
+      LOG.warn("Failed to parse resource loaded from URL: $url", t)
       null
     }
-
-    if (subcommand != null) {
-      commandSpecsCache.put(commandName, subcommand)
-    }
-
-    return subcommand
   }
 
   private data class ShellCommandInfo(val command: ShellCommand, val bean: CommandSpecsBean)
