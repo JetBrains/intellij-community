@@ -6,7 +6,7 @@ import com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.daemon.impl.readGutterIcon
 import com.intellij.codeInsight.daemon.impl.writeGutterIcon
-import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
+import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -21,7 +21,7 @@ internal data class CodeVisionState(val contentHash: Int, val entries: List<Code
     Pair(TextRange(entry.startOffset, entry.endOffset), entry.asZombie())
   }
 
-  object Externalizer : TextEditorCache.ValueExternalizer<CodeVisionState> {
+  object Externalizer : VersionedExternalizer<CodeVisionState> {
     override fun serdeVersion() = 0
 
     override fun save(output: DataOutput, value: CodeVisionState) {

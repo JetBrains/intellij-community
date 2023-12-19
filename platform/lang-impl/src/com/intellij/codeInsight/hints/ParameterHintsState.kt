@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
-import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
+import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
@@ -12,7 +12,7 @@ import java.io.DataOutput
 
 internal data class ParameterHintsState(val contentHash: Int, val hints: List<Pair<Int, HintData>>) {
 
-  object Externalizer : TextEditorCache.ValueExternalizer<ParameterHintsState> {
+  object Externalizer : VersionedExternalizer<ParameterHintsState> {
     override fun serdeVersion() = 0
 
     override fun save(output: DataOutput, value: ParameterHintsState) {

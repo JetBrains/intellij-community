@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
-import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache.Companion.contentHash
+import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -80,7 +80,7 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
     }
   }
 
-  object FoldingStateExternalizer : TextEditorCache.ValueExternalizer<FoldingState> {
+  object FoldingStateExternalizer : VersionedExternalizer<FoldingState> {
     override fun serdeVersion() = 2
     override fun save(output: DataOutput, value: FoldingState) = value.save(output)
     override fun read(input: DataInput) = FoldingState.read(input)

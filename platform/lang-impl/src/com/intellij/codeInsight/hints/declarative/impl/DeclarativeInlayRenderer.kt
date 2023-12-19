@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -28,6 +29,7 @@ class DeclarativeInlayRenderer(
   val presentationList: InlayPresentationList,
   private val fontMetricsStorage: InlayTextMetricsStorage,
   val providerId: String,
+  private val position: InlayPosition,
 ) : EditorCustomElementRenderer {
   private var inlay: Inlay<DeclarativeInlayRenderer>? = null
 
@@ -89,5 +91,8 @@ class DeclarativeInlayRenderer(
   override fun getContextMenuGroupId(inlay: Inlay<*>): String {
     return "DummyActionGroup"
   }
-}
 
+  internal fun toInlayData(): InlayData {
+    return presentationList.toInlayData(position, providerId)
+  }
+}

@@ -18,12 +18,8 @@ abstract class TextEditorCache<T>(private val project: Project, private val scop
   protected val cache: ManagedCache<Int, T> = createCache()
 
   abstract fun namePrefix(): String
-  abstract fun valueExternalizer(): ValueExternalizer<T>
+  abstract fun valueExternalizer(): VersionedExternalizer<T>
   abstract fun useHeapCache(): Boolean
-
-  interface ValueExternalizer<T> : DataExternalizer<T> {
-    fun serdeVersion(): Int
-  }
 
   companion object {
     fun Document.contentHash(): Int = Hashing.komihash5_0().hashCharsToInt(this.immutableCharSequence)

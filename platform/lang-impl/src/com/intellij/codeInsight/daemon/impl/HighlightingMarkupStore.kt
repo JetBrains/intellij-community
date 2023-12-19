@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave.FileMarkupInfo
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
+import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +35,7 @@ internal class HighlightingMarkupStore(project: Project, private val scope: Coro
     }
   }
 
-  object FileMarkupInfoExternalizer : ValueExternalizer<FileMarkupInfo> {
+  object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
     override fun serdeVersion() = 2
     override fun save(output: DataOutput, value: FileMarkupInfo) = value.bury(output)
     override fun read(input: DataInput) = FileMarkupInfo.exhume(input)

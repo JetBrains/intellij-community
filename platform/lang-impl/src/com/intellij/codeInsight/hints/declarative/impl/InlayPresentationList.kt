@@ -3,6 +3,8 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -206,5 +208,18 @@ class InlayPresentationList(
   fun getMouseArea(pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage): InlayMouseArea? {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return null
     return entry.clickArea
+  }
+
+  internal fun toInlayData(position: InlayPosition, providerId: String): InlayData {
+    return InlayData(
+      position,
+      tooltip,
+      hasBackground,
+      state,
+      providerId,
+      isDisabled,
+      payloads?.map { (name, action) -> InlayPayload(name, action) },
+      providerClass,
+    )
   }
 }
