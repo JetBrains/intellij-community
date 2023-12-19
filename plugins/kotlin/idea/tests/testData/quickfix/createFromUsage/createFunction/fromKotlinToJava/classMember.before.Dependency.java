@@ -1,3 +1,2 @@
-public class J {
-
+public interface J {
 }

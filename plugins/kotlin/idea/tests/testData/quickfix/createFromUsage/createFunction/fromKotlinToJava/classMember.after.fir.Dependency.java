@@ -1,6 +1,3 @@
-public class J {
-
-    boolean foo(int i, String string) {
-        return false;
-    }
+public interface J {
+    boolean foo(int i, String string);
 }
