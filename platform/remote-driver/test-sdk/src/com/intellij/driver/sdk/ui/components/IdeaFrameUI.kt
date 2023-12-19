@@ -12,7 +12,7 @@ fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
 }
 
-class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
+open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   val projectViewTree = tree("//div[@class='ProjectViewTree']")
 
   val project: Project?
