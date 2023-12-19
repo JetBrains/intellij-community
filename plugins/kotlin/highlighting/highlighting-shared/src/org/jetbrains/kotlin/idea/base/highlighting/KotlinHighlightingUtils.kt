@@ -78,6 +78,6 @@ private fun KtFile.calculateShouldHighlightScript(): Boolean {
 
     return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
             && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
-            && ScriptConfigurationManager.getInstance(project).getConfiguration(this) != null
+            && ScriptConfigurationManager.getInstance(project).hasConfiguration(this)
             && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
 }
