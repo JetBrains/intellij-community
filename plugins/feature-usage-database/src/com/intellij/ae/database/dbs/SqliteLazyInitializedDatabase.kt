@@ -129,6 +129,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       conn.close()
       connectionAttempts = 0
       connection = null
+      metadata = null
     }
     else if (shouldLog) {
       logger.info("Connection was null, so didn't close it")
@@ -182,10 +183,10 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     val currentConnection = connection
     val currentMetadata = metadata
     if (currentConnection != null && currentMetadata == null) {
-      logger.error("Metadata is null while connection is not")
+      logger.error("Metadata is null while connection is not (not a fatal error)")
     }
     else if (currentConnection == null && currentMetadata != null) {
-      logger.error("Connection is null while metadata is not")
+      logger.error("Connection is null while metadata is not (not a fatal error)")
     }
     return if (currentConnection != null && currentMetadata != null) {
       lastConnectionAt = InstantUtils.Now
