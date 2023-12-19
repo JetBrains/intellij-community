@@ -17,7 +17,7 @@ interface RunToCursorState {
   suspend fun canRunToCursor(project: Project, position: XSourcePosition, editor: Editor): Boolean
 }
 
-class DefaultRunToCursorState : RunToCursorState {
+open class DefaultRunToCursorState : RunToCursorState {
   override fun isApplicable(project: Project) = true
 
   override fun showInlay(project: Project): Boolean {
