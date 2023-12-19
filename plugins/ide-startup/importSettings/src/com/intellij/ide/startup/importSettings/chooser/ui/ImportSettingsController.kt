@@ -45,7 +45,6 @@ private class ImportSettingsControllerImpl(val dialog: OnboardingDialog) : Impor
     }
   }
 
-
   override fun goToSettingsPage(provider: ActionsDataProvider<*>, product: SettingsContributor) {
     val page = SettingChooserPage.createPage(provider, product, this)
     dialog.changePage(page)

@@ -2,6 +2,10 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.openapi.components.service
+import com.jetbrains.rd.util.reactive.IOptPropertyView
+import com.jetbrains.rd.util.reactive.IPropertyView
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 interface WizardProvider {
   companion object {
@@ -20,11 +24,32 @@ interface WizardService {
 }
 
 interface ThemeService {
+  val themeList: List<WizardTheme>
+  fun getEditorImageById(themeId: String, isDark: Boolean): Icon?
 
+  fun chosen(themeId: String, isDark: Boolean)
+}
+
+interface WizardTheme {
+  val id: String
+  val name: @Nls String
 }
 
 interface PluginService {
+  val plugins: List<WizardPlugin>
+  fun install(ids: List<String>): PluginImportProgress
+}
 
+interface PluginImportProgress {
+  val progressMessage: IPropertyView<@Nls String?>
+  val progress: IOptPropertyView<Int>
+}
+
+interface WizardPlugin {
+  val id: String
+  val icon: Icon
+  val name: String
+  val description: String
 }
 
 interface KeymapService {

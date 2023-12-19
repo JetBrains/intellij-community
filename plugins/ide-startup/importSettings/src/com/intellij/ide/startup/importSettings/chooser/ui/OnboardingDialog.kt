@@ -2,7 +2,9 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -15,10 +17,9 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class OnboardingDialog(cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
-                                                                   false) {
+class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
+                                                                       false) {
 
-  val cancelCallback = cancelCallback
   private val tracker = WizardPageTracker()
 
   private val pane = JPanel(BorderLayout()).apply {
@@ -35,7 +36,7 @@ class OnboardingDialog(cancelCallback: () -> Unit) : DialogWrapper(null, null, t
   override fun doCancelAction() {
     val shouldExit = currentPage.confirmExit(peer.contentPane)
 
-    if (shouldExit != false) {
+    if (shouldExit) {
       super.doCancelAction()
       tracker.onLeave()
       cancelCallback()
@@ -50,6 +51,8 @@ class OnboardingDialog(cancelCallback: () -> Unit) : DialogWrapper(null, null, t
   fun changePage(page: ImportSettingsPage) {
     overlay.clearNotifications()
     pane.remove(currentPage.content)
+    Disposer.dispose(currentPage)
+
     tracker.onLeave()
 
     val content = page.content
@@ -100,9 +103,11 @@ class OnboardingDialog(cancelCallback: () -> Unit) : DialogWrapper(null, null, t
   }
 }
 
-interface ImportSettingsPage {
+interface ImportSettingsPage: Disposable {
   val content: JComponent
   val stage: StartupWizardStage?
 
-  fun confirmExit(parentComponent: Component?): Boolean?
+  override fun dispose() {}
+
+  fun confirmExit(parentComponent: Component?): Boolean
 }

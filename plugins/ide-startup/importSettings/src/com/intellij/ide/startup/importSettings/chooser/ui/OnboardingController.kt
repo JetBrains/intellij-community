@@ -22,7 +22,6 @@ class OnboardingController private constructor(){
   private fun createDialog(): OnboardingDialog {
     return OnboardingDialog { doCancelAction() }.apply {
       this.isResizable = false
-      //this.isModal = bla
     }
   }
 
