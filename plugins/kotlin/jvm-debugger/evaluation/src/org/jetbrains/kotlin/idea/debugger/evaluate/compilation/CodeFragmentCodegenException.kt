@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.readText
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
@@ -14,7 +15,8 @@ class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 internal fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
-    reason: Throwable
+    reason: Throwable,
+    headerMessage: @NlsSafe String = "Error when compiling code fragment with IR evaluator"
 ) {
     val evaluationContext = executionContext.evaluationContext
     val projectName = evaluationContext.project.name
@@ -58,7 +60,7 @@ internal fun reportErrorWithAttachments(
     }
 
     LOG.error(
-        "Error when compiling code fragment with IR evaluator. Details in attachments.",
+        "$headerMessage. Details in attachments.",
         RuntimeExceptionWithAttachments(reason, *attachments.toTypedArray())
     )
 }

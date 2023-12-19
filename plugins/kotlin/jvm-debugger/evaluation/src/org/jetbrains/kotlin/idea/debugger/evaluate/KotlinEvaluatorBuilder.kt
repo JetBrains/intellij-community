@@ -65,6 +65,8 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConve
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -126,7 +128,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         try {
             val executionContext = ExecutionContext(context, frameProxy)
-            return evaluateSafe(executionContext)
+            return evaluateSafe(executionContext, codeFragment)
         } catch (e: CodeFragmentCodegenException) {
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
@@ -150,9 +152,28 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun evaluateSafe(context: ExecutionContext): Any? {
+    private fun evaluateSafe(context: ExecutionContext, codeFragment: KtCodeFragment): Any? {
         val compiledData = getCompiledCodeFragment(context)
 
+        return try {
+            runEvaluation(context, compiledData).also {
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS)
+            }
+        } catch (e: Throwable) {
+            if (e !is EvaluateException && !isUnitTestMode()) {
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
+                if (isApplicationInternalMode()) {
+                    reportErrorWithAttachments(context, codeFragment, e, "Can't perform evaluation")
+                }
+            }
+            throw e
+        }
+    }
+
+    private fun runEvaluation(
+        context: ExecutionContext,
+        compiledData: CompiledCodeFragmentData
+    ): Value? {
         val classLoadingResult = loadClassesSafely(context, compiledData.classes)
         val classLoaderRef = classLoadingResult.getOrNull()
 
@@ -205,7 +226,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
         val stats = CodeFragmentCompilationStats()
         fun onFinish(status: StatisticsEvaluationResult) =
-            KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
+            KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
         try {
             patchCodeFragment(context, codeFragment, stats)
 
