@@ -1,6 +1,5 @@
 // "Opt in for 'Library' on statement" "true"
 // ACTION: Add '-opt-in=ContainingClassWithInnerClass.Library' to module light_idea_test_case compiler arguments
-// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
 // ACTION: Opt in for 'Library' in containing file 'containingClassWithInnerClass.kts'
 // ACTION: Opt in for 'Library' on 't5'

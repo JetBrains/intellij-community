@@ -3,6 +3,7 @@
 // ACTION: Convert property initializer to getter
 // ACTION: Convert property to function
 // ACTION: Convert to lazy property
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Introduce backing property
 // ACTION: Move to companion object
 // ACTION: Specify type explicitly

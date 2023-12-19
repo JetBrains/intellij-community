@@ -3,42 +3,68 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.io.File
 
 abstract class AbstractKotlinLambdasHintsProvider :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+    DeclarativeInlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
-        assertThatActualHintsMatch(testPath)
-    }
-
-    private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinLambdasHintsProvider()) {
-            val fileContents = FileUtil.loadFile(File(fileName), true)
-            val settings = createSettings()
-            with(settings) {
-                when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "return" -> set(returns = true)
-                    "receivers_params" -> set(receiversAndParams = true)
-                    "return-&-receivers_params" -> set(returns = true, receiversAndParams = true)
-                    else -> set()
-                }
-            }
-
-            doTestProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings, true)
+        customToStringProvider = { element ->
+            val virtualFile = element.containingFile.virtualFile
+            val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+                val root = VfsUtilCore.getRootFile(virtualFile)
+                "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+            } ?: virtualFile.toString()
+            "[$path:${element.startOffset}]"
+        }
+        try {
+            assertThatActualHintsMatch(testPath)
+        } finally {
+            customToStringProvider = null
         }
     }
 
-    private fun KotlinLambdasHintsProvider.Settings.set(returns: Boolean = false, receiversAndParams: Boolean = false) {
-        this.returnExpressions = returns
-        this.implicitReceiversAndParams = receiversAndParams
+    private fun assertThatActualHintsMatch(fileName: String) {
+        with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider()) {
+            val fileContents = FileUtil.loadFile(File(fileName), true)
+            val options = buildMap<String, Boolean> {
+                put(SHOW_RETURN_EXPRESSIONS, false)
+                put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, false)
+
+                when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
+                    "return" -> put(SHOW_RETURN_EXPRESSIONS, true)
+                    "receivers_params" -> put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, true)
+                    "return-&-receivers_params" -> {
+                        put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, true)
+                        put(SHOW_RETURN_EXPRESSIONS, true)
+                    }
+                }
+            }
+
+            try {
+                doTestProvider("KotlinLambdasHintsProvider.kt", fileContents, this, options)
+            } catch (e: ComparisonFailure) {
+                throw FileComparisonFailedError(
+                    e.message,
+                    e.expected, e.actual, File(fileName).absolutePath, null
+                )
+            }
+        }
     }
+
 }

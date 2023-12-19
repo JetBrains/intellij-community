@@ -248,7 +248,7 @@ enum class HintType(
         get() = option.get()
 }
 
-data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>)
+data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>, val option: String? = null)
 
 sealed class InlayInfoDetail(val text: String)
 

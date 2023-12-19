@@ -1,4 +1,5 @@
 // "Add annotation target" "false"
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Introduce import alias
 // ACTION: Make internal
 // ACTION: Make private

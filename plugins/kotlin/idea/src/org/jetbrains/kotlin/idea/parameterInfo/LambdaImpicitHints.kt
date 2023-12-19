@@ -8,6 +8,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.TokenType
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -26,7 +27,11 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
     val implicitReceiverHint = functionDescriptor.extensionReceiverParameter?.let { implicitReceiver ->
         val type = implicitReceiver.type
         val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderTypeIntoInlayInfo(type)
-        InlayInfoDetails(InlayInfo("", lbrace.psi.textRange.endOffset), listOf(TextInlayInfoDetail("this: ")) + renderedType)
+        InlayInfoDetails(
+            InlayInfo("", lbrace.psi.textRange.endOffset),
+            listOf(TextInlayInfoDetail("this: ")) + renderedType,
+            option = KotlinLambdasHintsProvider.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+        )
     }
 
     val singleParameter = functionDescriptor.valueParameters.singleOrNull()
@@ -34,7 +39,11 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
         val type = singleParameter.type
         if (type.isUnit()) null else {
             val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderTypeIntoInlayInfo(type)
-            InlayInfoDetails(InlayInfo("", lbrace.textRange.endOffset), listOf(TextInlayInfoDetail("it: ")) + renderedType)
+            InlayInfoDetails(
+                InlayInfo("", lbrace.textRange.endOffset),
+                listOf(TextInlayInfoDetail("it: ")) + renderedType,
+                option = KotlinLambdasHintsProvider.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+            )
         }
     } else null
 

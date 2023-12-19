@@ -1,2 +1,2 @@
 // MODE: property
-val a/*<# [:  [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/Collections.kt:*]List < [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/String.kt:*]String >] #>*/ = listOf("a")
+val a/*<# : |[kotlin.collections.List:kotlin.fqn.class]List|<|[kotlin.String:kotlin.fqn.class]String|> #>*/ = listOf("a")

@@ -1,5 +1,5 @@
 // MODE: receivers_params
-val x = foo {/*<# [[this:  [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/String.kt:618]String] [it:  [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/Primitives.kt:21054]Int]] #>*/
+val x = foo {/*<# this: |[kotlin.String:kotlin.fqn.class]String #>*//*<# it: |[kotlin.Int:kotlin.fqn.class]Int #>*/
 
 }
 

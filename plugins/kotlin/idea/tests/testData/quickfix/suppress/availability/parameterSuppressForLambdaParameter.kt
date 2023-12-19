@@ -2,7 +2,7 @@
 // ACTION: Convert to anonymous function
 // ACTION: Convert to lazy property
 // ACTION: Convert to single-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Remove explicit lambda parameter types (may break code)
 // ACTION: Rename to _

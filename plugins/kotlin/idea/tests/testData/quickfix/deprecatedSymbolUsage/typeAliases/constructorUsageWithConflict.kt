@@ -2,6 +2,7 @@
 // ACTION: Compiler warning 'DEPRECATION' options
 // ACTION: Compiler warning 'TYPEALIAS_EXPANSION_DEPRECATION' options
 // ACTION: Convert to block body
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ACTION: Replace usages of '`<init>`(): Old /* = OldClass */' in whole project

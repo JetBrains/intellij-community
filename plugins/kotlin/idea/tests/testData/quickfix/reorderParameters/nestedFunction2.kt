@@ -1,6 +1,7 @@
 // "Reorder parameters" "false"
 // ACTION: Add '@JvmOverloads' annotation to function 'bar'
 // ACTION: Convert to block body
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Flip ',' (may change semantics)
 // ACTION: Put parameters on one line

@@ -1,7 +1,5 @@
 fun printString(str: String) {
-    str.run {
+    str.run {/*<# this: String #>*/
         println(length)
     }
 }
-
-fun <R> run(block: () -> R): R = TODO()

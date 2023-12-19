@@ -2,9 +2,10 @@
 // ACTION: Convert function to property
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
+// ACTION: Enable 'Types' inlay hints
+// ACTION: Make 'open'
 // ACTION: Move to companion object
 // ACTION: Specify return type explicitly
-// ACTION: Make 'open'
 
 interface Inter {
     fun something(): String

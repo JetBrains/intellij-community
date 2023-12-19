@@ -1,6 +1,7 @@
 // "Make 'Data' internal" "true"
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Make 'Data' internal
 // ACTION: Make 'Data' public
 // ACTION: Make 'bar' private

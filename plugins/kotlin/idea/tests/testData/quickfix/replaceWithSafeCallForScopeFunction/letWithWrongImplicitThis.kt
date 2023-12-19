@@ -3,7 +3,6 @@
 // ACTION: Add 'return@let'
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Convert to single-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce local variable
 // ACTION: Move lambda argument into parentheses

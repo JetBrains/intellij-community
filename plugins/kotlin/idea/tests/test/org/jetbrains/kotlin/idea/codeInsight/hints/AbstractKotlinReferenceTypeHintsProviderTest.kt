@@ -6,17 +6,23 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
+import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_FUNCTION_PARAMETER_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_FUNCTION_RETURN_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_LOCAL_VARIABLE_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractKotlinReferenceTypeHintsProviderTest :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+    DeclarativeInlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun setUp() {
         super.setUp()
@@ -47,31 +53,36 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest :
     }
 
     private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinReferencesTypeHintsProvider()) {
+        with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
-            val settings = createSettings()
-            with(settings) {
+            val options = buildMap<String, Boolean> {
+                put(SHOW_PROPERTY_TYPES, false)
+                put(SHOW_LOCAL_VARIABLE_TYPES, false)
+                put(SHOW_FUNCTION_RETURN_TYPES, false)
+                put(SHOW_FUNCTION_PARAMETER_TYPES, false)
                 when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "function_return" -> set(functionReturn = true)
-                    "local_variable" -> set(localVariable = true)
-                    "parameter" -> set(parameter = true)
-                    "property" -> set(property = true)
-                    "all" -> set(functionReturn = true, localVariable = true, parameter = true, property = true)
-                    else -> set()
+                    "function_return" -> put(SHOW_FUNCTION_RETURN_TYPES, true)
+                    "local_variable" -> put(SHOW_LOCAL_VARIABLE_TYPES, true)
+                    "parameter" -> put(SHOW_FUNCTION_PARAMETER_TYPES, true)
+                    "property" -> put(SHOW_PROPERTY_TYPES, true)
+                    "all" -> {
+                        put(SHOW_PROPERTY_TYPES, true)
+                        put(SHOW_LOCAL_VARIABLE_TYPES, true)
+                        put(SHOW_FUNCTION_RETURN_TYPES, true)
+                        put(SHOW_FUNCTION_PARAMETER_TYPES, true)
+                    }
+                    else -> {}
                 }
             }
 
-            doTestProvider("KotlinReferencesTypeHintsProvider.kt", fileContents, this, settings)
+            try {
+                doTestProvider("KotlinReferencesTypeHintsProvider.kt", fileContents, this, options)
+            } catch (e: ComparisonFailure) {
+                throw FileComparisonFailedError(
+                    e.message,
+                    e.expected, e.actual, File(fileName).absolutePath, null
+                )
+            }
         }
-    }
-
-    private fun KotlinReferencesTypeHintsProvider.Settings.set(
-        functionReturn: Boolean = false, localVariable: Boolean = false,
-        parameter: Boolean = false, property: Boolean = false
-    ) {
-        this.functionReturnType = functionReturn
-        this.localVariableType = localVariable
-        this.parameterType = parameter
-        this.propertyType = property
     }
 }

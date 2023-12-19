@@ -11079,39 +11079,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/inlayHints")
-    public static class InlayHints extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("lambdaParameterType.kt")
-        public void testLambdaParameterType() throws Exception {
-            runTest("testData/intentions/inlayHints/lambdaParameterType.kt");
-        }
-
-        @TestMetadata("lambdaReturnExpression.kt")
-        public void testLambdaReturnExpression() throws Exception {
-            runTest("testData/intentions/inlayHints/lambdaReturnExpression.kt");
-        }
-
-        @TestMetadata("localVariable.kt")
-        public void testLocalVariable() throws Exception {
-            runTest("testData/intentions/inlayHints/localVariable.kt");
-        }
-
-        @TestMetadata("property.kt")
-        public void testProperty() throws Exception {
-            runTest("testData/intentions/inlayHints/property.kt");
-        }
-
-        @TestMetadata("range.kt")
-        public void testRange() throws Exception {
-            runTest("testData/intentions/inlayHints/range.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/insertCurlyBracesToTemplate")
     public static class InsertCurlyBracesToTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -158,16 +158,84 @@
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
 
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinReferencesTypeHintsProvider"/>
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinLambdasHintsProvider"/>
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider"/>
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinValuesHintsProvider"/>
+    <!-- CodeVision is disabled for Kotlin -->
+<!--    <codeInsight.inlayProvider language="kotlin"-->
+<!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
+
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinFqnDeclarativeInlayActionHandler"
+                                    handlerId="kotlin.fqn.class"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinCallChainHintsProvider"
+            isEnabledByDefault="false"
+            group="METHOD_CHAINS_GROUP"
+            providerId="kotlin.method.chains"
+            bundle="messages.JavaBundle"
+            nameKey="java.method.chains.inlay.provider.name"
+            descriptionKey="inlay.MethodChainsInlayProvider.description" />
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider"
+            isEnabledByDefault="false"
+            group="TYPES_GROUP"
+            providerId="kotlin.references.types.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.types"
+            descriptionKey="inlay.kotlin.references.types.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.property"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.property"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.property"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.variable"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.variable"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.variable"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.return"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.return"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.parameter"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.parameter"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.parameter"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider"
+            isEnabledByDefault="false"
+            group="LAMBDAS_GROUP"
+            providerId="kotlin.lambdas.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.lambdas"
+            descriptionKey="inlay.kotlin.lambdas.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.return"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.return"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.receivers.parameters"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.receivers.parameters"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider"
+            isEnabledByDefault="true"
+            group="VALUES_GROUP"
+            providerId="kotlin.values.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.values.ranges"
+            descriptionKey="inlay.kotlin.values.hints"/>
 
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>

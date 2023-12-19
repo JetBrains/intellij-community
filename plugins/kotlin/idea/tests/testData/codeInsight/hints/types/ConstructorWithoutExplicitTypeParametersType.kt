@@ -1,2 +1,2 @@
 // MODE: property
-class Bar<T>(val t: T); val a/*<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:0]Bar < [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/String.kt:*]String >] #>*/ = Bar("")
+class Bar<T>(val t: T); val a/*<# : |[Bar:kotlin.fqn.class]Bar|<|[kotlin.String:kotlin.fqn.class]String|> #>*/ = Bar("")

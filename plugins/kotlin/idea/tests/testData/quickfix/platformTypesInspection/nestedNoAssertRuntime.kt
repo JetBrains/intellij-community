@@ -2,6 +2,7 @@
 // ACTION: Convert function to property
 // ACTION: Convert to block body
 // ACTION: Create test
+// ACTION: Enable 'Types' inlay hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Specify return type explicitly
 

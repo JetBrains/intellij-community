@@ -19,8 +19,8 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : DeclarativeInlayHintsProvi
 
   fun `test basic cases`() {
     val text = """
-      def x/*<# : |Integer #>*/ = 1
-      def y/*<# : |String #>*/ = "abc"
+      def x/*<# : |[java.lang.Integer:java.fqn.class]Integer #>*/ = 1
+      def y/*<# : |[java.lang.String:java.fqn.class]String #>*/ = "abc"
     """.trimIndent()
     testTypeHints(text)
   }
@@ -49,13 +49,13 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : DeclarativeInlayHintsProvi
 
   fun `test var keyword`() {
     testTypeHints("""
-      var x/*<# : |Integer #>*/ = 1
+      var x/*<# : |[java.lang.Integer:java.fqn.class]Integer #>*/ = 1
     """.trimIndent())
   }
 
   fun `test tuples`() {
     testTypeHints("""
-    def (a/*<# : |Integer #>*/, b/*<# : |String #>*/) = new Tuple2<>(1, "")
+    def (a/*<# : |[java.lang.Integer:java.fqn.class]Integer #>*/, b/*<# : |[java.lang.String:java.fqn.class]String #>*/) = new Tuple2<>(1, "")
     """.trimIndent())
   }
 

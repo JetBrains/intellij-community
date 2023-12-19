@@ -1,5 +1,5 @@
 // MODE: all
 fun foo() {
-    val x/*<# [:  [jar://kotlin-stdlib-sources.jar!/jvmMain/kotlin/Unit.kt:*]Unit] #>*/ =
+    val x/*<# : |[kotlin.Unit:kotlin.fqn.class]Unit #>*/ =
         println("Foo") // indent differs
 }
