@@ -147,8 +147,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
     // coverage runner
     final String runnerId = element.getAttributeValue(COVERAGE_RUNNER);
-    myCoverageRunner = null;
     if (runnerId != null) {
+      myCoverageRunner = null;
       for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
         if (Comparing.strEqual(coverageRunner.getId(), runnerId)) {
           myCoverageRunner = coverageRunner;
