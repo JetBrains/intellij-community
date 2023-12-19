@@ -33,9 +33,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.search.JavaVersionBasedScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
@@ -79,7 +81,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
   private final DebugEnvironment myDebugEnvironment;
-  private final GlobalSearchScope mySearchScope;
+  private final GlobalSearchScope myBaseScope;
+  private GlobalSearchScope mySearchScope;
   private Sdk myAlternativeJre;
   private final Sdk myRunJre;
 
@@ -115,6 +118,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public void setAlternativeJre(Sdk sdk) {
     myAlternativeJre = sdk;
+    updateScope();
     PsiElementFinder.EP.findExtension(AlternativeJreClassFinder.class, getProject()).clearCache();
   }
 
@@ -215,9 +219,23 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     ValueLookupManager.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
-    mySearchScope = environment.getSearchScope();
+    myBaseScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
     myRunJre = environment.getRunJre();
+    updateScope();
+  }
+
+  private void updateScope() {
+    Sdk jre = myAlternativeJre;
+    if (jre == null) jre = myRunJre;
+    GlobalSearchScope scope = myBaseScope;
+    if (jre != null) {
+      LanguageLevel level = LanguageLevel.parse(jre.getVersionString());
+      if (level != null) {
+        scope = new JavaVersionBasedScope(getProject(), scope, level);
+      }
+    }
+    mySearchScope = scope;
   }
 
   @NotNull

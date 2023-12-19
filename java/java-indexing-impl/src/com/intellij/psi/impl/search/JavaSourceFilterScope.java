@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -16,15 +15,10 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final @Nullable ProjectFileIndex myIndex;
-  private final boolean myIncludeVersions;
   private final boolean myIncludeLibrarySources;
 
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate) {
     this(delegate, false);
-  }
-
-  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
-    this(delegate, includeVersions, false);
   }
 
   /**
@@ -32,11 +26,10 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
    * (i.e. *.class files located under META-INF/versions/ directory).
    * Setting {@code includeVersions} parameter to {@code true} allows such files to pass the filter.
    */
-  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions, boolean includeLibrarySources) {
+  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeLibrarySources) {
     super(delegate);
     Project project = getProject();
     myIndex = project == null ? null : ProjectRootManager.getInstance(project).getFileIndex();
-    myIncludeVersions = includeVersions;
     myIncludeLibrarySources = includeLibrarySources;
   }
 
@@ -51,24 +44,10 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
 
     if (FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
-      return myIndex.isInLibraryClasses(file) && (myIncludeVersions || !isVersioned(file, myIndex));
+      return myIndex.isInLibraryClasses(file);
     }
 
     return myIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) ||
            (myIncludeLibrarySources || myBaseScope.isForceSearchingInLibrarySources()) && myIndex.isInLibrarySource(file);
-  }
-
-  private static boolean isVersioned(VirtualFile file, ProjectFileIndex index) {
-    VirtualFile root = index.getClassRootForFile(file);
-    while ((file = file.getParent()) != null && !file.equals(root)) {
-      if (Comparing.equal(file.getNameSequence(), "versions")) {
-        VirtualFile parent = file.getParent();
-        if (parent != null && Comparing.equal(parent.getNameSequence(), "META-INF")) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 }

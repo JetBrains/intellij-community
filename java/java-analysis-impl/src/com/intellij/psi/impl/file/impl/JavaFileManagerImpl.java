@@ -28,6 +28,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,10 +120,13 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
-      VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
+      ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
+      boolean checkMultiRelease = index.isInLibrary(vFile);
+      VirtualFile root = index.getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();
       PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
-      while (parent != null && !Comparing.equal(parent, root)) {
+      while (parent != null && !Comparing.equal(parent, root) &&
+             (!checkMultiRelease || JavaMultiReleaseUtil.getVersionForVersionRoot(root, parent) == null)) {
         if (!nameHelper.isIdentifier(parent.getName())) return false;
         parent = parent.getParent();
       }
@@ -211,8 +215,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   private static Collection<PsiJavaModule> upgradeModules(Collection<PsiJavaModule> modules, String moduleName, GlobalSearchScope scope) {
-    if (modules.size() > 1 && PsiJavaModule.UPGRADEABLE.contains(moduleName) && scope instanceof ModuleWithDependenciesScope) {
-      Module module = ((ModuleWithDependenciesScope)scope).getModule();
+    if (scope instanceof DelegatingGlobalSearchScope delegatingScope) {
+      scope = delegatingScope.unwrap();
+    }
+    if (modules.size() > 1 && PsiJavaModule.UPGRADEABLE.contains(moduleName) && scope instanceof ModuleWithDependenciesScope moduleScope) {
+      Module module = moduleScope.getModule();
       boolean isModular = Stream.of(ModuleRootManager.getInstance(module).getSourceRoots(true))
         .filter(scope::contains)
         .anyMatch(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE) != null);

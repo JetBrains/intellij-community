@@ -42,7 +42,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaResolveScopeProvider"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>

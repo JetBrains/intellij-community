@@ -47,6 +47,7 @@ import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -125,7 +126,24 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
       String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
-      finder = root -> root.findFileByRelativePath(relativePath);
+      LanguageLevel level = JavaMultiReleaseUtil.getVersion(clsFile);
+      if (level == null) {
+        finder = root -> root.findFileByRelativePath(relativePath);
+      }
+      else {
+        // Multi-release jar: assume that source file is placed in META-INF/versions/<ver>
+        // fallback to default location only if there's no the same file in the root
+        PsiFile baseFile = JavaMultiReleaseUtil.findBaseFile(clsFile);
+        String versionPath = "META-INF/versions/" + level.toJavaVersion().feature + "/" + relativePath;
+        if (baseFile != null) {
+          finder = root -> root.findFileByRelativePath(versionPath);
+        } else {
+          finder = root -> {
+            VirtualFile target = root.findFileByRelativePath(versionPath);
+            return target == null ? root.findFileByRelativePath(relativePath) : target;
+          };
+        }
+      }
       filter = PsiClassOwner.class::isInstance;
     }
     else {

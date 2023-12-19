@@ -55,7 +55,7 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
   }
 
   public Collection<PsiJavaModule> getModules(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope, true), PsiJavaModule.class);
+    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiJavaModule.class);
     if (modules.size() > 1) {
       modules = filterVersions(project, modules);
     }

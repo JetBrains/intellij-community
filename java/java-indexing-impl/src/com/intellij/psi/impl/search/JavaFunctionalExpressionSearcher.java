@@ -124,7 +124,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       for (SamDescriptor descriptor : descriptors) {
-        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope, false, true);
+        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope, true);
         for (FunctionalExpressionKey key : descriptor.keys) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
             result.putValues(file, ContainerUtil.map(infos, entry -> entry.occurrence));
