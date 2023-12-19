@@ -522,7 +522,7 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
     try {
       MavenProjectPreImporter.getInstance(myProject)
-        .preimport(files, null, mavenImporterSettings, mavenGeneralSettings, activity)
+        .preimport(files, null, mavenImporterSettings, mavenGeneralSettings,true, activity)
     }
     finally {
       activity.finished()

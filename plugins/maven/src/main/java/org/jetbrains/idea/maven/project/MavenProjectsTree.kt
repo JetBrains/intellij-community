@@ -375,7 +375,9 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @ApiStatus.Internal
-  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+  suspend fun updateAll(force: Boolean,
+                        generalSettings: MavenGeneralSettings,
+                        progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val managedFiles = existingManagedFiles
     val explicitProfiles = explicitProfiles
 
@@ -1069,6 +1071,41 @@ class MavenProjectsTree(val project: Project) {
         })
       return this
     }
+
+    fun copyFrom(projectTree: MavenProjectsTree): Updater {
+
+      addFrom(projectTree) { it.myManagedFilesPaths }
+      addFrom(projectTree) { it.myRootProjects }
+
+      addFromMap(projectTree) { it.myMavenIdToProjectMapping }
+      addFromMap(projectTree) { it.myVirtualFileToProjectMapping }
+      addFromMap(projectTree) { it.myAggregatorToModuleMapping }
+      addFromMap(projectTree) { it.myModuleToAggregatorMapping }
+
+      return this
+    }
+
+    private fun <T> addFrom(projectTree: MavenProjectsTree, getter: (MavenProjectsTree) -> MutableCollection<T>) {
+      val my = getter(this@MavenProjectsTree)
+      val theirs = getter(projectTree)
+      if (my.isEmpty()) {
+        my.addAll(theirs)
+      }
+      else {
+        val set = LinkedHashSet<T>()
+        set.addAll(my)
+        set.addAll(theirs)
+        my.clear()
+        my.addAll(set.toList())
+      }
+    }
+
+    private fun <K, V> addFromMap(projectTree: MavenProjectsTree, getter: (MavenProjectsTree) -> MutableMap<K, V>) {
+      val my = getter(this@MavenProjectsTree)
+      val theirs = getter(projectTree)
+      my.putAll(theirs)
+    }
+
   }
 
   companion object {

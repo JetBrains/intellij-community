@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -45,7 +44,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                         optionalModelsProvider: IdeModifiableModelsProvider?,
                         importingSettings: MavenImportingSettings,
                         generalSettings: MavenGeneralSettings,
-                        parentActivity: StructuredIdeActivity): List<Module> {
+                        reimportExistingFiles: Boolean,
+                        parentActivity: StructuredIdeActivity): PreimportResult {
 
 
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
@@ -56,7 +56,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val forest = rootProjectFiles.map {
         scope.preimport(it)
       }.awaitAll().filterNotNull()
-      if (forest.isEmpty()) return emptyList()
+      if (forest.isEmpty()) return PreimportResult.empty(project)
 
 
       val projectTree = MavenProjectsTree(project)
@@ -71,7 +71,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         allProjects.addAll(tree.projects())
         tree.root?.let(roots::add)
 
-        if (existingTree == null) {
+        if (existingTree == null || reimportExistingFiles) {
           projectChanges.putAll(tree.projects().associateWith { MavenProjectChanges.ALL })
         }
         else {
@@ -89,7 +89,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
       val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
       // MavenProjectsManager.getInstance(project).projectsTree = projectTree
-      return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
+      return PreimportResult(withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         blockingContext {
           val importer = MavenProjectImporter.createImporter(project, projectTree,
                                                              projectChanges,
@@ -103,11 +103,11 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
           return@blockingContext importer.createdModules()
 
         }
-      }
+      }, projectTree)
     }
     catch (e: Throwable) {
       MavenLog.LOG.error(e)
-      return emptyList()
+      return PreimportResult.empty(project)
     }
     finally {
       activity.finished {
