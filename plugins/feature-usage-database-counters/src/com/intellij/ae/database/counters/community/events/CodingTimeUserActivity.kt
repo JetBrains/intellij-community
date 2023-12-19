@@ -6,7 +6,7 @@ import com.intellij.ae.database.createMap
 import com.intellij.ae.database.runUpdateEvent
 import com.intellij.ae.database.utils.InstantUtils
 import com.intellij.lang.Language
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -19,8 +19,6 @@ import com.intellij.openapi.vfs.validOrNull
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.validOrNull
 import com.intellij.util.io.DigestUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.sqlite.ObjectBinderFactory
 import java.math.BigInteger
 import java.time.Instant
@@ -106,7 +104,7 @@ internal class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListen
       override fun documentChanged(event: DocumentEvent) {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CodingTimeUserActivity) {
           val vf = editor.virtualFile?.validOrNull() ?: return@runUpdateEvent
-          val psiFile = withContext(Dispatchers.EDT) {
+          val psiFile = readAction {
             PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
           } ?: return@runUpdateEvent
           it.write(editorId, psiFile.language, vf)
