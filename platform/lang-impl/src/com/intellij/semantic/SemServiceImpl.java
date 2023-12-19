@@ -233,7 +233,9 @@ public final class SemServiceImpl extends SemService implements Disposable {
       for (SemKey<?> each : inheritors) {
         List<SemElement> list = createSemElements(currentProducers, each, psi, processingContext);
         map.put(each.getUniqueId(), list);
-        result.addAll((List<T>)list);
+        if (!list.isEmpty()) {
+          result.addAll((List<T>)list);
+        }
       }
     }
 
