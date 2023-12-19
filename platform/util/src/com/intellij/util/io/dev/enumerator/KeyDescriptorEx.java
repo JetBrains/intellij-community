@@ -3,7 +3,6 @@ package com.intellij.util.io.dev.enumerator;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.*;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,7 @@ import java.nio.ByteBuffer;
  * {@link java.io.OutputStream}
  */
 @ApiStatus.Internal
-public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
+public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerEx<K> {
   /** See {@link KeyDescriptor#getHashCode(Object)} docs */
   @Override
   int getHashCode(K value);
@@ -26,26 +25,12 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
   boolean isEqual(K key1, K key2);
 
 
-  K read(@NotNull ByteBuffer input) throws IOException;
-
-
-
-  KnownSizeRecordWriter writerFor(@NotNull K key) throws IOException;
-
-  interface KnownSizeRecordWriter extends ByteBufferWriter {
-    @Override
-    ByteBuffer write(@NotNull ByteBuffer data) throws IOException;
-
-    /** @return size of the record to be written by {@link #write(ByteBuffer)} */
-    int recordSize();
-  }
-
   /**
    * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
    * <p>
    * <p/>
    * Implementation is not 100% optimal -- it does unnecessary allocations and copying -- but usually good enough to
-   * start using new API (i.e. {@link com.intellij.util.io.DataEnumerator}), and see does it make any difference.
+   * start using new API (i.e. {@link DataEnumerator}), and see does it make any difference.
    * <p/>
    * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
    */
@@ -87,36 +72,5 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
         return "KeyDescriptorAdapter[adapted: " + oldSchoolDescriptor + "]";
       }
     };
-  }
-
-  static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes) {
-    return new ByteArrayWriter(bytes);
-  }
-
-  //MAYBE RC: append marker-interface, like ByteArrayExposingWriter,
-  //          so implementation could use appendOnlyLog.append(byte[])
-  //          method for such writers, which is slightly faster/cheaper
-  /** Simplest implementation: writer over the record already serialized into a byte[] */
-  class ByteArrayWriter implements KnownSizeRecordWriter {
-    private final byte[] bytes;
-
-    public ByteArrayWriter(byte @NotNull [] bytes) {
-      this.bytes = bytes;
-    }
-
-    @Override
-    public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-      return data.put(bytes);
-    }
-
-    @Override
-    public int recordSize() {
-      return bytes.length;
-    }
-
-    @Override
-    public String toString(){
-      return "ByteArrayWriter[" + IOUtil.toHexString(bytes) + "]";
-    }
   }
 }

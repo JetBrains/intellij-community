@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerat
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +200,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
 
     @Override
     public KnownSizeRecordWriter writerFor(byte @NotNull [] hash) throws IOException {
-      return KeyDescriptorEx.fromBytes(hash);
+      return DataExternalizerEx.fromBytes(hash);
     }
 
     @Override

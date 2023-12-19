@@ -35,6 +35,6 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
 
   @Override
   public KnownSizeRecordWriter writerFor(@NotNull String key) throws IOException {
-    return KeyDescriptorEx.fromBytes(key.getBytes(UTF_8));
+    return DataExternalizerEx.fromBytes(key.getBytes(UTF_8));
   }
 }
