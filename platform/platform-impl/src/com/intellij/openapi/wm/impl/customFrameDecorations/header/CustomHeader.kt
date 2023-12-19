@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
@@ -273,6 +274,12 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
         return iconProvider.getOrProvide(ScaleContext.create(window))!!
       }
     }
+
+    if (ApplicationManager.getApplication().isInternal) {
+      @Suppress("HardCodedStringLiteral")
+      ic.accessibleContext.accessibleName = "Application icon"
+    }
+
     ic.addMouseListener(object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent?) {
         JBPopupMenu.showBelow(ic, menu)
