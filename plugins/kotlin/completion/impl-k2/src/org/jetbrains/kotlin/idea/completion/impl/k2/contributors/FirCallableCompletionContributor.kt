@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
@@ -724,7 +723,7 @@ internal class FirInfixCallableCompletionContributor(
 ) : FirCallableCompletionContributor(basicContext, priority) {
     context(KtAnalysisSession)
     override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
-        insertionStrategy
+        infixCallableInsertionStrategy
 
     context(KtAnalysisSession)
     override fun getInsertionStrategyForExtensionFunction(
@@ -742,7 +741,11 @@ internal class FirInfixCallableCompletionContributor(
     }
 
     companion object {
-        private val insertionStrategy = CallableInsertionStrategy.AsIdentifierCustom {
+        private val infixCallableInsertionStrategy = CallableInsertionStrategy.AsIdentifierCustom {
+            if (completionChar == ' ') {
+                setAddCompletionChar(false)
+            }
+
             insertStringAndInvokeCompletion(" ")
         }
     }
