@@ -57,7 +57,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFile = ReadAction.compute(() -> {
-      VirtualFile file = element.isValid() && element.isPhysical() ? PsiUtilCore.getVirtualFile(element) : null;
+      VirtualFile file = element.isValid() ? PsiUtilCore.getVirtualFile(element) : null;
       if (file != null) {
         VirtualFile canonical = file.getCanonicalFile();
         if (canonical != null) return canonical;
