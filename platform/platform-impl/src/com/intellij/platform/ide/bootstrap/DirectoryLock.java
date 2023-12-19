@@ -418,7 +418,6 @@ final class DirectoryLock {
       buffer.get(bytes);
       lines.add(new String(bytes, StandardCharsets.UTF_8));
     }
-    if (LOG.isDebugEnabled()) LOG.debug("received: " + lines);
     return lines;
   }
   //</editor-fold>
