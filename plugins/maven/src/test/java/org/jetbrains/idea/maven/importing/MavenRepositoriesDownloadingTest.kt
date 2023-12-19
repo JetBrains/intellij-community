@@ -14,6 +14,8 @@ import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   
@@ -24,8 +26,18 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     super.setUp()
     httpServerFixture.setUp()
     myUrl = httpServerFixture.url()
+    ping(myUrl)
   }
 
+  private fun ping(urlString: String) {
+    val url = URL(urlString)
+    val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
+    connection.setRequestMethod("GET")
+    connection.connect()
+    val responseCode = connection.getResponseCode()
+    connection.disconnect()
+    assertEquals(404, responseCode)
+  }
 
   public override fun tearDown() {
     try {
