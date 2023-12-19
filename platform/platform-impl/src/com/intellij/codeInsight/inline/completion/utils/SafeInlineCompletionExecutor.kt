@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.utils
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -47,7 +48,7 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
     }
 
     // create a new lazy job
-    val nextJob = scope.launch(start = CoroutineStart.LAZY, block = block)
+    val nextJob = scope.launch(ClientId.coroutineContext(), start = CoroutineStart.LAZY, block = block)
     onJob(InlineCompletionJob(nextJob))
     val jobWithTimestamp = JobWithTimestamp(nextJob, lastRequestedJobTimestamp.incrementAndGet())
     val sendResult = nextTask.trySend(jobWithTimestamp)
