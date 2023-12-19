@@ -25,6 +25,10 @@ import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.util.LineSeparator
@@ -33,10 +37,6 @@ import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
@@ -226,7 +226,10 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
     && unloadedEntitiesStorage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
 
   val allSources = storage.entitiesBySource { true } + unloadedEntitiesStorage.entitiesBySource { true }
-  val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
+  val urlsFromSources = allSources.keys
+    .filterIsInstance<JpsFileEntitySource>()
+    .filterNot { it is JpsGlobalFileEntitySource } // Do not check global entity sources in project-level serializers
+    .mapTo(HashSet()) { getNonNullActualFileUrl(it) }
   assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
     .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }.map { it.key }.sorted())
 
