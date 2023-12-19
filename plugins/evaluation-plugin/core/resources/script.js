@@ -307,7 +307,8 @@ function updateMultilinePopup(event) {
   popup.setAttribute("class", "autocomplete-items")
 
   addMultilineHeaders(popup, showSuggestion)
-  let indent = getMultilineContext(sessionDiv).prefix.match(/ *$/)[0].length
+  let context = getMultilineContext(sessionDiv)
+  let indent = "prefix" in context ? context.prefix.match(/ *$/)[0].length : 0
   let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"].replace(new RegExp(`^ {${indent}}`, 'gm'), '')
   if (showSuggestion) {
     addMultilineSuggestion(sessionDiv, popup, lookup)
