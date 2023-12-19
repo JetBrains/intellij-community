@@ -420,8 +420,10 @@ public final class DateFormatUtil {
     return makeFormats(shortDate, shortTime, mediumTime, locale);
   }
 
+  // https://learn.microsoft.com/en-us/windows/win32/intl/day--month--year--and-era-format-pictures
+  // https://learn.microsoft.com/en-us/windows/win32/intl/hour--minute--and-second-format-pictures
   private static String fixWindowsFormat(String format) {
-    return format.replaceAll("g+", "G").replace("tt", "a");
+    return format.replace('g', 'G').replace("dddd", "EEEE").replace("ddd", "E").replace("tt", "a").replace("t", "a");
   }
 
   private static Formats makeFormats(String date, String timeShort, String timeMedium, Locale locale) {
