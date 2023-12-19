@@ -262,10 +262,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   public @Nullable TerminalLineIntervalHighlighting highlightLineInterval(int lineNumber, int intervalStartOffset, int intervalLength,
                                                                           @NotNull TextStyle style) {
     TerminalLine line = getTerminalTextBuffer().getLine(lineNumber);
-    if (line == null) {
-      LOG.error("No line found");
-      return null;
-    }
     TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
     getTerminalPanel().repaint();
     return highlighting;
