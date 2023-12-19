@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,5 +65,23 @@ public final class HighlightImplicitClassUtil {
         JavaErrorBundle.message("error.package.statement.not.allowed.for.implicit.class"));
     }
     return null;
+  }
+
+  @Nullable
+  static HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiJavaFile file) {
+    if (!HighlightingFeature.IMPLICIT_CLASSES.isAvailable(file)) return null;
+    PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
+    if (implicitClass == null) return null;
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    if (module == null) return null;
+
+    GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(implicitClass.getResolveScope());
+    String qualifiedName = implicitClass.getQualifiedName();
+    if (qualifiedName == null) {
+      return null;
+    }
+    PsiClass[] classes = JavaPsiFacade.getInstance(implicitClass.getProject()).findClasses(qualifiedName, scope);
+    return HighlightClassUtil.checkDuplicateClasses(implicitClass, classes);
   }
 }

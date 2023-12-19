@@ -375,6 +375,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitJavaFile(file);
     if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkImplicitClassHasMainMethod(file));
     if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkImplicitClassFileIsValidIdentifier(file));
+    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkDuplicateClasses(file));
   }
 
   @Override

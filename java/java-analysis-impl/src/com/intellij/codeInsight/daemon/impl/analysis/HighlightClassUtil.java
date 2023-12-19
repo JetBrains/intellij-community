@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -173,6 +174,7 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiImplicitClass) return null; //check in HighlightImplicitClassUtil
     if (!(aClass.getParent() instanceof PsiFile)) return null;
     String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) return null;
@@ -181,12 +183,31 @@ public final class HighlightClassUtil {
       qualifiedName = qualifiedName.replace('$', '.');
       numOfClassesToFind = 1;
     }
-    PsiManager manager = aClass.getManager();
+
     Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return null;
 
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope()));
+    GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope());
+    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, scope);
+    if (aClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null) {
+      Collection<? extends PsiClass> implicitClasses =
+        JavaImplicitClassIndex.getInstance().getElements(qualifiedName, javaFile.getProject(), scope);
+      if (!implicitClasses.isEmpty()) {
+        ArrayList<PsiClass> newClasses = new ArrayList<>();
+        ContainerUtil.addAll(newClasses, classes);
+        ContainerUtil.addAll(newClasses, implicitClasses);
+        classes = newClasses.toArray(PsiClass.EMPTY_ARRAY);
+      }
+    }
     if (classes.length < numOfClassesToFind) return null;
+    return checkDuplicateClasses(aClass, classes);
+  }
+
+  @Nullable
+  static HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiClass aClass,  @NotNull PsiClass @NotNull[] classes) {
+    PsiManager manager = aClass.getManager();
+    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+    if (module == null) return null;
     ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
     if (virtualFile == null) return null;
@@ -362,12 +383,27 @@ public final class HighlightClassUtil {
                                                               @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
     String message = JavaErrorBundle.message(key, name);
     PsiIdentifier identifier = aClass.getNameIdentifier();
-    if (identifier == null) return null;
-    TextRange textRange = identifier.getTextRange();
-    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message);
-    IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
-    if (action != null) {
-      info.registerFix(action, null, null, null, null);
+    HighlightInfo.Builder info;
+    if (aClass instanceof PsiImplicitClass) {
+      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(aClass)
+        .fileLevelAnnotation()
+        .description(message);
+      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
+      if (action != null) {
+        info.registerFix(action, null, null, null, null);
+      }
+    }
+    else {
+      if (identifier == null) return null;
+      TextRange textRange = identifier.getTextRange();
+      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(textRange)
+        .descriptionAndTooltip(message);
+      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
+      if (action != null) {
+        info.registerFix(action, null, null, null, null);
+      }
     }
     return info;
   }
