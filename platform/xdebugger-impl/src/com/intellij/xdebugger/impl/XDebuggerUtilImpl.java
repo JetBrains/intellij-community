@@ -468,7 +468,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     var properties = variant.createProperties();
     var type = variant.getType();
     var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
-    LOG.assertTrue(type.variantAndBreakpointMatch(breakpoint, variant), type + ": " + variant.getClass());
+    if (!type.variantAndBreakpointMatch(breakpoint, variant)) {
+      LOG.error("breakpoint doesn't match source variant, " + type + ", " + variant.getClass());
+    }
     return breakpoint;
   }
 

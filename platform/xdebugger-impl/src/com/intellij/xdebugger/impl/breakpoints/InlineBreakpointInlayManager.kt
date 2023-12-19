@@ -4,6 +4,8 @@ import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -255,27 +257,48 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     return buildList {
       val remainingBreakpoints = breakpoints.toMutableSmartList()
       for (variant in variants) {
-        val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it) }
-        if (!breakpointsHere.isEmpty()) {
-          for (breakpointHere in breakpointsHere) {
-            remainingBreakpoints.remove(breakpointHere)
-            val offset = getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)
-            // TODO[inline-bp]: introduce better way to check that it's simple line breakpoint,
-            //                  it should be possible when we are able to better match variants and breakpoints
-            val singleLineBreakpoint = breakpoints.size == 1 && offset == codeStartOffset
-            if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
-              add(SingleInlayDatum(breakpointHere, variant, offset))
-            }
-          }
-        }
-        else {
+        val matchingBreakpoints = breakpoints.filter { areMatching(variant, it) }
+        if (matchingBreakpoints.isEmpty()) {
+          // Easy case: just draw this inlay as a variant.
           val offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset)
           add(SingleInlayDatum(null, variant, offset))
         }
+        else {
+          if (matchingBreakpoints.size >= 2) {
+            // We have multiple breakpoints for a single variant, bad luck.
+            // Draw them, but report an error.
+            reportSingleVariantMultipleBreakpoints(document, line, variant, matchingBreakpoints)
+          }
+          // Else we have a variant and single corresponding breakpoint.
+
+          for (breakpoint in matchingBreakpoints) {
+            val notYetMatched = remainingBreakpoints.remove(breakpoint)
+            if (notYetMatched) {
+              // If breakpoint was not matched earlier, just draw this inlay as a breakpoint.
+              val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
+
+              // However, if this breakpoint is the only breakpoint, and it covers a whole line, don't draw it.
+              val singleLineBreakpoint = breakpoints.size == 1 && getBreakpointHighlightRange(breakpoint) == null
+
+              if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
+                add(SingleInlayDatum(breakpoint, variant, offset))
+              }
+            }
+            else {
+              // We have multiple variants matching a single breakpoint, bad luck.
+              // Don't draw anything new and report an error.
+              reportSingleBreakpointMultipleVariants(document, line, breakpoint, variants.filter { areMatching(it, breakpoint) })
+            }
+          }
+        }
       }
-      for (remainingBreakpoint in remainingBreakpoints) {
-        val offset = getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)
-        add(SingleInlayDatum(remainingBreakpoint, null, offset))
+
+      for (breakpoint in remainingBreakpoints) {
+        // We have some breakpoints without matched variants.
+        // Draw them and report an error.
+        reportBreakpointWithoutVariants(document, line, breakpoint)
+        val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
+        add(SingleInlayDatum(breakpoint, null, offset))
       }
     }
   }
@@ -291,17 +314,21 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   }
 
   private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointType<*>.XLineBreakpointVariant, codeStartOffset: Int): Int {
-    val variantRange = variant.highlightRange
-    return getLineRangeStartNormalized(variantRange, codeStartOffset)
+    val range = variant.highlightRange
+    return getLineRangeStartNormalized(range, codeStartOffset)
+  }
+
+  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Int {
+    val range = getBreakpointHighlightRange(breakpoint)
+    return getLineRangeStartNormalized(range, codeStartOffset)
   }
 
   @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
-  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Int {
+  private fun getBreakpointHighlightRange(breakpoint: XLineBreakpointImpl<*>): TextRange? {
     val type: XLineBreakpointType<XBreakpointProperties<*>> = breakpoint.type as XLineBreakpointType<XBreakpointProperties<*>>
     val b = breakpoint as XLineBreakpoint<XBreakpointProperties<*>>
 
-    val breakpointRange = type.getHighlightRange(b)
-    return getLineRangeStartNormalized(breakpointRange, codeStartOffset)
+    return type.getHighlightRange(b)
   }
 
   private fun getLineRangeStartNormalized(range: TextRange?, codeStartOffset: Int): Int {
@@ -310,6 +337,40 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     // to the offset of that non-whitespace character for ease of comparison of various ranges coming from variants and breakpoints.
     return range?.let { max(it.startOffset, codeStartOffset) } ?: codeStartOffset
   }
+
+  private fun reportSingleVariantMultipleBreakpoints(document: Document, line: Int,
+                                                     variant: XLineBreakpointType<*>.XLineBreakpointVariant,
+                                                     breakpoints: List<XLineBreakpointImpl<*>>) {
+    logger.error("single variant (${formatTextRangeForErrors(variant.highlightRange)}) " +
+                 "matches ${breakpoints.size} breakpoints " +
+                 "${breakpoints.map { formatTextRangeForErrors(getBreakpointHighlightRange(it)) }} " +
+                 "at line ${line + 1}",
+                 sourceCodeAttachment(document))
+  }
+
+  private fun reportSingleBreakpointMultipleVariants(document: Document, line: Int,
+                                                     breakpoint: XLineBreakpointImpl<*>,
+                                                     variants: List<XLineBreakpointType<*>.XLineBreakpointVariant>) {
+    logger.error("single breakpoint (${formatTextRangeForErrors(getBreakpointHighlightRange(breakpoint))}) " +
+                 "matches ${variants.size} variants " +
+                 "${variants.map { formatTextRangeForErrors(it.highlightRange) }} " +
+                 "at line ${line + 1}",
+                 sourceCodeAttachment(document))
+  }
+
+  private fun reportBreakpointWithoutVariants(document: Document, line: Int,
+                                              breakpoint: XLineBreakpointImpl<*>) {
+    logger.error("breakpoint (${formatTextRangeForErrors(getBreakpointHighlightRange(breakpoint))}) " +
+                 "matches no variants " +
+                 "at line ${line + 1}",
+                 sourceCodeAttachment(document))
+  }
+
+  private fun formatTextRangeForErrors(range: TextRange?): String =
+    range?.toString() ?: "(whole-line)"
+
+  private fun sourceCodeAttachment(document: Document): Attachment =
+    Attachment("source.txt", document.text)
 
   @RequiresWriteLock
   private fun insertInlays(document: Document,
@@ -363,6 +424,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     EditorFactory.getInstance().getEditors(document, project)
 
   companion object {
+    private val logger = logger<InlineBreakpointInlayManager>()
+
     @JvmStatic
     fun getInstance(project: Project): InlineBreakpointInlayManager =
       project.service<InlineBreakpointInlayManager>()
