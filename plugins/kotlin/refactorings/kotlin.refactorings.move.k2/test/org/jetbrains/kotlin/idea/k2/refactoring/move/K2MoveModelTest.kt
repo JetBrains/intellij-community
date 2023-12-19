@@ -27,8 +27,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveMembersModel.source.elements)
         val sourceElement = moveMembersModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        val targetElement = moveMembersModel.target.file
-        assert(targetElement.name == "Bar.kt")
+        val targetElement = moveMembersModel.target.fileName
+        assert(targetElement == "Bar.kt")
     }
 
     fun `test file from source directory to source directory move`() {

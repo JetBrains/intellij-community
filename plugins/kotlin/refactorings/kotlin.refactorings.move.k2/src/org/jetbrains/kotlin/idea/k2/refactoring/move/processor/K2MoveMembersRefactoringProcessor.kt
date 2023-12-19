@@ -33,13 +33,13 @@ class K2MoveMembersRefactoringProcessor(val descriptor: K2MoveDescriptor.Members
     override fun findUsages(): Array<UsageInfo> {
         if (!descriptor.searchReferences) return emptyArray()
         return descriptor.source.elements.flatMap {
-            it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target.file.packageFqName)
+            it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target.pkgName)
         }.toTypedArray()
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
-      val targetFile = descriptor.target.file
+      val targetFile = descriptor.target.getOrCreateFile()
 
       val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
 

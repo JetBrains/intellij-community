@@ -188,14 +188,11 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val actualTarget = when (specifiedTarget) {
                 is K2MoveTargetDescriptor.File -> specifiedTarget
                 is K2MoveTargetDescriptor.SourceDirectory -> {
-                    val file = runWriteAction {
-                        createKotlinFile(
-                            source.elements.first().name?.capitalizeAsciiOnly() + ".kt",
-                            specifiedTarget.directory,
-                            specifiedTarget.pkgName.asString()
-                        )
-                    }
-                    K2MoveTargetDescriptor.File(file)
+                    K2MoveTargetDescriptor.File(
+                        source.elements.first().name?.capitalizeAsciiOnly() + ".kt",
+                        specifiedTarget.pkgName,
+                        specifiedTarget.directory
+                    )
                 }
                 else -> throw IllegalStateException("Invalid specified target")
             }
@@ -210,18 +207,5 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 /* callback = */ null
             )
         }
-    }
-
-    private fun createKotlinFile(
-        fileName: String,
-        targetDir: PsiDirectory,
-        packageName: String? = targetDir.kotlinFqName?.asString()
-    ): KtFile {
-        targetDir.checkCreateFile(fileName)
-        val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-        val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-            fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName} \n\n" else ""
-        )
-        return targetDir.add(file) as KtFile
     }
 }

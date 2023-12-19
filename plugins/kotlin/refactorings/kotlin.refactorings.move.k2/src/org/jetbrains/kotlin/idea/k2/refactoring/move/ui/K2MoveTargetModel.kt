@@ -19,13 +19,11 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import java.nio.file.Paths
 import javax.swing.JComponent
 
 sealed interface K2MoveTargetModel {
@@ -85,36 +83,21 @@ sealed interface K2MoveTargetModel {
         }
     }
 
-    class File(file: KtFile, pkg: FqName, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
-        var file: KtFile = file
+    class File(fileName: String, pkg: FqName, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
+        var fileName: String = fileName
             private set
 
-        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(file, pkgName, directory)
+        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(fileName, pkgName, directory)
 
         private lateinit var fileChooser: TextFieldWithBrowseButton
 
         context(Panel)
         override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
             super.buildPanel(project, onError)
-            fun updateFileChooser() {
-                val itemWrapper = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper) ?: return
-                val existingPath = itemWrapper.directory?.virtualFile?.path ?: return
-                val postFix = itemWrapper.postfix?.removePrefix("\\")?.replace("\\", "/")?.plus("/") ?: "" // post fix in case real directory doesn't exist yet
-                val fileName = fileChooser.text.substringAfterLast("/")
-                val fullPath = "$existingPath/$postFix$fileName"
-                if (fullPath != fileChooser.text) fileChooser.text = fullPath
-            }
-            destinationChooser.comboBox.addActionListener {
-                updateFileChooser()
-            }
-            destinationChooser.comboBox.addPropertyChangeListener { // invoked when changing pkg in pkg chooser
-                if (it.propertyName != "model") return@addPropertyChangeListener
-                updateFileChooser()
-            }
             row {
                 label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
-                fileChooser.text = file.virtualFilePath
+                fileChooser.text = fileName
                 fileChooser.addActionListener {
                     val dialog = KotlinFileChooserDialog(
                         KotlinBundle.message("text.choose.containing.file"),
@@ -125,7 +108,7 @@ sealed interface K2MoveTargetModel {
                     dialog.showDialog()
                     val selectedFile = if (dialog.isOK) dialog.selected else null
                     if (selectedFile != null) {
-                        fileChooser.text = selectedFile.virtualFile.path
+                        fileChooser.text = selectedFile.name
                         pkgChooser.prependItem(selectedFile.packageFqName.asString())
                         ReadAction.nonBlocking<VirtualFile> {
                             ProjectFileIndex.getInstance(project).getSourceRootForFile(selectedFile.virtualFile)
@@ -136,8 +119,7 @@ sealed interface K2MoveTargetModel {
                 }
             }.layout(RowLayout.PARENT_GRID)
             onApply {
-                val selectedFile = Paths.get(fileChooser.text).toFile().toPsiFile(project) as? KtFile?
-                if (selectedFile != null) file = selectedFile
+                fileName = fileChooser.text
             }
         }
     }
@@ -145,7 +127,7 @@ sealed interface K2MoveTargetModel {
     companion object {
         fun File(file: KtFile): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
-            return File(file, file.packageFqName, directory)
+            return File(file.name, file.packageFqName, directory)
         }
     }
 }
