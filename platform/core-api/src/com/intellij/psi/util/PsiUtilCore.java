@@ -374,9 +374,7 @@ public class PsiUtilCore {
         StubElement<?> stub1 = ((StubBasedPsiElement<?>)element1).getStub();
         StubElement<?> stub2 = ((StubBasedPsiElement<?>)element2).getStub();
         if (stub1 != null && stub2 != null) {
-          int[] vector1 = getPathVector(stub1);
-          int[] vector2 = getPathVector(stub2);
-          return compareVectorsBackwards(vector1, vector2);
+          return compareStubPositions(stub1, stub2);
         }
       }
       final TextRange textRange1 = element1.getTextRange();
@@ -391,26 +389,39 @@ public class PsiUtilCore {
     final String name2 = psiFile2.getName();
     return name1.compareToIgnoreCase(name2);
   }
-
-  private static int compareVectorsBackwards(int[] a, int[] b) {
-    for (int i = 0; i < Math.min(a.length, b.length); i++) {
-      int ai = a.length - i - 1;
-      int bi = b.length - i - 1;
-      if (a[ai] != b[bi]) return Integer.compare(a[ai], b[bi]);
+  
+  private static int compareStubPositions(StubElement<?> stub1, StubElement<?> stub2) {
+    int depth1 = getStubDepth(stub1);
+    int depth2 = getStubDepth(stub2);
+    int diff = Integer.compare(depth1, depth2);
+    while (depth1 > depth2) {
+      stub1 = stub1.getParentStub();
+      depth1--;
     }
-    return Integer.compare(a.length, b.length);
+    while (depth2 > depth1) {
+      stub2 = stub2.getParentStub();
+      depth2--;
+    }
+    int cmp = compareBalancedStubs(stub1, stub2);
+    return cmp == 0 ? diff : cmp;
   }
 
-  private static int[] getPathVector(@NotNull Stub stub) {
-    IntStream.Builder builder = IntStream.builder();
+  private static int getStubDepth(StubElement<?> stub) {
+    int depth = 0;
     while (stub != null) {
-      Stub parent = stub.getParentStub();
-      if (parent != null) {
-        builder.accept(parent.getChildrenStubs().indexOf(stub));
-      }
-      stub = parent;
+      stub = stub.getParentStub();
+      depth++;
     }
-    return builder.build().toArray();
+    return depth;
+  }
+
+  private static int compareBalancedStubs(StubElement<?> stub1, StubElement<?> stub2) {
+    if (stub1 == stub2) return 0;
+    StubElement<?> parent1 = stub1.getParentStub();
+    StubElement<?> parent2 = stub2.getParentStub();
+    int parentCmp = compareBalancedStubs(parent1, parent2);
+    if (parentCmp != 0) return parentCmp;
+    return Integer.compare(parent1.getChildrenStubs().indexOf(stub1), parent2.getChildrenStubs().indexOf(stub2));
   }
 
   /**
