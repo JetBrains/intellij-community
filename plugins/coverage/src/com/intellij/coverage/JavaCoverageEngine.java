@@ -234,7 +234,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   protected void deleteAssociatedTraces(CoverageSuite suite) {
-    if (suite.isBranchCoverage()) {
+    if (suite.isCoverageByTestEnabled()) {
       File tracesDirectory = getTracesDirectory(suite);
       if (tracesDirectory.exists()) {
         FileUtil.delete(tracesDirectory);
@@ -270,13 +270,17 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            @NotNull CoverageFileProvider coverageDataFileProvider,
                                            @NotNull CoverageEnabledConfiguration config) {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
-      return createSuite(covRunner, name, coverageDataFileProvider,
+      Project project = config.getConfiguration().getProject();
+      JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+      return createSuite(optionsProvider.getCoverageRunner(),
+                         name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          javaConfig.createTimestamp(),
-                         javaConfig.isTrackPerTestCoverage() && javaConfig.isBranchCoverageEnabled(),
-                         javaConfig.isBranchCoverageEnabled(),
-                         javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
+                         optionsProvider.getTestTracking() && canHavePerTestCoverage(config.getConfiguration()),
+                         optionsProvider.getBranchCoverage(),
+                         optionsProvider.getTestModulesCoverage(),
+                         project);
     }
     return null;
   }
@@ -699,15 +703,15 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
-                                          String name, CoverageFileProvider coverageDataFileProvider,
-                                          String[] filters,
-                                          String[] excludePatterns,
-                                          long lastCoverageTimeStamp,
-                                          boolean coverageByTestEnabled,
-                                          boolean branchCoverage,
-                                          boolean trackTestFolders, Project project) {
-    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, branchCoverage,
-                                 trackTestFolders, acceptedCovRunner, this, project);
+                                       String name, CoverageFileProvider coverageDataFileProvider,
+                                       String[] filters,
+                                       String[] excludePatterns,
+                                       long lastCoverageTimeStamp,
+                                       boolean coverageByTestEnabled,
+                                       boolean branchCoverage,
+                                       boolean trackTestFolders, Project project) {
+    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp,
+                                 coverageByTestEnabled, branchCoverage, trackTestFolders, acceptedCovRunner, this, project);
   }
 
   @NotNull

@@ -62,29 +62,29 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     return null;
   }
 
-  public void appendCoverageArgument(@NotNull RunConfigurationBase<?> configuration, final SimpleJavaParameters javaParameters) {
-    final CoverageRunner runner = getCoverageRunner();
+  public void appendCoverageArgument(@NotNull CoverageSuite suite, final SimpleJavaParameters javaParameters) {
+    final CoverageRunner runner = suite.getRunner();
     if (runner instanceof JavaCoverageRunner javaCoverageRunner) {
-      final String path = getCoverageFilePath();
+      final String path = suite.getCoverageDataFileName();
       assert path != null; // cannot be null here if runner != null
 
       String sourceMapPath = null;
-      if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
+      if (JavaCoverageEngine.isSourceMapNeeded(getConfiguration())) {
         sourceMapPath = getSourceMapPath(path);
       }
 
       final String[] patterns = getPatterns();
       final String[] excludePatterns = getExcludePatterns();
-      final Project project = configuration.getProject();
-      CoverageLogger.logStarted(javaCoverageRunner, isBranchCoverageEnabled(), isTrackPerTestCoverage(),
+      final Project project = getConfiguration().getProject();
+      CoverageLogger.logStarted(runner, suite.isBranchCoverage(), suite.isCoverageByTestEnabled(),
                                 patterns == null ? 0 : patterns.length,
                                 excludePatterns == null ? 0 : excludePatterns.length);
       javaCoverageRunner.appendCoverageArgument(new File(path).getAbsolutePath(),
                                                 patterns,
                                                 excludePatterns,
                                                 javaParameters,
-                                                isTrackPerTestCoverage() && isBranchCoverageEnabled(),
-                                                isBranchCoverageEnabled(),
+                                                suite.isCoverageByTestEnabled(),
+                                                suite.isBranchCoverage(),
                                                 sourceMapPath,
                                                 project);
     }
@@ -184,16 +184,6 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
         element.addContent(patternElement);
       }
     }
-  }
-
-  @Override
-  @Nullable
-  public String getCoverageFilePath() {
-    if (myCoverageFilePath != null ) {
-      return myCoverageFilePath;
-    }
-    myCoverageFilePath = createCoverageFile();
-    return myCoverageFilePath;
   }
 
   public void setUpCoverageFilters(@Nullable String className, @Nullable String packageName) {

@@ -23,15 +23,10 @@ import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -130,25 +125,24 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
     if (coverageConfig == null) return;
     coverageConfig.setCurrentCoverageSuite(null);
-    final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
+    CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
-      Project project = configuration.getProject();
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      }, ModalityState.nonModal(), project.getDisposed());
-      appendCoverageArgument(configuration, params, coverageConfig);
+      CoverageSuite suite = CoverageDataManager.getInstance(configuration.getProject()).addCoverageSuite(coverageConfig);
+      if (suite != null) {
+        coverageConfig.setCurrentCoverageSuite(suite);
+        appendCoverageArgument(suite, params, coverageConfig);
+      }
     }
   }
 
-  private void appendCoverageArgument(@NotNull RunConfigurationBase<?> configuration,
+  private void appendCoverageArgument(@NotNull CoverageSuite suite,
                                       @NotNull JavaParameters params,
                                       JavaCoverageEnabledConfiguration coverageConfig) {
     JavaParameters coverageParams = new JavaParameters();
-    coverageConfig.appendCoverageArgument(configuration, coverageParams);
+    coverageConfig.appendCoverageArgument(suite, coverageParams);
 
-    boolean runsUnderNonLocalTarget = configuration instanceof TargetEnvironmentAwareRunProfile
-                                      && ((TargetEnvironmentAwareRunProfile)configuration).needPrepareTarget();
+    boolean runsUnderNonLocalTarget = coverageConfig.getConfiguration() instanceof TargetEnvironmentAwareRunProfile profile
+                                      && profile.needPrepareTarget();
     if (!runsUnderNonLocalTarget) {
       params.getVMParametersList().addAll(coverageParams.getTargetDependentParameters().toLocalParameters());
       myTargetDependentParameters = null;
@@ -277,9 +271,9 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
     if (listener instanceof CoverageListener) {
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
-      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-      return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) ||
-             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && coverageEnabledConfiguration.isBranchCoverageEnabled());
+      CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
+      CoverageSuite suite = coverageEnabledConfiguration.getCurrentCoverageSuite();
+      return suite == null || !suite.getRunner().isCoverageByTestApplicable() || !suite.isCoverageByTestEnabled();
     }
     return false;
   }
