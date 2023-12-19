@@ -53,6 +53,8 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 val importsToRemove =  unusedImportsAfter - unusedImportsBefore
                 importsToRemove.forEach(PsiElement::delete)
                 return if (shorten) {
+                    // TODO Reference shortening should be done BEFORE removing the obsolete imports
+                    // (but currently it is blocked by KTIJ-28004 and KTIJ-27841)
                     val newShortenings = analyze(newElement) {
                         collectPossibleReferenceShorteningsInElement(newElement)
                     }

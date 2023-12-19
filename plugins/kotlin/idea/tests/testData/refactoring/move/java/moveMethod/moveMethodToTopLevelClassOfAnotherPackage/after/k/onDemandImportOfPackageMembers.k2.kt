@@ -1,7 +1,7 @@
 package k
 
-import j.B.foo
+import j.B
 
 fun bar(s: String) {
-    foo(s)
+    B.foo(s)
 }
