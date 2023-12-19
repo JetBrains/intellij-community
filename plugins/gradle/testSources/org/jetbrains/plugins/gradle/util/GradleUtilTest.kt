@@ -9,7 +9,6 @@ import com.intellij.testFramework.utils.io.createFile
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.junit.Test
 import java.io.File
 import java.net.URI
 
@@ -22,26 +21,22 @@ class GradleUtilTest: UsefulTestCase() {
     rootDir = FileUtil.createTempDirectory("gradleRoot", null)
   }
 
-  @Test
   fun `test root project detector for empty dir`() {
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(rootDir.absolutePath))
   }
 
-  @Test
   fun `test root project is found from subdirectory`() {
     File(rootDir, "settings.gradle").writeText("# empty settings file")
     val subDir = File(rootDir, "sub/sub/subDir").apply { mkdirs() }
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(subDir.absolutePath))
   }
 
-  @Test
   fun `test kotlin root project is found from subdirectory`() {
     File(rootDir, "settings.gradle.kts").writeText("// empty settings file in Kotlin script")
     val subDir = File(rootDir, "sub/sub/subDir").apply { mkdirs() }
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(subDir.absolutePath))
   }
 
-  @Test
   fun `test root project is found from a file`() {
     File(rootDir, "settings.gradle").writeText("# empty settings file")
     val projectFile = File(rootDir, "sub/sub/subDir/build.gradle").apply {
@@ -51,13 +46,11 @@ class GradleUtilTest: UsefulTestCase() {
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(projectFile.absolutePath))
   }
 
-  @Test
   fun `test project without settings is found from a file`() {
     val projectFile = File(rootDir, "build.gradle").apply { writeText("// empty project file") }
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(projectFile.absolutePath))
   }
 
-  @Test
   fun `test file chooser descriptor accepts kotlin scripts`() {
     val chooserDescriptor = GradleUtil.getGradleProjectFileChooserDescriptor()
 
@@ -65,7 +58,6 @@ class GradleUtilTest: UsefulTestCase() {
     assertTrue("gradle kotlin script should be selectable", chooserDescriptor.isFileSelectable(MockVirtualFile("build.gradle.kts")))
   }
 
-  @Test
   fun `test parsing Gradle distribution version`() {
     assertNull(GradleInstallationManager.parseDistributionVersion(""))
     assertNull(GradleInstallationManager.parseDistributionVersion("abc"))
