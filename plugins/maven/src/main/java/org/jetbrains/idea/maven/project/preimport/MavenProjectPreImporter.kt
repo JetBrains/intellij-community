@@ -490,7 +490,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                          } ?: emptyList()
 
       val id = extractId(it)
-      val plugin = MavenPlugin(id.groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), executions, emptyList())
+      val groupId = id.groupId.nullize(true) ?: "org.apache.maven.plugins"
+      val plugin = MavenPlugin(groupId, id.artifactId, id.version, false, false, it.getChild("configuration"), executions, emptyList())
       plugins[trimVersion(id)] = plugin
     }
     return plugins

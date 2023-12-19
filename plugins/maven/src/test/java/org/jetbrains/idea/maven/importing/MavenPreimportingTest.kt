@@ -217,6 +217,33 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  fun testImportProjectWithCompilerConfigWithoutGroupId() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                            <source>14</source>
+                            <target>14</target>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      val module = getModule("project")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+  @Test
   fun testImportProjectWithCompilerConfigOfParent() = runBlocking {
 
     createModulePom("m1", """
