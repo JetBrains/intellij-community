@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
   private static final ExtensionPointName<CustomLibraryTableDescription> CUSTOM_TABLES_EP = new ExtensionPointName<>("com.intellij.customLibraryTable");
-  private final Map<String, LibraryTableBase> customLibraryTables = new ConcurrentHashMap<>();
+  private final Map<String, LibraryTable> customLibraryTables = new ConcurrentHashMap<>();
   private volatile boolean extensionLoaded = false;
   private final Object extensionLoadingLock = new Object();
 
@@ -55,7 +55,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
     return getCustomLibrariesMap().get(level);
   }
 
-  public @NotNull Map<String, LibraryTableBase> getCustomLibrariesMap() {
+  private @NotNull Map<String, LibraryTable> getCustomLibrariesMap() {
     if (extensionLoaded) {
       return customLibraryTables;
     }
@@ -65,15 +65,15 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
         CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
           @Override
           public void extensionAdded(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
-            LibraryTableBase table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
+            LibraryTable table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
             customLibraryTables.put(extension.getTableLevel(), table);
           }
 
           @Override
           public void extensionRemoved(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
-            LibraryTableBase table = customLibraryTables.remove(extension.getTableLevel());
-            if (table != null) {
-              Disposer.dispose(table);
+            LibraryTable table = customLibraryTables.remove(extension.getTableLevel());
+            if (table instanceof Disposable disposable) {
+              Disposer.dispose(disposable);
             }
           }
         }, true, null);
@@ -90,8 +90,10 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public void dispose() {
-    for (LibraryTableBase value : customLibraryTables.values()) {
-      Disposer.dispose(value);
+    for (LibraryTable table : customLibraryTables.values()) {
+      if (table instanceof Disposable disposable) {
+        Disposer.dispose(disposable);
+      }
     }
     customLibraryTables.clear();
   }

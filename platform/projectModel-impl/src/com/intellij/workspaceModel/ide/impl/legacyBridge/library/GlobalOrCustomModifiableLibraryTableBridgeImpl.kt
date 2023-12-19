@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -20,10 +19,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable):
+internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable):
   LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance().currentSnapshot), true),
   LibraryTable.ModifiableModel {
+
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
+  private val libraryTableId = LibraryTableId.GlobalLibraryTableId(libraryTable.tableLevel)
 
   override fun createLibrary(name: String?): Library {
     return createLibrary(name = name, type = null)
@@ -34,10 +35,8 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
   }
 
   override fun createLibrary(name: String?, type: PersistentLibraryKind<*>?, externalSource: ProjectModelExternalSource?): Library {
-    if (name.isNullOrBlank()) error("Application Library must have a name")
+    if (name.isNullOrBlank()) error("${libraryTableId.level} library must have a name")
     assertModelIsLive()
-
-    val libraryTableId = LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)
 
     val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(),
                                                      LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
@@ -77,7 +76,7 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
   }
 
   override fun commit() {
-    GlobalWorkspaceModel.getInstance().updateModel("Global library table commit") {
+    GlobalWorkspaceModel.getInstance().updateModel("${libraryTableId.level} library table commit") {
       it.addDiff(diff)
     }
     libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
@@ -86,18 +85,17 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
   override fun getLibraryIterator(): Iterator<Library> = libraries.iterator()
 
   override fun getLibraryByName(name: String): Library? {
-    val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))) ?: return null
+    val libraryEntity = diff.resolve(LibraryId(name, libraryTableId)) ?: return null
     return diff.libraryMap.getDataByEntity(libraryEntity)
   }
 
   override fun getLibraries(): Array<Library> {
-    return diff.entities(LibraryEntity::class.java).filter { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class }
+    return diff.entities(LibraryEntity::class.java).filter { it.tableId == libraryTableId }
       .mapNotNull { diff.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
   }
 
   override fun isChanged(): Boolean = diff.hasChanges()
-
 
   override fun dispose() {
     modelIsCommittedOrDisposed = true

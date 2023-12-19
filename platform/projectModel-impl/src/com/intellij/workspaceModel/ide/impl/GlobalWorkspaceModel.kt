@@ -11,23 +11,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
-import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
@@ -143,27 +143,25 @@ class GlobalWorkspaceModel : Disposable {
   @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ThreadingAssertions.assertWriteAccess()
-    logErrorOnEventHandling {
-      GlobalLibraryTableBridge.getInstance().initializeLibraryBridges(change, builder)
-    }
-    logErrorOnEventHandling {
-      GlobalSdkTableBridge.getInstance().initializeSdkBridges(change, builder)
+
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach {
+      logErrorOnEventHandling {
+        it.initializeBridges(change, builder)
+      }
     }
   }
 
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
-    GlobalSdkTableBridge.getInstance().handleBeforeChangeEvents(change)
-    GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach { it.handleBeforeChangeEvents(change) }
   }
 
   @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
-    GlobalSdkTableBridge.getInstance().handleChangedEvents(change)
-    GlobalLibraryTableBridge.getInstance().handleChangedEvents(change)
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach { it.handleChangedEvents(change) }
 
     globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
@@ -212,6 +210,7 @@ class GlobalWorkspaceModel : Disposable {
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
     val mutableEntityStorage = MutableEntityStorage.create()
     // Copying global libraries
+    // TODO:: Check heree that we also copying custom libraries
     storage.entities(LibraryEntity::class.java).forEach { libraryEntity ->
       if (!globalEntitiesFilter.invoke(libraryEntity.entitySource)) return@forEach
       val libraryRootsCopy = libraryEntity.roots.map { root ->

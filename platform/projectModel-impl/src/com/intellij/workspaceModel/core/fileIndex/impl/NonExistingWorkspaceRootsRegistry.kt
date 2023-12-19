@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -20,6 +21,8 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import java.util.*
 
@@ -190,15 +193,14 @@ private class VfsChangeApplierImpl(
     }
     indexData.updateDirtyEntities()
     
-    // Keep old behaviour for global libraries
+    // Keep old behaviour for global and custom libraries
     if (affectedEntities.isNotEmpty()) {
       val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
-      val globalLibraryTableBridge = GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl
 
       affectedEntities.forEach { entityRef ->
         val libraryEntity = (entityRef.resolve(entityStorage) as? LibraryEntity) ?: return@forEach
-        if (libraryEntity.tableId.level != LibraryTablesRegistrar.APPLICATION_LEVEL) return@forEach
-        globalLibraryTableBridge.fireRootSetChanged(libraryEntity, entityStorage)
+        if (libraryEntity.tableId !is LibraryTableId.GlobalLibraryTableId) return@forEach
+        (entityStorage.libraryMap.getDataByEntity(libraryEntity) as? LibraryBridgeImpl)?.fireRootSetChanged()
       }
     }
   }

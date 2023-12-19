@@ -4,18 +4,10 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
+import org.jetbrains.annotations.ApiStatus
 
-interface GlobalSdkTableBridge {
-  fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
-                                                initialEntityStorage: VersionedEntityStorage): () -> Unit
-  fun initializeSdkBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
-  fun handleBeforeChangeEvents(event: VersionedStorageChange)
-  fun handleChangedEvents(event: VersionedStorageChange)
-
+@ApiStatus.Internal
+interface GlobalSdkTableBridge: GlobalEntityBridgeAndEventHandler {
   companion object {
     fun getInstance(): GlobalSdkTableBridge = ApplicationManager.getApplication().service()
     fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.sdk.bridge", true)

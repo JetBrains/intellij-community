@@ -17,8 +17,7 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -156,13 +155,10 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,
                                             initialEntityStorage: VersionedEntityStorage): () -> Unit {
-    val sdkCallback = GlobalSdkTableBridge.getInstance().initializeSdkBridgesAfterLoading(mutableStorage,
-                                                                                          initialEntityStorage)
-    val librariesCallback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage,
-                                                                                                        initialEntityStorage)
+    val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers()
+      .map { it.initializeBridgesAfterLoading(mutableStorage, initialEntityStorage) }
     return {
-      sdkCallback.invoke()
-      librariesCallback.invoke()
+      callbacks.forEach { it.invoke() }
     }
   }
 

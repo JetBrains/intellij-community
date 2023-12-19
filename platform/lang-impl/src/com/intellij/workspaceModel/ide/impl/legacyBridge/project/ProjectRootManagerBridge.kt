@@ -7,9 +7,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
@@ -77,9 +78,9 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     }
 
     private fun shouldListen(library: Library): Boolean {
-      //project and global level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher
-      return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL &&
-             library.table?.tableLevel != LibraryTablesRegistrar.APPLICATION_LEVEL
+      //project, global and custom level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher
+      val libraryTableId = (library as? LibraryBridge)?.libraryId?.tableId ?: return true
+      return libraryTableId !is LibraryTableId.ProjectLibraryTableId && libraryTableId !is LibraryTableId.GlobalLibraryTableId
     }
 
     override fun referencedSdkAdded(sdk: Sdk) {

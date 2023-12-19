@@ -36,7 +36,7 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
 
 class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
 
-  override fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
+  override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                 initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
@@ -51,7 +51,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     return {}
   }
 
-  override fun initializeSdkBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+  override fun initializeBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     @Suppress("UNCHECKED_CAST")
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
