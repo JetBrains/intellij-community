@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,8 +37,8 @@ public final class HighlightImplicitClassUtil {
     if (!HighlightingFeature.IMPLICIT_CLASSES.isAvailable(file)) return null;
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return null;
-    String name = ClassUtil.getJVMClassName(implicitClass);
-    if (!PsiNameHelper.getInstance(file.getProject()).isQualifiedName(name)) {
+    String name = implicitClass.getQualifiedName();
+    if (!PsiNameHelper.getInstance(file.getProject()).isIdentifier(name)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(file)
         .fileLevelAnnotation()

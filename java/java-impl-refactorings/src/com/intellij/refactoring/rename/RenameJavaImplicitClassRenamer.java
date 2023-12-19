@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 
 public class RenameJavaImplicitClassRenamer implements RenameHandler {
   private final RenameJavaImplicitClassProcessor myProcessor = new RenameJavaImplicitClassProcessor();
+  private static final Logger LOG = Logger.getInstance(RenameJavaImplicitClassRenamer.class);
 
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
@@ -37,7 +39,7 @@ public class RenameJavaImplicitClassRenamer implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    //do nothing, it is not expected to be call from editor
+    LOG.error("Must not be called, because implicit classes are not available from editor");
   }
 
   @Override

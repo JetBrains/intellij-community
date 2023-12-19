@@ -55,7 +55,7 @@ public class RenameJavaImplicitClassProcessor extends RenamePsiFileProcessor {
     protected void canRun() throws ConfigurationException {
       String name = super.getNewName();
       if (Comparing.strEqual(name, myImplicitClass.getQualifiedName())) throw new ConfigurationException(null);
-      if (!PsiNameHelper.getInstance(myImplicitClass.getProject()).isQualifiedName(name)) {
+      if (!PsiNameHelper.getInstance(myImplicitClass.getProject()).isIdentifier(name)) {
         throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
       }
     }

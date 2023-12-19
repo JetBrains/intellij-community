@@ -32,6 +32,11 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testIncorrectImplicitClassName() {
+    myFixture.configureByFile( "Incorrect.implicit.class.name.java")
+    myFixture.checkHighlighting()
+  }
+
   fun testNestedReferenceHighlighting() {
     doTest()
   }
