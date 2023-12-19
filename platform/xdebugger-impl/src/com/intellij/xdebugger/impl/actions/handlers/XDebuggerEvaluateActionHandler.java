@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -52,7 +53,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
         focusOwner = window.getMostRecentFocusOwner();
       }
     }
-    if (focusOwner != null) {
+    if (focusOwner != null && ClientId.isCurrentlyUnderLocalId()) {
       dataContext = DataManager.getInstance().getDataContext(focusOwner);
     }
 
