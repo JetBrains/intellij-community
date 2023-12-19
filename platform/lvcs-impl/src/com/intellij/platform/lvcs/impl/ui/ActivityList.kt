@@ -37,15 +37,29 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
   }
 
   fun setItems(items: List<ActivityItem>) {
-    allItems = items
-    val filteringModel = FilteringListModel(createDefaultListModel(items))
-    setModel(filteringModel)
-    filteringModel.setFilter { visibleItems?.contains(it) != false }
+    doWithPreservedSelection {
+      allItems = items
+      val filteringModel = FilteringListModel(createDefaultListModel(items))
+      setModel(filteringModel)
+      filteringModel.setFilter { visibleItems?.contains(it) != false }
+    }
   }
 
   fun setVisibleItems(items: Set<ActivityItem>?) {
-    visibleItems = items
-    (model as? FilteringListModel)?.refilter()
+    doWithPreservedSelection {
+      visibleItems = items
+      (model as? FilteringListModel)?.refilter()
+    }
+  }
+
+  private fun doWithPreservedSelection(task: () -> Unit) {
+    val selection = Selection()
+    try {
+      task()
+    }
+    finally {
+      selection.restore()
+    }
   }
 
   fun addListener(listener: Listener, parent: Disposable) {
@@ -56,6 +70,22 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
     fun onSelectionChanged(selection: ActivitySelection)
     fun onEnter(): Boolean
     fun onDoubleClick(): Boolean
+  }
+
+  private inner class Selection {
+    val selectedItems = selectionModel.selectedIndices.mapTo(mutableSetOf()) { model.getElementAt(it) }
+
+    fun restore() {
+      val newIndices = 0.until(model.size).filter { selectedItems.contains(model.getElementAt(it)) }
+
+      selectionModel.valueIsAdjusting = true
+      selectionModel.clearSelection()
+      for (index in newIndices) {
+        selectionModel.addSelectionInterval(index, index)
+      }
+      if (selectionModel.isSelectionEmpty && model.size > 0) selectionModel.addSelectionInterval(0, 0)
+      selectionModel.valueIsAdjusting = false
+    }
   }
 
   private inner class MyEnterListener : KeyAdapter() {
