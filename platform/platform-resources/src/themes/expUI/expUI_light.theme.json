@@ -283,7 +283,8 @@
         "successBorder": "Green8",
         "warningBackground": "Yellow9",
         "warningBorder": "Yellow6",
-        "iconHoverBackground": "#0000000D"
+        "iconHoverBackground": "#0000000D",
+        "selectionBackground": "Grey12"
       }
     },
 

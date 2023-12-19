@@ -5,6 +5,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
@@ -25,7 +26,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -169,11 +169,11 @@ public final class ParameterInfoComponent extends JPanel {
   private void setPanels() {
     myMainPanel.removeAll();
     myPanels = new OneElementComponent[myParameterInfoControllerData.getDescriptors().length];
+    int lineGap = UISettings.getInstance().getCompactMode() ? 4 : 8;
     for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
       myPanels[i] = new OneElementComponent();
-      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
-                                                          GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          JBInsets.emptyInsets(), 0, 0));
+      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                          i > 0 && mySimpleDesignMode ? new JBInsets(lineGap, 0, 0, 0) : JBInsets.emptyInsets(), 0, 0));
     }
   }
 
@@ -199,7 +199,7 @@ public final class ParameterInfoComponent extends JPanel {
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
       if (mySimpleDesignMode) {
-        myShortcutLabel.setBorder(JBUI.Borders.emptyTop(12));
+        myShortcutLabel.setBorder(JBUI.Borders.emptyTop(10));
       }
       else {
         Font labelFont = StartupUiUtil.getLabelFont();
@@ -294,14 +294,7 @@ public final class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      if (mySimpleDesignMode) {
-        if (!isSingleParameterInfo() && isHighlighted() && myPanels.length > 1) {
-          if (htmlText.contains("<p>") || htmlText.contains("<p ")) { //NON-NLS
-            myPanels[i].setLineBorder(i > 0, !isLastParameterOwner());
-          }
-        }
-      }
-      else {
+      if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
     }
@@ -416,68 +409,31 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     int length = myPanels.length;
-    boolean border = true;
-    for (int i = 0; i < length; i++) {
-      OneElementComponent panel = myPanels[i];
+
+    if (length == 1) {
+      OneElementComponent panel = myPanels[0];
       int count = panel.getComponentCount();
 
-      if (length > 1) {
-        if (count > 1) {
-          panel.setLineBorder(i > 0 && border, i != length - 1);
-          border = false;
-        }
-        else {
-          border = true;
-        }
-      }
+      panel.myShowSelection = false;
 
-      if (i == length - 1) {
-        if (count == 1) {
-          ((JComponent)panel.getComponent(0)).setBorder(null);
-          continue;
-        }
-      }
-      else if (count == 1) {
-        ((JComponent)panel.getComponent(0)).setBorder(JBUI.Borders.emptyBottom(3));
-        continue;
-      }
-      if (count > 1) {
-        for (int j = 0; j < count - 1; j++) {
-          ((JComponent)panel.getComponent(j)).setBorder(JBUI.Borders.emptyBottom(3));
-        }
-        ((JComponent)panel.getComponent(count - 1)).setBorder(null);
-      }
-    }
-
-    List<JLabel> labels = new ArrayList<>();
-
-    for (OneElementComponent panel : myPanels) {
-      int count = panel.getComponentCount();
       for (int i = 0; i < count; i++) {
         OneLineComponent line = (OneLineComponent)panel.getComponent(i);
-        if (line.myLabel.getIcon() != EmptyIcon.ICON_16) {
-          for (int j = i + 1; j < count; j++) {
-            OneLineComponent nextLine = (OneLineComponent)panel.getComponent(j);
-            if (nextLine.myLabel.getIcon() != EmptyIcon.ICON_16) {
-              nextLine.myLabel.setIcon(EmptyIcon.ICON_16);
-            }
-          }
-          if (myPanels.length == 1) {
-            for (int j = 0; j < count; j++) {
-              OneLineComponent nextLine = (OneLineComponent)panel.getComponent(j);
-              labels.add(nextLine.myLabel);
-            }
-            break;
-          }
-          return;
-        }
-        labels.add(line.myLabel);
+        line.myLabel.setIcon(null);
+        line.myLabel.setIconTextGap(0);
       }
     }
-
-    for (JLabel label : labels) {
-      label.setIcon(null);
-      label.setIconTextGap(0);
+    else {
+      for (OneElementComponent panel : myPanels) {
+        if (panel.myShowSelection) {
+          int count = panel.getComponentCount();
+          if (count > 1) {
+            for (int i = 1; i < count; i++) {
+              OneLineComponent line = (OneLineComponent)panel.getComponent(i);
+              line.myLabel.setIcon(EmptyIcon.ICON_16);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -494,6 +450,7 @@ public final class ParameterInfoComponent extends JPanel {
   }
 
   private final class OneElementComponent extends JPanel {
+    private boolean myShowSelection;
 
     OneElementComponent() {
       super(new GridBagLayout());
@@ -522,9 +479,7 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     private void setup(@NlsContexts.Label String htmlText, Color background) {
-      if (!mySimpleDesignMode) {
-        setBackground(background);
-      }
+      configureColor(background);
       getOneLineComponent(0).doSetup(htmlText, background);
       trimComponents(1);
     }
@@ -538,9 +493,7 @@ public final class ParameterInfoComponent extends JPanel {
                          boolean isDisabledBeforeHighlight,
                          Color background) {
       StringBuilder buf = new StringBuilder(text.length());
-      if (!mySimpleDesignMode) {
-        setBackground(background);
-      }
+      configureColor(background);
 
       String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT),
                                         // disable splitting by width, to avoid depending on platform's font in tests
@@ -586,9 +539,7 @@ public final class ParameterInfoComponent extends JPanel {
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
       @NlsContexts.Label StringBuilder buf = new StringBuilder();
-      if (!mySimpleDesignMode) {
-        setBackground(background);
-      }
+      configureColor(background);
       int index = 0;
       int curOffset = 0;
       final List<Integer> startOffsets = new ArrayList<>();
@@ -637,22 +588,34 @@ public final class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
-    public void setLineBorder(boolean top, boolean bottom) {
-      setBorder(new CustomLineBorder(SEPARATOR_COLOR, top ? 13 : 0, 0, bottom ? 13 : 0, 0) {
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
-          Insets insets = getBorderInsets(c);
-          int lineY = JBUI.scale(6);
-          int lineHeight = JBUI.scale(1);
-          g.setColor(getColor());
-          if (insets.top > 0) {
-            g.fillRect(x, y + lineY, w, lineHeight);
-          }
-          if (insets.bottom > 0) {
-            g.fillRect(x, y + h - lineY, w, lineHeight);
-          }
-        }
-      });
+    private void configureColor(Color background) {
+      if (mySimpleDesignMode) {
+        myShowSelection = background != BACKGROUND;
+      }
+      else {
+        myShowSelection = false;
+        setBackground(background);
+      }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      if (!myShowSelection) {
+        return;
+      }
+
+      Graphics2D g2 = (Graphics2D)g.create();
+
+      try {
+        g2.setColor(JBUI.CurrentTheme.Editor.Tooltip.SELECTION_BACKGROUND);
+        GraphicsUtil.setupAAPainting(g2);
+        int arc = JBUI.scale(8);
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
+      }
+      finally {
+        g2.dispose();
+      }
     }
   }
 
@@ -664,8 +627,12 @@ public final class ParameterInfoComponent extends JPanel {
       setOpaque(!mySimpleDesignMode);
       myLabel.setOpaque(!mySimpleDesignMode);
       myLabel.setFont(NORMAL_FONT);
-      if (myRequestFocus)
+      if (mySimpleDesignMode) {
+        myLabel.setBorder(JBUI.Borders.empty(2, 6, 2, 8));
+      }
+      if (myRequestFocus) {
         myLabel.setFocusable(true);
+      }
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
@@ -712,8 +679,29 @@ public final class ParameterInfoComponent extends JPanel {
 
     private String doSetup(@NotNull @NlsContexts.Label String text, @NotNull Color background) {
       if (mySimpleDesignMode) {
-        myLabel.setIcon(background != BACKGROUND ? LafIconLookup.getIcon("checkmark") : EmptyIcon.ICON_16);
-        myLabel.setIconTextGap(JBUI.scale(8));
+        if (background != BACKGROUND) {
+          Icon icon = LafIconLookup.getIcon("checkmark");
+          myLabel.setIcon(new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+              icon.paintIcon(c, g, x, myLabel.getInsets().top + JBUI.scale(1));
+            }
+
+            @Override
+            public int getIconWidth() {
+              return icon.getIconWidth();
+            }
+
+            @Override
+            public int getIconHeight() {
+              return icon.getIconHeight();
+            }
+          });
+        }
+        else {
+          myLabel.setIcon(EmptyIcon.ICON_16);
+        }
+        myLabel.setIconTextGap(JBUI.scale(4));
       }
       else {
         myLabel.setBackground(background);

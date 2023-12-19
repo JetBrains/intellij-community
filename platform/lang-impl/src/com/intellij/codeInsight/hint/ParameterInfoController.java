@@ -183,6 +183,9 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
       hintHint.setComponentBorder(JBUI.Borders.empty());
     }
+    else {
+      hintHint.setBorderInsets(JBUI.insets(8, 8, 10, 8));
+    }
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
