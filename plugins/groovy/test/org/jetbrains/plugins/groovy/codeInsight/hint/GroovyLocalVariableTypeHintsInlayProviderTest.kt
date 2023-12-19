@@ -1,29 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider
 
-class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
+class GroovyLocalVariableTypeHintsInlayProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return GroovyProjectDescriptors.GROOVY_3_0
   }
 
-  private fun testTypeHints(@Language("Groovy") text: String, drawHintBefore: Boolean = false) {
-    doTestProvider("test.groovy",
-                   text,
-                   GroovyLocalVariableTypeHintsInlayProvider(),
-                   GroovyLocalVariableTypeHintsInlayProvider.Settings(insertBeforeIdentifier = drawHintBefore))
+  private fun testTypeHints(@Language("Groovy") text: String) {
+    doTestProvider("test.groovy", text, GroovyLocalVariableTypeHintsInlayProvider())
   }
 
   fun `test basic cases`() {
     val text = """
-      def x/*<# [:  Integer] #>*/ = 1
-      def y/*<# [:  String] #>*/ = "abc"
+      def x/*<# : |Integer #>*/ = 1
+      def y/*<# : |String #>*/ = "abc"
     """.trimIndent()
     testTypeHints(text)
   }
@@ -52,20 +49,14 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
 
   fun `test var keyword`() {
     testTypeHints("""
-      def x/*<# [:  Integer] #>*/ = 1
+      var x/*<# : |Integer #>*/ = 1
     """.trimIndent())
   }
 
   fun `test tuples`() {
     testTypeHints("""
-    def (a/*<# [:  Integer] #>*/, b/*<# [:  String] #>*/) = new Tuple2<>(1, "")
+    def (a/*<# : |Integer #>*/, b/*<# : |String #>*/) = new Tuple2<>(1, "")
     """.trimIndent())
-  }
-
-  fun `test draw hint before`() {
-    testTypeHints("""
-      def /*<# [Integer  ] #>*/a = 1
-    """.trimIndent(), true)
   }
 
   fun `test no type hint for variable with explicit type`() {

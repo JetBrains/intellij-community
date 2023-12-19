@@ -427,7 +427,15 @@
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
     <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyParameterTypeHintsInlayProvider"/>
-    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider"/>
+    <codeInsight.declarativeInlayProvider
+      language="Groovy"
+      implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider"
+      isEnabledByDefault="true"
+      group="TYPES_GROUP"
+      providerId="groovy.local.variable.implicit.types"
+      bundle="messages.GroovyBundle"
+      nameKey="settings.inlay.groovy.local.variable.implicit.types.name"
+      descriptionKey="settings.inlay.groovy.local.variable.implicit.types.description"/>
     <codeInsight.declarativeInlayProvider
       language="Groovy"
       implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyImplicitNullArgumentHintProvider"
