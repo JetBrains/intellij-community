@@ -14,6 +14,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
@@ -25,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
@@ -45,7 +47,8 @@ class GlobalWorkspaceModel : Disposable {
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
   private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()
-  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource }
+  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource
+                                                                     || entitySource is LegacyCustomLibraryEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
   val currentSnapshot: EntityStorageSnapshot
@@ -209,15 +212,15 @@ class GlobalWorkspaceModel : Disposable {
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
     val mutableEntityStorage = MutableEntityStorage.create()
-    // Copying global libraries
-    // TODO:: Check heree that we also copying custom libraries
+    // Copying global and custom libraries
     storage.entities(LibraryEntity::class.java).forEach { libraryEntity ->
       if (!globalEntitiesFilter.invoke(libraryEntity.entitySource)) return@forEach
       val libraryRootsCopy = libraryEntity.roots.map { root ->
         LibraryRoot(root.url.createCopyAtManager(vfuManager), root.type, root.inclusionOptions)
       }
 
-      val entitySourceCopy = (libraryEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
+      // If it's global library then we need to copy its entity source. For the custom lib we just reuse singleton
+      val entitySourceCopy = (libraryEntity.entitySource as? JpsGlobalFileEntitySource)?.copy(vfuManager) ?: LegacyCustomLibraryEntitySource
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
       val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {

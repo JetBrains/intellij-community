@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
@@ -63,7 +64,9 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
   override fun getPresentation(): LibraryTablePresentation = GLOBAL_LIBRARY_TABLE_PRESENTATION
 
-  override fun getModifiableModel(): LibraryTable.ModifiableModel = GlobalOrCustomModifiableLibraryTableBridgeImpl(this)
+  override fun getModifiableModel(): LibraryTable.ModifiableModel {
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
+  }
 
   override fun dispose(): Unit = Disposer.dispose(libraryTableDelegate)
 

@@ -58,7 +58,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
   override fun getPresentation(): LibraryTablePresentation = presentation
 
-  override fun getModifiableModel(): LibraryTable.ModifiableModel = GlobalOrCustomModifiableLibraryTableBridgeImpl(this)
+  override fun getModifiableModel(): LibraryTable.ModifiableModel = GlobalOrCustomModifiableLibraryTableBridgeImpl(this, Stitne)
 
   override fun isEditable(): Boolean = false
 

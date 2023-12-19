@@ -10,16 +10,16 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable):
+internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, private val entitySource: EntitySource):
   LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance().currentSnapshot), true),
   LibraryTable.ModifiableModel {
 
@@ -38,8 +38,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
     if (name.isNullOrBlank()) error("${libraryTableId.level} library must have a name")
     assertModelIsLive()
 
-    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(),
-                                                     LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), entitySource)
 
     if (type != null) {
       diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
