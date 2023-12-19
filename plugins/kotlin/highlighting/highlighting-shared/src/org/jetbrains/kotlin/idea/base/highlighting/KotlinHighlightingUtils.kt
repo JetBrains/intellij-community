@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.base.highlighting
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -33,58 +34,50 @@ fun KtFile.shouldHighlightErrors(): Boolean {
         return true
     }
 
-    val canCheckScript = shouldCheckScript()
-    if (canCheckScript == true) {
-        return this.shouldHighlightScript()
+    val indexingInProgress = isIndexingInProgress(project)
+    if (!indexingInProgress && isScript()) { /* isScript() is based on stub index */
+        return calculateShouldHighlightScript()
     }
 
-    return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = canCheckScript == null).matches(this)
+    return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = indexingInProgress).matches(this)
 }
 
 @ApiStatus.Internal
 fun KtFile.shouldHighlightFile(): Boolean {
-    val file = this
-    return CachedValuesManager.getManager(project).getCachedValue(file) {
-        CachedValueProvider.Result.create(
-            file.calculateShouldHighlightFile(),
-            ProjectRootModificationTracker.getInstance(project),
-            ScriptDependenciesModificationTracker.getInstance(project)
-        )
-    }
-}
-
-private fun KtFile.calculateShouldHighlightFile(): Boolean {
-    if (this is KtCodeFragment && context != null) {
-        return true
+    if (isIndexingInProgress(project)) {
+        // During indexing (the dumb mode) only compliant (dumb-aware) highlighting passes are executed.
+        return RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true).matches(this)
     }
 
-    if (OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
-        return true
-    }
-
-    val shouldCheckScript = shouldCheckScript()
-    if (shouldCheckScript == true) {
-        return this.shouldHighlightScript()
-    }
-
-    return if (shouldCheckScript != null) {
-        RootKindFilter.everything.matches(this) && moduleInfo !is NotUnderContentRootModuleInfo
+    return if (isScript()) { /* isScript() is based on stub index */
+        computeIfAbsent(ProjectRootModificationTracker.getInstance(project), ScriptDependenciesModificationTracker.getInstance(project)) {
+            calculateShouldHighlightScript()
+        }
     } else {
-        RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+        computeIfAbsent(ProjectRootModificationTracker.getInstance(project)) {
+            calculateShouldHighlightFile()
+        }
     }
 }
 
-private fun KtFile.shouldCheckScript(): Boolean? = runReadAction {
-    when {
-        // to avoid SNRE from stub (KTIJ-7633)
-        DumbService.getInstance(project).isDumb -> null
-        isScript() -> true
-        else -> false
+private fun KtFile.computeIfAbsent(vararg dependencies: Any, compute: KtFile.() -> Boolean): Boolean =
+    CachedValuesManager.getManager(project).getCachedValue(this) {
+        CachedValueProvider.Result.create(compute(), dependencies)
     }
-}
 
-private fun KtFile.shouldHighlightScript(): Boolean =
-    !KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
+private fun isIndexingInProgress(project: Project) = runReadAction { DumbService.getInstance(project).isDumb }
+
+private fun KtFile.shouldDefinitelyHighlight(): Boolean =
+    this is KtCodeFragment && context != null || OutsidersPsiFileSupport.isOutsiderFile(virtualFile)
+
+private fun KtFile.calculateShouldHighlightFile(): Boolean =
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && moduleInfo !is NotUnderContentRootModuleInfo
+
+private fun KtFile.calculateShouldHighlightScript(): Boolean {
+    if (shouldDefinitelyHighlight()) return true
+
+    return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
             && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
             && ScriptConfigurationManager.getInstance(project).getConfiguration(this) != null
-            && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+            && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
+}
