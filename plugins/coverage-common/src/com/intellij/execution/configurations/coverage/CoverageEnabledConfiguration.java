@@ -5,7 +5,10 @@ import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +35,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   private final RunConfigurationBase<?> myConfiguration;
 
   private boolean myIsCoverageEnabled = false;
-  private CoverageRunner myCoverageRunner;
+  private String myRunnerId;
+  private CoverageRunner myCachedRunner;
   private boolean myTrackTestFolders = false;
 
   private boolean myBranchCoverage = false;
@@ -52,7 +56,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   public CoverageEnabledConfiguration(@NotNull RunConfigurationBase<?> configuration, @NotNull CoverageRunner runner) {
     myConfiguration = configuration;
-    myCoverageRunner = runner;
+    setCoverageRunner(runner);
   }
 
   public @NotNull RunConfigurationBase<?> getConfiguration() {
@@ -64,7 +68,15 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   public @Nullable CoverageRunner getCoverageRunner() {
-    return myCoverageRunner;
+    if (myCachedRunner == null && myRunnerId != null) {
+      for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
+        if (myRunnerId.equals(runner.getId())) {
+          myCachedRunner = runner;
+          break;
+        }
+      }
+    }
+    return myCachedRunner;
   }
 
   /**
@@ -72,7 +84,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
    */
   @Deprecated
   public void setCoverageRunner(@Nullable CoverageRunner coverageRunner) {
-    myCoverageRunner = coverageRunner;
+    myRunnerId = coverageRunner == null ? null : coverageRunner.getId();
+    myCachedRunner = coverageRunner;
     myCoverageFilePath = null;
   }
 
@@ -140,9 +153,9 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
 
   public void coverageRunnerExtensionRemoved(@NotNull CoverageRunner runner) {
-    if (runner.getId().equals(myCoverageRunner.getId())) {
+    if (runner.getId().equals(myRunnerId)) {
       myConfiguration.putCopyableUserData(COVERAGE_KEY, null);
-      myCoverageRunner = null;
+      myCachedRunner = null;
     }
   }
 
@@ -173,13 +186,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     // coverage runner
     final String runnerId = element.getAttributeValue(COVERAGE_RUNNER);
     if (runnerId != null) {
-      myCoverageRunner = null;
-      for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
-        if (Comparing.strEqual(coverageRunner.getId(), runnerId)) {
-          myCoverageRunner = coverageRunner;
-          break;
-        }
-      }
+      myRunnerId = runnerId;
     }
   }
 
@@ -206,14 +213,15 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
 
     // runner
-    if (myCoverageRunner != null) {
-      element.setAttribute(COVERAGE_RUNNER, myCoverageRunner.getId());
+    if (myRunnerId != null) {
+      element.setAttribute(COVERAGE_RUNNER, myRunnerId);
     }
   }
 
   @NonNls
   protected @Nullable String createCoverageFile() {
-    if (myCoverageRunner == null) {
+    CoverageRunner runner = getCoverageRunner();
+    if (runner == null) {
       return null;
     }
 
@@ -223,7 +231,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     String projectName = FileUtil.sanitizeFileName(myConfiguration.getProject().getName());
     String configName = FileUtil.sanitizeFileName(myConfiguration.getName());
     String separator = coverageFileNameSeparator();
-    String extension = myCoverageRunner.getDataFileExtension();
+    String extension = runner.getDataFileExtension();
     String path = String.format("%s%s%s.%s", projectName, separator, configName, extension);
 
     return coverageRootPath.resolve(path).toString();
