@@ -1,9 +1,6 @@
 package bar
 
-import foo.A
 import foo.A.Companion.companionExtensionMember
-import foo.J
-import foo.O
 import foo.O.objectExtensionMember1
 import foo.X
 import foo.classExtension
@@ -22,9 +19,9 @@ fun test() {
     foo.J().javaClassMember()
     foo.J.javaClassStaticMember()
     foo.topLevel()
-    with(O) { 1.objectExtensionMember1() }
+    with(foo.O) { 1.objectExtensionMember1() }
     1.objectExtensionMember2()
-    with(A) { 1.companionExtensionMember() }
+    with(foo.A) { 1.companionExtensionMember() }
 
     foo.A()::classMember
     foo.A::classMember
@@ -48,7 +45,7 @@ fun test() {
     ::JConstr
     J::JJ
 
-    with(A()) {
+    with(foo.A()) {
         classMember()
         this.classMember()
         classExtension()
@@ -58,7 +55,7 @@ fun test() {
         this::classExtension
     }
 
-    with(J()) {
+    with(foo.J()) {
         javaClassMember()
         this.javaClassMember()
 

@@ -34,10 +34,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
  */
 @Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
-    override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
-        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
-        is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
-        else -> throw IncorrectOperationException()
+    override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement {
+        if (ktReference.isReferenceTo(element)) return element
+        return when (ktReference) {
+            is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+            is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+            else -> throw IncorrectOperationException()
+        }
     }
 
     private fun KtFile.unusedImports(): Set<KtImportDirective> =
@@ -89,6 +92,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     ): PsiElement {
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
+        if (simpleNameReference.resolve()?.kotlinFqName == fqName) return expression
         val parent = expression.parent
         val writableFqn = if (parent is KtCallableReferenceExpression && parent.callableReference == expression) {
             FqName.topLevel(fqName.shortName())
