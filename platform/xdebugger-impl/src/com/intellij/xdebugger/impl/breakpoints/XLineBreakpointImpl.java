@@ -371,11 +371,16 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       var oldLine = getLine();
       myState.setLine(line);
       mySourcePosition = null;
+
       if (visualLineMightBeChanged) {
         removeHighlighter();
-        redrawInlineInlays(getFile(), oldLine);
-        redrawInlineInlays(getFile(), getLine());
-      } // otherwise highlighter and inlay would move together with line
+      }
+
+      // We try to redraw inlays every time,
+      // due to lack of synchronization between inlay redrawing and breakpoint changes.
+      redrawInlineInlays(getFile(), oldLine);
+      redrawInlineInlays(getFile(), line);
+
       fireBreakpointChanged();
     }
   }
