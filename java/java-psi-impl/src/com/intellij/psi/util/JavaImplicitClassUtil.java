@@ -3,19 +3,15 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JavaImplicitClassUtil {
-  public static boolean isFileWithImplicitClass(@NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile) {
-      PsiJavaFile javaFile = (PsiJavaFile)file;
-      if (getImplicitClassFor(javaFile) != null) return true;
-    }
-    return false;
+  public static boolean isFileWithImplicitClass(@NotNull PsiElement file) {
+    return getImplicitClassFor(file) != null;
   }
 
   /**
@@ -25,7 +21,7 @@ public final class JavaImplicitClassUtil {
    * @return the implicitly declared class if found, null otherwise
    */
   @Nullable
-  public static PsiImplicitClass getImplicitClassFor(@NotNull PsiFile file) {
+  public static PsiImplicitClass getImplicitClassFor(@NotNull PsiElement file) {
     if (file instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)file;
       PsiClass[] classes = javaFile.getClasses();
