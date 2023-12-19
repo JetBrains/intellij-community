@@ -250,7 +250,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
             this.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
             this.kind = kotlinFacetSettings.kind
-            this.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
+            this.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
             val compilerSettings = kotlinFacetSettings.compilerSettings
             this.compilerSettings =
                 if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib", false)

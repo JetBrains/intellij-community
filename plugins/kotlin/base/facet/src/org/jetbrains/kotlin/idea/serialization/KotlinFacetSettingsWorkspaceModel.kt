@@ -60,7 +60,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
 
             val serializedArguments = entity.compilerArguments
             _compilerArguments = if (serializedArguments.isNotEmpty()) {
-                KotlinModuleSettingsSerializer.serializeFromString(serializedArguments) as? CommonCompilerArguments
+                CompilerArgumentsSerializer.deserializeFromString(serializedArguments)
             } else {
                 null
             }
@@ -68,7 +68,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             return _compilerArguments
         }
         set(value) {
-            entity.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(value)
+            entity.compilerArguments = CompilerArgumentsSerializer.serializeToString(value)
             updateMergedArguments()
             _compilerArguments = value
         }

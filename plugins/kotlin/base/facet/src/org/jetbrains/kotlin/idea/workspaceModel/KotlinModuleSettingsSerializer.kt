@@ -8,14 +8,11 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.util.descriptors.ConfigFileItemSerializer
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import java.io.*
-import java.util.*
 
 
 class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<KotlinSettingsEntity>, ConfigFileItemSerializer {
@@ -86,7 +83,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.kind = kotlinFacetSettings.kind
 
         if (kotlinFacetSettings.compilerArguments != null) {
-            kotlinSettingsEntity.compilerArguments = serializeToString(kotlinFacetSettings.compilerArguments!!)
+            kotlinSettingsEntity.compilerArguments = CompilerArgumentsSerializer.serializeToString(kotlinFacetSettings.compilerArguments!!)
         }
 
         val compilerSettings = kotlinFacetSettings.compilerSettings
@@ -113,7 +110,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             useProjectSettings = entity.useProjectSettings
 
             compilerArguments =
-                if (entity.compilerArguments.isEmpty()) null else serializeFromString(entity.compilerArguments) as CommonCompilerArguments
+                if (entity.compilerArguments.isEmpty()) null else CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
 
             val compilerSettingsFromEntity = entity.compilerSettings
             val isCompilerSettingsChanged =
@@ -156,30 +153,5 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         }.serializeFacetSettings(rootElement)
 
         return rootElement
-    }
-
-    // naive implementation of compile arguments serialization, need to be optimized
-    // TODO: optimize compiler arguments serialization (KTIJ-27769)
-    companion object {
-        fun serializeToString(o: Serializable?): String {
-            if (o == null) return ""
-            lateinit var res: String
-            ByteArrayOutputStream().use { baos ->
-                ObjectOutputStream(baos).use { oos ->
-                    oos.writeObject(o)
-                }
-                res = Base64.getEncoder().encodeToString(baos.toByteArray())
-            }
-            return res
-        }
-
-        fun serializeFromString(s: String): Any {
-            val data: ByteArray = Base64.getDecoder().decode(s)
-            return ObjectInputStream(
-                ByteArrayInputStream(data)
-            ).use {
-                it.readObject()
-            }
-        }
     }
 }

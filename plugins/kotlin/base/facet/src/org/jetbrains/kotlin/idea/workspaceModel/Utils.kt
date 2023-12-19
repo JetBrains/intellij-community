@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import org.jetbrains.kotlin.cli.common.arguments.Freezable
+import com.google.gson.Gson
+import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_OUTPUT_DIRECTORY
+import org.jetbrains.kotlin.platform.impl.FakeK2NativeCompilerArguments
 
 class ObservableCompilerSettings(val updateEntity: (CompilerSettings) -> Unit) : CompilerSettings() {
     override var additionalArguments: String = DEFAULT_ADDITIONAL_ARGUMENTS
@@ -81,4 +82,41 @@ fun deserializeExternalSystemTestRunTask(deserializedTask: String): ExternalSyst
 
         else -> error("Unsupported task type in provided string.")
     } ?: error("Task deserialization failed. Check that class type is present in `deserializeExternalSystemTestRunTask`")
+}
+
+object CompilerArgumentsSerializer {
+    private val gson = Gson()
+
+    private val argumentsTypeMap = mapOf(
+        "J" to K2JVMCompilerArguments::class.java,
+        "S" to K2JSCompilerArguments::class.java,
+        "M" to K2MetadataCompilerArguments::class.java,
+        "N" to K2NativeCompilerArguments::class.java,
+        "F" to FakeK2NativeCompilerArguments::class.java,
+        "D" to CommonCompilerArguments.DummyImpl::class.java
+    )
+
+    fun serializeToString(commonCompilerArguments: CommonCompilerArguments?): String {
+        return commonCompilerArguments?.let {
+            val classIdentifier = argumentsTypeMap.entries.firstOrNull { it.value == commonCompilerArguments.javaClass }?.key
+                ?: error("Class not found: ${commonCompilerArguments.javaClass}")
+
+            classIdentifier + gson.toJson(commonCompilerArguments)
+        } ?: ""
+    }
+
+    fun deserializeFromString(serializedArguments: String): CommonCompilerArguments? {
+        return when {
+            serializedArguments.isEmpty() -> null
+            serializedArguments.isNotBlank() && serializedArguments[0].isLetter() -> {
+                val classIdentifier = serializedArguments.substring(0, 1)
+                val classType = argumentsTypeMap[classIdentifier]
+                    ?: error("Class identifier not found: $classIdentifier")
+
+                gson.fromJson(serializedArguments.substring(1), classType)
+            }
+
+            else -> error("Invalid serialization format: $serializedArguments")
+        }
+    }
 }
