@@ -11,7 +11,8 @@ import java.io.File
 
 class ExternalCoverageTest : CoverageIntegrationBaseTest() {
   fun `test watching externally added coverage`(): Unit = runBlocking {
-    val  ijSuite = loadIJSuiteCopy()
+    assertNoSuites()
+    val ijSuite = loadIJSuiteCopy()
     val ijSuiteFile = File(ijSuite.suites[0].coverageDataFileProvider.coverageDataFilePath)
 
     openSuiteAndWait(ijSuite)
@@ -34,5 +35,8 @@ class ExternalCoverageTest : CoverageIntegrationBaseTest() {
     val classData = projectData.getClassData("foo.bar.BarClass")
     val lineData = classData.getLineData(9)
     Assert.assertEquals(LineCoverage.FULL, lineData.status.toByte())
+
+    closeSuite(ijSuite)
+    assertNoSuites()
   }
 }

@@ -92,6 +92,11 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     return loadIJSuite(path = ijSuiteFile.absolutePath)
   }
 
+  protected fun assertNoSuites() {
+    Assert.assertNull(manager.currentSuitesBundle)
+    Assert.assertEquals(0, manager.suites.size)
+  }
+
   companion object {
     protected fun getTestDataPath() = PluginPathManager.getPluginHomePath("coverage") + "/testData/simple"
 

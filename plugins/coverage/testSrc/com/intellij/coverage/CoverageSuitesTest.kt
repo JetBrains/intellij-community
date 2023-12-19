@@ -173,8 +173,4 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     manager.addCoverageSuite(suite, suite.presentableName)
   }
 
-  private fun assertNoSuites() {
-    Assert.assertNull(manager.currentSuitesBundle)
-    Assert.assertTrue(manager.suites.isEmpty())
-  }
 }
