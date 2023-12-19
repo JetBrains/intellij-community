@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -61,6 +62,14 @@ public final class DependencyResolverImpl implements DependencyResolver {
   private final @NotNull Project myProject;
   private final boolean myDownloadJavadoc;
   private final boolean myDownloadSources;
+
+  public DependencyResolverImpl(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    @NotNull GradleDependencyDownloadPolicy dependencyDownloadPolicy
+  ) {
+    this(context, project, dependencyDownloadPolicy.isDownloadJavadoc(), dependencyDownloadPolicy.isDownloadSources());
+  }
 
   public DependencyResolverImpl(
     @NotNull ModelBuilderContext context,

@@ -31,6 +31,10 @@ public final class Messages {
   public final static @NotNull String EAR_CONFIGURATION_MODEL_GROUP = "gradle.earConfigurationModel.group";
   public final static @NotNull String WAR_CONFIGURATION_MODEL_GROUP = "gradle.warConfigurationModel.group";
 
+  public final static @NotNull String DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP = "gradle.dependencyDownloadPolicyModel.group";
+  public final static @NotNull String DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP = "gradle.dependencyDownloadPolicyModel.cacheGet.group";
+  public final static @NotNull String DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP = "gradle.dependencyDownloadPolicyModel.cacheSet.group";
+
   public final static @NotNull String DEPENDENCY_ACCESSOR_MODEL_GROUP = "gradle.dependencyAccessorModel.group";
   public final static @NotNull String DEPENDENCY_GRAPH_MODEL_GROUP = "gradle.dependencyGraphModel.group";
 

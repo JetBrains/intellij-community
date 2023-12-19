@@ -3,6 +3,7 @@ com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuil
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyGraphModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyBuilder
 org.jetbrains.plugins.gradle.tooling.builder.AnnotationProcessingModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.WarModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.EarModelBuilderImpl

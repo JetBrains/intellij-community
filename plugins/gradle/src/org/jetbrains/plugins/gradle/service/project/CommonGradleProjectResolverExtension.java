@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyProvider;
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
@@ -775,6 +776,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       super.getModelProviders(),
       new GradleSourceSetModelProvider(),
       new GradleTaskModelProvider(),
+      new GradleDependencyDownloadPolicyProvider(),
       new GradleExternalProjectModelProvider()
     );
   }

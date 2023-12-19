@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
-import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPolicyUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.util.GradleVersion;
@@ -48,9 +49,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    final boolean downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project);
-    final boolean downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project);
-    GradleDependencyArtifactPolicyUtil.setPolicy(project, downloadSources, downloadJavadoc);
+    GradleDependencyDownloadPolicy dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
+      .getDependencyDownloadPolicy(project);
 
     Project parent = project.getParent();
     if (parent != null) {
@@ -64,7 +64,7 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
     if (classpathConfiguration == null) return null;
 
-    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, downloadJavadoc, downloadSources)
+    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, dependencyDownloadPolicy)
       .resolveDependencies(classpathConfiguration);
 
     for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {

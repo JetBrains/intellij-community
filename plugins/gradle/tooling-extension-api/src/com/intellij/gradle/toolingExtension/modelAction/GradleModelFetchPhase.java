@@ -30,6 +30,20 @@ public enum GradleModelFetchPhase {
   TASK_WARM_UP_PHASE("Task warm-up phase"),
 
   /**
+   * Model providers, in this phase, configures dependency download policies for the dependency resolution in the next phase.
+   * <p>
+   * These model providers will be executed after "sync" tasks are run
+   * <p>
+   * [DEPENDENCY_DOWNLOAD_POLICY_PHASE] should be before [PROJECT_SOURCE_SET_PHASE],
+   * because model builders in [PROJECT_SOURCE_SET_PHASE] resolves and downloads project dependencies.
+   * In the future, the dependency resolution phase will be extracted from the source-set phase
+   * and [DEPENDENCY_DOWNLOAD_POLICY_PHASE] will be a first part of the new phase.
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished(BuildAction, IntermediateResultHandler)
+   */
+  DEPENDENCY_DOWNLOAD_POLICY_PHASE("Dependency download policy phase"),
+
+  /**
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.
    * <p>
    * These model providers will be executed after "sync" tasks are run
