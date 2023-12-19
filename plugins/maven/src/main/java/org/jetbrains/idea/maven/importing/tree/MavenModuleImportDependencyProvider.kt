@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
+import org.jetbrains.idea.maven.utils.MavenLog
 
 private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
 
@@ -50,9 +51,11 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
 
   private fun getDependency(artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
     val dependencyType = artifact.type
+    MavenLog.LOG.trace("Creating dependency from $mavenProject to $artifact, type $dependencyType")
 
     if (!dependencyTypesFromSettings.contains(dependencyType)
         && !mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
+      MavenLog.LOG.trace("Dependency skipped")
       return emptyList()
     }
 
@@ -61,11 +64,18 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
     val depProject = myProjectTree.findProject(artifact.mavenId)
 
     if (depProject != null) {
-      if (depProject === mavenProject) return emptyList()
+      MavenLog.LOG.trace("Dependency project $depProject")
+
+      if (depProject === mavenProject) {
+        MavenLog.LOG.trace("Project depends on itself")
+        return emptyList()
+      }
 
       val mavenProjectImportData = moduleImportDataByMavenId[depProject.mavenId]
 
-      if (mavenProjectImportData == null || myProjectTree.isIgnored(depProject)) {
+      val depProjectIgnored = myProjectTree.isIgnored(depProject)
+      if (mavenProjectImportData == null || depProjectIgnored) {
+        MavenLog.LOG.trace("Created base dependency, project ignored: $depProjectIgnored, import data: $mavenProjectImportData")
         return listOf<MavenImportDependency<*>>(BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope))
       }
       else {
@@ -80,18 +90,22 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
             && !isTestJar
             && "system" != artifact.scope
             && "false" != System.getProperty("idea.maven.classifier.dep")) {
+          MavenLog.LOG.trace("Created library dependency")
           result.add(LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope))
         }
 
+        MavenLog.LOG.trace("Created module dependency")
         result.add(ModuleDependency(moduleName, scope, isTestJar))
         return result
       }
     }
     else if ("system" == artifact.scope) {
+      MavenLog.LOG.trace("Created system dependency")
       return listOf<MavenImportDependency<*>>(SystemDependency(artifact, scope))
     }
     else {
-      val finalArtifact = if ("bundle" == dependencyType) {
+      val isBundle = "bundle" == dependencyType
+      val finalArtifact = if (isBundle) {
         MavenArtifact(
           artifact.groupId,
           artifact.artifactId,
@@ -109,6 +123,7 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
       }
       else artifact
 
+      MavenLog.LOG.trace("Created base dependency, bundle: $isBundle")
       return listOf<MavenImportDependency<*>>(BaseDependency(finalArtifact, scope))
     }
   }
