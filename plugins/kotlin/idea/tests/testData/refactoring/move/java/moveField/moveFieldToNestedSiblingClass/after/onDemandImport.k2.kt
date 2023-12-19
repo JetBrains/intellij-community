@@ -1,6 +1,3 @@
-import A.B.X
-
-
 fun bar(s: String) {
-    X = s
+    A.B.X = s
 }
