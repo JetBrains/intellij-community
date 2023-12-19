@@ -6,6 +6,7 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
+import com.intellij.tasks.gitlab.GitlabRepositoryType;
 import com.intellij.tasks.gitlab.GitlabTask;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
@@ -78,13 +79,13 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
 
     final Task[] allIssues = myRepository.getIssues("", 0, 20, true);
     assertSize(2, allIssues);
-    assertNotNull(ContainerUtil.find(allIssues, task -> task.isClosed() && task.getSummary().equals("Closed issue #1")));
-    assertNotNull(ContainerUtil.find(allIssues, task -> !task.isClosed() && task.getSummary().equals("Opened issue #1")));
+    assertNotNull(ContainerUtil.find(allIssues, task -> task.isClosed() && task.getSummary().equals("Closed Issue #1")));
+    assertNotNull(ContainerUtil.find(allIssues, task -> !task.isClosed() && task.getSummary().equals("Opened Issue #1")));
 
     final Task[] openedIssues = myRepository.getIssues("", 0, 20, false);
     assertSize(1, openedIssues);
     assertFalse(openedIssues[0].isClosed());
-    assertEquals("Opened issue #1", openedIssues[0].getSummary());
+    assertEquals("Opened Issue #1", openedIssues[0].getSummary());
   }
 
   // IDEA-136499
@@ -133,7 +134,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myRepository = new GitlabRepository();
+    myRepository = (GitlabRepository)new GitlabRepositoryType().createRepository();
     myRepository.setUrl(SERVER_URL);
     myRepository.setPassword(TOKEN);
   }
