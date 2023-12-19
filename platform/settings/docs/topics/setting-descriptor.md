@@ -1,3 +1,5 @@
+# Setting Descriptor
+
 `SettingDescriptor` has two required properties:
 
  * key

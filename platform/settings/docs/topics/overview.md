@@ -1,8 +1,10 @@
+# Overview
+
 A Settings Controller is a service that encapsulates both the persistence and calculation of individual values. Each setting is represented by a distinct [key](setting-descriptor.md).
 
 The Settings Controller returns a calculated value corresponding to a given key. A "calculated" value means that the actual value is computed based on the setting value derived from all participating sources.
 
-```d2 scale="0.8"
+```d2
 client: Client
 
 scm: Settings Controller Mediator {
@@ -35,8 +37,9 @@ secondSC -> Database
 
 secondSC -> nSC
 ```
+{scale="0.8"}
 
-The extension order defines the sequence in which controllers are processed. 
+The extension order defines the sequence in which controllers are processed.
 
 The mediator selects the first controller,
 and the processing order of the following controllers is determined by the implementation of this first controller.
@@ -87,4 +90,4 @@ One important TBE requirement: unset value — set to some default value.
 
 A service is an entity that implements specific IDE functionality. The Settings API, replacing the previous `PropertiesComponent`, can be used anywhere a suspend context is available.
 
-Still the term `Service` is chosen specifically, advocating that ideally, all code should be implemented as a service.
+Still, the term `Service` is chosen specifically, advocating that ideally, all code should be implemented as a service.
