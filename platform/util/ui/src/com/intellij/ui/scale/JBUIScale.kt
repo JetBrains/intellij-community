@@ -315,7 +315,10 @@ object JBUIScale {
   }
 
   private fun discreteScale(scale: Float): Float {
-    return (scale / DISCRETE_SCALE_RESOLUTION).roundToInt() * DISCRETE_SCALE_RESOLUTION
+    return (scale / DISCRETE_SCALE_RESOLUTION).let {
+      if (Registry.`is`("ide.scale.discrete.take.floor", false)) it.toInt()
+      else it.roundToInt()
+    } * DISCRETE_SCALE_RESOLUTION
   }
 
   /**
