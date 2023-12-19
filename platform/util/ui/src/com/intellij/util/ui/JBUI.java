@@ -787,6 +787,7 @@ public final class JBUI {
         Color SUCCESS_BORDER = JBColor.namedColor("Editor.ToolTip.successBorder", 0xAFDBB8, 0x375239);
         Color WARNING_BACKGROUND = JBColor.namedColor("Editor.ToolTip.warningBackground", 0xFFF6DE, 0x3D3223);
         Color WARNING_BORDER = JBColor.namedColor("Editor.ToolTip.warningBorder", 0xFED277, 0x5E4D33);
+        Color SELECTION_BACKGROUND = JBColor.namedColor("Editor.ToolTip.selectionBackground", 0xEBECF0, 0x2B2D30);
       }
 
       interface Notification {
