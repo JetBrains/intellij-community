@@ -120,7 +120,7 @@ class ColumnVisualisationType:
     PERCENTAGE = "percentage"
 
 class ColumnVisualisationUtils:
-    NUM_BINS = 5
+    NUM_BINS = 20
     MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
     UNIQUE_VALUES_PERCENT = 50
 

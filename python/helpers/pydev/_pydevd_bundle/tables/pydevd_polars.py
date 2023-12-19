@@ -75,7 +75,7 @@ class ColumnVisualisationType:
 
 
 class ColumnVisualisationUtils:
-    NUM_BINS = 5
+    NUM_BINS = 20
     MAX_UNIQUE_VALUES = 3
     MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 50
 
