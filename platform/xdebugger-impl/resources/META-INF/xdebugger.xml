@@ -20,6 +20,7 @@
     <extensionPoint name="xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.run.to.cursor.state" interface="com.intellij.xdebugger.impl.RunToCursorState" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -106,6 +107,9 @@
     <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultPresentationProvider"/>
 
     <xdebugger.dialog.process.view.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToRemoteProcessViewProvider" />
+
+    <xdebugger.run.to.cursor.state implementation="com.intellij.xdebugger.impl.DefaultRunToCursorState"
+                                   id="default" order="last"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
