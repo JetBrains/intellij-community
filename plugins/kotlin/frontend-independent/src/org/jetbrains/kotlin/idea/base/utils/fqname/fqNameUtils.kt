@@ -2,34 +2,10 @@
 
 package org.jetbrains.kotlin.idea.base.utils.fqname
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
-
-/**
- * Returns FqName for given declaration (either Java or Kotlin)
- */
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName' instead",
-    ReplaceWith("this.kotlinFqName", imports = ["org.jetbrains.kotlin.idea.base.psi.kotlinFqName"])
-)
-fun PsiElement.getKotlinFqName(): FqName? = when (val element = namedUnwrappedElement) {
-    is PsiPackage -> FqName(element.qualifiedName)
-    is PsiClass -> element.qualifiedName?.let(::FqName)
-    is PsiMember -> element.getName()?.let { name ->
-        val prefix = element.containingClass?.qualifiedName
-        FqName(if (prefix != null) "$prefix.$name" else name)
-    }
-    is KtNamedDeclaration -> element.fqName
-    else -> null
-}
 
 fun FqName.isImported(importPath: ImportPath, skipAliasedImports: Boolean = true): Boolean {
     return when {
