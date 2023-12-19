@@ -30,7 +30,7 @@ interface IjentApi : AutoCloseable {
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
    */
-  suspend fun info(): Info
+  val info: Info
 
   /**
    * Explicitly terminates the process on the remote machine.

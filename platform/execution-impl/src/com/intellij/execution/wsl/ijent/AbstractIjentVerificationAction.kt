@@ -60,7 +60,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
 
               coroutineScope {
                 launch {
-                  val info = ijent.info()
+                  val info = ijent.info
                   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                     Messages.showInfoMessage(
                       """
