@@ -2,6 +2,6 @@
   <extensions defaultExtensionNs="com.intellij.cce">
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinMultiLineEvaluationVisitor"/>
-    <completionGolfVisitorFactory implementation="com.intellij.cce.visitor.KotlinCompletionGolfVisitorFactory"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.KotlinLineCompletionVisitorFactory"/>
   </extensions>
 </idea-plugin>

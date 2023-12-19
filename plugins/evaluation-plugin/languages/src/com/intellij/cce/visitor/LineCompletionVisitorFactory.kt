@@ -5,13 +5,13 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.openapi.extensions.ExtensionPointName
 
-interface CompletionGolfVisitorFactory {
+interface LineCompletionVisitorFactory {
   val language: Language
-  fun createVisitor(featureName: String, mode: CompletionGolfMode): CompletionGolfEvaluationVisitor
+  fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor
 
   companion object {
-    val EP_NAME: ExtensionPointName<CompletionGolfVisitorFactory> = ExtensionPointName.create(
-      "com.intellij.cce.completionGolfVisitorFactory"
+    val EP_NAME: ExtensionPointName<LineCompletionVisitorFactory> = ExtensionPointName.create(
+      "com.intellij.cce.lineCompletionVisitorFactory"
     )
   }
 }

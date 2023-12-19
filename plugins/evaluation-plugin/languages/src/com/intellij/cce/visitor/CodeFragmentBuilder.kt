@@ -16,7 +16,7 @@ abstract class CodeFragmentBuilder {
       val language = Language.resolve(languageName)
 
       return when {
-        strategy is CompletionGolfStrategy -> CompletionGolfFragmentBuilder(project, language, featureName, strategy.mode)
+        strategy is CompletionGolfStrategy -> LineCompletionFragmentBuilder(project, language, featureName, strategy.mode)
         language != Language.ANOTHER -> CodeFragmentFromPsiBuilder(project, language)
         else -> CodeFragmentFromTextBuilder()
       }

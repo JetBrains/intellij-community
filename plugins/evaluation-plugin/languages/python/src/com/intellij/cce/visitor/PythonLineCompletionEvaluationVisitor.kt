@@ -2,13 +2,8 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.CodeLine
-import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.golf.CompletionGolfMode
-import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
-import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -19,18 +14,18 @@ import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
 
 
-class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
+class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.PYTHON
-  override fun createVisitor(featureName: String, mode: CompletionGolfMode): CompletionGolfEvaluationVisitor {
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
     when (mode) {
       CompletionGolfMode.ALL -> return AllVisitor(featureName)
       CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
     }
   }
 
-  class AllVisitor(override val feature: String) : CompletionGolfAllEvaluationVisitor, PyRecursiveElementVisitor() {
+  class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, PyRecursiveElementVisitor() {
     override val language: Language = Language.PYTHON
-    override val processor = CompletionGolfAllEvaluationVisitor.Processor()
+    override val processor = LineCompletionAllEvaluationVisitor.Processor()
 
     override fun visitComment(comment: PsiComment) {
       processor.skipElement(comment)
@@ -60,72 +55,46 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     }
   }
 
-  class TokensVisitor(override val feature: String) : CompletionGolfEvaluationVisitor, PyRecursiveElementVisitor() {
-    private var codeFragment: CodeFragment? = null
+  class TokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, PyRecursiveElementVisitor() {
+    private val visitorHelper = LineCompletionVisitorHelper()
     private val tokenSetContributor = PythonTokenSetContributor()
-    private val lines = mutableListOf<CodeLine>()
 
     override val language: Language = Language.PYTHON
 
-    override fun getFile(): CodeFragment {
-      codeFragment?.let { file ->
-        lines.filter { it.getChildren().isNotEmpty() }.forEach { file.addChild(it) }
-        return file
-      }
-      throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
-    }
+    override fun getFile(): CodeFragment = visitorHelper.getFile()
 
     override fun visitPyFile(file: PyFile) {
-      codeFragment = CodeFragment(file.textOffset, file.textLength)
-      lines.clear()
-      var offset = 0
-      for (line in file.text.lines()) {
-        lines.add(CodeLine(line, offset))
-        offset += line.length + 1
-      }
+      visitorHelper.visitFile(file)
       super.visitFile(file)
     }
 
     override fun visitElement(element: PsiElement) {
       if (tokenSetContributor.keywordTokens.contains(element.elementType)) {
-        addElement(element.node)
+        visitorHelper.addElement(element.node)
       }
       else if (element is PsiNameIdentifierOwner) {
-        element.nameIdentifier?.node?.let { addElement(it) }
+        element.nameIdentifier?.node?.let { visitorHelper.addElement(it) }
       }
       super.visitElement(element)
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
-      node.nameElement?.let { addElement(it) }
+      node.nameElement?.let { visitorHelper.addElement(it) }
       super.visitPyReferenceExpression(node)
     }
 
     override fun visitPyKeywordArgument(node: PyKeywordArgument) {
-      node.keywordNode?.let { addElement(it) }
+      node.keywordNode?.let { visitorHelper.addElement(it) }
       super.visitPyKeywordArgument(node)
     }
 
     override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
       if (node.parent is PySubscriptionExpression) {
-        addElement(node.node)
+        visitorHelper.addElement(node.node)
       }
       else {
         super.visitPyStringLiteralExpression(node)
       }
-    }
-
-    private fun addElement(element: ASTNode) {
-      val text = element.text.take(MAX_PREFIX_LENGTH)
-      if (text.isValuableString()) {
-        lines.find { it.offset <= element.startOffset && it.offset + it.text.length > element.startOffset }?.addChild(
-          CodeToken(text, element.startOffset)
-        )
-      }
-    }
-
-    companion object {
-      const val MAX_PREFIX_LENGTH: Int = 4
     }
   }
 }

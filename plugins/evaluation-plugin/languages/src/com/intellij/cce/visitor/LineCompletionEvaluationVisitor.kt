@@ -10,10 +10,10 @@ import com.intellij.refactoring.suggested.startOffset
 import kotlin.math.min
 
 
-interface CompletionGolfEvaluationVisitor : EvaluationVisitor
+interface LineCompletionEvaluationVisitor : EvaluationVisitor
 
 
-interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
+interface LineCompletionAllEvaluationVisitor : LineCompletionEvaluationVisitor {
   val processor: Processor
 
   override fun getFile() = processor.safeCodeFragment
@@ -75,7 +75,7 @@ interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
 
 
   class Default(override val feature: String, override val language: Language = Language.ANOTHER)
-    : CompletionGolfAllEvaluationVisitor, PsiRecursiveElementVisitor() {
+    : LineCompletionAllEvaluationVisitor, PsiRecursiveElementVisitor() {
     override val processor = Processor()
     override fun visitComment(comment: PsiComment) {
       processor.skipElement(comment)

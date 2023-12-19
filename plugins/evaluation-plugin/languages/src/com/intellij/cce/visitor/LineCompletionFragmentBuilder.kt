@@ -5,15 +5,15 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.openapi.project.Project
 
-class CompletionGolfFragmentBuilder(project: Project,
+class LineCompletionFragmentBuilder(project: Project,
                                     language: Language,
                                     private val featureName: String,
                                     private val completionGolfMode: CompletionGolfMode)
   : CodeFragmentFromPsiBuilder(project, language) {
-  override fun getVisitors(): List<CompletionGolfEvaluationVisitor> {
-    return CompletionGolfVisitorFactory.EP_NAME.extensionList
+  override fun getVisitors(): List<LineCompletionEvaluationVisitor> {
+    return LineCompletionVisitorFactory.EP_NAME.extensionList
              .filter { it.language == language }.takeIf { it.isNotEmpty() }
              ?.map { it.createVisitor(featureName, completionGolfMode) }
-           ?: listOf(CompletionGolfAllEvaluationVisitor.Default(featureName, language))
+           ?: listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language))
   }
 }
