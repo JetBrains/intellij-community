@@ -93,7 +93,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         private val replaceOccurrence: Boolean,
         private val noTypeInference: Boolean,
         private val expressionType: KotlinType?,
-        private val componentFunctions: List<FunctionDescriptor>,
+        private val isDestructuringDeclaration: Boolean,
         private val bindingContext: BindingContext,
         private val resolutionFacade: ResolutionFacade
     ) {
@@ -131,21 +131,15 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             return result
         }
 
-        private fun runRefactoring(
-            isVar: Boolean,
-            expression: KtExpression,
-            commonContainer: PsiElement,
-            commonParent: PsiElement,
-            allReplaces: List<KtExpression>
-        ) {
+        private fun createBasicPropertyOrDestructuringDeclaration(expression: KtExpression, isVar: Boolean): KtDeclaration {
             val initializer = (expression as? KtParenthesizedExpression)?.expression ?: expression
             val initializerText = if (initializer.mustBeParenthesizedInInitializerPosition()) "(${initializer.text})" else initializer.text
 
             val varOvVal = if (isVar) "var" else "val"
 
-            var property: KtDeclaration = if (componentFunctions.isNotEmpty()) {
+            return if (isDestructuringDeclaration) {
                 buildString {
-                    componentFunctions.indices.joinTo(this, prefix = "$varOvVal (", postfix = ")") { nameSuggestions[it].first() }
+                    nameSuggestions.joinTo(this, prefix = "$varOvVal (", postfix = ")") { it.first() }
                     append(" = ")
                     append(initializerText)
                 }.let { psiFactory.createDestructuringDeclaration(it) }
@@ -161,7 +155,16 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     append(initializerText)
                 }.let { psiFactory.createProperty(it) }
             }
+        }
 
+        private fun runRefactoring(
+            isVar: Boolean,
+            expression: KtExpression,
+            commonContainer: PsiElement,
+            commonParent: PsiElement,
+            allReplaces: List<KtExpression>
+        ) {
+            var property = createBasicPropertyOrDestructuringDeclaration(expression, isVar)
             var anchor = calculateAnchor(commonParent, commonContainer, allReplaces) ?: return
             val needBraces = commonContainer !is KtBlockExpression && commonContainer !is KtClassBody && commonContainer !is KtFile
             if (!needBraces) {
@@ -493,7 +496,8 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                 )
 
-                val suggestedNames = if (componentFunctions.isNotEmpty()) {
+                val isDestructuringDeclaration = componentFunctions.isNotEmpty()
+                val suggestedNames = if (isDestructuringDeclaration) {
                     val collectingValidator = CollectingNameValidator(filter = validator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
@@ -508,7 +512,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                 val introduceVariableContext = IntroduceVariableContext(
                     expression, suggestedNames, allReplaces, commonContainer, commonParent,
-                    replaceOccurrence, noTypeInference, expressionType, componentFunctions, bindingContext, resolutionFacade
+                    replaceOccurrence, noTypeInference, expressionType, isDestructuringDeclaration, bindingContext, resolutionFacade
                 )
 
                 if (!containers.targetContainer.isPhysical) {

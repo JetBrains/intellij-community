@@ -62,7 +62,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         private val container: PsiElement,
         private val replaceOccurrence: Boolean,
         private val expressionRenderedType: String,
-        private val componentNames: List<String>,
+        private val isDestructuringDeclaration: Boolean,
         renderedTypeArguments: String?,
     ) {
         private val psiFactory = KtPsiFactory(expression.project)
@@ -104,19 +104,15 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             return result
         }
 
-        private fun runRefactoring(
-            isVar: Boolean,
-            expression: KtExpression,
-            container: PsiElement,
-        ) {
+        private fun createBasicPropertyOrDestructuringDeclaration(isVar: Boolean): KtDeclaration {
             val initializer = (expression as? KtParenthesizedExpression)?.expression ?: expression
             val initializerText = if (initializer.mustBeParenthesizedInInitializerPosition()) "(${initializer.text})" else initializer.text
 
             val varOvVal = if (isVar) "var" else "val"
 
-            var property: KtDeclaration = if (componentNames.isNotEmpty()) {
+            return if (isDestructuringDeclaration) {
                 buildString {
-                    componentNames.indices.joinTo(this, prefix = "$varOvVal (", postfix = ")") { nameSuggestions[it].first() }
+                    nameSuggestions.joinTo(this, prefix = "$varOvVal (", postfix = ")") { it.first() }
                     append(" = ")
                     append(initializerText)
                 }.let { psiFactory.createDestructuringDeclaration(it) }
@@ -128,6 +124,14 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     append(initializerText)
                 }.let { psiFactory.createProperty(it) }
             }
+        }
+
+        private fun runRefactoring(
+            isVar: Boolean,
+            expression: KtExpression,
+            container: PsiElement,
+        ) {
+            var property = createBasicPropertyOrDestructuringDeclaration(expression, isVar)
             val lambdaArgumentName = if (expression.isLambdaOutsideParentheses()) {
                 analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                     getLambdaArgumentNameIfShouldBeNamed(expression.getStrictParentOfType<KtLambdaArgument>()!!)
@@ -400,6 +404,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
                 val anchor = calculateAnchor(expression, containers.targetContainer) as? KtElement
                     ?: return@chooseApplicableComponentNamesForVariableDeclaration
+                val isDestructuringDeclaration = componentNames.isNotEmpty()
                 val suggestedNames = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                     val nameValidator = KotlinDeclarationNameValidator(
                         anchor,
@@ -407,7 +412,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                         this,
                     )
-                    if (componentNames.isNotEmpty()) {
+                    if (isDestructuringDeclaration) {
                         componentNames.map { componentName -> suggestNameByName(componentName, nameValidator).let(::listOf) }
                     } else {
                         with(KotlinNameSuggester()) {
@@ -422,7 +427,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     containers.targetContainer,
                     replaceOccurrence,
                     expressionRenderedType,
-                    componentNames,
+                    isDestructuringDeclaration,
                     renderedTypeArguments,
                 )
 
