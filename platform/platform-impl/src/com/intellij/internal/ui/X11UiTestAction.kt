@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.X11UiUtil
@@ -98,17 +96,19 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
         }
         row("isTileWM:") {
           label(X11UiUtil.isTileWM().toString())
+          contextHelp(X11UiUtil.TILE_WM.sorted().joinToString("<br>"), "Known Tile WMs")
         }
         row("isWSL:") {
           label(X11UiUtil.isWSL().toString())
+            .comment("Used WSL_DISTRO_NAME env variable. Value: ${System.getenv("WSL_DISTRO_NAME") ?: ""}")
         }
       }
 
-      group("Misc Values") {
-        row("IdeFrame.isInFullScreen:") {
+      group("IdeFrame") {
+        row("isInFullScreen:") {
           lbIdeFrameInFullScreen = label("").component
         }
-        row("IdeFrame.extendedState:") {
+        row("extendedState:") {
           lbFrameExtendedState = label("").component
 
           val cb = comboBox(listOf(Frame::MAXIMIZED_VERT, Frame::MAXIMIZED_HORIZ, Frame::MAXIMIZED_BOTH),
@@ -116,16 +116,25 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
 
           button("Set `state or value`") {
             getFrame()?.let {
+              @Suppress("UNCHECKED_CAST")
               val state = (cb.selectedItem as KProperty0<Int>).get()
               it.extendedState = it.extendedState or state
             }
           }
           button("Set `state and value.inv()`") {
             getFrame()?.let {
+              @Suppress("UNCHECKED_CAST")
               val state = (cb.selectedItem as KProperty0<Int>).get()
               it.extendedState = it.extendedState and state.inv()
             }
           }
+        }
+      }
+
+      group("Misc Values") {
+        row("Current desktop:") {
+          label(System.getenv("XDG_CURRENT_DESKTOP") ?: "")
+            .comment("Used XDG_CURRENT_DESKTOP env variable")
         }
       }
     }

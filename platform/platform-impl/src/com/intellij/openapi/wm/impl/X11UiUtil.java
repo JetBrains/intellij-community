@@ -42,7 +42,7 @@ public final class X11UiUtil {
   /**
    * List of all known tile WM in lower case, can be updated later
    */
-  private static final Set<String> TILE_WM = Set.of(
+  public static final Set<String> TILE_WM = Set.of(
     "awesome",
     "bspwm",
     "cagebreak",
