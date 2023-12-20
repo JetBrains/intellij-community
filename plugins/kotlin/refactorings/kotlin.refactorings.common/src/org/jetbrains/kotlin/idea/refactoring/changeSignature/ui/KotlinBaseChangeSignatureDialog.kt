@@ -316,6 +316,10 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
     protected abstract fun PsiCodeFragment?.isValidType(): Boolean
 
+    override fun updateSignatureAlarmFired() {
+        super.updateSignatureAlarmFired()
+        validateButtons()
+    }
 
     override fun getSelectedIdx(): Int = myMethod.parameters
         .withIndex()

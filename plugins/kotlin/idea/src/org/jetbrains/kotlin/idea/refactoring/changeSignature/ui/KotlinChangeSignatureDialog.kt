@@ -63,11 +63,6 @@ class KotlinChangeSignatureDialog (
         )
     )
 
-    override fun updateSignatureAlarmFired() {
-        super.updateSignatureAlarmFired()
-        validateButtons()
-    }
-
     // Forbid receiver propagation
     override fun mayPropagateParameters() = parameters.any { it.isNewParameter && it != parametersTableModel.receiver }
 
