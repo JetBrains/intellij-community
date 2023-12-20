@@ -2,11 +2,12 @@ package com.intellij.externalSystem
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencyUpdaterTest : MavenDependencyUpdaterTestBase() {
   @Test
-  fun testGetDependencies() {
+  fun testGetDependencies() = runBlocking {
     val dependencies = myModifierService!!.declaredDependencies(getModule("project"))
     assertNotNull(dependencies)
     assertEquals(2, dependencies.size)

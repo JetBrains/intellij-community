@@ -294,11 +294,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
     }
-    for (repo in model.repositories.repositories) {
-      if (repo.url.stringValue?.trimLastSlash() == repository.url?.trimLastSlash()) {
-        return
-      }
-    }
+    if (repositoryExists(model, repository)) return
 
     val psiFile = DomUtil.getFile(model)
     WriteCommandAction.writeCommandAction(myProject, psiFile).compute<Unit, Throwable> {
@@ -308,6 +304,17 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       repository.name?.let { repoTag.name.stringValue = it }
       repository.url.let { repoTag.url.stringValue = it }
       saveFile(psiFile)
+    }
+  }
+
+  private fun repositoryExists(model: MavenDomProjectModel, repository: UnifiedDependencyRepository): Boolean {
+    return ReadAction.compute<Boolean, Throwable> {
+      for (repo in model.repositories.repositories) {
+        if (repo.url.stringValue?.trimLastSlash() == repository.url?.trimLastSlash()) {
+          return@compute true
+        }
+      }
+      return@compute false
     }
   }
 
@@ -325,7 +332,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       return@compute null
     }
     if (repo == null) return
-    val psiFile = DomUtil.getFile(repo)
+    val psiFile = ReadAction.compute<XmlFile, Throwable> { DomUtil.getFile(repo) }
     WriteCommandAction.writeCommandAction(myProject, psiFile).compute<Unit, Throwable> {
       repo.xmlTag?.delete()
       if (model.repositories.repositories.isEmpty()) {

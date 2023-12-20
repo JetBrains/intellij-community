@@ -3,6 +3,7 @@ package com.intellij.externalSystem
 import com.intellij.externalSystem.DependencyModifierService.Companion.getInstance
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -51,9 +52,11 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
     importProjectWithErrors()
   }
 
-  protected fun findDependencyTag(group: String, artifact: String, version: String): XmlTag? {
-    val pom = PsiUtilCore.getPsiFile(myProject, myProjectPom)
-    return findDependencyTag(group, artifact, version, pom)
+  protected suspend fun findDependencyTag(group: String, artifact: String, version: String): XmlTag? {
+    return readAction {
+      val pom = PsiUtilCore.getPsiFile(myProject, myProjectPom)
+      findDependencyTag(group, artifact, version, pom)
+    }
   }
 
   private fun findDependencyTag(group: String, artifact: String, version: String, pom: PsiFile?): XmlTag? {
