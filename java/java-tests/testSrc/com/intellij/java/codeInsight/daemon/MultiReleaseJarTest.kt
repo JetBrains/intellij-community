@@ -13,6 +13,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.indexing.FileBasedIndex
@@ -150,6 +151,27 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val method9 = class9.findMethodsByName("ver9", false)[0]!!
     assertEquals(another8, (method8.returnType as PsiClassType).resolve())
     assertEquals(another9, (method9.returnType as PsiClassType).resolve())
+  }
+  
+  fun testReferenceSearch() {
+    val facade = myFixture.javaFacade
+    val class8 = facade.findClass(CLASS_NAME, scope8())!!
+    assertUnversioned(class8)
+    val class9 = facade.findClass(CLASS_NAME, scope9())!!
+    assertVersioned(class9)
+    myFixture.configureByText("Test.java", "import com.example.*; class Test extends MultiReleaseClass {}")
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+      val refs = ReferencesSearch.search(class8).findAll()
+      assertEquals(1, refs.size)
+      assertEquals(myFixture.file, refs.first().element.containingFile)
+      assertEmpty(ReferencesSearch.search(class9).findAll())
+    }
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
+      val refs = ReferencesSearch.search(class9).findAll()
+      assertEquals(1, refs.size)
+      assertEquals(myFixture.file, refs.first().element.containingFile)
+      assertEmpty(ReferencesSearch.search(class8).findAll())
+    }
   }
 
   fun testClassPresentation() {

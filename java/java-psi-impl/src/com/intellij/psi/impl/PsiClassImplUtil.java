@@ -1130,6 +1130,11 @@ public final class PsiClassImplUtil {
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);
     boolean lib2 = fileIndex2.isInLibraryClasses(vfile2);
+    if (lib1 && lib2) {
+      LanguageLevel ver1 = JavaMultiReleaseUtil.getVersion(vfile1);
+      LanguageLevel ver2 = JavaMultiReleaseUtil.getVersion(vfile2);
+      if (ver1 != ver2) return false;
+    }
 
     //if copy from another project, fileIndex of correct project should be requested
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex2.isInSource(vfile2) || lib2);
