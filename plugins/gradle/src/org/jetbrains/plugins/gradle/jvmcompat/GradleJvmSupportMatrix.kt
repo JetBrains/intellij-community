@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.openapi.components.State
@@ -16,18 +16,18 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   defaultState = DEFAULT_DATA
 ) {
   @Volatile
-  private var mySupportedGradleVersions: List<GradleVersion> = emptyList()
+  private var supportedGradleVersions: List<GradleVersion> = emptyList()
 
   @Volatile
-  private var mySupportedJavaVersions: List<JavaVersion> = emptyList()
+  private var supportedJavaVersions: List<JavaVersion> = emptyList()
 
   @Volatile
-  private var myCompatibility: List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> = emptyList()
+  private var compatibility: List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> = emptyList()
 
   private fun applyState(state: GradleCompatibilityState) {
-    myCompatibility = getCompatibilityRanges(state)
-    mySupportedGradleVersions = state.supportedGradleVersions.map(GradleVersion::version)
-    mySupportedJavaVersions = state.supportedJavaVersions.map(JavaVersion::parse)
+    compatibility = getCompatibilityRanges(state)
+    supportedGradleVersions = state.supportedGradleVersions.map(GradleVersion::version)
+    supportedJavaVersions = state.supportedJavaVersions.map(JavaVersion::parse)
   }
 
   init {
@@ -51,7 +51,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun isSupportedImpl(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-    return myCompatibility.any { (javaVersions, gradleVersions) ->
+    return compatibility.any { (javaVersions, gradleVersions) ->
       javaVersion in javaVersions && gradleVersion.baseVersion in gradleVersions
     }
   }
@@ -97,11 +97,11 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun getAllSupportedGradleVersionsByIdeaImpl(): List<GradleVersion> {
-    return mySupportedGradleVersions
+    return supportedGradleVersions
   }
 
   private fun getAllSupportedJavaVersionsByIdeaImpl(): List<JavaVersion> {
-    return mySupportedJavaVersions
+    return supportedJavaVersions
   }
 
   private fun getOldestSupportedGradleVersionByIdeaImpl(): GradleVersion {
