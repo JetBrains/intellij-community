@@ -2,9 +2,14 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testExtractMethodRecommender() {
@@ -18,6 +23,14 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
   public void testImplicitClass() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testRedundantSuppression() {
+    ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
+    inspection.minLength = 20;
+    myFixture.enableInspections(inspection, new RedundantSuppressInspection());
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }

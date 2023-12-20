@@ -124,10 +124,17 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
                   textRange.getLength() + 1)));
               }
               int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
+              PsiElement anchor = block;
               if (firstLineBreak > -1) {
                 textRange = TextRange.from(textRange.getStartOffset(), firstLineBreak);
+                TextRange firstStatementRange = statements[from].getTextRangeInParent();
+                if (firstStatementRange.getStartOffset() == textRange.getStartOffset() && 
+                    firstStatementRange.getEndOffset() >= textRange.getEndOffset()) {
+                  anchor = statements[from];
+                  textRange = textRange.shiftLeft(textRange.getStartOffset());
+                }
               }
-              holder.registerProblem(block, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
+              holder.registerProblem(anchor, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
                                      ProblemHighlightType.WEAK_WARNING,
                                      textRange,
                                      fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -175,7 +182,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         PsiElement start = statements[0];
         while (true) {
           PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
-          if (prev instanceof PsiComment) {
+          if (prev instanceof PsiComment &&
+              SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
             start = prev;
           }
           else {
