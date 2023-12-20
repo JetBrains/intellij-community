@@ -55,13 +55,13 @@ class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProje
 
             if (d.parent === dependency.parent) {
               // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
-              MavenLog.LOG.debug("Duplicate dependencies in the same file: ${dependencyToString(d)}")
+              MavenLog.LOG.debug("Duplicate dependencies in the same file: ${dependencyToString(d)}, ${dependencyToString(dependency)}")
               duplicateDependencies.add(d)
             }
             else {
               if (scope(d) == scope(dependency) && d.version.stringValue == dependency.version.stringValue) {
                 // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
-                MavenLog.LOG.debug("Duplicate dependencies in different files: ${dependencyToString(d)}")
+                MavenLog.LOG.debug("Duplicate dependencies in different files: ${dependencyToString(d)}, ${dependencyToString(dependency)}")
                 duplicateDependencies.add(d)
               }
             }
