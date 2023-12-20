@@ -12,9 +12,9 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
+import com.intellij.ide.wizard.comment.LinkNewProjectWizardStep
+import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
@@ -63,13 +63,15 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       .nextStep(::Step)
       .nextStep(::AssetsStep)
 
-  private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
-    override fun getComment(name: String): String {
-      return MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.comment", context.isCreatingNewProjectInt, name)
-    }
+  private class CommentStep(parent: NewProjectWizardStep) : LinkNewProjectWizardStep(parent) {
+
+    override val builderId: String =
+      BaseLanguageGeneratorNewProjectWizard.getLanguageModelBuilderId(context, JAVA)
+
+    override val comment: String =
+      MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.comment", context.isCreatingNewProjectInt, JAVA)
 
     override fun onStepSelected(step: NewProjectWizardStep) {
-      step.languageData!!.language = JAVA
       step.javaBuildSystemData!!.buildSystem = MAVEN
     }
   }

@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -164,12 +166,10 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         generateOnboardingTips: Boolean = false,
         parentData: ProjectData? = null
     ) {
-        languageData!!.language = "Kotlin"
-        kotlinBuildSystemData!!.buildSystem = "Gradle"
-        kotlinBuildSystemData!!.path = testRoot.toNioPath().getResolvedPath(path).parent.toCanonicalPath()
+        baseData!!.name = name
+        baseData!!.path = testRoot.toNioPath().getResolvedPath(path).parent.toCanonicalPath()
+        kotlinBuildSystemData!!.buildSystem = GRADLE
         kotlinGradleData!!.parentData = parentData
-        kotlinBuildSystemData!!.name = name
-        kotlinBuildSystemData!!.language = "Kotlin"
         kotlinGradleData!!.gradleDsl = if (useKotlinDsl) GradleDsl.KOTLIN else GradleDsl.GROOVY
         kotlinGradleData!!.groupId = groupId
         kotlinGradleData!!.artifactId = name
@@ -190,7 +190,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
     ) {
 
         runBlocking {
-            createProjectByWizard {
+            createProjectByWizard(KOTLIN) {
                 setGradleWizardData(
                     useKotlinDsl = useKotlinDsl,
                     name = name,
@@ -321,7 +321,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
             openProject("project").useProjectAsync { project ->
                 val parentData = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/$parentPath")!!
                 val existingModules = project.modules.map { it.name }
-                createModuleByWizard(project) {
+                createModuleByWizard(project, KOTLIN) {
                     setGradleWizardData(
                         useKotlinDsl = useKotlinDsl,
                         name = name,

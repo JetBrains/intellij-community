@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
@@ -15,6 +16,7 @@ import javax.swing.Icon
  * project generators in PyCharm.
  */
 interface GeneratorNewProjectWizard {
+
   /**
    * The unique identifier to distinguish this generator from others in the new project wizard.
    */
@@ -31,6 +33,12 @@ interface GeneratorNewProjectWizard {
   val icon: Icon
 
   /**
+   * The ordinal number by which all generators are sorted in the generator tray (on the left).
+   */
+  val ordinal: Int
+    get() = Int.MAX_VALUE
+
+  /**
    * The description of the generator.
    */
   val description: @NlsContexts.DetailedDescription String?
@@ -41,6 +49,12 @@ interface GeneratorNewProjectWizard {
    */
   val groupName: @Nls String?
     get() = null
+
+  /**
+   * Disabled generators will be excluded from the new project wizard.
+   * For example, you can use [PlatformUtils.isIdeaCommunity] or [PlatformUtils.isIdeaUltimate], etc.
+   */
+  fun isEnabled(): Boolean = true
 
   /**
    * Create the main new project wizard step for this generator.

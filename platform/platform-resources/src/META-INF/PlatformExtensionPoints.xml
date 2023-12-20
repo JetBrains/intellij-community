@@ -470,6 +470,7 @@
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
 
     <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
+    <extensionPoint name="newProjectWizard.languageGenerator" interface="com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard" dynamic="true"/>
 
     <extensionPoint name="newProject.onboarding.tips" interface="com.intellij.ide.wizard.NewProjectOnboardingTips" dynamic="true"/>
 

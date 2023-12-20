@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.testFramework.useProjectAsync
@@ -139,9 +139,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
         baseData!!.path = testRoot.path
       }.withProjectAsync { project ->
         assertModules(project, "project")
-        createModuleByWizard(project) {
+        createModuleByWizard(project, JAVA) {
           baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -149,9 +148,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
           Assertions.assertNull(javaGradleData!!.parentData)
         }
-        createModuleByWizard(project) {
+        createModuleByWizard(project, JAVA) {
           baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -167,8 +165,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       }.useProjectAsync { project ->
         val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled")!!
         val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled1")!!
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode1.data
           javaGradleData!!.addSampleCode = false
@@ -177,8 +174,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertEquals(testRoot.path + "/project/untitled", baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode2.data
           javaGradleData!!.addSampleCode = false

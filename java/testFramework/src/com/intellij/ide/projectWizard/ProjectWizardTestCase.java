@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -195,10 +194,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return createProjectFromWizard();
   }
 
-  protected Project createProjectFromTemplate(@NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
-    return createProjectFromTemplate(UIBundle.message("label.project.wizard.project.generator.name"), adjuster);
-  }
-
   protected Project createProjectFromTemplate(
     @NotNull String group,
     @NotNull Consumer<? super NewProjectWizardStep> adjuster
@@ -214,10 +209,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     runWizard(adjuster);
     myWizard.disposeIfNeeded();
     return createModuleFromWizard(project);
-  }
-
-  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
-    return createModuleFromTemplate(project, UIBundle.message("label.project.wizard.module.generator.name"), adjuster);
   }
 
   protected Module createModuleFromTemplate(

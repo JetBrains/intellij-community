@@ -12,6 +12,8 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.*;
+import com.intellij.ide.wizard.LanguageNewProjectWizard;
+import com.intellij.ide.wizard.language.*;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -131,7 +133,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myProjectTypeList = new JBList<>();
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
-    myProjectTypeList.setCellRenderer(new ProjectTypeListRenderer(groups));
+    myProjectTypeList.setCellRenderer(new ProjectTypeListRenderer(context, groups));
 
     GridLayoutManager layout = (GridLayoutManager)myPanel.getLayout();
     layout.setHGap(0);
@@ -400,19 +402,30 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     }
 
-    var newWizardGroups = new ArrayList<TemplatesGroup>();
+    var generatorNewProjectWizards = new ArrayList<GeneratorNewProjectWizard>();
+    //noinspection deprecation
+    LanguageNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
+      generatorNewProjectWizards.add(new LegacyLanguageGeneratorNewProjectWizard(context, wizard));
+    });
+    LanguageGeneratorNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
+      generatorNewProjectWizards.add(new BaseLanguageGeneratorNewProjectWizard(context, wizard));
+    });
+    generatorNewProjectWizards.removeIf(it -> !it.isEnabled());
+    generatorNewProjectWizards.sort(Comparator.comparing(it -> it.getOrdinal()));
+    if (context.isCreatingNewProject()) {
+      generatorNewProjectWizards.add(new EmptyProjectGeneratorNewProjectWizard());
+    }
+    var generatorNewProjectWizardGroups = ContainerUtil.map(generatorNewProjectWizards, it -> {
+      return new TemplatesGroup(new NewProjectModelBuilder(it));
+    });
+    groups.addAll(0, generatorNewProjectWizardGroups);
+    generatorNewProjectWizardGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
+
     var newWizardUserGroups = new ArrayList<TemplatesGroup>();
     if (context.isCreatingNewProject()) {
-      newWizardGroups.add(new TemplatesGroup(new NewProjectBuilder()));
-      newWizardGroups.add(new TemplatesGroup(new NewEmptyProjectBuilder()));
       newWizardUserGroups.addAll(getUserTemplatesMap(context));
     }
-    else {
-      newWizardGroups.add(new TemplatesGroup(new NewModuleBuilder()));
-    }
-    groups.addAll(0, newWizardGroups);
     groups.addAll(newWizardUserGroups);
-    newWizardGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
     newWizardUserGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
 
     return groups;
@@ -794,57 +807,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private static class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplatesGroup> {
-    ProjectTypeListRenderer(java.util.List<TemplatesGroup> groups) {
-      super(new ListItemDescriptorAdapter<>() {
-        @Nullable
-        @Override
-        public String getTextFor(TemplatesGroup value) {
-          return value.getName();
-        }
 
-        @Nullable
-        @Override
-        public String getTooltipFor(TemplatesGroup value) {
-          return value.getDescription();
-        }
-
-        @Nullable
-        @Override
-        public Icon getIconFor(TemplatesGroup value) {
-          return value.getIcon();
-        }
-
-        @Override
-        public String getCaptionAboveOf(TemplatesGroup value) {
-          var builder = value.getModuleBuilder();
-          if (builder instanceof TemplateModuleBuilder) {
-            return UIBundle.message("list.caption.group.templates");
-          }
-          else if (builder instanceof NewProjectBuilder) {
-            return UIBundle.message("list.caption.group.newProject");
-          }
-          else if (builder instanceof NewModuleBuilder) {
-            return UIBundle.message("list.caption.group.newModule");
-          }
-          else {
-            return UIBundle.message("list.caption.group.generators");
-          }
-        }
-
-        @Override
-        public boolean hasSeparatorAboveOf(TemplatesGroup value) {
-          int index = groups.indexOf(value);
-          if (index < 0) return false;
-          if (index == 0) return true;
-          TemplatesGroup upper = groups.get(index - 1);
-          if (value.getModuleBuilder() instanceof TemplateModuleBuilder && !(upper.getModuleBuilder() instanceof TemplateModuleBuilder)) {
-            return true;
-          }
-
-          ModuleBuilder builder = upper.getModuleBuilder();
-          return builder instanceof NewEmptyProjectBuilder || builder instanceof NewModuleBuilder;
-        }
-      });
+    ProjectTypeListRenderer(@NotNull WizardContext context, @NotNull java.util.List<TemplatesGroup> groups) {
+      super(new ProjectTypeListItemDescriptor(context, groups));
     }
 
     @Override
@@ -884,6 +849,73 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       if (icon == null) {
         myTextLabel.setIconTextGap(0);
       }
+    }
+  }
+
+  private static class ProjectTypeListItemDescriptor extends ListItemDescriptorAdapter<TemplatesGroup> {
+
+    private final @NotNull WizardContext myContext;
+    private final @NotNull java.util.List<TemplatesGroup> myGroups;
+
+    ProjectTypeListItemDescriptor(@NotNull WizardContext context, @NotNull java.util.List<TemplatesGroup> groups) {
+      myContext = context;
+      myGroups = groups;
+    }
+
+    @Nullable
+    @Override
+    public String getTextFor(TemplatesGroup value) {
+      return value.getName();
+    }
+
+    @Nullable
+    @Override
+    public String getTooltipFor(TemplatesGroup value) {
+      return value.getDescription();
+    }
+
+    @Nullable
+    @Override
+    public Icon getIconFor(TemplatesGroup value) {
+      return value.getIcon();
+    }
+
+    @Override
+    public String getCaptionAboveOf(TemplatesGroup value) {
+      var builder = value.getModuleBuilder();
+      if (builder instanceof TemplateModuleBuilder) {
+        return UIBundle.message("list.caption.group.templates");
+      }
+      else if (builder instanceof NewProjectModelBuilder) {
+        return UIBundle.message("list.caption.group.newProject", myContext.isCreatingNewProjectInt());
+      }
+      else {
+        return UIBundle.message("list.caption.group.generators");
+      }
+    }
+
+    @Override
+    public boolean hasSeparatorAboveOf(TemplatesGroup value) {
+      int index = myGroups.indexOf(value);
+      if (index < 0) return false;
+      if (index == 0) return true;
+      TemplatesGroup upper = myGroups.get(index - 1);
+      ModuleBuilder moduleBuilder = value.getModuleBuilder();
+      ModuleBuilder upperModuleBuilder = upper.getModuleBuilder();
+      if (!(moduleBuilder instanceof NewProjectModelBuilder) && upperModuleBuilder instanceof NewProjectModelBuilder) {
+        return true;
+      }
+      if (moduleBuilder instanceof TemplateModuleBuilder && !(upperModuleBuilder instanceof TemplateModuleBuilder)) {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  private static class NewProjectModelBuilder extends GeneratorNewProjectWizardBuilderAdapter {
+
+    NewProjectModelBuilder(@NotNull GeneratorNewProjectWizard wizard) {
+      super(wizard);
     }
   }
 }

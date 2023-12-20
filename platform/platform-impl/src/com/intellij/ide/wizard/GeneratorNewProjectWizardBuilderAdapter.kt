@@ -10,11 +10,14 @@ import javax.swing.Icon
  * [com.intellij.ide.util.projectWizard.ModuleBuilder] and register as an extension point.
  */
 abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewProjectWizard) : AbstractNewProjectWizardBuilder() {
+
+  override fun getWeight(): Int = wizard.ordinal
   override fun getBuilderId(): String = NPW_PREFIX + wizard.id
   override fun getPresentableName(): String = wizard.name
   override fun getDescription(): String = wizard.description ?: ""
   override fun getGroupName(): String = wizard.groupName ?: super.getGroupName()
   override fun getNodeIcon(): Icon = wizard.icon
+  override fun isAvailable(): Boolean = wizard.isEnabled()
   override fun createStep(context: WizardContext): NewProjectWizardStep = wizard.createStep(context)
 
   companion object {

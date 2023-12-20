@@ -3,11 +3,12 @@ package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.projectWizard.NewProjectWizard
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.ProjectTypeStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -54,7 +55,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   suspend fun createProjectByWizard(projectInfo: ProjectInfo): Project {
     Assertions.assertTrue(projectInfo.composites.isEmpty(), "NPW cannot create composite projects please use initProject instead.")
     val rootModuleInfo = projectInfo.rootModule
-    return createProjectByWizard {
+    return createProjectByWizard(JAVA) {
       configureWizardStepSettings(this, rootModuleInfo, null)
     }.withProjectAsync { project ->
       val projectRoot = testRoot.getDirectory(projectInfo.relativePath)
@@ -65,7 +66,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
       )!!
       for (moduleInfo in projectInfo.modules) {
         if (moduleInfo != rootModuleInfo) {
-          createModuleByWizard(project) {
+          createModuleByWizard(project, JAVA) {
             configureWizardStepSettings(this, moduleInfo, parentData.data)
           }
         }
@@ -74,10 +75,9 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
-    step.languageData!!.language = "Java"
-    step.javaBuildSystemData!!.buildSystem = "Gradle"
     step.baseData!!.name = moduleInfo.name
     step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
+    step.javaBuildSystemData!!.buildSystem = GRADLE
     step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
       true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
       else -> GradleNewProjectWizardStep.GradleDsl.GROOVY
@@ -90,7 +90,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   suspend fun createProjectByWizard(
-    group: String = NEW_PROJECT,
+    group: String,
     wait: Boolean = true,
     configure: NewProjectWizardStep.() -> Unit
   ): Project {
@@ -110,7 +110,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   suspend fun createModuleByWizard(
     project: Project,
-    group: String = NEW_MODULE,
+    group: String,
     wait: Boolean = true,
     configure: NewProjectWizardStep.() -> Unit
   ): Module? {
@@ -180,8 +180,6 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   companion object {
 
-    val NEW_PROJECT = UIBundle.message("label.project.wizard.project.generator.name")
-    val NEW_MODULE = UIBundle.message("label.project.wizard.module.generator.name")
     val NEW_EMPTY_PROJECT = UIBundle.message("label.project.wizard.empty.project.generator.name")
   }
 }
