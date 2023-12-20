@@ -684,7 +684,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
         resolutions.add(resolution);
       }
-      List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
+      // IDEA-341451: Parallel plugin resolution hangs in Maven 4.0.0-alpha-9
+      // It worked fine up until Maven 4.0.0-alpha-8
+      List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(false, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
       return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
