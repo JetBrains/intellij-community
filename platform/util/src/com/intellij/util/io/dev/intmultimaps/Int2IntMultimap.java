@@ -35,8 +35,8 @@ public final class Int2IntMultimap {
     this(16, 0.4f);
   }
 
-  public Int2IntMultimap(final int capacity,
-                         final float loadFactor) {
+  public Int2IntMultimap(int capacity,
+                         float loadFactor) {
     this.loadFactor = loadFactor;
     this.table = new int[capacity * 2];
 
@@ -46,15 +46,15 @@ public final class Int2IntMultimap {
   /**
    * @return true if iterated through all values, false if iteration was stopped early by valuesProcessor returning false
    */
-  public boolean lookup(final int key,
-                        final IntPredicate valuesProcessor) {
+  public boolean lookup(int key,
+                        IntPredicate valuesProcessor) {
     checkNotNoValue("key", key);
-    final int capacity = capacity();
-    final int startIndex = Math.abs(key % capacity);
+    int capacity = capacity();
+    int startIndex = Math.abs(key % capacity);
     for (int probe = 0; probe < capacity; probe++) {
-      final int slotIndex = (startIndex + probe) % capacity;
-      final int slotKey = table[slotIndex * 2];
-      final int slotValue = table[slotIndex * 2 + 1];
+      int slotIndex = (startIndex + probe) % capacity;
+      int slotKey = table[slotIndex * 2];
+      int slotValue = table[slotIndex * 2 + 1];
       if (slotKey == key) {
         assert slotValue != NO_VALUE : "value(table[" + (slotIndex * 2 + 1) + "]) = " + NO_VALUE + " (NO_VALUE), " +
                                        "while key(table[" + slotIndex * 2 + "]) = " + key;
@@ -70,16 +70,16 @@ public final class Int2IntMultimap {
     return true;
   }
 
-  public boolean has(final int key,
-                     final int value) {
+  public boolean has(int key,
+                     int value) {
     checkNotNoValue("key", key);
     checkNotNoValue("value", value);
-    final int capacity = capacity();
-    final int startIndex = Math.abs(key % capacity);
+    int capacity = capacity();
+    int startIndex = Math.abs(key % capacity);
     for (int probe = 0; probe < capacity; probe++) {
-      final int slotIndex = (startIndex + probe) % capacity;
-      final int slotKey = table[slotIndex * 2];
-      final int slotValue = table[slotIndex * 2 + 1];
+      int slotIndex = (startIndex + probe) % capacity;
+      int slotKey = table[slotIndex * 2];
+      int slotValue = table[slotIndex * 2 + 1];
       if (slotKey == key && slotValue == value) {
         return true;
       }
@@ -92,17 +92,17 @@ public final class Int2IntMultimap {
   }
 
 
-  public boolean put(final int key,
-                     final int value) {
+  public boolean put(int key,
+                     int value) {
     checkNotNoValue("key", key);
     checkNotNoValue("value", value);
-    final int capacity = capacity();
-    final int startIndex = Math.abs(key % capacity);
+    int capacity = capacity();
+    int startIndex = Math.abs(key % capacity);
     int firstTombstoneIndex = -1;
     for (int probe = 0; probe < capacity; probe++) {
-      final int slotIndex = (startIndex + probe) % capacity;
-      final int slotKey = table[slotIndex * 2];
-      final int slotValue = table[slotIndex * 2 + 1];
+      int slotIndex = (startIndex + probe) % capacity;
+      int slotKey = table[slotIndex * 2];
+      int slotValue = table[slotIndex * 2 + 1];
       if (slotKey == key && slotValue == value) {
         return false;//record already here, nothing to add
       }
@@ -116,7 +116,7 @@ public final class Int2IntMultimap {
         }
         else {
           //(NO_VALUE, NO_VALUE) -> free slot -> end of probing sequence, no (key, value) found -> insert it:
-          final int insertionIndex = firstTombstoneIndex >= 0 ? firstTombstoneIndex : slotIndex;
+          int insertionIndex = firstTombstoneIndex >= 0 ? firstTombstoneIndex : slotIndex;
           table[insertionIndex * 2] = key;
           table[insertionIndex * 2 + 1] = value;
           aliveValues++;
@@ -127,7 +127,7 @@ public final class Int2IntMultimap {
 
     if (aliveValues > capacity * loadFactor) {
       //resize:
-      final Int2IntMultimap newMMap = new Int2IntMultimap(capacity * 2, loadFactor);
+      Int2IntMultimap newMMap = new Int2IntMultimap(capacity * 2, loadFactor);
       forEach((_key, _value) -> {
         newMMap.put(_key, _value);
         return true;
@@ -139,16 +139,16 @@ public final class Int2IntMultimap {
     return true;
   }
 
-  public boolean remove(final int key,
-                        final int value) {
+  public boolean remove(int key,
+                        int value) {
     checkNotNoValue("key", key);
     checkNotNoValue("value", value);
-    final int capacity = capacity();
-    final int startIndex = Math.abs(key % capacity);
+    int capacity = capacity();
+    int startIndex = Math.abs(key % capacity);
     for (int probe = 0; probe < capacity; probe++) {
-      final int slotIndex = (startIndex + probe) % capacity;
-      final int slotKey = table[slotIndex * 2];
-      final int slotValue = table[slotIndex * 2 + 1];
+      int slotIndex = (startIndex + probe) % capacity;
+      int slotKey = table[slotIndex * 2];
+      int slotValue = table[slotIndex * 2 + 1];
       if (slotKey == key && slotValue == value) {
         //reset key, but leave value as-is: this is the marker of 'removed' slot
         table[slotIndex * 2] = NO_VALUE;
@@ -164,10 +164,10 @@ public final class Int2IntMultimap {
     return false;
   }
 
-  public void forEach(final KeyValueProcessor processor) {
+  public void forEach(@NotNull KeyValueProcessor processor) {
     for (int i = 0; i < table.length; i += 2) {
-      final int key = table[i];
-      final int value = table[i + 1];
+      int key = table[i];
+      int value = table[i + 1];
       if (key != NO_VALUE) {
         assert value != NO_VALUE : "value(table[" + (i + 1) + "]) = " + NO_VALUE + ", while key(table[" + i + "]) = " + key;
         if (!processor.process(key, value)) {
@@ -245,12 +245,12 @@ public final class Int2IntMultimap {
 
   @FunctionalInterface
   public interface KeyValueProcessor {
-    boolean process(final int key,
-                    final int value);
+    boolean process(int key,
+                    int value);
   }
 
-  private static void checkNotNoValue(final String paramName,
-                                      final int value) {
+  private static void checkNotNoValue(String paramName,
+                                      int value) {
     if (value == NO_VALUE) {
       throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
     }
