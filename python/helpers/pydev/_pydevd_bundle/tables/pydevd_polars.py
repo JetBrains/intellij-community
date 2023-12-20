@@ -4,6 +4,8 @@ import polars as pl
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
+pl_version_major, pl_version_minor, _ = pl.__version__.split(".")
+COUNT_COL_NAME = "counts" if pl_version_major == 0 and pl_version_minor < 20 else "count"
 
 
 def get_type(table):
@@ -119,18 +121,18 @@ def analyze_column(col_name, column):
 
 def analyze_boolean_column(column, col_name):
     counts = column.value_counts().sort(by=col_name).to_dict()
-    return ColumnVisualisationType.HISTOGRAM, add_custom_key_value_separator(zip(counts[col_name], counts["counts"]))
+    return ColumnVisualisationType.HISTOGRAM, add_custom_key_value_separator(zip(counts[col_name], counts[COUNT_COL_NAME]))
 
 
 def analyze_categorical_column(column, col_name):
     all_values = len(column)
     if column.is_null().all():
-        value_counts = pl.DataFrame({col_name: "None", "counts": all_values})
+        value_counts = pl.DataFrame({col_name: "None", COUNT_COL_NAME: all_values})
     else:
         value_counts = column.value_counts()
 
     # Sort in descending order to get values with max percent
-    value_counts = value_counts.sort("counts").reverse()
+    value_counts = value_counts.sort(COUNT_COL_NAME).reverse()
 
     if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         column_visualisation_type = ColumnVisualisationType.PERCENTAGE
@@ -138,12 +140,12 @@ def analyze_categorical_column(column, col_name):
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
         counts = value_counts[:num_unique_values]
-        top_values_counts = counts["counts"].apply(lambda count: round(count / all_values * 100, 1))
+        top_values_counts = counts[COUNT_COL_NAME].apply(lambda count: round(count / all_values * 100, 1))
         top_values = {label: count for label, count in zip(counts[col_name], top_values_counts)}
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
-            others_count = value_counts[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:]["counts"].sum()
+            others_count = value_counts[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:][COUNT_COL_NAME].sum()
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count / all_values * 100, 1)
         res = add_custom_key_value_separator(top_values.items())
 
@@ -165,8 +167,9 @@ def analyze_numeric_column(column, col_name):
         res = add_custom_key_value_separator(zip(bin_labels, counts))
     else:
         counts = column.value_counts().sort(by=col_name).to_dict()
-        res = add_custom_key_value_separator(zip(counts[col_name], counts["counts"]))
+        res = add_custom_key_value_separator(zip(counts[col_name], counts[COUNT_COL_NAME]))
     return ColumnVisualisationType.HISTOGRAM, res
+
 
 def add_custom_key_value_separator(pairs_list):
     return [str(label) + ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR + str(count) for label, count in pairs_list]
