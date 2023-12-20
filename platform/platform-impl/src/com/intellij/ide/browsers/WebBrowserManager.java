@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @Service(Service.Level.APP)
-@State(name = "WebBrowsersConfiguration", storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
+@State(name = "WebBrowsersConfiguration",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
 public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 

@@ -2,9 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
@@ -17,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Storage for file types user selected in "Override File Type" action
  */
-@State(name = "OverrideFileTypeManager", storages = @Storage("overrideFileTypes.xml"))
+@State(name = "OverrideFileTypeManager",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "overrideFileTypes.xml", roamingType = RoamingType.DISABLED))
 @Service
 public final class OverrideFileTypeManager extends PersistentFileSetManager {
   public boolean isMarkedPlainText(@NotNull VirtualFile file) {

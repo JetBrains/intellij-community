@@ -6,10 +6,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfoRt
@@ -56,7 +53,10 @@ import kotlin.io.path.pathString
  *  1. `setSSLSocketFactory()` and specify instance `SSLConnectionSocketFactory` which uses result of [.getSslContext].
  *  1. `setConnectionManager` and initialize it with `Registry` that binds aforementioned `SSLConnectionSocketFactory` to HTTPS protocol
  */
-@State(name = "CertificateManager", storages = [Storage("certificates.xml")], reportStatistic = false)
+@State(name = "CertificateManager",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage("certificates.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateComponent<CertificateManager.Config?> {
   private var config = Config()
 

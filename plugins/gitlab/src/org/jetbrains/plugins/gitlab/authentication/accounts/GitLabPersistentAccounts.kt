@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.gitlab.authentication.accounts
 
 import com.intellij.collaboration.auth.AccountsRepository
-import com.intellij.openapi.components.SerializablePersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
-@State(name = "GitLabAccounts", storages = [Storage(value = "gitlab.xml")], reportStatistic = false)
+@State(name = "GitLabAccounts",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "gitlab.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 internal class GitLabPersistentAccounts : AccountsRepository<GitLabAccount>,
                                           SerializablePersistentStateComponent<GitLabPersistentAccounts.GitLabAccountsState>(
                                             GitLabAccountsState()) {

@@ -10,10 +10,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -58,7 +55,10 @@ private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
 @NonNls
 private const val FRAME_ELEMENT = "frame"
 
-@State(name = "WindowManager", storages = [
+@State(name = "WindowManager",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [
   Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED, usePathMacroManager = false)
 ])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {

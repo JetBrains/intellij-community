@@ -2,10 +2,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +10,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The application wide settings for the git
  */
-@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.DISABLED))
+@State(name = "Git.Application.Settings",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "git.xml", roamingType = RoamingType.DISABLED))
 public final class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 

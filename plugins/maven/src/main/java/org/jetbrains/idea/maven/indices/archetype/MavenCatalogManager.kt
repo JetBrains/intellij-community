@@ -1,16 +1,16 @@
 package org.jetbrains.idea.maven.indices.archetype
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
 import java.net.URL
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.Path
 
-@State(name = "MavenCatalogManager", storages = [Storage(value = "maven-catalogs.xml")])
+@State(name = "MavenCatalogManager",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "maven-catalogs.xml", roamingType = RoamingType.DISABLED)])
 class MavenCatalogManager : PersistentStateComponent<MavenCatalogManager.State> {
 
   private var localCatalogs = CopyOnWriteArrayList<MavenCatalog.Local>()

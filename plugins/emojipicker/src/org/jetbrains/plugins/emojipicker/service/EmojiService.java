@@ -3,10 +3,7 @@ package org.jetbrains.plugins.emojipicker.service;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,7 +34,10 @@ import java.util.stream.Collectors;
 import static org.jetbrains.plugins.emojipicker.messages.EmojipickerBundle.message;
 
 @Service
-@State(name = "EmojiPickerState", storages = @Storage("emoji.picker.xml"))
+@State(name = "EmojiPickerState",
+  category = SettingsCategory.CODE,
+  exportable = true,
+  storages = @Storage(value = "emoji.picker.xml", roamingType = RoamingType.DISABLED))
 public final class EmojiService implements PersistentStateComponent<EmojiService.State> {
   private final List<Emoji> myEmoji;
   private final List<EmojiCategory> myCategories;

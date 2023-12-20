@@ -30,7 +30,10 @@ private class KeymapFlagsStorageListener : KeymapManagerListener {
 
 @Internal
 @Service(Service.Level.APP)
-@State(name = "KeymapFlagsStorage", storages = [Storage("keymapFlags.xml")])
+@State(name = "KeymapFlagsStorage",
+       category = SettingsCategory.KEYMAP,
+       exportable = true,
+       storages = [Storage("keymapFlags.xml", roamingType = RoamingType.DISABLED)])
 internal class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsStorage.State>(State()) {
   companion object {
     const val FLAG_MIGRATED_SHORTCUT: String = "MIGRATED_SHORTCUT"

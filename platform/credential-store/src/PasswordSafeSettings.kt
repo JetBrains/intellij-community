@@ -13,7 +13,10 @@ private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
 @Service
-@State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+@State(name = "PasswordSafe",
+       category = SettingsCategory.SYSTEM,
+       exportable = true,
+       storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
   companion object {
     @JvmField

@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-@State(name = "OSFileAssociationPreferences", storages =  @Storage(value = "osFileIdePreferences.xml", roamingType = RoamingType.DISABLED))
+@State(name = "OSFileAssociationPreferences",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "osFileIdePreferences.xml", roamingType = RoamingType.DISABLED))
 public final class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
   public List<String> fileTypeNames = new ArrayList<>();
   public String ideLocationHash;

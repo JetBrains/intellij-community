@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicLong
 
 @State(
   name = "PathMacrosImpl",
+  category = SettingsCategory.SYSTEM,
+  exportable = true,
   storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED, usePathMacroManager = false)],
   useLoadedStateAsExisting = false,
   reportStatistic = false,

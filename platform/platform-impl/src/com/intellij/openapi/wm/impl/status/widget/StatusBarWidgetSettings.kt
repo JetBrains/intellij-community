@@ -9,7 +9,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Service(Service.Level.APP)
-@State(name = "StatusBar", storages = [Storage(value = "ide.general.xml")])
+@State(name = "StatusBar",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [Storage(value = "ide.general.xml", roamingType = RoamingType.DISABLED)]
+)
 class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarState>(StatusBarState()) {
   companion object {
     @JvmStatic
