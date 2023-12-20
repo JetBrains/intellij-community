@@ -70,7 +70,7 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
 
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
-    val baseSdk = setupBaseSdk(basePythonVersion.get()!!, state.allSdks.get()) ?: return null
+    val baseSdk = installBaseSdk(basePythonVersion.get()!!, state.allSdks.get()) ?: return null
     val newSdk = setupPipEnvSdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
                                              baseSdk.homePath, false)!!
     SdkConfigurationUtil.addSdk(newSdk)
