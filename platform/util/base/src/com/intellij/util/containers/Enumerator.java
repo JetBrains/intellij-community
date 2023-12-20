@@ -10,6 +10,12 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Utility class that allows to associate objects with a unique number
+ * Null is always associated with a 0
+ *
+ * @param <T> type of enumerated object
+ */
 public class Enumerator<T> {
   private static final LoggerRt LOG = LoggerRt.getInstance(Enumerator.class);
   private final Object2IntMap<T> myNumbers;
@@ -35,15 +41,32 @@ public class Enumerator<T> {
       });
   }
 
+  /**
+   * Clear all associations
+   */
   public void clear() {
     myNumbers.clear();
     myNextNumber = 1;
   }
 
+  /**
+   * Associate all objects with numbers
+   *
+   * @param objects array of objects to be associated
+   * @return the mapping of an initial array into associated numbers
+   */
   public int @NotNull [] enumerate(T @NotNull [] objects) {
     return enumerate(objects, 0, 0);
   }
 
+  /**
+   * Associate a subset of objects with numbers
+   *
+   * @param objects    array of objects to be associated
+   * @param startShift subset start index
+   * @param endCut     a number of excluded objects at the end
+   * @return the mapping of an initial array into associated numbers
+   */
   public int @NotNull [] enumerate(T @NotNull [] objects, final int startShift, final int endCut) {
     int[] idx = ArrayUtil.newIntArray(objects.length - startShift - endCut);
     for (int i = startShift; i < objects.length - endCut; i++) {
@@ -54,17 +77,29 @@ public class Enumerator<T> {
     return idx;
   }
 
+  /**
+   * Associate a single object with a number
+   *
+   * @param object to be associated
+   * @return a number that was associated with an object
+   */
   public int enumerate(T object) {
     final int res = enumerateImpl(object);
     return Math.max(res, -res);
   }
 
+  /**
+   * Associate a single object with a number
+   *
+   * @param object to be associated
+   * @return whether a new association was established
+   */
   public boolean add(T object) {
     final int res = enumerateImpl(object);
     return res < 0;
   }
 
-  public int enumerateImpl(T object) {
+  protected int enumerateImpl(T object) {
     if( object == null ) return 0;
 
     int number = myNumbers.getInt(object);
@@ -76,10 +111,17 @@ public class Enumerator<T> {
     return number;
   }
 
+  /**
+   * Check whether an object was associated with a number
+   */
   public boolean contains(@NotNull T object) {
     return myNumbers.getInt(object) != 0;
   }
 
+  /**
+   * Get the number associated with an object
+   * Returns 0 for null and non-enumerated objects
+   */
   public int get(T object) {
     if (object == null) return 0;
     final int res = myNumbers.getInt(object);
