@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.actions.ChangeSignatureAction
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -33,15 +35,15 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     }
 
     override fun invokeChangeSignature(
-        element: KtElement, context: PsiElement, project: Project, editor: Editor?
+        element: KtElement, context: PsiElement, project: Project, editor: Editor?, dataContext: DataContext?
     ) {
-        val callableDeclaration = findDeclaration(element, context, project, editor) ?: return
+        val callableDeclaration = findDeclaration(element, context, project, editor, dataContext) ?: return
         runChangeSignature(project, editor, callableDeclaration, context)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     fun findDeclaration(
-        element: KtElement, context: PsiElement, project: Project, editor: Editor?
+        element: KtElement, context: PsiElement, project: Project, editor: Editor?, dataContext: DataContext?
     ): KtNamedDeclaration? {
         val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
         return allowAnalysisOnEdt {
@@ -61,6 +63,13 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                     ktSymbol is KtFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
                     ktSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> InapplicabilityKind.Synthetic
                     ktSymbol.origin == KtSymbolOrigin.LIBRARY -> InapplicabilityKind.Library
+                    ktSymbol.origin == KtSymbolOrigin.JAVA -> {
+                        val psiElement = ktSymbol.psi
+                        if (psiElement != null) {
+                            ChangeSignatureAction.getChangeSignatureHandler(psiElement)?.invoke(project, arrayOf(psiElement), dataContext)
+                        }
+                        return@analyze null
+                    }
                     else -> null
                 }
 

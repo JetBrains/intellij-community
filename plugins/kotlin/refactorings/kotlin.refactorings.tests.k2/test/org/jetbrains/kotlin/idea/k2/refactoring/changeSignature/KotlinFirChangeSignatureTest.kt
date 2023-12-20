@@ -56,7 +56,7 @@ class KotlinFirChangeSignatureTest :
 
     override fun createChangeInfo(): KotlinChangeInfo {
         val element = findTargetElement()?.unwrapped as KtElement
-        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)!!
+        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor, null)!!
         val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
