@@ -3,8 +3,9 @@
     <!--suppress PluginXmlI18n -->
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
+    <!--suppress PluginXmlCapitalization -->
     <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.TransferSettingsDemoAction"
-            internal="true"/>
+            internal="true" text="Test transfer settings"/>
   </actions>
 
   <extensionPoints>

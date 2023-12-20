@@ -22,7 +22,7 @@ import javax.swing.*
 /**
  * Internal demo action
  */
-class TransferSettingsDemoAction : DumbAwareAction("Test transfer settings") {
+class TransferSettingsDemoAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     TransferSettingsDemoDialog(e.project!!).show()
   }
