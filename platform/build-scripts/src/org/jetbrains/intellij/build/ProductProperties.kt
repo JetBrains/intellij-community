@@ -387,13 +387,21 @@ abstract class ProductProperties {
    * todo: remove me when platform is ready
    */
   @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
-  open fun productNameOverride(project: JpsProject): ApplicationNamesInfoOverride? = null
+  open fun applicationInfoOverride(project: JpsProject): ApplicationInfoOverrides? = null
 
   @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
-  data class ApplicationNamesInfoOverride(
+  data class ApplicationInfoOverrides(
     val fullProductName: String,
     val editionName: String?,
     val motto: String?,
+    val eap: String?,
+    val majorVersion: String?,
+    val minorVersion: String?,
+    val microVersion: String?,
+    val patchVersion: String?,
+    val fullVersionFormat: String?,
+    val versionSuffix: String?,
+    val majorReleaseDate: String?
   )
 
   /**
