@@ -2,7 +2,14 @@
 package com.intellij.openapi.projectRoots;
 
 /**
- * Container for the SDK properties specific to a particular SDK type.
+ * The `SdkAdditionalData` interface represents additional data associated with an SDK.
+ * This interface should be implemented by classes that need to provide additional data for an SDK.
+ * <p>
+ * It's possible to create an object from scratch or update it via [SdkModificator]. Changing already
+ * atached to the SDK object outside of the [SdkModificator] is prohibited to catch all plases where
+ * you have mutations outside the modificator, implement [markAsCommited] or use [SdkAdditionalDataBase]
+ * as a base class for your class and add [SdkAdditionalDataBase#assertWritable()] to all your setter
+ * methods.
  */
 public interface SdkAdditionalData {
   /**
