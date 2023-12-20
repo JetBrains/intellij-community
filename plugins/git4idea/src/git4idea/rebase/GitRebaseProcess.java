@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -8,6 +8,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,15 +69,15 @@ public class GitRebaseProcess {
 
   private final NotificationAction ABORT_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.abort.text"),
-    () -> abort()
+    action("git4idea.rebase.abort", this::abort)
   );
   private final NotificationAction CONTINUE_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.continue.text"),
-    () -> retry(GitBundle.message("rebase.progress.indicator.continue.title"))
+    action("git4idea.rebase.continue", () -> retry(GitBundle.message("rebase.progress.indicator.continue.title")))
   );
   private final NotificationAction RETRY_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.retry.text"),
-    () -> retry(GitBundle.message("rebase.progress.indicator.retry.title"))
+    action("git4idea.rebase.retry", () -> retry(GitBundle.message("rebase.progress.indicator.retry.title")))
   );
   private final NotificationAction VIEW_STASH_ACTION;
 
@@ -581,13 +582,22 @@ public class GitRebaseProcess {
   }
 
   private @NotNull NotificationAction createResolveNotificationAction(@NotNull GitRepository currentRepository) {
-    return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"), (e, notification) -> {
-      myProgressManager.run(new Task.Backgroundable(myProject, GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          resolveConflicts(currentRepository, notification);
-        }
-      });
+    return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"), new NotificationAction.ActionConsumer() {
+      @Override
+      public @NotNull String getId() {
+        return "git4idea.rebase.resolve";
+      }
+
+      @Override
+      public void accept(@NotNull AnActionEvent event, @NotNull Notification notification) {
+        myProgressManager.run(
+          new Task.Backgroundable(myProject, GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              resolveConflicts(currentRepository, notification);
+            }
+          });
+      }
     });
   }
 
@@ -624,6 +634,20 @@ public class GitRebaseProcess {
         GitRebaseUtils.continueRebase(myProject);
       }
     });
+  }
+
+  private static @NotNull Runnable action(@NonNls @NotNull String fusId, @NotNull Runnable action) {
+    return new NotificationAction.ActionRunnable() {
+      @Override
+      public void run() {
+        action.run();
+      }
+
+      @Override
+      public @NotNull String getId() {
+        return fusId;
+      }
+    };
   }
 
   private static class GitRebaseProgressListener implements GitLineHandlerListener {

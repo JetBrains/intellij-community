@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
@@ -63,7 +63,7 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @ApiStatus.Internal
-  public static final class Simple extends NotificationAction implements ActionWithDelegate<Object> {
+  public static final class Simple extends NotificationAction implements ActionWithDelegate<Object>, FusReportableAction {
     private final BiConsumer<? super AnActionEvent, ? super Notification> myAction;
     private final boolean myExpire;
     private final Object myActionInstance;  // for FUS
@@ -100,5 +100,27 @@ public abstract class NotificationAction extends DumbAwareAction {
     public @NotNull Object getDelegate() {
       return myActionInstance;
     }
+
+    @Override
+    public @NotNull String getId() {
+      if (myActionInstance instanceof FusReportableAction reportableAction) {
+        return reportableAction.getId();
+      }
+      return getDelegate().getClass().getName();
+    }
+  }
+
+  /**
+   * Implement for {@link Simple} actions which should report custom action ID to FUS
+   */
+  @ApiStatus.Internal
+  public interface ActionRunnable extends Runnable, FusReportableAction {
+  }
+
+  /**
+   * @see ActionRunnable
+   */
+  @ApiStatus.Internal
+  public interface ActionConsumer extends BiConsumer<@NotNull AnActionEvent, @NotNull Notification>, FusReportableAction {
   }
 }

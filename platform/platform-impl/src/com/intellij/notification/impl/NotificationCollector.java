@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -86,10 +86,10 @@ public final class NotificationCollector {
                                            @NotNull NotificationPlace notificationPlace) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
-    if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
+    if (action instanceof NotificationAction.Simple simpleAction) {
+      Object actionInstance = simpleAction.getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
-      String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
+      String actionId = info.isSafeToReport() ? simpleAction.getId() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
     }
     else {
