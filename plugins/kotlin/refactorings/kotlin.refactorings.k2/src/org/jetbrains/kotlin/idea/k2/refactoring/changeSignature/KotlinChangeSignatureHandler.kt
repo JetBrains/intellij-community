@@ -54,7 +54,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                     is KtParameter -> if (element.hasValOrVar()) element.getSymbol() else null
                     is KtCallableDeclaration -> element.getSymbol()
                     is KtClass -> element.primaryConstructor?.getSymbol()
-                        ?: if (element.allConstructors.isEmpty()) element.getSymbol() else null
+                        ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
                     is KtReferenceExpression -> element.mainReference.resolveToSymbols().firstOrNull()
                         ?.takeIf { it !is KtValueParameterSymbol || it.generatedPrimaryConstructorProperty != null }
                     else -> null

@@ -99,15 +99,23 @@ class KotlinFirChangeSignatureTest :
         doTestTargetDeclaration<KtNamedFunction>("class B { fun m() { fooB<caret>ar() } fun fooBar(){} }", "fooBar")
     }
 
-    fun testStdlib() {
-        myFixture.configureByText("dummy.kt", "fun main() { lis<caret>tOf(\"\") } ")
+    private fun doTestConflict(code: String, conflict: String) {
+        myFixture.configureByText("dummy.kt", code)
         val element = findTargetElement() as KtElement
         try {
             KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)
         } catch (e: RefactoringErrorHintException) {
-            assertEquals("Cannot perform refactoring.\nLibrary declarations cannot be changed", e.message)
+            assertEquals(conflict, e.message)
             return
         }
         fail("Expected conflict message")
+    }
+
+    fun testStdlib() {
+        doTestConflict("fun main() { lis<caret>tOf(\"\") } ", "Cannot perform refactoring.\nLibrary declarations cannot be changed")
+    }
+
+    fun testInterface() {
+        doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
     }
 }
