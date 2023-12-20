@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
@@ -77,10 +78,16 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     serializers.forEach { serializer ->
       val entities = entityStorage.entities(serializer.mainEntityClass).toList()
       LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
+
+      val filteredEntities = if (serializer.mainEntityClass == LibraryEntity::class.java) {
+        // We need to filter custom libraries, they will be serialized by the client code and not by the platform
+        entities.filter { it.entitySource is JpsGlobalFileEntitySource }
+      } else entities
+
       if (serializer.mainEntityClass == SdkEntity::class.java) {
         assertUnexpectedAdditionalDataModification(entityStorage)
       }
-      serializer.saveEntities(entities, emptyMap(), entityStorage, contentWriter)
+      serializer.saveEntities(filteredEntities, emptyMap(), entityStorage, contentWriter)
     }
     contentWriter.saveSession()
   }
