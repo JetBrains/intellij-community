@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-providers" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:2.0.0-dev-10043">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:2.0.0-dev-10944">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10043/analysis-api-providers-for-ide-2.0.0-dev-10043.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10944/analysis-api-providers-for-ide-2.0.0-dev-10944.jar">
           <sha256sum>ed076ce17a8b287b1dabe113c5a86ba0c68bf6450495f02b2381d983547caf86</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10043/analysis-api-providers-for-ide-2.0.0-dev-10043.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10944/analysis-api-providers-for-ide-2.0.0-dev-10944.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10043/analysis-api-providers-for-ide-2.0.0-dev-10043-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/2.0.0-dev-10944/analysis-api-providers-for-ide-2.0.0-dev-10944-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
