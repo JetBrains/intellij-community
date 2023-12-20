@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.ChangeModifierRequest;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
@@ -591,11 +592,11 @@ public final class HighlightClassUtil {
   static HighlightInfo.Builder checkCannotInheritFromFinal(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
     HighlightInfo.Builder errorResult = null;
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
-      String message = JavaErrorBundle
-        .message("inheritance.from.final.class", superClass.getQualifiedName(), superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
-      errorResult =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
-      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superClass, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
+      String message = JavaErrorBundle.message("inheritance.from.final.class", HighlightUtil.formatClass(superClass),
+                                               superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
+      ChangeModifierRequest removeFinal = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superClass, removeFinal));
     }
     return errorResult;
   }
