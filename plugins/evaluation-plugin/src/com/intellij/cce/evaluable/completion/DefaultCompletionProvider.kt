@@ -5,6 +5,7 @@ import com.intellij.cce.core.CommonFeatures
 import com.intellij.cce.core.Features
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.evaluable.common.asSuggestion
+import com.intellij.cce.evaluable.common.readActionInSmartMode
 import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
@@ -22,15 +23,15 @@ import com.intellij.openapi.editor.Editor
 class DefaultCompletionProvider : SuggestionsProvider {
   override val name: String = "DEFAULT"
 
-  override fun getSuggestions(expectedText: String, editor: Editor, language: Language, comparator: (String, String) -> Boolean): Lookup {
+  override fun getSuggestions(expectedText: String, editor: Editor, language: Language, comparator: (String, String) -> Boolean): Lookup = readActionInSmartMode(editor.project!!) {
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
     val activeLookup = LookupManager.getActiveLookup(editor) ?: invokeCompletion(editor)
     val latency = System.currentTimeMillis() - start
     if (activeLookup == null) {
-      return Lookup.fromExpectedText(expectedText, "", emptyList(), latency,
-                                     isNew = isNew, startOffset = editor.caretModel.logicalPosition.column,
-                                     comparator = comparator)
+      return@readActionInSmartMode Lookup.fromExpectedText(expectedText, "", emptyList(), latency,
+                                                           isNew = isNew, startOffset = editor.caretModel.logicalPosition.column,
+                                                           comparator = comparator)
     }
 
     val lookup = activeLookup as LookupImpl
@@ -41,7 +42,8 @@ class DefaultCompletionProvider : SuggestionsProvider {
     )
     val suggestions = lookup.items.map { it.asSuggestion() }
 
-    return Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew, editor.caretModel.logicalPosition.column, comparator)
+    return@readActionInSmartMode Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew,
+                                                         editor.caretModel.logicalPosition.column, comparator)
   }
 
   private fun invokeCompletion(editor: Editor): LookupEx? {
