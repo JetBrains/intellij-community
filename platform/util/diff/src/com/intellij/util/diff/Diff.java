@@ -32,15 +32,6 @@ public final class Diff {
   public static @Nullable <T> Change buildChanges(T @NotNull [] objects1,
                                                   T @NotNull [] objects2,
                                                   @NotNull HashingStrategy<? super T> strategy) throws FilesTooBigForDiffException {
-    // Old variant of enumerator worked incorrectly with null values.
-    // This check is to ensure that the corrected version does not introduce bugs.
-    for (T anObjects1 : objects1) {
-      assert anObjects1 != null;
-    }
-    for (T anObjects2 : objects2) {
-      assert anObjects2 != null;
-    }
-
     int startShift = getStartShift(objects1, objects2, strategy);
     int endCut = getEndCut(objects1, objects2, startShift, strategy);
 
