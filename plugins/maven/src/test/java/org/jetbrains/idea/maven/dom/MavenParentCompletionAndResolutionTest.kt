@@ -501,7 +501,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <version><error>4.0</error></version>
                        </parent>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     checkHighlighting()
   }
 
@@ -516,7 +516,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <version><error>4.0</error></version>
                        </parent>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     checkHighlighting()
   }
 
@@ -531,7 +531,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <artifactId>junit</artifactId>
                        </parent>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
 
     fixture.enableInspections(MavenParentMissedVersionInspection::class.java)
     checkHighlighting()
