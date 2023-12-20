@@ -3,20 +3,20 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.*
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -622,10 +622,11 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals(
             "[1, 2]",
             intValues?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
-                (annoValue as? PsiLiteral)?.value?.toString() ?: annoValue.text
+                (annoValue as? PsiLiteralExpression)?.value?.toString() ?: annoValue.text
             }
         )
-        val flagValue = (lc.findAttributeValue("flag") as? PsiLiteral)?.value
+
+        val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
     }
 

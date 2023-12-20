@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -73,6 +74,12 @@ class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         val target = resolveDocLink("topLevelFun")
         assertInstanceOf(target, KtFunction::class.java)
         Assert.assertEquals("topLevelFun", (target as KtFunction).name)
+    }
+
+    fun testTopLevelFunParameterName() {
+        val target = resolveDocLink("x")
+        assertInstanceOf(target, KtParameter::class.java)
+        Assert.assertEquals("x", (target as KtParameter).name)
     }
 
     fun testTopLevelProperty() {
