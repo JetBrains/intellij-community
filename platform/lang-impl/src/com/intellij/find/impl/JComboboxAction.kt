@@ -63,7 +63,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       insertItemAt(emptyText, 0)
       selectedItem = FindSettings.getInstance().fileMask ?: emptyText
       findModel.fileFilter = FindSettings.getInstance().fileMask
-      addActionListener(ActionListener { rebuild() })
+      addItemListener { rebuild() }
 
       findModel.addObserver {
         runInEdt {
