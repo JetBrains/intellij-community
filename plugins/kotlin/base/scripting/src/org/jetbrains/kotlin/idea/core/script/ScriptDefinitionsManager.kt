@@ -29,12 +29,22 @@ import kotlin.script.experimental.host.toScriptSource
 
 
 /**
- * [ScriptDefinitionsManager] is a project service responsible for loading/caching and searching script definitions.
+ * [ScriptDefinitionsManager] is a project service responsible for loading/caching and searching [ScriptDefinition]s.
  *
- * Class delegates the loading to the instances of [ScriptDefinitionsSource] which in their turn are registered via extension points
- * either as [ScriptTemplatesProviderAdapter] or [ScriptDefinitionContributor].
+ * Definitions are organized in a sequential list. To locate a definition that matches a script, we need to identify
+ * the first one where the [ScriptDefinition.isScript] function returns `true`.
  *
- * Note that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open` methods.
+ * The order of definitions is defined by [ScriptDefinitionsSource]s they are discovered and loaded by. Since every source
+ * provides its own definitions list, the resulting one is partitioned. Partitions in their turn are sorted.
+ * E.g. if definition sources are ordered as (A, B, C), their definitions might look as ((A-def-1, A-def-2), (B-def), (C-def)).
+ *
+ * [ScriptDefinitionsSource]s are registered via extension points either as [ScriptTemplatesProviderAdapter] or [ScriptDefinitionContributor].
+ * Their order is crucial because it affects definition search algo.
+ *
+ * Sometimes resulting definitions order might be inaccurate and doesn't accommodate the user needs. [KotlinScriptingSettings] is a project wide
+ * configuration specifying custom definitions order. Besides sorting weights the settings provide enabled/disabled indicator per definition.
+ *
+ * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open` methods.
  */
 open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
 
@@ -55,13 +65,24 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
 
+    /**
+     * Property generates a sequence of all discovered definitions.
+     * Definitions disabled via [KotlinScriptingSettings.isScriptDefinitionEnabled] are filtered out.
+     * The sequence is ordered according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or, if the latter is missing,
+     * conforms default by-source order (see [ScriptDefinitionsManager]).
+     * @see [getAllDefinitions]
+     */
     public override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
             val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptySequence()
             return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
         }
 
-
+    /**
+     * Searches script definition that best matches the specified [script].
+     * Contribution from all [ScriptDefinitionsSource]s in taken into configuration. If any of the sources has not yet provided its
+     * input by the moment of the method call it's triggered proactively.
+     */
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
 
@@ -87,19 +108,52 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
     }
 
+
+    /**
+     *  Lists all discovered definitions with no [KotlinScriptingSettings.isScriptDefinitionEnabled] filtering applied.
+     *  If by the moment of the call any of the [ScriptDefinitionsSource]s has not yet contributed to the resulting set of definitions,
+     *  it's called before returning the result.
+     *  @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
+     *  if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
+     *  @see [currentDefinitions]
+     */
     fun getAllDefinitions(): List<ScriptDefinition> = getOrLoadDefinitions()
 
-    fun reloadScriptDefinitionsIfNeeded() = getOrLoadDefinitions()
+    /**
+     * Launches not yet contributed [ScriptDefinitionsSource]s and returns the whole list of discovered definitions.
+     * Sources that already loaded their definitions are not relaunched.
+     * @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
+     * if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
+     */
+    fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
 
-    fun reloadScriptDefinitions() = reloadDefinitionsInternal(getSources())
+    /**
+     * Goes through the list of registered [ScriptDefinitionsSource]s and triggers definitions reload.
+     * Result of previous reloads is invalidated including those launched via [reloadDefinitionsBy].
+     * @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or,
+     * if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
+     */
+    fun reloadScriptDefinitions(): List<ScriptDefinition> = reloadDefinitionsInternal(getSources())
 
     fun isReady(): Boolean = true
 
+    /**
+     * Reloads definitions from the requested [source] only. Definitions provided by other [ScriptDefinitionsSource]s remain as is
+     * (could remain unloaded).
+     * @return All definitions known by the moment the method is complete.
+     * The list is sorted according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or, if the latter is missing, conforms
+     * default by-source order (see [ScriptDefinitionsManager]).
+     */
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource): List<ScriptDefinition> = reloadDefinitionsInternal(listOf(source))
 
-    fun reorderScriptDefinitions() {
-        val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        if (definitions == null) return
+    /**
+     * Reorders all known definitions according to the [KotlinScriptingSettings.getScriptDefinitionOrder].
+     * If the order is undefined, the definitions list remains as is.
+     * @return Reordered definitions known by the moment of the method call.
+     */
+    fun reorderScriptDefinitions(): List<ScriptDefinition> {
+        val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptyList()
+        if (definitions == null) return emptyList()
 
         withLocks {
             definitions?.let { list ->
@@ -112,11 +166,15 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         }
 
         applyDefinitionsUpdate()  // <== acquires read-action inside
+        return definitions ?: emptyList()
     }
 
+    /**
+     * @return Definition bundled with IDEA and aimed for basic '.kts' scripts support.
+     */
     override fun getDefaultDefinition(): ScriptDefinition {
         val bundledScriptDefinitionContributor = getBundledScriptDefinitionContributor()
-            ?: error("StandardScriptDefinitionContributor should be registered in plugin.xml")
+            ?: error("BundledScriptDefinitionContributor must be registered in plugin.xml")
         return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), bundledScriptDefinitionContributor.getDefinitions().last())
     }
 
