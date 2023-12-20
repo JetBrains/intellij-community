@@ -40,10 +40,14 @@ object CodeReviewDetailsCommitsComponentFactory {
       })
     }
     val commitsPopup = scope.createCommitChooserActionLink(changesVm, commitPresentation)
+    val nextPrevVisibilityFlow = combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
+      commits.size > 1 && selectedCommitIndex >= 0
+    }
     val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectNextCommit() }
-      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      isVisible = false
+      bindVisibilityIn(scope, nextPrevVisibilityFlow)
       bindDisabledIn(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
         selectedCommitIndex == commits.size - 1
       })
@@ -51,7 +55,8 @@ object CodeReviewDetailsCommitsComponentFactory {
     val previousCommitIcon = InlineIconButton(AllIcons.Chooser.Top).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectPreviousCommit() }
-      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      isVisible = false
+      bindVisibilityIn(scope, nextPrevVisibilityFlow)
       bindDisabledIn(scope, changesVm.selectedCommitIndex.map { it == 0 })
     }
 
