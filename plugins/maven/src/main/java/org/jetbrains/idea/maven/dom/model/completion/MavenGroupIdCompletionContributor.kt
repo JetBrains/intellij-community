@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import java.util.function.Consumer
 import java.util.function.Predicate
 
 class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("groupId") {
@@ -27,7 +26,7 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
   override suspend fun find(service: DependencySearchService,
                             coordinates: MavenDomShortArtifactCoordinates,
                             parameters: CompletionParameters,
-                            consumer: Consumer<RepositoryArtifactData>) {
+                            consumer: (RepositoryArtifactData) -> Unit) {
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)

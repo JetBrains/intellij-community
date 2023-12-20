@@ -37,7 +37,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
     override suspend fun find(service: DependencySearchService,
                               coordinates: MavenDomShortArtifactCoordinates,
                               parameters: CompletionParameters,
-                              consumer: Consumer<RepositoryArtifactData>) {
+                              consumer: (RepositoryArtifactData) -> Unit) {
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)

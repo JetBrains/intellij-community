@@ -64,7 +64,7 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
   protected abstract suspend fun find(service: DependencySearchService,
                                       coordinates: MavenDomShortArtifactCoordinates,
                                       parameters: CompletionParameters,
-                                      consumer: Consumer<RepositoryArtifactData>)
+                                      consumer: (RepositoryArtifactData) -> Unit)
 
   protected open fun fillAfter(result: CompletionResultSet) {
   }

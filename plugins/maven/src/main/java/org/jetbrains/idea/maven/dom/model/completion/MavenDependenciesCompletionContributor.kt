@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import java.util.function.Consumer
 
 
 class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
@@ -13,7 +12,7 @@ class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContribu
   override suspend fun find(service: DependencySearchService,
                             coordinates: MavenDomShortArtifactCoordinates,
                             parameters: CompletionParameters,
-                            consumer: Consumer<RepositoryArtifactData>) {
+                            consumer: (RepositoryArtifactData) -> Unit) {
 
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')
