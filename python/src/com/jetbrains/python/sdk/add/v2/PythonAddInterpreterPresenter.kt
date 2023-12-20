@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -21,6 +22,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.ProjectLocationContexts
+import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.isLocal
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
@@ -100,13 +102,25 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .mapLatest { context ->
         _detectingSdks.value = true
         val sdks = runCatching {
-          detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+          val detected = detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+          return@runCatching appendMostRecentlyUsedBaseSdk(detected, context.targetEnvironmentConfiguration)
         }.getOrLogException(LOG) ?: emptyList()
         _detectingSdks.value = false
         context to sdks
       }
       .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
+
+  private fun appendMostRecentlyUsedBaseSdk(detectedSdks: List<Sdk>, targetEnvConf: TargetEnvironmentConfiguration?): List<Sdk> {
+    val mostRecentlyUsedBasePath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+    if (targetEnvConf.isLocal() && mostRecentlyUsedBasePath != null && FileUtil.exists(mostRecentlyUsedBasePath)) {
+      val mostRecentlyUsedBaseSdk = createDetectedSdk(mostRecentlyUsedBasePath, isLocal = true)
+      if (!detectedSdks.hasSamePythonInterpreter(mostRecentlyUsedBaseSdk)) {
+        return detectedSdks + listOf(mostRecentlyUsedBaseSdk)
+      }
+    }
+    return detectedSdks
+  }
 
   private val manuallyAddedSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
   private val manuallyAddedBaseSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
