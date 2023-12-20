@@ -541,7 +541,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
           commandRunnable.run();
         }
         else if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          ensureDocumentCommitted(file);
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           prepareDataAction.executeSynchronously();
           commandRunnable.run();
         }
