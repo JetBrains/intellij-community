@@ -221,6 +221,13 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @Override
+  public boolean remove(int key, int value) throws IOException {
+    HashMapSegmentLayout segment = segmentForKey(key);
+
+    return hashMapAlgo.remove(segment, key, value);
+  }
+
+  @Override
   public synchronized int size() throws IOException {
     checkNotClosed();
     //FIXME RC: now it is O(N), better to have O(1) -- just keep records count in a header
@@ -847,8 +854,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   @FunctionalInterface
   public interface BufferSource {
-    @NotNull ByteBuffer slice(long offsetInFile,
-                              int length) throws IOException;
+    @NotNull
+    ByteBuffer slice(long offsetInFile,
+                     int length) throws IOException;
   }
 
   /** Abstracts data storage for open-addressing hash-table implementation */
@@ -997,9 +1005,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       // stochastic, and could be not very effective
     }
 
-    public void remove(@NotNull HashTableData table,
-                       int key,
-                       int value) {
+    public boolean remove(@NotNull HashTableData table,
+                          int key,
+                          int value) {
       checkNotNoValue("key", key);
       checkNotNoValue("value", value);
       int capacity = capacity(table);
@@ -1012,13 +1020,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
           //reset key, but leave value as-is: this is the marker of 'removed' slot
           markEntryAsDeleted(table, slotIndex);
           //No need to look farther, since only one (key,value) record could be in the map
-          return;
+          return true;
         }
         if (slotKey == NO_VALUE && slotValue == NO_VALUE) {
           //free slot -> end of probing sequence, no (key, value) found -> nothing to remove:
-          return;
+          return false;
         }
       }
+      return false;
     }
 
     public boolean forEach(@NotNull HashTableData table,

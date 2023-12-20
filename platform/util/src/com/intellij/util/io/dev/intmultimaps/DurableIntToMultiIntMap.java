@@ -27,7 +27,13 @@ import java.io.IOException;
 public interface DurableIntToMultiIntMap extends Flushable, Closeable, CleanableStorage {
   int NO_VALUE = DataEnumerator.NULL_ID;
 
-  /** @return true if (key,value) pair was really put into the map -- i.e., wasn't there before */
+  /**
+   * Method <b>adds</b> a value into a set of values for the key.
+   * BEWARE: it is multi-value map -- new values do not overwrite previous ones, but appended to the set of values for the key.
+   * To overwrite previous value: remove and add new one, or use (to be implemented) replace method
+   *
+   * @return true if (key,value) pair was really put into the map -- i.e., wasn't there before
+   */
   boolean put(int key,
               int value) throws IOException;
 
@@ -56,6 +62,14 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
   int lookupOrInsert(int key,
                      @NotNull ValueAcceptor valuesAcceptor,
                      @NotNull ValueCreator valueCreator) throws IOException;
+
+  /**
+   * Removes (key,value) mapping from the multimap.
+   *
+   * @return true if such mapping existed and was removed, false if there wasn't such a mapping (i.e. nothing changed)
+   */
+  boolean remove(int key,
+                 int value) throws IOException;
 
   int size() throws IOException;
 

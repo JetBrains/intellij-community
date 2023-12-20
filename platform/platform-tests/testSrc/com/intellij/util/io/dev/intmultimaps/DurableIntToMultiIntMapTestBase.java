@@ -14,13 +14,13 @@ import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.LongStream;
 
-public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
+public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
 
   protected final int entriesCountToTest;
 
   protected M multimap;
 
-  protected IntToMultiIntMapTestBase(int entriesCountToTest) { this.entriesCountToTest = entriesCountToTest; }
+  protected DurableIntToMultiIntMapTestBase(int entriesCountToTest) { this.entriesCountToTest = entriesCountToTest; }
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
@@ -127,7 +127,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
 
   @Test
-  public void withManyKeyValuesPut_SizeIsEqualToNumberOfTruthReturned() throws IOException {
+  public void withManyKeyValuesPut_MultimapSizeIsEqualToNumberOfTruthReturned() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     int truthsReturnedFromPut = 0;
@@ -171,6 +171,47 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     );
   }
 
+  @Test
+  public void remove_DeletesKeyValueFromTheMultimap_AndReturnsTrueIfKeyValuePreviouslyExists() throws IOException {
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+      multimap.put(key, value);
+    }
+
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      assertTrue(multimap.has(key, value),
+                 "[key,value] was put before => must exist in the map");
+
+      boolean existentRemoved = multimap.remove(key, value);
+
+      assertTrue(existentRemoved,
+                 "[key,value] exist in the map => remove must return true");
+      assertFalse(multimap.has(key, value),
+                 "[key,value] was just removed => must NOT exist in the map anymore");
+
+      boolean notExistentRemoved  = multimap.remove(key, value);
+      assertFalse(notExistentRemoved,
+                 "[key,value] NOT exist in the map => remove must return false");
+    }
+
+    assertEquals(
+      0,
+      multimap.size(),
+      "All values added -- were removed, size must be 0"
+    );
+    assertTrue(
+      multimap.isEmpty(),
+      "All values added -- were removed, size must be 0"
+    );
+  }
+
+
+  //TODO RC: test modification of records
 
   @Test
   public void closeIsSafeToCallTwice() throws IOException {
@@ -178,8 +219,6 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     multimap.close();
   }
 
-  //TODO RC: test modification of records
-  //TODO RC: test many multi-mapping (>1 value for the same key)
 
 
   /* ======================== infrastructure: ================================================================ */
@@ -212,7 +251,10 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     return ThreadLocalRandom.current().longs()
       .filter(v -> key(v) != NO_VALUE
                    && value(v) != NO_VALUE)
-      //generate more multi-keys, to better check apt branches
+      //generate more multi-value-keys, to better check appropriate branches: +1,+2,... is almost always
+      // have same upper 32 bits (=key), but different lower 32 bits (=value) => this switch creates
+      // approximately 1/14 of keys with 2 values, and another 3/14 of keys with 5 values, and 10/14 of
+      // keys with a single value
       .flatMap(v -> switch ((int)(v % 14)) {
         case 13 -> LongStream.of(v, v + 1, v - 1, v + 42, v - 42);
         case 10, 11, 12 -> LongStream.of(v, v + 1);

@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 
 import com.intellij.openapi.vfs.newvfs.persistent.StorageTestingUtils;
 import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.dev.intmultimaps.IntToMultiIntMapTestBase;
+import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMapTestBase;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -18,7 +18,7 @@ import java.util.List;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHashMap> {
+public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<ExtendibleHashMap> {
 
   public ExtendibleHashMapTest() {
     super(/*entriesToTest: */4_000_000);

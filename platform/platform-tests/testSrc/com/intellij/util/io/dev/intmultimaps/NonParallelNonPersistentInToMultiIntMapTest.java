@@ -7,7 +7,7 @@ import org.junit.AssumptionViolatedException;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class NonParallelNonPersistentInToMultiIntMapTest extends IntToMultiIntMapTestBase<NonDurableNonParallelIntToMultiIntMap> {
+public class NonParallelNonPersistentInToMultiIntMapTest extends DurableIntToMultiIntMapTestBase<NonDurableNonParallelIntToMultiIntMap> {
 
   public NonParallelNonPersistentInToMultiIntMapTest() {
     super(500_000);

@@ -76,6 +76,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean remove(int key, int value) throws IOException {
+    return multimap.remove(key, value);
+  }
+
+  @Override
   public synchronized int size() {
     return multimap.size();
   }

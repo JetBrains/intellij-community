@@ -139,8 +139,8 @@ public final class Int2IntMultimap {
     return true;
   }
 
-  public void remove(final int key,
-                     final int value) {
+  public boolean remove(final int key,
+                        final int value) {
     checkNotNoValue("key", key);
     checkNotNoValue("value", value);
     final int capacity = capacity();
@@ -154,13 +154,14 @@ public final class Int2IntMultimap {
         table[slotIndex * 2] = NO_VALUE;
         aliveValues--;
         //No need to look farther, since only one (key,value) record could be in the map
-        return;
+        return true;
       }
       if (slotKey == NO_VALUE && slotValue == NO_VALUE) {
         //free slot -> end of probing sequence, no (key, value) found -> nothing to remove:
-        return;
+        return false;
       }
     }
+    return false;
   }
 
   public void forEach(final KeyValueProcessor processor) {
