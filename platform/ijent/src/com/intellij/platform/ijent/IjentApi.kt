@@ -21,11 +21,11 @@ interface IjentApi : AutoCloseable {
    * Checks if the API is active and is safe to use. If it returns false, IJent on the other side is certainly unavailable.
    * If it returns true, it's likely available.
    *
-   * The methods must return true as soon as [close] is called.
+   * The property must return true as soon as [close] is called.
    *
-   * The method must not perform any blocking operation and must work fast.
+   * The property must not perform any blocking operation and must work fast.
    */
-  fun isRunning(): Boolean
+  val isRunning: Boolean
 
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.

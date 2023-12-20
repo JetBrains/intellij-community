@@ -46,7 +46,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
         true ->
-          if (oldHolder.getInitialized().isRunning()) oldHolder
+          if (oldHolder.getInitialized().isRunning) oldHolder
           else null
         false -> oldHolder
         null -> null
