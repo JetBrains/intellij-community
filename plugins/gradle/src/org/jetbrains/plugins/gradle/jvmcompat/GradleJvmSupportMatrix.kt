@@ -10,7 +10,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.gradle.util.Ranges
 
-@State(name = "GradleJvmSupportMatrix", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
+@State(name = "GradleJvmSupportMatrix", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>(
   parser = GradleCompatibilityDataParser,
   defaultState = DEFAULT_DATA
