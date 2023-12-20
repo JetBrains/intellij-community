@@ -51,7 +51,7 @@ interface IjentExecApi {
 }
 
 /** Docs: [IjentExecApi.executeProcess] */
-suspend inline fun IjentExecApi.executeProcess(
+suspend fun IjentExecApi.executeProcess(
   exe: String,
   vararg args: String,
   builder: IjentExecApi.ExecuteProcessArgs.() -> Unit = {},
