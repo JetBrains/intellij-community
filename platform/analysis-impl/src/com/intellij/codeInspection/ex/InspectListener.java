@@ -13,6 +13,8 @@ public interface InspectListener {
 
   default void fileAnalyzed(PsiFile file, Project project) {}
 
+  default void inspectionFailed(String toolId, Throwable throwable, @Nullable PsiFile file, Project project) { }
+
   enum InspectionKind {
     LOCAL,
     LOCAL_PRIORITY,

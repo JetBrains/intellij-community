@@ -265,15 +265,29 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       getGetOrCreateLafDetector()
     }
 
-    val oldTheme = currentTheme
-
-    val newThemeSupplier = loadThemeState(element)
-    val newTheme = newThemeSupplier.get()!!
-    if (isFirstSetup || newThemeSupplier == oldTheme) {
-      currentTheme = newTheme
+    if (isFirstSetup) {
+      currentTheme = try {
+        loadThemeState(element).get()
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        null
+      } ?: loadDefaultTheme().get()
     }
     else {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newTheme, true, true, true)
+      val oldTheme = currentTheme
+      val newThemeSupplier = loadThemeState(element)
+      val newTheme = newThemeSupplier.get()!!
+      if (newThemeSupplier == oldTheme) {
+        currentTheme = newTheme
+      }
+      else {
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this,
+                                                    /* lf = */ newTheme,
+                                                    /* async = */ true,
+                                                    /* force = */ true,
+                                                    /* lockEditorScheme = */ true)
+      }
     }
   }
 
@@ -698,6 +712,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val theme = currentTheme ?: return
+    // Remove the mapping previously imported from 2023.2.
+    lafToPreviousScheme.remove(theme.name)
     // Classic Light color scheme has id `EditorColorsScheme.DEFAULT_SCHEME_NAME` - save it as is
     if (Scheme.getBaseName(scheme.name) == theme.editorSchemeId) {
       lafToPreviousScheme.remove(theme.id)

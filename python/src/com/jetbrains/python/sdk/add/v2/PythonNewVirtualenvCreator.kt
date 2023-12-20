@@ -161,7 +161,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(): Sdk? {
     return presenter.setupVirtualenv(Path.of(location.get()), state.projectPath.get(), basePythonVersion.get()!!)
   }
 

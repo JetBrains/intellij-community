@@ -8,4 +8,7 @@
   <item name='com.ibm.icu.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...)'>
     <annotation name='org.jetbrains.annotations.Nls'/>
   </item>
+  <item name='com.ibm.icu.text.MessageFormat java.lang.String format(java.lang.String, java.util.Map&lt;java.lang.String,java.lang.Object&gt;)'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
 </root>

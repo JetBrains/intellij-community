@@ -4,6 +4,7 @@
 package com.intellij.dependencytoolwindow
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -12,7 +13,10 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.RegisterToolWindowTask
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import icons.PlatformDependencyToolwindowIcons
@@ -65,7 +69,7 @@ internal class DependencyToolWindowInitializer(
         val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
           RegisterToolWindowTask(
             id = ToolWindowId.BUILD_DEPENDENCIES,
-            stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
+            stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Dependencies"),
             icon = PlatformDependencyToolwindowIcons.ArtifactSmall,
             shouldBeAvailable = DependenciesToolWindowTabProvider.hasAnyExtensions()
           )

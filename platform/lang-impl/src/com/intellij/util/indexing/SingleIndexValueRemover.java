@@ -60,7 +60,7 @@ class SingleIndexValueRemover {
       }
 
       if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {
-        if (myIndexImpl.doTraceStubUpdates(indexId) || myIndexImpl.doTraceIndexUpdates()) {
+        if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
         ConcurrencyUtil.withLock(myIndexImpl.myReadLock, () -> {

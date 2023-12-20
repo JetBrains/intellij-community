@@ -14,6 +14,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import java.util.*
@@ -201,7 +202,13 @@ abstract class ProductProperties {
    * specified module is used to compute [JetBrainsClientModuleFilter]. 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientMainModule: String? = null 
+  var embeddedJetBrainsClientMainModule: String? = null
+
+  /**
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
 
   /**
    * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
@@ -252,19 +259,12 @@ abstract class ProductProperties {
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
 
   /**
-   * `<productName>-<releaseVersion>` for release builds, e.g. ideaIC-2023.2
-   * `<productName>-<buildNumber>` for other builds, e.g. ideaIC-232.9999
+   * `<productName>-<buildNumber>` for any (nightly, EAP or release) build, e.g. ideaIC-232.9999
    *
    * See [getBaseArtifactName].
    */
-  open fun getBaseArtifactName(context: BuildContext): String {
-    val buildNumber = if (context.applicationInfo.isRelease) {
-      context.applicationInfo.fullVersion
-    }
-    else {
-      context.buildNumber
-    }
-    return getBaseArtifactName(context.applicationInfo, buildNumber)
+  fun getBaseArtifactName(context: BuildContext): String {
+    return getBaseArtifactName(context.applicationInfo, context.buildNumber)
   }
 
   /**
@@ -382,6 +382,20 @@ abstract class ProductProperties {
    * authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
+
+  /**
+   * Allows to override product name in ApplicationInfo.xml
+   * todo: remove me when platform is ready
+   */
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  open fun productNameOverride(project: JpsProject): ApplicationNamesInfoOverride? = null
+
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  data class ApplicationNamesInfoOverride(
+    val fullProductName: String,
+    val editionName: String?,
+    val motto: String?,
+  )
 
   /**
    * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.

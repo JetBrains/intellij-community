@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -41,7 +41,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
-  private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty("groovyc.optimized.class.loading.threshold", "10"));
+  public static final String GROOVYC_CLASSPATH_OPTIMIZE_THRESHOLD = "groovyc.optimized.class.loading.threshold";
+  private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty(GROOVYC_CLASSPATH_OPTIMIZE_THRESHOLD, "10"));
   static final Logger LOG = Logger.getInstance(JpsGroovycRunner.class);
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
@@ -149,7 +150,15 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     int version = jdk != null ? JpsJavaSdkType.getJavaVersion(jdk) : JavaVersion.current().feature;
     boolean inProcess = shouldRunGroovycInProcess(version);
     boolean mayDependOnUtilJar = version >= 6;
-    boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
+    // Optimized classloader is in fact a UrlClassLoader that refers to jar archives in the SDK distribution
+    // Starting from Java 9, JDK is no longer distributed as a set of jar archives, which invalidates assumptions for classloading optimization.
+    boolean isJdkSuitableForOptimization = version < 9;
+    boolean optimizeClassLoading =
+      !inProcess &&
+      mayDependOnUtilJar &&
+      isJdkSuitableForOptimization &&
+      ourOptimizeThreshold != 0 &&
+      toCompilePaths.size() >= ourOptimizeThreshold;
 
     Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 

@@ -218,6 +218,10 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue4"
+    "DataSummary.Chart.background": "Blue4",
+
+    "ManagedIdeBadgeBorder": "Grey11",
+    "ManagedIdeBadgeBackground": "Grey13",
+    "ManagedIdeBadgeBackgroundHover": "Grey12"
   }
 }

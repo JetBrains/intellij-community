@@ -54,7 +54,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
 
     val generator = NsisFileListGenerator()
     generator.addDirectory(context.paths.distAllDir.toString())
-    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
+    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/${context.productProperties.baseFileName}*.vmoptions"))
     generator.addDirectory(additionalDirectoryToInclude.toString())
     generator.addDirectory(runtimeDir.toString())
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))

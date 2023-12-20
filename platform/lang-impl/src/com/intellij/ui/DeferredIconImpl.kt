@@ -152,7 +152,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val scaledDelegateIcon = scaledDelegateIcon
-    if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.scaledDelegateIcon is DeferredIconImpl<*>)) {
+    if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.containsDeferredIconsRecursively(2))) {
       //SOE protection
       scaledDelegateIcon.paintIcon(c, g, x, y)
     }
@@ -160,6 +160,10 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scheduleEvaluation(c, x, y)
     }
   }
+
+  private fun containsDeferredIconsRecursively(atLeastTimes: Int): Boolean =
+    atLeastTimes <= 0 ||
+    scaledDelegateIcon.let { it is DeferredIconImpl<*> && it.containsDeferredIconsRecursively(atLeastTimes - 1) }
 
   fun currentlyPaintedIcon(): Icon {
     var result = scaledDelegateIcon

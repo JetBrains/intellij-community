@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -242,5 +243,44 @@ public class MMappedFileStorageTest {
     anotherStorageOtherSameFile.closeAndClean();
     assertEquals(initialStoragesCount - 1, MMappedFileStorage.openedStoragesCount(),
                  "'another storage' is now closed -> openedStoragesCount must be decremented");
+  }
+
+  @Test
+  public void fsync_IsSafeToCallOnStorage() throws IOException {
+    //IDEA-335858: IOException('Resource busy') on MacOS M2
+    //             just check .fsync() is not fail on all platforms
+    int pagesToAllocate = 16;
+    byte[] ones = new byte[1024];
+    Arrays.fill(ones, (byte)1);
+    for (int pageNo = 0; pageNo < pagesToAllocate; pageNo++) {
+      Page page = storage.pageByIndex(pageNo);
+      ByteBuffer buffer = page.rawPageBuffer();
+      buffer.put(0, ones);
+    }
+
+    storage.fsync();
+  }
+
+  @Test
+  public void mappedStorageFailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) {
+    Path nonExistentDir = tempDir.resolve("subdir");
+    Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
+    try {
+      var storage = new MMappedFileStorage(storagePath, PAGE_SIZE);
+      storage.closeAndClean();
+      fail("Storage must fail to open file in non-existing directory");
+    }
+    catch (IOException e) {
+      //ok
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_CreatesParentDirectoryIfNotExist(@TempDir Path tempDir) throws IOException {
+    Path nonExistentDir = tempDir.resolve("subdir");
+    Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
+    try (var storage = MMappedFileStorageFactory.withDefaults().open(storagePath)) {
+      storage.closeAndClean();
+    }
   }
 }

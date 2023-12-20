@@ -26,11 +26,25 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
-  override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
+  private var STATIC_REQUIRES_MODULE_NAMES = setOf("lombok")
+  override fun getText(): String {
+    if (STATIC_REQUIRES_MODULE_NAMES.contains(requiredName)) {
+      return QuickFixBundle.message("module.info.add.requires.static.name", requiredName)
+    }
+    else {
+      return QuickFixBundle.message("module.info.add.requires.name", requiredName)
+    }
+  }
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.requires.find { requiredName == it.moduleName } == null) {
-      PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
+
+      if (STATIC_REQUIRES_MODULE_NAMES.contains(requiredName)) {
+        PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + PsiKeyword.STATIC + ' ' + requiredName)
+      }
+      else {
+        PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
+      }
     }
   }
 }

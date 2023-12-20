@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="layoutlib" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:jb-layoutlib-jdk11:223.0.1.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:jb-layoutlib-jdk11:231.0.1.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/jb-layoutlib-jdk11/223.0.1.0/jb-layoutlib-jdk11-223.0.1.0.jar">
-          <sha256sum>c119161aa752e5a03eca2b64ebf23116169750ad86872e014292d4b83d8c100c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/jb-layoutlib-jdk11/231.0.1.4/jb-layoutlib-jdk11-231.0.1.4.jar">
+          <sha256sum>25268dc0123254fb765dba1b99dec38d4dc074e79af84205e54d6055a5896724</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/jb-layoutlib-jdk11/223.0.1.0/jb-layoutlib-jdk11-223.0.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/jb-layoutlib-jdk11/231.0.1.4/jb-layoutlib-jdk11-231.0.1.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -14,7 +14,7 @@ abstract class IncorrectServiceRetrievingInspectionTestBase : LightDevKitInspect
 
       public interface ComponentManager {
         <T> T getService(@NotNull Class<T> serviceClass);
-        <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded);
+        <T> T getServiceIfCreated(@NotNull Class<T> serviceClass);
       }
       """)
     myFixture.addClass(
@@ -78,5 +78,6 @@ abstract class IncorrectServiceRetrievingInspectionTestBase : LightDevKitInspect
       }
       """)
     }
+    doTest()
   }
 }

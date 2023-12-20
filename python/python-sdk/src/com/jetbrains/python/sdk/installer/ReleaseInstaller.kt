@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.system.OS
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import java.nio.file.Path
@@ -79,17 +78,13 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
       Paths.get(tempPath, "${System.nanoTime()}-${it.fileName}")
     }
     try {
-      indicator.text = PySdkBundle.message("python.sdk.preparation.hint")
+      indicator.text = PySdkBundle.message("python.sdk.preparation.progress.text")
       files.forEach { (resource, path) ->
         download(resource, path, indicator)
       }
 
       onPrepareComplete()
 
-      indicator.text = when(OS.CURRENT) {
-        OS.Windows -> PySdkBundle.message("python.sdk.installing.hint.windows")
-        else -> PySdkBundle.message("python.sdk.installing.hint")
-      }
       process(release, files, indicator)
     }
     finally {
@@ -115,7 +110,7 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
   @Throws(PrepareException::class)
   private fun download(resource: Resource, target: Path, indicator: ProgressIndicator) {
     LOGGER.info("Downloading ${resource.url} to $target")
-    indicator.text2 = PySdkBundle.message("python.sdk.downloading", resource.fileName)
+    indicator.text2 = PySdkBundle.message("python.sdk.downloading.progress.details", resource.fileName)
     try {
       indicator.checkCanceled()
       HttpRequests.request(resource.url)

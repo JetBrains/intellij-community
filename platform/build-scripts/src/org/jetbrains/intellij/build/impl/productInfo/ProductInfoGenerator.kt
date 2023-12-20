@@ -87,7 +87,18 @@ data class ProductInfoLaunchData(
   val startupWmClass: String? = null,
   val bootClassPathJarNames: List<String>,
   val additionalJvmArguments: List<String>,
-  val mainClass: String
+  val mainClass: String,
+  val customCommands: List<CustomCommandLaunchData> = emptyList(),
+)
+
+@Serializable
+data class CustomCommandLaunchData(
+  val commands: List<String>,
+  val vmOptionsFilePath: String? = null,
+  val bootClassPathJarNames: List<String> = emptyList(),
+  val additionalJvmArguments: List<String> = emptyList(),
+  val mainClass: String? = null,
+  val dataDirectoryName: String? = null,
 )
 
 @Serializable

@@ -60,7 +60,7 @@ class SingleIndexValueApplier<FileIndexMetaData> {
 
   private boolean doApply() {
     if (myIndex.runUpdateForPersistentData(storageUpdate)) {
-      if (myIndex.doTraceStubUpdates(indexId) || myIndex.doTraceIndexUpdates()) {
+      if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
         FileBasedIndexImpl.LOG.info("index " + indexId + " update finished for " + fileInfo);
       }
       if (!isMock) {

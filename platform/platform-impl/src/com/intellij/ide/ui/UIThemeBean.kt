@@ -3,11 +3,14 @@
 
 package com.intellij.ide.ui
 
+import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
+import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.function.BiFunction
 
@@ -56,22 +59,31 @@ internal class UIThemeBean {
   override fun toString() = "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
 }
 
-internal fun readTheme(parser: JsonParser): UIThemeBean {
+@VisibleForTesting
+fun readThemeBeanForTest(@Language("json") data: String, warn: (String, Throwable?) -> Unit): Map<String, String?> {
+  val bean = readTheme(JsonFactory().createParser(data), warn)
+  return hashMapOf(
+    "author" to bean.author,
+    "name" to bean.name,
+  )
+}
+
+internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): UIThemeBean {
   check(parser.nextToken() == JsonToken.START_OBJECT)
   val bean = UIThemeBean()
   while (true) {
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
-        when (val fieldName = parser.currentName()) {
+        when (parser.currentName()) {
           "icons" -> bean.icons = readMapFromJson(parser)
           "background" -> bean.background = readMapFromJson(parser)
           "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
-          "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap())
-          "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap())
+          "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap(), warn)
+          "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap(), warn)
           "ui" -> {
             // ordered map is required (not clear why)
             val map = LinkedHashMap<String, Any?>(700)
-            readFlatMapFromJson(parser, map)
+            readFlatMapFromJson(parser = parser, result = map, warn = warn)
             putDefaultsIfAbsent(map)
             bean.ui = map
           }
@@ -79,11 +91,12 @@ internal fun readTheme(parser: JsonParser): UIThemeBean {
             parser.skipChildren()
           }
           else -> {
-            logger<UIThemeBean>().warn("Unknown field: $fieldName")
+            logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
           }
         }
       }
       JsonToken.END_OBJECT -> {
+        break
       }
       JsonToken.VALUE_STRING -> {
         when (parser.currentName()) {
@@ -131,7 +144,7 @@ internal fun readTheme(parser: JsonParser): UIThemeBean {
  *
  * Note: we intentionally do not expand "*" patterns here.
  */
-private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>) {
+private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>, warn: (String, Throwable?) -> Unit) {
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
   val prefix = ArrayDeque<String>()
@@ -176,7 +189,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it) }
+        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it, warn = warn) }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
@@ -216,22 +229,17 @@ private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
 private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>) {
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
-  var level = 1
   l@
   while (true) {
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
-        level++
         val m = LinkedHashMap<String, Any?>()
         result.put(parser.currentName(), m)
         readMapFromJson(parser, m)
       }
       JsonToken.END_OBJECT -> {
-        level--
-
-        if (level == 0) {
-          break
-        }
+        // END_OBJECT for nested maps is handled by readMapFromJson
+        break
       }
       JsonToken.VALUE_STRING -> {
         val text = parser.text

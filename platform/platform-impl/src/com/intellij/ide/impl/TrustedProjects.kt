@@ -8,17 +8,13 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
-import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.function.Consumer
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
 @ApiStatus.ScheduledForRemoval
@@ -54,43 +50,22 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted(): Boolean = TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
+fun Project.isTrusted(): Boolean {
+  return TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
+}
 
-fun Project.setTrusted(isTrusted: Boolean): Unit = TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
+fun Project.setTrusted(isTrusted: Boolean) {
+  TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
+}
 
-fun Project.getTrustedState(): ThreeState = TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
+@Suppress("unused") // Used externally
+fun Project.getTrustedState(): ThreeState {
+  return TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
+}
 
-@ApiStatus.Internal
-fun isTrustedCheckDisabled(): Boolean = TrustedProjects.isTrustedCheckDisabled()
-
-@JvmOverloads
-@ApiStatus.Internal
-@Suppress("DEPRECATION")
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use TrustedProjects.isProjectTrusted instead")
-fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean =
-  TrustedProjects.isProjectImplicitlyTrusted(projectDir, project)
-
-/**
- * Per-project "is this project trusted" setting from the previous version of the trusted API.
- * It shouldn't be used and is kept for migration purposes only.
- */
-@State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-@Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-@Suppress("DEPRECATION")
-@Deprecated("Use TrustedPaths instead")
-internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
-  class State : BaseState() {
-    @get:Attribute
-    var isTrusted: ThreeState by enum(ThreeState.UNSURE)
-  }
-
-  var trustedState: ThreeState
-    get() = state.isTrusted
-    set(value) {
-      state.isTrusted = value
-    }
+@Suppress("unused") // Used externally
+fun isTrustedCheckDisabled(): Boolean {
+  return TrustedProjects.isTrustedCheckDisabled()
 }
 
 @Suppress("DEPRECATION")
@@ -133,18 +108,5 @@ interface TrustStateListener {
     val TOPIC: Topic<TrustStateListener> = Topic(TrustStateListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }
-
-@JvmOverloads
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener)"))
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
-  TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener)
-}
-
-@JvmOverloads
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener::accept)"))
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>): Unit =
-  TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener::accept)
 
 const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"

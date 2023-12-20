@@ -69,7 +69,7 @@ internal class IndexingStampStorageOverFastAttributes : IndexingStampStorage {
     val dir = PathManager.getIndexRoot().resolve("fast_index_stamps")
 
     persistence = EnumeratedFastFileAttribute(dir, PERSISTENCE, TimestampsKeyDescriptor()) { enumeratorPath ->
-      PersistentTimestampsEnumerator(enumeratorPath)
+      DurableTimestampsEnumerator(enumeratorPath)
     }
   }
 

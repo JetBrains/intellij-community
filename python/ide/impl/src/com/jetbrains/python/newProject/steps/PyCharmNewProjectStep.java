@@ -6,7 +6,6 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle;
@@ -14,7 +13,12 @@ import com.jetbrains.python.newProject.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+
+import static com.jetbrains.python.newProject.PythonProjectGenerator.useNewInterpreterCreationUi;
 
 public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewProjectSettings> {
   public PyCharmNewProjectStep() {
@@ -43,7 +47,7 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
         //noinspection unchecked
         return new NewProjectWizardProjectSettingsStep<PyNewProjectSettings>(npwGenerator);
       }
-      else if (Registry.is("python.new.interpreter.creation.ui")) {
+      else if (useNewInterpreterCreationUi()) {
         return new PythonProjectSpecificSettingsStep<>(projectGenerator, callback);
       }
       else {
@@ -65,7 +69,7 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
         return 0;
       }));
 
-      if (Registry.is("python.new.interpreter.creation.ui")) {
+      if (useNewInterpreterCreationUi()) {
         //noinspection unchecked
         var map = StreamEx.of(generators)
           .map(generator -> new Pair<>(generator, getActions((DirectoryProjectGenerator<PyNewProjectSettings>)generator, callback)))

@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.EnvironmentUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.FileSystems
@@ -38,8 +39,8 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {
     val fs = FileSystems.getDefault()
-    val pathNames = System.getenv("PATH").split(File.pathSeparatorChar)
-      .mapNotNull {
+    val pathNames = EnvironmentUtil.getEnvironmentMap().get("PATH")?.split(File.pathSeparatorChar)
+      ?.mapNotNull {
         try {
           fs.getPath(it)
         }
@@ -47,8 +48,8 @@ object EnvironmentScanner {
           null
         }
       }
-      .filter(Files::exists)
-    return pathNames
+      ?.filter(Files::exists)
+    return pathNames ?: emptyList()
   }
 
   fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {

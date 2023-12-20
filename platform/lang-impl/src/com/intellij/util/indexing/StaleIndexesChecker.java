@@ -92,7 +92,7 @@ public final class StaleIndexesChecker {
     boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        final int maxLogCount = (unitTest || FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || LOG.isDebugEnabled()) ? Integer.MAX_VALUE : 10;
+        final int maxLogCount = (unitTest || FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || LOG.isDebugEnabled()) ? Integer.MAX_VALUE : 10;
         int loggedCount = 0;
         for (int staleId : staleIds) {
           if (loggedCount < maxLogCount) {

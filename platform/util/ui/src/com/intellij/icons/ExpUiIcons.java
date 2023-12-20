@@ -44,7 +44,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon PlayForward = load("expui/actions/playForward.svg", 929979108, 2);
     /** 16x16 */ public static final @NotNull Icon PlayLast = load("expui/actions/playLast.svg", 1279252835, 2);
     /** 16x16 */ public static final @NotNull Icon Preview = load("expui/actions/preview.svg", 216908392, 2);
-    /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", 251390405, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", -2066399037, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfileMemory = load("expui/actions/profileMemory.svg", -340841991, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfileRed = load("expui/actions/profileRed.svg", 406132239, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", 910306733, 2);
     /** 16x16 */ public static final @NotNull Icon ReformatCode = load("expui/actions/reformatCode.svg", 1980487789, 2);
     /** 16x16 */ public static final @NotNull Icon Report = load("expui/actions/report.svg", -808282148, 2);
@@ -55,6 +57,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 48135364, 2);
     /** 16x16 */ public static final @NotNull Icon Split = load("expui/actions/split.svg", -2090554966, 2);
     /** 16x16 */ public static final @NotNull Icon StartMemoryProfile = load("expui/actions/startMemoryProfile.svg", 1939692711, 2);
+    /** 16x16 */ public static final @NotNull Icon SuggestedRefactoringBulb = load("expui/actions/suggestedRefactoringBulb.svg", -1109100444, 2);
     /** 16x16 */ public static final @NotNull Icon SwapPanels = load("expui/actions/swapPanels.svg", 496326212, 2);
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("expui/actions/synchronizeScrolling.svg", 1854114394, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("expui/actions/toggleVisibility.svg", 943747548, 2);

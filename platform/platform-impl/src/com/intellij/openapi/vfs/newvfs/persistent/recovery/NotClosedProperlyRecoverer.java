@@ -104,10 +104,6 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         return;
       }
 
-      //Fail-safe: if following recovery procedures fail to rebuild VFS -- on restart, we'll short-circuit
-      // the detailing checks
-      records.setErrorsAccumulated(accumulatedErrors + totalErrors);
-
       if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       NAME_STORAGE_INCOMPLETE,
@@ -151,8 +147,8 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
     try (DataInputStream stream = contentStorage.readStream(contentId)) {
       stream.readAllBytes();
     }
-    catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + e.getMessage());
+    catch (Throwable t) {
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + t.getMessage());
       return false;
     }
     try {

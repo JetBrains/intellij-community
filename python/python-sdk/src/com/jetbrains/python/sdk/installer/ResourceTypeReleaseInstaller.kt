@@ -30,7 +30,7 @@ class PkgReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.APPLE_SOFT
  */
 class ExeReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
   override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
-    return GeneralCommandLine(path.absolutePathString(), "/quiet", "InstallAllUsers=0")
+    return GeneralCommandLine(path.absolutePathString(), "/repair", "/quiet", "InstallAllUsers=0")
   }
 }
 
@@ -42,7 +42,6 @@ abstract class ResourceTypeReleaseInstaller(private val resourceType: ResourceTy
 
   @Throws(ProcessException::class)
   override fun process(release: Release, resourcePaths: Map<Resource, Path>, indicator: ProgressIndicator) {
-    indicator.isIndeterminate = true
     resourcePaths.forEach { (resource, path) ->
       processResource(resource, path, indicator)
     }
@@ -50,7 +49,9 @@ abstract class ResourceTypeReleaseInstaller(private val resourceType: ResourceTy
 
   @Throws(ProcessException::class)
   private fun processResource(resource: Resource, path: Path, indicator: ProgressIndicator) {
-    indicator.text2 = PySdkBundle.message("python.sdk.running", resource.fileName)
+    indicator.isIndeterminate = true
+    indicator.text = PySdkBundle.message("python.sdk.running.progress.text", resource.fileName)
+    indicator.text2 = PySdkBundle.message("python.sdk.running.one.minute.progress.details")
 
     val commandLine = buildCommandLine(resource, path)
     LOGGER.info("Running ${commandLine.commandLineString}")

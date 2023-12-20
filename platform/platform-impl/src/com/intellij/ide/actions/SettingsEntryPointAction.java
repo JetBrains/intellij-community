@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -58,6 +59,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
+
+  private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 
   public SettingsEntryPointAction() {
     super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
@@ -116,17 +119,22 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (UpdateAction action : provider.getUpdateActions(context)) {
-        Presentation presentation = action.getTemplatePresentation();
-        if (action.isIdeUpdate()) {
-          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
-          appActions.add(action);
+      try {
+        for (UpdateAction action : provider.getUpdateActions(context)) {
+          Presentation presentation = action.getTemplatePresentation();
+          if (action.isIdeUpdate()) {
+            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+            appActions.add(action);
+          }
+          else {
+            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+            pluginActions.add(action);
+          }
+          action.markAsRead();
         }
-        else {
-          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          pluginActions.add(action);
-        }
-        action.markAsRead();
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -169,8 +177,13 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       int count = group.getChildrenCount();
 
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-        for (AnAction action : provider.getLastActions(context)) {
-          group.add(action);
+        try {
+          for (AnAction action : provider.getLastActions(context)) {
+            group.add(action);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
 
@@ -210,16 +223,20 @@ public final class SettingsEntryPointAction extends DumbAwareAction
             if (action instanceof LastAction lastAction) {
               Presentation presentation = action.getTemplatePresentation();
               JBLabel label = new JBLabel(presentation.getIcon());
+              label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
-              JPanel panel = new OpaquePanel(new BorderLayout(JBUI.scale(4), 0), isSelected
-                                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
-                                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
+              JPanel panel = new OpaquePanel(new BorderLayout(), isSelected
+                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
+                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
                 @Override
                 public AccessibleContext getAccessibleContext() {
                   return label.getAccessibleContext();
                 }
               };
-              panel.setBorder(JBUI.Borders.empty(12, 14));
+
+              float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
+              Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+              panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
 
               JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
               iconPanel.add(label, BorderLayout.NORTH);
@@ -274,18 +291,23 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
-        if (action.isNewAction()) {
-          if (action.isIdeUpdate()) {
-            ourShowPlatformUpdateIcon = true;
-          }
-          else {
-            ourShowPluginsUpdateIcon = true;
-          }
-          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
-            break loop;
+      try {
+        for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+          if (action.isNewAction()) {
+            if (action.isIdeUpdate()) {
+              ourShowPlatformUpdateIcon = true;
+            }
+            else {
+              ourShowPluginsUpdateIcon = true;
+            }
+            if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
+              break loop;
+            }
           }
         }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -302,9 +324,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-        if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
-          updates = true;
-          break;
+        try {
+          if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+            updates = true;
+            break;
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
@@ -360,50 +387,75 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     }
 
     public void paintButton(@NotNull ActionButton button, @NotNull ActionButtonLook look, @NotNull Graphics g) {
-      int radius = JBUI.scale(6);
-      Insets insets = button.getInsets();
-      Dimension size = button.getSize();
-      JBInsets.removeFrom(size, insets);
+      Graphics2D g2 = (Graphics2D)g.create();
 
-      g.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(button.getPopState() != ActionButtonComponent.NORMAL));
-      g.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      g.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
-      g.drawRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+        int radius = JBUI.scale(12);
+        boolean compactMode = UISettings.getInstance().getCompactMode();
+        Insets insets = button.getInsets();
+        if (compactMode) {
+          int compact = JBUI.scale(3);
+          insets.set(insets.top + compact, insets.left + compact, insets.bottom + compact, insets.right + compact);
+        }
+        Dimension size = button.getSize();
+        JBInsets.removeFrom(size, insets);
 
-      int offset = JBUI.scale(4);
-      int iconSize = JBUI.scale(20);
-      int height = button.getHeight();
-      look.paintIcon(g, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
-                     (height - myFirstIcon.getIconHeight()) / 2);
-      look.paintIcon(g, button, mySecondIcon, insets.left + offset + iconSize + offset + (iconSize - mySecondIcon.getIconWidth()) / 2,
-                     (height - mySecondIcon.getIconHeight()) / 2);
+        g2.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(button.getPopState() != ActionButtonComponent.NORMAL));
+        g2.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+
+        g2.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
+        g2.drawRoundRect(insets.left, insets.top, size.width, size.height - 1, radius, radius);
+
+        int offset = JBUI.scale(compactMode ? 3 : 6);
+        int iconSize = JBUI.scale(20);
+        int height = button.getHeight();
+        look.paintIcon(g2, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
+                       (height - myFirstIcon.getIconHeight()) / 2);
+        look.paintIcon(g2, button, mySecondIcon, insets.left + offset + iconSize + offset + (iconSize - mySecondIcon.getIconWidth()) / 2,
+                       (height - mySecondIcon.getIconHeight()) / 2);
+      }
+      finally {
+        g2.dispose();
+      }
     }
 
     @Override
     public int getIconWidth() {
-      return JBUI.scale(52);
+      return JBUI.scale(UISettings.getInstance().getCompactMode() ? 52 : 58);
     }
 
     @Override
     public int getIconHeight() {
-      return JBUI.scale(28);
+      return JBUI.scale(30);
     }
   }
 
   private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
     for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
-      Icon icon = customizer.getCustomIcon(supplier);
-      if (icon != null) return icon;
+      try {
+        Icon icon = customizer.getCustomIcon(supplier);
+        if (icon != null) return icon;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return supplier.getOriginalIcon();
   }
 
   private static @Nullable Icon getSecondIcon() {
     for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
-      Icon icon = customizer.getSecondIcon();
-      if (icon != null) {
-        return icon;
+      try {
+        Icon icon = customizer.getSecondIcon();
+        if (icon != null) {
+          return icon;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return null;
@@ -583,6 +635,19 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   }
 
   public abstract static class LastAction extends DumbAwareAction {
+    protected LastAction() {
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text,
+                         @Nullable @NlsActions.ActionDescription String description,
+                         @Nullable Icon icon) {
+      super(text, description, icon);
+    }
+
     public abstract @NotNull @NlsActions.ActionText String getSecondText();
   }
 }

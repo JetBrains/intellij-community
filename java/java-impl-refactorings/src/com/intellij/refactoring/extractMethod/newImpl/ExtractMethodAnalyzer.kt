@@ -32,19 +32,20 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Processor
 import java.util.*
 
-fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
+fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true): ExtractOptions {
   require(elements.isNotEmpty())
   val analyzer = CodeFragmentAnalyzer(elements)
 
   val flowOutput = findFlowOutput(analyzer)
                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
-  val variableData = findVariableData(analyzer, analyzer.findOutputVariables())
+  val variableData = findVariableData(analyzer, analyzer.findOutputVariables(), inferNullity)
 
   val expression = elements.singleOrNull() as? PsiExpression
 
   val dataOutput = when {
-    expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
+    expression != null -> ExpressionOutput(getExpressionType(expression), null, listOf(expression),
+                                           if (inferNullity) CodeFragmentAnalyzer.inferNullability(listOf(expression)) else Nullability.UNKNOWN)
     variableData is VariableOutput -> when {
       variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> null
       flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements) -> null
@@ -188,7 +189,7 @@ private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput)
   }
 }
 
-private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>): DataOutput {
+private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>, inferNullity: Boolean): DataOutput {
   val variable = when {
     variables.size > 1 -> throw ExtractMultipleVariablesException(variables, analyzer.elements)
     analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() ->
@@ -196,7 +197,9 @@ private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<Psi
     variables.isEmpty() -> return EmptyOutput()
     else -> variables.single()
   }
-  val nullability = CodeFragmentAnalyzer.inferNullability(analyzer.elements.last(), variable.name)
+  val nullability =
+    if (inferNullity) CodeFragmentAnalyzer.inferNullability(analyzer.elements.last(), variable.name)
+    else Nullability.UNKNOWN
   return VariableOutput(variables.single().type, variables.single(), variables.single() in analyzer, nullability)
 }
 

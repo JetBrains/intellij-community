@@ -50,8 +50,18 @@ public abstract class EditorMacro extends Macro {
     }
 
     int offset = editor.logicalPositionToOffset(pos);
-    int lineStart = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(offset));
+    return getColumnNumber(editor, offset);
+  }
+
+  @NotNull
+  protected static String getColumnNumber(Editor editor, int offset) {
+    int lineNumber = getLineNumber(editor, offset);
+    int lineStart = editor.getDocument().getLineStartOffset(lineNumber);
     return String.valueOf(offset - lineStart + 1);
+  }
+
+  protected static int getLineNumber(Editor editor, int offset) {
+    return editor.getDocument().getLineNumber(offset);
   }
 
   @Nullable

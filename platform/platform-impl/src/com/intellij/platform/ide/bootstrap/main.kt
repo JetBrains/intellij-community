@@ -42,6 +42,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -207,7 +208,16 @@ fun CoroutineScope.startApplication(args: List<String>,
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
-    if (isHeadless || !configImportNeededDeferred.await()) {
+    if (isHeadless) {
+      if (configImportNeededDeferred.await()) {
+        // make sure we lock the dir before writing
+        lockSystemDirsJob.join()
+        enableNewUi(logDeferred)
+      }
+      return@async null
+    }
+
+    if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
       return@async null
     }
 
@@ -222,11 +232,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     )
 
     if (ConfigImportHelper.isNewUser()) {
-      if (System.getProperty("ide.experimental.ui") == null) {
-        runCatching {
-          EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
-        }.getOrLogException(log)
-      }
+      enableNewUi(logDeferred)
 
       if (isIdeStartupWizardEnabled) {
         log.info("Will enter initial app wizard flow.")
@@ -338,6 +344,20 @@ fun CoroutineScope.startApplication(args: List<String>,
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
       appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
+    }
+  }
+}
+
+private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
+  if (System.getProperty("ide.experimental.ui") == null) {
+    try {
+      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logDeferred.await().error(e)
     }
   }
 }

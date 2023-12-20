@@ -78,6 +78,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     if (type instanceof PyTupleType tupleType) {
       return Optional
         .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
+        .map(index -> !tupleType.isHomogeneous() && index < 0 ? tupleType.getElementCount() + index : index)
         .map(tupleType::getElementType)
         .orElse(null);
     }

@@ -471,7 +471,7 @@ public final class PushController implements Disposable {
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);
     if (!specs.isEmpty()) {
-      pusher.push(specs, options, force);
+      pusher.push(specs, options, force, myDialog.getCustomParams());
     }
   }
 
@@ -597,7 +597,16 @@ public final class PushController implements Disposable {
     for (PushSupport<?, ?, ?> support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
+
     return result;
+  }
+
+  @ApiStatus.Experimental
+  public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
+    return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
+      VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
+      return panel != null ? Pair.pair(panelProvider.getId(), panel) : null;
+    });
   }
 
   @NotNull

@@ -27,6 +27,11 @@
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolFactory"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolFactoryEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolFactory"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.documentationCustomizer"
                     interface="com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer"
                     dynamic="true"/>

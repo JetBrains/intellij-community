@@ -26,6 +26,10 @@
     <extensionPoint name="commitNodeUiRenderExtension"
                     interface="com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension"
                     dynamic="true"/>
+
+    <extensionPoint name="customPushOptionsPanelFactory"
+                    interface="com.intellij.dvcs.push.CustomPushOptionsPanelFactory"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>

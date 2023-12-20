@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 
 @RunWith(JUnit38AssumeSupportRunner.class)
 public class LoadVersionsFromMavenTest extends LightIdeaTestCase {
@@ -25,6 +26,9 @@ public class LoadVersionsFromMavenTest extends LightIdeaTestCase {
         assertTrue(versions.size() > 0);
         for (String version : versions) {
             assertTrue(VersionComparatorUtil.compare(version, "1.0.0") >= 0);
+            assertFalse(version.contains("-"));
+            assertFalse(version.toLowerCase(Locale.ROOT).contains("beta"));
+            assertFalse(version.toLowerCase(Locale.ROOT).contains("rc"));
         }
     }
 }

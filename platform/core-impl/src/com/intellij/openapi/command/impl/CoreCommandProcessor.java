@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -231,6 +232,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         finishCommand(descriptor, finalThrowable);
       });
+      if (finalThrowable instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)finalThrowable;
+      }
     }
   }
 

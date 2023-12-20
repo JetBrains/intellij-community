@@ -11,8 +11,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -59,7 +59,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
-            project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+            project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
 
             coroutineToIndicator {
               rootProblemNotifier.rescanAndNotifyIfNeeded()

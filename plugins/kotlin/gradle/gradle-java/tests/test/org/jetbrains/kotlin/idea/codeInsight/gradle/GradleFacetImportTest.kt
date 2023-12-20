@@ -831,7 +831,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         importProject()
 
-        TestCase.assertEquals("1.1", holder.settings.languageVersion)
+        // Different language versions -> there is no common language version
+        TestCase.assertNull(holder.settings.languageVersion)
     }
 
     @Test

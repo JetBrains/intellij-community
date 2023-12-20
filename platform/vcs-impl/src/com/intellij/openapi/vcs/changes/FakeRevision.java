@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -17,17 +18,37 @@ import org.jetbrains.annotations.Nullable;
  * These are going to be replaced by real content revision after the next CLM refresh.
  */
 public class FakeRevision implements ContentRevision {
+  private static final Logger LOG = Logger.getInstance(FakeRevision.class);
+
   private final Project myProject;
   private final FilePath myFile;
+  private final boolean myCurrentRevision;
 
+  /**
+   * @deprecated Consider this class platform-only, use own ContentRevision implementation when needed.
+   */
+  @Deprecated
   public FakeRevision(@NotNull Project project, @NotNull FilePath file) {
+    this(project, file, false);
+  }
+
+  public FakeRevision(@NotNull Project project, @NotNull FilePath file, boolean isCurrentRevision) {
     myProject = project;
     myFile = file;
+    myCurrentRevision = isCurrentRevision;
   }
 
   @Override
   @Nullable
   public String getContent() throws VcsException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("FakeRevision queried for " + myFile.getPath() + (myCurrentRevision ? " (current)" : ""), new Throwable());
+    }
+
+    if (myCurrentRevision) {
+      return new CurrentContentRevision(myFile).getContent();
+    }
+
     VirtualFile virtualFile = myFile.getVirtualFile();
     if (virtualFile == null) return null;
 

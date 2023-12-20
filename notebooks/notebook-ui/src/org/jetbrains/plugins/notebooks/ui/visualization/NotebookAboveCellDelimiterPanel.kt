@@ -111,7 +111,7 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       }
     }
 
-    addPropertyChangeListener(UIFormXmlConstants.ELEMENT_FONT) {
+    addPropertyChangeListener(UIFormXmlConstants.ELEMENT_BORDER) {
       val newBackgroundColor = editor.colorsScheme.defaultBackground
       colorsChangeListenerAdapter.propertyChanged(
         newBackgroundColor,

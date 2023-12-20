@@ -94,7 +94,7 @@ class Module(
     }
 
     companion object {
-        val ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES = setOf('-', '_', '.')
+        val ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES = setOf('-', '_', '.', ' ')
 
         val parser: Parser<Module> = mapParser { map, path ->
             val (name) = map.parseValue<String>(path, "name")

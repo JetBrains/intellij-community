@@ -81,7 +81,7 @@ internal abstract class BgtTreeWalker<N : Any>(
           success.enter(null)
           return
         }
-        val node = level.nodes.removeLastOrNull()
+        val node = level.nodes.removeFirstOrNull()
         if (node == null) {
           debug("No nodes remaining on the level, going up")
           stack.removeLast()

@@ -6,10 +6,13 @@ package com.intellij.ide.ui
 import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
+import com.intellij.diagnostic.PluginException
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.laf.UIThemeExportableBean
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorUtil
@@ -72,6 +75,9 @@ class UITheme internal constructor(
       }
     }
 
+    val classLoader = providerClassLoader
+    val warn = createWarnFunction(classLoader)
+
     for ((key, value) in bean.colorMap.map) {
       val k = "ColorPalette.$key"
       assert(value !is IJColorUIResource)
@@ -88,7 +94,7 @@ class UITheme internal constructor(
       }
 
       @Suppress("NAME_SHADOWING")
-      val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = providerClassLoader)
+      val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = classLoader, warn = warn)
       if (key.startsWith("*.")) {
         val tail = key.substring(1)
         addPattern(key, value, defaults)
@@ -160,25 +166,35 @@ class UITheme internal constructor(
 
     @ApiStatus.Internal
     fun loadTempThemeFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
-      val theme = readTheme(JsonFactory().createParser(stream))
+      val classLoader = UITheme::class.java.classLoader
+      val warn = createWarnFunction(classLoader)
+      val theme = readTheme(JsonFactory().createParser(stream), warn)
       return createTheme(themeId = themeId,
                          theme = theme,
                          parentTheme = resolveParentTheme(theme, themeId),
-                         classLoader = UITheme::class.java.classLoader)
+                         classLoader = classLoader,
+                         warn = warn)
     }
 
     fun loadFromJson(data: ByteArray,
                      themeId: @NonNls String,
                      classLoader: ClassLoader,
                      iconMapper: ((String) -> String?)? = null): UITheme {
-      val theme = readTheme(JsonFactory().createParser(data))
+      val warn = createWarnFunction(classLoader)
+      val theme = readTheme(JsonFactory().createParser(data), warn)
       val parentTheme = resolveParentTheme(theme, themeId)
-      return createTheme(theme = theme, parentTheme = parentTheme, classLoader = classLoader, iconMapper = iconMapper, themeId = themeId)
+      return createTheme(theme = theme,
+                         parentTheme = parentTheme,
+                         classLoader = classLoader,
+                         iconMapper = iconMapper,
+                         themeId = themeId,
+                         warn = warn)
     }
 
     internal fun loadDeprecatedFromJson(data: ByteArray, themeId: @NonNls String, classLoader: ClassLoader): UITheme {
-      val theme = readTheme(JsonFactory().createParser(data))
-      return createTheme(theme = theme, parentTheme = null, classLoader = classLoader, iconMapper = null, themeId = themeId)
+      val warn = createWarnFunction(classLoader)
+      val theme = readTheme(JsonFactory().createParser(data), warn)
+      return createTheme(theme = theme, parentTheme = null, classLoader = classLoader, iconMapper = null, themeId = themeId, warn = warn)
     }
 
     private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {
@@ -199,8 +215,9 @@ class UITheme internal constructor(
                               classLoader: ClassLoader,
                               iconMapper: ((String) -> String?)? = null,
                               defaultDarkParent: Supplier<UITheme?>?,
-                              defaultLightParent: Supplier<UITheme?>?): UITheme {
-      val bean = readTheme(JsonFactory().createParser(data))
+                              defaultLightParent: Supplier<UITheme?>?,
+                              warn: (String, Throwable?) -> Unit): UITheme {
+      val bean = readTheme(JsonFactory().createParser(data), warn)
       val parent: UIThemeBean?
       if (parentTheme == null) {
         val parentThemeId = bean.parentTheme
@@ -215,7 +232,12 @@ class UITheme internal constructor(
         parent = parentTheme.bean
         bean.parentTheme = parentTheme.id
       }
-      return createTheme(theme = bean, parentTheme = parent, classLoader = classLoader, iconMapper = iconMapper, themeId = themeId)
+      return createTheme(theme = bean,
+                         parentTheme = parent,
+                         classLoader = classLoader,
+                         iconMapper = iconMapper,
+                         themeId = themeId,
+                         warn = warn)
     }
 
     @TestOnly
@@ -228,11 +250,12 @@ private fun createTheme(theme: UIThemeBean,
                         parentTheme: UIThemeBean?,
                         classLoader: ClassLoader,
                         iconMapper: ((String) -> String?)? = null,
-                        themeId: @NonNls String): UITheme {
+                        themeId: @NonNls String,
+                        warn: (String, Throwable?) -> Unit): UITheme {
   if (parentTheme != null) {
     importFromParentTheme(theme, parentTheme)
   }
-  initializeNamedColors(theme)
+  initializeNamedColors(theme, warn = warn)
 
   val paletteScopeManager = UiThemePaletteScopeManager()
 
@@ -417,4 +440,11 @@ internal class IJColorUIResource(color: Color, private val name: String) : JBCol
   override fun getName(): String = name
 
   override fun toString(): String = "IJColorUIResource(color=${super.toString()}, name=$name)"
+}
+
+private fun createWarnFunction(classLoader: ClassLoader): (String, Throwable?) -> Unit {
+  return { message, error ->
+    val id = if (classLoader is PluginAwareClassLoader) classLoader.pluginId else PluginManagerCore.CORE_ID
+    logger<UITheme>().warn(PluginException(message, error, id))
+  }
 }

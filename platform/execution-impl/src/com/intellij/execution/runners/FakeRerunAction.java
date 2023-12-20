@@ -37,7 +37,8 @@ public class FakeRerunAction extends AnAction {
       RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
       RunConfiguration configuration = settings == null ? null : settings.getConfiguration();
       if (configuration != null &&
-          RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration)) {
+          RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration) &&
+          (ActionPlaces.RUNNER_TOOLBAR.equals(event.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(event.getPlace()))) {
         presentation.setEnabledAndVisible(false);
         return;
       }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -62,7 +64,6 @@ public final class MavenIndexImpl implements MavenIndex {
   public MavenIndexImpl(MavenIndexerWrapper indexer,
                         MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
     myNexusIndexer = indexer;
-
     myDir = propertyHolder.dir;
     myKind = propertyHolder.kind;
     myRegisteredRepositoryIds = propertyHolder.repositoryIds;
@@ -100,6 +101,11 @@ public final class MavenIndexImpl implements MavenIndex {
       }
     }
     finally {
+      boolean isCentral = isForCentral();
+      MavenIndexUsageCollector.INDEX_OPENED.log(
+        myKind == IndexKind.LOCAL,
+        isCentral,
+        myKind == IndexKind.REMOTE && !isCentral);
       save();
     }
   }
@@ -213,6 +219,8 @@ public final class MavenIndexImpl implements MavenIndex {
   @Override
   public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
     throws MavenProcessCanceledException {
+    StructuredIdeActivity activity = MavenIndexUsageCollector.INDEX_UPDATE.started(null);
+    boolean isSuccess = false;
     try {
       indexUpdateLock.lock();
 
@@ -252,6 +260,7 @@ public final class MavenIndexImpl implements MavenIndex {
       myFailureMessage = null;
 
       MavenLog.LOG.debug("finish update index " + this);
+      isSuccess = true;
     }
     catch (MavenProcessCanceledException e) {
       throw e;
@@ -260,10 +269,25 @@ public final class MavenIndexImpl implements MavenIndex {
       handleUpdateException(e);
     }
     finally {
+      boolean isCentral = isForCentral();
+      boolean finalIsSuccess = isSuccess;
+      activity.finished(() ->
+                          Arrays.asList(
+                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == IndexKind.LOCAL),
+                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == IndexKind.REMOTE && isCentral),
+                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == IndexKind.REMOTE && !isCentral),
+                            MavenIndexUsageCollector.IS_SUCCESS.with(finalIsSuccess),
+                            MavenIndexUsageCollector.MANUAL.with(multithreaded)
+                          )
+      );
       indexUpdateLock.unlock();
     }
 
     save();
+  }
+
+  private boolean isForCentral() {
+    return myRepositoryPathOrUrl != null && myRepositoryPathOrUrl.contains("repo.maven.apache.org");
   }
 
   private boolean hasValidContext(@NotNull File contextDir) {
@@ -487,6 +511,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isBroken) return false;
 
     IndexData indexData = myData;
+    if (indexData == null) return false;
     return doIndexTask(() -> indexData.groupToArtifactMap.containsMapping(groupId), false);
   }
 
@@ -495,6 +520,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isBroken) return false;
 
     IndexData indexData = myData;
+    if (indexData == null) return false;
     String key = groupId + ":" + artifactId;
     return doIndexTask(() -> indexData.groupWithArtifactToVersionMap.containsMapping(key), false);
   }
@@ -502,16 +528,20 @@ public final class MavenIndexImpl implements MavenIndex {
   @Override
   public boolean hasVersion(String groupId, String artifactId, final String version) {
     if (isBroken) return false;
+    IndexData indexData = myData;
+    if (indexData == null) return false;
 
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
     String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
-    IndexData indexData = myData;
+
     return doIndexTask(() -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version), false);
   }
 
   @Override
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
-    return doIndexAndRecoveryTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
+    IndexData indexData = myData;
+    if (indexData == null) return Collections.emptySet();
+    return doIndexAndRecoveryTask(() -> indexData.search(pattern, maxResult), Collections.emptySet());
   }
 
   @Override
@@ -519,6 +549,7 @@ public final class MavenIndexImpl implements MavenIndex {
     return doIndexAndRecoveryTask(() -> {
       Set<MavenArchetype> archetypes = new HashSet<>();
       IndexData indexData = myData;
+      if (indexData == null) return Collections.emptySet();
       indexData.archetypeIdToDescriptionMap.consumeKeysWithExistingMapping(ga -> {
         List<String> gaParts = split(ga, ":");
 
@@ -588,6 +619,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isClose) return;
     if (!isBroken) {
       MavenLog.LOG.info("index is broken " + this);
+      MavenIndexUsageCollector.INDEX_BROKEN.log();
       ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEX_IS_BROKEN).indexIsBroken(this);
     }
     isBroken = true;

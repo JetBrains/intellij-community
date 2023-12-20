@@ -160,7 +160,7 @@ def analyze_numeric_column(column, col_name):
         counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
         format_function = int if column.is_integer() else lambda x: round(x, 1)
 
-        # so {} — {} will be correctly viewed both on Mac and Windows
+        # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         res = add_custom_key_value_separator(zip(bin_labels, counts))
     else:

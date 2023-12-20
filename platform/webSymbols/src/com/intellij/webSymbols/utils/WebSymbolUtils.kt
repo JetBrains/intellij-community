@@ -7,6 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -14,6 +15,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -66,6 +68,20 @@ fun WebSymbol.withMatchedName(matchedName: String) =
     WebSymbolMatch.create(matchedName, listOf(nameSegment), namespace, kind, origin)
   }
   else this
+
+fun WebSymbol.withNavigationTarget(target: PsiElement): WebSymbol =
+  object : WebSymbolDelegate<WebSymbol>(this@withNavigationTarget) {
+    override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
+      listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
+
+    override fun createPointer(): Pointer<out WebSymbol> {
+      val symbolPtr = delegate.createPointer()
+      val targetPtr = target.createSmartPointer()
+      return Pointer {
+        targetPtr.dereference()?.let { symbolPtr.dereference()?.withNavigationTarget(it) }
+      }
+    }
+  }
 
 fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
   Sequence {

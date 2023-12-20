@@ -306,6 +306,9 @@ public final class PsiUtil extends PsiUtilCore {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
+      if (variable instanceof PsiPatternVariable) {
+        return declarationScope;
+      }
       if (declarationScope instanceof PsiCatchSection) {
         codeBlock = ((PsiCatchSection)declarationScope).getCatchBlock();
       }

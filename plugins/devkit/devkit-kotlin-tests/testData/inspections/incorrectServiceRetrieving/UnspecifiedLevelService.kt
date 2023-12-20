@@ -10,13 +10,15 @@ import com.intellij.openapi.project.Project
 @Service
 class MyService
 
+@Service(Service.Level.PROJECT)
+class ProjectService
+
 fun test(project: Project) {
   service<MyService>()
   serviceOrNull<MyService>()
   serviceIfCreated<MyService>()
 
   ApplicationManager.getApplication().getService(MyService::class.java)
-  ApplicationManager.getApplication().getService(MyService::class.java, true)
 
   project.getService(ProjectService::class.java)
   project.service<ProjectService>()

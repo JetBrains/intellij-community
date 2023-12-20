@@ -518,6 +518,9 @@
                        bundle="messages.PyBundle" key="notification.group.packaging.toolwindow"/>
     <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.poetry.pip.file.watcher"/>
+    <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="python.sdk.installation.notification.group"/>
+
 
     <completion.contributor language="TOML"
                             implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageCompletionContributor"/>

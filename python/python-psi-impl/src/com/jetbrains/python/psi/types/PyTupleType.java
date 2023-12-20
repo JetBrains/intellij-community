@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -76,7 +75,8 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     if (isHomogeneous()) {
       return getIteratedItemType();
     }
-    return ContainerUtil.getOrElse(myUnpackedTupleType.getElementTypes(), index, null);
+    List<PyType> elementTypes = myUnpackedTupleType.getElementTypes();
+    return index >= 0 && index < elementTypes.size() ? elementTypes.get(index) : null;
   }
 
   public int getElementCount() {

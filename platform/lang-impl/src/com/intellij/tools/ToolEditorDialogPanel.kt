@@ -45,7 +45,7 @@ internal class ToolEditorDialogPanel {
 
     group(ToolsBundle.message("border.title.tool.settings")) {
       row(ToolsBundle.message("label.tool.program")) {
-        programField = textFieldWithBrowseButton()
+        programField = cell(TextFieldWithBrowseButton())
           .align(AlignX.FILL)
           .component
       }
@@ -55,7 +55,7 @@ internal class ToolEditorDialogPanel {
           .component
       }
       row(ToolsBundle.message("label.tool.working.directory")) {
-        workingDirField = textFieldWithBrowseButton()
+        workingDirField = cell(TextFieldWithBrowseButton())
           .align(AlignX.FILL)
           .component
       }

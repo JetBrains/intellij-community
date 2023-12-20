@@ -3,7 +3,6 @@ package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -65,23 +64,29 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
     }
 
     public boolean isNewOrUpgraded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-      return !StringUtil.equals(pluginIdToVersion.get(getId(pluginDescriptor)), getVersion(pluginDescriptor));
+      synchronized (pluginIdToVersion) {
+        return !StringUtil.equals(pluginIdToVersion.get(getId(pluginDescriptor)), getVersion(pluginDescriptor));
+      }
     }
 
     public void rememberPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-      pluginIdToVersion.put(getId(pluginDescriptor), getVersion(pluginDescriptor));
+      synchronized (pluginIdToVersion) {
+        pluginIdToVersion.put(getId(pluginDescriptor), getVersion(pluginDescriptor));
+      }
     }
 
     public static @NotNull State forgetDisabledPlugins(@NotNull State storedState) {
-      Map<String, String> pluginIdToVersion = new HashMap<>(storedState.pluginIdToVersion.size());
-      for (String pluginIdString : storedState.pluginIdToVersion.keySet()) {
-        PluginId pluginId = PluginId.findId(pluginIdString);
-        IdeaPluginDescriptor plugin = pluginId == null ? null : PluginManager.getInstance().findEnabledPlugin(pluginId);
-        if (plugin != null) {
-          pluginIdToVersion.put(pluginIdString, storedState.pluginIdToVersion.get(pluginIdString));
+      synchronized (storedState.pluginIdToVersion) {
+        Map<String, String> pluginIdToVersion = new HashMap<>(storedState.pluginIdToVersion.size());
+        for (String pluginIdString : storedState.pluginIdToVersion.keySet()) {
+          PluginId pluginId = PluginId.findId(pluginIdString);
+          IdeaPluginDescriptor plugin = pluginId == null ? null : PluginManager.getInstance().findEnabledPlugin(pluginId);
+          if (plugin != null) {
+            pluginIdToVersion.put(pluginIdString, storedState.pluginIdToVersion.get(pluginIdString));
+          }
         }
+        return new State(pluginIdToVersion);
       }
-      return new State(pluginIdToVersion);
     }
 
     @Override

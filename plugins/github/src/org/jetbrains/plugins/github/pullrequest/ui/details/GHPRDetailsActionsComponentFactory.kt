@@ -61,8 +61,7 @@ internal object GHPRDetailsActionsComponentFactory {
     return Wrapper().apply {
       bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewers, reviewActions,
-                                                      moreActionsGroup)
+          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
           ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, dataProvider, reviewActions, moreActionsGroup)
           ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup,
                                                                                              ::createMergeActionGroup)
@@ -79,25 +78,22 @@ internal object GHPRDetailsActionsComponentFactory {
     }
   }
 
-  private fun <Reviewer> CoroutineScope.createActionsForAuthor(
-    reviewState: Flow<ReviewState>,
-    requestedReviewers: Flow<List<Reviewer>>,
+  private fun CoroutineScope.createActionsForAuthor(
+    reviewFlowVm: GHPRReviewFlowViewModel,
     reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
     val cs = this
+    val reviewState = reviewFlowVm.reviewState
+    val requestedReviewers = reviewFlowVm.requestedReviewers
+
     val requestReviewButton = CodeReviewDetailsActionsComponentFactory.createRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.requestReviewAction
     )
     val reRequestReviewButton = CodeReviewDetailsActionsComponentFactory.createReRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
     )
-    val mergeReviewButton = JBOptionButton(
-      reviewActions.mergeReviewAction,
-      arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
-    ).apply {
-      bindVisibilityIn(cs, reviewState.map { it == ReviewState.ACCEPTED })
-    }
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       reviewState.collect { reviewState ->
@@ -148,13 +144,7 @@ internal object GHPRDetailsActionsComponentFactory {
         it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
       })
     }
-    val mergeReviewButton = JBOptionButton(
-      reviewActions.mergeReviewAction,
-      arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
-    ).apply {
-      bindVisibilityIn(cs, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
-    }
-
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       reviewFlowVm.reviewState.collect { reviewState ->
@@ -177,6 +167,25 @@ internal object GHPRDetailsActionsComponentFactory {
       add(submitReviewButton)
       add(mergeReviewButton)
       add(moreActionsButton)
+    }
+  }
+
+  private fun createMergeReviewOptionButton(
+    cs: CoroutineScope,
+    reviewFlowVm: GHPRReviewFlowViewModel,
+    reviewActions: CodeReviewActions
+  ): JBOptionButton {
+    // Usual order: [0] -- "Merge", [1] -- "Squash and Merge", [2] -- "Rebase"
+    val actions = mutableListOf(reviewActions.mergeReviewAction, reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
+    val restrictions = reviewFlowVm.repositoryRestrictions
+    val mainAction = when {
+      restrictions.isMergeAllowed -> actions.removeAt(0)
+      restrictions.isSquashMergeAllowed -> actions.removeAt(1)
+      else -> actions.removeAt(2)
+    }
+
+    return JBOptionButton(mainAction, actions.toTypedArray()).apply {
+      bindVisibilityIn(cs, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
     }
   }
 

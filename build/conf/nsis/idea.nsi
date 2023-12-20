@@ -1324,7 +1324,14 @@ installdir_is_empty:
   Call OnDirectoryPageLeave
 done:
   ${LogText} "Installation dir: $INSTDIR"
-;  !insertmacro MUI_LANGDLL_DISPLAY
+  ${If} $Language == ${LANG_SIMPCHINESE}
+    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+    ${If} $R0 != ${LANG_SIMPCHINESE}
+      ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
+      StrCpy $Language ${LANG_ENGLISH}
+    ${EndIf}
+  ${EndIf}
+  ;!insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
 
@@ -1486,7 +1493,13 @@ end_of_uninstall:
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
   Abort
 UAC_Done:
-  !insertmacro MUI_UNGETLANGUAGE
+  ${If} $Language == ${LANG_SIMPCHINESE}
+    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+    ${If} $R0 != ${LANG_SIMPCHINESE}
+      StrCpy $Language ${LANG_ENGLISH}
+    ${EndIf}
+  ${EndIf}
+  ;!insertmacro MUI_UNGETLANGUAGE
 FunctionEnd
 
 

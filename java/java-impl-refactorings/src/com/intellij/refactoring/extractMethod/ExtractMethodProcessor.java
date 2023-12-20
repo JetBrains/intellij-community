@@ -250,7 +250,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myControlFlowWrapper = new ControlFlowWrapper(codeFragment, myElements);
 
     try {
-      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
+      myExitStatements = myControlFlowWrapper.prepareAndCheckExitStatements(myElements, codeFragment);
       if (myControlFlowWrapper.isGenerateConditionalExit()) {
         myGenerateConditionalExit = true;
       } else {

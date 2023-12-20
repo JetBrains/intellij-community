@@ -25,6 +25,7 @@ const PATH_MACRO: &str = "$IDE_HOME";
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
+    pub launch_info: ProductInfoLaunchField,
     pub ide_home: PathBuf,
     pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
@@ -52,7 +53,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
         // appending product-specific VM options (non-overridable, so should come last)
         debug!("Appending product-specific VM options");
-        vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
+        vm_options.extend_from_slice(&self.launch_info.additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
             *vm_option = self.expand_path_macro(vm_option)?;
@@ -68,7 +69,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         let lib_path = self.ide_home.join("lib").to_string_checked()?;
-        let class_path = self.product_info.launch[0].bootClassPathJarNames.iter()
+        let class_path = self.launch_info.bootClassPathJarNames.iter()
             .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
             .collect();
         Ok(class_path)
@@ -76,7 +77,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
-        Ok((jre_home, &self.product_info.launch[0].mainClass))
+        Ok((jre_home, &self.launch_info.mainClass))
     }
 }
 
@@ -90,14 +91,18 @@ impl DefaultLaunchConfiguration {
         debug!("OS config dir: {config_home:?}");
 
         let product_info = read_product_info(&product_info_file)?;
-        let vm_options_rel_path = &product_info.launch[0].vmOptionsFilePath;
+        let (launch_info, custom_data_directory_name) =
+            compute_launch_info(&product_info, args.first())?;
+        let vm_options_rel_path = &launch_info.vmOptionsFilePath;
         let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
-        let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
+        let data_directory_name = custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
+        let user_config_dir = config_home.join(&product_info.productVendor).join(data_directory_name);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
         let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
 
         let config = DefaultLaunchConfiguration {
             product_info,
+            launch_info,
             ide_home,
             vm_options_path,
             user_config_dir,
@@ -318,17 +323,58 @@ fn is_gc_vm_option(s: &str) -> bool {
     s.starts_with("-XX:+") && s.ends_with("GC")
 }
 
-fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
+pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
 
     let product_info: ProductInfo = serde_json::from_reader(BufReader::new(file))?;
     debug!("{:?}", serde_json::to_string(&product_info));
 
+    Ok(product_info)
+}
+
+pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&String>)
+    -> Result<(ProductInfoLaunchField, Option<String>)> {
+
     if product_info.launch.len() != 1 {
         bail!("Malformed product descriptor (expecting 1 'launch' record, got {})", product_info.launch.len())
     }
 
-    Ok(product_info)
+    let launch_data = &product_info.launch[0];
+    let custom_command_data = match command_name {
+        Some(command_name) => {
+            match &launch_data.customCommands {
+                Some(commands) => commands.iter().find(
+                    |custom| custom.commands.contains(command_name)
+                ),
+                None => None
+            }
+        },
+        None => None
+    };
+
+    let result = match custom_command_data {
+        None => (launch_data.clone(), None),
+        Some(custom_command_data) => {
+            (ProductInfoLaunchField {
+                vmOptionsFilePath: custom_command_data.vmOptionsFilePath.clone().unwrap_or(launch_data.vmOptionsFilePath.clone()),
+                bootClassPathJarNames: if !custom_command_data.bootClassPathJarNames.is_empty() {
+                    custom_command_data.bootClassPathJarNames.clone()
+                }
+                else {
+                    launch_data.bootClassPathJarNames.clone()
+                },
+                additionalJvmArguments: if !custom_command_data.additionalJvmArguments.is_empty() {
+                    custom_command_data.additionalJvmArguments.clone()
+                }
+                else {
+                    launch_data.additionalJvmArguments.clone()
+                },
+                mainClass: custom_command_data.mainClass.clone().unwrap_or(launch_data.mainClass.clone()),
+                customCommands: None
+            }, custom_command_data.dataDirectoryName.clone())
+        }
+    };
+    Ok(result)
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {

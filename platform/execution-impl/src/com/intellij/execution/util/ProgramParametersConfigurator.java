@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.impl.statistics.MacroUsageCollector;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
@@ -198,9 +199,11 @@ public class ProgramParametersConfigurator {
           throw new IncorrectOperationException();
         }
       }
-      return macro instanceof PromptingMacro ?
-             macro.expand(dataContext, args):
-             ReadAction.compute(() -> macro.expand(dataContext, args));
+      String value = macro instanceof PromptingMacro ?
+                     macro.expand(dataContext, args) :
+                     ReadAction.compute(() -> macro.expand(dataContext, args));
+      MacroUsageCollector.logMacroExpanded(macro, value != null);
+      return value;
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;

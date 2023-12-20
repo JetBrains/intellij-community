@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ui.SdkAppearanceService
 import com.intellij.openapi.ui.ComboBox
@@ -87,7 +88,7 @@ internal class SdkListPresenter2<T>(
         item.append(SdkListPresenter.presentDetectedSdkPath(sdkListItem.homePath))
         item.append(" ${sdkListItem.version}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
-        archInfo(sdkListItem.homePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        archInfo(sdkListItem.javaSdkHomePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       }
 
       is SdkListItem.ProjectSdkItem -> {
@@ -109,7 +110,7 @@ internal class SdkListPresenter2<T>(
         val version = sdkListItem.sdk.versionString ?: (sdkListItem.sdk.sdkType as SdkType).presentableName
         item.append(" $version", SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
-        archInfo(sdkListItem.sdk.homePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        archInfo(sdkListItem.javaSdkHomePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       }
 
       is SdkListItem.GroupItem -> {
@@ -145,9 +146,15 @@ internal class SdkListPresenter2<T>(
     }
   }
 
-  private fun archInfo(path: String?): @NlsSafe String? {
-    if (path == null) return null
-    return when (JdkVersionDetector.getInstance().detectJdkVersionInfo(path)?.arch) {
+  private val SdkListItem.SuggestedItem.javaSdkHomePath: String?
+    get() = homePath.takeIf { sdkType is JavaSdkType }
+
+  private val SdkListItem.SdkItem.javaSdkHomePath: String?
+    get() = sdk.homePath.takeIf { sdk.sdkType is JavaSdkType }
+
+  private fun archInfo(javaSdkHomePath: String?): @NlsSafe String? {
+    if (javaSdkHomePath == null) return null
+    return when (JdkVersionDetector.getInstance().detectJdkVersionInfo(javaSdkHomePath)?.arch) {
       CpuArch.ARM64 -> " - aarch64"
       else -> null
     }

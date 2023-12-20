@@ -35,6 +35,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   private String myReturnTypeAsText;
   private Function<LombokLightMethodBuilder, String> myBuilderBodyFunction;
 
+  private boolean myReadWriteAccess = false;
+
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
           new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
@@ -153,6 +155,15 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     final PsiModifierList modifierList = getModifierList();
     annotations.forEach(modifierList::addAnnotation);
     return this;
+  }
+
+  public LombokLightMethodBuilder withWriteAccess() {
+    myReadWriteAccess = true;
+    return this;
+  }
+
+  public boolean hasWriteAccess() {
+    return myReadWriteAccess;
   }
 
   // add Parameter as is, without wrapping with LightTypeParameter

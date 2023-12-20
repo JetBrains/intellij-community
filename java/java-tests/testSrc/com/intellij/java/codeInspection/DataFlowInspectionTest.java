@@ -190,6 +190,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testDoubleNaN() { doTest(); }
+  public void testDoubleNaN2() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testBoxedNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }

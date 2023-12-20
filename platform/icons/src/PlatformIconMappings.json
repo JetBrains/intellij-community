@@ -29,6 +29,8 @@
       "playLast.svg": "actions/play_last.svg",
       "preview.svg": "actions/preview.svg",
       "profileCPU.svg": "actions/profileCPU.svg",
+      "profileMemory.svg": "actions/profileMemory.svg",
+      "profileRed.svg": "actions/profileRed.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
@@ -41,6 +43,7 @@
       "swapPanels.svg": "actions/swapPanels.svg",
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
+      "suggestedRefactoringBulb.svg": "actions/suggestedRefactoringBulb.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
     },

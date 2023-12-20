@@ -1126,6 +1126,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
 
     public void copyFrom(IndentOptions other) {
       copyPublicFields(other, this);
+      myOverrideLanguageOptions = other.myOverrideLanguageOptions;
     }
 
     @Nullable

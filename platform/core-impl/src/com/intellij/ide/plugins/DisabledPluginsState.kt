@@ -47,9 +47,8 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       return splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
     }
 
-    private fun loadDisabledPlugins(): Set<PluginId> {
+    fun loadDisabledPlugins(path: Path): Set<PluginId> {
       val disabledPlugins = LinkedHashSet<PluginId>()
-      val path = defaultFilePath
       val requiredPlugins = getRequiredPlugins()
       var updateFile = false
       try {
@@ -95,7 +94,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
         var result = disabledPlugins
         if (result == null) {
           @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-          result = Collections.unmodifiableSet(loadDisabledPlugins())!!
+          result = Collections.unmodifiableSet(loadDisabledPlugins(defaultFilePath))!!
           disabledPlugins = result
         }
         return result

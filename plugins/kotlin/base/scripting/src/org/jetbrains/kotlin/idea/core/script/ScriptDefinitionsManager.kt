@@ -41,7 +41,7 @@ val loadScriptDefinitionsOnDemand
     get() = Registry.`is`("kotlin.scripting.load.definitions.on.demand", true)
 
 internal class LoadScriptDefinitionsStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) : Unit = blockingContextScope {
+    override suspend fun execute(project: Project): Unit = blockingContextScope {
         if (loadScriptDefinitionsOnDemand) return@blockingContextScope
 
         if (isUnitTestMode()) {
@@ -365,14 +365,16 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
     private val definitionsLock = ReentrantLock()
 
-    // @GuardedBy("definitionsLock")
     // Support for insertion order is crucial because 'getSources()' is based on EP order in XML (default configuration source goes last)
     private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
 
-    private val failedContributorsHashes = ConcurrentHashMap.newKeySet<Int>()
+    private val activatedDefinitionSources: MutableSet<ScriptDefinitionsSource> = ConcurrentHashMap.newKeySet()
+
+    private val failedContributorsHashes: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+
 
     // cache service as it's getter is on the hot path
     // it is safe, since both services are in same plugin
@@ -421,33 +423,43 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
     override fun reloadDefinitionsBy(source: ScriptDefinitionsSource) = reloadDefinitionsInternal(listOf(source))
 
+    // This function is aimed to fix locks acquisition order.
+    // The internal block still may acquire the read lock, it just won't have an effect.
+    private fun withLocks(block: () -> Unit) = runReadAction { definitionsLock.withLock { block.invoke() } }
+
     private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")
 
-        return definitionsLock.withLock {
-            val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
-                sources.associateWith {
-                    val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() }
-                    scriptingDebugLog { "Loaded definitions: time = $ms ms, source = ${it.javaClass.name}, definitions = ${definitions.map { it.name }}" }
-                    definitions
-                }
+        var loadedDefinitions: List<ScriptDefinition>? = null
+
+        val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
+            sources.associateWith {
+                val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() /* can acquire read-action inside */ }
+                scriptingDebugLog { "Loaded definitions: time = $ms ms, source = ${it.javaClass.name}, definitions = ${definitions.map { it.name }}" }
+                definitions
             }
+        }
 
-            scriptingDebugLog { "Definitions loading total time: $ms ms" }
+        scriptingDebugLog { "Definitions loading total time: $ms ms" }
 
-            if (newDefinitionsBySource.isEmpty()) return@withLock emptyList()
+        if (newDefinitionsBySource.isEmpty()) return emptyList()
 
+        withLocks {
             definitionsBySource.putAll(newDefinitionsBySource)
 
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
                 .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
                 .sortedBy(ScriptDefinition::order)
                 .takeIf { it.isNotEmpty() }
 
-            applyDefinitionsUpdate()
-
-            definitions ?: emptyList()
+            definitions = loadedDefinitions
         }
+
+        activatedDefinitionSources.addAll(sources)
+
+        applyDefinitionsUpdate() // <== acquires read-action inside
+
+        return loadedDefinitions ?: emptyList()
     }
 
     override val currentDefinitions: Sequence<ScriptDefinition>
@@ -455,6 +467,8 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
             val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptySequence()
             return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
         }
+
+    private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
 
     private fun getSources(): List<ScriptDefinitionsSource> {
         @Suppress("DEPRECATION")
@@ -466,7 +480,13 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
     }
 
     private fun getOrLoadDefinitions(): List<ScriptDefinition> {
-        return definitions ?: reloadDefinitionsInternal(getSources())
+        // This is not thread safe, but if the condition changes by the time of the "then do this" it's ok - we just refresh the data.
+        // Taking local lock here is dangerous due to the possible global read-lock acquisition (hence, the deadlock). See KTIJ-27838.
+        return if (definitions == null || !allDefinitionSourcesContributedToCache()) {
+            reloadDefinitionsInternal(getSources())
+        } else {
+            definitions ?: error("'definitions' became null after they weren't")
+        }
     }
 
     override fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
@@ -477,15 +497,16 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
         if (definitions == null) return
 
-        definitionsLock.withLock {
+       withLocks {
             definitions?.let { list ->
                 list.forEach {
                     it.order = scriptingSettings.getScriptDefinitionOrder(it)
                 }
                 definitions = list.sortedBy(ScriptDefinition::order)
             }
-            applyDefinitionsUpdate()
         }
+
+        applyDefinitionsUpdate()  // <== acquires read-action inside
     }
 
     private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
@@ -556,6 +577,7 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
         definitionsBySource.clear()
         definitions = null
+        activatedDefinitionSources.clear()
         failedContributorsHashes.clear()
         configurations = null
     }

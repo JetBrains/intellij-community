@@ -63,13 +63,13 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val chars = editor.document.charsSequence
     val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler>>()
 
     // \n - NormalCompletion
     lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler.LazyBuilder(holdReadLock = true) { builder ->
         val argumentsStringToInsert = StringBuilder()
 
+        val chars = editor.document.charsSequence
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
         val openingBracket = if (insertLambda) '{' else '('

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -165,6 +166,11 @@ public final class XBreakpointUtil {
                                                                                          @Nullable Editor editor) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
+
+    if (!file.isValid()) {
+      return Pair.create(Collections.emptyList(), -1);
+    }
+
     // for folded text check each line and find out type with the biggest priority
     int linesEnd = lineStart;
     if (editor != null) {

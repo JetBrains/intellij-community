@@ -85,8 +85,7 @@ public class HtmlParsing {
       }
     }
 
-    flushOpenItemsWhile((item) -> true);
-    myItemsStack.clear();
+    flushIncompleteStackItemsWhile((item) -> true);
 
     if (error != null) {
       error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
@@ -95,29 +94,22 @@ public class HtmlParsing {
     document.done(XmlElementType.HTML_DOCUMENT);
   }
 
-  protected final void flushOpenItemsWhile(Predicate<HtmlParserStackItem> itemFilter) {
-    flushOpenItemsWhile(null, itemFilter);
+
+  protected final void completeTopStackItem() {
+    popItemFromStack().done(myBuilder, null, false);
   }
 
-  protected final void flushOpenItemsWhile(@Nullable PsiBuilder.Marker beforeMarker, Predicate<HtmlParserStackItem> itemFilter) {
+  protected final void completeTopStackItemBefore(@Nullable PsiBuilder.Marker beforeMarker) {
+    popItemFromStack().done(myBuilder, beforeMarker, false);
+  }
+
+  protected final void flushIncompleteStackItemsWhile(Predicate<HtmlParserStackItem> itemFilter) {
+    flushIncompleteStackItemsWhile(null, itemFilter);
+  }
+
+  protected final void flushIncompleteStackItemsWhile(@Nullable PsiBuilder.Marker beforeMarker, Predicate<HtmlParserStackItem> itemFilter) {
     while (!myItemsStack.isEmpty() && itemFilter.test(myItemsStack.peek())) {
-      autoCloseItem(myItemsStack.pop(), beforeMarker);
-    }
-  }
-
-  protected void autoCloseItem(@NotNull HtmlParserStackItem item, @Nullable PsiBuilder.Marker beforeMarker) {
-    if (item instanceof HtmlTagInfo tag) {
-      if (isEndTagRequired(tag)) {
-        if (beforeMarker != null) {
-          var errorMarker = beforeMarker.precede();
-          errorMarker.errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tag.getOriginalName()), beforeMarker);
-        } else {
-          error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tag.getOriginalName()));
-        }
-      }
-      doneTag(tag, beforeMarker);
-    } else {
-      throw new IllegalStateException("Support for stack item of class " + item.getClass().getName() + " is not implemented");
+      myItemsStack.pop().done(myBuilder, beforeMarker, true);
     }
   }
 
@@ -183,7 +175,7 @@ public class HtmlParsing {
 
         HtmlTagInfo info = createHtmlTagInfo(originalTagName, tagStart);
         while (openingTagAutoClosesTagInStack(info)) {
-          doneTagBefore(tagStart);
+          completeTopStackItemBefore(tagStart);
         }
         pushItemToStack(info);
 
@@ -418,10 +410,14 @@ public class HtmlParsing {
   }
 
   protected final @NotNull HtmlTagInfo peekTagInfo() {
-    return (HtmlTagInfo) myItemsStack.peek();
+    return (HtmlTagInfo)myItemsStack.peek();
   }
 
-  protected void processStackItems(@NotNull Processor<? super HtmlParserStackItem> processor) {
+  /**
+   * Passes stack items starting the top of the stack to the processor.
+   * Processing is finished if processor returns false or whole stack has been visited
+   */
+  protected final void processStackItems(@NotNull Processor<? super HtmlParserStackItem> processor) {
     for (int i = myItemsStack.size() - 1; i >= 0; i--) {
       if (!processor.process(myItemsStack.get(i))) return;
     }
@@ -442,21 +438,12 @@ public class HtmlParsing {
     return false;
   }
 
-  protected void doneTag() {
-    doneTag((HtmlTagInfo)popItemFromStack(), null);
-  }
-
-  protected void doneTagBefore(@Nullable PsiBuilder.Marker beforeMarker) {
-    doneTag((HtmlTagInfo)popItemFromStack(), beforeMarker);
-  }
-
-  protected void doneTag(HtmlTagInfo tag, @Nullable PsiBuilder.Marker beforeMarker) {
-    var elementType = getHtmlTagElementType(tag, myItemsStack.size() + 1);
-    if (beforeMarker != null) {
-      tag.getStartMarker().doneBefore(elementType, beforeMarker);
-    } else {
-      tag.getStartMarker().done(elementType);
+  protected final void doneTag() {
+    if (!(peekStackItem() instanceof HtmlTagInfo)) {
+      throw new IllegalStateException(
+        "Unexpected item on stack: " + myItemsStack);
     }
+    completeTopStackItem();
   }
 
   protected IElementType getHtmlTagElementType(@NotNull HtmlTagInfo info, int tagLevel) {
@@ -756,22 +743,32 @@ public class HtmlParsing {
   }
 
   public interface HtmlParserStackItem {
+    /**
+     * Make all of associated with the item markers dropped or done.
+     *
+     * @param builder current PsiBuilder
+     * @param beforeMarker an optional marker before, which the item should be done
+     * @param incomplete whether the item is missing the closing tag, token, etc.
+     */
+    void done(@NotNull PsiBuilder builder, @Nullable PsiBuilder.Marker beforeMarker, boolean incomplete);
   }
 
   public interface HtmlTagInfo extends HtmlParserStackItem {
-    @NotNull PsiBuilder.Marker getStartMarker();
-
     @NotNull String getNormalizedName();
 
     @NotNull String getOriginalName();
   }
 
-  protected static class HtmlTagInfoImpl implements HtmlTagInfo {
+  protected class HtmlTagInfoImpl implements HtmlTagInfo {
     private final @NotNull String normalizedName;
     private final @NotNull String originalName;
     private final @NotNull PsiBuilder.Marker startMarker;
 
-    protected HtmlTagInfoImpl(@NotNull String normalizedName, @NotNull String originalName, PsiBuilder.@NotNull Marker marker) {
+    protected HtmlTagInfoImpl(
+      @NotNull String normalizedName,
+      @NotNull String originalName,
+      @NotNull PsiBuilder.Marker marker
+    ) {
       this.normalizedName = normalizedName;
       this.originalName = originalName;
       startMarker = marker;
@@ -788,8 +785,20 @@ public class HtmlParsing {
     }
 
     @Override
-    public @NotNull PsiBuilder.Marker getStartMarker() {
-      return startMarker;
+    public void done(@NotNull PsiBuilder builder, @Nullable PsiBuilder.Marker beforeMarker, boolean incomplete) {
+      var myElementType = getHtmlTagElementType(this, myItemsStack.size() + 1);
+      if (beforeMarker == null) {
+        if (incomplete && isEndTagRequired(this)) {
+          builder.error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", getOriginalName()));
+        }
+        startMarker.done(myElementType);
+      } else {
+        if (incomplete && isEndTagRequired(this)) {
+          beforeMarker.precede()
+            .errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", getOriginalName()), beforeMarker);
+        }
+        startMarker.doneBefore(myElementType, beforeMarker);
+      }
     }
   }
 }

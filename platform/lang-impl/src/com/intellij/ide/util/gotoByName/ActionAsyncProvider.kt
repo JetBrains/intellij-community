@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSea
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
@@ -107,7 +106,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         return
       }
 
-      if (!coroutineToIndicator { consumer.test(value) }) {
+      if (!consumer.test(value)) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()
       }
@@ -117,7 +116,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: Predicate<in MatchedValue>) {
     flow.onEach {
-      val collected = coroutineToIndicator { consumer.test(it) } //this wrapper is only to avoid a problem with semantic search
+      val collected = consumer.test(it)
       if (!collected) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()

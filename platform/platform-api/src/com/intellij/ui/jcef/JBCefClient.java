@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * return value is returned as the result. When a CEF callback is passed to the handler, it's the responsibility of the client to manage
  * the callback calls in case when multiple handlers are added.
  *
- * @author tav
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/jcef.html">Embedded Browser (JCEF) (IntelliJ Platform Docs)</a>
  */
 // [tav]: todo: think if we need some more sophisticated way to handle results of sequence of handles (like foldResults() callback)
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)

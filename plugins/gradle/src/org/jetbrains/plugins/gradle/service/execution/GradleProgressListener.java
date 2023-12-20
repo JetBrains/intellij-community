@@ -116,33 +116,74 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private boolean maybeReportModelBuilderMessage(String eventDescription) {
-    if (!eventDescription.startsWith(MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+    var message = parseModelBuilderMessage(eventDescription);
+    if (message == null) {
       return false;
     }
-    try {
-      Message message = new GsonBuilder().create()
-        .fromJson(StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
-      MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-      Message.FilePosition messageFilePosition = message.getFilePosition();
-      FilePosition filePosition = messageFilePosition == null ? null :
-                                  new FilePosition(new File(messageFilePosition.getFilePath()), messageFilePosition.getLine(),
-                                                   messageFilePosition.getColumn());
-      MessageEvent messageEvent = new MessageEventImpl(myTaskId, kind, message.getGroup(), message.getTitle(), message.getText()) {
-        @Override
-        public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-          if (filePosition == null) return null;
-          return new FileNavigatable(project, filePosition);
-        }
-      };
 
-      GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
-      myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
-      return true;
+    reportModelBuilderMessageToFus(message);
+    reportModelBuilderMessageToLogger(message);
+    reportModelBuilderMessageToListener(message);
+    return true;
+  }
+
+  private static @Nullable Message parseModelBuilderMessage(String eventDescription) {
+    if (!eventDescription.startsWith(MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+      return null;
+    }
+    var messageString = StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX);
+    try {
+      return new GsonBuilder().create().fromJson(messageString, Message.class);
     }
     catch (Exception e) {
       LOG.warn("Failed to report model builder message using event '" + eventDescription + "'", e);
+      return null;
     }
-    return false;
+  }
+
+  private void reportModelBuilderMessageToFus(@NotNull Message message) {
+    GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
+  }
+
+  private static void reportModelBuilderMessageToLogger(@NotNull Message message) {
+    if (message.getKind() == Message.Kind.INTERNAL) {
+      LOG.warn(
+        message.getGroup() + "\n" +
+        message.getTitle() + "\n" +
+        message.getText()
+      );
+    }
+  }
+
+  private void reportModelBuilderMessageToListener(@NotNull Message message) {
+    if (message.getKind() != Message.Kind.INTERNAL) {
+      var messageEvent = getModelBuilderMessage(message);
+      myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
+    }
+  }
+
+  @NotNull
+  private MessageEvent getModelBuilderMessage(@NotNull Message message) {
+    MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
+    Message.FilePosition messageFilePosition = message.getFilePosition();
+    FilePosition filePosition = messageFilePosition == null ? null : new FilePosition(
+      new File(messageFilePosition.getFilePath()),
+      messageFilePosition.getLine(),
+      messageFilePosition.getColumn()
+    );
+    return new MessageEventImpl(
+      myTaskId,
+      kind,
+      message.getGroup(),
+      message.getTitle(),
+      message.getText()
+    ) {
+      @Override
+      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
+        if (filePosition == null) return null;
+        return new FileNavigatable(project, filePosition);
+      }
+    };
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {

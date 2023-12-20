@@ -135,7 +135,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
           connection.subscribe(ProjectDataImportListener.TOPIC, new ProjectDataImportListener() {
             @Override
-            public void onImportFinished(String projectPath) {
+            public void onFinalTasksFinished(String projectPath) {
               _onImportFinished(projectPath);
             }
 

@@ -1,28 +1,22 @@
 <component name="libraryTable">
   <library name="kotlin-test-junit" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:1.9.10">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:1.9.21">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.10/kotlin-test-junit-1.9.10.jar">
-          <sha256sum>0397497f5721994d2dbc1338c8ff32b74e224849e87ababa8f3f0d4229ebb336</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.21/kotlin-test-junit-1.9.21.jar">
+          <sha256sum>c9e9f27cbf37f1aee42e463f6fbc63fd31770443e9f53ca452c71a5935894aca</sha256sum>
         </artifact>
       </verification>
       <exclude>
-        <dependency maven-id="junit:junit" />
-        <dependency maven-id="org.hamcrest:hamcrest-core" />
-        <dependency maven-id="org.jetbrains:annotations" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-test-annotations-common" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-test-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-test" />
+        <dependency maven-id="junit:junit" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.10/kotlin-test-junit-1.9.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.21/kotlin-test-junit-1.9.21.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.10/kotlin-test-junit-1.9.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.9.21/kotlin-test-junit-1.9.21-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

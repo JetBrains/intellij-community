@@ -79,6 +79,8 @@ except ImportError:
     def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self, stream)
 
+IS_EXTRA_TESTS_ARG_DEPRECATED = True if VERSION >= (4, ) else False
+
 
 def strclass(cls):
   if not cls.__name__:
@@ -151,9 +153,11 @@ class DjangoTeamcityTestRunner(BaseRunner):
       return TeamcityTestRunner.run(self, suite, **self.options)
 
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
+    args = (test_labels, ) if IS_EXTRA_TESTS_ARG_DEPRECATED else (test_labels, extra_tests)
+
     if is_nosetest(settings):
-      return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests)
-    return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
+      return super(DjangoTeamcityTestRunner, self).run_tests(*args)
+    return super(DjangoTeamcityTestRunner, self).run_tests(*args, **kwargs)
 
 
 def partition_suite(suite, classes, bins):

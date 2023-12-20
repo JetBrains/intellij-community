@@ -65,9 +65,9 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   }
 
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
-    val baseSdk = setupBaseSdk(basePythonVersion.get()!!, state.allSdks.get())
+    val baseSdk = setupBaseSdk(basePythonVersion.get()!!, state.allSdks.get()) ?: return null
     val newSdk = setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
                                              baseSdk.homePath, false)!!
     SdkConfigurationUtil.addSdk(newSdk)

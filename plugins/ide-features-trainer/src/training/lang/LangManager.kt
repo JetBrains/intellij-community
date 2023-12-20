@@ -30,20 +30,7 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   private val langSupportRef: LangSupport? by langSupportDelegator
 
   init {
-    val productName = ApplicationNamesInfo.getInstance().productName
-    val langSupportBeans = languages
-    val onlyLang =
-      langSupportBeans.singleOrNull()
-      ?: langSupportBeans.singleOrNull { it.defaultProductName?.split(",")?.contains(productName) ?: false }
-      ?: langSupportBeans.firstOrNull()?.also {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
-          logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
-        }
-      }
-
-    if (onlyLang != null) {
-      state.languageName = onlyLang.language
-    }
+    installDefaultLangSupport()
   }
 
   companion object {
@@ -85,6 +72,10 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   override fun loadState(state: State) {
     val oldLanguage = this.state.languageName
     super.loadState(state)
+    // reset to default lang if stored lang is not present (for example, if plugin with this lang is disabled)
+    if (getLangSupportBean() == null) {
+      installDefaultLangSupport()
+    }
     if (oldLanguage != state.languageName) {
       langSupportDelegator.reset()
     }
@@ -94,6 +85,21 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
     val default = "default"
     val languageName = state.languageName ?: return default
     return (findLanguageByID(languageName) ?: return default).displayName
+  }
+
+  private fun installDefaultLangSupport() {
+    val productName = ApplicationNamesInfo.getInstance().productName
+    val langSupportBeans = languages
+    val defaultLang = langSupportBeans.singleOrNull()
+                      ?: langSupportBeans.singleOrNull { it.defaultProductName?.split(",")?.contains(productName) ?: false }
+                      ?: langSupportBeans.firstOrNull()?.also {
+                        if (!ApplicationManager.getApplication().isUnitTestMode) {
+                          logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
+                        }
+                      }
+    if (defaultLang != null) {
+      state.languageName = defaultLang.language
+    }
   }
 
   // Note: languageName - it is language Id actually

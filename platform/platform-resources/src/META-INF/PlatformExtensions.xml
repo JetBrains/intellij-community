@@ -66,6 +66,9 @@ Android Studio: b/282808067 -->
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.ide.actions.ReportFeedbackService"
+                        serviceImplementation="com.intellij.ide.actions.DefaultReportFeedbackService"/>
+
     <applicationService serviceInterface="com.intellij.util.net.ssl.InitialUntrustedCertificateStrategyProvider"
                         serviceImplementation="com.intellij.util.net.ssl.DefaultInitialUntrustedCertificateStrategyProvider"/>
 
@@ -534,8 +537,6 @@ Android Studio: don't register IntelliJ fork -->
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.project.ProjectInitialActivitiesNotifier"
-                    serviceImplementation="com.intellij.openapi.project.ProjectInitialActivitiesNotifierImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerStartupActivity" order="last"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
 
@@ -1447,7 +1448,7 @@ Android Studio: b/285867050 -->
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"
                        key="notification.group.shortcut.conflicts"/>
-    <notificationGroup id="Required Plugins" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
+    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
     <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"
                        notificationIds="mixed.bag.installation;implicit.plugin.directory.path;implicit.log.directory.path;
                                         bundled.jre.m1.arch.message;bundled.jre.version.message;code.cache.warn.message;
@@ -1664,11 +1665,11 @@ Android Studio: b/285867050 -->
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
 
     <registryKey key="search.everywhere.recents"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables recent items on search everywhere tabs"/>
 
     <registryKey key="search.everywhere.recents.limit"

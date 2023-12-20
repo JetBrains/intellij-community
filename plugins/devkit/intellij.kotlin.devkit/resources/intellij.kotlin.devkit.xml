@@ -79,5 +79,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
+    <methodNameProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtMethodNameProvider"/>
   </extensions>
 </idea-plugin>

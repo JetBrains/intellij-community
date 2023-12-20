@@ -46,7 +46,7 @@ public final class GotoRelatedSymbolAction extends AnAction {
     // it's calculated in advance because `NavigationUtil.collectRelatedItems` might be
     // calculated under a cancellable progress, and we can't use the data context anymore,
     // since it can't be reused between swing events
-    RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    final RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
     if (items.isEmpty()) {
@@ -54,7 +54,6 @@ public final class GotoRelatedSymbolAction extends AnAction {
       if (component instanceof EditorComponentImpl editor) {
         Point point = popupLocation.getPoint();
         point.translate(0, -editor.getEditor().getLineHeight());
-        popupLocation = new RelativePoint(popupLocation.getComponent(), point);
       }
 
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(LangBundle.message("hint.text.no.related.symbols"), MessageType.ERROR, null)

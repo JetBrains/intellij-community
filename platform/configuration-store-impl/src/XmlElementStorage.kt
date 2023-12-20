@@ -246,7 +246,7 @@ internal class XmlDataWriter(private val rootElementName: String?,
         writer.append('"')
         var value = entry.value
         if (replacePathMap != null) {
-          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfo.isFileSystemCaseSensitive)
+          value = replacePathMap.substitute(value, SystemInfo.isFileSystemCaseSensitive)
         }
         writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')

@@ -55,6 +55,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
             setupSampleCodeUI(builder)
             setupSampleCodeWithOnBoardingTipsUI(builder)
             setupCompactDirectoryLayoutUI(builder)
+            if (context.isCreatingNewProject) {
+                addMultiPlatformLink(builder)
+            }
         }
 
         private fun setupCompactDirectoryLayoutUI(builder: Panel) {

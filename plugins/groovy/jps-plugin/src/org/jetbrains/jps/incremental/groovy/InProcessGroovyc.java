@@ -108,7 +108,7 @@ final class InProcessGroovyc implements GroovycFlavor {
         //noinspection unchecked
         Queue<String> toGroovyc = (Queue<String>)msg;
         loader.resetCache();
-        return createContinuation(future, toGroovyc, parser);
+        return createContinuation(future, toGroovyc, parser, loader);
       }
       else if (msg != null) {
         throw new AssertionError("Unknown message: " + msg);
@@ -119,11 +119,13 @@ final class InProcessGroovyc implements GroovycFlavor {
   @NotNull
   private static GroovycContinuation createContinuation(Future<Void> future,
                                                         @NotNull Queue<String> mailbox,
-                                                        GroovycOutputParser parser) {
+                                                        GroovycOutputParser parser, 
+                                                        @NotNull JointCompilationClassLoader loader) {
     return new GroovycContinuation() {
       @NotNull
       @Override
       public GroovyCompilerResult continueCompilation() throws Exception {
+        loader.resetCache();
         parser.onContinuation();
         mailbox.offer(GroovyRtConstants.JAVAC_COMPLETED);
         future.get();
@@ -206,6 +208,10 @@ final class InProcessGroovyc implements GroovycFlavor {
     return UrlClassLoader.build().
       files(toPaths(compilationClassPath))
       .parent(parent)
+      /* obsolete classpath.index files are deleted only after compilation of the module chunk finishes, so they may not include *.class 
+         files produced by javac during compilation of this chunk;
+         therefore, persistent index should be disabled for Groovy class loader */
+      .usePersistentClasspathIndexForLocalClassDirectories(false)
       .useCache(ourLoaderCachePool, file -> {
         String filePath = FileUtil.toCanonicalPath(file.toString());
         for (String output : myOutputs) {

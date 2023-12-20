@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME;
+
 public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private static final Logger LOG = Logger.getInstance(AbstractCodeStylePropertyMapper.class);
 
@@ -120,5 +122,7 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
   protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
     accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), null));
     accessorMap.put(FormatterEnabledAccessor.PROPERTY_NAME, new FormatterEnabledAccessor(getRootSettings()));
+    accessorMap.put(OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME,
+                    new OverrideLanguageIndentOptionsAccessor(getRootSettings().OTHER_INDENT_OPTIONS));
   }
 }

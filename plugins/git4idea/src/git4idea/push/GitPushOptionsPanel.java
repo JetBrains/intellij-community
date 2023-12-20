@@ -63,13 +63,16 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   }
 
   private static int calcStrutWidth(int plannedWidth, @NotNull JComponent leftComponent, @NotNull JComponent rightComponent) {
-    return JBUIScale.scale(plannedWidth) - JBInsets.create(rightComponent.getInsets()).left - JBInsets.create(leftComponent.getInsets()).right;
+    return JBUIScale.scale(plannedWidth) -
+           JBInsets.create(rightComponent.getInsets()).left -
+           JBInsets.create(leftComponent.getInsets()).right;
   }
 
   @Override
   public @Nullable VcsPushOptionValue getValue() {
     GitPushTagMode selectedTagMode = !myPushTagsMode.isVisible() ? GitPushTagMode.ALL : (GitPushTagMode)myPushTagsMode.getSelectedItem();
     GitPushTagMode tagMode = myPushTags.isSelected() ? selectedTagMode : null;
+
     return new GitVcsPushOptionValue(tagMode, myRunHooks.isVisible() && !myRunHooks.isSelected());
   }
 

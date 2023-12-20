@@ -228,7 +228,7 @@ final class UnindexedFilesFinder {
         boolean shouldCheckContentIndexes = !isDirectory && !myFileBasedIndex.isTooLarge(file);
         if (shouldCheckContentIndexes) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
-            if (myFileBasedIndex.doTraceIndexUpdates()) {
+            if (FileBasedIndexEx.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
@@ -305,7 +305,7 @@ final class UnindexedFilesFinder {
         fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
       }
       if (fileIndexingState.updateRequired()) {
-        if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+        if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
           FileBasedIndexImpl.LOG.info(
             "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
             (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
@@ -434,7 +434,7 @@ final class UnindexedFilesFinder {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         myFileBasedIndex.getIndex(indexId).setIndexedStateForFile(inputId, fileContent, true);
-        if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+        if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
           LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
         }
         return true;

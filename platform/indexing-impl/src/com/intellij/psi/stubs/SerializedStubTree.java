@@ -68,6 +68,11 @@ public final class SerializedStubTree {
       }
       Objects.requireNonNull(myMap).put(stubIndexKey, partialMap);
     }
+
+    @Override
+    public String toString() {
+      return "map=" + myMap + ",state=" + myState;
+    }
   }
 
   public SerializedStubTree(byte @NotNull [] treeBytes,
@@ -262,6 +267,11 @@ public final class SerializedStubTree {
       myTreeHash = digest.digest();
     }
     return myTreeHash;
+  }
+
+  @Override
+  public String toString() {
+    return "Stub[" + myDeserializedIndexedStubs + "]";
   }
 
   // TODO replace it with separate StubTreeLoader implementation

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
@@ -42,7 +42,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class NavBarPresentation {
   private final Project project;
 

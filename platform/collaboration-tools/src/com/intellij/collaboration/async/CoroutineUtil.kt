@@ -97,7 +97,7 @@ fun <T1, T2, T3, R> combineState(scope: CoroutineScope,
 suspend fun <T1, T2> combineAndCollect(
   flow1: Flow<T1>,
   flow2: Flow<T2>,
-  action: (T1, T2) -> Unit
+  action: suspend (T1, T2) -> Unit
 ) {
   return combine(flow1, flow2) { value1, value2 ->
     value1 to value2
@@ -111,7 +111,7 @@ suspend fun <T1, T2, T3> combineAndCollect(
   flow1: Flow<T1>,
   flow2: Flow<T2>,
   flow3: Flow<T3>,
-  action: (T1, T2, T3) -> Unit
+  action: suspend (T1, T2, T3) -> Unit
 ) {
   return combine(flow1, flow2, flow3) { value1, value2, value3 ->
     Triple(value1, value2, value3)

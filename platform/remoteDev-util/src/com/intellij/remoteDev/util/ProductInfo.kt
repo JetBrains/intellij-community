@@ -17,10 +17,12 @@ data class ProductInfo(
   val productCode: @NlsSafe String,
   val version: @NlsSafe String,
   val versionSuffix: @NlsSafe String?,
+  val launch: List<LaunchData>,
 ) {
   companion object {
     private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 
+    @JvmStatic
     fun fromJson(json: String): ProductInfo {
       return gson.fromJson(json, ProductInfo::class.java)
     }
@@ -42,4 +44,12 @@ data class ProductInfo(
     // EAP, RC
     return " " + versionSuffix.trim()
   }
+  
+  data class LaunchData(
+    val customCommands: List<CustomCommandLaunchData> = emptyList(),
+  )
+  
+  data class CustomCommandLaunchData(
+    val commands: List<@NlsSafe String>,
+  )
 }

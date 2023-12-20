@@ -211,7 +211,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     Ref<GitPushResultNotification> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       ref.set(GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
-                                               null, map.size() > 1, null));
+                                               null, map.size() > 1, null, Collections.emptyMap()));
     });
     return ref.get();
   }

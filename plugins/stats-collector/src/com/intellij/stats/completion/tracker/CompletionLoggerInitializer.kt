@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -43,7 +43,8 @@ class CompletionLoggerInitializer : LookupTracker() {
       "typescript" to 0.5,
       "c/c++" to 0.5,
       "c#" to 0.05,
-      "go" to 0.4
+      "go" to 0.4,
+      "rust" to 0.1
     )
 
     private val LOGGED_SESSIONS_RATIO_FILE_TYPE: Map<String, Double> = mapOf(

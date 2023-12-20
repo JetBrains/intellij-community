@@ -49,6 +49,7 @@ class NonSingularHandler implements BuilderElementHandler {
       .withNavigationElement(info.getVariable())
       .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations())
+      .withWriteAccess()
       .withBodyText(blockText);
     if(info.getVariable() instanceof PsiField psiField) {
       LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);

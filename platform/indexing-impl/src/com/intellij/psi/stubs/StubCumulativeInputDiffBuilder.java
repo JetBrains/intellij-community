@@ -43,17 +43,44 @@ final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<In
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
                                @NotNull RemovedKeyProcessor<? super Integer> removeProcessor,
                                boolean dryRun) throws StorageException {
+    if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+      LOG.info((dryRun ? "[dry run]" : "") + "differentiate: inputId=" + myInputId +
+               ",newData.isEmpty=" + newData.isEmpty() +
+               ", myCurrentTree is " + ((myCurrentTree == null) ? "null" : "not null"));
+    }
+
     if (!newData.isEmpty()) {
       SerializedStubTree newSerializedStubTree = newData.values().iterator().next();
       if (myCurrentTree != null) {
-        if (treesAreEqual(newSerializedStubTree, myCurrentTree)) return false;
+        if (treesAreEqual(newSerializedStubTree, myCurrentTree)) {
+          if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+            LOG.info((dryRun ? "[dry run]" : "") + "equal trees: inputId=" + myInputId +
+                     ",myTreeLen=" + myCurrentTree.myTreeByteLength +
+                     ",myStubLen=" + myCurrentTree.myIndexedStubByteLength +
+                     ",newTreeLen=" + newSerializedStubTree.myIndexedStubByteLength +
+                     ",newStubLen=" + newSerializedStubTree.myIndexedStubByteLength);
+          }
+          return false;
+        }
+        else {
+          if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+            LOG.info((dryRun ? "[dry run]" : "") + "different trees: inputId=" + myInputId +
+                     ",myStubLen=" + myCurrentTree.myIndexedStubByteLength +
+                     ",newStubLen=" + newSerializedStubTree.myIndexedStubByteLength);
+          }
+        }
         removeProcessor.process(myInputId, myInputId);
       }
       addProcessor.process(myInputId, newSerializedStubTree, myInputId);
       if (!dryRun) updateStubIndices(newSerializedStubTree);
     }
     else {
-      if (myCurrentTree == null) return false; // ?????????
+      if (myCurrentTree == null) {
+        if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+          LOG.info((dryRun ? "[dry run]" : "") + "myCurrentTree=null, inputId=" + myInputId);
+        }
+        return false; // ?????????
+      }
       removeProcessor.process(myInputId, myInputId);
       if (!dryRun) updateStubIndices(null);
     }
@@ -99,7 +126,7 @@ final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<In
         ContainerUtil.union(oldForwardIndex.keySet(), newForwardIndex.keySet());
 
       StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
-      if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
         stubIndex.getLogger()
           .info("stub indexes " + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
       }

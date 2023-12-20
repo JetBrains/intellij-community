@@ -106,6 +106,24 @@ public final class MacUtil {
     return null;
   }
 
+  public static boolean isNativeBoundsEmpty(@NotNull Window window) {
+    Object platformWindow = getPlatformWindow(window);
+    if (platformWindow != null) {
+      try {
+        Field boundsField = platformWindow.getClass().getDeclaredField("nativeBounds");
+        boundsField.setAccessible(true);
+        Object boundsObject = boundsField.get(platformWindow);
+        if (boundsObject instanceof Rectangle bounds) {
+          return bounds.isEmpty();
+        }
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        LOG.debug(e);
+      }
+    }
+    return false;
+  }
+
   public static void updateRootPane(@NotNull Window window, @NotNull JRootPane rootPane) {
     try {
       Object platformWindow = getPlatformWindow(window);

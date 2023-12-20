@@ -1,0 +1,10 @@
+{
+  "inspections": [
+    {
+      "id": "MismatchedStringCase",
+      "cweIds": [
+        597
+      ]
+    }
+  ]
+}

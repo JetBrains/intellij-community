@@ -41,7 +41,7 @@ class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
     targets.values.forEach(PythonLocalEnvironmentCreator::onShown)
   }
 
-  fun getSdk(): Sdk {
+  fun getSdk(): Sdk? {
     // todo uncomment for all available targets
     //return targets[targetSelector.selectedItem]!!.getSdk()
     return targets[LOCAL_MACHINE]!!.getSdk()

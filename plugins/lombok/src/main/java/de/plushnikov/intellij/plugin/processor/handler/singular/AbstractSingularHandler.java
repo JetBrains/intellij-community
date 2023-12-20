@@ -62,7 +62,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
+      .withAnnotations(info.getAnnotations())
+      .withWriteAccess();
 
     addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
     if(info.getVariable() instanceof PsiField psiField) {
@@ -82,7 +83,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
+      .withAnnotations(info.getAnnotations())
+      .withWriteAccess();
 
     addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
     if(info.getVariable() instanceof PsiField psiField) {
@@ -102,7 +104,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
+      .withAnnotations(info.getAnnotations())
+      .withWriteAccess();
     final String clearMethodBlockText = getClearMethodBody(info);
     clearMethodBuilder.withBodyText(clearMethodBlockText);
 

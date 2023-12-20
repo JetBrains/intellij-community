@@ -9,7 +9,6 @@ interface ApplicationInfoProperties {
   val fullVersionFormat: String
   val isEAP: Boolean
   val versionSuffix: String?
-  val isRelease: Boolean get() = !isEAP && versionSuffix == null
   /**
    * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').

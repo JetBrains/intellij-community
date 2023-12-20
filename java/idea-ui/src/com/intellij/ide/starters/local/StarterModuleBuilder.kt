@@ -382,10 +382,10 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another, open files first
+          // import of module may dispose it and create another. open samples first.
           openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration) {
+          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
               GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }

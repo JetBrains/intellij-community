@@ -591,7 +591,7 @@
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
-                 description="Navigate to the staging area content from diff instead of the local file" />
+                 description="Navigate to the staging area content from diff instead of the local file"/>
     <registryKey key="git.stage.enable.commit.all" defaultValue="true"
                  description="Deprecated. Use the option in the Commit tool window 'Options' menu.
                  When no changes are staged, stage and commit all changes in the project"/>
@@ -795,12 +795,12 @@
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
 
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 
     <changesViewContent tabName="Git Conflicts"
                         className="git4idea.conflicts.GitConflictsToolWindowManager$ContentProvider"

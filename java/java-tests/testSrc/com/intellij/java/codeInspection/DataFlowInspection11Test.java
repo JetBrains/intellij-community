@@ -18,6 +18,8 @@ public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
   }
 
   public void testStreamCollector10Inlining() { doTest(); }
+  
+  public void testStreamFlatMapOptional() {doTest();}
 
   public void testAvoidWarningAtNotInferredType() { doTest();}
 

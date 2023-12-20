@@ -74,13 +74,23 @@ public abstract class DialogWrapper {
 
   public enum IdeModalityType {
     IDE,
+    /**
+     * Effectively the same as {@link IDE}.
+     *
+     * @deprecated use {@link IDE} instead
+     */
+    @Deprecated
     PROJECT,
     MODELESS;
 
     public @NotNull Dialog.ModalityType toAwtModality() {
       return switch (this) {
         case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
-        case PROJECT -> Dialog.ModalityType.DOCUMENT_MODAL;
+        case PROJECT -> {
+          LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
+          if (Registry.is("ide.treat.project.modality.as.application")) yield Dialog.ModalityType.APPLICATION_MODAL;
+          else yield Dialog.ModalityType.DOCUMENT_MODAL;
+        }
         case MODELESS -> Dialog.ModalityType.MODELESS;
       };
     }
@@ -850,6 +860,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(Window owner, boolean canBeParent, IdeModalityType ideModalityType) {
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);
   }
 
@@ -858,6 +869,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(@Nullable Project project, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.warn("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent, ideModalityType);
   }
 

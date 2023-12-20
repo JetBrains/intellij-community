@@ -618,12 +618,12 @@ object CodeWithMeClientDownloader {
     error("JetBrains Client home is not found under $guestRoot")
   }
 
-  private fun findLauncher(guestRoot: Path, launcherNames: List<String>): Pair<Path, List<String>> {
+  private fun findLauncher(guestRoot: Path, launcherNames: List<String>): JetBrainsClientLauncherData {
     val launcher = launcherNames.firstNotNullOfOrNull {
       val launcherRelative = Path.of("bin", it)
       val launcher = findLauncher(guestRoot, launcherRelative)
       launcher?.let {
-        launcher to listOf(launcher.toString())
+        JetBrainsClientLauncherData(launcher, listOf(launcher.toString()))
       }
     }
 
@@ -644,7 +644,7 @@ object CodeWithMeClientDownloader {
     return null
   }
 
-  private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): Pair<Path, List<String>> {
+  private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): JetBrainsClientLauncherData {
     when {
       SystemInfo.isWindows -> {
         val batchLaunchers = listOf("intellij_client.bat", "jetbrains_client.bat")
@@ -660,7 +660,7 @@ object CodeWithMeClientDownloader {
         if (SystemInfo.isMac) {
           val app = guestRoot.toFile().listFiles { file -> file.name.endsWith(".app") && file.isDirectory }!!.singleOrNull()
           if (app != null) {
-            return app.toPath() to listOf("open", "-n", "-W", "-a", app.toString(), "--args")
+            return createLauncherDataForMacOs(app.toPath())
           }
         }
 
@@ -672,6 +672,9 @@ object CodeWithMeClientDownloader {
     }
   }
 
+  internal fun createLauncherDataForMacOs(app: Path) =
+    JetBrainsClientLauncherData(app, listOf("open", "-n", "-W", "-a", app.pathString, "--args"))
+
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -680,7 +683,7 @@ object CodeWithMeClientDownloader {
     url: String,
     extractedJetBrainsClientData: ExtractedJetBrainsClientData
   ): Lifetime {
-    val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
+    val launcherData = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
 
     if (extractedJetBrainsClientData.jreDir != null) {
       createSymlinkToJdkFromGuest(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir)
@@ -693,29 +696,40 @@ object CodeWithMeClientDownloader {
       }
     }
 
-    val parameters =  listOf("thinClient", url)
+    return runJetBrainsClientProcess(launcherData, 
+                                     workingDirectory = extractedJetBrainsClientData.clientDir,
+                                     clientVersion = extractedJetBrainsClientData.version, 
+                                     url, lifetime)
+  }
+
+  internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
+                                         workingDirectory: Path,
+                                         clientVersion: String,
+                                         url: String,
+                                         lifetime: Lifetime): Lifetime {
+    val parameters = listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
       // macOS stores vmoptions file inside .app file – we can't edit it
       Paths.get(
-        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + extractedJetBrainsClientData.version),
+        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + clientVersion),
         "jetbrains_client.vmoptions"
       )
-    } else if (SystemInfoRt.isWindows) executable.resolveSibling("jetbrains_client64.exe.vmoptions")
-    else executable.resolveSibling("jetbrains_client64.vmoptions")
+    } else if (SystemInfoRt.isWindows) launcherData.executable.resolveSibling("jetbrains_client64.exe.vmoptions")
+    else launcherData.executable.resolveSibling("jetbrains_client64.vmoptions")
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
     val clientEnvironment = mutableMapOf<String, String>()
-    val separateConfigOption = ClientVersionUtil.computeSeparateConfigEnvVariableValue(extractedJetBrainsClientData.version)
+    val separateConfigOption = ClientVersionUtil.computeSeparateConfigEnvVariableValue(clientVersion)
     if (separateConfigOption != null) {
       clientEnvironment["JBC_SEPARATE_CONFIG"] = separateConfigOption
     }
 
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsCreateProcess(
-        executable = executable,
-        workingDirectory = extractedJetBrainsClientData.clientDir,
+        executable = launcherData.executable,
+        workingDirectory = workingDirectory,
         parameters = parameters,
         environment = clientEnvironment
       )
@@ -753,7 +767,7 @@ object CodeWithMeClientDownloader {
       var lastProcessStartTime: Long
 
       fun doRunProcess() {
-        val commandLine = GeneralCommandLine(fullLauncherCmd + parameters)
+        val commandLine = GeneralCommandLine(launcherData.commandLine + parameters)
           .withEnvironment(clientEnvironment)
 
         config.modifyClientCommandLine(commandLine)
@@ -951,3 +965,8 @@ object CodeWithMeClientDownloader {
     }
   }
 }
+
+data class JetBrainsClientLauncherData(
+  val executable: Path,
+  val commandLine: List<String>
+)

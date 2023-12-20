@@ -586,7 +586,7 @@ public class BuilderHandler {
 
     //add com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder(withPrefix="with", buildMethodName="build")
     final PsiAnnotation jsonPojoBuilderAnnotation = createPojoBuilderAnnotation(psiClass, psiAnnotation);
-    builderClass.getModifierList().withAnnotation(jsonPojoBuilderAnnotation);
+    builderClass.getModifierList().withAnnotation(JACKSON_DATABIND_ANNOTATION_JSON_POJOBUILDER, jsonPojoBuilderAnnotation);
 
     LombokCopyableAnnotations.copyCopyableAnnotations(null == psiMethod ? psiClass : psiMethod,
                                                       builderClass.getModifierList(),

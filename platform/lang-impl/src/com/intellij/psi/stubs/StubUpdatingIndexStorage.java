@@ -58,29 +58,49 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
-    Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
-    IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    try {
+      Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
 
-    return () -> {
-      try {
-        Boolean result = indexUpdateComputable.compute();
-        if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
-          ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+      return () -> {
+        try {
+          Boolean result = indexUpdateComputable.compute();
+          if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
+            ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+            }
+          }
+          else {
+            // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
+            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+          }
+          return result;
         }
-        return result;
+        catch (Throwable t) {
+          // ProcessCanceledException is not expected here
+          LOG.error("Could not compute indexUpdateComputable", t);
+          throw t;
+        }
+      };
+    }
+    catch (ProcessCanceledException pce) {
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+        LOG.infoWithDebug("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + pce, new RuntimeException(pce));
       }
-      catch (ProcessCanceledException e) {
-        LOG.error("ProcessCanceledException is not expected here", e);
-        throw e;
-      }
-    };
+      throw pce;
+    }
+    catch (Throwable t) {
+      LOG.warn("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + t, FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES ? t : null);
+      throw t;
+    }
   }
 
   @Override
   public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 
-    if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+    if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
       LOG.info("removing transient data for inputId = " + inputId +
                ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
                ", data = " + maps);

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -34,7 +35,7 @@ private val WIDGET_ICON: Icon = ExpUiIcons.General.Vcs
 
 private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
 
-internal class GitToolbarWidgetAction : ExpandableComboAction() {
+internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   private val actionsWithIncomingOutgoingEnabled = GitToolbarActions.isEnabledAndVisible()
 

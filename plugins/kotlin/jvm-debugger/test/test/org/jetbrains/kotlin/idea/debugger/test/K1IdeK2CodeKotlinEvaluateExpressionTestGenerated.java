@@ -189,6 +189,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassReceiversInMethod.kt");
             }
 
+            @TestMetadata("contextReceiverInsideWithLambda.kt")
+            public void testContextReceiverInsideWithLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiverInsideWithLambda.kt");
+            }
+
             @TestMetadata("contextReceiversInFunction.kt")
             public void testContextReceiversInFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInFunction.kt");
@@ -227,6 +232,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("nestedContextClassReceivers.kt")
             public void testNestedContextClassReceivers() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/nestedContextClassReceivers.kt");
+            }
+
+            @TestMetadata("valContextReceiver.kt")
+            public void testValContextReceiver() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/valContextReceiver.kt");
             }
         }
 
@@ -876,6 +886,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/lambdas/destructuringParam.kt");
             }
 
+            @TestMetadata("evalInFilter.kt")
+            public void testEvalInFilter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/evalInFilter.kt");
+            }
+
             @TestMetadata("inlineFunctionalExpression.kt")
             public void testInlineFunctionalExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineFunctionalExpression.kt");
@@ -884,6 +899,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("inlineLambda.kt")
             public void testInlineLambda() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineLambda.kt");
+            }
+
+            @TestMetadata("labelOnAnonymousFunction.kt")
+            public void testLabelOnAnonymousFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/labelOnAnonymousFunction.kt");
             }
 
             @TestMetadata("lambdaOnReturn.kt")
@@ -1020,6 +1040,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localClass.kt");
             }
 
+            @TestMetadata("localExtensionFunction.kt")
+            public void testLocalExtensionFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localExtensionFunction.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunction.kt");
@@ -1078,6 +1103,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping5.kt")
             public void testVariableFinderShouldNotImplementDynamicScoping5() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping5.kt");
+            }
+
+            @TestMetadata("withAnonymousObject.kt")
+            public void testWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/withAnonymousObject.kt");
             }
         }
 
@@ -1316,6 +1346,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/genericWithMultipleUpperBounds.kt");
             }
 
+            @TestMetadata("getPropertyInInitContext.kt")
+            public void testGetPropertyInInitContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/getPropertyInInitContext.kt");
+            }
+
             @TestMetadata("imports.kt")
             public void testImports() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/imports.kt");
@@ -1369,6 +1404,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("inlineMethodsInSignature.kt")
             public void testInlineMethodsInSignature() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
+            }
+
+            @TestMetadata("inlineWithAnonymousObject.kt")
+            public void testInlineWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
             }
 
             @TestMetadata("innerClass.kt")
@@ -1601,6 +1641,16 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/properties.kt");
             }
 
+            @TestMetadata("protectedGetterFromJavaInsideClass.kt")
+            public void testProtectedGetterFromJavaInsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaInsideClass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaOutsideClass.kt")
+            public void testProtectedGetterFromJavaOutsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaOutsideClass.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
@@ -1694,6 +1744,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("whenEvaluation.kt")
             public void testWhenEvaluation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+            }
+
+            @TestMetadata("withSerializationPlugin.kt")
+            public void testWithSerializationPlugin() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
             @TestMetadata(".kt.kt")

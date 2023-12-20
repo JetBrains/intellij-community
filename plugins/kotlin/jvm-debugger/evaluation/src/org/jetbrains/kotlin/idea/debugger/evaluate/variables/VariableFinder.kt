@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParam
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
@@ -421,6 +422,7 @@ class VariableFinder(val context: ExecutionContext) {
                     || name == AsmUtil.RECEIVER_PARAMETER_NAME
                     || name == AsmUtil.THIS_IN_DEFAULT_IMPLS
                     || INLINED_THIS_REGEX.matches(name)
+                    || name == SpecialNames.THIS.asString()
 
         if (kind is VariableKind.ExtensionThis) {
             variables.namedEntitySequence()

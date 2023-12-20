@@ -193,6 +193,12 @@ mod tests {
     }
 
     #[test]
+    fn selecting_custom_launch_info() {
+        let result = run_launcher(LauncherRunSpec::standard().with_args(&["custom-command"]).assert_status());
+        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=null"), "Custom system property is not set: {:?}", result);
+    }
+
+    #[test]
     fn selecting_product_jdk_env_runtime_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
         let expected_rt = test.create_jbr_link("_prod_jdk_jbr");

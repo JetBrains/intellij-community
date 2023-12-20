@@ -77,7 +77,7 @@ public final class AboutDialog extends DialogWrapper {
 
   public AboutDialog(@Nullable Project project) {
     super(project, false);
-    String appName = ApplicationNamesInfo.getInstance().getFullProductName();
+    String appName = getFullNameForAboutDialog();
     setResizable(false);
     setTitle(IdeBundle.message("about.popup.about.app", appName));
 
@@ -377,9 +377,14 @@ public final class AboutDialog extends DialogWrapper {
     };
 
     dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
-                                      ApplicationNamesInfo.getInstance().getFullProductName(),
+                                      getFullNameForAboutDialog(),
                                       ApplicationInfo.getInstance().getFullVersion()));
     dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
     dialog.show();
+  }
+
+  private static @NotNull String getFullNameForAboutDialog() {
+    if (!PlatformUtils.isJetBrainsClient()) return ApplicationNamesInfo.getInstance().getFullProductName();
+    return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 }

@@ -7,7 +7,7 @@ public class BuilderDefaultsWarnings {
 }
 
 class NoBuilderButHasDefaults {
-	@lombok.Builder.Default private final long z = 5;
+	<error descr="@Builder.Default requires @Builder or @SuperBuilder on the class for it to mean anything.">@lombok.Builder.Default</error> private final long z = 5;
 
 	@lombok.Builder
 	public NoBuilderButHasDefaults() {

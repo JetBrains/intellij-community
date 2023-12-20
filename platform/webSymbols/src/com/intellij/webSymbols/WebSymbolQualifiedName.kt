@@ -16,4 +16,5 @@ data class WebSymbolQualifiedName(
   fun matches(qualifiedKind: WebSymbolQualifiedKind, vararg qualifiedKinds: WebSymbolQualifiedKind): Boolean =
     sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
 
+  override fun toString(): String = "/$namespace/$kind/$name"
 }

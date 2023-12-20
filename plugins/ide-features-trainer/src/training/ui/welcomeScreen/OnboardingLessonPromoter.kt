@@ -22,6 +22,7 @@ import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.statistic.StatisticBase
 import training.ui.showOnboardingFeedbackNotification
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
@@ -33,7 +34,8 @@ private const val PROMO_HIDDEN = "ift.hide.welcome.screen.promo"
 
 /** Do not use lesson itself in the parameters to postpone IFT modules/lessons initialization */
 @ApiStatus.Internal
-open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
+open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
+                                    @NonNls private val languageId: String,
                                     @Nls private val lessonName: String) : BannerStartPagePromoter() {
   override val promoImage: Icon
     get() = FeaturesTrainerIcons.PluginIcon
@@ -54,20 +56,18 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     get() = LearnBundle.message("welcome.promo.start.tour")
 
   override fun runAction() =
-    startOnboardingLessonWithSdk()
+    startOnboardingLessonWithSdk(lessonId, languageId)
 
   override val description: String
     get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
 
-  private fun startOnboardingLessonWithSdk() {
+  protected fun startOnboardingLessonWithSdk(lessonId: String, languageId: String) {
+    resetPrimaryLanguage(languageId)
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
     if (lesson == null) {
       logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
       return
     }
-    val primaryLanguage: String = lesson.module.primaryLanguage?.primaryLanguage
-                                  ?: error("No primary language for promoting lesson ${lesson.name}")
-    resetPrimaryLanguage(primaryLanguage)
     LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
       OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)
     }
@@ -98,5 +98,9 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + JBUIScale.scale(-1))
     })
     promoPanel.revalidate()
+  }
+
+  override fun onBannerShown() {
+    StatisticBase.logOnboardingBannerShown(lessonId, languageId)
   }
 }

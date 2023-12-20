@@ -10,7 +10,10 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-internal class IncorrectServiceRetrievingInspection : DevKitUastInspectionBase() {
+internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectionBase(
+  additionalComponentManagerMethodNames = arrayOf("getServiceIfCreated"),
+  additionalServiceKtFileMethodNames = arrayOf("serviceOrNull", "serviceIfCreated")
+) {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {

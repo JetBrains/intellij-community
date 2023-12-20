@@ -12,6 +12,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -59,7 +61,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
         }
         writeVmOptions(distBinDir)
-        generateScripts(distBinDir, arch)
+        generateScripts(distBinDir, arch, context)
+        val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+        if (jetBrainsClientContext != null) {
+          writeLinuxVmOptions(distBinDir, jetBrainsClientContext)
+          generateMainScript(distBinDir, arch, additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS, jetBrainsClientContext)
+        }
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
         customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
@@ -119,15 +126,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
   override fun writeVmOptions(distBinDir: Path): Path {
-    val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
-
-    @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
-                    listOf("-Dsun.tools.attach.tmp.only=true",
-                           "-Dawt.lock.fair=true")
-    VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\n")
-
-    return vmOptionsPath
+    return writeLinuxVmOptions(distBinDir, context)
   }
 
   private fun generateReadme(unixDistPath: Path) {
@@ -286,52 +285,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       }
   }
 
-  private fun generateScripts(distBinDir: Path, arch: JvmArchitecture) {
-    val classPathJars = context.bootClassPathJarNames
-    var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
-    for (i in 1 until classPathJars.size) {
-      classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
-    }
-
-    val additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.LINUX, arch = arch, isScript = true).toMutableList()
-    if (!context.xBootClassPathJarNames.isEmpty()) {
-      val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
-      additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
-    }
-    val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
-    val baseName = context.productProperties.baseFileName
-
-    val vmOptionsPath = distBinDir.resolve("${baseName}64.vmoptions")
-
-    val defaultXmxParameter = try {
-      Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
-    }
-    catch (e: NoSuchFileException) {
-      throw IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
-    } ?: throw IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
-
-    Files.createDirectories(distBinDir)
-    val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
-
-    val scriptName = "$baseName.sh"
-    Files.newDirectoryStream(sourceScriptDir).use {
-      for (file in it) {
-        val fileName = file.fileName.toString()
-        val target = distBinDir.resolve(if (fileName == "executable-template.sh") scriptName else fileName)
-        copyScript(sourceFile = file,
-                   targetFile = target,
-                   vmOptionsFileName = baseName,
-                   additionalJvmArgs = additionalJvmArgs,
-                   defaultXmxParameter = defaultXmxParameter,
-                   classPath = classPath,
-                   scriptName = scriptName,
-                   context = context)
-      }
-    }
-
-    copyInspectScript(context, distBinDir)
-  }
-
   private suspend fun unSquashSnap(snap: Path): Path {
     val unSquashed = context.paths.tempDir.resolve("unSquashed-${snap.nameWithoutExtension}")
     NioFiles.deleteRecursively(unSquashed)
@@ -367,13 +320,75 @@ private fun generateVersionMarker(unixDistPath: Path, context: BuildContext) {
   Files.writeString(targetDir.resolve("build-marker-" + context.fullBuildNumber), context.fullBuildNumber)
 }
 
+private const val EXECUTABLE_TEMPLATE_NAME = "executable-template.sh"
+
+private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: BuildContext) {
+  Files.createDirectories(distBinDir)
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
+
+  Files.newDirectoryStream(sourceScriptDir).use {
+    for (file in it) {
+      val fileName = file.fileName.toString()
+      if (fileName != EXECUTABLE_TEMPLATE_NAME) {
+        copyScript(sourceFile = file,
+                   targetFile = distBinDir.resolve(fileName),
+                   additionalTemplateValues = emptyList(),
+                   context = context)
+      }
+    }
+  }
+
+  copyInspectScript(context, distBinDir)
+  generateMainScript(distBinDir, arch, emptyList(), context)
+}
+
+private val ProductProperties.mainScriptFileName: String
+  get() = "$baseFileName.sh"
+
+private fun generateMainScript(distBinDir: Path, arch: JvmArchitecture, additionalNonCustomizableJvmArgs: List<String>, context: BuildContext) {
+  val baseName = context.productProperties.baseFileName
+  val vmOptionsPath = distBinDir.resolve("${baseName}64.vmoptions")
+
+  val defaultXmxParameter = try {
+    Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
+  }
+                            catch (e: NoSuchFileException) {
+                              throw IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
+                            } ?: throw IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
+
+  val classPathJars = context.bootClassPathJarNames
+  var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
+  for (i in 1 until classPathJars.size) {
+    classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
+  }
+
+  val additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.LINUX, arch = arch, isScript = true).toMutableList()
+  additionalJvmArguments.addAll(additionalNonCustomizableJvmArgs)
+  if (!context.xBootClassPathJarNames.isEmpty()) {
+    val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
+    additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
+  }
+  val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
+  val additionalTemplateValues = listOf(
+    Pair("vm_options", context.productProperties.baseFileName),
+    Pair("system_selector", context.systemSelector),
+    Pair("ide_jvm_args", additionalJvmArgs),
+    Pair("ide_default_xmx", defaultXmxParameter.trim()),
+    Pair("class_path", classPath),
+    Pair("main_class_name", context.ideMainClassName),
+  )
+
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
+
+  copyScript(sourceFile = sourceScriptDir.resolve(EXECUTABLE_TEMPLATE_NAME),
+             targetFile = distBinDir.resolve(context.productProperties.mainScriptFileName),
+             additionalTemplateValues = additionalTemplateValues,
+             context = context)
+}
+
 private fun copyScript(sourceFile: Path,
                        targetFile: Path,
-                       vmOptionsFileName: String,
-                       additionalJvmArgs: String,
-                       defaultXmxParameter: String,
-                       classPath: String,
-                       scriptName: String,
+                       additionalTemplateValues: List<Pair<String, String>>,
                        context: BuildContext) {
   // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
   // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
@@ -386,15 +401,21 @@ private fun copyScript(sourceFile: Path,
       Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
       Pair("product_vendor", context.applicationInfo.shortCompanyName),
       Pair("product_code", context.applicationInfo.productCode),
-      Pair("vm_options", vmOptionsFileName),
-      Pair("system_selector", context.systemSelector),
-      Pair("ide_jvm_args", additionalJvmArgs),
-      Pair("ide_default_xmx", defaultXmxParameter.trim()),
-      Pair("class_path", classPath),
-      Pair("script_name", scriptName),
-      Pair("main_class_name", context.ideMainClassName),
-    ),
+      Pair("script_name", context.productProperties.mainScriptFileName),
+    ) + additionalTemplateValues,
     mustUseAllPlaceholders = false,
     convertToUnixLineEndings = true,
   )
+}
+
+private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
+  val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
+
+  @Suppress("SpellCheckingInspection")
+  val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
+                  listOf("-Dsun.tools.attach.tmp.only=true",
+                         "-Dawt.lock.fair=true")
+  VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\n")
+
+  return vmOptionsPath
 }

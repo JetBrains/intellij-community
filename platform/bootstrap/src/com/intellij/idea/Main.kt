@@ -102,13 +102,10 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
     }
 
-    val configImportNeededDeferred = if (AppMode.isHeadless()) {
-      CompletableDeferred(false)
-    }
-    else {
-      async(Dispatchers.IO) {
-        isConfigImportNeeded(PathManager.getConfigDir())
-      }
+    // some code can rely on this flag, even if it is not used to show config import dialog or something config related,
+    // that's why we check it even in a headless mode (https://youtrack.jetbrains.com/issue/IJPL-333)
+    val configImportNeededDeferred = async(Dispatchers.IO) {
+      isConfigImportNeeded(PathManager.getConfigDir())
     }
 
     // this check must be performed before system directories are locked

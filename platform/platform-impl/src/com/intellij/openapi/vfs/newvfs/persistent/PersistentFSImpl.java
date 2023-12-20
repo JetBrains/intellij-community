@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
@@ -220,17 +221,21 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void showNotificationAboutLongRecovery() {
     NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
-    ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-    AnAction reportProblemAction = ActionManager.getInstance().getAction("ReportProblem");
-    notificationGroup.createNotification(
-        IdeBundle.message("notification.vfs.vfs-recovered.notification.title", names.getFullProductName()),
-        IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getProductName()),
-        INFORMATION
-      )
-      .setDisplayId("VFS.recovery.happened")
-      .addAction(reportProblemAction)
-      .setImportant(false)
-      .notify(/*project: */ null);
+    if (notificationGroup != null) {
+      ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+      Notification notification = notificationGroup.createNotification(
+          IdeBundle.message("notification.vfs.vfs-recovered.notification.title", names.getFullProductName()),
+          IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getProductName()),
+          INFORMATION
+        )
+        .setDisplayId("VFS.recovery.happened")
+        .setImportant(false);
+      AnAction reportProblemAction = ActionManager.getInstance().getAction("ReportProblem");
+      if (reportProblemAction != null) {
+        notification = notification.addAction(reportProblemAction);
+      }
+      notification.notify(/*project: */ null);
+    }
   }
 
   private static void applyVfsLogPreferences() {

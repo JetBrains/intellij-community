@@ -37,7 +37,6 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.bootstrap.IdeStartupWizardKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
@@ -907,7 +906,14 @@ public final class ConfigImportHelper {
     catch (IOException e) {
       log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
-
+    Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+    Set<PluginId> disabledPlugins =
+      Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
+    for (IdeaPluginDescriptor pluginToMigrate: pluginsToMigrate) {
+      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
+        pluginToMigrate.setEnabled(false);
+      }
+    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }

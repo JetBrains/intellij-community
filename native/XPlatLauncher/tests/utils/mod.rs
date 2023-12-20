@@ -56,8 +56,7 @@ impl<'a> TestEnvironment<'a> {
         temp_file
     }
 
-    pub fn create_user_config_file(&mut self, name: &str, content: &str) -> PathBuf {
-        let custom_config_dir = get_custom_config_dir();
+    pub fn create_user_config_file(&mut self, name: &str, content: &str, custom_config_dir: PathBuf) -> PathBuf {
         self.to_delete.push(custom_config_dir.clone());
         let config_file = custom_config_dir.join(name);
         Self::create_file(&config_file, content);
@@ -393,8 +392,12 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
     Ok(())
 }
 
-fn get_custom_config_dir() -> PathBuf {
-    get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
+pub fn get_custom_config_dir() -> PathBuf {
+    get_jetbrains_config_root().join("XPlatLauncherTest")
+}
+
+pub fn get_jetbrains_config_root() -> PathBuf {
+    get_config_home().unwrap().join("JetBrains")
 }
 
 pub struct LauncherRunSpec {

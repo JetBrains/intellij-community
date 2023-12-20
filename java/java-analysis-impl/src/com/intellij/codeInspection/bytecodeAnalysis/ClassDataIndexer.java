@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
@@ -98,14 +99,16 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
            // See IDEA-285334.
            path.endsWith("!/play/db/jpa/GenericModel.class");
   }
+  
+  private static final Pattern ANDROID_JAR_PATH = Pattern.compile(
+    "(platforms/android-.+/android.jar!/|com/google/android/android/[\\d.]+/android-[\\d.]+.jar!/android)");
 
   /**
    * Ignore inside android.jar because all class files there are dummy and contain no code at all.
    * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
    */
   private static boolean isInsideDummyAndroidJar(String path) {
-    int index = path.indexOf("/android.jar!/");
-    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
+    return path.contains("android") && ANDROID_JAR_PATH.matcher(path).find();
   }
 
   @Contract(mutates = "param2")

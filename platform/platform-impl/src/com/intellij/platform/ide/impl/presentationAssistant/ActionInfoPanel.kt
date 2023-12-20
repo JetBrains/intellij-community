@@ -33,11 +33,11 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
 
     layout = GridLayout()
     border = JBUI.Borders.empty(appearance.popupInsets)
-    val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(bottom = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
+    val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(top = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
 
     RowsGridBuilder(this)
-      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, visualPaddings = titleSubtitleIntersection)
-      .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, visualPaddings = titleSubtitleIntersection)
 
     titleLabel.foreground = appearance.theme.foreground
 

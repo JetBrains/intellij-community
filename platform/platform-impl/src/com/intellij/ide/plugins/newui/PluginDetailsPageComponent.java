@@ -1152,8 +1152,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     if (myDate != null) {
-      IdeaPluginDescriptor pluginNode = myUpdateDescriptor != null ? myUpdateDescriptor : myPlugin;
-      String date = pluginNode instanceof PluginNode ? ((PluginNode)pluginNode).getPresentableDate() : null;
+      String date = plugin instanceof PluginNode ? ((PluginNode)plugin).getPresentableDate() : null;
       myDate.setText(myMultiTabs ? IdeBundle.message("plugins.configurable.release.date.0", date) : date);
       myDate.setVisible(date != null);
     }
@@ -1670,11 +1669,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @Nullable @NlsSafe String getChangeNotes() {
-    if (myUpdateDescriptor != null) {
-      String notes = myUpdateDescriptor.getChangeNotes();
-      if (!Strings.isEmptyOrSpaces(notes)) {
-        return notes;
-      }
+    String notes = myPlugin.getChangeNotes();
+    if (!Strings.isEmptyOrSpaces(notes)) {
+      return notes;
     }
     PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
@@ -1683,8 +1680,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return changeNotes;
       }
     }
-    String notes = myPlugin.getChangeNotes();
-    return Strings.isEmptyOrSpaces(notes) ? null : notes;
+    return null;
   }
 
   private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {

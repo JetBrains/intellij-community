@@ -39,6 +39,9 @@ import java.io.File
  */
 @TestRoot("project-wizard/tests")
 class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
+    companion object {
+        private const val ONBOARDING_TIPS_SEARCH_STR = "with your caret at the highlighted text"
+    }
     private lateinit var testInfo: TestInfo
 
     @BeforeEach
@@ -233,7 +236,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                 val mainFileContent = project.findMainFileContent()
                 Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
                 Assertions.assertTrue(
-                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
                     "Main file did not contain onboarding tips"
                 )
                 Assertions.assertFalse(
@@ -253,7 +256,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                 val mainFileContent = project.findMainFileContent()
                 Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
                 Assertions.assertTrue(
-                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
                     "Main file did not contain onboarding tips"
                 )
                 Assertions.assertFalse(
@@ -271,7 +274,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                 val mainFileContent = project.findMainFileContent()
                 Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
                 Assertions.assertTrue(
-                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
                     "Main file did not contain onboarding tips"
                 )
                 Assertions.assertTrue(
@@ -289,7 +292,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                 val mainFileContent = project.findMainFileContent()
                 Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
                 Assertions.assertTrue(
-                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
                     "Main file did not contain onboarding tips"
                 )
                 Assertions.assertTrue(

@@ -80,7 +80,7 @@ public abstract class StubIndexEx extends StubIndex {
                               @NotNull Set<? extends K> newKeys) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       try {
-        if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+        if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
           getLogger().info("stub index '" + stubIndexKey + "' update: " + fileId +
                            " old = " + Arrays.toString(oldKeys.toArray()) +
                            " new  = " + Arrays.toString(newKeys.toArray()) +
@@ -109,7 +109,7 @@ public abstract class StubIndexEx extends StubIndex {
               }
             }
 
-            if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
               getLogger().info("keys iteration finished updated_id = " + System.identityHashCode(newKeys) + "; modified = " + modified);
             }
 
@@ -150,7 +150,8 @@ public abstract class StubIndexEx extends StubIndex {
       }
       Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
       PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
-        project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
+        project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass,
+        () -> "Looking for " + key + " in " + indexKey);
 
       Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
       Iterator<VirtualFile> fileStream;

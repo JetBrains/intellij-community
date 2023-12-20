@@ -5,6 +5,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,6 +34,8 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class RollbackWorker {
+  private static final Logger LOG = Logger.getInstance(RollbackWorker.class);
+
   private final Project myProject;
   private final @Nls(capitalization = Nls.Capitalization.Title) String myOperationName;
   private final boolean myInvokedFromModalContext;
@@ -129,6 +132,11 @@ public class RollbackWorker {
       myProject, changes, true,
       (partialChanges, tracker) -> {
         if (!tracker.hasPartialChangesToCommit()) return false;
+        if (!tracker.isOperational()) {
+          LOG.warn("Skipping non-operational tracker: " + tracker);
+          return false;
+        }
+
         if (!honorExcludedFromCommit) {
           Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
           if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) return false;

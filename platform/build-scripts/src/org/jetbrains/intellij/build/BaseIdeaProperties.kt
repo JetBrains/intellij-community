@@ -35,7 +35,7 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
  */
 @Suppress("SpellCheckingInspection")
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
-  "intellij.java.plugin",
+  JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
   "intellij.copyright",
   "intellij.properties",
@@ -166,7 +166,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     }
 
     productLayout.compatiblePluginsToIgnore = persistentListOf(
-      "intellij.java.plugin",
+      JavaPluginLayout.MAIN_MODULE_NAME,
     )
     additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
     modulesToCompileTests = persistentListOf("intellij.platform.jps.build.tests")

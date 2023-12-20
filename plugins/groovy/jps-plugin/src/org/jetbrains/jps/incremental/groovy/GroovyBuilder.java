@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,10 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);
@@ -129,7 +132,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   static List<String> getGroovyRtRoots(boolean addClassLoaderJar) {
     List<String> roots = GroovyRtJarPaths.getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class), addClassLoaderJar);
     if (addClassLoaderJar) {
-      return ContainerUtil.append(roots, ClasspathBootstrap.getResourcePath(Function.class)); // intellij.platform.util.rt
+      return ContainerUtil.append(roots, ClasspathBootstrap.getResourcePath(Ref.class)); // intellij.platform.util.rt
     }
     return roots;
   }

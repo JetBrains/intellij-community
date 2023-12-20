@@ -75,15 +75,38 @@ public final class ControlFlowWrapper {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final PsiElement @NotNull [] elements,
-                                                        @NotNull final PsiElement enclosingCodeFragment)
+  public @NotNull Collection<PsiStatement> prepareAndCheckExitStatements(final PsiElement @NotNull [] elements,
+                                                                @NotNull final PsiElement enclosingCodeFragment)
     throws ExitStatementsNotSameException {
-    myExitPoints = new IntArrayList();
-    myExitStatements = ControlFlowUtil
-      .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    prepareExitStatements(elements);
+    checkExitStatements(elements, enclosingCodeFragment);
+    return myExitStatements;
+  }
+
+  /**
+   * @param elements elements to extract
+   * @param enclosingCodeFragment code fragment that contains all the elements to extract
+   * @throws ExitStatementsNotSameException if there are many exit statements that cannot be deduplicated
+   */
+  public void checkExitStatements(PsiElement @NotNull [] elements, @NotNull PsiElement enclosingCodeFragment) 
+    throws ExitStatementsNotSameException {
     if (ControlFlowUtil.hasObservableThrowExitPoints(myControlFlow, myFlowStart, myFlowEnd, elements, enclosingCodeFragment)) {
       throw new ExitStatementsNotSameException();
     }
+    if (myExitPoints.size() != 1) {
+      areExitStatementsTheSame();
+    }
+  }
+
+  /**
+   * Initializes the wrapper
+   * @param elements elements to extract
+   * @return a collection of exit statements
+   */
+  public @NotNull Collection<PsiStatement> prepareExitStatements(PsiElement @NotNull [] elements) {
+    myExitPoints = new IntArrayList();
+    myExitStatements = ControlFlowUtil
+      .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
       for (int i = 0; i < myExitPoints.size(); i++) {
@@ -101,7 +124,6 @@ public final class ControlFlowWrapper {
 
     if (myExitPoints.size() != 1) {
       myGenerateConditionalExit = true;
-      areExitStatementsTheSame();
     }
     return myExitStatements;
   }

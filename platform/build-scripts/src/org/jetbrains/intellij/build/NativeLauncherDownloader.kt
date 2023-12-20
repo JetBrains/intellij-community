@@ -58,8 +58,8 @@ object NativeLauncherDownloader {
     return null
   }
 
-  private const val GROUP_ID = "org.jetbrains.intellij.deps.experimental"
-  private const val ARTIFACT_ID = "xplat-launchers"
+  private const val GROUP_ID = "org.jetbrains.intellij.deps"
+  private const val ARTIFACT_ID = "launcher"
   private const val PACKAGING = "tar.gz"
 
   private val PLATFORMS = mapOf(
