@@ -633,7 +633,14 @@ public final class HighlightUtil {
       if (returnValue != null) {
         PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
         if (isMethodVoid) {
-          description = JavaErrorBundle.message("return.from.void.method");
+          boolean constructor = method != null && method.isConstructor();
+          if (constructor) {
+            PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null && !method.getName().equals(containingClass.getName())) {
+              return null;
+            }
+          }
+          description = JavaErrorBundle.message(constructor ? "return.from.constructor" : "return.from.void.method");
           errorResult =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
           if (method != null && valueType != null && method.getBody() != null) {
