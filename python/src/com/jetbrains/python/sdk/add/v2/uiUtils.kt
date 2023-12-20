@@ -21,17 +21,20 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
@@ -49,7 +52,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.exists
@@ -205,8 +210,9 @@ internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutabl
     }
 
 private fun findPrioritySdk(sdkList: List<Sdk>): Sdk? {
-  // todo[akniazev] save last used base sdk path to suggest first
-  return sdkList.firstOrNull { it !is PyDetectedSdk && it !is PySdkToInstall }
+  val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+  return sdkList.firstOrNull { it.homePath == preferredSdkPath }
+         ?: sdkList.firstOrNull { it !is PyDetectedSdk && it !is PySdkToInstall }
          ?: sdkList.firstOrNull { it is PyDetectedSdk }
          ?: sdkList.firstOrNull { it is PySdkToInstall }
 }
