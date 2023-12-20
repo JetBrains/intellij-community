@@ -57,6 +57,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
         PsiFile psi = PsiManager.getInstance(project).findFile(file);
         if (psi != null) {
           PsiFile originalFile = psi.getOriginalFile();
+          // Decompiled file: return scope for the original class file
           if (originalFile != psi && originalFile.getFileType().equals(JavaClassFileType.INSTANCE)) {
             return getClassFileScope(originalFile.getVirtualFile(), project);
           }

@@ -110,19 +110,17 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
-    if (psiFile != null) {
-      PsiFile baseFile = JavaMultiReleaseUtil.findBaseFile(psiFile);
-      if (baseFile != null) {
-        VirtualFile baseSource = JavaEditorFileSwapper.findSourceFile(project, baseFile.getVirtualFile());
-        if (baseSource != null) {
-          return notificationPanelCreator.andThen(panel -> {
-            appendOpenFileAction(project, panel, baseSource, JavaUiBundle.message("class.file.open.source.version.specific.action"));
-            return panel;
-          });
-        }
+    VirtualFile baseFile = JavaMultiReleaseUtil.findBaseFile(file);
+    if (baseFile != null) {
+      VirtualFile baseSource = JavaEditorFileSwapper.findSourceFile(project, baseFile);
+      if (baseSource != null) {
+        return notificationPanelCreator.andThen(panel -> {
+          appendOpenFileAction(project, panel, baseSource, JavaUiBundle.message("class.file.open.source.version.specific.action"));
+          return panel;
+        });
       }
     }
-    
+
     List<? extends AttachSourcesProvider.AttachSourcesAction> actionsByFile = psiFile != null ?
                                                                               collectActions(libraries, psiFile) :
                                                                               List.of();

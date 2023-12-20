@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -78,21 +77,6 @@ public final class JavaMultiReleaseUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @param psiFile a PSI file that represents a version-specific file from an MR-JAR
-   * @return a file representing the same class or resource from the JAR root; null if there's no corresponding resource in the JAR root,
-   * or if the supplied file is not a version-specific file from an MR-JAR
-   */
-  public static @Nullable PsiFile findBaseFile(@NotNull PsiFile psiFile) {
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return null;
-    Project project = psiFile.getProject();
-    if (project.isDefault()) return null;
-    VirtualFile target = findBaseFile(file);
-    if (target == null) return null;
-    return psiFile.getManager().findFile(target);
   }
 
   /**

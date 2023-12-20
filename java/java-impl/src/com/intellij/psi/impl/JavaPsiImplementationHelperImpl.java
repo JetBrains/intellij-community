@@ -133,9 +133,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
       else {
         // Multi-release jar: assume that source file is placed in META-INF/versions/<ver>
         // fallback to default location only if there's no the same file in the root
-        PsiFile baseFile = JavaMultiReleaseUtil.findBaseFile(clsFile);
         String versionPath = "META-INF/versions/" + level.toJavaVersion().feature + "/" + relativePath;
-        if (baseFile != null) {
+        if (JavaMultiReleaseUtil.findBaseFile(clsFile.getVirtualFile()) != null) {
           finder = root -> root.findFileByRelativePath(versionPath);
         } else {
           finder = root -> {
