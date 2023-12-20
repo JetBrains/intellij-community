@@ -24,10 +24,9 @@ import java.util.concurrent.atomic.LongAdder
 private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
 
 /**
- * ION used instead of CBOR - efficient implementation (to be checked, but ION is quite a mature library).
- * And
+ * CBOR is used instead of ION - no mature and robust implementation for kotlinx-serialization.
  */
-internal class CacheStateStorageService(@JvmField val storage: MvStoreStorage) {
+internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage) {
   private val meter: Meter = TelemetryManager.getMeter(cacheScope)
 
   private val getMeasurer = Measurer(meter, "get")

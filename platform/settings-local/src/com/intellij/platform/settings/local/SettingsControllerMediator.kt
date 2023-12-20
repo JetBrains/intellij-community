@@ -4,10 +4,7 @@ package com.intellij.platform.settings.local
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.settings.ChainedSettingsController
-import com.intellij.platform.settings.SettingDescriptor
-import com.intellij.platform.settings.SettingsController
-import com.intellij.platform.settings.SettingsControllerInternal
+import com.intellij.platform.settings.*
 
 private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
@@ -35,12 +32,14 @@ internal class SettingsControllerMediator : SettingsController, SettingsControll
   fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) = first.putIfDiffers(key = key, value = value, chain = chain)
 
   override fun createStateStorage(collapsedPath: String): Any? {
-    if (collapsedPath == StoragePathMacros.CACHE_FILE &&
-        (delegateToSettingsController || ApplicationManager.getApplication().isUnitTestMode)) {
-      return StateStorageBackedByController(this)
-    }
-    else {
+    if (!delegateToSettingsController && !ApplicationManager.getApplication().isUnitTestMode) {
       return null
+    }
+
+    when (collapsedPath) {
+      StoragePathMacros.CACHE_FILE -> return StateStorageBackedByController(this, listOf(CacheTag))
+      StoragePathMacros.WORKSPACE_FILE -> return StateStorageBackedByController(this, listOf(NonShareableInternalTag))
+      else -> return null
     }
   }
 }

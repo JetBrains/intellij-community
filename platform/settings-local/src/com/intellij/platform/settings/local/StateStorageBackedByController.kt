@@ -11,8 +11,8 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingTag
 import com.intellij.platform.settings.StringSettingSerializerDescriptor
 import com.intellij.platform.settings.settingDescriptor
 import com.intellij.serialization.SerializationException
@@ -32,7 +32,10 @@ import kotlin.concurrent.write
 
 private val shimPluginId = PluginId.getId("__controller_shim__")
 
-internal class StateStorageBackedByController(private val controller: SettingsControllerMediator) : StateStorage {
+internal class StateStorageBackedByController(
+  @JvmField val controller: SettingsControllerMediator,
+  private val tags: List<SettingTag>,
+) : StateStorage {
   private val bindingProducer = BindingProducer()
 
   override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
@@ -90,30 +93,31 @@ internal class StateStorageBackedByController(private val controller: SettingsCo
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
-    return ControllerBackedSaveSessionProducer(bindingProducer = bindingProducer, controller = controller)
+    return ControllerBackedSaveSessionProducer(bindingProducer = bindingProducer, storageController = this)
   }
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // external change is not expected and not supported
   }
-}
 
-private fun createSettingDescriptor(key: String): SettingDescriptor<String> {
-  return settingDescriptor(key = key, pluginId = shimPluginId, serializer = StringSettingSerializerDescriptor) {
-    tags = listOf(CacheTag)
+  internal fun createSettingDescriptor(key: String): SettingDescriptor<String> {
+    val tags = tags
+    return settingDescriptor(key = key, pluginId = shimPluginId, serializer = StringSettingSerializerDescriptor) {
+      this.tags = tags
+    }
   }
 }
 
 private class ControllerBackedSaveSessionProducer(
   private val bindingProducer: BindingProducer,
-  private val controller: SettingsControllerMediator,
+  private val storageController: StateStorageBackedByController,
 ) : SaveSessionProducer {
   private fun put(key: SettingDescriptor<String>, value: String?) {
-    controller.putIfDiffers(key, value)
+    storageController.controller.putIfDiffers(key, value)
   }
 
   override fun setState(component: Any?, componentName: String, state: Any?) {
-    val settingDescriptor = createSettingDescriptor(componentName)
+    val settingDescriptor = storageController.createSettingDescriptor(componentName)
     if (state == null) {
       put(settingDescriptor, null)
       return

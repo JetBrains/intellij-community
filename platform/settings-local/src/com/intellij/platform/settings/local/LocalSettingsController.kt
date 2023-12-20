@@ -11,10 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.settings.CacheTag
-import com.intellij.platform.settings.ChainedSettingsController
-import com.intellij.platform.settings.PropertyManagerAdapterTag
-import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.TestOnly
@@ -53,18 +50,18 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
   val storage: MvStoreStorage = MvStoreStorage()
 
   // Telemetry is not ready at this point yet
-  val cacheStore by lazy { CacheStateStorageService(storage) }
+  val internalStore by lazy { InternalStateStorageService(storage) }
 
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       coroutineScope.coroutineContext.job.invokeOnCompletion {
-        cacheStore.storage.close()
+        internalStore.storage.close()
       }
     }
   }
 
   override suspend fun save() {
-    cacheStore.storage.save()
+    internalStore.storage.save()
   }
 
   fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
@@ -75,7 +72,7 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
         return propertyManager.getValue(tag.oldKey) as T?
       }
       else if (tag is CacheTag) {
-        return cacheStore.getValue(key = getEffectiveKey(key = key), serializer = key.serializer, pluginId = key.pluginId)
+        return internalStore.getValue(key = getEffectiveKey(key = key), serializer = key.serializer, pluginId = key.pluginId)
       }
     }
 
@@ -84,28 +81,31 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
   }
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    operate(key, cacheOperation = {
-      cacheStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+    operate(key, internalOperation = {
+      internalStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 
   fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) {
-    operate(key, cacheOperation = {
-      cacheStore.putIfDiffers(key = getEffectiveKey(key = key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+    operate(key, internalOperation = {
+      internalStore.putIfDiffers(key = getEffectiveKey(key = key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 
   fun invalidateCaches() {
-    cacheStore.invalidate()
+    internalStore.invalidate()
   }
 
   private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
 }
 
-private inline fun <R : Any, T: Any> operate(key: SettingDescriptor<T>, cacheOperation: () -> R): R? {
+private inline fun <R : Any, T: Any> operate(key: SettingDescriptor<T>, internalOperation: (isCache: Boolean) -> R): R? {
   for (tag in key.tags) {
     if (tag is CacheTag) {
-      return cacheOperation()
+      return internalOperation(true)
+    }
+    else if (tag is NonShareableInternalTag) {
+      return internalOperation(false)
     }
   }
 
