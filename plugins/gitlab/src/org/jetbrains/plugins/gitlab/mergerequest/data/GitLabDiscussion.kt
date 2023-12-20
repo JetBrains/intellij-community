@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -26,10 +27,9 @@ interface GitLabDiscussion {
   val notes: Flow<List<GitLabNote>>
   val canAddDraftNotes: Boolean
 
-  val resolvable: Boolean
   val canResolve: Boolean
   val canAddNotes: Flow<Boolean>
-  val resolved: Flow<Boolean>
+  val resolved: StateFlow<Boolean>
 
   suspend fun changeResolvedState()
 
@@ -94,12 +94,12 @@ class LoadedGitLabDiscussion(
             return@collectLatest
           }
 
-          emit(Collections.unmodifiableList(notesData))
+          emit(notesData.toList())
         }
       }
-      emit(Collections.unmodifiableList(notesData))
+      emit(notesData.toList())
     }
-  }.modelFlow(cs, LOG)
+  }.stateIn(cs, SharingStarted.Eagerly, discussionData.notes)
 
   override val notes: Flow<List<GitLabMergeRequestNote>> =
     loadedNotes
@@ -118,11 +118,10 @@ class LoadedGitLabDiscussion(
     (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
   // a little cheat that greatly simplifies the implementation
-  override val resolvable: Boolean = discussionData.notes.first().resolvable
-  override val canResolve: Boolean = discussionData.notes.first().userPermissions.resolveNote
+  override val canResolve: Boolean = discussionData.notes.first().resolvable && discussionData.notes.first().userPermissions.resolveNote
 
-  override val resolved: Flow<Boolean> =
-    loadedNotes.mapLatest { it.first().resolved }.distinctUntilChanged().modelFlow(cs, LOG)
+  override val resolved: StateFlow<Boolean> =
+    loadedNotes.mapState { it.firstOrNull()?.resolved ?: false }
 
   override suspend fun changeResolvedState() {
     withContext(cs.coroutineContext) {
@@ -165,5 +164,5 @@ class LoadedGitLabDiscussion(
   }
 
   override fun toString(): String =
-    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, resolvable=$resolvable, canResolve=$canResolve)"
+    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, canResolve=$canResolve)"
 }

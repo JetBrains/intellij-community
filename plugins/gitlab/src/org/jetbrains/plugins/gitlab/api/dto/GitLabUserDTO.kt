@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.net.URL
@@ -15,7 +16,7 @@ open class GitLabUserDTO(
   override val name: @NlsSafe String,
   override val avatarUrl: String?,
   val webUrl: String
-) : AccountDetails {
+) : AccountDetails, CodeReviewUser {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

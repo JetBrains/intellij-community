@@ -25,7 +25,7 @@ class GitLabMergeRequestEditorDiscussionViewModel internal constructor(
     it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
   }
 
-  override val isVisible: Flow<Boolean> = combine(resolveVm?.resolved ?: flowOf(false), discussionsViewOption) { isResolved, viewOption ->
+  override val isVisible: Flow<Boolean> = combine(isResolved, discussionsViewOption) { isResolved, viewOption ->
     return@combine when (viewOption) {
       DiscussionsViewOption.ALL -> true
       DiscussionsViewOption.UNRESOLVED_ONLY -> !isResolved

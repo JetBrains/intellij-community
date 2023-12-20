@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -18,11 +20,10 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewM
 import java.net.URL
 import java.util.*
 
-interface GitLabMergeRequestDiscussionViewModel {
+interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewModel {
   val id: GitLabId
   val notes: Flow<List<NoteItem>>
 
-  val resolveVm: GitLabDiscussionResolveViewModel?
   val replyVm: Flow<GitLabDiscussionReplyViewModel?>
 
   val position: Flow<GitLabNotePosition?>
@@ -39,18 +40,20 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
-  discussion: GitLabMergeRequestDiscussion,
+  private val discussion: GitLabMergeRequestDiscussion,
   glProject: GitLabProjectCoordinates
 ) : GitLabMergeRequestDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val taskLauncher = SingleCoroutineLauncher(cs)
+  override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val id: GitLabId = discussion.id
 
   private val expandRequested = MutableStateFlow(false)
 
-  override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+  override val isResolved: StateFlow<Boolean> = discussion.resolved
+  override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
@@ -87,6 +90,18 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
+
+  override fun changeResolvedState() {
+    taskLauncher.launch {
+      try {
+        discussion.changeResolvedState()
+      }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        //TODO: handle???
+      }
+    }
+  }
 }
 
 class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(

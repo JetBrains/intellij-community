@@ -3,28 +3,27 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
+import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
-import com.intellij.ui.OverlaidOffsetIconsIcon
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.containers.nullize
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -43,7 +42,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
@@ -107,7 +105,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
                               vm: GitLabMergeRequestTimelineDiscussionViewModel,
                               avatarIconsProvider: IconsProvider<GitLabUserDTO>): JPanel {
     val mainNoteVm = vm.mainNote
-    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm, project).apply {
+    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
@@ -247,67 +245,13 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                        vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                        project: Project): JComponent {
-    val authorsLabel = JLabel().apply {
-      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
-
-      val repliesAuthors = vm.replies.map { replies ->
-        val authors = LinkedHashSet<GitLabUserDTO>()
-        replies.mapTo(authors) { it.author }
-      }
-
-      bindIconIn(cs, repliesAuthors.map { authors ->
-        authors.map {
-          avatarIconsProvider.getIcon(it, ComponentType.COMPACT.iconSize)
-        }.nullize()?.let {
-          OverlaidOffsetIconsIcon(it)
-        }
-      })
+                                        vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+    val iconsProvider = IconsProvider<CodeReviewUser> { key, size ->
+      if (key is GitLabUserDTO) avatarIconsProvider.getIcon(key, size) else EmptyIcon.create(size)
     }
-
-    val hasRepliesOrCanCreateNewFlow = vm.replies
-      .flatMapConcat { replies -> vm.replyVm.map { replyVm -> replies.isNotEmpty() || replyVm != null } }
-
-    val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
-      vm.setRepliesFolded(false)
-    }).apply {
-      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
-      bindTextIn(cs, vm.replies.map { replies ->
-        val replyCount = replies.size
-        if (replyCount == 0) {
-          CollaborationToolsBundle.message("review.comments.reply.action")
-        }
-        else {
-          CollaborationToolsBundle.message("review.comments.replies.action", replyCount)
-        }
-      })
-    }
-
-    val lastReplyDateLabel = JLabel().apply {
-      foreground = UIUtil.getContextHelpForeground()
-    }.apply {
-      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
-      bindTextIn(cs, vm.replies.mapNotNull { replies ->
-        replies.lastOrNull()?.createdAt?.let { DateFormatUtil.formatPrettyDateTime(it) }
-      })
-    }
-
-    val repliesActions = HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GAP).apply {
-      add(authorsLabel)
-      add(repliesLink)
-      add(lastReplyDateLabel)
-    }.apply {
-      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
-    }
-    return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
-      add(repliesActions)
-
-      vm.resolveVm?.takeIf { it.canResolve }?.let {
-        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it, project, ACTION_PLACE)
-          .also(::add)
-      }
-    }
+    return CodeReviewCommentUIUtil.createFoldedThreadControlsIn(
+      cs, vm, iconsProvider
+    )
   }
 
   private fun createDiscussionTextPane(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
@@ -356,7 +300,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesListPanel)
       bindChildIn(cs, vm.replyVm) { newNoteVm ->
         newNoteVm?.let {
-          GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
+          GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, vm, it,
                                                             avatarIconsProvider, ACTION_PLACE)
         }
       }

@@ -332,6 +332,18 @@ object CollaborationToolsUIUtil {
         }
       }
     }
+
+  /**
+   * Hides the component if none of the children are visible
+   * TODO: handle children list mutability
+   */
+  fun hideWhenNoVisibleChildren(component: JComponent) {
+    val children = component.components
+    component.isVisible = children.any { it.isVisible }
+    for (child in children) {
+      UIUtil.runWhenVisibilityChanged(child) { component.isVisible = children.any { it.isVisible } }
+    }
+  }
 }
 
 @Suppress("FunctionName")
