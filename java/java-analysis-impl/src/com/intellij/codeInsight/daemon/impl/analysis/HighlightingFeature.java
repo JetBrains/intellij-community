@@ -120,6 +120,7 @@ public enum HighlightingFeature {
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
+  STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
   ;
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";

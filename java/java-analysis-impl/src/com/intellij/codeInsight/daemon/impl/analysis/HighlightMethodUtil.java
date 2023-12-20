@@ -67,10 +67,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class HighlightMethodUtil {
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
-  private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
-                                                                                                                PsiType.EMPTY_ARRAY,
-                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
-                                                                                                                PsiSubstitutor.EMPTY);
+  private static final MethodSignature ourValuesEnumSyntheticMethod =
+    MethodSignatureUtil.createMethodSignature("values",
+                                              PsiType.EMPTY_ARRAY,
+                                              PsiTypeParameter.EMPTY_ARRAY,
+                                              PsiSubstitutor.EMPTY);
 
   private HighlightMethodUtil() { }
 
@@ -1452,6 +1453,17 @@ public final class HighlightMethodUtil {
 
   static HighlightInfo.Builder checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
+    PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    PsiReferenceExpression expression = methodCall.getMethodExpression();
+    if (method == null || !method.isConstructor()) {
+      String message = JavaErrorBundle.message("constructor.call.only.allowed.in.constructor", expression.getText() + "()");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    }
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+    if (constructorCall != methodCall) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(
+        JavaErrorBundle.message("only.one.constructor.call.allowed.in.constructor", expression.getText() + "()"));
+    }
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock) {
       PsiMethod ctor = tryCast(codeBlock.getParent(), PsiMethod.class);
@@ -1469,9 +1481,13 @@ public final class HighlightMethodUtil {
         }
       }
     }
-    PsiReferenceExpression expression = methodCall.getMethodExpression();
+    if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
+      String message = JavaErrorBundle.message("constructor.call.must.be.top.level.statement", expression.getText() + "()");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    }
     String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    return HighlightUtil.checkFeature(methodCall, HighlightingFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
+                                    methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
   }
 
 
