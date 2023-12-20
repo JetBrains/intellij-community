@@ -37,14 +37,16 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     override fun invokeChangeSignature(
         element: KtElement, context: PsiElement, project: Project, editor: Editor?, dataContext: DataContext?
     ) {
-        val callableDeclaration = findDeclaration(element, context, project, editor, dataContext) ?: return
+        val callableDeclaration = findDeclaration(element, context, project, editor) ?: return
+        if (callableDeclaration !is KtNamedDeclaration) {
+            ChangeSignatureAction.getChangeSignatureHandler(callableDeclaration)?.invoke(project, arrayOf(callableDeclaration), dataContext)
+            return
+        }
         runChangeSignature(project, editor, callableDeclaration, context)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    fun findDeclaration(
-        element: KtElement, context: PsiElement, project: Project, editor: Editor?, dataContext: DataContext?
-    ): KtNamedDeclaration? {
+    fun findDeclaration(element: KtElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
         return allowAnalysisOnEdt {
             analyze(ktModule) {
@@ -63,13 +65,6 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                     ktSymbol is KtFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
                     ktSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> InapplicabilityKind.Synthetic
                     ktSymbol.origin == KtSymbolOrigin.LIBRARY -> InapplicabilityKind.Library
-                    ktSymbol.origin == KtSymbolOrigin.JAVA -> {
-                        val psiElement = ktSymbol.psi
-                        if (psiElement != null) {
-                            ChangeSignatureAction.getChangeSignatureHandler(psiElement)?.invoke(project, arrayOf(psiElement), dataContext)
-                        }
-                        return@analyze null
-                    }
                     else -> null
                 }
 
@@ -82,7 +77,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                         project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE
                     )
                     null
-                } else ktSymbol?.psi as? KtNamedDeclaration
+                } else ktSymbol?.psi
             }
         }
     }

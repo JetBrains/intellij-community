@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
@@ -56,7 +59,7 @@ class KotlinFirChangeSignatureTest :
 
     override fun createChangeInfo(): KotlinChangeInfo {
         val element = findTargetElement()?.unwrapped as KtElement
-        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor, null)!!
+        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor) as KtNamedDeclaration
         val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
@@ -79,4 +82,32 @@ class KotlinFirChangeSignatureTest :
         swapParameters(0, 1)
     }
 
+    private inline fun <reified T> doTestTargetDeclaration(code: String, name: String) {
+        myFixture.configureByText("dummy.kt", code)
+        val element = findTargetElement() as KtElement
+        val declaration = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)!!
+        assertEquals(T::class, declaration::class)
+        assertEquals(name, (declaration as PsiNamedElement).name)
+    }
+
+    fun testJavaTarget() {
+        myFixture.addClass("public class A { public void fooBar() {} }")
+        doTestTargetDeclaration<PsiMethodImpl>("class B { fun m(a: A) { a.fooB<caret>ar() } }", "fooBar")
+    }
+
+    fun testKotlinTarget() {
+        doTestTargetDeclaration<KtNamedFunction>("class B { fun m() { fooB<caret>ar() } fun fooBar(){} }", "fooBar")
+    }
+
+    fun testStdlib() {
+        myFixture.configureByText("dummy.kt", "fun main() { lis<caret>tOf(\"\") } ")
+        val element = findTargetElement() as KtElement
+        try {
+            KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)
+        } catch (e: RefactoringErrorHintException) {
+            assertEquals("Cannot perform refactoring.\nLibrary declarations cannot be changed", e.message)
+            return
+        }
+        fail("Expected conflict message")
+    }
 }
