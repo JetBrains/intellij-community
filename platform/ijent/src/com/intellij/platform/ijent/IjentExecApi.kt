@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -13,27 +12,33 @@ interface IjentExecApi {
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
    *
-   * Beware that processes with [ExecuteProcessArgs.pty] usually don't have stderr.
+   * Beware that processes with [ExecuteProcessBuilder.pty] usually don't have stderr.
    * The [IjentChildProcess.stderr] must be an empty stream in such case.
    *
-   * By default, environment is always inherited from the running IJent instance, which may be unwanted. [ExecuteProcessArgs.env] allows
+   * By default, environment is always inherited from the running IJent instance, which may be unwanted. [ExecuteProcessBuilder.env] allows
    * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
-   * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessArgs.env].
+   * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessBuilder.env].
    *
    * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
-   * [ExecuteProcessArgs.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+   * [ExecuteProcessBuilder.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
    */
-  suspend fun executeProcess(args: ExecuteProcessArgs): ExecuteProcessResult
+  fun executeProcessBuilder(exe: String): ExecuteProcessBuilder
 
-  /** Docs: [executeProcess] */
-  class ExecuteProcessArgs(var exe: String) {
-    var args: MutableList<String> = SmartList()
-    var env: MutableMap<String, String> = HashMap(0)
-    var pty: Pty? = null
-    var workingDirectory: String? = null
+  /** Docs: [executeProcessBuilder] */
+  interface ExecuteProcessBuilder {
+    fun args(args: List<String>): ExecuteProcessBuilder
+    fun env(env: Map<String, String>): ExecuteProcessBuilder
+    fun pty(pty: Pty?): ExecuteProcessBuilder
+    fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilder
 
-    override fun toString(): String =
-      "ExecuteProcessArgs(exe='$exe', args=$args, env=$env, pty=$pty, workingDirectory=$workingDirectory)"
+    /**
+     * Executes the process, returning either an [IjentChildProcess] or an error provided by the remote operating system.
+     *
+     * The instance of the [ExecuteProcessBuilder] _may_ become invalid after this call.
+     *
+     * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
+     */
+    suspend fun execute(): ExecuteProcessResult
   }
 
   /**
@@ -50,15 +55,13 @@ interface IjentExecApi {
   data class Pty(val columns: Int, val rows: Int, val echo: Boolean)
 }
 
-/** Docs: [IjentExecApi.executeProcess] */
-suspend fun IjentExecApi.executeProcess(
-  exe: String,
-  vararg args: String,
-  builder: IjentExecApi.ExecuteProcessArgs.() -> Unit = {},
-): IjentExecApi.ExecuteProcessResult {
-  require(exe.isNotEmpty()) { "Executable must be specified" }
-  return executeProcess(IjentExecApi.ExecuteProcessArgs(exe).apply {
-    this.args += args
-    builder()
-  })
-}
+/** Docs: [IjentExecApi.executeProcessBuilder] */
+suspend fun IjentExecApi.executeProcess(exe: String, vararg args: String): IjentExecApi.ExecuteProcessResult =
+  executeProcessBuilder(exe).args(listOf(*args)).execute()
+
+/** Docs: [IjentExecApi.executeProcessBuilder] */
+fun IjentExecApi.executeProcessBuilder(exe: String, arg1: String, vararg args: String): IjentExecApi.ExecuteProcessBuilder =
+  executeProcessBuilder(exe).args(listOf(arg1, *args))
+
+fun IjentExecApi.ExecuteProcessBuilder.args(first: String, vararg other: String): IjentExecApi.ExecuteProcessBuilder =
+  args(listOf(first, *other))

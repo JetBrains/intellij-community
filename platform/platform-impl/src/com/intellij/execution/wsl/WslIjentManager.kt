@@ -13,7 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.IjentExecApi
+import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -105,12 +108,13 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         ?: processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
 
       val ijentApi = getIjentApi(wslDistribution, project, isSudo)
-      when (val processResult = ijentApi.exec.executeProcess(FileUtil.toSystemIndependentName(command.first())) {
-        args += command.toList().drop(1)
-        env += processBuilder.environment()
-        this.pty = pty
-        workingDirectory = directory
-      }) {
+      when (val processResult = ijentApi.exec.executeProcessBuilder(FileUtil.toSystemIndependentName(command.first()))
+        .args(command.toList().drop(1))
+        .env(processBuilder.environment())
+        .pty(pty)
+        .workingDirectory(directory)
+        .execute()
+      ) {
         is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
         is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
