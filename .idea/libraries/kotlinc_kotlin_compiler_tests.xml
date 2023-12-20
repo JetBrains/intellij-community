@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:2.0.0-dev-10613">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:2.0.0-dev-10935">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10613/kotlin-compiler-tests-for-ide-2.0.0-dev-10613.jar">
-          <sha256sum>3b59d3a9013649f0c0f1b06e48118b28a9b798143702d1950cc52fcc34ae116e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10935/kotlin-compiler-tests-for-ide-2.0.0-dev-10935.jar">
+          <sha256sum>4a59f82b565facfa97d9140c46c52d07649d29e27d960f346106223c17abbddb</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10613/kotlin-compiler-tests-for-ide-2.0.0-dev-10613.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10935/kotlin-compiler-tests-for-ide-2.0.0-dev-10935.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10613/kotlin-compiler-tests-for-ide-2.0.0-dev-10613-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.0.0-dev-10935/kotlin-compiler-tests-for-ide-2.0.0-dev-10935-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

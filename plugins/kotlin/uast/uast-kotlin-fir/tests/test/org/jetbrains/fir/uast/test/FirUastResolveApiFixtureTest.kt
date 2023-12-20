@@ -255,4 +255,12 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testResolveThisExpressionAsLambdaReceiver() {
         checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
+
+    fun testResolvePropertiesInCompanionObjectFromBinaryDependency() {
+        checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture)
+    }
+
+    fun testResolvePropertiesInInnerClassFromBinaryDependency() {
+        checkResolvePropertiesInInnerClassFromBinaryDependency(myFixture)
+    }
 }
