@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 import com.intellij.ide.util.DirectoryChooser
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
 
 sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
@@ -34,7 +35,7 @@ sealed interface K2MoveTargetModel {
     fun toDescriptor(): K2MoveTargetDescriptor
 
     context(Panel)
-    fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit)
+    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     open class SourceDirectory(
         override var pkgName: FqName,
@@ -47,7 +48,8 @@ sealed interface K2MoveTargetModel {
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
         context(Panel)
-        override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            val project = directory.project
             row {
                 label(KotlinBundle.message("label.text.package")).align(AlignX.LEFT)
                 pkgChooser = cell(
@@ -68,14 +70,16 @@ sealed interface K2MoveTargetModel {
                         return pkgChooser.text
                     }
                 }).align(AlignX.FILL).component
+                destinationChooser.comboBox.addPropertyChangeListener {
+                    if (it.propertyName != "model") return@addPropertyChangeListener
+                    // this will be invoked when package/source root changes
+                    directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
+                    pkgName = FqName(pkgChooser.text)
+                    RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
+                    revalidateButtons()
+                }
             }.layout(RowLayout.PARENT_GRID)
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
-
-            onApply {
-                directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
-                pkgName = FqName(pkgChooser.text)
-                RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
-            }
         }
 
         private companion object {
@@ -92,8 +96,9 @@ sealed interface K2MoveTargetModel {
         private lateinit var fileChooser: TextFieldWithBrowseButton
 
         context(Panel)
-        override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
-            super.buildPanel(project, onError)
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            super.buildPanel(onError, revalidateButtons)
+            val project = directory.project
             row {
                 label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
@@ -117,10 +122,13 @@ sealed interface K2MoveTargetModel {
                         }.submit(AppExecutorUtil.getAppExecutorService())
                     }
                 }
+                fileChooser.addDocumentListener(object : DocumentAdapter() {
+                    override fun textChanged(e: DocumentEvent) {
+                        fileName = fileChooser.text
+                        revalidateButtons()
+                    }
+                })
             }.layout(RowLayout.PARENT_GRID)
-            onApply {
-                fileName = fileChooser.text
-            }
         }
     }
 

@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 /**
@@ -43,7 +42,18 @@ sealed class K2MoveModel {
 
     val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
-    abstract fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor?
+    abstract fun toDescriptor(): K2MoveDescriptor
+
+    fun isValidRefactoring(): Boolean {
+        fun KtFile.isTargetFile(): Boolean {
+            return (target as? K2MoveTargetModel.File)?.let { fileTarget ->
+                containingDirectory == fileTarget.directory && name == fileTarget.fileName
+            } ?: true
+        }
+        if (source.elements.isEmpty()) return false
+        val files = source.elements.map { it.containingKtFile }.toSet()
+        return files.size != 1 || !files.single().isTargetFile()
+    }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String, val setting: KMutableProperty0<Boolean>) {
         SEARCH_FOR_TEXT(
@@ -81,8 +91,8 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor? {
-            val srcDescr = source.toDescriptor(onError) ?: return null
+        override fun toDescriptor(): K2MoveDescriptor {
+            val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
             return K2MoveDescriptor.Files(
@@ -105,8 +115,8 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveDescriptor? {
-            val srcDescr = source.toDescriptor(onError) ?: return null
+        override fun toDescriptor(): K2MoveDescriptor {
+            val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
             return K2MoveDescriptor.Members(

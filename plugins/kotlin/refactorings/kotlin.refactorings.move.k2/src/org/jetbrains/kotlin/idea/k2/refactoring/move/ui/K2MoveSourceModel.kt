@@ -24,20 +24,19 @@ import javax.swing.JComponent
 sealed interface K2MoveSourceModel<T : KtElement> {
     val elements: Set<T>
 
-    fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveSourceDescriptor<T>?
+    fun toDescriptor(): K2MoveSourceDescriptor<T>?
 
     context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit)
+    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     class FileSource(files: Set<KtFile>) : K2MoveSourceModel<KtFile> {
         override var elements: Set<KtFile> = files
             internal set
 
-        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveSourceDescriptor.FileSource?
-            = K2MoveSourceDescriptor.FileSource(elements)
+        override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
             class PresentableFile(val file: KtFile, val presentation: TargetPresentation)
@@ -72,16 +71,10 @@ sealed interface K2MoveSourceModel<T : KtElement> {
 
         private lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
 
-        override fun toDescriptor(onError: (String?, JComponent) -> Unit): K2MoveSourceDescriptor.ElementSource? {
-            if (elements.isEmpty()) {
-                onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
-                return null
-            }
-            return K2MoveSourceDescriptor.ElementSource(elements)
-        }
+        override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
+        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
                 .mapNotNull { it.parent as? KtDeclarationContainer }
                 .toSet()
@@ -110,10 +103,17 @@ sealed interface K2MoveSourceModel<T : KtElement> {
 
             row {
                 memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
+                val table = memberSelectionPanel.table
+                table.addMemberInfoChangeListener {
+                    elements = table.selectedMemberInfos.map { it.member }.toSet()
+                    if (elements.isEmpty()) {
+                        onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
+                    } else {
+                        onError(null, memberSelectionPanel.table)
+                    }
+                    revalidateButtons()
+                }
             }.resizableRow()
-            onApply {
-                elements = memberSelectionPanel.table.selectedMemberInfos.map { it.member }.toSet()
-            }
         }
     }
 }

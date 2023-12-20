@@ -22,8 +22,8 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
 
     override fun createCenterPanel(): JComponent {
         mainPanel = panel {
-            model.target.buildPanel(model.project, ::setErrorText)
-            model.source.buildPanel(::setErrorText)
+            model.target.buildPanel(::setErrorText, ::validateRefactorButton)
+            model.source.buildPanel(::setErrorText, ::validateRefactorButton)
             row {
                 panel {
                     model.searchForText.createComboBox()
@@ -37,14 +37,17 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
         return mainPanel
     }
 
+    private fun validateRefactorButton() {
+        refactorAction.isEnabled = model.isValidRefactoring()
+    }
+
     private fun saveSettings() {
-        mainPanel.apply()
         KotlinCommonRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages
     }
 
     override fun doAction() {
         saveSettings()
-        val descriptor = model.toDescriptor(::setErrorText) ?: return
+        val descriptor = model.toDescriptor()
         invokeRefactoring(descriptor.refactoringProcessor())
     }
 }
