@@ -84,7 +84,11 @@ We do not want to clone the configuration directory for each connection. The sam
 
 ## TBE
 
-One important TBE requirement: unset value — set to some default value.
+- set/get a specific setting(as opposed to only operating on a container level)
+- access settings without knowing implementation details of a container in a form of a key/value API
+- prevent certain keys from being set by the user(read-only settings)
+- intercept the events that a settings has been modified
+- tell IJ platform to use "default" value for a certain key
 
 ## Service
 
