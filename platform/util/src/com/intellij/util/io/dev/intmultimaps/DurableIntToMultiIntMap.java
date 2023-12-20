@@ -37,6 +37,16 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
   boolean put(int key,
               int value) throws IOException;
 
+  /**
+   * if mapping (key, oldValue) exists -- replaces it with (key, newValue), otherwise do nothing
+   *
+   * @return true if actually replaced something, i.e. there was (key, oldValue) mapping before, false if there was no
+   * such mapping, and hence nothing was replaced
+   */
+  boolean replace(int key,
+                  int oldValue,
+                  int newValue) throws IOException;
+
   boolean has(int key,
               int value) throws IOException;
 

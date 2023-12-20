@@ -192,11 +192,11 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
       assertTrue(existentRemoved,
                  "[key,value] exist in the map => remove must return true");
       assertFalse(multimap.has(key, value),
-                 "[key,value] was just removed => must NOT exist in the map anymore");
+                  "[key,value] was just removed => must NOT exist in the map anymore");
 
-      boolean notExistentRemoved  = multimap.remove(key, value);
+      boolean notExistentRemoved = multimap.remove(key, value);
       assertFalse(notExistentRemoved,
-                 "[key,value] NOT exist in the map => remove must return false");
+                  "[key,value] NOT exist in the map => remove must return false");
     }
 
     assertEquals(
@@ -210,8 +210,40 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
     );
   }
 
+  @Test
+  public void replace_ChangedOldValue_WithNewOne() throws IOException {
+    multimap.put(1, 2);
+    multimap.put(1, 3);
 
-  //TODO RC: test modification of records
+    assertEquals(2, multimap.size(), "there are 2 entries in the multimap");
+
+    multimap.replace(1, 3, /* -> */ 4);
+
+    assertTrue(multimap.has(1, 2), "1->2 mapping should remain untouched");
+    assertTrue(multimap.has(1, 4), "1->3 mapping should be replaced with 1->4");
+    assertFalse(multimap.has(1, 3), "1->3 mapping should not exist anymore");
+
+    assertEquals(2, multimap.size(), "there are still 2 entries in the multimap");
+  }
+
+  @Test
+  public void replace_RemovesOldValue_IfNewValueMappingAlreadyExistsInMultimap() throws IOException {
+    multimap.put(1, 2);
+    multimap.put(1, 3);
+
+    assertEquals(2, multimap.size(), "there are 2 entries in the multimap");
+
+    //replace 2 with 3 -- and 3 is already exist in the map:
+    multimap.replace(1, 2, /* -> */ 3);
+
+    assertFalse(multimap.has(1, 2), "1->2 mapping should remain untouched");
+    assertTrue(multimap.has(1, 3), "1->3 mapping should exist (replaced from 1->2)");
+
+    assertEquals(1, multimap.size(), "there is only 1 entry remain in the multimap (2 entries have collapsed)");
+    IntOpenHashSet values = lookupAllValues(multimap, 1);
+    assertEquals(1, values.size());
+  }
+
 
   @Test
   public void closeIsSafeToCallTwice() throws IOException {

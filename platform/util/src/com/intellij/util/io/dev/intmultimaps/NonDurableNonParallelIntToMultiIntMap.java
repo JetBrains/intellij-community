@@ -24,6 +24,13 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean replace(int key,
+                         int oldValue,
+                         int newValue) throws IOException {
+    return multimap.replace(key, oldValue, newValue);
+  }
+
+  @Override
   public synchronized boolean has(int key,
                                   int value) throws IOException {
     return multimap.has(key, value);

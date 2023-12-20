@@ -190,6 +190,59 @@ public final class Int2IntMultimap {
     return aliveValues;
   }
 
+  public boolean replace(int key,
+                         int oldValue,
+                         int newValue) {
+    checkNotNoValue("key", key);
+    checkNotNoValue("oldValue", oldValue);
+    checkNotNoValue("newValue", newValue);
+
+    int capacity = capacity();
+    int startIndex = Math.abs(key % capacity);
+    //BEWARE: .replace() must maintain an invariant that key's values is a _set_ -- not just a list.
+    // I.e. if newValue is already exist among the key's values -- oldValue should NOT be replaced, but just removed,
+    // to not create 2 newValue entries => we need to look for both old & newValue first, and only then decide
+    // how to behave:
+    int oldValueSlotIndex = -1;
+    int newValueSlotIndex = -1;
+    for (int probe = 0; probe < capacity; probe++) {
+      int slotIndex = (startIndex + probe) % capacity;
+      int slotKey = table[slotIndex * 2];
+      int slotValue = table[slotIndex * 2 + 1];
+      if (slotKey == key) {
+        if (slotValue == oldValue) {
+          oldValueSlotIndex = slotIndex;
+        }
+        else if (slotValue == newValue) {
+          newValueSlotIndex = slotIndex;
+        }
+      }
+      if (slotKey == NO_VALUE && slotValue == NO_VALUE) {
+        //free slot -> end of probing sequence
+        break;
+      }
+    }
+
+    if (oldValueSlotIndex != -1) {
+      if (newValueSlotIndex != -1) {
+        //both oldValue and newValue exists in the map
+        // => no need to update anything, just mark oldValue slot as 'deleted':
+        table[oldValueSlotIndex * 2] = NO_VALUE;
+        aliveValues--;
+      }
+      else {
+        //newValue is not exists in key's values set
+        // => update slot (old->new)Value:
+        table[oldValueSlotIndex * 2 + 1] = newValue;
+      }
+      return true;
+    }
+    else {
+      //oldValue is not exist -> do nothing
+      return false;
+    }
+  }
+
   @FunctionalInterface
   public interface KeyValueProcessor {
     boolean process(final int key,
