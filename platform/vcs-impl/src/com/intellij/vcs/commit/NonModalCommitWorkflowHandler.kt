@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.util.progress.durationStep
+import com.intellij.platform.util.progress.itemDuration
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.util.containers.nullize
@@ -406,7 +407,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return workflow.runModificationCommitChecks underChangelist@{
       AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
 
-      val duration = 1.0 / commitChecks.size
+      val duration = commitChecks.itemDuration()
       for (commitCheck in commitChecks) {
         val problem = durationStep(duration) {
           AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
@@ -421,7 +422,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runLateCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    val duration = 1.0 / commitChecks.size
+    val duration = commitChecks.itemDuration()
     for (commitCheck in commitChecks) {
       val problem = durationStep(duration) {
         AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)

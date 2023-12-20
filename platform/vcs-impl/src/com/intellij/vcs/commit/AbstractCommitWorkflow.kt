@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.durationStep
 import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.itemDuration
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -328,7 +329,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private suspend fun runModalCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitChecksResult? {
     if (commitChecks.isNullOrEmpty()) return null
 
-    val duration = 1.0 / commitChecks.size
+    val duration = commitChecks.itemDuration()
     for (commitCheck in commitChecks) {
       val result = durationStep(duration) {
         runModalCommitCheck(commitInfo, commitCheck)

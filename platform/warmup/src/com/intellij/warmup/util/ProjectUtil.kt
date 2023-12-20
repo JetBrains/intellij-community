@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.util.progress.durationStep
+import com.intellij.platform.util.progress.itemDuration
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -213,7 +214,7 @@ private suspend fun callProjectConfigurators(
     }
   }
 
-  val fraction = 1.0 / activeConfigurators.size.toDouble()
+  val fraction = activeConfigurators.itemDuration()
 
   withLoggingProgressReporter {
     for (configuration in activeConfigurators) {

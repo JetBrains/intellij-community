@@ -7,6 +7,7 @@ import com.intellij.platform.util.progress.impl.ACCEPTABLE_FRACTION_OVERFLOW
 import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.itemDuration
 import com.intellij.platform.util.progress.progressReporter
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.rawProgressReporter
@@ -789,7 +790,7 @@ class ProgressReporterTest {
       ProgressState(text = null, details = null, fraction = 0.0),
       ProgressState(text = null, details = null, fraction = 0.9892473118279571),
     ) {
-      val duration = 1.0 / 93
+      val duration = total.itemDuration()
       val nextToLast = (total - 1) * duration
       progressStep(endFraction = nextToLast) {} // emulate 92 steps
       durationStep(duration = duration) {} // this failed before changes

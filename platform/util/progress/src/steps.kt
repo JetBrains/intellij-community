@@ -37,6 +37,27 @@ private suspend fun <T> progressStep(
   }
 }
 
+/**
+ * Example usage:
+ *
+ * ```
+ * val duration = items.itemDuration()
+ * for (item in items) {
+ *   durationStep(duration, "Processing $item") {
+ *     ...
+ *   }
+ * }
+ * ```
+ *
+ * @return a fraction duration which should be advanced once the processing of item in [this] is finished
+ */
+fun Collection<*>.itemDuration(): Double = this.size.itemDuration()
+
+fun Int.itemDuration(): Double = 1.0 / this
+
+/**
+ * @see itemDuration
+ */
 suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   val reporter = coroutineContext.progressReporter
                  ?: return coroutineScope(action)
@@ -120,7 +141,7 @@ suspend fun <T, R> Collection<T>.transformWithProgress(
 ): List<R> {
   return channelFlow {
     val items = this@transformWithProgress
-    val duration = 1.0 / items.size
+    val duration = itemDuration()
     val collector = object : TransformCollector<R> {
       override suspend fun out(value: R) {
         send(value)
