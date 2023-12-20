@@ -526,7 +526,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <name>Maven archetype Test create-2-subModule</name>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
   }
 
   @Test

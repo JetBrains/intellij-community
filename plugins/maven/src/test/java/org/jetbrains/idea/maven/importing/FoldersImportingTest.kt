@@ -68,7 +68,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>1
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     assertModules("project")
     assertContentRoots("project", projectPath)
   }
@@ -90,7 +90,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     assertModules("project")
     assertSources("project", "src/main/java")
     assertDefaultResources("project")

@@ -169,7 +169,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProjectWithErrors()
+    importProjectAsync()
     assertEquals("\${prop1}", resolve("\${prop1}", myProjectPom))
     assertEquals("\${prop3}", resolve("\${prop3}", myProjectPom))
     assertEquals("\${prop5}", resolve("\${prop5}", myProjectPom))

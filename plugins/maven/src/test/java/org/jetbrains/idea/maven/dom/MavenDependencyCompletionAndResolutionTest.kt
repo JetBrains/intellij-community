@@ -1269,7 +1269,7 @@ $libPath<caret></systemPath>
         </dependency>
       </dependencies>
       """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
 
     withContext(Dispatchers.EDT) {
       val model = MavenDomUtil.getMavenDomModel(myProject, myProjectPom, MavenDomProjectModel::class.java)

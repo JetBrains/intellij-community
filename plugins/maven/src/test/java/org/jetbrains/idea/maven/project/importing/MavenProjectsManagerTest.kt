@@ -141,7 +141,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>1
                        """.trimIndent())
-    importProjectWithErrors()
+    importProjectAsync()
     assertModules("project")
     assertFalse(called[0]) // on import
     createProjectPom("""

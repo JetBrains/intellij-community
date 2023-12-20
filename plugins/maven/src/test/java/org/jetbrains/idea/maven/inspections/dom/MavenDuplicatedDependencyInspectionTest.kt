@@ -153,7 +153,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    importProjectWithErrors()
+    importProjectAsync()
 
     checkHighlighting()
   }
