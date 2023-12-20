@@ -387,6 +387,15 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       myFixture!!.testHighlighting(true, false, true, f)
     }
     catch (throwable: Throwable) {
+      MavenLog.LOG.error("Exception during highlighting", throwable)
+      val cause1 = throwable.cause
+      if (null != cause1) {
+        MavenLog.LOG.error("Cause 1", cause1)
+        val cause2 = cause1.cause
+        if (null != cause2) {
+          MavenLog.LOG.error("Cause 2", cause2)
+        }
+      }
       throw RuntimeException(throwable)
     }
     finally {
