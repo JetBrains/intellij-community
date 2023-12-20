@@ -16,8 +16,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.ElementManipulators
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -25,6 +29,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -476,6 +481,17 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testHighlightingAbsentGroupId() = runBlocking {
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable)
+      .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun before(events: MutableList<out VFileEvent>) {
+          MavenLog.LOG.warn("before $events")
+        }
+
+        override fun after(events: MutableList<out VFileEvent>) {
+          MavenLog.LOG.warn("after $events")
+        }
+      })
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
