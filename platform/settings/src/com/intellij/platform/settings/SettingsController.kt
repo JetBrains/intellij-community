@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.*
 import java.util.*
@@ -18,6 +19,7 @@ interface SettingsController {
   suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?)
 
   @Internal
+  @IntellijInternalApi
   fun createStateStorage(collapsedPath: String): Any?
 }
 
@@ -25,19 +27,18 @@ interface SettingsController {
  * Caveat: do not touch telemetry API during init, it is not ready yet.
  */
 @Internal
-interface ChainedSettingsController : SettingsControllerInternal {
+interface ChainedSettingsController {
   fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T?
 
   @Throws(ReadOnlySettingException::class)
   suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>)
 
   // advanced API
+  @IntellijInternalApi
   fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>)
-}
 
-@Internal
-interface SettingsControllerInternal {
-  fun hasKeyStartsWith(key: String): Boolean
+  @IntellijInternalApi
+  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): Boolean
 }
 
 class ReadOnlySettingException(val key: SettingDescriptor<*>) : IllegalStateException()

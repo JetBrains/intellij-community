@@ -201,14 +201,20 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public final void deserializeInto(@NotNull Object result, @NotNull Element element) {
-    deserializeInto(result, element, null);
+    deserializeInto(result, element, null, bindings, 0, bindings.length);
   }
 
-  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
+  public static void deserializeInto(@NotNull Object result,
+                                     @NotNull Element element,
+                                     @Nullable Set<? super String> accessorNameTracker,
+                                     NestedBinding[] bindings,
+                                     int start,
+                                     int end) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
       if (StringUtilRt.isEmpty(attribute.getNamespaceURI())) {
-        for (NestedBinding binding : bindings) {
+        for (int i = start; i < end; i++) {
+          NestedBinding binding = bindings[i];
           if (binding instanceof AttributeBinding && ((AttributeBinding)binding).name.equals(attribute.getName())) {
             if (accessorNameTracker != null) {
               accessorNameTracker.add(binding.getAccessor().getName());
@@ -223,7 +229,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     LinkedHashMap<NestedBinding, List<Element>> data = null;
     nextNode:
     for (Content content : element.getContent()) {
-      for (NestedBinding binding : bindings) {
+      for (int i = start; i < end; i++) {
+        NestedBinding binding = bindings[i];
         if (content instanceof org.jdom.Text) {
           if (binding instanceof TextBinding) {
             ((TextBinding)binding).set(result, content.getValue());
@@ -250,7 +257,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
-    for (Binding binding : bindings) {
+    for (int i = start; i < end; i++) {
+      Binding binding = bindings[i];
       if (binding instanceof AccessorBindingWrapper && ((AccessorBindingWrapper)binding).isFlat) {
         binding.deserializeUnsafe(result, element);
       }
@@ -295,7 +303,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     LinkedHashMap<NestedBinding, List<XmlElement>> data = null;
     nextNode:
     for (XmlElement child : element.children) {
-      for (NestedBinding binding : bindings) {
+      for (int i = start; i < end; i++) {
+        NestedBinding binding = bindings[i];
         if (binding instanceof AttributeBinding || binding instanceof TextBinding || !binding.isBoundTo(child)) {
           continue;
         }
@@ -313,7 +322,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
-    for (Binding binding : bindings) {
+    for (int i = start; i < end; i++) {
+      Binding binding = bindings[i];
       if (binding instanceof AccessorBindingWrapper && ((AccessorBindingWrapper)binding).isFlat) {
         binding.deserializeUnsafe(result, element);
       }

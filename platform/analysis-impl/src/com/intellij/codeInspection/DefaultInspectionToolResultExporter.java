@@ -121,7 +121,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
         exportResults(descriptions, refElement, element -> {
           try {
-            JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
+            JbXmlOutputter.Companion.collapseMacrosAndWrite(element, getContext().getProject(), writer);
           }
           catch (IOException e) {
             LOG.error(e);

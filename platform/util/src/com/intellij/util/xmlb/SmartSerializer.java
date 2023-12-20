@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
@@ -10,24 +10,24 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public final class SmartSerializer {
-  private Set<String> mySerializedAccessorNameTracker;
+  private Set<String> serializedAccessorNameTracker;
   private Object2FloatMap<String> myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
   private SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
-    mySerializedAccessorNameTracker = trackSerializedNames ? CollectionFactory.createSmallMemoryFootprintLinkedSet() : null;
+    serializedAccessorNameTracker = trackSerializedNames ? CollectionFactory.createSmallMemoryFootprintLinkedSet() : null;
 
     mySerializationFilter = useSkipEmptySerializationFilter ?
                             new SkipEmptySerializationFilter() {
                               @Override
                               protected ThreeState accepts(@NotNull String name, @NotNull Object beanValue) {
-                                return mySerializedAccessorNameTracker != null && mySerializedAccessorNameTracker.contains(name) ? ThreeState.YES : ThreeState.UNSURE;
+                                return serializedAccessorNameTracker != null && serializedAccessorNameTracker.contains(name) ? ThreeState.YES : ThreeState.UNSURE;
                               }
                             } :
                             new SkipDefaultValuesSerializationFilters() {
                               @Override
                               public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-                                if (mySerializedAccessorNameTracker != null && mySerializedAccessorNameTracker.contains(accessor.getName())) {
+                                if (serializedAccessorNameTracker != null && serializedAccessorNameTracker.contains(accessor.getName())) {
                                   return true;
                                 }
                                 return super.accepts(accessor, bean);
@@ -44,16 +44,16 @@ public final class SmartSerializer {
   }
 
   public void readExternal(@NotNull Object bean, @NotNull Element element) {
-    if (mySerializedAccessorNameTracker != null) {
-      mySerializedAccessorNameTracker.clear();
+    if (serializedAccessorNameTracker != null) {
+      serializedAccessorNameTracker.clear();
       myOrderedBindings = null;
     }
 
     BeanBinding beanBinding = getBinding(bean);
-    beanBinding.deserializeInto(bean, element, mySerializedAccessorNameTracker);
+    BeanBinding.deserializeInto(bean, element, serializedAccessorNameTracker, beanBinding.bindings, 0, beanBinding.bindings.length);
 
-    if (mySerializedAccessorNameTracker != null) {
-      myOrderedBindings = beanBinding.computeBindingWeights(mySerializedAccessorNameTracker);
+    if (serializedAccessorNameTracker != null) {
+      myOrderedBindings = beanBinding.computeBindingWeights(serializedAccessorNameTracker);
     }
   }
 
@@ -67,17 +67,17 @@ public final class SmartSerializer {
       binding.sortBindings(myOrderedBindings);
     }
 
-    if (preserveCompatibility || mySerializedAccessorNameTracker == null) {
+    if (preserveCompatibility || serializedAccessorNameTracker == null) {
       binding.serializeInto(bean, element, mySerializationFilter);
     }
     else {
-      Set<String> oldTracker = mySerializedAccessorNameTracker;
+      Set<String> oldTracker = serializedAccessorNameTracker;
       try {
-        mySerializedAccessorNameTracker = null;
+        serializedAccessorNameTracker = null;
         binding.serializeInto(bean, element, mySerializationFilter);
       }
       finally {
-        mySerializedAccessorNameTracker = oldTracker;
+        serializedAccessorNameTracker = oldTracker;
       }
     }
   }

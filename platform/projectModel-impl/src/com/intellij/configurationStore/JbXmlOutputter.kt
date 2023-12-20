@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.application.options.ReplacePathToMacroMap
@@ -28,13 +27,11 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
                                                     private val isForbidSensitiveData: Boolean = true,
                                                     private val storageFilePathForDebugPurposes: String? = null) : BaseXmlOutputter(lineSeparator) {
   companion object {
-    @JvmStatic
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
       createOutputter(project).output(element, writer)
     }
 
-    @JvmStatic
     fun createOutputter(project: ComponentManager): JbXmlOutputter {
       val macroManager = PathMacroManager.getInstance(project)
       return JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter)
@@ -44,7 +41,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager): String {
       val writer = StringWriter()
-      collapseMacrosAndWrite(element, project, writer)
+      collapseMacrosAndWrite(element = element, project = project, writer = writer)
       return writer.toString()
     }
 
@@ -108,7 +105,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   }
 
   /**
-   * This will handle printing of the declaration.
+   * This will handle the printing of the declaration.
    * Assumes XML version 1.0 since we don't directly know.
    *
    * @param out      `Writer` to use.

@@ -32,7 +32,6 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -137,7 +136,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                      myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
                   getPresentation(toolWrapper).exportResults(e -> {
                     try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                      JbXmlOutputter.Companion.collapseMacrosAndWrite(e, getProject(), writer);
                       writer.flush();
                     }
                     catch (IOException e1) {

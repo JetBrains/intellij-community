@@ -519,26 +519,34 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "ISO RELAX", libraryName = "isorelax", url = "https://sourceforge.net/projects/iso-relax/").mit()
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
+
     LibraryLicense(name = "Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
       .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
     LibraryLicense(name = "jackson-jr-objects", libraryName = "jackson-jr-objects",
                    url = "https://github.com/FasterXML/jackson-jr")
-      .apache("https://github.com/FasterXML/jackson-jr/blob/2.14/LICENSE")
+      .apache("https://github.com/FasterXML/jackson-jr/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
     LibraryLicense(name = "Jackson Databind", libraryName = "jackson-databind",
                    url = "https://github.com/FasterXML/jackson-databind")
-      .apache("https://github.com/FasterXML/jackson-databind/blob/2.14/LICENSE")
+      .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
+    LibraryLicense(name = "Jackson Dataformat CBOR", libraryName = "jackson-dataformat-cbor",
+                   url = "https://github.com/FasterXML/jackson-dataformats-binary")
+      .apache("https://github.com/FasterXML/jackson-dataformats-binary/blob/2.14/pom.xml")
+      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
     LibraryLicense(name = "Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml",
                    url = "https://github.com/FasterXML/jackson-dataformats-text")
-      .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.14/pom.xml")
+      .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
     LibraryLicense(name = "Jackson Module Kotlin", libraryName = "jackson-module-kotlin",
                    url = "https://github.com/FasterXML/jackson-module-kotlin")
-      .apache("https://github.com/FasterXML/jackson-module-kotlin/blob/2.14/LICENSE")
+      .apache("https://github.com/FasterXML/jackson-module-kotlin/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown", "Jayson Minard",
                          "Drew Stephens", "Vyacheslav Artemyev", "Dmitry Spikhalskiy"),
+
     LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/").eplV1(),
     LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher",
                    url = "https://jakarta.apache.org/oro/")

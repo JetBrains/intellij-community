@@ -172,7 +172,7 @@ public final class InspectionsResultUtil {
     void checkOpen() throws IOException {
       if (myFileWriter == null) {
         myFileWriter = openFile(myOutputDirectory, myName);
-        myOutputter = JbXmlOutputter.createOutputter(myProject);
+        myOutputter = JbXmlOutputter.Companion.createOutputter(myProject);
         startWritingXml();
       }
     }

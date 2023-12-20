@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+@file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.platform.settings.local
 
@@ -10,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -18,12 +19,12 @@ import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 fun clearCacheStore() {
-  service<LocalSettingsControllerService>().storage.clear()
+  service<LocalSettingsControllerService>().storeManager.clear()
 }
 
 @TestOnly
 internal suspend fun compactCacheStore() {
-  service<LocalSettingsControllerService>().storage.compactStore()
+  service<LocalSettingsControllerService>().storeManager.compactStore()
 }
 
 private class LocalSettingsController : ChainedSettingsController {
@@ -37,7 +38,9 @@ private class LocalSettingsController : ChainedSettingsController {
     service.setItem(key, value)
   }
 
-  override fun hasKeyStartsWith(key: String) = service.storage.hasKeyStartsWith(key)
+  override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): Boolean {
+    return service.hasKeyStartsWith(key)
+  }
 
   override fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
     service.putIfDiffers(key, value)
@@ -46,22 +49,24 @@ private class LocalSettingsController : ChainedSettingsController {
 
 @Service(Service.Level.APP)
 private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : SettingsSavingComponent {
-  @JvmField
-  val storage: MvStoreStorage = MvStoreStorage()
+  @JvmField val storeManager: MvStoreManager = MvStoreManager()
 
   // Telemetry is not ready at this point yet
-  val internalStore by lazy { InternalStateStorageService(storage) }
+  private val cacheMap by lazy { InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage") }
+  private val internalMap by lazy {
+    InternalStateStorageService(storeManager.openMap("internal_v1"), telemetryScopeName = "internalStateStorage")
+  }
 
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       coroutineScope.coroutineContext.job.invokeOnCompletion {
-        internalStore.storage.close()
+        storeManager.close()
       }
     }
   }
 
   override suspend fun save() {
-    internalStore.storage.save()
+    storeManager.save()
   }
 
   fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
@@ -71,46 +76,53 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
         @Suppress("UNCHECKED_CAST")
         return propertyManager.getValue(tag.oldKey) as T?
       }
-      else if (tag is CacheTag) {
-        return internalStore.getValue(key = getEffectiveKey(key = key), serializer = key.serializer, pluginId = key.pluginId)
-      }
     }
 
-    thisLogger().error("Getting of $key is not supported")
+    operate(key, internalOperation = {
+      return it.getValue(key = getEffectiveKey(key), serializer = key.serializer, pluginId = key.pluginId)
+    })
+
     return null
   }
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     operate(key, internalOperation = {
-      internalStore.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+      it.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 
   fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) {
     operate(key, internalOperation = {
-      internalStore.putIfDiffers(key = getEffectiveKey(key = key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+      it.putIfDiffers(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 
+  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
+    operate(key, internalOperation = {
+      return it.map.hasKeyStartsWith(getEffectiveKey(key) + ".")
+    })
+
+    return false
+  }
+
   fun invalidateCaches() {
-    internalStore.invalidate()
+    cacheMap.clear()
   }
 
   private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
-}
 
-private inline fun <R : Any, T: Any> operate(key: SettingDescriptor<T>, internalOperation: (isCache: Boolean) -> R): R? {
-  for (tag in key.tags) {
-    if (tag is CacheTag) {
-      return internalOperation(true)
+  private inline fun  <T: Any> operate(key: SettingDescriptor<T>, internalOperation: (map: InternalStateStorageService) -> Unit) {
+    for (tag in key.tags) {
+      if (tag is CacheTag) {
+        return internalOperation(cacheMap)
+      }
+      else if (tag is NonShareableInternalTag) {
+        return internalOperation(internalMap)
+      }
     }
-    else if (tag is NonShareableInternalTag) {
-      return internalOperation(false)
-    }
+
+    logger<LocalSettingsController>().error("Operation for $key is not supported")
   }
-
-  logger<LocalSettingsController>().error("Saving of $key is not supported")
-  return null
 }
 
 private class CacheStateStorageInvalidator : CachesInvalidator() {

@@ -3,7 +3,7 @@
 
 package com.intellij.platform.settings.local
 
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -30,44 +30,24 @@ import kotlin.time.toDuration
 
 private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
-/**
- * * Faster than PHM (`kv-store-benchmark` project).
- * * Grouped on disk close to each other as keys are sorted
- * * One database file instead of several.
- * * Several maps in a one file (so, we can store several versions in a one file).
- */
-// see DbConverter
-internal class MvStoreStorage : Storage {
-  private val map: MVMap<String, ByteArray> = createOrResetStore(getDatabaseFile())
-
+internal class MvStoreManager {
   // yes - save is ignored first 5 minutes
   private var lastSaved: Duration = nowAsDuration()
   // compact only once per-app launch
   private var isCompacted = AtomicBoolean(false)
 
-  override fun close() {
-    map.store.close()
-  }
+  private val store: MVStore = createOrResetStore(getDatabaseFile())
 
-  override fun get(key: String): ByteArray? = map.get(key)
+  fun openMap(name: String): MvMapManager = MvMapManager(openMap(store, name))
 
-  override fun remove(key: String) {
-    map.remove(key)
-  }
-
-  override fun put(key: String, bytes: ByteArray?) {
-    // do not write if existing value equals to the old one
-    putIfDiffers(key, bytes)
-  }
-
-  override suspend fun save() {
+  suspend fun save() {
     if ((nowAsDuration() - lastSaved) < 5.minutes) {
       return
     }
 
     // tryCommit - do not commit if store is locked (e.g., another commit for some reason is called or another write operation)
     withContext(Dispatchers.IO) {
-      map.store.tryCommit()
+      store.tryCommit()
 
       ensureActive()
 
@@ -83,7 +63,7 @@ internal class MvStoreStorage : Storage {
   suspend fun compactStore() {
     runInterruptible {
       try {
-        map.store.compactFile(30.seconds.inWholeMilliseconds.toInt())
+        store.compactFile(30.seconds.inWholeMilliseconds.toInt())
       }
       catch (e: RuntimeException) {
         /** see [org.h2.mvstore.FileStore.compact] */
@@ -94,15 +74,45 @@ internal class MvStoreStorage : Storage {
     }
   }
 
-  override fun invalidate() {
+  fun close() {
+    store.close()
+  }
+
+  @TestOnly
+  fun clear() {
+    for (mapName in store.mapNames) {
+      store.openMap<Any, Any>(mapName).clear()
+    }
+  }
+}
+
+/**
+ * * Faster than PHM (`kv-store-benchmark` project).
+ * * Grouped on disk close to each other as keys are sorted
+ * * One database file instead of several.
+ * * Several maps in a one file (so, we can store several versions in a one file).
+ */
+// see DbConverter
+internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
+  fun get(key: String): ByteArray? = map.get(key)
+
+  fun remove(key: String) {
+    map.remove(key)
+  }
+
+  fun put(key: String, bytes: ByteArray?) {
+    // do not write if existing value equals to the old one
+    putIfDiffers(key, bytes)
+  }
+
+  fun invalidate() {
     val file = getDatabaseFile()
     if (Files.exists(file)) {
       Files.write(file.parent.resolve(".invalidated"), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
     }
   }
 
-  @TestOnly
-  override fun clear() {
+  fun clear() {
     map.clear()
   }
 
@@ -125,9 +135,9 @@ internal class MvStoreStorage : Storage {
   }
 }
 
-private fun getDatabaseFile(): Path = appSystemDir.resolve("app-cache-settings.db")
+private fun getDatabaseFile(): Path = PathManager.getConfigDir().resolve("app-internal-state.db")
 
-private fun createOrResetStore(file: Path): MVMap<String, ByteArray> {
+private fun createOrResetStore(file: Path): MVStore {
   val parentDir = file.parent
   val markerFile = parentDir.resolve(".invalidated")
   if (Files.exists(markerFile)) {
@@ -141,15 +151,15 @@ private fun createOrResetStore(file: Path): MVMap<String, ByteArray> {
     return openStore(file)
   }
   catch (e: Throwable) {
-    logger<MvStoreStorage>().warn("Cannot open cache state storage, will be recreated", e)
+    logger<MvMapManager>().warn("Cannot open cache state storage, will be recreated", e)
   }
 
   NioFiles.deleteRecursively(file)
   return openStore(file)
 }
 
-private fun openStore(file: Path): MVMap<String, ByteArray> {
-  val storeErrorHandler = StoreErrorHandler(file) { logger<MvStoreStorage>() }
+private fun openStore(file: Path): MVStore {
+  val storeErrorHandler = StoreErrorHandler(file) { logger<MvMapManager>() }
   // default cache size is 16MB
   val store = MVStore.Builder()
     .fileName(file.toAbsolutePath().toString())
@@ -165,7 +175,27 @@ private fun openStore(file: Path): MVMap<String, ByteArray> {
 
   // versioning isn't required, otherwise the file size will be larger than needed
   store.setVersionsToKeep(0)
-  return store.openMap("cache_v1", mapBuilder)
+  return store
+}
+
+private fun openMap(store: MVStore, name: String): MVMap<String, ByteArray> {
+  val mapBuilder = MVMap.Builder<String, ByteArray>()
+  mapBuilder.setKeyType(ModernStringDataType)
+  mapBuilder.setValueType(ByteArrayDataType.INSTANCE)
+
+  try {
+    return store.openMap(name, mapBuilder)
+  }
+  catch (e: Throwable) {
+    logger<MvMapManager>().error("Cannot open map $name, map will be removed", e)
+    try {
+      store.removeMap(name)
+    }
+    catch (e2: Throwable) {
+      e.addSuppressed(e2)
+    }
+  }
+  return store.openMap(name, mapBuilder)
 }
 
 private class StoreErrorHandler(private val dbFile: Path, private val logSupplier: () -> Logger) : Thread.UncaughtExceptionHandler {

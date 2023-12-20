@@ -16,43 +16,39 @@ import com.intellij.platform.settings.SettingValueSerializer
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 
-private val cacheScope = Scope("cacheStateStorage", PlatformMetrics)
+internal val cborFormat: Cbor = Cbor {
+   ignoreUnknownKeys = true
+ }
 
 /**
  * CBOR is used instead of ION - no mature and robust implementation for kotlinx-serialization.
  */
-internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage) {
-  private val meter: Meter = TelemetryManager.getMeter(cacheScope)
+internal class InternalStateStorageService(@JvmField val map: MvMapManager, telemetryScopeName: String) {
+  private val meter: Meter = TelemetryManager.getMeter(Scope(telemetryScopeName, PlatformMetrics))
 
   private val getMeasurer = Measurer(meter, "get")
   private val setMeasurer = Measurer(meter, "set")
 
-  private val cbor = Cbor {
-     ignoreUnknownKeys = true
-   }
-
-  @TestOnly
   fun clear() {
-    storage.clear()
+    map.clear()
   }
 
   fun <T : Any> getValue(key: String, serializer: SettingSerializerDescriptor<T>, pluginId: PluginId): T? {
     val start = System.nanoTime()
     var bytes: ByteArray? = null
     try {
-      bytes = storage.get(key)
+      bytes = map.get(key)
       @Suppress("UNCHECKED_CAST")
       val result: T? = bytes?.let {
         if (serializer === RawSettingSerializerDescriptor) {
           bytes as T
         }
         else {
-          cbor.decodeFromByteArray((serializer as SettingValueSerializer<T>).serializer, bytes)
+          cborFormat.decodeFromByteArray((serializer as SettingValueSerializer<T>).serializer, bytes)
         }
       }
       getMeasurer.add(System.nanoTime() - start)
@@ -67,13 +63,13 @@ internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage
     catch (e: Throwable) {
       var message = "Cannot deserialize value for key $key (size=${bytes?.size ?: "null"}"
       try {
-        storage.remove(key)
+        map.remove(key)
         if (bytes == null || bytes.isEmpty()) {
           message += ")"
         }
         else {
           val keyForInvestigation = "${key}.__corrupted__"
-          storage.put(keyForInvestigation, bytes)
+          map.put(keyForInvestigation, bytes)
           message += ", value will be stored under key ${keyForInvestigation})"
         }
       }
@@ -90,14 +86,14 @@ internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage
     val start = System.nanoTime()
     try {
       if (value == null) {
-        storage.remove(key)
+        map.remove(key)
       }
       else if (serializer === RawSettingSerializerDescriptor) {
-        storage.put(key, value as ByteArray)
+        map.put(key, value as ByteArray)
       }
       else {
         @Suppress("UNCHECKED_CAST")
-        storage.put(key, cbor.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
+        map.put(key, cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
       }
       setMeasurer.add(System.nanoTime() - start)
     }
@@ -116,14 +112,14 @@ internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage
     val start = System.nanoTime()
     try {
       if (value == null) {
-        storage.remove(key)
+        map.remove(key)
       }
       else if (serializer === RawSettingSerializerDescriptor) {
-        storage.putIfDiffers(key, value as ByteArray)
+        map.putIfDiffers(key, value as ByteArray)
       }
       else {
         @Suppress("UNCHECKED_CAST")
-        storage.putIfDiffers(key, cbor.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
+        map.putIfDiffers(key, cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
       }
       setMeasurer.add(System.nanoTime() - start)
     }
@@ -137,27 +133,6 @@ internal class InternalStateStorageService(@JvmField val storage: MvStoreStorage
       thisLogger().error(PluginException(e, pluginId))
     }
   }
-
-  fun invalidate() {
-    storage.invalidate()
-  }
-}
-
-sealed interface Storage {
-  suspend fun save()
-
-  fun close()
-
-  fun invalidate()
-
-  @TestOnly
-  fun clear()
-
-  fun get(key: String): ByteArray?
-
-  fun remove(key: String)
-
-  fun put(key: String, bytes: ByteArray?)
 }
 
 private class Measurer(meter: Meter, subKey: String) {

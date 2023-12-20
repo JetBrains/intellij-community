@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -84,21 +84,21 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="jackson.dataformat.cbor" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.15.3">
+    <orderEntry type="module-library">
+      <library name="jackson-dataformat-cbor" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.16.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3.jar">
-              <sha256sum>b8c7ae4a9d82e3fd0aecfd4599f42eaf503d0faf99e2f97abfb8b2c33bc09da7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0.jar">
+              <sha256sum>c6496d54e2dfcf3397dad550c56564475e6880a5e6f1bb3219c8da3c067148c0</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.15.3/jackson-dataformat-cbor-2.15.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -108,5 +108,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
   </component>
 </module>

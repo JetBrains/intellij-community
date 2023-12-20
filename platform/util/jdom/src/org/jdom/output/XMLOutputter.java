@@ -428,8 +428,7 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Return a string representing a list of nodes.  The list is
-   * assumed to contain legal JDOM nodes.
+   * Return a string representing a list of nodes.  The list is assumed to contain legal JDOM nodes.
    *
    * @param list <code>List</code> to format.
    */
@@ -444,9 +443,7 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Return a string representing a CDATA node. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
+   * Return a string representing a CDATA node. Warning: a String is Unicode, which may not match the outputter's specified encoding.
    *
    * @param cdata <code>CDATA</code> to format.
    */

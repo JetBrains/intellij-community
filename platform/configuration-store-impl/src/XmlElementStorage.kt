@@ -264,7 +264,11 @@ internal class XmlDataWriter(private val rootElementName: String?,
       writer.append('>')
     }
 
-    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter(), replacePathMap, macroFilter, storageFilePathForDebugPurposes = storageFilePathForDebugPurposes)
+    val xmlOutputter = JbXmlOutputter(lineSeparator = lineSeparatorWithIndent,
+                                      elementFilter = filter?.toElementFilter(),
+                                      macroMap = replacePathMap,
+                                      macroFilter = macroFilter,
+                                      storageFilePathForDebugPurposes = storageFilePathForDebugPurposes)
     for (element in elements) {
       if (hasRootElement) {
         writer.append(lineSeparatorWithIndent)

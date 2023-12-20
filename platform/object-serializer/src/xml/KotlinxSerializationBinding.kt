@@ -26,7 +26,8 @@ private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 
 @Internal
 class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding() {
-  private val serializer: KSerializer<Any>
+  @JvmField
+  val serializer: KSerializer<Any>
 
   init {
     val findStaticGetter = lookup.findStaticGetter(aClass, "Companion", aClass.classLoader.loadClass(aClass.name + "\$Companion"))
@@ -44,9 +45,9 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding(
     return element
   }
 
-  fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
+  private fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
 
-  fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
+  private fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
 
   override fun isBoundTo(element: Element): Boolean {
     throw UnsupportedOperationException("Only root object is supported")

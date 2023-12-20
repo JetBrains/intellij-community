@@ -1,17 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.settings.local
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
 
 private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
 
-private val delegateToSettingsController = System.getProperty("idea.settings.cache.delegate.to.controller", "true").toBoolean()
+private val delegateToSettingsController = System.getProperty("idea.settings.internal.delegate.to.controller", "true").toBoolean()
 
-internal class SettingsControllerMediator : SettingsController, SettingsControllerInternal {
+internal class SettingsControllerMediator : SettingsController {
   private val first: ChainedSettingsController
   private val chain: List<ChainedSettingsController>
 
@@ -27,7 +30,7 @@ internal class SettingsControllerMediator : SettingsController, SettingsControll
     return first.setItem(key = key, value = value, chain = chain)
   }
 
-  override fun hasKeyStartsWith(key: String) = first.hasKeyStartsWith(key)
+  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>) = first.hasKeyStartsWith(key, chain)
 
   fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) = first.putIfDiffers(key = key, value = value, chain = chain)
 
@@ -38,7 +41,7 @@ internal class SettingsControllerMediator : SettingsController, SettingsControll
 
     when (collapsedPath) {
       StoragePathMacros.CACHE_FILE -> return StateStorageBackedByController(this, listOf(CacheTag))
-      StoragePathMacros.WORKSPACE_FILE -> return StateStorageBackedByController(this, listOf(NonShareableInternalTag))
+      StoragePathMacros.NON_ROAMABLE_FILE -> return StateStorageBackedByController(this, listOf(NonShareableInternalTag))
       else -> return null
     }
   }

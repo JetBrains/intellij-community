@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:OptIn(IntellijInternalApi::class, ExperimentalSerializationApi::class)
 
 package com.intellij.platform.settings.local
 
@@ -10,19 +11,17 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingTag
-import com.intellij.platform.settings.StringSettingSerializerDescriptor
-import com.intellij.platform.settings.settingDescriptor
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.util.xmlb.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jdom.Element
-import java.io.StringReader
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Type
@@ -42,11 +41,11 @@ internal class StateStorageBackedByController(
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     return when {
       stateClass === Element::class.java -> {
-        val data = controller.getItem(createSettingDescriptor(componentName)) ?: return mergeInto
-        JDOMUtil.load(data) as T
+        val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
+        data as T
       }
       com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
-        val data = controller.getItem(createSettingDescriptor(componentName)) ?: return mergeInto
+        val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
         if (mergeInto != null) {
           thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
         }
@@ -54,7 +53,7 @@ internal class StateStorageBackedByController(
         val t = MethodHandles.privateLookupIn(stateClass, MethodHandles.lookup())
           .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
           .invoke() as com.intellij.openapi.util.JDOMExternalizable
-        t.readExternal(JDOMUtil.load(data))
+        t.readExternal(data)
         t as T
       }
       else -> {
@@ -62,18 +61,18 @@ internal class StateStorageBackedByController(
           val beanBinding = bindingProducer.getRootBinding(stateClass) as NotNullDeserializeBinding
           if (beanBinding is KotlinxSerializationBinding) {
             val data = controller.getItem(createSettingDescriptor(componentName)) ?: return mergeInto
-            return beanBinding.decodeFromJson(data) as T
+            return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
           }
           else {
             var result = mergeInto
             val bindings = (beanBinding as BeanBinding).bindings
             for ((index, binding) in bindings.withIndex()) {
-              val data = controller.getItem(createSettingDescriptor("$componentName.${binding.accessor.name}")) ?: continue
+              val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}")) ?: continue
               if (result == null) {
                 // create a result only if we have some data - do not return empty state class
                 result = beanBinding.newInstance() as T
               }
-              BeanBinding.deserializeInto(result, readXmlAsModel(StringReader(data)), bindings, index, index + 1)
+              BeanBinding.deserializeInto(result, data, null, bindings, index, index + 1)
             }
             return result
           }
@@ -88,8 +87,19 @@ internal class StateStorageBackedByController(
     }
   }
 
+  private fun getXmlData(key: SettingDescriptor<ByteArray>): Element? {
+    try {
+      val data = controller.getItem(key) ?: return null
+      return decodeCborToXml(data)
+    }
+    catch (e: Throwable) {
+      thisLogger().error("Cannot deserialize value for $key", e)
+      return null
+    }
+  }
+
   override fun hasState(componentName: String, reloadData: Boolean): Boolean {
-    return controller.hasKeyStartsWith("$shimPluginId.$componentName.")
+    return controller.hasKeyStartsWith(createSettingDescriptor(componentName))
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
@@ -100,11 +110,13 @@ internal class StateStorageBackedByController(
     // external change is not expected and not supported
   }
 
-  internal fun createSettingDescriptor(key: String): SettingDescriptor<String> {
-    val tags = tags
-    return settingDescriptor(key = key, pluginId = shimPluginId, serializer = StringSettingSerializerDescriptor) {
-      this.tags = tags
-    }
+  internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> {
+    return SettingDescriptor(
+      key = key,
+      pluginId = shimPluginId,
+      tags = this.tags,
+      serializer = RawSettingSerializerDescriptor,
+    )
   }
 }
 
@@ -112,7 +124,7 @@ private class ControllerBackedSaveSessionProducer(
   private val bindingProducer: BindingProducer,
   private val storageController: StateStorageBackedByController,
 ) : SaveSessionProducer {
-  private fun put(key: SettingDescriptor<String>, value: String?) {
+  private fun put(key: SettingDescriptor<ByteArray>, value: ByteArray?) {
     storageController.controller.putIfDiffers(key, value)
   }
 
@@ -125,18 +137,18 @@ private class ControllerBackedSaveSessionProducer(
 
     @Suppress("DEPRECATION")
     when (state) {
-      is Element -> put(settingDescriptor, jdomElementToString(state))
+      is Element -> putJdomElement(settingDescriptor, state)
       is com.intellij.openapi.util.JDOMExternalizable -> {
         val element = Element(FileStorageCoreUtil.COMPONENT)
         state.writeExternal(element)
-        put(settingDescriptor, jdomElementToString(element))
+        putJdomElement(settingDescriptor, element)
       }
       else -> {
         val aClass = state.javaClass
         val beanBinding = bindingProducer.getRootBinding(aClass)
         if (beanBinding is KotlinxSerializationBinding) {
           // `Serializable` is not intercepted - it is not used for regular settings that we want to support on a property level
-          put(settingDescriptor, beanBinding.encodeToJson(state))
+          put(settingDescriptor, cborFormat.encodeToByteArray(beanBinding.serializer, state))
         }
         else {
           val filter = jdomSerializer.getDefaultSerializationFilter()
@@ -150,17 +162,29 @@ private class ControllerBackedSaveSessionProducer(
                                                             /* element = */ null,
                                                             /* filter = */ filter,
                                                             /* isFilterPropertyItself = */ true)
-            put(settingDescriptor.withSubName(binding.accessor.name), element?.let { jdomElementToString(it) })
+            putJdomElement(settingDescriptor.withSubName(binding.accessor.name), element)
           }
         }
       }
     }
   }
 
+  // do nothing if failed to serialize
+  private fun putJdomElement(key: SettingDescriptor<ByteArray>, state: Element?) {
+    if (state == null || state.isEmpty) {
+      return
+    }
+
+    try {
+      put(key, encodeXmlToCbor(state))
+    }
+    catch (e: Throwable) {
+      thisLogger().error("Cannot serialize value for $key", e)
+    }
+  }
+
   override fun createSaveSession(): SaveSession? = null
 }
-
-private fun jdomElementToString(state: Element): String? = if (state.isEmpty) null else JDOMUtil.writeElement(state)
 
 private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
   private val cache: MutableMap<Class<*>, Binding> = HashMap()
@@ -184,10 +208,9 @@ private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
     return getRootBinding(aClass)
   }
 
-  fun createRootBinding(aClass: Class<*>): Binding {
-    var binding = createClassBinding(aClass, null, aClass)
+  private fun createRootBinding(aClass: Class<*>): Binding {
+    @Suppress("DuplicatedCode") var binding = createClassBinding(aClass, null, aClass)
     if (binding == null) {
-      assert(!aClass.isAnnotationPresent(Serializable::class.java))
       if (aClass.isAnnotationPresent(Serializable::class.java)) {
         binding = KotlinxSerializationBinding(aClass)
       }
