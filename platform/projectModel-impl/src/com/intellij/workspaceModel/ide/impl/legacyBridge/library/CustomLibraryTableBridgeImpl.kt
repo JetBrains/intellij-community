@@ -66,17 +66,16 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun isEditable(): Boolean = false
 
   override fun dispose() {
-    if (libraries.isEmpty()) {
-      Disposer.dispose(libraryTableDelegate)
-      return
-    }
+    if (libraries.isEmpty()) return
+    Disposer.dispose(libraryTableDelegate)
 
     val runnable: () -> Unit = {
       // We need to remove all related libraries from the [GlobalWorkspaceModel] e.g. extension point and related [CustomLibraryTable] can be unloaded
-      val modifiableModel = modifiableModel
-      libraries.forEach { modifiableModel.removeLibrary(it) }
-      modifiableModel.commit()
-      Disposer.dispose(libraryTableDelegate)
+      GlobalWorkspaceModel.getInstance().updateModel("Cleanup custom libraries after dispose") { storage ->
+        storage.entities(LibraryEntity::class.java).filter { it.entitySource == entitySource }.forEach {
+          storage.removeEntity(it)
+        }
+      }
     }
 
     val application = ApplicationManager.getApplication()

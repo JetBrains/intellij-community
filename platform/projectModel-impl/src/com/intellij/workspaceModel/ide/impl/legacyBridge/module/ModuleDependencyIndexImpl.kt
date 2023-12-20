@@ -5,12 +5,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointPriorityListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -46,6 +50,17 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val messageBusConnection = project.messageBus.connect(this)
       messageBusConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
     }
+
+    CustomLibraryTableDescription.CUSTOM_TABLES_EP.point.addExtensionPointListener(
+      // We need a priority listener here because it's important to unsubscribe before the custom table will be removed at
+      // [LibraryTablesRegistrarImpl.getCustomLibrariesMap]
+      object : ExtensionPointListener<CustomLibraryTableDescription>, ExtensionPointPriorityListener {
+        override fun extensionRemoved(extension: CustomLibraryTableDescription, pluginDescriptor: PluginDescriptor) {
+          LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(extension.tableLevel, project)?.let { table ->
+            libraryTablesListener.unsubscribeFromCustomTableOnDispose(table)
+          }
+        }
+      }, true, project)
   }
 
   override fun addListener(listener: ModuleDependencyListener) {
@@ -268,6 +283,16 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         }
       }
       librariesPerModuleMap.clear()
+    }
+
+    fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {
+      libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+        if (libraryTable.tableLevel != libraryLevel) return@forEach
+        libraryTable.libraryIterator.forEach {
+          it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+        }
+        libraryTable.removeListener(libraryTablesListener)
+      }
     }
   }
 

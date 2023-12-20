@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
-  private static final ExtensionPointName<CustomLibraryTableDescription> CUSTOM_TABLES_EP = new ExtensionPointName<>("com.intellij.customLibraryTable");
   private final Map<String, LibraryTable> customLibraryTables = new ConcurrentHashMap<>();
   private volatile boolean extensionLoaded = false;
   private final Object extensionLoadingLock = new Object();
@@ -62,7 +60,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
     synchronized (extensionLoadingLock) {
       if (!extensionLoaded) {
-        CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+        CustomLibraryTableDescription.CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
           @Override
           public void extensionAdded(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
             LibraryTable table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
