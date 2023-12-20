@@ -87,7 +87,7 @@ internal fun blockingSaveSessions(saveSessions: Collection<SaveSession>, result:
   }
 }
 
-internal suspend fun executeSave(session: SaveSession, result: SaveResult) {
+private suspend fun executeSave(session: SaveSession, result: SaveResult) {
   try {
     session.save()
   }
@@ -106,7 +106,7 @@ internal suspend fun executeSave(session: SaveSession, result: SaveResult) {
   }
 }
 
-internal fun executeSaveBlocking(session: SaveSession, result: SaveResult) {
+private fun executeSaveBlocking(session: SaveSession, result: SaveResult) {
   try {
     session.saveBlocking()
   }

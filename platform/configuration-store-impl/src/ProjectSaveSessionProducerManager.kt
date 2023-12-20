@@ -55,7 +55,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     writeAction {
       val r = SaveResult()
       for (entry in oldList) {
-        executeSaveBlocking(entry.session, r)
+        blockingSaveSessions(listOf(entry.session), r)
       }
       r
     }.appendTo(saveResult)
