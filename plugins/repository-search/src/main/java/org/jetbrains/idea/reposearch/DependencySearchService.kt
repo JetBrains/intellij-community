@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.async
@@ -235,7 +234,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:", SearchParameters(true, true)) {
       if (it is MavenRepositoryArtifactInfo) {
-        if (StringUtil.equals(groupId, it.groupId)) {
+        if (groupId == it.groupId) {
           result.add(it.artifactId)
         }
       }
@@ -248,7 +247,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:$artifactId", SearchParameters(true, true)) {
       if (it is MavenRepositoryArtifactInfo) {
-        if (StringUtil.equals(groupId, it.groupId) && StringUtil.equals(artifactId, it.artifactId)) {
+        if (groupId == it.groupId && artifactId == it.artifactId) {
           for (item in it.items) {
             if (item.version != null) result.add(item.version!!)
           }
