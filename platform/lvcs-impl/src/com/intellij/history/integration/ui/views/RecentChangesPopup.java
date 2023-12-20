@@ -6,6 +6,10 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -19,7 +23,16 @@ import java.util.List;
 
 public final class RecentChangesPopup {
   public static void show(Project project, @NotNull IdeaGateway gw, @NotNull LocalHistoryFacade vcs) {
-    List<RecentChange> cc = vcs.getRecentChanges(gw.createTransientRootEntry());
+    List<RecentChange> cc = ProgressManager.getInstance().run(new Task.WithResult<>(project,
+                                                                                    LocalHistoryBundle.message("recent.changes.loading"),
+                                                                                    true) {
+      @Override
+      protected List<RecentChange> compute(@NotNull ProgressIndicator indicator) {
+        return vcs.getRecentChanges(ReadAction.compute(() -> {
+          return gw.createTransientRootEntry();
+        }));
+      }
+    });
     String title = LocalHistoryBundle.message("recent.changes.popup.title");
     if (cc.isEmpty()) {
       Messages.showInfoMessage(project, LocalHistoryBundle.message("recent.changes.to.changes"), title);
