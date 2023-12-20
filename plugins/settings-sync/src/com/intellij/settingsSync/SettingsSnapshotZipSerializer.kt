@@ -26,8 +26,6 @@ internal object SettingsSnapshotZipSerializer {
   private const val INFO = "info.json"
   private const val PLUGINS = "plugins.json"
 
-  private const val ZIP_SIZE_SOFT_LIMIT = 524288 // bytes
-
   private val LOG = logger<SettingsSnapshotZipSerializer>()
 
   private val json = Json { prettyPrint = true }
@@ -35,9 +33,11 @@ internal object SettingsSnapshotZipSerializer {
   fun serializeToZip(snapshot: SettingsSnapshot): Path {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     serialize(snapshot, Compressor.Zip(file))
+    /*
     if (file.length() > ZIP_SIZE_SOFT_LIMIT) {
       NotificationService.getInstance().notifyZipSizeExceed()
     }
+    */
     return file.toPath()
   }
 
