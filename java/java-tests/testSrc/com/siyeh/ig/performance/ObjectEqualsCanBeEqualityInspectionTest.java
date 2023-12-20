@@ -79,15 +79,18 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
   }
 
   public void testSingleton() {
-    doTest("final class Singleton {" +
-           "  private static final DynamicBundle INSTANCE = new DynamicBundle(Singleton.class, BUNDLE);" +
-           "  private Singleton() {}" +
-           "}" +
-           "class U {" +
-           "  boolean f(Singleton s1, Singleton s2) {" +
-           "    return s1./*'equals()' can be replaced with '=='*/equals/**/(s2);" +
-           "  }" +
-           "}");
+    doTest("""
+             final class Singleton {
+               static String BUNDLE = null;
+               static class DynamicBundle { DynamicBundle(Class<?> cls, String bundle) {} }
+               private static final DynamicBundle INSTANCE = new DynamicBundle(Singleton.class, BUNDLE);
+               private Singleton() {}
+             }
+             class U {
+               boolean f(Singleton s1, Singleton s2) {
+                 return s1./*'equals()' can be replaced with '=='*/equals/**/(s2);
+               }
+             }""");
   }
 
   @NotNull
