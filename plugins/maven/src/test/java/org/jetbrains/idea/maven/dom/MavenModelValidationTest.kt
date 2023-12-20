@@ -157,7 +157,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          """.trimIndent())
     updateSettingsXml("<<<")
 
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
@@ -184,7 +184,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          """.trimIndent())
     createProfilesXml("<<<")
 
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
@@ -215,7 +215,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          </project>
                          """.trimIndent())
 
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
@@ -260,7 +260,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                            </parent>
                          </project>
                          """.trimIndent())
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
@@ -292,7 +292,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                            <</project>
                          """.trimIndent())
 
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
@@ -329,7 +329,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          </project>
                          """.trimIndent())
 
-    readProjects()
+    importProjectAsync()
 
     fixture.saveText(myProjectPom,
                        """
