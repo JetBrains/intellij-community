@@ -68,7 +68,7 @@ public @interface Storage {
   boolean exclusive() default false;
 
   /**
-   * Is exportable (Export Settings dialog) regardless of roaming type.
+   * Is exportable (Export Settings dialog, migrate settings) regardless of roaming type.
    */
   boolean exportable() default false;
 

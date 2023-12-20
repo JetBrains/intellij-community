@@ -77,62 +77,68 @@ class JbSettingsImporter(private val configDirPath: Path,
   suspend fun importOptions(categories: Set<SettingsCategory>): Boolean {
     // load all components
     // import all, except schema managers
-    val allFiles = mutableSetOf<String>()
-    val loadedComponentNames = componentStore.getComponentNames()
-    val notLoadedComponents = arrayListOf<String>()
-    val unknownStorage = arrayListOf<String>()
-    val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
-    val cachedFileStorages = storageManager.getCachedFileStorages().map { (it as FileBasedStorage).file.name }
+    try {
+      val allFiles = mutableSetOf<String>()
+      val loadedComponentNames = componentStore.getComponentNames()
+      val notLoadedComponents = arrayListOf<String>()
+      val unknownStorage = arrayListOf<String>()
+      val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
+      val storageManager = componentStore.storageManager as StateStorageManagerImpl
+      val cachedFileStorages = storageManager.getCachedFileStorages()
+        .mapNotNull { (it as? FileBasedStorage)?.file?.name }
 
-    for (optionsEntry in optionsPath.listDirectoryEntries()) {
-      if (optionsEntry.name.lowercase().endsWith(".xml")) {
-        allFiles.add(optionsEntry.name)
-        val element = JDOMUtil.load(optionsEntry)
-        val children = element.getChildren("component")
-        if (!cachedFileStorages.contains(optionsEntry.name)) {
-          unknownStorage.add(optionsEntry.name)
-        }
-        for (componentElement in children) {
-          val componentName = componentElement.getAttributeValue("name")
-          LOG.info("Found $componentName in ${optionsEntry.name}")
-          if (!loadedComponentNames.contains(componentName)) {
-            notLoadedComponents.add(componentName)
+      for (optionsEntry in optionsPath.listDirectoryEntries()) {
+        if (optionsEntry.name.lowercase().endsWith(".xml")) {
+          allFiles.add(optionsEntry.name)
+          val element = JDOMUtil.load(optionsEntry)
+          val children = element.getChildren("component")
+          if (!cachedFileStorages.contains(optionsEntry.name)) {
+            unknownStorage.add(optionsEntry.name)
+          }
+          for (componentElement in children) {
+            val componentName = componentElement.getAttributeValue("name")
+            LOG.info("Found $componentName in ${optionsEntry.name}")
+            if (!loadedComponentNames.contains(componentName)) {
+              notLoadedComponents.add(componentName)
+            }
           }
         }
+        else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
+          // i.e. mac/keymap.xml
+          allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
+        }
       }
-      else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
-        // i.e. mac/keymap.xml
-        allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
+
+      //TODO: remove later, now keep for logging purposes
+      LOG.info("Loaded components:\n${loadedComponentNames.joinToString()}")
+      LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
+      LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
+
+      loadNotLoadedComponents(notLoadedComponents)
+
+      LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
+      val componentAndFilesMap = filterComponents(allFiles, categories)
+      val componentFiles = componentAndFilesMap.values.toSet()
+      LOG.info("After filtering we have ${componentFiles.size} component files to import: ${componentFiles.joinToString()}")
+      val schemeFiles = filterSchemes(allFiles, categories)
+      LOG.info("After filtering we have ${schemeFiles.size} scheme files to import: ${schemeFiles.joinToString()}")
+
+      // setting dummy valueChangeListener, so effects won't affect the UI, etc.
+      Registry.setValueChangeListener(object : RegistryValueListener {
+        // do nothing
+      })
+      withExternalStreamProvider(storageManager) {
+        componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
       }
+      RegistryManager.getInstanceAsync().resetValueChangeListener()
+
+      // there's currently only one reason to restart after reading configs
+      // plugins are handled separately
+      return Registry.getInstance().isRestartNeeded
+    } catch (th: Throwable) {
+      LOG.error(th)
+      return false
     }
-
-    //TODO: remove later, now keep for logging purposes
-    LOG.info("Loaded components:\n${loadedComponentNames.joinToString()}")
-    LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
-    LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
-
-    loadNotLoadedComponents(notLoadedComponents)
-
-    LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
-    val componentAndFilesMap = filterComponents(allFiles, categories)
-    val componentFiles = componentAndFilesMap.values.toSet()
-    LOG.info("After filtering we have ${componentFiles.size} component files to import: ${componentFiles.joinToString()}")
-    val schemeFiles = filterSchemes(allFiles, categories)
-    LOG.info("After filtering we have ${schemeFiles.size} scheme files to import: ${schemeFiles.joinToString()}")
-
-    // setting dummy valueChangeListener, so effects won't affect the UI, etc.
-    Registry.setValueChangeListener(object : RegistryValueListener {
-      // do nothing
-    })
-    withExternalStreamProvider(storageManager) {
-      componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
-    }
-    RegistryManager.getInstanceAsync().resetValueChangeListener()
-
-    // there's currently only one reason to restart after reading configs
-    // plugins are handled separately
-    return Registry.getInstance().isRestartNeeded
   }
 
   private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: ()->Unit) {
@@ -244,11 +250,12 @@ class JbSettingsImporter(private val configDirPath: Path,
         return@processAllImplementationClasses
 
       val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
-      if (!categories.contains(state.category) || !state.roamingType.canBeMigrated())
+      if (!categories.contains(state.category))
         return@processAllImplementationClasses
 
       val activeStorage = state.storages.find { !it.deprecated } ?: return@processAllImplementationClasses
-      if (activeStorage.value == StoragePathMacros.CACHE_FILE || !activeStorage.roamingType.canBeMigrated())
+      if (activeStorage.value == StoragePathMacros.CACHE_FILE ||
+          (!activeStorage.roamingType.canBeMigrated() && !state.exportable && !activeStorage.exportable))
         return@processAllImplementationClasses
 
       if (activeStorage.roamingType.isOsSpecific && allFiles.contains("$osFolderName/${activeStorage.value}")) {

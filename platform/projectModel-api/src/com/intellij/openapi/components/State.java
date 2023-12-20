@@ -88,8 +88,7 @@ public @interface State {
   SettingsCategory category() default SettingsCategory.OTHER;
 
   /**
-   * Indicates the roaming type of the component. See {@link RoamingType} for details.
-   *
+   * Is exportable (Export Settings dialog, migrate settings) regardless of roaming type.
    */
-  RoamingType roamingType() default RoamingType.DEFAULT;
+  boolean exportable() default false;
 }

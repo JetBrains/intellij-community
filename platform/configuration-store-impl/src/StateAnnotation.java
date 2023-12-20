@@ -87,8 +87,8 @@ public class StateAnnotation implements State {
   }
 
   @Override
-  public RoamingType roamingType() {
-    return RoamingType.DEFAULT;
+  public boolean exportable() {
+    return false;
   }
 
   @Override
