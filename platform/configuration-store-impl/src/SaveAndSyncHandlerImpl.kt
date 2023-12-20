@@ -222,7 +222,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private suspend fun executeOnIdle() {
     withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+      (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
 

@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.writeAction
@@ -12,9 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 internal interface SaveExecutor {
-  /**
-   * @return was something really saved
-   */
   suspend fun save(): SaveResult
 }
 
@@ -26,7 +21,7 @@ open class SaveSessionProducerManager : SaveExecutor {
   private var isVfsRequired = false
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
-    var producer = producers.get(storage)
+    var producer = producers[storage]
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
       val prev = producers.put(storage, producer)

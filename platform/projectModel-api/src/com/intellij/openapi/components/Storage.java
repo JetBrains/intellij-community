@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -15,31 +14,28 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
-  /**
-   * @deprecated Use {@link #value()}.
-   */
+  /** @deprecated Use {@link #value()}. */
   @Deprecated(forRemoval = true)
   String file() default "";
 
   /**
    * The configuration root path relative to component container.
-   * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
+   * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only a file path).
    * <p>
    * Consider reusing existing storage files instead of a new one to avoid creating too many of them.
    * Related components should reuse the same storage file.
    * But don't mix components with different RoamingTypes in a single file, it is prohibited.
    * <p>
-   * The actual path to the storage file on disk is not strictly defined as relative to the container path,
-   * in fact it can be different, e.g. application-wide {@link RoamingType#PER_OS os-dependent} settings are stored in the subfolder
-   * correspondent to the current OS, e.g. in {@code APP_CONFIG/options/mac/}.
+   * The actual path to the storage file on disk is not strictly defined as relative to the container path;
+   * in fact it can be different, e.g., application-wide {@link RoamingType#PER_OS os-dependent} settings are stored in the subfolder
+   * corresponding to the current OS (e.g., in {@code APP_CONFIG/options/mac/}).
    *
    * @see StoragePathMacros
    */
-  @NonNls
   String value() default "";
 
   /**
-   * If deprecated, data will be removed on write. And ignored on read if (and only if) new storage exists.
+   * If deprecated, data won't be written. And ignored on read - but only if a new storage exists.
    */
   boolean deprecated() default false;
 
@@ -55,7 +51,7 @@ public @interface Storage {
    */
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("removal")
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 
   /**

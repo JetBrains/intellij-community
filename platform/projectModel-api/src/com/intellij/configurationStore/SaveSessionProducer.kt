@@ -13,12 +13,12 @@ interface SaveSessionProducer : StorageManagerFileWriteRequestor {
   fun setState(component: Any?, componentName: String, state: Any?)
 
   /**
-   * return null if nothing to save
+   * Returns `null` if nothing to save.
    */
   fun createSaveSession(): SaveSession?
 }
 
 /**
- * A marker interface for to not process this file change event.
+ * A marker interface to skip processing of this file change event.
  */
 interface StorageManagerFileWriteRequestor
