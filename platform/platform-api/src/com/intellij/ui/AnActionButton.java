@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * @author Konstantin Bulenkov
+ * AnActionButton reinvents the action update wheel and breaks MVC.
+ * We are slowly migrating to regular {@link AnAction}.
  */
+@ApiStatus.Obsolete
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
