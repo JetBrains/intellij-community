@@ -87,7 +87,7 @@ public class Enumerator<T> {
    */
   public int enumerate(T object) {
     final int res = enumerateImpl(object);
-    return Math.max(res, -res);
+    return Math.abs(res);
   }
 
   /**
