@@ -622,7 +622,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    readProjects()
+    updateAllProjects()
 
     withContext(Dispatchers.EDT) {
       assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"))
@@ -655,7 +655,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    readProjects()
+    updateAllProjects()
 
     withContext(Dispatchers.EDT) {
       assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"))
@@ -1198,9 +1198,5 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   private suspend fun readWithProfiles(vararg profiles: String) {
     projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
     updateAllProjects()
-  }
-
-  override fun readProjects() = runBlocking {
-    readWithProfiles()
   }
 }

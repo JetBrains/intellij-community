@@ -533,11 +533,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
   }
 
-  @Throws(Exception::class)
-  protected open fun readProjects() {
-    readProjects(projectsManager.getProjectsFiles())
-  }
-
   protected suspend fun downloadArtifacts() {
     projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
   }
