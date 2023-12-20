@@ -34,6 +34,8 @@ interface IjentApi : AutoCloseable {
 
   /**
    * Explicitly terminates the process on the remote machine.
+   *
+   * The method is not supposed to block the current thread.
    */
   override fun close()
 
