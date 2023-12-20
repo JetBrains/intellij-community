@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jackson" type="repository">
-    <properties maven-id="com.fasterxml.jackson.core:jackson-core:2.15.2">
+    <properties maven-id="com.fasterxml.jackson.core:jackson-core:2.16.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.15.2/jackson-core-2.15.2.jar">
-          <sha256sum>303c99e82b1faa91a0bae5d8fbeb56f7e2adf9b526a900dd723bf140d62bd4b4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.0/jackson-core-2.16.0.jar">
+          <sha256sum>66e2cde4cc7e565d5fce2a2998b64e991777bf9fad4d220735c525fd8d01c31a</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/jackson" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.15.2/jackson-core-2.15.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.0/jackson-core-2.16.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.15.2/jackson-core-2.15.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.0/jackson-core-2.16.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

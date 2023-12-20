@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jackson-module-kotlin" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2">
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.16.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.15.2/jackson-module-kotlin-2.15.2.jar">
-          <sha256sum>b3361598a81901613201757461b0149cd75095d420ceb155ddfad09338d77588</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.16.0/jackson-module-kotlin-2.16.0.jar">
+          <sha256sum>70f963945b0af9154ae83db1c61673bc0fa7b8e5b96d3b845bcb938d66243550</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.15.2/jackson-module-kotlin-2.15.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.16.0/jackson-module-kotlin-2.16.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.15.2/jackson-module-kotlin-2.15.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.16.0/jackson-module-kotlin-2.16.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
