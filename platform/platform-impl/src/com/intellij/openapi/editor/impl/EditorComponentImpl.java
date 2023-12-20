@@ -103,10 +103,18 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
-        float defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+        boolean isChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent();
+        float defaultFontSize;
+        if (isChangePersistent) {
+          defaultFontSize = UISettings.getInstance().getFontSize();
+        }
+        else {
+          defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+        }
+
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
         myEditor.setFontSize(size);
-        if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+        if (isChangePersistent) {
           myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
         }
 
