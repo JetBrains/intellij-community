@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaReference
 import com.intellij.psi.impl.search.JavaVersionBasedScope
@@ -16,6 +17,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
+import kotlin.test.assertNotEquals
 
 private const val CLASS_NAME = "com.example.MultiReleaseClass"
 
@@ -134,7 +136,22 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertUnversioned(myFixture.javaFacade.findClass(CLASS_NAME, scope8()))
     assertVersioned(myFixture.javaFacade.findClass(CLASS_NAME, scope9()))
   }
-  
+
+  fun testResolveFromMultiRelease() {
+    val facade = myFixture.javaFacade
+    val class8 = facade.findClass(CLASS_NAME, scope8())!!
+    val class9 = facade.findClass(CLASS_NAME, scope9())!!
+    assertNotEquals(class8, class9)
+    val another8 = facade.findClass("com.example.Another", scope8())!!
+    val another9 = facade.findClass("com.example.Another", scope9())!!
+    assertEquals(8, another8.fields[0].computeConstantValue())
+    assertEquals(9, another9.fields[0].computeConstantValue())
+    val method8 = class8.findMethodsByName("ver8", false)[0]!!
+    val method9 = class9.findMethodsByName("ver9", false)[0]!!
+    assertEquals(another8, (method8.returnType as PsiClassType).resolve())
+    assertEquals(another9, (method9.returnType as PsiClassType).resolve())
+  }
+
   fun testClassPresentation() {
     assertEquals("(com.example)", myFixture.javaFacade.findClass(CLASS_NAME, scope8())!!.presentation!!.locationString)
     assertEquals("(com.example/ver. 9)", myFixture.javaFacade.findClass(CLASS_NAME, scope9())!!.presentation!!.locationString)
