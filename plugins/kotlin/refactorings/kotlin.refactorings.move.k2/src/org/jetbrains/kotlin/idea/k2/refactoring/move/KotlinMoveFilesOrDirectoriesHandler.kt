@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -11,9 +12,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 
-/**
- * Currently not registered, required for the case we have to disable smart move at the last moment
- */
 class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
     private fun adjustElements(elements: Array<out PsiElement>): Array<PsiFileSystemItem>? {
         return elements.map {
@@ -27,6 +25,7 @@ class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
     }
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
+        if (Registry.`is`("kotlin.k2.smart.move")) return false
         val adjustedElements = adjustElements(elements) ?: return false
         if (adjustedElements.none { it is KtFile }) return false
 

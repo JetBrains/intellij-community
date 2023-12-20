@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -24,7 +25,8 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun supportsLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
-        if (elements.any { it !is KtElement}) return false
+        if (!Registry.`is`("kotlin.k2.smart.move")) return false
+        if (elements.any { it !is KtElement }) return false
         if (targetContainer != null && !targetContainer.isValidTarget()) return false
         return true
     }
