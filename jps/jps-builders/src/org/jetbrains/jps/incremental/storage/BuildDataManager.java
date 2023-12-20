@@ -77,21 +77,32 @@ public final class BuildDataManager {
   public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
-    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
-    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
-    File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
-    if (JavaBuilderUtil.isDepGraphEnabled()) {
-      if(Boolean.parseBoolean(System.getProperty("kotlin.jps.workaround.tests", "false"))) {
-        myMappings = new DumbMappings();
-      } else {
-        myMappings = null;
+    try {
+      mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
+      myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
+      File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
+      if (JavaBuilderUtil.isDepGraphEnabled()) {
+        if(Boolean.parseBoolean(System.getProperty("kotlin.jps.workaround.tests", "false"))) {
+          myMappings = new DumbMappings();
+        }
+        else {
+          myMappings = null;
+        }
+        createDependencyGraph(mappingsRoot, false);
+        LOG.info("Using DependencyGraph-based build incremental analysis");
       }
-      createDependencyGraph(mappingsRoot, false);
-      LOG.info("Using DependencyGraph-based build incremental analysis");
+      else {
+        myMappings = new Mappings(mappingsRoot, relativizer);
+        myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
+      }
     }
-    else {
-      myMappings = new Mappings(mappingsRoot, relativizer);
-      myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
+    catch (IOException e) {
+      try {
+        close();
+      }
+      catch (Throwable ignored) {
+      }
+      throw e;
     }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myDepGraphPathMapper = relativizer != null? new PathSourceMapper(relativizer::toFull, relativizer::toRelative) : new PathSourceMapper();
@@ -215,25 +226,34 @@ public final class BuildDataManager {
   }
 
   public void createDependencyGraph(File mappingsRoot, boolean deleteExisting) throws IOException {
-    synchronized (myGraphManagementLock) {
-      DependencyGraph depGraph = myDepGraph;
-      if (depGraph == null) {
-        if (deleteExisting) {
-          FileUtil.delete(mappingsRoot);
-        }
-        myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
-      }
-      else {
-        try {
-          depGraph.close();
-        }
-        finally {
+    try {
+      synchronized (myGraphManagementLock) {
+        DependencyGraph depGraph = myDepGraph;
+        if (depGraph == null) {
           if (deleteExisting) {
             FileUtil.delete(mappingsRoot);
           }
           myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
         }
+        else {
+          try {
+            depGraph.close();
+          }
+          finally {
+            if (deleteExisting) {
+              FileUtil.delete(mappingsRoot);
+            }
+            myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
+          }
+        }
       }
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
+      throw e;
     }
   }
 

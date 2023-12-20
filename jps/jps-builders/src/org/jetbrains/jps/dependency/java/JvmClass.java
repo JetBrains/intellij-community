@@ -34,10 +34,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
     Iterable<TypeRepr.ClassType> annotations,
-    Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, Iterable<Usage> usages
-    ) {
+    Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata> metadata
+  ) {
     
-    super(flags, signature, fqName, outFilePath, annotations, usages);
+    super(flags, signature, fqName, outFilePath, annotations, usages, metadata);
     mySuperFqName = superFqName == null || OBJECT_CLASS_NAME.equals(superFqName)? "" : superFqName;
     myOuterFqName = outerFqName == null? "" : outerFqName;
     myInterfaces = interfaces;

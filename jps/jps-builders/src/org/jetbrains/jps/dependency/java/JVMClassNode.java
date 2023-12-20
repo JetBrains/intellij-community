@@ -9,6 +9,7 @@ import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,12 +20,14 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
+  private final Iterable<JvmMetadata> myMetadata;
 
-  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages) {
+  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata> metadata) {
     super(flags, signature, name, annotations);
     myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
     myUsages = usages;
+    myMetadata = metadata;
   }
 
   public JVMClassNode(GraphDataInput in) throws IOException {
@@ -42,6 +45,8 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     finally {
       myUsages = usages;
     }
+
+    myMetadata = RW.readCollection(in, in::readGraphElement, new SmartList<>());
   }
 
   @Override
@@ -63,7 +68,9 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     out.writeInt(usageGroups.size());
     for (Map.Entry<Class<? extends Usage>, List<Usage>> entry : usageGroups.entrySet()) {
       out.writeGraphElementCollection(entry.getKey(), entry.getValue());
-   }
+    }
+
+    RW.writeCollection(out, myMetadata, out::writeGraphElement);
   }
 
   @Override
@@ -78,6 +85,10 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   @Override
   public Iterable<Usage> getUsages() {
     return myUsages;
+  }
+
+  public Iterable<JvmMetadata> getMetadata() {
+    return myMetadata;
   }
 
   @Override

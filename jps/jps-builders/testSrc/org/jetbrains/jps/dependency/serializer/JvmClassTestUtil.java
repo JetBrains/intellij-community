@@ -74,7 +74,7 @@ public final class JvmClassTestUtil {
                         methods,
                         classAnnotations,
                         annotationTargets, null,
-                        usages);
+                        usages, Collections.emptyList());
   }
 
   public static void checkJvmClassEquals(JvmClass jvmClass1, JvmClass jvmClass2) {

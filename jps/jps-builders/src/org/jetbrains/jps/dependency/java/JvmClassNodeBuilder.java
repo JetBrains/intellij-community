@@ -16,7 +16,9 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
 
@@ -199,15 +201,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     }
 
     private void registerUsages(String methodName, String methodDescr, Object value) {
-
       if (value instanceof Type) {
         final String className = ((Type)value).getClassName().replace('.', '/');
         addUsage(new ClassUsage(className));
       }
-
       addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr));
-      //myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className));
-
       myUsedArguments.add(methodName);
     }
 
@@ -219,6 +217,77 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
       else {
         s.retainAll(myUsedArguments);
+      }
+    }
+  }
+
+  private static final class KotlinMetadataCrawler extends AnnotationVisitor {
+
+    private final Consumer<KotlinMeta> myResultConsumer;
+
+    private static final class DataField<T> {
+      private final String myName;
+      private final Class<T> myType;
+
+      DataField(String name, Class<T> type) {
+        myName = name;
+        myType = type;
+      }
+
+      public T get(Map<String, Object> data) {
+        Object val = data.get(myName);
+        return myType.isInstance(val)? myType.cast(val) : null;
+      }
+    }
+
+    private static final DataField<Integer> KIND = new DataField<>("k", Integer.class);
+    private static final DataField<int[]> VERSION = new DataField<>("mv", int[].class);
+    private static final DataField<String[]> DATA1 = new DataField<>("d1", String[].class);
+    private static final DataField<String[]> DATA2 = new DataField<>("d2", String[].class);
+    private static final DataField<String> EXTRA_STRING = new DataField<>("xs", String.class);
+    private static final DataField<String> PACKAGE_NAME = new DataField<>("pn", String.class);
+    private static final DataField<Integer> EXTRA_INT = new DataField<>("xi", Integer.class);
+
+    private final Map<String, Object> myData = new HashMap<>();
+
+    private KotlinMetadataCrawler(Consumer<KotlinMeta> resultConsumer) {
+      super(ASM_API_VERSION);
+      myResultConsumer = resultConsumer;
+    }
+
+    @Override
+    public void visit(String name, Object value) {
+      myData.put(name, value);
+    }
+
+    @Override
+    public AnnotationVisitor visitArray(String name) {
+      return new AnnotationVisitor(ASM_API_VERSION) {
+        private final List<Object> values = new SmartList<>();
+        @Override
+        public void visit(String name, Object value) {
+          if (value != null) {
+            values.add(value);
+          }
+        }
+
+        @Override
+        public void visitEnd() {
+          if (!values.isEmpty()) {
+            myData.put(name, values.toArray((Object[])Array.newInstance(values.iterator().next().getClass(), values.size())));
+          }
+        }
+      };
+    }
+
+    @Override
+    public void visitEnd() {
+      Integer kind = KIND.get(myData);
+      if (kind != null) {
+        Integer extraInt = EXTRA_INT.get(myData);
+        myResultConsumer.accept(new KotlinMeta(
+          kind, VERSION.get(myData), DATA1.get(myData), DATA2.get(myData), EXTRA_STRING.get(myData), PACKAGE_NAME.get(myData), extraInt == null? 0 : extraInt
+        ));
       }
     }
   }
@@ -334,6 +403,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Set<ModuleRequires> myModuleRequires = new HashSet<>();
   private final Set<ModulePackage> myModuleExports = new HashSet<>();
 
+  private final List<JvmMetadata> myMetadata = new SmartList<>();
+
   private JvmClassNodeBuilder(final String fn, boolean isGenerated) {
     super(ASM_API_VERSION);
     myFileName = fn;
@@ -382,7 +453,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
         addUsage(usage);
       }
-      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages);
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages, myMetadata);
     }
 
     for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
@@ -402,7 +473,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         addUsage(usage);
       }
     }
-    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
+    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages, myMetadata);
   }
 
   @Override
@@ -439,12 +510,16 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   @Override
   public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
-    if (desc.equals("Ljava/lang/annotation/Target;")) {
+    if ("Ljava/lang/annotation/Target;".equals(desc)) {
       return new AnnotationTargetCrawler();
     }
 
-    if (desc.equals("Ljava/lang/annotation/Retention;")) {
+    if ("Ljava/lang/annotation/Retention;".equals(desc)) {
       return new AnnotationRetentionPolicyCrawler();
+    }
+
+    if ("Lkotlin/Metadata;".equals(desc)) {
+      return new KotlinMetadataCrawler(myMetadata::add);
     }
 
     TypeRepr.ClassType annotationType = (TypeRepr.ClassType)TypeRepr.getType(desc);
