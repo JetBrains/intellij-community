@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.flow.mapStateIn
@@ -17,18 +18,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.ProjectLocationContexts
+import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.isLocal
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
-import com.jetbrains.python.sdk.detectSystemWideSdksSuspended
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.prepareSdkList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.InvalidPathException
@@ -103,13 +102,25 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .mapLatest { context ->
         _detectingSdks.value = true
         val sdks = runCatching {
-          detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+          val detected = detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+          return@runCatching appendMostRecentlyUsedBaseSdk(detected, context.targetEnvironmentConfiguration)
         }.getOrLogException(LOG) ?: emptyList()
         _detectingSdks.value = false
         context to sdks
       }
       .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
+
+  private fun appendMostRecentlyUsedBaseSdk(detectedSdks: List<Sdk>, targetEnvConf: TargetEnvironmentConfiguration?): List<Sdk> {
+    val mostRecentlyUsedBasePath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+    if (targetEnvConf.isLocal() && mostRecentlyUsedBasePath != null && FileUtil.exists(mostRecentlyUsedBasePath)) {
+      val mostRecentlyUsedBaseSdk = createDetectedSdk(mostRecentlyUsedBasePath, isLocal = true)
+      if (!detectedSdks.hasSamePythonInterpreter(mostRecentlyUsedBaseSdk)) {
+        return detectedSdks + listOf(mostRecentlyUsedBaseSdk)
+      }
+    }
+    return detectedSdks
+  }
 
   private val manuallyAddedSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
   private val manuallyAddedBaseSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
