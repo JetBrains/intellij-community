@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
@@ -232,7 +233,7 @@ fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  val start = System.currentTimeMillis()
+  val start = System.nanoTime()
   saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
   if (onlyProject == null) {
     for (project in getOpenedProjects()) {
@@ -243,9 +244,9 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
     saveSettings(onlyProject, forceSavingAllSettings = true)
   }
 
-  val duration = System.currentTimeMillis() - start
+  val duration = (System.nanoTime() - start).nanoseconds.inWholeMilliseconds
   if (duration > 1000 || LOG.isDebugEnabled) {
-    LOG.info("saveProjectsAndApp took $duration ms")
+    LOG.info("saveProjectsAndApp took ${duration} ms")
   }
 }
 
