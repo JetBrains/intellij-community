@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <T> type of enumerated object
  */
+@ApiStatus.Internal
 public class Enumerator<T> {
   private static final LoggerRt LOG = LoggerRt.getInstance(Enumerator.class);
   private final Object2IntMap<T> myNumbers;
