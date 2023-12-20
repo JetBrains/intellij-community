@@ -376,6 +376,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ExtensionOverload.kt")
+        public void testExtensionOverload() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/ExtensionOverload.kt");
+        }
+
         @TestMetadata("Qualified.kt")
         public void testQualified() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/Qualified.kt");
