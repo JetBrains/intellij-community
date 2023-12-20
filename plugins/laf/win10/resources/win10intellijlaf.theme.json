@@ -63,6 +63,7 @@
         "pressedBackgroundColor": "#cce4f7",
         "pressedBorderColor": "#005499"
       },
+      "minimumSize": "72,22",
       "UI": "com.intellij.laf.win10.WinIntelliJButtonUI"
     },
 

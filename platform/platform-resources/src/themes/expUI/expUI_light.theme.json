@@ -166,6 +166,7 @@
       "startBorderColor": "Grey9",
       "endBorderColor": "Grey9",
       "focusedBorderColor": "Grey14",
+      "minimumSize": "72,28",
 
       "default": {
         "foreground": "Grey14",

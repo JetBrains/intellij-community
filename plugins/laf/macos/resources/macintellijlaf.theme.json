@@ -43,6 +43,7 @@
       "background": "#ECECEC",
       "foreground": "#000000",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
+      "minimumSize": "72,21",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
 

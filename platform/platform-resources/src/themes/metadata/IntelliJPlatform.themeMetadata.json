@@ -105,6 +105,10 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.minimumSize",
+      "description": "Minimum size of buttons"
+    },
+    {
       "key": "Button.Split.default.separatorColor",
       "description": "Separator color for default split button"
     },

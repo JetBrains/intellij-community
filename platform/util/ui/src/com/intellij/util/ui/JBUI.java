@@ -461,6 +461,10 @@ public final class JBUI {
         return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
       }
 
+      public static Dimension minimumSize() {
+        return size("Button.minimumSize", size(72, 24));
+      }
+
       public static final class Split {
         public static final class Default {
           public static final @NotNull Color SEPARATOR_COLOR =
@@ -1243,7 +1247,7 @@ public final class JBUI {
           return insets("MainToolbar.SplitDropdown.leftPartMargin", insets(3, 7));
         }
         @NotNull public static Insets rightPartMargin() {
-          return insets("MainToolbar.SplitDropdown.rightPartMargin", insets(3, 3));
+          return insets("MainToolbar.SplitDropdown.rightPartMargin", JBUI.insets(3));
         }
       }
 

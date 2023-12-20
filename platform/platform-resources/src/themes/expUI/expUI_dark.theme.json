@@ -172,6 +172,7 @@
       "startBorderColor": "Grey5",
       "endBorderColor": "Grey5",
       "focusedBorderColor": "Grey2",
+      "minimumSize": "72,28",
       "shadowColor": "#00000000",
 
       "default": {
