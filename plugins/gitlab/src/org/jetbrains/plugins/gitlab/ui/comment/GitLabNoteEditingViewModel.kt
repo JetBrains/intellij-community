@@ -280,3 +280,11 @@ internal fun NewGitLabNoteViewModel.secondarySubmitActionIn(
     if (it && submitAsDraft != null) listOf(submit)
     else listOfNotNull(submitAsDraft)
   }
+
+internal fun NewGitLabNoteViewModel.submitActionHintIn(
+  cs: CoroutineScope,
+  mainHint: @Nls String,
+  draftHint: @Nls String
+): StateFlow<@Nls String> =
+  if (!canSubmitAsDraft) MutableStateFlow(mainHint)
+  else usedAsDraftSubmitActionLast.mapState(cs) { if (it) draftHint else mainHint }

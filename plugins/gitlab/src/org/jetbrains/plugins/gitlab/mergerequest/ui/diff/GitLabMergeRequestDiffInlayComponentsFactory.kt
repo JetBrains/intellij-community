@@ -51,16 +51,15 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
         onCancel()
       }
     }
-    val primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction)
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = primaryAction,
+      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
       secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
       cancelAction = MutableStateFlow(cancelAction),
-      submitHint = MutableStateFlow(
-        if (primaryAction == addAction)
-          CollaborationToolsBundle.message("review.comment.hint", CommentInputActionsComponentFactory.submitShortcutText)
-        else
-          GitLabBundle.message("merge.request.details.action.draft.comment.hint", CommentInputActionsComponentFactory.submitShortcutText))
+      submitHint = vm.submitActionHintIn(cs,
+                                         CollaborationToolsBundle.message("review.comment.hint",
+                                                                          CommentInputActionsComponentFactory.submitShortcutText),
+                                         GitLabBundle.message("merge.request.details.action.draft.comment.hint",
+                                                              CommentInputActionsComponentFactory.submitShortcutText))
     )
 
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT

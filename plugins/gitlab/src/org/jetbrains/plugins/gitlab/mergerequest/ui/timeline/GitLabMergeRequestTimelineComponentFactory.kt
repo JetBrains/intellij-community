@@ -32,7 +32,6 @@ import com.intellij.util.ui.StyleSheetUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
@@ -112,16 +111,15 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val addAsDraftAction = editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
                                                         project, NewGitLabNoteType.STANDALONE,
                                                         GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
-
-    val primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction)
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = primaryAction,
+      primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction),
       secondaryActions = editVm.secondarySubmitActionIn(noteCs, addAction, addAsDraftAction),
-      submitHint = MutableStateFlow(
-        if (primaryAction == addAction)
-          CollaborationToolsBundle.message("review.comment.hint", CommentInputActionsComponentFactory.submitShortcutText)
-        else
-          GitLabBundle.message("merge.request.details.action.draft.reply.hint", CommentInputActionsComponentFactory.submitShortcutText))
+      submitHint = editVm.submitActionHintIn(noteCs,
+                                             CollaborationToolsBundle.message("review.comment.hint",
+                                                                              CommentInputActionsComponentFactory.submitShortcutText),
+                                             GitLabBundle.message("merge.request.details.action.draft.comment.hint",
+                                                                  CommentInputActionsComponentFactory.submitShortcutText)
+      )
     )
 
     val itemType = ComponentType.FULL
