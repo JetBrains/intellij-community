@@ -227,7 +227,6 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     if (mustRunCommandLineWithIjent(options)) {
-      commandLine.withEscapingForLocalRun(false);
       String wslSpecificWorkingDirectory = options.getRemoteWorkingDirectory();
       IjentExecApi.Pty ijentPty;
       if (commandLine instanceof PtyCommandLine ptyCommandLine) {
