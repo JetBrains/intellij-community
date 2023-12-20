@@ -177,23 +177,39 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Map<C, IdeaPluginDescriptorImpl> selection = getSelection();
-      if (!askToUninstall(getUninstallAllMessage(selection.values()), myUiParent)) {
-        return;
-      }
-
       ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+      Map<PluginId, IdeaPluginDescriptorImpl> plugins = PluginManagerCore.INSTANCE.buildPluginIdMap();
+
+      List<IdeaPluginDescriptorImpl> toDeleteWithAsk = new ArrayList<>();
+      List<IdeaPluginDescriptorImpl> toDelete = new ArrayList<>();
+
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
-                                                                                applicationInfo, PluginManagerCore.INSTANCE.buildPluginIdMap());
-
-        if (dependents.isEmpty() ||
-            askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {
-          myPluginModel.uninstallAndUpdateUi(descriptor);
+        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor, applicationInfo, plugins);
+        if (dependents.isEmpty()) {
+          toDeleteWithAsk.add(descriptor);
+        }
+        else if (askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {
+          toDelete.add(descriptor);
         }
       }
 
-      myOnFinishAction.run();
+      boolean runFinishAction = false;
+
+      if (!toDeleteWithAsk.isEmpty() && askToUninstall(getUninstallAllMessage(toDeleteWithAsk), myUiParent)) {
+        for (IdeaPluginDescriptorImpl descriptor : toDeleteWithAsk) {
+          myPluginModel.uninstallAndUpdateUi(descriptor);
+        }
+        runFinishAction = true;
+      }
+
+      for (IdeaPluginDescriptorImpl descriptor : toDelete) {
+        myPluginModel.uninstallAndUpdateUi(descriptor);
+      }
+
+      if (runFinishAction || !toDelete.isEmpty()) {
+        myOnFinishAction.run();
+      }
     }
 
     private static @NotNull @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors) {
@@ -214,12 +230,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       return XmlStringUtil.wrapInHtml(message);
     }
 
-    private static boolean askToUninstall(@NotNull @Nls String message,
-                                          @NotNull JComponent parentComponent) {
-      return MessageDialogBuilder
-        .yesNo(IdeBundle.message("title.plugin.uninstall"),
-               message)
-        .ask(parentComponent);
+    private static boolean askToUninstall(@NotNull @Nls String message, @NotNull JComponent parentComponent) {
+      return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall"), message).ask(parentComponent);
     }
   }
 
