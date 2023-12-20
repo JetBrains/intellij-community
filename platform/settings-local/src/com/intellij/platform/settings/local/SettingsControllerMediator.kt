@@ -8,31 +8,45 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
+import org.jetbrains.annotations.VisibleForTesting
 
-private val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<ChainedSettingsController> =
+@VisibleForTesting
+internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
 
 private val delegateToSettingsController = System.getProperty("idea.settings.internal.delegate.to.controller", "true").toBoolean()
 
 internal class SettingsControllerMediator : SettingsController {
-  private val first: ChainedSettingsController
-  private val chain: List<ChainedSettingsController>
+  private val controllers = SETTINGS_CONTROLLER_EP_NAME.extensionList
 
-  init {
-    val extensions = SETTINGS_CONTROLLER_EP_NAME.extensionList
-    first = extensions.first()
-    chain = extensions.subList(1, extensions.size)
+  override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
+    for (controller in controllers) {
+      val result = controller.getItem(key)
+      if (result.isResolved) {
+        return result.get()
+      }
+    }
+
+    return null
   }
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>): T? = first.getItem(key, chain)
-
-  override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    return first.setItem(key = key, value = value, chain = chain)
+  override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
+    for (controller in controllers) {
+      if (controller.setItem(key = key, value = value)) {
+        return
+      }
+    }
   }
 
-  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>) = first.hasKeyStartsWith(key, chain)
+  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
+    for (controller in controllers) {
+      if (controller.hasKeyStartsWith(key) == true) {
+        return true
+      }
+    }
 
-  fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) = first.putIfDiffers(key = key, value = value, chain = chain)
+    return false
+  }
 
   override fun createStateStorage(collapsedPath: String): Any? {
     if (!delegateToSettingsController && !ApplicationManager.getApplication().isUnitTestMode) {

@@ -1,7 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.platform.settings.local
 
 import com.intellij.configurationStore.SettingsSavingComponent
@@ -11,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -27,24 +24,17 @@ internal suspend fun compactCacheStore() {
   service<LocalSettingsControllerService>().storeManager.compactStore()
 }
 
-private class LocalSettingsController : ChainedSettingsController {
+private class LocalSettingsController : DelegatedSettingsController {
   private val service = service<LocalSettingsControllerService>()
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): T? {
-    return service.getItem(key)
-  }
+  override fun <T : Any> getItem(key: SettingDescriptor<T>) = GetResult.resolved(service.getItem(key))
 
-  override suspend fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
+  override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean {
     service.setItem(key, value)
+    return false
   }
 
-  override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>, chain: List<ChainedSettingsController>): Boolean {
-    return service.hasKeyStartsWith(key)
-  }
-
-  override fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?, chain: List<ChainedSettingsController>) {
-    service.putIfDiffers(key, value)
-  }
+  override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>) = service.hasKeyStartsWith(key)
 }
 
 @Service(Service.Level.APP)
@@ -88,12 +78,6 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     operate(key, internalOperation = {
       it.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
-    })
-  }
-
-  fun <T : Any> putIfDiffers(key: SettingDescriptor<T>, value: T?) {
-    operate(key, internalOperation = {
-      it.putIfDiffers(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 

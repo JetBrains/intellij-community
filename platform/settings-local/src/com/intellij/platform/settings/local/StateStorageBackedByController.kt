@@ -125,7 +125,7 @@ private class ControllerBackedSaveSessionProducer(
   private val storageController: StateStorageBackedByController,
 ) : SaveSessionProducer {
   private fun put(key: SettingDescriptor<ByteArray>, value: ByteArray?) {
-    storageController.controller.putIfDiffers(key, value)
+    storageController.controller.setItem(key, value)
   }
 
   override fun setState(component: Any?, componentName: String, state: Any?) {
