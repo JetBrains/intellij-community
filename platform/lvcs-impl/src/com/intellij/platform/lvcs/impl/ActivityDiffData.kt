@@ -3,7 +3,9 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface ActivityDiffData {
   fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper>
 }

@@ -2,7 +2,9 @@
 package com.intellij.platform.lvcs.impl
 
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface ActivityProvider {
   val activityItemsChanged: Flow<Unit>
 

@@ -18,7 +18,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JList
 
-class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
+internal class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   private var allItems = emptyList<ActivityItem>()

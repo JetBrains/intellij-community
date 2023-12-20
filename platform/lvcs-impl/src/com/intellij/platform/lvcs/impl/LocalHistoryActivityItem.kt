@@ -6,7 +6,7 @@ import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.ui.models.RevisionItem
 import com.intellij.util.containers.HashingStrategy
 
-class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {
+internal class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {
   override val timestamp: Long
     get() = revisionItem.revision.timestamp
 
@@ -22,7 +22,7 @@ class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {
   }
 }
 
-class RecentChangeActivityItem(val recentChange: RecentChange) : ActivityItem {
+internal class RecentChangeActivityItem(val recentChange: RecentChange) : ActivityItem {
   override val timestamp: Long
     get() = recentChange.revisionAfter.timestamp
 

@@ -4,7 +4,9 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.history.core.Paths
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 sealed interface ActivityScope {
   data object Recent : ActivityScope
   sealed interface File : ActivityScope {

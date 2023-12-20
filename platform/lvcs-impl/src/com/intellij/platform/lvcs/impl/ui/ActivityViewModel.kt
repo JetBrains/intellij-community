@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.debounce
 import java.util.*
 
 @OptIn(FlowPreview::class)
-class ActivityViewModel(project: Project, gateway: IdeaGateway, private val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
+internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
   private val eventDispatcher = EventDispatcher.create(ActivityModelListener::class.java)
 
   internal val activityProvider: ActivityProvider = LocalHistoryActivityProvider(project, gateway)
