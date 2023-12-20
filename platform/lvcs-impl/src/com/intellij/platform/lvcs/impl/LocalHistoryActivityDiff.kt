@@ -24,9 +24,6 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.platform.lvcs.ActivityDiffData
-import com.intellij.platform.lvcs.ActivityScope
-import com.intellij.platform.lvcs.filePath
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.Nls
 import java.util.*

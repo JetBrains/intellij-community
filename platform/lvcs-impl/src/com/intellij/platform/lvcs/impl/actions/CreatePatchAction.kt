@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.platform.lvcs.impl.getChanges
 import com.intellij.platform.lvcs.impl.toRevisionSelection
-import com.intellij.platform.lvcs.ui.ActivityViewDataKeys
+import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
 class CreatePatchAction : RevisionSelectionAction() {
 

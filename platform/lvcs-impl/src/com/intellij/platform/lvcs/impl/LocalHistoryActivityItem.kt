@@ -4,7 +4,6 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.history.core.revisions.RecentChange
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.ui.models.RevisionItem
-import com.intellij.platform.lvcs.ActivityItem
 import com.intellij.util.containers.HashingStrategy
 
 class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {

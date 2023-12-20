@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lvcs.ui
+package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
@@ -15,9 +15,9 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-import com.intellij.platform.lvcs.ActivityDiffData
-import com.intellij.platform.lvcs.ActivityScope
-import com.intellij.platform.lvcs.filePath
+import com.intellij.platform.lvcs.impl.ActivityDiffData
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.filePath
 import javax.swing.JComponent
 
 class CombinedActivityDiffPreview(project: Project, targetComponent: JComponent, val scope: ActivityScope, parentDisposable: Disposable) :

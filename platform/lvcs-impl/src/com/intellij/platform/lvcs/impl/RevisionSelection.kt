@@ -4,9 +4,6 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.tree.Entry
-import com.intellij.platform.lvcs.ActivityScope
-import com.intellij.platform.lvcs.ActivitySelection
-import com.intellij.platform.lvcs.filePath
 
 data class RevisionSelection(val leftRevision: Revision,
                              val rightRevision: Revision,

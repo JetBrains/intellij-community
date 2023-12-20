@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.platform.lvcs.impl.createReverter
 import com.intellij.platform.lvcs.impl.toRevisionSelection
-import com.intellij.platform.lvcs.ui.ActivityViewDataKeys
+import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
 class RevertAction : RevisionSelectionAction() {
 

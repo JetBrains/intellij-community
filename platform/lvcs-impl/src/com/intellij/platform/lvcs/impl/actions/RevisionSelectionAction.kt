@@ -4,7 +4,7 @@ package com.intellij.platform.lvcs.impl.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.lvcs.impl.toRevisionSelection
-import com.intellij.platform.lvcs.ui.ActivityViewDataKeys
+import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
 abstract class RevisionSelectionAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {

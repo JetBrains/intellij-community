@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lvcs.ui
+package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.platform.lvcs.ActivityItem
-import com.intellij.platform.lvcs.ActivityPresentation
-import com.intellij.platform.lvcs.ActivitySelection
+import com.intellij.platform.lvcs.impl.ActivityItem
+import com.intellij.platform.lvcs.impl.ActivityPresentation
+import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes

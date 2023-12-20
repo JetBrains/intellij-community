@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lvcs.ui
+package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lvcs.*
-import com.intellij.platform.lvcs.impl.LocalHistoryActivityProvider
+import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
