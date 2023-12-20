@@ -18,18 +18,18 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
   }
 
   @Override
-  public int getHashCode(String value) {
+  public int getHashCode(@NotNull String value) {
     return value.hashCode();
   }
 
   @Override
-  public boolean isEqual(String key1,
-                         String key2) {
+  public boolean isEqual(@NotNull String key1,
+                         @NotNull String key2) {
     return key1.equals(key2);
   }
 
   @Override
-  public String read(@NotNull ByteBuffer input) throws IOException {
+  public @NotNull String read(@NotNull ByteBuffer input) throws IOException {
     return IOUtil.readString(input);
   }
 
