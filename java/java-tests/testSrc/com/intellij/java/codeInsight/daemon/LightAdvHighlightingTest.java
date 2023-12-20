@@ -241,7 +241,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false); }
-
+  public void testStatementsBeforeSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
   public void testCastFromVoid() { doTest(false); }
   public void testCatchUnknownMethod() { doTest(false); }
   public void testIDEADEV8822() { doTest(false); }

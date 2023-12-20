@@ -35,6 +35,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -1701,21 +1702,30 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       try {
         PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiFile.class, PsiClassInitializer.class,
                                                         PsiLambdaExpression.class, PsiMethod.class);
-        HighlightInfo.Builder info;
-        if (parent instanceof PsiMethod && JavaPsiRecordUtil.isCompactConstructor((PsiMethod)parent)) {
-          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
-            .descriptionAndTooltip(JavaErrorBundle.message("record.compact.constructor.return"));
+        if (parent instanceof PsiMethod method ) {
+          if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
+                  .descriptionAndTooltip(JavaErrorBundle.message("record.compact.constructor.return")));
+          }
+          else if (method.isConstructor()) {
+            PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+            if (constructorCall != null && statement.getTextOffset() < constructorCall.getTextOffset()) {
+              add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
+                    .descriptionAndTooltip(JavaErrorBundle.message("return.statement.not.allowed.before.explicit.constructor.call",
+                                                                   constructorCall.getMethodExpression().getText() + "()")));
+            }
+          }
         }
-        else {
-          info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
+        if (!hasErrorResults() && parent != null) {
+          HighlightInfo.Builder info = HighlightUtil.checkReturnStatementType(statement, parent);
           if (info != null && parent instanceof PsiMethod method) {
             PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
             if (expectedType != null && !PsiTypes.voidType().equals(expectedType)) {
               HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
             }
           }
+          add(info);
         }
-        add(info);
       }
       catch (IndexNotReadyException ignore) {
       }
