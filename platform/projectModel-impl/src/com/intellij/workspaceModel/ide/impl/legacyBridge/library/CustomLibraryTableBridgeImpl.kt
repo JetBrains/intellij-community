@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 internal class CustomLibraryTableBridgeImpl(private val level: String, private val presentation: LibraryTablePresentation)
   : CustomLibraryTableBridge, CustomLibraryTable, Disposable {
+  private val entitySource = LegacyCustomLibraryEntitySource(tableLevel)
   private val libraryTableId = LibraryTableId.GlobalLibraryTableId(tableLevel)
   private val libraryTableDelegate = GlobalLibraryTableDelegate(this, libraryTableId)
 
@@ -59,7 +60,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun getPresentation(): LibraryTablePresentation = presentation
 
   override fun getModifiableModel(): LibraryTable.ModifiableModel {
-    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, LegacyCustomLibraryEntitySource)
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, entitySource)
   }
 
   override fun isEditable(): Boolean = false
@@ -95,7 +96,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     val mutableEntityStorage = MutableEntityStorage.create()
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
       val name = libraryTag.getAttributeValue(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
-      val libraryEntity = JpsLibraryEntitiesSerializer.loadLibrary(name, libraryTag, libraryTableId, LegacyCustomLibraryEntitySource,
+      val libraryEntity = JpsLibraryEntitiesSerializer.loadLibrary(name, libraryTag, libraryTableId, entitySource,
                                                                  VirtualFileUrlManager.getGlobalInstance())
       mutableEntityStorage.addEntity(libraryEntity)
     }
@@ -104,7 +105,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
     val runnable: () -> Unit = {
       GlobalWorkspaceModel.getInstance().updateModel("Custom library table ${libraryTableId.level} update") { builder ->
-        builder.replaceBySource({ it is LegacyCustomLibraryEntitySource }, mutableEntityStorage)
+        builder.replaceBySource({ it == entitySource }, mutableEntityStorage)
       }
     }
 
@@ -138,4 +139,4 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun removeListener(listener: LibraryTable.Listener) = libraryTableDelegate.removeListener(listener)
 }
 
-object LegacyCustomLibraryEntitySource: EntitySource
+data class LegacyCustomLibraryEntitySource(private val levelId: String): EntitySource

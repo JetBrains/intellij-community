@@ -219,8 +219,8 @@ class GlobalWorkspaceModel : Disposable {
         LibraryRoot(root.url.createCopyAtManager(vfuManager), root.type, root.inclusionOptions)
       }
 
-      // If it's global library then we need to copy its entity source. For the custom lib we just reuse singleton
-      val entitySourceCopy = (libraryEntity.entitySource as? JpsGlobalFileEntitySource)?.copy(vfuManager) ?: LegacyCustomLibraryEntitySource
+      // If it's global library then we need to copy its entity source. For the custom lib we just reuse origin entity source
+      val entitySourceCopy = (libraryEntity.entitySource as? JpsGlobalFileEntitySource)?.copy(vfuManager) ?: libraryEntity.entitySource
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
       val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
