@@ -4,7 +4,7 @@ Reports usages of deprecated classes, fields, and methods.
 A quick-fix is available to automatically convert the deprecated usage,
 when the necessary information can be extracted from the Javadoc of the deprecated member.
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   class Interesting {
 
     /**
@@ -22,7 +22,7 @@ when the necessary information can be extracted from the Javadoc of the deprecat
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   class Interesting {
 
     /**
@@ -41,7 +41,7 @@ when the necessary information can be extracted from the Javadoc of the deprecat
 </code></pre>
 <p>By default, the inspection doesn't produce a warning if it's impossible or hard to avoid it.  For example,
   the following code won't be reported:</p>
-<pre><code>
+<pre><code lang="java">
   abstract class A { //library code
      @Deprecated
      abstract void m();
