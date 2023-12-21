@@ -114,7 +114,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static void addBundleWithParents(ResourceBundle bundle, boolean isPluginBundle, Map<Integer, ResourceBundle> bundles)
-    throws IllegalAccessException {
+    throws Throwable {
     bundles.put(getPriority(bundle, isPluginBundle), bundle);
     ResourceBundle parent = getParent(bundle);
     while (parent != null) {
@@ -123,9 +123,9 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
-  private static ResourceBundle getParent(ResourceBundle bundle) throws IllegalAccessException {
-    if (DynamicBundleInternal.PARENT_FIELD != null) {
-      return (ResourceBundle)DynamicBundleInternal.PARENT_FIELD.get(bundle);
+  private static ResourceBundle getParent(ResourceBundle bundle) throws Throwable {
+    if (DynamicBundleInternal.GET_PARENT != null) {
+      return (ResourceBundle)DynamicBundleInternal.GET_PARENT.invokeWithArguments(bundle);
     }
     return null;
   }
@@ -180,7 +180,7 @@ public class DynamicBundle extends AbstractBundle {
   private static class DynamicBundleInternal {
 
     private static final MethodHandle SET_PARENT;
-    private static final Field PARENT_FIELD;
+    private static final MethodHandle GET_PARENT;
 
     static {
       try {
@@ -190,7 +190,7 @@ public class DynamicBundle extends AbstractBundle {
 
         Field parentField = ResourceBundle.class.getDeclaredField("parent");
         parentField.setAccessible(true);
-        PARENT_FIELD = parentField;
+        GET_PARENT = MethodHandles.lookup().unreflectGetter(parentField);
       }
       catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
         throw new RuntimeException(e);
