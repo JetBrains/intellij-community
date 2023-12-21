@@ -121,15 +121,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @Override
   public abstract @NotNull VcsLogGraphTable getTable();
 
-  /**
-   * @deprecated provide navigation history in the data context of the main component if needed
-   * @see History#KEY
-   */
-  @Deprecated
-  public @Nullable History getNavigationHistory() {
-    return null;
-  }
-
   public void requestMore(@NotNull Runnable onLoaded) {
     myRefresher.moreCommitsNeeded(onLoaded);
     getTable().setPaintBusy(true);
