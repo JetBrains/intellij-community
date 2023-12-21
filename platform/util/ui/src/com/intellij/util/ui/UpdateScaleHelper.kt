@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
-import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
+import javax.swing.UIManager
 
 @Internal
-open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentScale: (() -> Float) = { JBUIScale.scale(1f) }) {
-  private var savedScale: Float = currentScale()
+open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentValue: (() -> Float) = {
+  UIManager.getFont("Label.font").size2D
+}) {
+  private var savedValue: Float = currentValue()
   private var initialRunPerformed = false
 
   fun saveScaleAndRunIfChanged(runnable: Runnable): Boolean =
@@ -15,14 +17,14 @@ open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentSc
 
   fun saveScaleAndRunIfChanged(block: () -> Unit): Boolean {
     if ((!forceInitialRun || initialRunPerformed)
-        && savedScale == currentScale()) return false
+        && savedValue == currentValue()) return false
 
     try {
       block()
     }
     finally {
       initialRunPerformed = true
-      savedScale = currentScale()
+      savedValue = currentValue()
     }
     return true
   }
