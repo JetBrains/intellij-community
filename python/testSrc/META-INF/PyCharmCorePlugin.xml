@@ -3,7 +3,6 @@
   <xi:include href="/META-INF/PlatformLangXmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-core-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="python-copyright-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="intellilang-python-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="python-rest-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
@@ -12,5 +11,6 @@
   <content>
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.grazie"/>
+    <module name="intellij.python.langInjection"/>
   </content>
 </idea-plugin>
