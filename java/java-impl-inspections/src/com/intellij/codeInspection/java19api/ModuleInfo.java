@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -11,20 +12,17 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.Map;
 
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
-record ModuleInfo(@NotNull PsiDirectory rootDir,
-                  @NotNull String name,
-                  @NotNull Set<ModuleNode> requires,
-                  @NotNull Set<String> exports) {
+record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
   boolean fileAlreadyExists() {
-    return StreamEx.of(rootDir().getChildren())
+    return ReadAction.compute(() -> StreamEx.of(rootDir().getChildren())
       .select(PsiFile.class)
       .map(PsiFileSystemItem::getName)
-      .anyMatch(MODULE_INFO_FILE::equals);
+      .anyMatch(MODULE_INFO_FILE::equals));
   }
 
   @NotNull
@@ -32,7 +30,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir,
     CharSequence requires = requiresText();
     CharSequence exports = exportsText();
 
-    return new StringBuilder().append(PsiKeyword.MODULE).append(" ").append(name()).append(" {\n")
+    return new StringBuilder().append(PsiKeyword.MODULE).append(" ").append(node().getName()).append(" {\n")
       .append(requires)
       .append((!requires.isEmpty() && !exports.isEmpty()) ? "\n" : "")
       .append(exports)
@@ -42,12 +40,18 @@ record ModuleInfo(@NotNull PsiDirectory rootDir,
   @NotNull
   private CharSequence requiresText() {
     StringBuilder text = new StringBuilder();
-    for (ModuleNode dependency : requires()) {
-      final String dependencyName = dependency.getName();
+    for (Map.Entry<ModuleNode, Boolean> dependency : node().getDependencies().entrySet()) {
+      if(dependency.getValue() == null) continue;
+      final String dependencyName = dependency.getKey().getName();
       if (JAVA_BASE.equals(dependencyName)) continue;
       boolean isBadSyntax = ContainerUtil.or(dependencyName.split("\\."),
                                              part -> JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9));
-      text.append(isBadSyntax ? "// " : " ").append(PsiKeyword.REQUIRES).append(' ').append(dependencyName).append(";\n");
+
+      text.append(isBadSyntax ? "// " : " ").append(PsiKeyword.REQUIRES).append(' ');
+      if (Boolean.TRUE.equals(dependency.getValue())) {
+        text.append(PsiKeyword.TRANSITIVE).append(' ');
+      }
+      text.append(dependencyName).append(";\n");
     }
     return text;
   }
@@ -55,7 +59,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir,
   @NotNull
   private CharSequence exportsText() {
     StringBuilder text = new StringBuilder();
-    for (String packageName : exports()) {
+    for (String packageName : node().getExports()) {
       text.append(PsiKeyword.EXPORTS).append(' ').append(packageName).append(";\n");
     }
     return text;

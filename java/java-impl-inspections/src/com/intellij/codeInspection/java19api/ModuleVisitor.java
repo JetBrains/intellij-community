@@ -22,7 +22,6 @@ class ModuleVisitor extends AbstractDependencyVisitor {
   protected void addClassName(String className) {
     final String packageName = myCheckPackage.apply(className);
     if (packageName != null) {
-      // todo if transitive
       myRequiredPackages.add(packageName);
     }
   }
@@ -43,7 +42,6 @@ class ModuleVisitor extends AbstractDependencyVisitor {
   }
 
   Set<String> getRequiredPackages() {
-    myRequiredPackages.removeAll(getDeclaredPackages());
     return myRequiredPackages;
   }
 

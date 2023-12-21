@@ -1497,6 +1497,8 @@
                        key="notification.group.defender.config"/>
     <notificationGroup id="BrowserCfgProblems" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.browser.config.problems"/>
+    <notificationGroup id="Failed to generate module descriptors" displayType="BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.failed.to.generate.module.descriptors"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>

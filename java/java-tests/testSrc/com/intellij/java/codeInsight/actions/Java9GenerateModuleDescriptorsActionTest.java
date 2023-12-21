@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,10 +50,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT;
@@ -62,11 +60,13 @@ import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerE
 import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*;
 
 public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTestCase {
-  private MultiModuleProjectDescriptor myDescriptor = new MultiModuleProjectDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)));
+  private MultiModuleProjectDescriptor myDescriptor;
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return myDescriptor;
+    return myDescriptor == null
+           ? myDescriptor = new MultiModuleProjectDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)))
+           : myDescriptor;
   }
 
   @Override
@@ -86,6 +86,14 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
     performReformatAction();
   }
 
+  public void testTransitiveDependency() throws IOException {
+    performReformatAction();
+  }
+
+  public void testCommonModuleWithTransitiveDependencies() throws IOException {
+    performReformatAction();
+  }
+
   protected void performReformatAction() throws IOException {
     // INIT
     final AnAction action = ActionManager.getInstance().getAction("GenerateModuleDescriptors");
@@ -102,46 +110,16 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
     final MultiModuleProjectDescriptor descriptor = (MultiModuleProjectDescriptor)getProjectDescriptor();
 
     PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.getAfterPath()),
-                                            LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()),
-                                            file -> "java".equals(file.getExtension()));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      WriteAction.run(() -> {
-        ModuleManager moduleManager = ModuleManager.getInstance(getProject());
-        for (Module module : moduleManager.getModules()) {
-          if (!module.isDisposed()) moduleManager.disposeModule(module);
-        }
-        ((MultiModuleProjectDescriptor)getProjectDescriptor()).cleanup();
-        LightPlatformTestCase.closeAndDeleteProject();
-      });
-      myDescriptor = null;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+                                            LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()));
   }
 
   private static class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor {
     private final Path myPath;
-    private final LazyInitializer.LazyValue<ProjectModel> myProjectModel;
+    private final Path myProjectPath;
 
     MultiModuleProjectDescriptor(@NotNull Path path) {
       myPath = path;
-      Path projectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
-
-      try {
-        FileUtil.copyDir(getBeforePath().toFile(), projectPath.toFile());
-        myProjectModel = LazyInitializer.create(() -> new ProjectModel(projectPath));
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      myProjectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
     }
 
     Path getBeforePath() {
@@ -152,49 +130,29 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
       return myPath.resolve("after");
     }
 
-    void cleanup() {
-      for (ModuleDescriptor module : myProjectModel.get().getModules()) {
-        try {
-          if (module.src() != null) {
-            for (VirtualFile child : module.src().getChildren()) {
-              child.delete(this);
-            }
-          }
-          if (module.testSrc() != null) {
-            for (VirtualFile child : module.testSrc().getChildren()) {
-              child.delete(this);
-            }
-          }
-          for (VirtualFile child : VirtualFileManager.getInstance().refreshAndFindFileByNioPath(myProjectModel.get().getProjectPath())
-            .getChildren()) {
-            child.delete(this);
-          }
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
-
     @Override
     public @NotNull Path generateProjectPath() {
-      return myProjectModel.get().getProjectPath();
+      return myProjectPath;
     }
 
     public @NotNull Path getProjectPath() {
-      return myProjectModel.get().getProjectPath();
+      return myProjectPath;
     }
 
     @Override
     public Sdk getSdk() {
-      return myProjectModel.get().getSdk();
+      return IdeaTestUtil.getMockJdk11();
     }
 
     @Override
     public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
       WriteAction.run(() -> {
-        VfsUtil.markDirtyAndRefresh(false, true, true, myProjectModel.get().getProjectPath().toFile());
+        FileUtilRt.deleteRecursively(myProjectPath);
+        FileUtil.copyDir(getBeforePath().toFile(), myProjectPath.toFile());
+        VfsUtil.markDirtyAndRefresh(false, true, true, myProjectPath.toFile());
+        ProjectModel projectModel = new ProjectModel(myProjectPath);
         // replace services
-        CompilerProjectExtension.getInstance(project).setCompilerOutputUrl(myProjectModel.get().getOutputUrl());
+        CompilerProjectExtension.getInstance(project).setCompilerOutputUrl(projectModel.getOutputUrl());
         ServiceContainerUtil.replaceService(project, DumbService.class,
                                             new DumbServiceImpl(project, CoroutineScopeKt.CoroutineScope(JobKt.Job(null))) {
                                               @Override
@@ -209,7 +167,7 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
           }
         }, project);
 
-        for (ModuleDescriptor descriptor : myProjectModel.get().getModules()) {
+        for (ModuleDescriptor descriptor : projectModel.getModules()) {
           Path iml = descriptor.basePath().resolve(descriptor.name() + ModuleFileType.DOT_DEFAULT_EXTENSION);
           final Module module = Files.exists(iml)
                                 ? ModuleManager.getInstance(project).loadModule(iml)
@@ -218,7 +176,7 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
 
           ModuleRootModificationUtil.updateModel(module, model -> {
             model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(descriptor.languageLevel());
-            model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
+            //model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
             if (descriptor.src() != null) {
               model.addContentEntry(descriptor.src()).addSourceFolder(descriptor.src(), JavaSourceRootType.SOURCE);
               handler.sourceRootCreated(descriptor.src());

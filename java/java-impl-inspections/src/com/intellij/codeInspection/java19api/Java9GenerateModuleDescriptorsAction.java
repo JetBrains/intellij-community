@@ -3,6 +3,8 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.java19api.DescriptorsGenerator.ModuleFiles;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -26,16 +28,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class Java9GenerateModuleDescriptorsAction extends AnAction {
@@ -85,19 +84,19 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
 
   private static void generateWhenSmart(@NotNull Project project) {
     LOG.assertTrue(!DumbService.isDumb(project), "Module name index should be ready");
-    final UniqueModuleNames names = new UniqueModuleNames(project);
     ProgressManager.getInstance().run(
       new Task.Backgroundable(project, getTitle(), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final List<ModuleFiles> moduleFiles = collectClassFiles(project);
           if (ContainerUtil.exists(moduleFiles, module -> !module.files().isEmpty())) {
-            new DescriptorsGenerator(project, names, LOG).generate(moduleFiles, indicator);
+            new DescriptorsGenerator(project, new UniqueModuleNames(project), LOG).generate(moduleFiles, indicator);
           }
           else {
-            CommonRefactoringUtil.showErrorHint(project, null,
-                                                JavaRefactoringBundle.message("generate.module.descriptors.build.required.message"),
-                                                getTitle(), null);
+            NotificationGroupManager.getInstance().getNotificationGroup("Failed to generate module descriptors")
+              .createNotification(getTitle(), JavaRefactoringBundle.message("generate.module.descriptors.build.required.message"), NotificationType.ERROR)
+              .setImportant(true)
+              .notify(project);
           }
         }
       });
@@ -113,22 +112,25 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!mayContainModuleInfo(module)) continue;
       try {
-        String production = CompilerPaths.getModuleOutputPath(module, false);
-        Path productionRoot = production != null ? Paths.get(production) : null;
-        moduleFiles.add(new ModuleFiles(module, collectClassFiles(productionRoot)));
+        final String url = CompilerPaths.getModuleOutputPath(module, false);
+        if (url == null) continue;
+        final Path path = Paths.get(url);
+        Path production = Files.exists(path) ? path : null;
+        moduleFiles.add(new ModuleFiles(module, collectClassFiles(production)));
       }
       catch (IOException e) {
-        CommonRefactoringUtil.showErrorHint(
-          project, null,
-          JavaRefactoringBundle.message("generate.module.descriptors.io.exceptions.message", module.getName()),
-          getTitle(), null);
+        NotificationGroupManager.getInstance().getNotificationGroup("Failed to generate module descriptors")
+          .createNotification(getTitle(), JavaRefactoringBundle.message("generate.module.descriptors.io.exceptions.message", module.getName()), NotificationType.ERROR)
+          .setImportant(true)
+          .notify(project);
         return Collections.emptyList();
       }
     }
     if (moduleFiles.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, null,
-                                          JavaRefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"),
-                                          getTitle(), null);
+      NotificationGroupManager.getInstance().getNotificationGroup("Failed to generate module descriptors")
+        .createNotification(getTitle(), JavaRefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"), NotificationType.WARNING)
+        .setImportant(true)
+        .notify(project);
     }
     return moduleFiles;
   }
@@ -139,7 +141,7 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
 
   @NotNull
   private static List<Path> collectClassFiles(@Nullable Path file) throws IOException {
-    if (file == null) return Collections.emptyList();
+    if (file == null || !Files.exists(file)) return Collections.emptyList();
     try (Stream<Path> stream = Files.walk(file)) {
       final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(CLASS_FILE_PATTERN);
       return stream.filter(path -> matcher.matches(path.getFileName())).toList();

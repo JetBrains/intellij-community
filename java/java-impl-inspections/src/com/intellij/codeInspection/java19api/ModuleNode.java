@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -18,27 +18,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class ModuleNode implements Comparable<ModuleNode> {
-  private final Module myModule;
-  private final Set<String> myDeclaredPackages;
-  private final Set<String> myRequiredPackages;
-  private final Set<ModuleNode> myDependencies = new TreeSet<>();
-  private final Set<String> myExports = new TreeSet<>();
-  private final PsiJavaModule myDescriptor;
-  private final String myName;
+  @Nullable private final Module myModule;
+  @NotNull private final Set<String> myDeclaredPackages;
+  @NotNull private final Set<String> myRequiredPackages;
+  @NotNull private final Map<ModuleNode, Boolean> myDependencies = new TreeMap<>();
+  @NotNull private final Set<String> myExports = new TreeSet<>();
+  @Nullable private final PsiJavaModule myDescriptor;
+  @NotNull private final String myName;
 
   ModuleNode(@NotNull Module module,
              @NotNull Set<String> declaredPackages,
              @NotNull Set<String> requiredPackages,
              @NotNull UniqueModuleNames uniqueModuleNames) {
     myModule = module;
-    myDeclaredPackages = declaredPackages;
-    myRequiredPackages = requiredPackages;
+    myDeclaredPackages = new HashSet<>(declaredPackages);
 
+    myRequiredPackages = new HashSet<>(requiredPackages);
+    myRequiredPackages.removeAll(myDeclaredPackages);
+
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
     myDescriptor = ReadAction.compute(() -> {
-      VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
+      VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots(false);
       return sourceRoots.length != 0 ? findDescriptor(module, sourceRoots[0]) : null;
     });
-    myName = myDescriptor != null ? myDescriptor.getName() : uniqueModuleNames.getUniqueName(myModule);
+    myName = ReadAction.compute(() -> myDescriptor != null ? myDescriptor.getName() : uniqueModuleNames.getUniqueName(myModule));
   }
 
   ModuleNode(@NotNull PsiJavaModule descriptor) {
@@ -46,36 +49,45 @@ class ModuleNode implements Comparable<ModuleNode> {
     myDeclaredPackages = Collections.emptySet();
     myRequiredPackages = Collections.emptySet();
     myDescriptor = descriptor;
-    myName = myDescriptor.getName();
+    myName = ReadAction.compute(() -> myDescriptor.getName());
   }
 
+  @Nullable
+  Module getModule() {
+    return myModule;
+  }
+
+  @NotNull
   Set<String> getDeclaredPackages() {
     return myDeclaredPackages;
   }
 
+  @NotNull
   Set<String> getRequiredPackages() {
     return myRequiredPackages;
   }
 
-  Set<ModuleNode> getDependencies() {
+  @NotNull
+  Map<ModuleNode, Boolean> getDependencies() {
     return myDependencies;
   }
 
+  @NotNull
   Set<String> getExports() {
     return myExports;
   }
 
-  void addExport(String packageName) {
+  void addExport(@NotNull String packageName) {
     myExports.add(packageName);
   }
 
-
+  @Nullable
   PsiJavaModule getDescriptor() {
     return myDescriptor;
   }
 
   @NotNull
-  String getName() {
+  public String getName() {
     return myName;
   }
 
@@ -86,7 +98,7 @@ class ModuleNode implements Comparable<ModuleNode> {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof ModuleNode && myName.equals(((ModuleNode)o).myName);
+    return this == o || o instanceof ModuleNode node && getName().equals(node.getName());
   }
 
   @Override
@@ -96,14 +108,16 @@ class ModuleNode implements Comparable<ModuleNode> {
 
   @Override
   public int compareTo(@NotNull ModuleNode o) {
-    int m1 = myModule == null ? 0 : 1, m2 = o.myModule == null ? 0 : 1;
+    int m1 = myModule == null ? 0 : 1;
+    int m2 = o.myModule == null ? 0 : 1;
     if (m1 != m2) return m1 - m2;
-    int j1 = myName.startsWith("java.") || myName.startsWith("javax.") ? 0 : 1;
-    int j2 = o.myName.startsWith("java.") || o.myName.startsWith("javax.") ? 0 : 1;
+    int j1 = getName().startsWith("java.") || getName().startsWith("javax.") ? 0 : 1;
+    int j2 = o.getName().startsWith("java.") || o.getName().startsWith("javax.") ? 0 : 1;
     if (j1 != j2) return j1 - j2;
-    return StringUtil.compare(myName, o.myName, false);
+    return StringUtil.compare(getName(), o.getName(), false);
   }
 
+  @Nullable
   PsiDirectory getRootDir() {
     if (myModule == null) return null;
     return ReadAction.compute(() -> {
@@ -114,14 +128,14 @@ class ModuleNode implements Comparable<ModuleNode> {
   }
 
   @Nullable
-  private static PsiDirectory findJavaDirectory(PsiManager psiManager, VirtualFile[] roots) {
-    return StreamEx.of(roots)
+  private static PsiDirectory findJavaDirectory(@NotNull PsiManager psiManager, VirtualFile @NotNull [] roots) {
+    return ReadAction.compute(() -> StreamEx.of(roots)
       .sorted(Comparator.comparingInt((VirtualFile vFile) -> "java".equals(vFile.getName()) ? 0 : 1).thenComparing(VirtualFile::getName))
-      .map(psiManager::findDirectory).nonNull().findFirst().orElse(null);
+      .map(psiManager::findDirectory).nonNull().findFirst().orElse(null));
   }
 
   @Nullable
-  private static PsiJavaModule findDescriptor(@NotNull Module module, VirtualFile root) {
+  private static PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
     return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
   }
 }

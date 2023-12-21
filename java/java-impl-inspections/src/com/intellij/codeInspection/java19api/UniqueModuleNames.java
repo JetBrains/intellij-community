@@ -8,6 +8,7 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +23,11 @@ class UniqueModuleNames {
     final GlobalSearchScope scope = ProjectScope.getAllScope(project);
 
     final List<PsiJavaModule> modules = new ArrayList<>();
-    for (String key : index.getAllKeys(project)) {
-      modules.addAll(index.getModules(key, project, scope));
-    }
+    ReadAction.run(() -> {
+      for (String key : index.getAllKeys(project)) {
+        modules.addAll(index.getModules(key, project, scope));
+      }
+    });
     myNameGenerator = new UniqueNameGenerator(modules, module -> ReadAction.compute(() -> module.getName()));
   }
 
