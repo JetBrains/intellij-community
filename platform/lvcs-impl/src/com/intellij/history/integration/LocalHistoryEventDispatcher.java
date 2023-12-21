@@ -73,7 +73,7 @@ final class LocalHistoryEventDispatcher {
     var projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices;
     ProjectFileIndex containingProjectIndex = null;
     for (var projectIndex : projectIndexes) {
-      if (!projectIndex.isInProject(dir)) continue;
+      if (!projectIndex.isInProjectOrExcluded(dir)) continue;
       if (containingProjectIndex != null) return false; // more than 1 project contains this dir
       containingProjectIndex = projectIndex;
     }
@@ -88,7 +88,7 @@ final class LocalHistoryEventDispatcher {
   }
 
   private void createRecursively(@NotNull VirtualFile f) {
-    if (f.isDirectory() && USE_WORKSPACE_TRAVERSAL) {
+    if (USE_WORKSPACE_TRAVERSAL) {
       if (createRecursivelyUsingWorkspaceTraversal(f)) return;
     }
     VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
