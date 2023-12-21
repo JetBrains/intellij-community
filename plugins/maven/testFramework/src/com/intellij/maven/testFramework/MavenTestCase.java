@@ -645,8 +645,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
-                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
+    assertEquals((CollectionFactory.createFilePathSet(expected)), (CollectionFactory.createFilePathSet(actual)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
@@ -755,45 +754,5 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
       return defaultContext.getData(dataId);
     };
-  }
-
-  private static class SetWithToString<T> extends AbstractSet<T> {
-
-    private final Set<T> myDelegate;
-
-    SetWithToString(@NotNull Set<T> delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public int size() {
-      return myDelegate.size();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-      return myDelegate.contains(o);
-    }
-
-    @NotNull
-    @Override
-    public Iterator<T> iterator() {
-      return myDelegate.iterator();
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-      return myDelegate.containsAll(c);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return myDelegate.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      return myDelegate.hashCode();
-    }
   }
 }
