@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
 
@@ -42,24 +41,6 @@ public class FileUtil extends FileUtilRt {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
-
-  /**
-   * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
-    new TObjectHashingStrategy<File>() {
-      @Override
-      public int computeHashCode(File object) {
-        return fileHashCode(object);
-      }
-
-      @Override
-      public boolean equals(File o1, File o2) {
-        return filesEqual(o1, o2);
-      }
-    };
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
