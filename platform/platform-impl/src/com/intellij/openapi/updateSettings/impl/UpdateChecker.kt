@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -681,8 +680,8 @@ private fun doUpdateAndShowResult(
   return {
     fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
 
-    val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
-    val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
+    val updatesForEnabledPlugins = nonIgnored(pluginUpdates.allEnabled)
+    val updatesForPlugins = updatesForEnabledPlugins + nonIgnored(pluginUpdates.allDisabled)
 
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
@@ -690,7 +689,7 @@ private fun doUpdateAndShowResult(
       showResults(
         project = project,
         platformUpdates = platformUpdates,
-        updatedPlugins = updatedPlugins,
+        updatedPlugins = updatesForPlugins,
         incompatiblePlugins = pluginUpdates.incompatible,
         showNotification = userInitiated || WelcomeFrame.getInstance() != null,
         forceDialog = forceDialog,
@@ -700,10 +699,10 @@ private fun doUpdateAndShowResult(
     else {
       showResults(
         project = project,
-        updatedPlugins = updatedPlugins,
+        updatesForPlugins = updatesForPlugins,
         customRepoPlugins = customRepoPlugins,
         externalUpdates = externalUpdates,
-        pluginsEnabled = enabledPlugins.isNotEmpty(),
+        updatesForEnabledPlugins = updatesForEnabledPlugins,
         userInitiated = userInitiated,
         forceDialog = forceDialog,
         showSettingsLink = showSettingsLink,
@@ -725,49 +724,31 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
 @RequiresEdt
 private fun showResults(
   project: Project?,
-  updatedPlugins: List<PluginDownloader>,
+  updatesForPlugins: List<PluginDownloader>,
   customRepoPlugins: Collection<PluginNode>,
   externalUpdates: Collection<ExternalUpdate>,
-  pluginsEnabled: Boolean,
+  updatesForEnabledPlugins: List<PluginDownloader>,
   userInitiated: Boolean,
   forceDialog: Boolean,
   showSettingsLink: Boolean,
 ) {
-  if (pluginsEnabled) {
+  if (updatesForEnabledPlugins.isNotEmpty()) {
     if (userInitiated) {
       shownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
     }
 
-    val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
+    // offer all updates in a dialog
+    val showUpdateDialog = { PluginUpdateDialog(project, updatesForPlugins, customRepoPlugins).show() }
 
     if (forceDialog) {
-      runnable()
+      showUpdateDialog()
     }
     else {
-      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
 
       if (userInitiated) {
-        val updatedPluginNames = updatedPlugins.map { it.pluginName }
-        val (title, message) = when (updatedPluginNames.size) {
-          1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPluginNames[0])
-          else -> IdeBundle.message("updates.plugins.ready.title") to updatedPluginNames.joinToString { """"$it"""" }
-        }
-        showNotification(
-          project = project,
-          kind = NotificationKind.PLUGINS,
-          displayId = "plugins.update.available",
-          title = title,
-          message = message,
-          actions = listOf(
-            NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
-            },
-            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
-            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
-              UpdateChecker.ignorePlugins(updatedPlugins.map { it.descriptor })
-            },
-          ),
-        )
+        // offer to update only enabled plugins
+        showUpdatePluginsNotification(updatesForEnabledPlugins, project, showUpdateDialog)
       }
     }
   }
@@ -793,7 +774,7 @@ private fun showResults(
       }
     }
   }
-  else if (!pluginsEnabled) {
+  else if (updatesForEnabledPlugins.isEmpty()) {
     if (forceDialog) {
       NoUpdatesDialog(showSettingsLink).show()
     }
@@ -805,6 +786,32 @@ private fun showResults(
                        message = NoUpdatesDialog.getNoUpdatesText())
     }
   }
+}
+
+private fun showUpdatePluginsNotification(updatesForPlugins: List<PluginDownloader>,
+                                          project: Project?,
+                                          showUpdateDialog: () -> Unit) {
+  val updatedPluginNames = updatesForPlugins.map { it.pluginName }
+  val (title, message) = when (updatedPluginNames.size) {
+    1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPluginNames[0])
+    else -> IdeBundle.message("updates.plugins.ready.title") to updatedPluginNames.joinToString { """"$it"""" }
+  }
+  showNotification(
+    project = project,
+    kind = NotificationKind.PLUGINS,
+    displayId = "plugins.update.available",
+    title = title,
+    message = message,
+    actions = listOf(
+      NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatesForPlugins.size)) { e, _ ->
+        PluginUpdateDialog.runUpdateAll(updatesForPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+      },
+      NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), showUpdateDialog),
+      NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatesForPlugins.size)) {
+        UpdateChecker.ignorePlugins(updatesForPlugins.map { it.descriptor })
+      },
+    ),
+  )
 }
 
 @RequiresEdt
@@ -821,7 +828,7 @@ private fun showResults(
     shownNotifications.remove(NotificationKind.PLATFORM)?.forEach { it.expire() }
   }
 
-  val runnable = {
+  val showUpdateDialog = {
     UpdateInfoDialog(
       project,
       platformUpdates,
@@ -832,7 +839,7 @@ private fun showResults(
   }
 
   if (forceDialog) {
-    runnable()
+    showUpdateDialog()
   }
   else {
     UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
@@ -852,7 +859,7 @@ private fun showResults(
         message = message,
         actions = listOf(NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
           IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
-          runnable()
+          showUpdateDialog()
         }))
     }
   }
