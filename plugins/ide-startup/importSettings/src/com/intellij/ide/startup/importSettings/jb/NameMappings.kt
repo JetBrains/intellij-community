@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
-import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.*
-import com.intellij.ide.startup.importSettings.data.DialogImportItem
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.jb.IDEData.Companion.IDE_MAP
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PlatformUtils
 import javax.swing.Icon
 
@@ -58,7 +55,7 @@ private enum class IDEData(val code: String,
   APPCODE("AC", "AppCode", "AppCode", AC_20, AC_24, AC_48),
   AQUA("Aqua", "Aqua", "Aqua", Aqua_20, Aqua_24, Aqua_48),
   CLION("CL", "CLion", "CLion", CL_20, CL_24, CL_48),
-  CLION_NOVA("CL", "CLionNova", "CLion with Radler", CL_20, CL_24, CL_48),
+  CLION_NOVA("CL", "CLionNova", "CLion Nova", CL_20, CL_24, CL_48),
   DATAGRIP("DG", "DataGrip", "DataGrip", DG_20, DG_24, DG_48),
   DATASPELL("DS", "DataSpell", "DataSpell", DS_20, DS_24, DS_48),
   GOLAND("GO", "GoLand", "GoLand", GO_20, GO_24, GO_48),
