@@ -73,6 +73,19 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return true;
   }
 
+  @Override
+  public boolean processChangedMethod(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmMethod, JvmMethod.Diff> change, Utils future, Utils present) {
+    if (
+      find(change.getDiff().paramAnnotations().removed(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot.type)) != null ||
+      find(change.getDiff().annotations().added(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot)) != null) {
+
+      JvmMethod changedMethod = change.getPast();
+      debug("One of method's parameters or method's return value has become non-nullable; affecting method usages ", changedMethod);
+      affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod));
+    }
+    return true;
+  }
+
   private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, @Nullable TypeRepr.ClassType samType, Utils utils) {
     if (clsMethod.isPrivate() || clsMethod.isConstructor()) {
       return;

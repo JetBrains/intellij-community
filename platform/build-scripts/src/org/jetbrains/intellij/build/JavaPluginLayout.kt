@@ -92,6 +92,7 @@ object JavaPluginLayout {
       // used in JPS - do not use uber jar
       spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("jps-javac-extension", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("jetbrains.kotlinx.metadata.jvm", LibraryPackMode.STANDALONE_MERGED)
       // gpl-cpe license - do not use uber jar
       spec.withProjectLibrary("jb-jdi", LibraryPackMode.STANDALONE_MERGED)
 

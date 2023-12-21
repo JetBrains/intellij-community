@@ -23,6 +23,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
+import kotlinx.metadata.jvm.JvmMetadataUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,8 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,6 +114,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
 
     ClassPathUtil.addKotlinStdlib(cp);
+    addToClassPath(JvmMetadataUtil.class, cp);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
 
     addToClassPath(ClassWriter.class, cp);  // asm

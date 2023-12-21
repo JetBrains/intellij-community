@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -635,6 +635,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jediterm-ui", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(name = "jetbrains.kotlinx.metadata.jvm", libraryName = "jetbrains.kotlinx.metadata.jvm",
+                   url = "https://github.com/JetBrains/kotlin")
+      .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "JetBrains Annotations", libraryName = "jetbrains-annotations",
                    url = "https://github.com/JetBrains/java-annotations")

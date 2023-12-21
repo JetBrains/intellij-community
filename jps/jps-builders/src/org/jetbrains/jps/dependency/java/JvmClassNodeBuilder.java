@@ -5,6 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import kotlinx.metadata.Attributes;
+import kotlinx.metadata.KmClass;
+import kotlinx.metadata.KmFunction;
+import kotlinx.metadata.KmValueParameter;
+import kotlinx.metadata.jvm.JvmExtensionsKt;
+import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
@@ -559,6 +565,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     };
   }
 
+
+  private KmClass findKmClass() {
+    KotlinMeta meta = (KotlinMeta)Iterators.find(myMetadata, md-> md instanceof KotlinMeta);
+    return meta != null? meta.getKmClass() : null;
+  }
+
   @Override
   public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
     final Ref<Object> defaultValue = Ref.create();
@@ -570,6 +582,25 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
+          KmClass kmClass = findKmClass();
+          if (kmClass != null) {
+            KmFunction func = Iterators.find(kmClass.getFunctions(), f -> {
+              JvmMethodSignature sign = JvmExtensionsKt.getSignature(f);
+              return sign != null && n.equals(sign.getName()) && desc.equals(sign.getDescriptor());
+            });
+            if (func != null) {
+              if (Attributes.isNullable(func.getReturnType())) {
+                annotations.add(KotlinMeta.KOTLIN_NULLABLE);
+              }
+              int paramIndex = 0;
+              for (KmValueParameter parameter : func.getValueParameters()) {
+                if (Attributes.isNullable(parameter.getType())) {
+                  paramAnnotations.add(new ParamAnnotation(paramIndex, KotlinMeta.KOTLIN_NULLABLE));
+                }
+                paramIndex++;
+              }
+            }
+          }
           myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
       }

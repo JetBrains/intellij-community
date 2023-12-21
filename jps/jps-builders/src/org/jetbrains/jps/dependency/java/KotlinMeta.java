@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import kotlinx.metadata.KmClass;
+import kotlinx.metadata.jvm.KotlinClassHeader;
+import kotlinx.metadata.jvm.KotlinClassMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.GraphDataInput;
@@ -15,6 +18,8 @@ import java.util.Arrays;
  * The created annotation instance can be further introspected with <a href="https://github.com/JetBrains/kotlin/tree/master/libraries/kotlinx-metadata/jvm">kotlinx-metadata-jvm</a> library
  */
 public final class KotlinMeta implements JvmMetadata {
+
+  public static final TypeRepr.ClassType KOTLIN_NULLABLE = new TypeRepr.ClassType("org/jetbrains/annotations/depgraph/KotlinNullable");
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
   private static final int[] EMPTY_INT_ARRAY = new int[0];
 
@@ -97,5 +102,27 @@ public final class KotlinMeta implements JvmMetadata {
   @NotNull
   public Integer getExtraInt() {
     return myExtraInt;
+  }
+
+
+  private KotlinClassMetadata[] myKmClass; // cached
+
+  public KotlinClassMetadata getClassMetadata() {
+    if (myKmClass == null) {
+      try {
+        myKmClass = new KotlinClassMetadata[] {KotlinClassMetadata.readLenient(new KotlinClassHeader(
+          getKind(), getVersion(), getData1(), getData2(), getExtraString(), getPackageName(), getExtraInt()
+        ))};
+      }
+      catch (Throwable e) {
+        myKmClass = new KotlinClassMetadata[] {null};
+      }
+    }
+    return myKmClass[0];
+  }
+
+  public KmClass getKmClass() {
+    KotlinClassMetadata classMetadata = getClassMetadata();
+    return classMetadata instanceof KotlinClassMetadata.Class? ((KotlinClassMetadata.Class)classMetadata).getKmClass() : null;
   }
 }
