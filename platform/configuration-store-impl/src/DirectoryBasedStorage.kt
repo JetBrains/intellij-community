@@ -66,8 +66,6 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
     }
     return state
   }
-
-  override fun hasState(storageData: StateMap, componentName: String): Boolean = storageData.hasStates()
 }
 
 @ApiStatus.Internal

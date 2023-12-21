@@ -44,12 +44,6 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
 
-  protected abstract fun hasState(storageData: T, componentName: String): Boolean
-
-  final override fun hasState(componentName: String, reloadData: Boolean): Boolean {
-    return hasState(getStorageData(reloadData), componentName)
-  }
-
   protected fun getStorageData(reload: Boolean = false): T {
     val currentStorageData = storageDataRef.get()
     if (currentStorageData != null && !reload) {

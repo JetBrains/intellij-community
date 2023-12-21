@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore
@@ -104,13 +104,13 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
   override val isExternalSystemStorageEnabled: Boolean
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled ?: false
 
-  override fun createFileBasedStorage(path: Path,
+  override fun createFileBasedStorage(file: Path,
                                       collapsedPath: String,
                                       roamingType: RoamingType,
                                       usePathMacroManager: Boolean,
                                       rootTagName: String?): StateStorage {
     return ModuleFileStorage(storageManager = this,
-                             file = path,
+                             file = file,
                              fileSpec = collapsedPath,
                              rootElementName = rootTagName,
                              roamingType = roamingType,

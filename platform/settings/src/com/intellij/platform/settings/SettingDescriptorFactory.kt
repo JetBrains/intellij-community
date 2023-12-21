@@ -35,6 +35,6 @@ sealed interface SettingDescriptorTemplateFactory {
 inline fun <T : Any> settingDescriptor(key: String,
                                        pluginId: PluginId,
                                        serializer: SettingSerializerDescriptor<T>,
-                                       block: SettingDescriptor.Builder.() -> Unit): SettingDescriptor<T> {
+                                       block: SettingDescriptor.Builder.() -> Unit = {}): SettingDescriptor<T> {
   return SettingDescriptor.Builder().apply(block).build(key = key, pluginId = pluginId, serializer = serializer)
 }

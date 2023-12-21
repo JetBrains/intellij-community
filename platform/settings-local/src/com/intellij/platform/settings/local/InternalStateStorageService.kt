@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package com.intellij.platform.settings.local
 
 import com.intellij.diagnostic.PluginException
@@ -14,7 +12,6 @@ import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingSerializerDescriptor
 import com.intellij.platform.settings.SettingValueSerializer
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -94,32 +91,6 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
       else {
         @Suppress("UNCHECKED_CAST")
         map.put(key, cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
-      }
-      setMeasurer.add(System.nanoTime() - start)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      thisLogger().error(PluginException(e, pluginId))
-    }
-  }
-
-  fun <T : Any> putIfDiffers(key: String, value: T?, serializer: SettingSerializerDescriptor<T>, pluginId: PluginId) {
-    val start = System.nanoTime()
-    try {
-      if (value == null) {
-        map.remove(key)
-      }
-      else if (serializer === RawSettingSerializerDescriptor) {
-        map.putIfDiffers(key, value as ByteArray)
-      }
-      else {
-        @Suppress("UNCHECKED_CAST")
-        map.putIfDiffers(key, cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
       }
       setMeasurer.add(System.nanoTime() - start)
     }

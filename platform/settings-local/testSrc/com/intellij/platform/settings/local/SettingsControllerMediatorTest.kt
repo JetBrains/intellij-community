@@ -4,7 +4,6 @@ package com.intellij.platform.settings.local
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -70,12 +69,9 @@ private fun createGet(resultSupplier: () -> GetResult<String>): DelegatedSetting
     override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean {
       TODO("Not yet implemented")
     }
-
-    @IntellijInternalApi
-    override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean? {
-      TODO("Not yet implemented")
-    }
   }
 }
 
-private fun key(name: String): SettingDescriptor<String> = settingDescriptor(name, PluginManagerCore.CORE_ID, StringSettingSerializerDescriptor) { }
+private fun key(@Suppress("SameParameterValue") name: String): SettingDescriptor<String> {
+  return settingDescriptor(key = name, pluginId = PluginManagerCore.CORE_ID, serializer = StringSettingSerializerDescriptor)
+}

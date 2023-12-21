@@ -4,6 +4,7 @@ package com.intellij.platform.settings
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.*
+import java.nio.file.Path
 import java.util.*
 
 @NonExtendable
@@ -21,7 +22,7 @@ interface SettingsController {
 
   @Internal
   @IntellijInternalApi
-  fun createStateStorage(collapsedPath: String): Any?
+  fun createStateStorage(collapsedPath: String, file: Path): Any?
 }
 
 @JvmInline
@@ -64,12 +65,6 @@ interface DelegatedSettingsController {
    */
   @Throws(ReadOnlySettingException::class)
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean
-
-  /**
-   * Return `null` if unknown (controller is not applicable for setting).
-   */
-  @IntellijInternalApi
-  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean?
 }
 
 class ReadOnlySettingException(val key: SettingDescriptor<*>) : IllegalStateException()

@@ -33,8 +33,6 @@ private class LocalSettingsController : DelegatedSettingsController {
     service.setItem(key, value)
     return false
   }
-
-  override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>) = service.hasKeyStartsWith(key)
 }
 
 @Service(Service.Level.APP)
@@ -79,14 +77,6 @@ private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : S
     operate(key, internalOperation = {
       it.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
-  }
-
-  fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
-    operate(key, internalOperation = {
-      return it.map.hasKeyStartsWith(getEffectiveKey(key) + ".")
-    })
-
-    return false
   }
 
   fun invalidateCaches() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.configurationStore.SaveSessionProducer
@@ -50,7 +50,6 @@ private object NonPersistentStateStorageManager : StateStorageManager {
 
 private object NonPersistentStateStorage : StateStorage {
   override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? = null
-  override fun hasState(componentName: String, reloadData: Boolean): Boolean = false
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) = Unit
 }

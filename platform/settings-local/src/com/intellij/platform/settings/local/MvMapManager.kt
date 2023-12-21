@@ -100,11 +100,6 @@ internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
     map.remove(key)
   }
 
-  fun put(key: String, bytes: ByteArray?) {
-    // do not write if existing value equals to the old one
-    putIfDiffers(key, bytes)
-  }
-
   fun invalidate() {
     val file = getDatabaseFile()
     if (Files.exists(file)) {
@@ -116,12 +111,7 @@ internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
     map.clear()
   }
 
-  fun hasKeyStartsWith(key: String): Boolean {
-    val ceilingKey = map.ceilingKey(key)
-    return ceilingKey != null && ceilingKey.startsWith(key)
-  }
-
-  fun putIfDiffers(key: String, value: ByteArray?) {
+  fun put(key: String, value: ByteArray?) {
     map.operate(key, value, object : MVMap.DecisionMaker<ByteArray?>() {
       override fun decide(existingValue: ByteArray?, providedValue: ByteArray?): MVMap.Decision {
         if (existingValue.contentEquals(providedValue)) {

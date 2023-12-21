@@ -51,8 +51,6 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageData.archive(componentName, serializedState)
   }
 
-  final override fun hasState(storageData: StateMap, componentName: String) = storageData.hasState(componentName)
-
   final override fun loadData() = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {

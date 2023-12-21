@@ -6,6 +6,7 @@ package com.intellij.platform.settings.local
 
 import com.intellij.configurationStore.SaveSession
 import com.intellij.configurationStore.SaveSessionProducer
+import com.intellij.configurationStore.__platformSerializer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
@@ -34,17 +35,25 @@ private val shimPluginId = PluginId.getId("__controller_shim__")
 internal class StateStorageBackedByController(
   @JvmField val controller: SettingsControllerMediator,
   private val tags: List<SettingTag>,
+  private val oldStorage: XmlFileStorage?,
 ) : StateStorage {
   private val bindingProducer = BindingProducer()
 
   override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
-    return when {
+    when {
       stateClass === Element::class.java -> {
-        val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
-        data as T
+        val data = getXmlData(createSettingDescriptor(componentName))
+        if (data != null) {
+          return data as T
+        }
+        oldStorage?.getJdom(componentName)?.let {
+          return it as T
+        }
+        return mergeInto
       }
       com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
+        // we don't care about data from the old storage for deprecated JDOMExternalizable
         val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
         if (mergeInto != null) {
           thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
@@ -54,27 +63,24 @@ internal class StateStorageBackedByController(
           .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
           .invoke() as com.intellij.openapi.util.JDOMExternalizable
         t.readExternal(data)
-        t as T
+        return t as T
       }
       else -> {
         try {
           val beanBinding = bindingProducer.getRootBinding(stateClass) as NotNullDeserializeBinding
           if (beanBinding is KotlinxSerializationBinding) {
-            val data = controller.getItem(createSettingDescriptor(componentName)) ?: return mergeInto
-            return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
+            val data = controller.getItem(createSettingDescriptor(componentName))
+            if (data != null) {
+              return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
+            }
+            else {
+              return oldStorage?.get(componentName)?.content?.let {
+                beanBinding.decodeFromJson(it)
+              } as T?
+            }
           }
           else {
-            var result = mergeInto
-            val bindings = (beanBinding as BeanBinding).bindings
-            for ((index, binding) in bindings.withIndex()) {
-              val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}")) ?: continue
-              if (result == null) {
-                // create a result only if we have some data - do not return empty state class
-                result = beanBinding.newInstance() as T
-              }
-              BeanBinding.deserializeInto(result, data, null, bindings, index, index + 1)
-            }
-            return result
+            return getXmlSerializationState(mergeInto = mergeInto, beanBinding = beanBinding, componentName = componentName)
           }
         }
         catch (e: SerializationException) {
@@ -87,19 +93,41 @@ internal class StateStorageBackedByController(
     }
   }
 
+  private fun <T : Any> getXmlSerializationState(mergeInto: T?, beanBinding: NotNullDeserializeBinding, componentName: String): T? {
+    var result = mergeInto
+    var hasData = false
+    val bindings = (beanBinding as BeanBinding).bindings
+    for ((index, binding) in bindings.withIndex()) {
+      val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}")) ?: continue
+      if (result == null) {
+        // create a result only if we have some data - do not return empty state class
+        @Suppress("UNCHECKED_CAST")
+        result = beanBinding.newInstance() as T
+      }
+
+      hasData = true
+      BeanBinding.deserializeInto(result, data, null, bindings, index, index + 1)
+    }
+
+    if (!hasData && oldStorage != null) {
+      val oldData = oldStorage.get(componentName)
+      if (oldData != null) {
+        @Suppress("UNCHECKED_CAST")
+        result = mergeInto ?: beanBinding.newInstance() as T
+        beanBinding.deserializeInto(result, oldData)
+      }
+    }
+    return result
+  }
+
   private fun getXmlData(key: SettingDescriptor<ByteArray>): Element? {
     try {
-      val data = controller.getItem(key) ?: return null
-      return decodeCborToXml(data)
+      return decodeCborToXml(controller.getItem(key) ?: return null)
     }
     catch (e: Throwable) {
       thisLogger().error("Cannot deserialize value for $key", e)
       return null
     }
-  }
-
-  override fun hasState(componentName: String, reloadData: Boolean): Boolean {
-    return controller.hasKeyStartsWith(createSettingDescriptor(componentName))
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
@@ -204,7 +232,9 @@ private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
   }
 
   override fun getRootBinding(aClass: Class<*>, originalType: Type): Binding {
-    assert(aClass === originalType)
+    require(aClass === originalType) {
+      "Expect that class $aClass is same as originalType $originalType"
+    }
     return getRootBinding(aClass)
   }
 
@@ -220,7 +250,7 @@ private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
     }
     cache.put(aClass, binding)
     try {
-      binding.init(aClass, this)
+      binding.init(aClass, __platformSerializer())
     }
     catch (e: Throwable) {
       cache.remove(aClass)

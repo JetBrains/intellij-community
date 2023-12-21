@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,7 +6,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -35,7 +34,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
     }
   }
 
-  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSessionProducer(states, this) {
+  override fun createSaveSession(states: StateMap) = object : FileSaveSessionProducer(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       super.saveLocally(when (dataWriter) {
         null -> null
@@ -90,7 +89,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun expandMacro(path: String) = throw UnsupportedOperationException()
+    override fun expandMacro(collapsedPath: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }

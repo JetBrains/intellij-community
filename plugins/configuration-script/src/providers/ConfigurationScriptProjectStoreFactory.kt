@@ -123,9 +123,6 @@ private class ReadOnlyStorage(val configurationSchemaKey: String,
     return state as T
   }
 
-  // never called for read-only storage
-  override fun hasState(componentName: String, reloadData: Boolean) = false
-
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {

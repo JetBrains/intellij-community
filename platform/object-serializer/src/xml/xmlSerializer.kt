@@ -13,6 +13,7 @@ import com.intellij.util.xmlb.*
 import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.lang.ref.SoftReference
@@ -150,6 +151,10 @@ fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyN
 }
 
 private val serializer = MyXmlSerializer()
+
+@Suppress("FunctionName")
+@Internal
+fun __platformSerializer(): Serializer = serializer
 
 private abstract class OldBindingProducer<ROOT_BINDING> {
   private val cache: MutableMap<Type, ROOT_BINDING> = HashMap()

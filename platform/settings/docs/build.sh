@@ -14,7 +14,7 @@ unzip ../webHelpSETTINGS-DOCS-DRAFT2-all.zip -d site
 cp "$BASEDIR"/Dockerfile ./
 cp "$BASEDIR"/nginx.conf ./
 
-nerdctl build --platform=amd64,arm64 . -t registry.jetbrains.team/p/ij/structurizr/settings-docs:latest
-nerdctl push --platform=amd64,arm64 registry.jetbrains.team/p/ij/structurizr/settings-docs:latest
+docker build --platform=linux/amd64 . -t registry.jetbrains.team/p/ij/structurizr/settings-docs:latest
+docker push registry.jetbrains.team/p/ij/structurizr/settings-docs:latest
 
 echo "$PWD"

@@ -38,7 +38,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   internal fun getNameFile(): Path {
     for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      runCatching { projectNameProvider.getNameFile(project)?.let { return it } }.getOrLogException(LOG)
+      runCatching { projectNameProvider.getNameFile(project) }
+        .getOrLogException(LOG)
+        ?.let { return it }
     }
     return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
   }
@@ -224,8 +226,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
                                                   storageManager = storageManager,
                                                   stateSpec = stateSpec,
                                                   storages = result!!,
-                                                  operation = operation)?.let { return it }
+                                                  operation = operation)
           }.getOrLogException(LOG)
+            ?.let { return it }
         }
       }
 

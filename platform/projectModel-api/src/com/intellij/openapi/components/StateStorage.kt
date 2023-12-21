@@ -14,8 +14,6 @@ interface StateStorage {
    */
   fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T?
 
-  fun hasState(componentName: String, reloadData: Boolean): Boolean
-
   /**
    * Returning `null` means that nothing to save.
    */

@@ -9,11 +9,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jdom.*
 
-private val factory = CBORFactory().configure(CBORGenerator.Feature.STRINGREF, true)
+internal val cborFactory: CBORFactory = CBORFactory().configure(CBORGenerator.Feature.STRINGREF, true)
 
 internal fun encodeXmlToCbor(element: Element): ByteArray {
   val b = BufferExposingByteArrayOutputStream()
-  val out = factory.createGenerator(b)
+  val out = cborFactory.createGenerator(b)
   out.use {
     writeElement(element, out)
   }
@@ -21,7 +21,7 @@ internal fun encodeXmlToCbor(element: Element): ByteArray {
 }
 
 internal fun decodeCborToXml(input: ByteArray): Element {
-  factory.createParser(input).use {
+  cborFactory.createParser(input).use {
     assert(it.nextToken() == JsonToken.START_OBJECT)
     return readElement(it)
   }

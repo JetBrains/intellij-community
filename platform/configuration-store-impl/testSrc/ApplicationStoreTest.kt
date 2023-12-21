@@ -31,6 +31,7 @@ import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
@@ -554,7 +555,6 @@ internal class ApplicationStoreTest {
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
-
     component.state = TestState(bar = "42")
     // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
@@ -563,6 +563,75 @@ internal class ApplicationStoreTest {
 
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
     assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  @Test
+  fun `settingsController - internal storage - read old data`() = runBlocking<Unit>(Dispatchers.Default) {
+    clearCacheStore()
+
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+    class Component : SerializablePersistentStateComponent<TestState>(TestState())
+
+    val file = testAppConfig.resolve(StoragePathMacros.NON_ROAMABLE_FILE)
+    Files.createDirectories(file.parent)
+    Files.writeString(file, """
+      <application>
+        <component name="TestState" foo="test" bar="aaa">
+        </component>
+      </application>
+    """.trimIndent())
+
+    val component = Component()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+
+    assertThat(component.state.foo).isEqualTo("test")
+    assertThat(component.state.bar).isEqualTo("aaa")
+
+    component.state = TestState(bar = "42")
+    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+    // test double save
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    assertThat(component.state.foo).isEmpty()
+    assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  private data class TestStateWithMap(@JvmField @Attribute var foo: String = "",
+                                      @JvmField val map: Map<String, Set<String>> = HashMap())
+
+  @Test
+  fun `settingsController - internal storage - serialize map`() = runBlocking<Unit>(Dispatchers.Default) {
+    clearCacheStore()
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+    class Component : SerializablePersistentStateComponent<TestStateWithMap>(TestStateWithMap())
+
+    val file = testAppConfig.resolve(StoragePathMacros.NON_ROAMABLE_FILE)
+    Files.createDirectories(file.parent)
+    Files.writeString(file, """
+      <application>
+        <component name="TestState" foo="test" bar="aaa">
+        </component>
+      </application>
+    """.trimIndent())
+
+    val component = Component()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+
+    assertThat(component.state.foo).isEqualTo("test")
+    assertThat(component.state.map).isEmpty()
+
+    val map = hashMapOf("f" to hashSetOf("1", "2", "3"), "d" to hashSetOf("e", "f", "d"))
+    component.state = TestStateWithMap(foo = "42", map)
+    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+    // test double save
+    assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    assertThat(component.state.foo).isEqualTo("42")
+    assertThat(component.state.map).isEqualTo(map)
   }
 
   private fun createComponentFileContent(fooValue: String, componentName: String = "A"): String {
@@ -647,7 +716,7 @@ internal class ApplicationStoreTest {
   private class ActualStorageLast : FooComponent()
 }
 
-internal data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")
+internal data class TestState(@JvmField @Attribute var foo: String = "", @JvmField @Attribute var bar: String = "")
 
 @State(name = "A", storages = [(Storage("a.xml"))], additionalExportDirectory = "foo")
 internal open class A : PersistentStateComponent<TestState> {
