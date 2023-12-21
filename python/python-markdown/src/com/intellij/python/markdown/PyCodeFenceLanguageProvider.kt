@@ -1,4 +1,4 @@
-package com.jetbrains.python.markdown
+package com.intellij.python.markdown
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement

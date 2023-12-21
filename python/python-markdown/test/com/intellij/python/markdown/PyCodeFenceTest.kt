@@ -1,4 +1,4 @@
-package com.jetbrains.python.markdown
+package com.intellij.python.markdown
 
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection

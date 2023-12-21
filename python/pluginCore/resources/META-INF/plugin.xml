@@ -31,9 +31,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <depends optional="true" config-file="intellilang-python-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true" config-file="python-terminal-plugin.xml">org.jetbrains.plugins.terminal</depends>
   <depends optional="true" config-file="python-grazie-plugin.xml">tanvd.grazi</depends>
-  <depends optional="true" config-file="python-markdown-plugin.xml">org.intellij.plugins.markdown</depends>
   <content>
     <module name="intellij.python.featuresTrainer"/>
+    <module name="intellij.python.markdown"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

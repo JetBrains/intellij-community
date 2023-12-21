@@ -5,10 +5,12 @@
   <xi:include href="python-copyright-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="intellilang-python-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="python-rest-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="python-markdown-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="python-grazie-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                         serviceImplementation="com.jetbrains.python.console.PydevConsoleRunnerFactory" />
   </extensions>
+  <content>
+    <module name="intellij.python.markdown"/>
+  </content>
 </idea-plugin>
