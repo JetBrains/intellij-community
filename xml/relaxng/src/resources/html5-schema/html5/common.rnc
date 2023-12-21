@@ -222,6 +222,11 @@ common.attrs.other =
 			list { w:string "render" }
 		}
 
+	common.attrs.fetchpriority =
+		attribute fetchpriority {
+			w:string "high" | w:string "low" | w:string "auto"
+		}
+
 	common.attrs.nonce =
 		attribute nonce {
 			string
