@@ -921,9 +921,10 @@ private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivi
   if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
   return when(val parentIdeActivity = environment.getUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY)) {
     null -> RunConfigurationUsageTriggerCollector
-      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun, environment.isRunningCurrentFile)
     else -> RunConfigurationUsageTriggerCollector
-      .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+      .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun,
+                         environment.isRunningCurrentFile)
   }
 }
 
