@@ -101,19 +101,21 @@ sealed interface K2MoveSourceModel<T : KtElement> {
                 return@underModalProgress memberInfos(elements, allDeclarations.toList())
             }
 
-            row {
-                memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
-                val table = memberSelectionPanel.table
-                table.addMemberInfoChangeListener {
-                    elements = table.selectedMemberInfos.map { it.member }.toSet()
-                    if (elements.isEmpty()) {
-                        onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
-                    } else {
-                        onError(null, memberSelectionPanel.table)
+            group(RefactoringBundle.message("move.declarations.group"), indent = false) {
+                row {
+                    memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
+                    val table = memberSelectionPanel.table
+                    table.addMemberInfoChangeListener {
+                        elements = table.selectedMemberInfos.map { it.member }.toSet()
+                        if (elements.isEmpty()) {
+                            onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
+                        } else {
+                            onError(null, memberSelectionPanel.table)
+                        }
+                        revalidateButtons()
                     }
-                    revalidateButtons()
-                }
-            }.resizableRow()
+                }.resizableRow()
+            }.topGap(TopGap.NONE).bottomGap(BottomGap.SMALL).resizableRow()
         }
     }
 }
