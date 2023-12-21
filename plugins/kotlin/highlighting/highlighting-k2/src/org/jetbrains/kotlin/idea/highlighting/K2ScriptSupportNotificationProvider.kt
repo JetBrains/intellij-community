@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -20,7 +21,10 @@ class K2ScriptSupportNotificationProvider: EditorNotificationProvider, DumbAware
         project: Project,
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?>? {
-        if (!file.isKotlinFileType() || !KotlinScriptingSettings.getInstance(project).showK2SupportWarning) {
+        if (Registry.`is`("kotlin.k2.scripting.enabled", true) ||
+            !KotlinScriptingSettings.getInstance(project).showK2SupportWarning ||
+            !file.isKotlinFileType()
+        ) {
             return null
         }
         val ktFile = (file.toPsiFile(project) as? KtFile) ?: return null
