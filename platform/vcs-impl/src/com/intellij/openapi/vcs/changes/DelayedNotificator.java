@@ -19,11 +19,11 @@ public final class DelayedNotificator implements ChangeListListener {
 
   @NotNull private final Project myProject;
   @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final Scheduler myScheduler;
+  @NotNull private final ChangeListScheduler myScheduler;
 
   public DelayedNotificator(@NotNull Project project,
                             @NotNull ChangeListManagerImpl manager,
-                            @NotNull Scheduler scheduler) {
+                            @NotNull ChangeListScheduler scheduler) {
     myProject = project;
     myManager = manager;
     myScheduler = scheduler;

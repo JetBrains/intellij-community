@@ -90,7 +90,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   private final Project myProject;
   private final ChangelistConflictTracker myConflictTracker;
 
-  private final Scheduler myScheduler; // update thread
+  private final ChangeListScheduler myScheduler; // update thread
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
   private final DelayedNotificator myDelayedNotificator; // notifies myListeners on the update thread
@@ -130,7 +130,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
-    myScheduler = new Scheduler(coroutineScope);
+    myScheduler = new ChangeListScheduler(coroutineScope);
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
@@ -1562,9 +1562,9 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
-    private final Scheduler myScheduler;
+    private final ChangeListScheduler myScheduler;
 
-    MyChangesDeltaForwarder(final Project project, @NotNull Scheduler scheduler) {
+    MyChangesDeltaForwarder(final Project project, @NotNull ChangeListScheduler scheduler) {
       myProject = project;
       myScheduler = scheduler;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);

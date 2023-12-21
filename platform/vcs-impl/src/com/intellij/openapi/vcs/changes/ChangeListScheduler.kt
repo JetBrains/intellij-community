@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException
 private val LOG: Logger
   get() = logger<ChangeListManagerImpl>()
 
-internal class Scheduler(private val coroutineScope: CoroutineScope) {
+internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
   // @TestOnly
   private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
   private val jobs = ArrayDeque<Job>()
