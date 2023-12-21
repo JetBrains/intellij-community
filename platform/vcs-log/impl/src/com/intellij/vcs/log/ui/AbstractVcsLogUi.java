@@ -7,20 +7,18 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -33,24 +31,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
-public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
+public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
-  private final @NotNull String myId;
   protected final @NotNull Project myProject;
-  protected final @NotNull VcsLogData myLogData;
   protected final @NotNull VcsLogColorManager myColorManager;
-  protected final @NotNull VcsLogImpl myLog;
-  protected final @NotNull VisiblePackRefresher myRefresher;
-  protected final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  protected final @NotNull Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   protected final @NotNull VisiblePackChangeListener myVisiblePackChangeListener;
 
   protected volatile @NotNull VisiblePack myVisiblePack = VisiblePack.EMPTY;
@@ -59,27 +50,16 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
                           @NotNull VcsLogData logData,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myId = id;
+    super(id, logData, refresher);
     myProject = logData.getProject();
-    myLogData = logData;
-    myRefresher = refresher;
     myColorManager = manager;
 
-    Disposer.register(this, myRefresher);
-    Disposer.register(this, myDisposableFlag);
-
-    myLog = new VcsLogImpl(logData, this);
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
       if (!myDisposableFlag.isDisposed()) {
         setVisiblePack(visiblePack);
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
-  }
-
-  @Override
-  public @NotNull String getId() {
-    return myId;
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {
@@ -99,23 +79,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
 
-  @Override
-  public @NotNull VisiblePackRefresher getRefresher() {
-    return myRefresher;
-  }
-
   public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
-  }
-
-  @Override
-  public @NotNull VcsLog getVcsLog() {
-    return myLog;
-  }
-
-  @Override
-  public @NotNull VcsLogData getLogData() {
-    return myLogData;
   }
 
   @Override
@@ -209,26 +174,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", commitId.toString());
   }
 
-  @Override
-  public void addLogListener(@NotNull VcsLogListener listener) {
-    ThreadingAssertions.assertEventDispatchThread();
-    myLogListeners.add(listener);
-  }
-
-  @Override
-  public void removeLogListener(@NotNull VcsLogListener listener) {
-    ThreadingAssertions.assertEventDispatchThread();
-    myLogListeners.remove(listener);
-  }
-
-  protected void fireChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
-    ThreadingAssertions.assertEventDispatchThread();
-
-    for (VcsLogListener listener : myLogListeners) {
-      listener.onChange(visiblePack, refresh);
-    }
-  }
-
   protected void invokeOnChange(@NotNull Runnable runnable) {
     invokeOnChange(runnable, Conditions.alwaysTrue());
   }
@@ -240,7 +185,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @Override
   public void dispose() {
     ThreadingAssertions.assertEventDispatchThread();
-    LOG.debug("Disposing VcsLogUi '" + myId + "'");
+    LOG.debug("Disposing VcsLogUi '" + getId() + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

@@ -16,6 +16,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * Use {@link VcsLogUiBase} as a base implementation class
+ */
 @ApiStatus.Experimental
 public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @NotNull
