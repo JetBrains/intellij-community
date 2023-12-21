@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import junit.framework.AssertionFailedError
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import java.io.File
@@ -33,8 +34,7 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
 
   protected var myModifierService: DependencyModifierService? = null
 
-  @Throws(Exception::class)
-  public override fun setUp() {
+  public override fun setUp() = runBlocking {
     super.setUp()
     myTestDataDir = PathManagerEx.findFileUnderCommunityHome("platform/external-system-api/dependency-updater/testData/maven")
     assertTrue(myTestDataDir!!.isDirectory)
@@ -44,12 +44,11 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
     prepareAndImport()
   }
 
-  @Throws(IOException::class)
-  protected fun prepareAndImport() {
+  private suspend fun prepareAndImport() {
     createProjectPom("")
     FileUtil.copyDir(myProjectDataDir!!, myProjectRoot.toNioPath().toFile())
     myProjectRoot.refresh(false, true)
-    importProjectWithErrors()
+    importProjectAsync()
   }
 
   protected suspend fun findDependencyTag(group: String, artifact: String, version: String): XmlTag? {

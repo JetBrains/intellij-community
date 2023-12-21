@@ -408,13 +408,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   }
 
-  @Obsolete
-  // use importProjectAsync()
-  protected fun importProjectWithErrors() {
-    val files = listOf(myProjectPom)
-    doImportProjects(files, false)
-  }
-
   protected fun importProjectWithProfiles(vararg profiles: String) {
     doImportProjects(listOf(myProjectPom), true, *profiles)
   }
