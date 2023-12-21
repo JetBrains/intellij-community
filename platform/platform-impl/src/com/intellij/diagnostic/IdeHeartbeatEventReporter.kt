@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.PowerSaveMode
@@ -95,7 +95,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 68)
+  private val GROUP = EventLogGroup("performance", 69)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -117,7 +117,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
 
   @JvmField
-  val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
+  val LAGGING: EventId2<Long, Boolean> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, Boolean("during_indexing"))
 
   @JvmField
   val COLD_START: BooleanEventField = Boolean("cold_start")
@@ -129,6 +129,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
                                                                       COLD_START,
                                                                       EventFields.Language)
 
+  @Suppress("SpellCheckingInspection")
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
