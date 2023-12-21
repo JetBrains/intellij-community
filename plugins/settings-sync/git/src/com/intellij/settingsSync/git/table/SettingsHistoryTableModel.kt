@@ -2,14 +2,13 @@ package com.intellij.settingsSync.git.table
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.settingsSync.git.record.ChangeRecord
 import com.intellij.settingsSync.git.record.HistoryRecord
 import com.intellij.settingsSync.git.record.RecordService
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePackChangeListener
@@ -91,21 +90,15 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
   }
 
   private fun getAllCommits(visiblePack: VisiblePack): List<VcsFullCommitDetails> {
-    val commits = mutableListOf<VcsFullCommitDetails>()
     val rowsTotal = visiblePack.visibleGraph.visibleCommitCount
-
     val commitIndexes = (0 until rowsTotal).mapNotNull { visiblePack.visibleGraph.getRowInfo(it).getCommit() }
     try {
-      commitDetailsGetter.loadCommitsDataSynchronously(commitIndexes, ProgressManager.getGlobalProgressIndicator()
-                                                                      ?: EmptyProgressIndicator()) { _, commitDetails ->
-        commits.add(commitDetails)
-      }
+      return commitDetailsGetter.getCommitDetails(commitIndexes)
     }
     catch (e: VcsException) {
       logger.error("Failed to load commit data", e)
+      return emptyList()
     }
-
-    return commits
   }
 
   override fun getRowCount(): Int {
