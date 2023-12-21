@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 /**
@@ -70,4 +73,14 @@ fun AbstractWslDistribution.getWslPathSafe(path: Path): String =
  * How Linux can access tool from IJ "bin" folder
  */
 fun AbstractWslDistribution.getToolLinuxPath(toolName: String): String =
-  getWslPathSafe(PathManager.findBinFileWithException(toolName))
+  testOverrideWslToolRoot?.plus("/$toolName")
+  ?: getWslPathSafe(PathManager.findBinFileWithException(toolName))
+
+private var testOverrideWslToolRoot: String? = null
+
+@TestOnly
+fun testOverrideWslToolRoot(linuxPath: String, disposable: Disposable) {
+  require(!linuxPath.endsWith("/"))
+  Disposer.register(disposable) { testOverrideWslToolRoot = null }
+  testOverrideWslToolRoot = linuxPath
+}

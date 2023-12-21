@@ -11,8 +11,10 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -423,7 +425,19 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
   }
 
+  private static @Nullable Path testOverriddenWslExe;
+
+  @TestOnly
+  public static void testOverriddenWslExe(@NotNull Path path, @NotNull Disposable disposable) {
+    Disposer.register(disposable, () -> {
+      testOverriddenWslExe = null;
+    });
+    testOverriddenWslExe = path;
+  }
+
   public static @Nullable Path findWslExe() {
+    if (testOverriddenWslExe != null) return testOverriddenWslExe;
+
     File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
     return file != null ? file.toPath() : null;
   }
@@ -799,7 +813,12 @@ public class WSLDistribution implements AbstractWslDistribution {
     return coalesce(getValueWithLogging(myLazyShellPath, "user's shell path"), DEFAULT_SHELL);
   }
 
+  @VisibleForTesting
+  protected @Nullable String testOverriddenShellPath;
+
   private @NlsSafe @Nullable String readShellPath() {
+    if (testOverriddenShellPath != null) return testOverriddenShellPath;
+
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true).setLaunchWithWslExe(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
