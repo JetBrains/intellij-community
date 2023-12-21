@@ -7,12 +7,18 @@ import com.intellij.ae.database.runUpdateEvent
 import com.intellij.ae.database.utils.InstantUtils
 import com.intellij.lang.Language
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.validOrNull
@@ -23,8 +29,6 @@ import org.jetbrains.sqlite.ObjectBinderFactory
 import java.math.BigInteger
 import java.time.Instant
 import java.util.*
-
-// todo check phantom changes not by user
 
 /**
  * Coding activity. Stores language of the file and file hash
@@ -93,6 +97,27 @@ data class LanguageWrapper(
   val id: String
 )
 
+@Service(Service.Level.PROJECT)
+private class DocumentHolder {
+  companion object {
+    fun getInstance(project: Project) = project.getService(DocumentHolder::class.java)
+  }
+
+  private val urls = mutableSetOf<String>()
+
+  fun submit(vf: VirtualFile) {
+    urls.add(vf.url)
+  }
+
+  fun remove(vf: VirtualFile) {
+    urls.remove(vf.url)
+  }
+
+  fun isAllowed(vf: VirtualFile): Boolean {
+    return urls.contains(vf.url)
+  }
+}
+
 internal class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor as EditorEx
@@ -104,14 +129,40 @@ internal class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListen
 
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CodingTimeUserActivity) {
-          val vf = editor.virtualFile?.validOrNull() ?: return@runUpdateEvent
-          val psiFile = readAction {
-            PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
-          } ?: return@runUpdateEvent
-          it.write(editorId, psiFile.language, vf)
+        val vf = editor.virtualFile?.validOrNull() ?: return
+        if (DocumentHolder.getInstance(project).isAllowed(vf)) {
+          FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CodingTimeUserActivity) {
+            val psiFile = readAction {
+              PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
+            } ?: return@runUpdateEvent
+            it.write(editorId, psiFile.language, vf)
+          }
         }
       }
     }, disposable)
+  }
+}
+
+internal class CodingTimeUserActivityCommandListener : CommandListener {
+  override fun commandStarted(event: CommandEvent) {
+    val doc = event.commandGroupId as? Document
+    if (doc != null) {
+      val vf = FileDocumentManager.getInstance().getFile(doc)
+      val project = event.project
+      if (vf != null && project != null) {
+        DocumentHolder.getInstance(project).submit(vf)
+      }
+    }
+  }
+
+  override fun commandFinished(event: CommandEvent) {
+    val doc = event.commandGroupId as? Document
+    if (doc != null) {
+      val vf = FileDocumentManager.getInstance().getFile(doc)
+      val project = event.project
+      if (vf != null && project != null) {
+        DocumentHolder.getInstance(project).remove(vf)
+      }
+    }
   }
 }

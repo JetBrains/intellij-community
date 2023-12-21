@@ -26,5 +26,7 @@
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ae.database.counters.community.events.ProjectOpenedTimeSpanUserActivityProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectCloseListener"/>
+    <listener class="com.intellij.ae.database.counters.community.events.CodingTimeUserActivityCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
   </applicationListeners>
 </idea-plugin>
