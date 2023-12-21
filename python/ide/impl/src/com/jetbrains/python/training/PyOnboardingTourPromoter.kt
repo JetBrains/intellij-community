@@ -3,7 +3,7 @@ package com.jetbrains.python.training
 
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.PlatformUtils
-import com.jetbrains.python.ift.PythonLessonsBundle
+import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 
