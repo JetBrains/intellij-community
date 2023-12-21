@@ -26,7 +26,7 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(myProjectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(File(projectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -45,7 +45,7 @@ $relativePathUnixSeparator<caret></relativePath>
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
-    assertResolved(myProjectPom, parentPsi)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 
@@ -58,7 +58,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(myProjectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(File(projectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -77,7 +77,7 @@ $relativePathUnixSeparator<caret></relativePath>
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
-    assertResolved(myProjectPom, parentPsi)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 }

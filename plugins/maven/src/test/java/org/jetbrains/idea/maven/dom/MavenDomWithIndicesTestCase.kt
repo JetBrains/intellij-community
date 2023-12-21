@@ -57,7 +57,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   }
 
   protected open fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(myDir.toPath(), myProject)
+    return MavenIndicesTestFixture(dir.toPath(), project)
   }
   override fun tearDown() {
     try {

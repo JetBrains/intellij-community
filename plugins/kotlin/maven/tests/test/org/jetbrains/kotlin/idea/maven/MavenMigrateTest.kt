@@ -79,7 +79,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         )
     }
 
-    private suspend fun doMigrationTest(before: String, after: String): List<Notification> = catchNotificationsAsync(myProject) {
+    private suspend fun doMigrationTest(before: String, after: String): List<Notification> = catchNotificationsAsync(project) {
         importProjectAsync(before)
         importProjectAsync(after)
     }

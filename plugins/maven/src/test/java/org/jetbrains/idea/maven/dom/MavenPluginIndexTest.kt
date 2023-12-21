@@ -27,7 +27,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun checkDownloadedPlugins() {
-    val basePath = Path.of(myDir.path, "testData", "local1").toString()
+    val basePath = Path.of(dir.path, "testData", "local1").toString()
     val basePluginsPath = Path.of(basePath, *DEFAULT_PLUGIN_GROUP_ID.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
     try {
       val pluginFolders = Files.list(basePluginsPath).map { obj: Path -> obj.fileName }.map { obj: Path -> obj.toString() }.collect(
@@ -42,7 +42,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun checkIndexedPlugins() {
-    val indicesManager = MavenIndicesManager.getInstance(myProject)
+    val indicesManager = MavenIndicesManager.getInstance(project)
     val notIndexedPlugins = HashSet<String?>()
     for (artifactId in DEFAULT_PLUGIN_ARTIFACT_IDS) {
       val pluginIndexed = indicesManager.hasLocalArtifactId(DEFAULT_PLUGIN_GROUP_ID, artifactId)

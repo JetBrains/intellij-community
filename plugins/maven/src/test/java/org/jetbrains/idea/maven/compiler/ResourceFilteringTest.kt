@@ -90,7 +90,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
 
     compileModules("project")
 
-    assert(!loadResult(myProjectPom, "target/classes/file.properties").contains("settings.localRepository"))
+    assert(!loadResult(projectPom, "target/classes/file.properties").contains("settings.localRepository"))
   }
 
   @Test
@@ -592,7 +592,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     assertResult("target/classes/file.properties", "value=1")
 
     WriteAction.runAndWait<IOException> { VfsUtil.saveText(filter, "xxx=2") }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     compileModules("project")
     assertResult("target/classes/file.properties", "value=2")
   }
@@ -654,8 +654,8 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   fun testUpdatingWhenPropertiesInModelAreChanged() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.name}")
 
-    val moduleManager = getInstance(myProject)
-    val mavenProjectsManager = MavenProjectsManager.getInstance(myProject)
+    val moduleManager = getInstance(project)
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1107,7 +1107,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                     """.trimIndent())
     compileModules("project")
 
-    assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"))
+    assertNotNull(projectPom.getParent().findFileByRelativePath("target/classes/file.xyz"))
   }
 
   @Test

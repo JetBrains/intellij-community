@@ -34,12 +34,12 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
     Assume.assumeTrue(isWorkspaceImport)
 
     disposable = Disposer.newDisposable("Real maven protector for MavenPreimportingTest")
-    val syncViewManager = object : SyncViewManager(myProject) {
+    val syncViewManager = object : SyncViewManager(project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         noRealMavenAllowed()
       }
     }
-    myProject.replaceService(SyncViewManager::class.java, syncViewManager, disposable)
+    project.replaceService(SyncViewManager::class.java, syncViewManager, disposable)
     ApplicationManager.getApplication().replaceService(MavenServerManager::class.java, NoRealMavenServerManager(), disposable)
 
 
@@ -546,9 +546,9 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
-    val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
+    val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {
-      MavenProjectPreImporter.getInstance(myProject)
+      MavenProjectPreImporter.getInstance(project)
         .preimport(files, null, mavenImporterSettings, mavenGeneralSettings,true, activity)
     }
     finally {

@@ -31,7 +31,7 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
   }
 
   protected void compileFile(final String moduleName, final VirtualFile file) throws Exception {
-    CompilerTester tester = new CompilerTester(myProject, Collections.singletonList(getModule(moduleName)), null);
+    CompilerTester tester = new CompilerTester(getProject(), Collections.singletonList(getModule(moduleName)), null);
     try {
       tester.compileFiles(file);
     }
@@ -46,7 +46,7 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
 
   private void compile(final CompileScope scope) {
     try {
-      CompilerTester tester = new CompilerTester(myProject, Arrays.asList(scope.getAffectedModules()), null);
+      CompilerTester tester = new CompilerTester(getProject(), Arrays.asList(scope.getAffectedModules()), null);
       try {
         List<CompilerMessage> messages = tester.make(scope);
         for (CompilerMessage message : messages) {
@@ -67,9 +67,9 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
   private CompileScope createArtifactsScope(String[] artifactNames) {
     List<Artifact> artifacts = new ArrayList<>();
     for (String name : artifactNames) {
-      artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
+      artifacts.add(ArtifactsTestUtil.findArtifact(getProject(), name));
     }
-    return ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+    return ArtifactCompileScope.createArtifactsScope(getProject(), artifacts);
   }
 
   private CompileScope createModulesCompileScope(final String[] moduleNames) {
@@ -77,7 +77,7 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }
-    return new ModuleCompileScope(myProject, modules.toArray(Module.EMPTY_ARRAY), false);
+    return new ModuleCompileScope(getProject(), modules.toArray(Module.EMPTY_ARRAY), false);
   }
 
   protected static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
@@ -91,15 +91,15 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
   }
 
   protected void assertResult(String relativePath, String content) throws IOException {
-    assertResult(myProjectPom, relativePath, content);
+    assertResult(getProjectPom(), relativePath, content);
   }
 
   protected void assertDirectory(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
-    fileSystemBuilder.build().assertDirectoryEqual(new File(myProjectPom.getParent().getPath(), relativePath));
+    fileSystemBuilder.build().assertDirectoryEqual(new File(getProjectPom().getParent().getPath(), relativePath));
   }
 
   protected void assertJar(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
-    fileSystemBuilder.build().assertFileEqual(new File(myProjectPom.getParent().getPath(), relativePath));
+    fileSystemBuilder.build().assertFileEqual(new File(getProjectPom().getParent().getPath(), relativePath));
   }
 
   @Nullable
@@ -136,16 +136,16 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
   }
 
   protected void assertCopied(String path) {
-    assertTrue(new File(myProjectPom.getParent().getPath(), path).exists());
+    assertTrue(new File(getProjectPom().getParent().getPath(), path).exists());
   }
 
   protected void assertCopied(String path, String content) throws IOException {
-    final File file = new File(myProjectPom.getParent().getPath(), path);
+    final File file = new File(getProjectPom().getParent().getPath(), path);
     assertTrue(file.exists());
     assertEquals(content, FileUtil.loadFile(file));
   }
 
   protected void assertNotCopied(String path) {
-    assertFalse(new File(myProjectPom.getParent().getPath(), path).exists());
+    assertFalse(new File(getProjectPom().getParent().getPath(), path).exists());
   }
 }

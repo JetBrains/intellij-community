@@ -17,7 +17,7 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected fun readProject(file: VirtualFile,
                             locator: MavenProjectReaderProjectLocator?,
                             vararg profiles: String): MavenProjectReaderResult {
-    val result = MavenProjectReader(myProject).readProject(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val result = MavenProjectReader(project).readProject(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
     return result
   }
 

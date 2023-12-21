@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenPluginPhaseInspection
-import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.utils.keysToMap
 import java.io.File
 
@@ -36,7 +36,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
 
         createPomFile(fileName)
         importProject()
-        myProject.allModules().forEach {
+        project.allModules().forEach {
             setupJdkForModule(it.name)
         }
 
@@ -53,7 +53,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
             .filter { matcher.matches(it) }
             .joinToString("\n")
 
-        val problemElements = runInspection(inspectionClass, myProject).problemElements
+        val problemElements = runInspection(inspectionClass, project).problemElements
         val actualProblems = problemElements
             .keys()
             .filter { it.name == "pom.xml" }
@@ -105,8 +105,8 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
             fail("Not all fixes covered by *.fixed.N.xml files")
         }
 
-        val documentManager = PsiDocumentManager.getInstance(myProject)
-        val document = documentManager.getDocument(PsiManager.getInstance(myProject).findFile(myProjectPom)!!)!!
+        val documentManager = PsiDocumentManager.getInstance(project)
+        val document = documentManager.getDocument(PsiManager.getInstance(project).findFile(projectPom)!!)!!
         val originalText = document.text
 
         suggestedFixes.forEachIndexed { index, suggestedFix ->
@@ -125,50 +125,51 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
     }
 
     private fun createPomFile(fileName: String) {
-        myProjectPom = myProjectRoot.findChild("pom.xml")
-        if (myProjectPom == null) {
-            myProjectPom = runWriteAction(ThrowableComputable {
-                myProjectRoot.createChildData(null, "pom.xml")
+        var pom = projectRoot.findChild("pom.xml")
+        if (pom == null) {
+            pom = runWriteAction(ThrowableComputable {
+                projectRoot.createChildData(null, "pom.xml")
             })
         }
-        myAllPoms.add(myProjectPom!!)
+        projectPom = pom!!
+        allPoms.add(projectPom)
 
         ApplicationManager.getApplication().runWriteAction {
-            myProjectPom!!.setBinaryContent(File(fileName).readBytes())
+            projectPom.setBinaryContent(File(fileName).readBytes())
         }
     }
 
     private fun <D : ProblemDescriptor> applyFix(quickFix: QuickFix<in D>, desc: D) {
         CommandProcessor.getInstance().executeCommand(
-            myProject,
-            {
+          project,
+          {
                 ApplicationManager.getApplication().runWriteAction {
-                    quickFix.applyFix(myProject, desc)
+                    quickFix.applyFix(project, desc)
 
-                    val manager = PsiDocumentManager.getInstance(myProject)
-                    val document = manager.getDocument(PsiManager.getInstance(myProject).findFile(myProjectPom)!!)!!
+                    val manager = PsiDocumentManager.getInstance(project)
+                    val document = manager.getDocument(PsiManager.getInstance(project).findFile(projectPom)!!)!!
                     manager.doPostponedOperationsAndUnblockDocument(document)
                     manager.commitDocument(document)
                     FileDocumentManager.getInstance().saveDocument(document)
                 }
 
-                println(myProjectPom.contentsToByteArray().toString(Charsets.UTF_8))
+                println(projectPom.contentsToByteArray().toString(Charsets.UTF_8))
             },
-            "quick-fix-$name", "Kotlin",
+          "quick-fix-$name", "Kotlin",
         )
     }
 
     private fun mkJavaFile() {
-        val contentEntry = getContentRoots(myProject.allModules().single().name).single()
+        val contentEntry = getContentRoots(project.allModules().single().name).single()
         val sourceFolder =
             contentEntry.getSourceFolders(JavaSourceRootType.SOURCE).singleOrNull() ?: contentEntry.getSourceFolders(SourceKotlinRootType)
                 .singleOrNull()
         ApplicationManager.getApplication().runWriteAction {
-            val javaFile = sourceFolder?.file?.toPsiDirectory(myProject)?.createFile("Test.java") ?: throw IllegalStateException()
+            val javaFile = sourceFolder?.file?.toPsiDirectory(project)?.createFile("Test.java") ?: throw IllegalStateException()
             javaFile.viewProvider.document!!.setText("class Test {}\n")
         }
 
-        assertTrue(FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, myProject.allModules().single().moduleScope))
+        assertTrue(FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, project.allModules().single().moduleScope))
     }
 
     private data class SimplifiedProblemDescription(val text: String, val elementText: String)

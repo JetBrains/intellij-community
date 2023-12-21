@@ -103,7 +103,7 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
     val fix = AddMavenDependencyQuickFix(element)
 
     if (referenceText == null) {
-      assertFalse(fix.isAvailable(myProject, fixture.getEditor(), fixture.getFile()))
+      assertFalse(fix.isAvailable(project, fixture.getEditor(), fixture.getFile()))
     }
     else {
       assertEquals(fix.getReferenceText(), referenceText)

@@ -12,27 +12,27 @@ public class MavenExternalParametersVmTest extends MavenTestCase {
     createProjectSubFile(".mvn/jvm.config", "-Xms800m");
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
     runnerSettings.setVmOptions("-Xmx400m");
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, getProjectPath());
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), getProjectPath());
     assertEquals("-Xmx400m", vmOptions);
   }
 
   public void testGetRunVmOptionsSettings() {
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
     runnerSettings.setVmOptions("-Xmx400m");
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, getProjectPath());
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), getProjectPath());
     assertEquals("-Xmx400m", vmOptions);
   }
 
   public void testGetRunVmOptionsJvm() throws IOException {
     createProjectSubFile(".mvn/jvm.config", "-Xms800m");
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, getProjectPath());
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), getProjectPath());
     assertEquals("-Xms800m", vmOptions);
   }
 
   public void testGetRunVmOptionsEmpty() throws IOException {
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, getProjectPath());
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), getProjectPath());
     assertEmpty(vmOptions);
   }
 
@@ -40,7 +40,7 @@ public class MavenExternalParametersVmTest extends MavenTestCase {
     createProjectSubFile(".mvn/jvm.config", "-Xms800m");
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
     String workingDirPath = Path.of(getProjectPath()).resolve("module").toString();
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, workingDirPath);
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), workingDirPath);
     assertEquals("", vmOptions);
   }
 
@@ -48,7 +48,7 @@ public class MavenExternalParametersVmTest extends MavenTestCase {
     createProjectSubFile("/module/.mvn/jvm.config", "-Xms800m");
     MavenRunnerSettings runnerSettings = new MavenRunnerSettings();
     String workingDirPath = Path.of(getProjectPath()).resolve("module").toString();
-    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, myProject, workingDirPath);
+    String vmOptions = MavenExternalParameters.getRunVmOptions(runnerSettings, getProject(), workingDirPath);
     assertEquals("-Xms800m", vmOptions);
   }
 }

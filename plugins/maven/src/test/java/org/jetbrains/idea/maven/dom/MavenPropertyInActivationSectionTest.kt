@@ -39,7 +39,7 @@ class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
         """.trimIndent())
 
 
-    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
-    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
+    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
+    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
   }
 }

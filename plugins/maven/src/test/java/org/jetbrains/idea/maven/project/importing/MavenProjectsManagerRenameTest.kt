@@ -56,7 +56,7 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "project.verymain", "project.verytest")
 
     updateAllProjects()
-    val moduleNames = WorkspaceModel.getInstance(myProject).currentSnapshot.entities(ModuleEntity::class.java).map { it.name }.toSet()
+    val moduleNames = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.name }.toSet()
     assertSameElements(moduleNames, "project", "project.main", "project.test")
     assertModules("project", "project.main", "project.test")
   }

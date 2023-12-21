@@ -25,7 +25,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
 
-    myDataContext = SimpleDataContext.getProjectContext(myProject)
+    myDataContext = SimpleDataContext.getProjectContext(project)
     myProvider = MavenRunAnythingProvider()
   }
 
@@ -123,13 +123,13 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun withVariantsFor(command: String, moduleName: String, supplier: Consumer<List<String>>) {
-    val moduleManager = getInstance(myProject)
+    val moduleManager = getInstance(project)
     val module = moduleManager.findModuleByName(moduleName)
     withVariantsFor(RunAnythingContext.ModuleContext(module!!), command, supplier)
   }
 
   private fun withVariantsFor(command: String, supplier: Consumer<List<String>>) {
-    withVariantsFor(RunAnythingContext.ProjectContext(myProject), command, supplier)
+    withVariantsFor(RunAnythingContext.ProjectContext(project), command, supplier)
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, supplier: Consumer<List<String>>) {

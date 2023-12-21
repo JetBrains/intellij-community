@@ -91,7 +91,7 @@ class CustomPomFileNameTest : MavenDomTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "m1/customPom.xml")
+    assertCompletionVariants(projectPom, "m1/customPom.xml")
   }
 
   @Test

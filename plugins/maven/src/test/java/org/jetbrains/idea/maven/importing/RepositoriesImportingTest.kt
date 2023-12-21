@@ -108,7 +108,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertDoNotHaveRepositories(vararg repos: String) {
     val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(myProject).repositories) { it: RemoteRepositoryDescription -> it.url }
+      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
 
     assertDoNotContain(actual, *repos)
   }
@@ -116,7 +116,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertHaveRepositories(vararg repos: String) {
     val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(myProject).repositories) { it: RemoteRepositoryDescription -> it.url }
+      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
 
     assertContain(actual, *repos)
   }

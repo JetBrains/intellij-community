@@ -35,7 +35,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    val moduleManager = ModuleManager.getInstance(myProject)
+    val moduleManager = ModuleManager.getInstance(project)
     val modules = moduleManager.modules
     assertEquals(2, modules.size)
 
@@ -87,7 +87,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
       }
     }
 
-    myProject.replaceService(MavenProjectResolver::class.java, resolverMock, testRootDisposable)
+    project.replaceService(MavenProjectResolver::class.java, resolverMock, testRootDisposable)
 
     importProjectAsync()
 

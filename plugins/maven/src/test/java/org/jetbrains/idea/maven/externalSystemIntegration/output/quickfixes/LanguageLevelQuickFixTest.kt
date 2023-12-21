@@ -21,10 +21,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                     <packaging>pom</packaging>
                     <version>1</version>"""
     )
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -46,10 +46,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                             <maven.compiler.source>5</maven.compiler.source>
                             <maven.compiler.target>5</maven.compiler.target>
                     </properties>""")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -77,10 +77,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                                 </plugin>
                             </plugins>
                         </build>""")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -110,10 +110,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                           </plugin>
                       </plugins>
                     </build>""")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -144,10 +144,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                       <artifactId>p2</artifactId>
                       <version>1</version>""")
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -183,10 +183,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                                  <maven.compiler.target>5</maven.compiler.target>
                                </properties>"""))
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -230,10 +230,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                                  </plugins>
                                </build>"""))
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -254,10 +254,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                   "<properties>" +
                   "        <maven.compiler.source>11</maven.compiler.source>" +
                   "</properties>")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getTargetInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -279,10 +279,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                   "        <maven.compiler.source>11</maven.compiler.source>" +
                   "        <maven.compiler.target>5</maven.compiler.target>" +
                   "</properties>")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getTargetInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -311,10 +311,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                   "            </plugin>" +
                   "        </plugins>" +
                   "    </build>")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -344,10 +344,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                   "            </plugin>" +
                   "        </plugins>" +
                   "    </build>")
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p1:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -382,10 +382,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                              "        <maven.compiler.target>5</maven.compiler.target>" +
                              "</properties>")
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -421,10 +421,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                      "<version>1</version>")
     )
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -467,10 +467,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                               "        </plugins>" +
                               "    </build>"))
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {
@@ -514,10 +514,10 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                      "<version>1</version>")
     )
     importProjectAsync()
-    val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(myProject, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
       }
     }
     readAction {

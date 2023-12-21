@@ -67,7 +67,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
     assertNoPendingProjectForReload()
     assertModules("project")
-    replaceContent(myProjectPom, createPomXml(
+    replaceContent(projectPom, createPomXml(
       """
             ${createPomContent("test", "project")}<packaging>pom</packaging>
             <modules><module>module</module></modules>
@@ -75,7 +75,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     createModulePom("module", createPomContent("test", "module"))
     scheduleProjectImportAndWait()
     assertModules("project", "module")
-    replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "")
+    replaceDocumentString(projectPom, "<modules><module>module</module></modules>", "")
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
@@ -178,7 +178,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun replaceContent(file: VirtualFile, content: String) {
-    WriteCommandAction.runWriteCommandAction(myProject, ThrowableComputable<Any?, IOException?> {
+    WriteCommandAction.runWriteCommandAction(project, ThrowableComputable<Any?, IOException?> {
       VfsUtil.saveText(file, content)
       null
     } as ThrowableComputable<*, IOException?>)
@@ -186,7 +186,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    WriteCommandAction.runWriteCommandAction(myProject) {
+    WriteCommandAction.runWriteCommandAction(project) {
       val document = fileDocumentManager.getDocument(file!!)
       val text = document!!.text
       val startOffset = text.indexOf(oldString)

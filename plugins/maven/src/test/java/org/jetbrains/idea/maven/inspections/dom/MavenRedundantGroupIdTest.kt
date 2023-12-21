@@ -72,7 +72,7 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                        </parent>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
     fixture.doHighlighting()
 
     for (intention in fixture.availableIntentions) {
@@ -84,7 +84,7 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
 
 
     //doPostponedFormatting(myProject)
-    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting()
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
 
     fixture.checkResult(createPomXml("""
                                                        <artifactId>childA</artifactId>

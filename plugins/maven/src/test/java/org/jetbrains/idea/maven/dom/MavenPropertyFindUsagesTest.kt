@@ -28,7 +28,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{project.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(myProjectPom,
+    assertSearchResults(projectPom,
                         findTag("project.name"),
                         findTag("project.description"))
   }
@@ -43,7 +43,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{pom.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(myProjectPom,
+    assertSearchResults(projectPom,
                         findTag("project.name"),
                         findTag("project.description"))
   }
@@ -58,7 +58,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    assertSearchResults(myProjectPom,
+    assertSearchResults(projectPom,
                         findTag("project.name"),
                         findTag("project.description"))
   }
@@ -72,7 +72,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <name>${'$'}{project.version}</name>
                        """.trimIndent())
 
-    assertSearchResults(myProjectPom, findTag("project.name"))
+    assertSearchResults(projectPom, findTag("project.name"))
   }
 
   @Test
@@ -87,7 +87,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"))
+    assertSearchResultsInclude(projectPom, findTag("project.name"))
   }
 
   @Test
@@ -100,7 +100,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   <description>${"$"}{env.${getEnvVar()}}</description>
   """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"))
+    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
   }
 
   @Test
@@ -113,7 +113,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{user.home}</description>
                        """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"))
+    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
   }
 
   @Test
@@ -139,7 +139,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                                  "foo=abc\${user<caret>.home}abc")
 
     val result = search(f)
-    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"))
+    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
   }
 
   @Test
@@ -152,7 +152,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    assertHighlighted(myProjectPom,
+    assertHighlighted(projectPom,
                       HighlightPointer(findTag("project.name"), "project.version"),
                       HighlightPointer(findTag("project.description"), "version"))
   }

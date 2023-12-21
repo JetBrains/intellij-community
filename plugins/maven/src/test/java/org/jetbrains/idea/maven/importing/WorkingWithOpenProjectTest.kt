@@ -29,7 +29,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNotFailOnAddingNewContentRootWithAPomFile() = runBlocking {
-    val newRootDir = File(myDir, "newRoot")
+    val newRootDir = File(dir, "newRoot")
     newRootDir.mkdirs()
 
     val pomFile = File(newRootDir, "pom.xml")
@@ -46,7 +46,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
     // cannot make it work die to order of document listeners
 
     projectsManager.listenForExternalChanges()
-    val d = FileDocumentManager.getInstance().getDocument(myProjectPom)
+    val d = FileDocumentManager.getInstance().getDocument(projectPom)
     writeAction {
       d!!.setText(createPomXml("""
                                 <groupId>test</groupId>

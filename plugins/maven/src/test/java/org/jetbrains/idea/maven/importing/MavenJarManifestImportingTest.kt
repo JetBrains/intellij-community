@@ -36,7 +36,8 @@ class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
 
-    val automaticModuleName = WorkspaceModel.getInstance(myProject).currentSnapshot.resolve(ModuleId("project"))?.javaSettings?.manifestAttributes?.get(PsiJavaModule.AUTO_MODULE_NAME)
+    val automaticModuleName = WorkspaceModel.getInstance(
+      project).currentSnapshot.resolve(ModuleId("project"))?.javaSettings?.manifestAttributes?.get(PsiJavaModule.AUTO_MODULE_NAME)
     assertEquals("my.module.name", automaticModuleName)
   }
 }

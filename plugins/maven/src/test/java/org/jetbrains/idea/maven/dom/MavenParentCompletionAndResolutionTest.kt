@@ -51,7 +51,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <version></version>
                        </parent>
                        """.trimIndent())
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit")
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "junit")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -62,7 +62,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <artifactId><caret></artifactId>
                        </parent>
                        """.trimIndent())
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit")
+    assertCompletionVariants(projectPom, RENDERING_TEXT, "junit")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -74,7 +74,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <version><caret></version>
                        </parent>
                        """.trimIndent())
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "3.8.1", "3.8.2", "4.0")
+    assertCompletionVariants(projectPom, RENDERING_TEXT, "3.8.1", "3.8.2", "4.0")
   }
 
   @Test
@@ -92,7 +92,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProjectsAsync(myProjectPom, m)
+    importProjectsAsync(projectPom, m)
 
     createModulePom("m", """
       <groupId>test</groupId>
@@ -106,7 +106,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(m, findPsiFile(myProjectPom))
+      assertResolved(m, findPsiFile(projectPom))
     }
   }
 
@@ -133,7 +133,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().findFileByPath(filePath)
 
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFile(f))
     }
   }
 
@@ -165,7 +165,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFile(parent))
     }
   }
 
@@ -200,13 +200,13 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFile(parent))
     }
   }
 
   @Test
   fun testResolvingByRelativePathWhenOutsideOfTheProject() = runBlocking {
-    val parent = createPomFile(myProjectRoot.getParent(),
+    val parent = createPomFile(projectRoot.getParent(),
                                """
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
@@ -232,13 +232,13 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFile(parent))
     }
   }
 
   @Test
   fun testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() = runBlocking {
-    createPomFile(myProjectRoot.getParent(),
+    createPomFile(projectRoot.getParent(),
                   """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -414,7 +414,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <version>1</version>
                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml")
+    assertCompletionVariants(projectPom, "dir", "two", "pom.xml")
   }
 
   @Test
@@ -454,7 +454,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "one", "two", "pom.xml")
+    assertCompletionVariants(projectPom, "one", "two", "pom.xml")
   }
 
   @Test
@@ -575,7 +575,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProjectsAsync(myProjectPom, m)
+    importProjectsAsync(projectPom, m)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -594,7 +594,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       assertNotNull(i)
 
       fixture.launchAction(i!!)
-      val el = getElementAtCaret(myProjectPom)!!
+      val el = getElementAtCaret(projectPom)!!
 
       assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))
     }
@@ -615,7 +615,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProjects(myProjectPom, m)
+    importProjects(projectPom, m)
 
     createProjectPom("""
                        <groupId>test</groupId>

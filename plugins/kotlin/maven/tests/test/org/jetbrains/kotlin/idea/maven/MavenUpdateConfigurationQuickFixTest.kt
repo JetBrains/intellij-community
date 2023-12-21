@@ -35,7 +35,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
 
     override fun setUp() {
         super.setUp()
-        myProject.messageBus.connect(testRootDisposable)
+        project.messageBus.connect(testRootDisposable)
             .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
                 override fun artifactDownloadingScheduled() {
                     artifactDownloadingScheduled.incrementAndGet()
@@ -73,8 +73,8 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     }
 
     override fun setUpFixtures() {
-        myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
-        codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
+        testFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
+        codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixture)
         codeInsightTestFixture.setUp()
     }
 
@@ -85,7 +85,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
                 @Suppress("UNCHECKED_CAST")
                 (this::codeInsightTestFixture as KMutableProperty0<CodeInsightTestFixture?>).set(null)
             },
-            ThrowableRunnable { myTestFixture = null }
+            ThrowableRunnable { setTestFixtureNull() }
         )
     }
 
@@ -127,11 +127,11 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private suspend fun doTest(intentionName: String) {
         val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
-        myProjectPom = pomVFile
-        myAllPoms.add(myProjectPom)
+        projectPom = pomVFile
+        allPoms.add(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
-            assertTrue(ModuleRootManager.getInstance(myTestFixture.module).fileIndex.isInSourceContent(sourceVFile))
+            assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
             codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
             codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
             FileDocumentManager.getInstance().saveAllDocuments()
@@ -142,17 +142,17 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private suspend fun doTestAndWaitForMavenImport(intentionName: String) {
         val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
-        myProjectPom = pomVFile
-        myAllPoms.add(myProjectPom)
+        projectPom = pomVFile
+        allPoms.add(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
-            assertTrue(ModuleRootManager.getInstance(myTestFixture.module).fileIndex.isInSourceContent(sourceVFile))
+            assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
         }
         codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
         val intentionAction = codeInsightTestFixture.findSingleIntention(intentionName)
         waitForImportWithinTimeout {
             withContext(Dispatchers.EDT) {
-                intentionAction.invoke(myProject, codeInsightTestFixture.editor, codeInsightTestFixture.file)
+                intentionAction.invoke(project, codeInsightTestFixture.editor, codeInsightTestFixture.file)
             }
         }
         withContext(Dispatchers.EDT) {

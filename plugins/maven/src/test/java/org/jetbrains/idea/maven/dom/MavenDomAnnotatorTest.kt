@@ -165,7 +165,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   private fun checkGutters(virtualFile: VirtualFile, expectedProperties: Collection<String>) {
-    val file = PsiManager.getInstance(myProject).findFile(virtualFile)!!
+    val file = PsiManager.getInstance(project).findFile(virtualFile)!!
     fixture.configureFromExistingVirtualFile(virtualFile)
 
     val text = file.text

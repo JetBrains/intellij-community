@@ -139,7 +139,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDeps("project") // dependency was not added due to reported pom model problem.
@@ -239,7 +239,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
     assertModuleLibDeps("project", "Maven: group:lib:1")
   }
 
@@ -1075,7 +1075,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDep("project",
@@ -1101,7 +1101,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   </dependency>
 </dependencies>
 """)
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDep("project",
@@ -1373,7 +1373,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModules("project", mn("project", "m"))
     assertModuleLibDeps(mn("project", "m"))
@@ -1388,7 +1388,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingFromRepositoriesIfSeveral() = runBlocking {
-    val fixture = MavenCustomRepositoryHelper(myDir, "local1")
+    val fixture = MavenCustomRepositoryHelper(dir, "local1")
     repositoryPath = fixture.getTestDataPath("local1")
     removeFromLocalRepository("junit")
 
@@ -1419,8 +1419,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUsingMirrors() = runBlocking {
-    repositoryPath = myDir.path + "/repo"
-    val mirrorPath = myPathTransformer.toRemotePath(FileUtil.toSystemIndependentName(myDir.path + "/mirror"))
+    repositoryPath = dir.path + "/repo"
+    val mirrorPath = pathTransformer.toRemotePath(FileUtil.toSystemIndependentName(dir.path + "/mirror"))
 
     updateSettingsXmlFully("""<settings>
   <mirrors>
@@ -1446,7 +1446,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    assertTrue(projectsTree.findProject(myProjectPom)!!.hasUnresolvedArtifacts())
+    assertTrue(projectsTree.findProject(projectPom)!!.hasUnresolvedArtifacts())
   }
 
   @Test
@@ -1473,7 +1473,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }
@@ -1706,7 +1706,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          <module>m2</module>
                        </modules>
                        """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/")
@@ -1737,7 +1737,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = File(myDir, "__repo").path
+      repositoryPath = File(dir, "__repo").path
       Unit
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
@@ -1773,7 +1773,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = File(myDir, "__repo").path
+      repositoryPath = File(dir, "__repo").path
       Unit
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
@@ -1836,7 +1836,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
           </dependency>
         </dependencies>
         """.trimIndent())
-      doImportProjects(listOf(myProjectPom), false)
+      doImportProjects(listOf(projectPom), false)
 
       assertModuleLibDep("project", "Maven: xxx:yyy:1", listOf(path), emptyList(), emptyList())
 
@@ -1868,7 +1868,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
         </dependency>
       </dependencies>
       """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://$projectPath/foo/bar.jar!/"),
@@ -1891,7 +1891,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://$projectPath/foo/xxx.jar!/"),
@@ -2190,7 +2190,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun createProjectLibrary(libraryName: String): Library {
-    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
+    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     return WriteAction.computeAndWait<Library, RuntimeException> { libraryTable.createLibrary(libraryName) }
   }
 
@@ -2202,7 +2202,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun clearLibraryRoots(libraryName: String, vararg types: OrderRootType) {
-    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName)
+    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libraryName)
     WriteAction.runAndWait<RuntimeException> {
       val model = lib!!.getModifiableModel()
       for (eachType in types) {
@@ -2215,7 +2215,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun addLibraryRoot(libraryName: String, type: OrderRootType, path: String) {
-    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName)
+    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libraryName)
     WriteAction.runAndWait<RuntimeException> {
       val model = lib!!.getModifiableModel()
       model.addRoot(path, type)
@@ -2274,7 +2274,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDoNotFailToConfigureUnresolvedVersionRangeDependencies() = runBlocking {
     // should not throw NPE when accessing CustomArtifact.getPath();
-    val helper = MavenCustomRepositoryHelper(myDir, "local1")
+    val helper = MavenCustomRepositoryHelper(dir, "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
 
@@ -2310,7 +2310,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(myDir, "local1")
+    val helper = MavenCustomRepositoryHelper(dir, "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
 
@@ -2496,7 +2496,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
 
     WriteAction.runAndWait<RuntimeException> {
       val rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel()

@@ -35,9 +35,9 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
 
-    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.xxx")
-    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.yyy")
-    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.zzz")
+    CompilerConfiguration.getInstance(project).addResourceFilePattern("!*.xxx")
+    CompilerConfiguration.getInstance(project).addResourceFilePattern("!*.yyy")
+    CompilerConfiguration.getInstance(project).addResourceFilePattern("!*.zzz")
   }
 
   @Test
@@ -399,7 +399,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     compileModules("project")
     assertCopied("target/classes/file.properties")
 
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> { file.delete(this) }
+    WriteCommandAction.writeCommandAction(project).run<IOException> { file.delete(this) }
 
     compileModules("project")
     assertNotCopied("target/classes/file.properties")
@@ -448,7 +448,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
   @Test
   fun testDoNotCopyExcludedStandardResources() = runBlocking {
-    val configuration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
+    val configuration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     configuration.addResourceFilePattern("*.zzz")
 
     createProjectSubFile("res/file.xxx")
@@ -584,8 +584,8 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
                       """.trimIndent())
     importProjectAsync()
 
-    WriteCommandAction.writeCommandAction(myProject)
-      .run<IOException> { setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2") }
+    WriteCommandAction.writeCommandAction(project)
+      .run<IOException> { setModulesOutput(projectRoot.createChildDirectory(this, "output"), "project", "m1", "m2") }
 
 
     compileModules("project", "m1", "m2")
@@ -631,14 +631,14 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
                         </properties>
                         """.trimIndent())
 
-    val module = getInstance(myProject).findModuleByName("project")
+    val module = getInstance(project).findModuleByName("project")
     PsiTestUtil.addSourceRoot(module!!, configDir)
     PsiTestUtil.addSourceRoot(module, excludedDir)
 
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> {
-      CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration()
+    WriteCommandAction.writeCommandAction(project).run<IOException> {
+      CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration()
         .addExcludeEntryDescription(ExcludeEntryDescription(excludedDir, true, false, getTestRootDisposable()))
-      setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project")
+      setModulesOutput(projectRoot.createChildDirectory(this, "output"), "project")
     }
 
     compileModules("project")

@@ -47,8 +47,8 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>""")
     importProjectAsync()
 
-    val m1Psi = PsiManager.getInstance(myProject).findFile(m1File)
-    val m2Psi = PsiManager.getInstance(myProject).findFile(m2File)
+    val m1Psi = PsiManager.getInstance(project).findFile(m1File)
+    val m2Psi = PsiManager.getInstance(project).findFile(m2File)
     UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
     UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
   }
@@ -62,7 +62,7 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
     FileSearchEverywhereContributor(createStubEvent())
 
   private fun createStubEvent(): AnActionEvent {
-    val dataContext = SimpleDataContext.getProjectContext(myProject)
+    val dataContext = SimpleDataContext.getProjectContext(project)
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
   }
 }

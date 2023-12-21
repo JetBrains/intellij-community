@@ -32,7 +32,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
   @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
-    myTree = MavenProjectsManager.getInstance(myProject).getProjectsTree()
+    myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
   }
 
   protected suspend fun updateAll(vararg files: VirtualFile?) {

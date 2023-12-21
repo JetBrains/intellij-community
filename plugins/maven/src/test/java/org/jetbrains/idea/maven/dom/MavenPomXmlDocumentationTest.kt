@@ -33,8 +33,8 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
                     scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+
                     """.trimIndent()
 
-    val originalElement = getElementAtCaret(myProjectPom)
-    val documentationManager = DocumentationManager.getInstance(myProject)
+    val originalElement = getElementAtCaret(projectPom)
+    val documentationManager = DocumentationManager.getInstance(project)
     val targetElement = documentationManager.findTargetElement(editor, testPsiFile, originalElement)
 
     val provider = DocumentationManager.getProviderFromElement(targetElement)

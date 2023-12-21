@@ -43,10 +43,10 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    myProjectRoot.getChildren() // make sure fs is cached
+    projectRoot.getChildren() // make sure fs is cached
 
-    File(myProjectRoot.getPath(), "target/foo").mkdirs()
-    File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs()
+    File(projectRoot.getPath(), "target/foo").mkdirs()
+    File(projectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs()
     updateTargetFolders()
 
     assertExcludes("project", "target")
@@ -61,15 +61,15 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    File(myProjectRoot.getPath(), "target/classes").mkdirs()
+    File(projectRoot.getPath(), "target/classes").mkdirs()
     updateTargetFolders()
 
     assertExcludes("project", "target")
-    myProjectRoot.refresh(false, true)
-    val target = myProjectRoot.findChild("target")
+    projectRoot.refresh(false, true)
+    val target = projectRoot.findChild("target")
     assertNotNull(target)
     if (!Registry.`is`("ide.hide.excluded.files")) {
-      assertTrue(VcsIgnoreManager.getInstance(myProject).isPotentiallyIgnoredFile(target!!))
+      assertTrue(VcsIgnoreManager.getInstance(project).isPotentiallyIgnoredFile(target!!))
     }
   }
 
@@ -105,10 +105,10 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     assertExcludes("m1", "target")
     assertExcludes("m2", "target")
 
-    File(myProjectRoot.getPath(), "m1/target/foo/z").mkdirs()
-    File(myProjectRoot.getPath(), "m1/target/generated-sources/xxx/z").mkdirs()
-    File(myProjectRoot.getPath(), "m2/target/bar").mkdirs()
-    File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy/z").mkdirs()
+    File(projectRoot.getPath(), "m1/target/foo/z").mkdirs()
+    File(projectRoot.getPath(), "m1/target/generated-sources/xxx/z").mkdirs()
+    File(projectRoot.getPath(), "m2/target/bar").mkdirs()
+    File(projectRoot.getPath(), "m2/target/generated-sources/yyy/z").mkdirs()
 
     updateTargetFolders()
 
@@ -149,15 +149,15 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    File(myProjectRoot.getPath(), "target/foo").mkdirs()
-    val sourceDir = File(myProjectRoot.getPath(), "target/src")
+    File(projectRoot.getPath(), "target/foo").mkdirs()
+    val sourceDir = File(projectRoot.getPath(), "target/src")
     sourceDir.mkdirs()
 
     writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
-        projectsTree.findProject(myProjectPom)!!,
+        projectsTree.findProject(projectPom)!!,
         getModule("project"),
-        ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
+        ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
       adapter.addSourceFolder(sourceDir.path, JavaSourceRootType.SOURCE)
       adapter.rootModel.commit()
     }
@@ -196,11 +196,11 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
 
     writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
-        projectsTree.findProject(myProjectPom)!!,
+        projectsTree.findProject(projectPom)!!,
         getModule("project"),
-        ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
-        adapter.useModuleOutput(File(myProjectRoot.getPath(), "target/my-classes").path,
-                                File(myProjectRoot.getPath(), "target/my-test-classes").path)
+        ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
+        adapter.useModuleOutput(File(projectRoot.getPath(), "target/my-classes").path,
+                                File(projectRoot.getPath(), "target/my-test-classes").path)
       adapter.rootModel.commit()
     }
 
@@ -221,7 +221,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     val count = intArrayOf(0)
-    myProject.getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+    project.getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         count[0]++
       }
@@ -261,16 +261,16 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     val eventsTestHelper = MavenEventsTestHelper()
-    eventsTestHelper.setUp(myProject)
+    eventsTestHelper.setUp(project)
     try {
       updateTargetFolders()
       eventsTestHelper.assertRootsChanged(if (isWorkspaceImport) 0 else 1)
       eventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 0 else 1)
 
       // let's add some generated folders, what should be picked up on updateTargetFolders
-      File(myProjectRoot.getPath(), "target/generated-sources/foo/z").mkdirs()
-      File(myProjectRoot.getPath(), "m1/target/generated-sources/bar/z").mkdirs()
-      File(myProjectRoot.getPath(), "m2/target/generated-sources/baz/z").mkdirs()
+      File(projectRoot.getPath(), "target/generated-sources/foo/z").mkdirs()
+      File(projectRoot.getPath(), "m1/target/generated-sources/bar/z").mkdirs()
+      File(projectRoot.getPath(), "m2/target/generated-sources/baz/z").mkdirs()
       updateTargetFolders()
 
       eventsTestHelper.assertRootsChanged(1)
@@ -288,7 +288,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs()
+    File(projectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs()
     updateTargetFolders()
 
     assertGeneratedSources("project", "target/generated-sources/xxx")
@@ -310,7 +310,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
 
   private suspend fun updateTargetFolders() {
     withContext(Dispatchers.EDT) {
-      tryUpdateTargetFolders(myProject)
+      tryUpdateTargetFolders(project)
     }
   }
 }

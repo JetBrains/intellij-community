@@ -57,11 +57,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   private val myConfigTimestamps: MutableMap<VirtualFile, Long> = HashMap()
   private var myOriginalAutoCompletion = false
 
+  protected val fixture: CodeInsightTestFixture
+    get() = myFixture!!
+
   @Throws(Exception::class)
   override fun setUpFixtures() {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
+    testFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
 
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixture)
     myFixture!!.setUp()
 
     // org.jetbrains.idea.maven.utils.MavenRehighlighter
@@ -87,7 +90,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun findPsiFile(f: VirtualFile?): PsiFile {
-    return PsiManager.getInstance(myProject).findFile(f!!)!!
+    return PsiManager.getInstance(project).findFile(f!!)!!
   }
 
   protected fun configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
@@ -128,7 +131,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected val editor: Editor
-    get() = getEditor(myProjectPom)
+    get() = getEditor(projectPom)
 
   protected fun getEditor(f: VirtualFile): Editor {
     configTest(f)
@@ -136,14 +139,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected val editorOffset: Int
-    get() = getEditorOffset(myProjectPom)
+    get() = getEditorOffset(projectPom)
 
   protected fun getEditorOffset(f: VirtualFile): Int {
     return getEditor(f).caretModel.offset
   }
 
   protected val testPsiFile: PsiFile
-    get() = getTestPsiFile(myProjectPom)
+    get() = getTestPsiFile(projectPom)
 
   private fun getTestPsiFile(f: VirtualFile): PsiFile {
     configTest(f)
@@ -151,11 +154,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun findTag(path: String?): XmlTag {
-    return findTag(myProjectPom, path)
+    return findTag(projectPom, path)
   }
 
   protected fun findTag(file: VirtualFile?, path: String?, clazz: Class<out MavenDomElement?> = MavenDomProjectModel::class.java): XmlTag {
-    val model = MavenDomUtil.getMavenDomModel(myProject, file!!, clazz)
+    val model = MavenDomUtil.getMavenDomModel(project, file!!, clazz)
     assertNotNull("Model is not of $clazz", model)
     return MavenDomUtil.findTag(model!!, path!!)!!
   }
@@ -333,8 +336,8 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun assertDocumentation(expectedText: String?) {
     withContext(Dispatchers.EDT) {
-      val originalElement = getElementAtCaret(myProjectPom)
-      val targetElement = DocumentationManager.getInstance(myProject)
+      val originalElement = getElementAtCaret(projectPom)
+      val targetElement = DocumentationManager.getInstance(project)
         .findTargetElement(editor, testPsiFile, originalElement)
 
       val provider = DocumentationManager.getProviderFromElement(targetElement)
@@ -342,13 +345,13 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
       // should work for lookup as well as for tags
       val lookupElement = provider.getDocumentationElementForLookupItem(
-        PsiManager.getInstance(myProject), originalElement!!.text, originalElement)
+        PsiManager.getInstance(project), originalElement!!.text, originalElement)
       assertSame(targetElement, lookupElement)
     }
   }
 
   protected suspend fun checkHighlighting() {
-    checkHighlighting(myProjectPom)
+    checkHighlighting(projectPom)
   }
 
   protected suspend fun checkHighlighting(f: VirtualFile) {
@@ -404,7 +407,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun getIntentionAtCaret(intentionName: String?): IntentionAction? {
-    return getIntentionAtCaret(myProjectPom, intentionName)
+    return getIntentionAtCaret(projectPom, intentionName)
   }
 
   protected fun getIntentionAtCaret(pomFile: VirtualFile, intentionName: String?): IntentionAction? {
@@ -421,8 +424,8 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   @Throws(Exception::class)
   protected fun assertRenameResult(value: String?, expectedXml: String?) {
-    doRename(myProjectPom, value)
-    assertEquals(createPomXml(expectedXml), getTestPsiFile(myProjectPom).text)
+    doRename(projectPom, value)
+    assertEquals(createPomXml(expectedXml), getTestPsiFile(projectPom).text)
   }
 
   protected fun doRename(f: VirtualFile, value: String?) {
@@ -442,7 +445,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun assertCannotRename() {
-    val context = createRenameDataContext(myProjectPom, "new name")
+    val context = createRenameDataContext(projectPom, "new name")
     val handler = RenameHandlerRegistry.getInstance().getRenameHandler(context)
     if (handler == null) return
     try {
@@ -456,7 +459,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   private fun invokeRename(context: MapDataContext, renameHandler: RenameHandler?) {
-    renameHandler!!.invoke(myProject, PsiElement.EMPTY_ARRAY, context)
+    renameHandler!!.invoke(project, PsiElement.EMPTY_ARRAY, context)
   }
 
   private fun createDataContext(f: VirtualFile): MapDataContext {
@@ -494,7 +497,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected fun assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
     val editor = getEditor(file)
-    HighlightUsagesHandler.invoke(myProject, editor, getTestPsiFile(file))
+    HighlightUsagesHandler.invoke(project, editor, getTestPsiFile(file))
 
     val highlighters = editor.markupModel.allHighlighters
     val actual: MutableList<HighlightPointer> = ArrayList()
@@ -509,9 +512,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
     assertUnorderedElementsAreEqual(actual, *expected)
   }
-
-  protected val fixture: CodeInsightTestFixture
-    get() = myFixture!!
 
   protected class HighlightPointer(var element: PsiElement?, var text: String?) {
     override fun equals(o: Any?): Boolean {

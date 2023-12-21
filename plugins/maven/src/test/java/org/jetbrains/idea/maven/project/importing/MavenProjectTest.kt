@@ -769,7 +769,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     val repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
     embeddersManager.release(mavenEmbedderWrapper)
 
-    val project = MavenProjectsManager.getInstance(myProject).findProject(projectPom)
+    val project = MavenProjectsManager.getInstance(project).findProject(projectPom)
     assertNotNull(project)
 
     assertTrue(repoIds.contains("mirror"))

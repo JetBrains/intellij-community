@@ -187,13 +187,13 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    val remoteRepo = FileUtil.toSystemIndependentName(myDir.path + "/repo")
+    val remoteRepo = FileUtil.toSystemIndependentName(dir.path + "/repo")
     updateSettingsXmlFully("""<settings>
 <mirrors>
   <mirror>
     <id>central</id>
     <url>
-${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
+${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
     <mirrorOf>*</mirrorOf>
   </mirror>
 </mirrors>

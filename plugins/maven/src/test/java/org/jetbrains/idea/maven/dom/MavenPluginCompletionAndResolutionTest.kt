@@ -12,7 +12,7 @@ import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
+    return MavenIndicesTestFixture(dir.toPath(), project, "plugins")
   }
   override fun setUp() = runBlocking {
     super.setUp()
@@ -39,7 +39,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo",
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo",
                                     "org.codehaus.plexus")
   }
 
@@ -59,7 +59,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
                                     "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
                                     "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin")
   }
@@ -83,13 +83,13 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
 
     if (mavenVersionIsOrMoreThan("3.9.3")) {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1", "3.11.0")
+      assertCompletionVariants(projectPom, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1")
+      assertCompletionVariants(projectPom, "2.0.2", "3.1", "3.10.1")
     }
     else {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1")
+      assertCompletionVariants(projectPom, "2.0.2", "3.1")
     }
   }
 
@@ -115,7 +115,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFile(f))
     }
   }
 
@@ -134,7 +134,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
                                     "project",
                                     "maven-clean-plugin",
                                     "maven-jar-plugin",
@@ -161,7 +161,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(myProjectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
+    val variants = getDependencyCompletionVariants(projectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
 
 
     assertContain(variants,
@@ -196,13 +196,13 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     if (mavenVersionIsOrMoreThan("3.9.3")) {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1")
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1")
     }
     else {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1")
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1")
     }
   }
 
@@ -228,7 +228,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
     withContext(Dispatchers.EDT) {
-      assertResolved(myProjectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFile(f))
     }
   }
 
@@ -250,7 +250,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
       ref!!.resolve() // shouldn't throw;
     }
@@ -294,13 +294,13 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testBasicConfigurationCompletion() = runBlocking {
     putCaretInConfigurationSection()
-    assertCompletionVariantsInclude(myProjectPom, "source", "target")
+    assertCompletionVariantsInclude(projectPom, "source", "target")
   }
 
   @Test
   fun testIncludingConfigurationParametersFromAllTheMojos() = runBlocking {
     putCaretInConfigurationSection()
-    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes")
+    assertCompletionVariantsInclude(projectPom, "excludes", "testExcludes")
   }
 
   private fun putCaretInConfigurationSection() {
@@ -339,7 +339,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 
   @Test
@@ -359,7 +359,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 
   @Test
@@ -381,7 +381,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
       val resolved = ref!!.resolve()
       assertNotNull(resolved)
@@ -411,7 +411,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
       val resolved = ref!!.resolve()
       assertNotNull(resolved)
@@ -443,7 +443,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile")
+    assertCompletionVariants(projectPom, "help", "compile", "testCompile")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -529,7 +529,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile")
+    assertCompletionVariants(projectPom, "help", "compile", "testCompile")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -579,7 +579,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
 
       val resolved = ref!!.resolve()
@@ -621,7 +621,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
     }
   }
@@ -649,7 +649,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
     withContext(Dispatchers.EDT) {
-      assertCompletionVariants(myProjectPom)
+      assertCompletionVariants(projectPom)
     }
 
     createProjectPom("""
@@ -672,7 +672,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
     withContext(Dispatchers.EDT) {
-      assertUnresolved(myProjectPom)
+      assertUnresolved(projectPom)
     }
   }
 
@@ -696,7 +696,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "clean", "compile", "package")
+    assertCompletionVariantsInclude(projectPom, "clean", "compile", "package")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -741,7 +741,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 
   @Test
@@ -769,7 +769,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val variants = getCompletionVariants(myProjectPom)
+    val variants = getCompletionVariants(projectPom)
     assertTrue(variants.toString(), variants.contains("excludes"))
     assertFalse(variants.toString(), variants.contains("testExcludes"))
   }
@@ -797,7 +797,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    val variants = getCompletionVariants(myProjectPom)
+    val variants = getCompletionVariants(projectPom)
     assertTrue(variants.toString(), variants.contains("excludes"))
     assertFalse(variants.toString(), variants.contains("testExcludes"))
   }
@@ -828,7 +828,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes")
+    assertCompletionVariantsInclude(projectPom, "excludes", "testExcludes")
   }
 
   @Test
@@ -849,7 +849,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes")
+    assertCompletionVariantsInclude(projectPom, "warSourceExcludes", "excludes")
   }
 
   @Test
@@ -873,7 +873,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "exclude")
+    assertCompletionVariants(projectPom, "exclude")
   }
 
   @Test
@@ -898,7 +898,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "additionalConfig", "config")
+    assertCompletionVariants(projectPom, "additionalConfig", "config")
   }
 
   @Test
@@ -945,7 +945,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "resource", "webResource")
+    assertCompletionVariants(projectPom, "resource", "webResource")
   }
 
   @Test
@@ -972,7 +972,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 
   @Test
@@ -1131,7 +1131,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "combine.children", "combine.self")
+    assertCompletionVariants(projectPom, "combine.children", "combine.self")
   }
 
   @Test
@@ -1217,6 +1217,6 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 }

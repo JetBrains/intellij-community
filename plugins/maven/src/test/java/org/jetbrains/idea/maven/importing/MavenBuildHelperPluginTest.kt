@@ -98,6 +98,6 @@ class MavenBuildHelperPluginTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "someNewProperty1", "someNewProperty2")
+    assertCompletionVariants(projectPom, "someNewProperty1", "someNewProperty2")
   }
 }

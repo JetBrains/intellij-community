@@ -19,7 +19,7 @@ class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
 
-    remoteRepoDir = File(myDir, "remote")
+    remoteRepoDir = File(dir, "remote")
     remoteRepoDir!!.mkdirs()
   }
 

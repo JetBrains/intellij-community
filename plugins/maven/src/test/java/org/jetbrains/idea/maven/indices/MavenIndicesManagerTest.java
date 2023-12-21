@@ -31,7 +31,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(getDir().toPath(), getProject());
     myIndicesFixture.setUp();
   }
 
@@ -58,7 +58,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(archetypes.getPath());
+    MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(archetypes.getPath());
     myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
     MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
     MavenIndex localIndex = indexHolder.getLocalIndex();
@@ -80,7 +80,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   public void testAddingFilesToIndex() throws IOException, MavenProcessCanceledException, InterruptedException {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
 
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(localRepo.getPath());
+    MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(localRepo.getPath());
     myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
     myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
     MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
@@ -105,7 +105,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
         }
       });
 
-    var indexingScheduled = MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(null, artifactFile);
+    var indexingScheduled = MavenIndicesManager.getInstance(getProject()).scheduleArtifactIndexing(null, artifactFile);
     assertTrue("Failed to schedule indexing", indexingScheduled);
 
     latch.await(1, TimeUnit.MINUTES);

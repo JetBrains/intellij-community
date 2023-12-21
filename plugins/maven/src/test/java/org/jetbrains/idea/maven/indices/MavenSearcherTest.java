@@ -39,7 +39,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(getDir().toPath(), getProject());
     myIndicesFixture.setUp();
   }
 
@@ -139,7 +139,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
 
   private List<String> getClassSearchResults(String pattern) {
     List<String> actualArtifacts = new ArrayList<>();
-    for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
+    for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(getProject(), pattern, 100)) {
       StringBuilder s = new StringBuilder(eachResult.getClassName() + "(" + eachResult.getPackageName() + ")");
       for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         if (s.length() > 0) s.append(" ");
@@ -153,7 +153,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   private void assertArtifactSearchResults(String pattern, String... expected) {
     List<String> actual = new ArrayList<>();
     StringBuilder s;
-    for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
+    for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(getProject(), pattern, 100)) {
       for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         s = new StringBuilder();
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());

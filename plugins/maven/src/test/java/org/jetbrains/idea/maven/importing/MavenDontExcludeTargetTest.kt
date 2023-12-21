@@ -13,7 +13,7 @@ import org.junit.Test
 class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
   
   fun testDontExcludeTargetTest() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isExcludeTargetFolder = false
+    MavenProjectsManager.getInstance(project).importingSettings.isExcludeTargetFolder = false
 
     val classA = createProjectSubFile("target/classes/A.class")
     val testClass = createProjectSubFile("target/test-classes/ATest.class")
@@ -27,7 +27,7 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    val fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex()
+    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
     withContext(Dispatchers.EDT) {
       assert(!fileIndex.isInContent(classA))
@@ -39,7 +39,7 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDontExcludeTargetTest2() = runBlocking {
-    MavenProjectsManager.getInstance(myProject).importingSettings.isExcludeTargetFolder = false
+    MavenProjectsManager.getInstance(project).importingSettings.isExcludeTargetFolder = false
 
     val realClassA = createProjectSubFile("customOutput/A.class")
     val realTestClass = createProjectSubFile("customTestOutput/ATest.class")
@@ -62,7 +62,7 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
         </build>
         """.trimIndent())
 
-    val fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex()
+    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
     withContext(Dispatchers.EDT) {
       assert(fileIndex.isInContent(classA))

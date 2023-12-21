@@ -19,7 +19,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit:junit")
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "junit:junit")
   }
 
   @Test
@@ -33,7 +33,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(myProjectPom)
+    configTest(projectPom)
     val elements = fixture.completeBasic()
     assertCompletionVariants(fixture, RENDERING_TEXT, "junit:junit")
     UsefulTestCase.assertSize(1, elements)
@@ -76,7 +76,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(myProjectPom)
+    configTest(projectPom)
     fixture.complete(CompletionType.BASIC)
     assertCompletionVariants(fixture, RENDERING_TEXT, "junit:junit")
     fixture.type('\n')
@@ -130,7 +130,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    configTest(myProjectPom)
+    configTest(projectPom)
 
     val elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
@@ -186,7 +186,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
     assertTrue(elements.size > 0)
@@ -231,7 +231,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
 
@@ -272,7 +272,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
     val elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
 
@@ -300,7 +300,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencyManagement>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
@@ -361,7 +361,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements!!)
@@ -432,7 +432,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(myProjectPom)
+    fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.complete(CompletionType.BASIC)
     UsefulTestCase.assertSize(1, elements)

@@ -20,7 +20,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myStructure = TestProjectTreeStructure(myProject, testRootDisposable)
+    myStructure = TestProjectTreeStructure(project, testRootDisposable)
   }
 
   override fun tearDown() = runBlocking {

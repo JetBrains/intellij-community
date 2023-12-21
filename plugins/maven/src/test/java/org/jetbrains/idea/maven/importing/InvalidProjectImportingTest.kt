@@ -141,7 +141,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testUnknownProblemWithEmptyFile() = runBlocking {
     createProjectPom("")
-    WriteAction.runAndWait<IOException> { myProjectPom.setBinaryContent(ByteArray(0)) }
+    WriteAction.runAndWait<IOException> { projectPom.setBinaryContent(ByteArray(0)) }
 
     importProjectAsync()
 
@@ -757,7 +757,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotReportResolvedPlugins() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(myDir, "plugins")
+    val helper = MavenCustomRepositoryHelper(dir, "plugins")
 
     repositoryPath = helper.getTestDataPath("plugins")
 

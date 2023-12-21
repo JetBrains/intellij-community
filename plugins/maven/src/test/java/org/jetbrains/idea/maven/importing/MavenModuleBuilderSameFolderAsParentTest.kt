@@ -38,7 +38,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
     WriteAction.runAndWait<Exception> {
-      val model = getInstance(myProject).getModifiableModel()
+      val model = getInstance(project).getModifiableModel()
       myBuilder!!.createModule(model)
       model.commit()
     }
@@ -73,9 +73,9 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
       )
     }
     assertRelativeContentRoots("module", "")
-    val module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"))
+    val module = MavenProjectsManager.getInstance(project).findProject(getModule("module"))
     readAction {
-      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module!!.file)
+      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(project, module!!.file)
       assertEquals("custompom.xml", domProjectModel!!.getMavenParent().getRelativePath().getRawText())
     }
   }

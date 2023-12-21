@@ -73,23 +73,62 @@ public abstract class MavenTestCase extends UsefulTestCase {
     """;
   private MavenProgressIndicator myProgressIndicator;
   private WSLDistribution myWSLDistribution;
-  protected RemotePathTransformerFactory.Transformer myPathTransformer;
+  private RemotePathTransformerFactory.Transformer myPathTransformer;
 
   private File ourTempDir;
 
-  protected IdeaProjectTestFixture myTestFixture;
+  private IdeaProjectTestFixture myTestFixture;
 
-  @NotNull
-  protected Project myProject;
+  @NotNull private Project project;
 
-  protected File myDir;
-  protected VirtualFile myProjectRoot;
+  private File myDir;
+  private VirtualFile myProjectRoot;
 
-  protected VirtualFile myProjectPom;
-  protected List<VirtualFile> myAllPoms = new ArrayList<>();
+  private VirtualFile myProjectPom;
+  private List<VirtualFile> myAllPoms = new ArrayList<>();
 
   protected static final boolean preimportTestMode = Boolean.getBoolean("MAVEN_TEST_PREIMPORT");
 
+  public RemotePathTransformerFactory.Transformer getPathTransformer() {
+    return myPathTransformer;
+  }
+
+  public IdeaProjectTestFixture getTestFixture() {
+    return myTestFixture;
+  }
+
+  public void setTestFixture(IdeaProjectTestFixture testFixture) {
+    myTestFixture = testFixture;
+  }
+
+  public void setTestFixtureNull() {
+    myTestFixture = null;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return project;
+  }
+
+  public File getDir() {
+    return myDir;
+  }
+
+  public VirtualFile getProjectRoot() {
+    return myProjectRoot;
+  }
+
+  public VirtualFile getProjectPom() {
+    return myProjectPom;
+  }
+
+  public void setProjectPom(VirtualFile projectPom) {
+    myProjectPom = projectPom;
+  }
+
+  public List<VirtualFile> getAllPoms() {
+    return myAllPoms;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -97,8 +136,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     super.setUp();
 
     setUpFixtures();
-    myProject = myTestFixture.getProject();
-    myPathTransformer = RemotePathTransformerFactory.createForProject(myProject);
+    project = myTestFixture.getProject();
+    myPathTransformer = RemotePathTransformerFactory.createForProject(project);
     setupWsl();
     ensureTempDirCreated();
 
@@ -106,9 +145,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
     FileUtil.ensureExists(myDir);
 
 
-    myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.nonModal()), null);
+    myProgressIndicator = new MavenProgressIndicator(project, new EmptyProgressIndicator(ModalityState.nonModal()), null);
 
-    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspacePersistedSettings());
+    MavenWorkspaceSettingsComponent.getInstance(project).loadState(new MavenWorkspacePersistedSettings());
 
     String home = getTestMavenHome();
     if (home != null) {
@@ -171,7 +210,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
 
     Sdk wslSdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
-    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(wslSdk));
+    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(project).setProjectSdk(wslSdk));
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
   }
 
@@ -204,18 +243,18 @@ public abstract class MavenTestCase extends UsefulTestCase {
       if (existingSdk == sdk) return sdk;
     }
     Sdk newSdk = JavaSdk.getInstance().createJdk("Wsl JDK For Tests", jdkPath);
-    WriteAction.runAndWait(() -> jdkTable.addJdk(newSdk, myProject));
+    WriteAction.runAndWait(() -> jdkTable.addJdk(newSdk, project));
     return newSdk;
   }
 
 
   @Override
   protected void tearDown() throws Exception {
-    String basePath = myProject.getBasePath();
+    String basePath = project.getBasePath();
     new RunAll(
       () -> {
         MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
-          myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
+          project.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
         if (mavenProgressTracker != null) {
           mavenProgressTracker.assertProgressTasksCompleted();
         }
@@ -223,7 +262,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> tearDownEmbedders(),
       () -> checkAllMavenConnectorsDisposed(),
-      () -> myProject = null,
+      () -> project = null,
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
         MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
@@ -243,7 +282,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   private void tearDownEmbedders() {
-    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(myProject);
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     if (manager == null) return;
     manager.getEmbeddersManager().releaseInTests();
   }
@@ -365,11 +404,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected MavenGeneralSettings getMavenGeneralSettings() {
-    return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+    return MavenProjectsManager.getInstance(project).getGeneralSettings();
   }
 
   protected MavenImportingSettings getMavenImporterSettings() {
-    return MavenProjectsManager.getInstance(myProject).getImportingSettings();
+    return MavenProjectsManager.getInstance(project).getImportingSettings();
   }
 
   protected String getRepositoryPath() {
@@ -438,9 +477,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected Module createModule(final String name, final ModuleType type) {
     try {
-      return WriteCommandAction.writeCommandAction(myProject).compute(() -> {
+      return WriteCommandAction.writeCommandAction(project).compute(() -> {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
-        Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
+        Module module = ModuleManager.getInstance(project).newModule(f.getPath(), type.getId());
         PsiTestUtil.addContentRoot(module, f.getParent());
         return module;
       });
@@ -546,7 +585,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void deleteProfilesXml() throws IOException {
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+    WriteCommandAction.writeCommandAction(project).run(() -> {
       VirtualFile f = myProjectRoot.findChild("profiles.xml");
       if (f != null) f.delete(this);
     });
@@ -694,11 +733,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected <R, E extends Throwable> R runWriteAction(@NotNull ThrowableComputable<R, E> computable) throws E {
-    return WriteCommandAction.writeCommandAction(myProject).compute(computable);
+    return WriteCommandAction.writeCommandAction(project).compute(computable);
   }
 
   protected <E extends Throwable> void runWriteAction(@NotNull ThrowableRunnable<E> runnable) throws E {
-    WriteCommandAction.writeCommandAction(myProject).run(runnable);
+    WriteCommandAction.writeCommandAction(project).run(runnable);
   }
 
   private static String getTestMavenHome() {
@@ -709,7 +748,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
     return dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
+        return project;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return new VirtualFile[]{pomFile};

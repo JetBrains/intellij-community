@@ -192,7 +192,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     createOutputDirectories();
     Module module = getModule("m");
     VirtualFile[] jdkRoots = ModuleRootManager.getInstance(module).getSdk().getRootProvider().getFiles(OrderRootType.CLASSES);
-    VirtualFile[] junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName("Maven: junit:junit:4.0")
+    VirtualFile[] junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getLibraryByName("Maven: junit:junit:4.0")
       .getFiles(OrderRootType.CLASSES);
     assertOrderedEquals(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots(),
                         ArrayUtil.mergeArrays(jdkRoots, junitRoots));
@@ -826,11 +826,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     importProjects(m1, m2);
     assertModules("m1", "m2");
 
-    Module m1m = ModuleManager.getInstance(myProject).findModuleByName("m1");
+    Module m1m = ModuleManager.getInstance(getProject()).findModuleByName("m1");
     List<OrderEntry> modules1 = new ArrayList<>();
     ModuleRootManager.getInstance(m1m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
       new CommonProcessors.CollectProcessor<>(modules1));
-    GlobalSearchScope scope1 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules1);
+    GlobalSearchScope scope1 = LibraryScopeCache.getInstance(getProject()).getLibraryScope(modules1);
     assertSearchScope(scope1,
                       getProjectPath() + "/m1/src/main/java",
                       getProjectPath() + "/m1/src/test/java",
@@ -840,11 +840,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
     String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
     String librarySrcPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar";
-    Module m2m = ModuleManager.getInstance(myProject).findModuleByName("m2");
+    Module m2m = ModuleManager.getInstance(getProject()).findModuleByName("m2");
     List<OrderEntry> modules2 = new ArrayList<>();
     ModuleRootManager.getInstance(m2m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
       new CommonProcessors.CollectProcessor<>(modules2));
-    GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
+    GlobalSearchScope scope2 = LibraryScopeCache.getInstance(getProject()).getLibraryScope(modules2);
 
     List<String> expectedPaths =
       new ArrayList<>(List.of(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath));
@@ -926,8 +926,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   }
 
   public void _testAdditionalClasspathElementsInTests() throws Exception {
-    File iof1 = new File(myDir, "foo/bar1");
-    File iof2 = new File(myDir, "foo/bar2");
+    File iof1 = new File(getDir(), "foo/bar1");
+    File iof2 = new File(getDir(), "foo/bar2");
     iof1.mkdirs();
     iof2.mkdirs();
     VirtualFile f1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof1);
@@ -1035,7 +1035,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
 
     final Module user = createModule("user");
 
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       ModuleRootModificationUtil.addDependency(user, getModule("m1"));
       VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
       VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
@@ -1179,11 +1179,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
                                            "</dependencies>\n");
     // The default setupInWriteAction only creates directories up to m4.
     // Create directories for m5 and m6 which we will use for this test.
-    WriteCommandAction.writeCommandAction(myProject).run(() -> createProjectSubDirs("m5/src/main/java",
-                                                                                    "m5/src/test/java",
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> createProjectSubDirs("m5/src/main/java",
+                                                                                       "m5/src/test/java",
 
-                                                                                    "m6/src/main/java",
-                                                                                    "m6/src/test/java"));
+                                                                                       "m6/src/main/java",
+                                                                                       "m6/src/test/java"));
     VirtualFile m5 = createModulePom("m5", """
       <groupId>test</groupId>
       <artifactId>m5</artifactId>
@@ -1215,7 +1215,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   // The result is the same for "compile" and "runtime" scopes.
   private void checkDirIndexTestModulesWithCompileOrRuntimeScope(List<Module> modules) {
     assertEquals(6, modules.size());
-    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
@@ -1267,7 +1267,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     // because test scope does not propagate transitive dependencies.
     List<Module> modules = setupDirIndexTestModulesWithScope("test");
     assertEquals(6, modules.size());
-    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be no transitive deps: m2 -> m3, m3 -> source, and m4 -> m3
@@ -1321,7 +1321,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     final Module nonMavenM1 = createModule("nonMavenM1");
     final Module nonMavenM2 = createModule("nonMavenM2");
 
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true);
       ModuleRootModificationUtil.addDependency(nonMavenM2, modules.get(0), DependencyScope.COMPILE, true);
       createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
@@ -1338,7 +1338,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     assertModuleModuleDeps("nonMavenM2", "m1");
     assertModuleModuleDeps("m1", "m2", "m3", "m5", "m6");
 
-    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
     VirtualFile m3JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "m3/src/main/java"), true);
     assertNotNull(m3JavaDir);
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
@@ -1490,7 +1490,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
       roots = ((LibraryRuntimeClasspathScope)searchScope).getRoots();
     }
     final List<VirtualFile> entries = new ArrayList<>(roots);
-    entries.removeAll(Arrays.asList(ProjectRootManager.getInstance(myProject).orderEntries().sdkOnly().classes().getRoots()));
+    entries.removeAll(Arrays.asList(ProjectRootManager.getInstance(getProject()).orderEntries().sdkOnly().classes().getRoots()));
 
     List<String> actualPaths = new ArrayList<>();
     for (VirtualFile each : entries) {
@@ -1523,7 +1523,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
   }
 
   private void createOutputDirectories() {
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
       CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
       if (extension != null) {
         createDirectoryIfDoesntExist(extension.getCompilerOutputUrl());

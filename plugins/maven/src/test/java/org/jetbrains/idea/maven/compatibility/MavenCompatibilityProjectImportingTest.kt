@@ -45,11 +45,11 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
   @Before
   fun before() {
-    myWrapperTestFixture = MavenWrapperTestFixture(myProject, myMavenVersion)
+    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
     myWrapperTestFixture!!.setUp()
 
 
-    val helper = MavenCustomRepositoryHelper(myDir, "local1")
+    val helper = MavenCustomRepositoryHelper(dir, "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
   }
@@ -63,7 +63,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   @Test
   fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
     assumeVersionAtLeast("3.1.0")
-    val helper = MavenCustomRepositoryHelper(myDir, "plugins")
+    val helper = MavenCustomRepositoryHelper(dir, "plugins")
     repositoryPath = helper.getTestDataPath("plugins")
     mavenGeneralSettings.isWorkOffline = true
 
@@ -82,7 +82,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    doImportProjects(java.util.List.of(myProjectPom), false)
+    doImportProjects(java.util.List.of(projectPom), false)
 
     val projects = projectsTree.projects
     assertEquals(1, projects.size)
@@ -160,7 +160,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
 
   private fun assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path).mavenDistribution.version)
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.version)
   }
 
   @Test

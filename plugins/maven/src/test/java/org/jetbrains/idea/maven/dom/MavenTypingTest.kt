@@ -302,7 +302,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   private fun assertTypeResult(c: Char, xml: String) {
-    assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml))
+    assertTypeResultInRegularFile(projectPom, c, createPomXml(xml))
   }
 
   private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {

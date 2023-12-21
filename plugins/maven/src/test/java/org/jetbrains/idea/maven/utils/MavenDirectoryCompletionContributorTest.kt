@@ -39,7 +39,7 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
 
     suspend fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
       readAction {
-        val psiDir = PsiManager.getInstance(myProject).findDirectory(dir)!!
+        val psiDir = PsiManager.getInstance(project).findDirectory(dir)!!
         Assertions.assertThat(MavenDirectoryCompletionContributor().getVariants(psiDir).map {
           FileUtil.getRelativePath(dir.path, FileUtil.toSystemIndependentName(it.path), '/') to it.rootType
         }).containsExactlyInAnyOrder(*expected)
@@ -48,7 +48,7 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
 
     val resources = defaultResources().map { it to JavaResourceRootType.RESOURCE } + defaultTestResources().map { it to JavaResourceRootType.TEST_RESOURCE }
 
-    check(myProjectRoot,
+    check(projectRoot,
           "customSrc" to JavaSourceRootType.SOURCE,
           "src/test/java" to JavaSourceRootType.TEST_SOURCE,
           *resources.toTypedArray())

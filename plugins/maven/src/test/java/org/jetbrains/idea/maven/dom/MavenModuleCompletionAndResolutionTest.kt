@@ -76,7 +76,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3")
+    assertCompletionVariants(projectPom, "m1", "m2", "m2/m3")
 
     createModulePom("m2", """
       <groupId>test</groupId>
@@ -112,7 +112,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom)
+    assertCompletionVariants(projectPom)
   }
 
   @Test
@@ -149,7 +149,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "subDir1", "subDir1/subDir2")
+    assertCompletionVariants(projectPom, "subDir1", "subDir1/subDir2")
   }
 
   @Test
@@ -192,7 +192,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m1), "m1")
+    assertResolved(projectPom, findPsiFile(m1), "m1")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -205,7 +205,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m2), "m2")
+    assertResolved(projectPom, findPsiFile(m2), "m2")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -217,7 +217,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertUnresolved(myProjectPom, "unknownModule")
+    assertUnresolved(projectPom, "unknownModule")
   }
 
   @Test
@@ -251,7 +251,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m), "./m")
+    assertResolved(projectPom, findPsiFile(m), "./m")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -263,7 +263,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m), ".\\m")
+    assertResolved(projectPom, findPsiFile(m), ".\\m")
   }
 
   @Test
@@ -303,7 +303,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m), "subDir/m")
+    assertResolved(projectPom, findPsiFile(m), "subDir/m")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -318,7 +318,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.dirName"))
+    assertResolved(projectPom, findTag(projectPom, "project.properties.dirName"))
   }
 
   @Test
@@ -524,7 +524,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     fixture.launchAction(i!!)
 
-    val pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml")
+    val pom = projectRoot.findFileByRelativePath("subDir/newModule/pom.xml")
     assertNotNull(pom)
   }
 
@@ -687,7 +687,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
           <module>../ppp/new<caret>Module</module>
         </modules>
         """.trimIndent()))
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
     assertNotNull(i)
     fixture.launchAction(i!!)
@@ -774,12 +774,12 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun assertCreateModuleFixResult(relativePath: String, expectedText: String) {
-    val pom = myProjectRoot.findFileByRelativePath(relativePath)
+    val pom = projectRoot.findFileByRelativePath(relativePath)
     assertNotNull(pom)
 
     val doc = FileDocumentManager.getInstance().getDocument(pom!!)
 
-    val selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor()
+    val selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor()
     assertEquals(doc, selectedEditor!!.getDocument())
 
     assertEquals(expectedText, doc!!.text)

@@ -54,18 +54,18 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
 
-    val projects = MavenProjectsManager.getInstance(myProject).getProjects()
+    val projects = MavenProjectsManager.getInstance(project).getProjects()
     assertEquals(1, projects.size)
 
-    val project = projects[0]
-    assertEquals(id, project.mavenId)
+    val mavenProject = projects[0]
+    assertEquals(id, mavenProject.mavenId)
 
     assertModules("module")
-    MavenProjectsManager.getInstance(myProject).isMavenizedModule(getModule("module"))
-    assertSame(project, MavenProjectsManager.getInstance(myProject).findProject(getModule("module")))
+    MavenProjectsManager.getInstance(project).isMavenizedModule(getModule("module"))
+    assertSame(project, MavenProjectsManager.getInstance(project).findProject(getModule("module")))
 
-    assertNotNull(myProjectRoot.findFileByRelativePath("src/main/java"))
-    assertNotNull(myProjectRoot.findFileByRelativePath("src/test/java"))
+    assertNotNull(projectRoot.findFileByRelativePath("src/main/java"))
+    assertNotNull(projectRoot.findFileByRelativePath("src/test/java"))
 
     assertSources("module", "src/main/java")
     assertTestSources("module", "src/test/java")
@@ -88,14 +88,14 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
 
-    val projects = MavenProjectsManager.getInstance(myProject).getProjects()
+    val projects = MavenProjectsManager.getInstance(project).getProjects()
     assertEquals(1, projects.size)
 
     val project = projects[0]
     assertEquals(id, project.mavenId)
 
-    assertNotNull(myProjectRoot.findFileByRelativePath("src/main/java/org/foo/App.java"))
-    assertNotNull(myProjectRoot.findFileByRelativePath("src/test/java/org/foo/AppTest.java"))
+    assertNotNull(projectRoot.findFileByRelativePath("src/main/java/org/foo/App.java"))
+    assertNotNull(projectRoot.findFileByRelativePath("src/test/java/org/foo/AppTest.java"))
 
     assertSources("module", "src/main/java")
     assertTestSources("module", "src/test/java")
@@ -112,7 +112,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     setModuleNameAndRoot("module", "$projectPath/module")
-    setAggregatorProject(myProjectPom)
+    setAggregatorProject(projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
 
     assertEquals(createPomXml("""
@@ -123,7 +123,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                                         <module>module</module>
                                     </modules>
                                 """.trimIndent()),
-                 StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)))
+                 StringUtil.convertLineSeparators(VfsUtil.loadText(projectPom)))
   }
 
   @Test
@@ -141,7 +141,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     setModuleNameAndRoot("module", "$projectPath/module")
     setAggregatorProject(null)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    myProjectRoot.findFileByRelativePath("module/pom.xml")
+    projectRoot.findFileByRelativePath("module/pom.xml")
 
     assertEquals(2, projectsManager.projectsTreeForTests.managedFilesPaths.size)
   }
@@ -159,9 +159,9 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     assertEquals(1, projectsManager.projectsTreeForTests.managedFilesPaths.size)
 
     setModuleNameAndRoot("module", "$projectPath/module")
-    setAggregatorProject(myProjectPom)
+    setAggregatorProject(projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    myProjectRoot.findFileByRelativePath("module/pom.xml")
+    projectRoot.findFileByRelativePath("module/pom.xml")
 
     assertEquals(1, projectsManager.projectsTreeForTests.managedFilesPaths.size)
   }
@@ -177,7 +177,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(myProjectPom)
+    setParentProject(projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
 
     assertEquals("""
@@ -201,7 +201,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
 
                    """.trimIndent(),
-                 VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")!!))
+                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
   }
 
   @Test
@@ -215,7 +215,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(myProjectPom)
+    setParentProject(projectPom)
     setInheritedOptions(true, true)
     createNewModule(MavenId("org.foo", "module", "1.0"))
 
@@ -238,7 +238,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
 
                    """.trimIndent(),
-                 VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")!!))
+                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
   }
 
   @Test
@@ -252,7 +252,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(myProjectPom)
+    setParentProject(projectPom)
     setInheritedOptions(true, true)
     setArchetype(MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null))
     createNewModule(MavenId("org.foo", "module", "1.0"))
@@ -288,7 +288,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                    </project>
                    
                    """.trimIndent(),
-                 VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")!!))
+                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
   }
 
   @Test
@@ -302,7 +302,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     setModuleNameAndRoot("module", "$projectPath/subDir/module")
-    setParentProject(myProjectPom)
+    setParentProject(projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
 
     assertEquals("""
@@ -327,11 +327,11 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
 
                    """.trimIndent(),
-                 VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")!!))
+                 VfsUtil.loadText(projectRoot.findFileByRelativePath("subDir/module/pom.xml")!!))
   }
 
   private fun deleteModule(name: String?) {
-    val moduleManger = ModuleManager.getInstance(myProject)
+    val moduleManger = ModuleManager.getInstance(project)
     val module = moduleManger.findModuleByName(name!!)
     val modifiableModuleModel = moduleManger.getModifiableModel()
     WriteAction.runAndWait<RuntimeException> {
@@ -370,7 +370,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     myBuilder!!.projectId = id
 
     WriteAction.runAndWait<Exception> {
-      val model = ModuleManager.getInstance(myProject).getModifiableModel()
+      val model = ModuleManager.getInstance(project).getModifiableModel()
       myBuilder!!.createModule(model)
       model.commit()
     }

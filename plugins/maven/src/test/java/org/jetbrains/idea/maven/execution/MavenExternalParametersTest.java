@@ -19,17 +19,17 @@ public class MavenExternalParametersTest extends MavenExecutionTestCase {
   @Test
   public void testBundledMavenHome() throws IOException, ExecutionException {
     MavenRunnerParameters runnerParameters = new MavenRunnerParameters(getProjectPath(), null, false, emptyList(), emptyMap());
-    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-    JavaParameters parameters = MavenExternalParameters.createJavaParameters(myProject, runnerParameters, generalSettings, null, null);
+    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(getProject()).getGeneralSettings();
+    JavaParameters parameters = MavenExternalParameters.createJavaParameters(getProject(), runnerParameters, generalSettings, null, null);
     assertTrue(parameters.getVMParametersList().hasProperty("maven.home"));
   }
 
   @Test
   public void testWrappedMavenWithoutWrapperProperties() throws IOException, ExecutionException {
     MavenRunnerParameters runnerParameters = new MavenRunnerParameters(getProjectPath(), null, false, emptyList(), emptyMap());
-    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(getProject()).getGeneralSettings();
     generalSettings.setMavenHomeType(MavenWrapper.INSTANCE);
-    JavaParameters parameters = MavenExternalParameters.createJavaParameters(myProject, runnerParameters, generalSettings, null, null);
+    JavaParameters parameters = MavenExternalParameters.createJavaParameters(getProject(), runnerParameters, generalSettings, null, null);
     assertTrue(parameters.getVMParametersList().hasProperty("maven.home"));
   }
 }

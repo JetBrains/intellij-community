@@ -60,20 +60,20 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
       val elementAtCaret = fixture.getElementAtCaret()
 
       UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
-      assertEquals((elementAtCaret as PsiFile).getVirtualFile(), myProjectPom)
+      assertEquals((elementAtCaret as PsiFile).getVirtualFile(), projectPom)
     }
   }
 
   @Test
   fun testUnderstandingProjectSchemaWithoutNamespace() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <dep<caret>
                          </project>
                          """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement")
+    assertCompletionVariants(projectPom, "dependencies", "dependencyManagement")
   }
 
   @Test
@@ -102,8 +102,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAbsentModelVersion() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <<error descr="'modelVersion' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <artifactId>foo</artifactId>
                          </project>
@@ -113,8 +113,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAbsentArtifactId() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <<error descr="'artifactId' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <modelVersion>4.0.0</modelVersion>
                          </project>
@@ -124,8 +124,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testUnknownModelVersion() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <modelVersion><error descr="Unsupported model version. Only version 4.0.0 is supported.">666</error></modelVersion>
                            <artifactId>foo</artifactId>
@@ -146,8 +146,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddingSettingsXmlReadingProblemsToProjectTag() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -159,8 +159,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <<error descr="'settings.xml' has syntax errors">project</error>>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -173,8 +173,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddingProfilesXmlReadingProblemsToProjectTag() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -186,8 +186,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <<error descr="'profiles.xml' has syntax errors">project</error>>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -200,8 +200,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAddingStructureReadingProblemsToParentTag() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -217,8 +217,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -245,8 +245,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                       <<<
                       """.trimIndent())
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -262,8 +262,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          """.trimIndent())
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -282,8 +282,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotAddReadingSyntaxProblemsToProjectTag() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -294,8 +294,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -308,8 +308,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotAddDependencyAndModuleProblemsToProjectTag() = runBlocking {
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
@@ -331,8 +331,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(myProjectPom,
-                       """
+    fixture.saveText(projectPom,
+                     """
                          <project>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>

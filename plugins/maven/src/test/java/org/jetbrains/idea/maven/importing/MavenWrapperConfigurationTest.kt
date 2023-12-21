@@ -38,7 +38,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
   @Test
   fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking {
 
-    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
 
@@ -90,7 +90,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/custom-maven.zip\n")
 
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
       .setMavenHomeNoFire(MavenWrapper)
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)

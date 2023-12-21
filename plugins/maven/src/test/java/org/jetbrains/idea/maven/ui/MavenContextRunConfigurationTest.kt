@@ -24,7 +24,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   public override fun setUp() = runBlocking {
     super.setUp()
     initProjectsManager(false)
-    myNavigator = MavenProjectsNavigator.getInstance(myProject)
+    myNavigator = MavenProjectsNavigator.getInstance(project)
     withContext(Dispatchers.EDT) {
       myNavigator.initForTests()
     }
@@ -37,7 +37,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom), MavenExplicitProfiles.NONE)
     importProjectAsync()
     projectsManager.fireActivatedInTests()
 
@@ -55,14 +55,14 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom), MavenExplicitProfiles.NONE)
     importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
-      val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)
+      val psiFile = PsiManager.getInstance(project).findFile(projectPom)
       val context = ConfigurationContext.createEmptyContextForLocation(
-        MavenGoalLocation(myProject, psiFile, arrayOf("validate").asList()))
+        MavenGoalLocation(project, psiFile, arrayOf("validate").asList()))
       val configurationFromContext = RunConfigurationProducer.getInstance(
         MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
       TestCase.assertNotNull(configurationFromContext)
@@ -97,21 +97,21 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
     importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
-      val psiFile = PsiManager.getInstance(myProject).findFile(m1)
+      val psiFile = PsiManager.getInstance(project).findFile(m1)
       val context = ConfigurationContext.createEmptyContextForLocation(
-        MavenGoalLocation(myProject, psiFile, arrayOf("validate").asList()))
+        MavenGoalLocation(project, psiFile, arrayOf("validate").asList()))
       val configurationFromContext = RunConfigurationProducer.getInstance(
         MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
       TestCase.assertNotNull(configurationFromContext)
       val runConfiguration = configurationFromContext?.configuration as? MavenRunConfiguration
-      val psiFile2 = PsiManager.getInstance(myProject).findFile(m2)
+      val psiFile2 = PsiManager.getInstance(project).findFile(m2)
       val context2 = ConfigurationContext.createEmptyContextForLocation(
-        MavenGoalLocation(myProject, psiFile2, arrayOf("validate").asList()))
+        MavenGoalLocation(project, psiFile2, arrayOf("validate").asList()))
       val configurationFromContext2 = RunConfigurationProducer.getInstance(
         MavenConfigurationProducer::class.java).createConfigurationFromContext(context2)
       val runConfiguration2 = configurationFromContext2?.configuration as? MavenRunConfiguration
@@ -154,7 +154,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
     importProjectAsync()
     projectsManager.fireActivatedInTests()
 
@@ -169,9 +169,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
 
 
   private fun createRunConfiguration(projectPom: VirtualFile, vararg goals: String): MavenRunConfiguration? {
-    val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)
+    val psiFile = PsiManager.getInstance(project).findFile(projectPom)
     val context = ConfigurationContext.createEmptyContextForLocation(
-      MavenGoalLocation(myProject, psiFile, goals.asList()))
+      MavenGoalLocation(project, psiFile, goals.asList()))
     val configurationFromContext = RunConfigurationProducer.getInstance(
       MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
     TestCase.assertNotNull(configurationFromContext)

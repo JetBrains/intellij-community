@@ -21,7 +21,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   
   override fun setUp() {
     super.setUp()
-    repoPath = File(myDir, "repo").path
+    repoPath = File(dir, "repo").path
     repositoryPath = repoPath
   }
 
@@ -247,7 +247,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       "src/test/java")
     assertDefaultTestResources("project")
 
-    val compilerSettings = myProject.getService(
+    val compilerSettings = project.getService(
       GreclipseIdeaCompilerSettings::class.java)
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
   }
@@ -313,7 +313,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       "src/test/java")
     assertDefaultTestResources("project")
 
-    val compilerSettings = myProject.getService(
+    val compilerSettings = project.getService(
       GreclipseIdeaCompilerSettings::class.java)
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
   }
@@ -734,9 +734,9 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
       writeAction {
         val a = MavenRootModelAdapter(
-          MavenRootModelAdapterLegacyImpl(projectsTree.findProject(myProjectPom)!!,
+          MavenRootModelAdapterLegacyImpl(projectsTree.findProject(projectPom)!!,
                                           getModule("project"),
-                                          ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
+                                          ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
         a.unregisterAll("$projectPath/target", true, true)
         a.rootModel.commit()
       }

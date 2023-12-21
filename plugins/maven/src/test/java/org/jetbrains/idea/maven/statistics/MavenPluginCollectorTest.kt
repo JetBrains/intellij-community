@@ -29,7 +29,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
                     </build>
                     """.trimIndent())
     val metrics = collectProjectStateCollectorEvents(
-      MavenPluginCollector::class.java, myProject)
+      MavenPluginCollector::class.java, project)
 
     val compiler = metrics.map { it.data.build() }.first {
       it[MavenPluginCollector.groupArtifactId.name] == "org.apache.maven.plugins:maven-compiler-plugin"
@@ -64,7 +64,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
                     </build>
                     """.trimIndent())
     val metrics = collectProjectStateCollectorEvents(
-      MavenPluginCollector::class.java, myProject)
+      MavenPluginCollector::class.java, project)
     val collectedGroupIds = metrics.map { it.data.build() }.map {
       it[MavenPluginCollector.groupArtifactId.name].toString()
     }

@@ -130,7 +130,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                  "foo=abc\${basedir<caret>}abc")
 
     withContext(Dispatchers.EDT) {
-      val baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent())
+      val baseDir = PsiManager.getInstance(project).findDirectory(projectPom.getParent())
       assertResolved(f, baseDir!!)
     }
   }
@@ -211,7 +211,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=@profileProp<caret>@")
     withContext(Dispatchers.EDT) {
-      assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java))
+      assertResolved(f, findTag(projectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java))
     }
   }
 
@@ -295,7 +295,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   private fun findPropertyPsiElement(filter: VirtualFile, propName: String): PsiElement? {
-    val property = MavenDomUtil.findProperty(myProject, filter, propName)
+    val property = MavenDomUtil.findProperty(project, filter, propName)
     return property?.getPsiElement()
   }
 
@@ -358,8 +358,8 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
     withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"),
-                                 MavenDomUtil.findPropertyValue(myProject, f, "foo2"))
+      assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(project, f, "foo"),
+                                 MavenDomUtil.findPropertyValue(project, f, "foo2"))
     }
   }
 
@@ -506,7 +506,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                   </resources>
                                 </build>
                                 """.trimIndent()),
-                   findPsiFile(myProjectPom).getText())
+                   findPsiFile(projectPom).getText())
 
       assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
     }

@@ -38,7 +38,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWriting() = runBlocking {
-    CommandProcessor.getInstance().executeCommand(myProject, {
+    CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel
         model!!.getGroupId().setStringValue("foo")
@@ -59,12 +59,12 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
                           <version>baz</version>${'\r'}
                       </project>
                       """.trimIndent(),
-                                   VfsUtil.loadText(myProjectPom))
+                                   VfsUtil.loadText(projectPom))
   }
 
   @Test
   fun testAddingADependency() = runBlocking {
-    CommandProcessor.getInstance().executeCommand(myProject, {
+    CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel
         val d = model!!.getDependencies().addDependency()
@@ -92,17 +92,17 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
                               </dependency>${'\r'}
                           </dependencies>${'\r'}
                       </project>
-                      """.trimIndent(), VfsUtil.loadText(myProjectPom))
+                      """.trimIndent(), VfsUtil.loadText(projectPom))
   }
 
   private val domModel: MavenDomProjectModel?
-    get() = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom)
+    get() = MavenDomUtil.getMavenDomProjectModel(project, projectPom)
 
   private fun formatAndSaveProjectPomDocument() {
     try {
-      val psiFile = PsiManager.getInstance(myProject).findFile(myProjectPom)
-      CodeStyleManager.getInstance(myProject).reformat(psiFile!!)
-      val d = FileDocumentManager.getInstance().getDocument(myProjectPom)
+      val psiFile = PsiManager.getInstance(project).findFile(projectPom)
+      CodeStyleManager.getInstance(project).reformat(psiFile!!)
+      val d = FileDocumentManager.getInstance().getDocument(projectPom)
       FileDocumentManager.getInstance().saveDocument(d!!)
     }
     catch (e: IncorrectOperationException) {

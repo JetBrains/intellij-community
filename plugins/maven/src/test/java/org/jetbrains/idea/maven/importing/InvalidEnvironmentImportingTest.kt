@@ -23,32 +23,32 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    myTestSyncViewManager = object : SyncViewManager(myProject) {
+    myTestSyncViewManager = object : SyncViewManager(project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }
-    myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
   }
 
   @Test
   fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() = runBlocking {
-    val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
-    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
+    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Project JDK is not specifie")) {
-        MavenWorkspaceSettingsComponent.getInstance(myProject)
+        MavenWorkspaceSettingsComponent.getInstance(project)
           .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK
-        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
+        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = null }
         createAndImportProject()
-        val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
+        val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == project }
         assertNotEmpty(connectors)
         TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }
     }
     finally {
-      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
+      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = projectSdk }
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter = jdkForImporter
     }
   }
 
@@ -105,6 +105,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>test</artifactId>" +
                      "<version>1.0</version>")
-    doImportProjects(listOf(myProjectPom), false)
+    doImportProjects(listOf(projectPom), false)
   }
 }

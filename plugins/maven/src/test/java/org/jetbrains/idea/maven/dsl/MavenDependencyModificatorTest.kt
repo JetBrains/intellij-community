@@ -11,7 +11,7 @@ class MavenDependencyModificatorTest : MavenTestCase() {
 
   @Test
   fun testShouldReturnDependencyDirectlyDeclared() = runBlocking {
-    val dep = MavenDependencyModificator(myProject)
+    val dep = MavenDependencyModificator(project)
     val file = createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
@@ -31,7 +31,7 @@ class MavenDependencyModificatorTest : MavenTestCase() {
 
   @Test
   fun testShouldReturnDependencyManagedInParent() = runBlocking {
-    val dep = MavenDependencyModificator(myProject)
+    val dep = MavenDependencyModificator(project)
     createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>

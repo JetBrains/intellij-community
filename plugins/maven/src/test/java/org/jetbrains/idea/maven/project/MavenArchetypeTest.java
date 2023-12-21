@@ -13,7 +13,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myManager = new MavenEmbeddersManager(myProject);
+    myManager = new MavenEmbeddersManager(getProject());
   }
 
   @Override
@@ -38,7 +38,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
   public void testInnerArchetypes() {
     assumeVersion("bundled");
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
+    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
     var archetypes = embedder.getInnerArchetypes(Path.of("/non-existing-path"));
     assertEquals(0, archetypes.size()); // at least, there were no errors
   }
@@ -47,7 +47,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
   public void testRemoteArchetypes() {
     assumeVersion("bundled");
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
+    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
     var archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
     var filtered = archetypes.stream()
       .filter(archetype ->
@@ -62,7 +62,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
   public void testResolveAndGetArchetypeDescriptor() {
     assumeVersion("bundled");
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
+    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
     var descriptorMap = embedder.resolveAndGetArchetypeDescriptor(
       "org.apache.maven.archetypes",
       "maven-archetype-archetype",

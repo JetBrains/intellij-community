@@ -31,9 +31,9 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassArgLine = true
-    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassEnvironmentVariables = true
-    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassSystemProperties = true
+    MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
+    MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
+    MavenProjectSettings.getInstance(project).testRunningSettings.isPassSystemProperties = true
   }
 
   @Test

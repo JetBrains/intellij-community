@@ -68,7 +68,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     if ("bundled".equals(myMavenVersion)) {
       return;
     }
-    myWrapperTestFixture = new MavenWrapperTestFixture(myProject, myMavenVersion);
+    myWrapperTestFixture = new MavenWrapperTestFixture(getProject(), myMavenVersion);
     myWrapperTestFixture.setUp();
   }
 

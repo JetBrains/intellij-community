@@ -40,20 +40,20 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
     assertTrue(myTestDataDir!!.isDirectory)
     myProjectDataDir = File(File(myTestDataDir, "projects"), getTestName(true))
     myExpectedDataDir = File(File(myTestDataDir, "expected"), getTestName(true))
-    myModifierService = getInstance(myProject)
+    myModifierService = getInstance(project)
     prepareAndImport()
   }
 
   private suspend fun prepareAndImport() {
     createProjectPom("")
-    FileUtil.copyDir(myProjectDataDir!!, myProjectRoot.toNioPath().toFile())
-    myProjectRoot.refresh(false, true)
+    FileUtil.copyDir(myProjectDataDir!!, projectRoot.toNioPath().toFile())
+    projectRoot.refresh(false, true)
     importProjectAsync()
   }
 
   protected suspend fun findDependencyTag(group: String, artifact: String, version: String): XmlTag? {
     return readAction {
-      val pom = PsiUtilCore.getPsiFile(myProject, myProjectPom)
+      val pom = PsiUtilCore.getPsiFile(project, projectPom)
       findDependencyTag(group, artifact, version, pom)
     }
   }
@@ -77,7 +77,7 @@ abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCa
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val expectedFile = file.toFile()
         val relativePath = myExpectedDataDir!!.toPath().relativize(file)
-        val actual = myProjectRoot.findFileByRelativePath(FileUtil.normalize(relativePath.toString()))
+        val actual = projectRoot.findFileByRelativePath(FileUtil.normalize(relativePath.toString()))
         if (actual == null) {
           fail("File $file not found in actual dir")
         }

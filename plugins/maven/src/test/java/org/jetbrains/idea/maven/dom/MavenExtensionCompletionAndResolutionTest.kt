@@ -11,7 +11,7 @@ import org.junit.Test
 
 class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
+    return MavenIndicesTestFixture(dir.toPath(), project, "plugins")
   }
 
   override fun importProjectOnSetup(): Boolean {
@@ -33,7 +33,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
                                     "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo")
   }
 
@@ -54,7 +54,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        """.trimIndent())
 
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
                                     "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
                                     "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin")
   }
@@ -74,7 +74,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
                                     "maven-clean-plugin",
                                     "maven-jar-plugin",
                                     "maven-war-plugin",
@@ -101,7 +101,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                          </extensions>
                        </build>
                        """.trimIndent())
-    val variants = getDependencyCompletionVariants(myProjectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
+    val variants = getDependencyCompletionVariants(projectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
 
     assertContain(variants,
                   "org.apache.maven.plugins:maven-clean-plugin",
@@ -139,7 +139,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    withContext(Dispatchers.EDT) { assertResolved(myProjectPom, findPsiFile(f)) }
+    withContext(Dispatchers.EDT) { assertResolved(projectPom, findPsiFile(f)) }
   }
 
 
@@ -161,7 +161,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(myProjectPom)
+      val ref = getReferenceAtCaret(projectPom)
       assertNotNull(ref)
       ref!!.resolve() // shouldn't throw;
     }

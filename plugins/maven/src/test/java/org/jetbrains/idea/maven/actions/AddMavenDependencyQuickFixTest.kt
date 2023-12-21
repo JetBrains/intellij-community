@@ -67,10 +67,10 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
+        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
       }
     }
-    val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertTrue(pomText.matches(
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*".toRegex()))
 
@@ -103,16 +103,16 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
+        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
       }
     }
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
+        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
       }
     }
-    val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertEquals("""
                     <?xml version="1.0"?>
                     <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -166,10 +166,10 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
+        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
       }
     }
-    val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertEquals("""
                    <?xml version="1.0"?>
                    <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -215,10 +215,10 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(myProject, fixture.getEditor(), fixture.getFile())
+        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
       }
     }
-    val pomText = readAction { PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText() }
+    val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertTrue(pomText.matches(
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*".toRegex()))
   }

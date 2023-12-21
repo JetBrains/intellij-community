@@ -23,8 +23,8 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
                                       "<version>1</version>")
 
     val document = readAction {
-      val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)!!
-      PsiDocumentManager.getInstance(myProject).getDocument(psiFile)!!
+      val psiFile = PsiManager.getInstance(project).findFile(projectPom)!!
+      PsiDocumentManager.getInstance(project).getDocument(psiFile)!!
     }
 
     // make a change but do not save
@@ -35,7 +35,7 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     }
 
     val context = MapDataContext()
-    context.put(CommonDataKeys.PROJECT, myProject)
+    context.put(CommonDataKeys.PROJECT, project)
     context.put(CommonDataKeys.VIRTUAL_FILE, projectPom)
     val event = TestActionEvent.createTestEvent(context)
     withContext(Dispatchers.EDT) {

@@ -82,7 +82,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    setFileContent(myProjectPom, createPomXml("""
+    setFileContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -96,7 +96,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
 
     checkHighlighting()
 
-    val documentSaved = !FileDocumentManager.getInstance().isDocumentUnsaved(getDocument(myProjectPom))
+    val documentSaved = !FileDocumentManager.getInstance().isDocumentUnsaved(getDocument(projectPom))
     assertTrue(documentSaved)
   }
 

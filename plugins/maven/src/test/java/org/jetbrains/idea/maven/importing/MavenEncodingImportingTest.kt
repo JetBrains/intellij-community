@@ -22,7 +22,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      </properties>"""
     )
 
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile, true))
   }
 
   @Test fun testShouldSetDifferentEncodingForSourceAndResource() = runBlocking {
@@ -48,8 +48,8 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      """
     )
 
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(srcFile, true))
-    TestCase.assertEquals(StandardCharsets.UTF_16LE, EncodingProjectManager.getInstance(myProject).getEncoding(resFile, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(srcFile, true))
+    TestCase.assertEquals(StandardCharsets.UTF_16LE, EncodingProjectManager.getInstance(project).getEncoding(resFile, true))
   }
 
   @Test fun testShouldUseSrcEncodingForResFiles() = runBlocking {
@@ -63,7 +63,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      """
     )
 
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(resFile, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(resFile, true))
   }
 
   @Test fun testShouldChangeEncoding() = runBlocking {
@@ -76,7 +76,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      </properties>"""
     )
 
-    TestCase.assertEquals(StandardCharsets.UTF_8, EncodingProjectManager.getInstance(myProject).getEncoding(subFile, true))
+    TestCase.assertEquals(StandardCharsets.UTF_8, EncodingProjectManager.getInstance(project).getEncoding(subFile, true))
 
     importProjectAsync("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -86,7 +86,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      </properties>"""
     )
 
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile, true))
   }
 
   @Test fun testShouldSetEncodingPerProject() = runBlocking {
@@ -126,8 +126,8 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
 
 
 
-    TestCase.assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(myProject).getEncoding(subFile1, true))
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
+    TestCase.assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(project).getEncoding(subFile1, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
   @Test fun testShouldSetEncodingPerProjectInSubsequentImport() = runBlocking {
@@ -178,8 +178,8 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                         <project.build.sourceEncoding>UTF-16</project.build.sourceEncoding>
                      </properties>""")
 
-    assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(myProject).getEncoding(subFile1, true))
-    assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
+    assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(project).getEncoding(subFile1, true))
+    assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
   @Test fun testShouldSetEncodingToNewFiles() = runBlocking {
@@ -219,8 +219,8 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     val subFile1 = createProjectSubFile("module1/src/main/java/MyClass.java")
     val subFile2 = createProjectSubFile("module2/src/main/java/AnotherClass.java")
 
-    TestCase.assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(myProject).getEncoding(subFile1, true))
-    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
+    TestCase.assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(project).getEncoding(subFile1, true))
+    TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
   @Test fun testShouldSetResourceEncodingAsProperties() = runBlocking {
@@ -243,9 +243,9 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
                      </build>
                      """
     )
-    val mavenProject = MavenProjectsManager.getInstance(myProject).rootProjects.first()
+    val mavenProject = MavenProjectsManager.getInstance(project).rootProjects.first()
 
-    TestCase.assertEquals("ISO-8859-1", mavenProject.getResourceEncoding(myProject))
+    TestCase.assertEquals("ISO-8859-1", mavenProject.getResourceEncoding(project))
   }
 
 

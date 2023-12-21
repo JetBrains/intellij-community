@@ -20,7 +20,7 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
   fun testSavingAndLoadingState() = runBlocking {
     var state = projectsManager.getState()
     assertTrue(state!!.originalFiles.isEmpty())
-    assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).settings.enabledProfiles.isEmpty())
+    assertTrue(MavenWorkspaceSettingsComponent.getInstance(project).settings.enabledProfiles.isEmpty())
     assertTrue(state.ignoredFiles.isEmpty())
     assertTrue(state.ignoredPathMasks.isEmpty())
 
@@ -67,14 +67,14 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
 
     state = projectsManager.getState()
     assertUnorderedPathsAreEqual(state!!.originalFiles, listOf(p1.getPath(), p2.getPath()))
-    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).state.realSettings.enabledProfiles, "one", "two")
+    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(project).state.realSettings.enabledProfiles, "one", "two")
     assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
 
     val newState = MavenProjectsManagerState()
 
     newState.originalFiles = listOf(p1.getPath(), p3.getPath())
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.setEnabledProfiles(mutableListOf("three"))
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.setEnabledProfiles(mutableListOf("three"))
     newState.ignoredFiles = setOf(p1.getPath())
     newState.ignoredPathMasks = mutableListOf("*.zzz")
 

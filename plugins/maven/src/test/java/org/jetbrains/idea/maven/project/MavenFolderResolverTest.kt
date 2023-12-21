@@ -15,12 +15,12 @@ class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    myTestSyncViewManager = object : SyncViewManager(myProject) {
+    myTestSyncViewManager = object : SyncViewManager(project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }
-    myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
   }
 
   @Test
@@ -56,7 +56,7 @@ class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
                   </build>
                   """.trimIndent())
     importProjectAsync()
-    MavenFolderResolver(myProject).resolveFoldersAndImport()
+    MavenFolderResolver(project).resolveFoldersAndImport()
     assertEvent { it.message.contains("Please set my-custom-property system property") }
   }
 

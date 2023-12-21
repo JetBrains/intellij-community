@@ -57,7 +57,7 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                        """.trimIndent()
     )
 
-    val variants = getCompletionVariants(myProjectPom)
+    val variants = getCompletionVariants(projectPom)
 
     assertContain(variants, "git.commitsCount")
   }

@@ -103,7 +103,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertSources("m3", "user-sources")
     assertSources("m4", "user-sources", "src/main/java")
 
-    val mFour = WorkspaceModel.getInstance(myProject).currentSnapshot.resolve(ModuleId("m4"))
+    val mFour = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ModuleId("m4"))
     assertNotNull(mFour)
     val sourceEntitySource = mFour!!.contentRoots.first().sourceRoots.filter { it.url.url.endsWith("java") }.first().entitySource
     assertTrue(sourceEntitySource is FileInDirectory)
@@ -167,7 +167,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot)
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
     val anotherContentRoot = createProjectSubFile("m1/user-content")
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
     assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath, anotherContentRoot.getPath())
@@ -190,7 +190,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot)
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
     assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath)
 
     val userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot")
@@ -944,7 +944,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(myProjectPom), false, "profile-test")
+    doImportProjects(listOf(projectPom), false, "profile-test")
   }
 
   @Test
@@ -1034,7 +1034,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     val disabledProfiles = listOf("one")
-    doImportProjects(listOf(myProjectPom), true, disabledProfiles)
+    doImportProjects(listOf(projectPom), true, disabledProfiles)
     assertModules("project-two")
   }
 }

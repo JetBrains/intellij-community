@@ -78,17 +78,17 @@ abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase(
     setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
     //assertModules("project", "moduleA", "moduleB");
-    WriteAction.run<RuntimeException> { ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk()) }
+    WriteAction.run<RuntimeException> { ProjectRootManager.getInstance(project).setProjectSdk(createJdk()) }
 
     val runnerParameters = MavenRunnerParameters(moduleB.getParent().getPath(), null, false, listOf("jetty:run"), emptyMap())
     runnerParameters.isResolveToWorkspace = true
 
-    val runnerSettings = MavenRunner.getInstance(myProject).settings.clone()
+    val runnerSettings = MavenRunner.getInstance(project).settings.clone()
     runnerSettings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA)
 
-    val parameters = MavenExternalParameters.createJavaParameters(myProject,
+    val parameters = MavenExternalParameters.createJavaParameters(project,
                                                                   runnerParameters,
-                                                                  MavenProjectsManager.getInstance(myProject).getGeneralSettings(),
+                                                                  MavenProjectsManager.getInstance(project).getGeneralSettings(),
                                                                   runnerSettings,
                                                                   null)
 
