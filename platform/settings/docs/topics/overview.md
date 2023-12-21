@@ -84,11 +84,11 @@ We do not want to clone the configuration directory for each connection. The sam
 
 ## TBE
 
-- set/get a specific setting(as opposed to only operating on a container level)
-- access settings without knowing implementation details of a container in a form of a key/value API
-- prevent certain keys from being set by the user(read-only settings)
-- intercept the events that a settings has been modified
-- tell IJ platform to use "default" value for a certain key
+- Set or get a specific setting (instead of only operating at the container level).
+- Access settings without needing to know the implementation details of a container through a key-value API (see `RawSettingSerializerDescriptor`).
+- Prevent certain keys from being set by the user (making them read-only settings). See [Mutability](setting-descriptor.md#mutability).
+- Intercept the events that signal a setting has been modified.
+- Instruct to use the "default" value for a certain key.
 
 ## Service
 
