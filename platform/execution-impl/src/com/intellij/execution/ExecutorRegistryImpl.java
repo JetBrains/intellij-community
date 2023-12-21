@@ -683,7 +683,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     protected void doRunCurrentFile(@NotNull Project project,
                                     @NotNull RunnerAndConfigurationSettings runConfig,
                                     @NotNull DataContext dataContext) {
-      ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext);
+      ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext, env -> env.setRunningCurrentFile(true));
     }
   }
 

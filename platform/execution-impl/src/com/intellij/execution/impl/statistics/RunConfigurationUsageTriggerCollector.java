@@ -33,12 +33,13 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 73);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 74);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
                                                                                            RunConfigurationExecutorUtilValidator.class);
   private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
+  private static final BooleanEventField IS_RUNNING_CURRENT_FILE = EventFields.Boolean("is_running_current_file");
 
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
@@ -56,6 +57,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
                                                                                         new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
                                                                                           IS_RERUN,
+                                                                                          IS_RUNNING_CURRENT_FILE,
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
                                                                                           RunConfigurationTypeUsagesCollector.ID_FIELD,
@@ -76,9 +78,12 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                        @NotNull ConfigurationFactory factory,
                                                        @NotNull Executor executor,
                                                        @Nullable RunConfiguration runConfiguration,
-                                                       boolean isRerun) {
+                                                       boolean isRerun,
+                                                       boolean isRunningCurrentFile) {
     return ACTIVITY_GROUP
-      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
+      .startedAsync(project, () -> ReadAction.nonBlocking(
+          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile)
+        )
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }
@@ -88,9 +93,12 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                                  @NotNull ConfigurationFactory factory,
                                                                  @NotNull Executor executor,
                                                                  @Nullable RunConfiguration runConfiguration,
-                                                                 boolean isRerun) {
+                                                                 boolean isRerun,
+                                                                 boolean isRunningCurrentFile) {
     return ACTIVITY_GROUP
-      .startedAsyncWithParent(project, parentActivity, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
+      .startedAsyncWithParent(project, parentActivity, () -> ReadAction.nonBlocking(
+          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile)
+        )
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }
@@ -99,12 +107,14 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                           @NotNull ConfigurationFactory factory,
                                                           @NotNull Executor executor,
                                                           @Nullable RunConfiguration runConfiguration,
-                                                          boolean isRerun) {
+                                                          boolean isRerun,
+                                                          boolean isRunningCurrentFile) {
     final ConfigurationType configurationType = factory.getType();
     List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
     ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
     eventPairs.add(IS_RERUN.with(isRerun));
+    eventPairs.add(IS_RUNNING_CURRENT_FILE.with(isRunningCurrentFile));
     if (runConfiguration instanceof FusAwareRunConfiguration) {
       List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
