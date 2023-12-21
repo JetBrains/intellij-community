@@ -2446,7 +2446,7 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.ModulesConfigurator$NewProjectWizardFactory"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.ModulesConfigurator$NewProjectWizardFactoryImpl"/>
 
-    <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
+    <newProjectWizard.languageGenerator implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
     <requiredForSmartModeStartupActivity implementation="com.intellij.ide.projectWizard.generators.SdkPreIndexingRequiredForSmartModeActivity"/>
 

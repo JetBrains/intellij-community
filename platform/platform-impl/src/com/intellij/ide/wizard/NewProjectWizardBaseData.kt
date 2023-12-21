@@ -15,6 +15,9 @@ interface NewProjectWizardBaseData {
 
   var path: String // canonical
 
+  val contentEntryPath: String // canonical
+    get() = "$path/$name"
+
   @Deprecated(
     message = "Unsafe: projectPath throws exception when it isn't validated",
     replaceWith = ReplaceWith("Path.of(path, name)", "java.nio.file.Path"),

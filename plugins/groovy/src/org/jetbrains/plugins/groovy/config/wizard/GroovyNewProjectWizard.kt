@@ -6,23 +6,28 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logB
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.GROOVY
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
+import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.SegmentedButton
+import icons.JetgroovyIcons
 
-class GroovyNewProjectWizard : LanguageNewProjectWizard {
+class GroovyNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = GROOVY
 
+  override val icon = JetgroovyIcons.Groovy.Groovy_16x16
+
   override val ordinal = 200
 
-  override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
+  override fun createStep(parent: NewProjectWizardStep) = Step(parent)
 
-  class Step(parent: NewProjectWizardLanguageStep) :
+  class Step(parent: NewProjectWizardStep) :
     AbstractNewProjectWizardMultiStep<Step, BuildSystemGroovyNewProjectWizard>(parent, BuildSystemGroovyNewProjectWizard.EP_NAME),
-    LanguageNewProjectWizardData by parent,
+    LanguageNewProjectWizardData by parent.languageData!!,
     BuildSystemGroovyNewProjectWizardData {
 
     override val self: Step = this

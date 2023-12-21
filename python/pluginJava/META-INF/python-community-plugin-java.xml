@@ -5,7 +5,7 @@
   <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <newProjectWizard.language implementation="com.jetbrains.python.newProject.PythonNewProjectWizard"/>
+    <newProjectWizard.languageGenerator implementation="com.jetbrains.python.newProject.PythonNewProjectWizard"/>
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
     <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>

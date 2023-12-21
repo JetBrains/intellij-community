@@ -5,6 +5,8 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.PYTHON
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -28,6 +30,7 @@ import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.pythonSdk
+import icons.PythonIcons
 import java.nio.file.Path
 
 /**
@@ -35,13 +38,15 @@ import java.nio.file.Path
  *
  * It suggests creating a new Python virtual environment for your new project to follow Python best practices.
  */
-class PythonNewProjectWizard : LanguageNewProjectWizard {
+class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = PYTHON
 
+  override val icon = PythonIcons.Python.Python
+
   override val ordinal = 600
 
-  override fun createStep(parent: NewProjectWizardLanguageStep): NewProjectWizardStep = NewPythonProjectStep(parent)
+  override fun createStep(parent: NewProjectWizardStep): NewProjectWizardStep = NewPythonProjectStep(parent)
 }
 
 /**
@@ -84,11 +89,10 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
  * It works for both PyCharm (where the *.iml file resides in .idea/ directory and the SDK is set for the project) and other
  * IntelliJ-based IDEs (where the *.iml file resides in the module directory and the SDK is set for the module).
  */
-class NewPythonProjectStep<P>(parent: P)
+class NewPythonProjectStep(parent: NewProjectWizardStep)
   : AbstractNewProjectWizardStep(parent),
-    NewProjectWizardBaseData by parent,
-    NewProjectWizardPythonData
-  where P : NewProjectWizardStep, P : NewProjectWizardBaseData {
+    NewProjectWizardBaseData by parent.baseData!!,
+    NewProjectWizardPythonData {
 
   override val pythonSdkProperty = propertyGraph.property<Sdk?>(null)
   override var pythonSdk by pythonSdkProperty
@@ -96,7 +100,7 @@ class NewPythonProjectStep<P>(parent: P)
     get() = intellijModule ?: context.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
   private var intellijModule: Module? = null
-  private val sdkStep: PythonSdkStep<NewPythonProjectStep<P>> by lazy { PythonSdkStep(this) }
+  private val sdkStep: PythonSdkStep<NewPythonProjectStep> by lazy { PythonSdkStep(this) }
 
   override fun setupUI(builder: Panel) {
     sdkStep.setupUI(builder)

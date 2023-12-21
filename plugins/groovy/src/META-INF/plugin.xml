@@ -1340,7 +1340,7 @@
 
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.groovy.dsl"/>
     <notificationGroup id="Grape" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.grape"/>
-    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
+    <newProjectWizard.languageGenerator implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
 
     <persistentFsConnectionListener implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyPersistentFsConnectionListener"/>
