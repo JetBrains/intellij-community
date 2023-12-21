@@ -55,7 +55,7 @@ public class EnumeratorsBenchmark {
       tempDir = FileUtil.createTempDirectory("DurableEnumerator", "tst").toPath();
       enumerator = createEnumerator();
 
-      generatedKeys = generateKeyValues(totalKeys);
+      generatedKeys = generateKey(totalKeys);
       enumeratedIds = new int[generatedKeys.length];
 
       for (int i = 0; i < generatedKeys.length; i++) {
@@ -91,7 +91,7 @@ public class EnumeratorsBenchmark {
       }
     }
 
-    private static String[] generateKeyValues(int keysCount) {
+    private static String[] generateKey(int keysCount) {
       String[] keys = new String[keysCount];
       ThreadLocalRandom rnd = ThreadLocalRandom.current();
       for (int i = 0; i < keysCount; i++) {

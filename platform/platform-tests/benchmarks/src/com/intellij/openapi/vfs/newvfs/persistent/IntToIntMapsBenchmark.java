@@ -114,7 +114,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = ExtendibleMapFactory.defaults().open(file.toPath());
+      map = ExtendibleMapFactory.large().open(file.toPath());
 
 
       generatedKeyValues = generateKeyValues(TOTAL_KEYS);
@@ -209,7 +209,7 @@ public class IntToIntMapsBenchmark {
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.SampleTime)
-      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*EMap.*")
+      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*")
       .threads(1)
       .build();
 
