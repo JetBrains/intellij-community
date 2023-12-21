@@ -302,6 +302,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         public void testSingleEntrySuffix() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleEntrySuffix.kt");
         }
+
+        @TestMetadata("singleOccurence.kt")
+        public void testSingleOccurence() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleOccurence.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

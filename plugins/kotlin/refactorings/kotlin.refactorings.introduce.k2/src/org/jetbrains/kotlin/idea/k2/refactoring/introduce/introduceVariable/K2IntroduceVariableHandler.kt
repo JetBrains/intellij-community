@@ -36,9 +36,12 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionByCopyableDataAndClearIt
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
 import org.jetbrains.kotlin.idea.refactoring.introduce.removeTemplateEntryBracesIfPossible
+import org.jetbrains.kotlin.idea.refactoring.introduce.replaceWith
+import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -81,6 +84,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val isActualExpression = expression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
+            val substringInfo = expressionToReplace.extractableSubstringInfo
             var result = when {
                 expressionToReplace.isLambdaOutsideParentheses() -> {
                     val functionLiteralArgument = expressionToReplace.getStrictParentOfType<KtLambdaArgument>()!!
@@ -88,6 +92,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     newCallExpression.valueArguments.last().getArgumentExpression()!!
                 }
 
+                substringInfo != null -> substringInfo.replaceWith(replacement)
                 else -> expressionToReplace.replace(replacement) as KtExpression
             }
 
@@ -104,7 +109,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             return result
         }
 
-        private fun createBasicPropertyOrDestructuringDeclaration(isVar: Boolean): KtDeclaration {
+        private fun createBasicPropertyOrDestructuringDeclaration(expression: KtExpression, isVar: Boolean): KtDeclaration {
             val initializer = (expression as? KtParenthesizedExpression)?.expression ?: expression
             val initializerText = if (initializer.mustBeParenthesizedInInitializerPosition()) "(${initializer.text})" else initializer.text
 
@@ -313,8 +318,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     }
 
     private fun calculateAnchor(expression: PsiElement, container: PsiElement): PsiElement? {
-        if (expression != container) return expression.parentsWithSelf.firstOrNull { it.parent == container }
-        val startOffset = min(container.endOffset, expression.startOffset)
+        val physicalExpression = expression.substringContextOrThis
+        if (physicalExpression != container) return physicalExpression.parentsWithSelf.firstOrNull { it.parent == container }
+        val startOffset = min(container.endOffset, physicalExpression.startOffset)
         return container.allChildren.lastOrNull { it.textRange.contains(startOffset) }
     }
 

@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
-import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionOrStringFragment
+import org.jetbrains.kotlin.idea.refactoring.introduce.findStringTemplateFragment
+import org.jetbrains.kotlin.idea.refactoring.introduce.findStringTemplateOrStringTemplateEntryExpression
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.psi.KtElement
@@ -30,9 +31,8 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
         elementKind: ElementKind
     ): PsiElement? {
         var element = findElement(file, startOffset, endOffset, elementKind)
-        if (element == null && elementKind == ElementKind.EXPRESSION) {
-            element = findExpressionOrStringFragment(file, startOffset, endOffset)
-        }
+            ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
+            ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
 
         if (element is KtExpression) {
             val qualifier = element.analyze().get(BindingContext.QUALIFIER, element)

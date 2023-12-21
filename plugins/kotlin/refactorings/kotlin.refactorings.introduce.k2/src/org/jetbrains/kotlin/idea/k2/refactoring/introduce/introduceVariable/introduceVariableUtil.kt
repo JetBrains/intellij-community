@@ -7,8 +7,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.getParameterNames
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal fun chooseApplicableComponentNames(
     contextExpression: KtExpression,
@@ -39,4 +47,25 @@ internal fun chooseApplicableComponentNames(
         .setItemChosenCallback { callback(if (it == singleVariable) emptyList() else componentNames) }
         .createPopup()
         .showInBestPositionFor(editor)
+}
+
+// a copy-paste of `org.jetbrains.kotlin.idea.refactoring.introduce.findStringTemplateFragment` from `idea.kotlin` module
+internal fun findStringTemplateFragment(file: KtFile, startOffset: Int, endOffset: Int, kind: ElementKind): KtExpression? {
+    if (kind != ElementKind.EXPRESSION) return null
+
+    val startEntry = file.findElementAt(startOffset)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+    val endEntry = file.findElementAt(endOffset - 1)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+
+    if (startEntry.parent !is KtStringTemplateExpression || startEntry.parent != endEntry.parent) return null
+
+    val prefixOffset = startOffset - startEntry.startOffset
+    if (startEntry !is KtLiteralStringTemplateEntry && prefixOffset > 0) return null
+
+    val suffixOffset = endOffset - endEntry.startOffset
+    if (endEntry !is KtLiteralStringTemplateEntry && suffixOffset < endEntry.textLength) return null
+
+    val prefix = startEntry.text.substring(0, prefixOffset)
+    val suffix = endEntry.text.substring(suffixOffset)
+
+    return K2ExtractableSubstringInfo(startEntry, endEntry, prefix, suffix).createExpression()
 }

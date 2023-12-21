@@ -6,12 +6,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.idea.util.ElementKind
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
@@ -41,4 +38,39 @@ fun PsiElement.findExpressionsByCopyableDataAndClearIt(key: Key<Boolean>): List<
     val results = collectDescendantsOfType<KtExpression> { it.getCopyableUserData(key) != null }
     results.forEach { it.putCopyableUserData(key, null) }
     return results
+}
+
+fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
+    return with(this) {
+        val psiFactory = KtPsiFactory(replacement.project)
+        val parent = startEntry.parent
+
+        psiFactory.createStringTemplate(prefix).entries.singleOrNull()?.let { parent.addBefore(it, startEntry) }
+
+        val refEntry = psiFactory.createBlockStringTemplateEntry(replacement)
+        val addedRefEntry = parent.addBefore(refEntry, startEntry) as KtStringTemplateEntryWithExpression
+
+        psiFactory.createStringTemplate(suffix).entries.singleOrNull()?.let { parent.addAfter(it, endEntry) }
+
+        parent.deleteChildRange(startEntry, endEntry)
+
+        addedRefEntry.expression!!
+    }
+}
+
+fun findStringTemplateOrStringTemplateEntryExpression(file: KtFile, startOffset: Int, endOffset: Int, kind: ElementKind): KtExpression? {
+    if (kind != ElementKind.EXPRESSION) return null
+
+    val startEntry = file.findElementAt(startOffset)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+    val endEntry = file.findElementAt(endOffset - 1)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+
+    if (startEntry == endEntry && startEntry is KtStringTemplateEntryWithExpression) return startEntry.expression
+
+    val stringTemplate = startEntry.parent as? KtStringTemplateExpression ?: return null
+    if (endEntry.parent != stringTemplate) return null
+
+    val templateOffset = stringTemplate.startOffset
+    if (stringTemplate.getContentRange().equalsToRange(startOffset - templateOffset, endOffset - templateOffset)) return stringTemplate
+
+    return null
 }

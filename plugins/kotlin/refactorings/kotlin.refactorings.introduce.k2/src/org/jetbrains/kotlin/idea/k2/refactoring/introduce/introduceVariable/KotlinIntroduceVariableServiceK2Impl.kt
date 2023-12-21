@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2In
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
+import org.jetbrains.kotlin.idea.refactoring.introduce.findStringTemplateOrStringTemplateEntryExpression
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.psi.KtElement
@@ -25,6 +26,8 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         elementKind: ElementKind
     ): PsiElement? {
         val element = findElement(file, startOffset, endOffset, elementKind)
+            ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
+            ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
 
         if (element == null) {
             if (failOnNoExpression) {

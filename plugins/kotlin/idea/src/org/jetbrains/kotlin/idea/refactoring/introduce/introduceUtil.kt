@@ -145,50 +145,28 @@ fun selectElementsWithTargetParent(
     selectSingleElement()
 }
 
-fun findExpressionOrStringFragment(file: KtFile, startOffset: Int, endOffset: Int): KtExpression? {
-    val entry1 = file.findElementAt(startOffset)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
-    val entry2 = file.findElementAt(endOffset - 1)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+fun findStringTemplateFragment(file: KtFile, startOffset: Int, endOffset: Int, kind: ElementKind): KtExpression? {
+    if (kind != ElementKind.EXPRESSION) return null
 
-    if (entry1 == entry2 && entry1 is KtStringTemplateEntryWithExpression) return entry1.expression
+    val startEntry = file.findElementAt(startOffset)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
+    val endEntry = file.findElementAt(endOffset - 1)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
 
-    val stringTemplate = entry1.parent as? KtStringTemplateExpression ?: return null
-    if (entry2.parent != stringTemplate) return null
+    if (startEntry.parent !is KtStringTemplateExpression || startEntry.parent != endEntry.parent) return null
 
-    val templateOffset = stringTemplate.startOffset
-    if (stringTemplate.getContentRange().equalsToRange(startOffset - templateOffset, endOffset - templateOffset)) return stringTemplate
+    val prefixOffset = startOffset - startEntry.startOffset
+    if (startEntry !is KtLiteralStringTemplateEntry && prefixOffset > 0) return null
 
-    val prefixOffset = startOffset - entry1.startOffset
-    if (entry1 !is KtLiteralStringTemplateEntry && prefixOffset > 0) return null
+    val suffixOffset = endOffset - endEntry.startOffset
+    if (endEntry !is KtLiteralStringTemplateEntry && suffixOffset < endEntry.textLength) return null
 
-    val suffixOffset = endOffset - entry2.startOffset
-    if (entry2 !is KtLiteralStringTemplateEntry && suffixOffset < entry2.textLength) return null
+    val prefix = startEntry.text.substring(0, prefixOffset)
+    val suffix = endEntry.text.substring(suffixOffset)
 
-    val prefix = entry1.text.substring(0, prefixOffset)
-    val suffix = entry2.text.substring(suffixOffset)
-
-    return K1ExtractableSubstringInfo(entry1, entry2, prefix, suffix).createExpression()
+    return K1ExtractableSubstringInfo(startEntry, endEntry, prefix, suffix).createExpression()
 }
 
 fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
     return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: textRange
-}
-
-fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
-    return with(this) {
-        val psiFactory = KtPsiFactory(replacement.project)
-        val parent = startEntry.parent
-
-        psiFactory.createStringTemplate(prefix).entries.singleOrNull()?.let { parent.addBefore(it, startEntry) }
-
-        val refEntry = psiFactory.createBlockStringTemplateEntry(replacement)
-        val addedRefEntry = parent.addBefore(refEntry, startEntry) as KtStringTemplateEntryWithExpression
-
-        psiFactory.createStringTemplate(suffix).entries.singleOrNull()?.let { parent.addAfter(it, endEntry) }
-
-        parent.deleteChildRange(startEntry, endEntry)
-
-        addedRefEntry.expression!!
-    }
 }
 
 fun isObjectOrNonInnerClass(e: PsiElement): Boolean = e is KtObjectDeclaration || (e is KtClass && !e.isInner())

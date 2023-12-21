@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -90,8 +92,20 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 DataManager.getInstance().getDataContext(fixture.editor.component)
             )
 
+            val inplaceVariableName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// INPLACE_VARIABLE_NAME:")
             val templateState = TemplateManagerImpl.getTemplateState(editor)
-            if (templateState?.isFinished() == false) {
+
+            if (inplaceVariableName != null) {
+                templateState as TemplateState
+
+                WriteCommandAction.runWriteCommandAction(project) {
+                    val range = templateState.currentVariableRange ?: error("No variable range was found")
+                    templateState.editor.document.replaceString(range.startOffset, range.endOffset, inplaceVariableName)
+                    templateState.update()
+                }
+            }
+
+            if (templateState?.isFinished == false) {
                 project.executeCommand("") { templateState.gotoEnd(false) }
             }
         }
@@ -195,8 +209,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 true
             )
             val suggestedNames = JavaNameSuggestionUtil.appendUnresolvedExprName(
-              JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
-              initializer
+                JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
+                initializer
             )
 
             IntroduceParameterProcessor(
@@ -366,7 +380,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
     protected fun doTestIfNotDisabledByFileDirective(action: (PsiFile) -> Unit) {
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else  IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
@@ -553,7 +567,7 @@ fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {
                     descriptor
                 }
 
-                fun afterFinish(extraction: ExtractionResult){
+                fun afterFinish(extraction: ExtractionResult) {
                     processDuplicates(extraction.duplicateReplacers, project, editor)
                     onFinish(extraction)
                 }
