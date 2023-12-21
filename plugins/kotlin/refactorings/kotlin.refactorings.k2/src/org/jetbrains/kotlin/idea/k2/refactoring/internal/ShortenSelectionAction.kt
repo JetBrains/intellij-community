@@ -8,20 +8,15 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.psi.KtFile
 
-class ShortenSelectionAction : AnAction() {
+internal class ShortenSelectionAction : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun isDumbAware(): Boolean = false
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     override fun actionPerformed(e: AnActionEvent) {
         val dataContext = e.dataContext
         val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
@@ -29,12 +24,8 @@ class ShortenSelectionAction : AnAction() {
         val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? KtFile ?: return
         val selection = TextRange(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
         WriteCommandAction.runWriteCommandAction(project, templateText, null, {
-            allowAnalysisOnEdt {
-                allowAnalysisFromWriteAction {
-                    analyze(file) {
-                        shortenReferencesInRange(file, selection)
-                    }
-                }
+            analyze(file) {
+                shortenReferencesInRange(file, selection)
             }
         }, file)
     }
