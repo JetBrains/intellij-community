@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.codeInsight.hints.declarative
 
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
 
-class KotlinValuesHintsProvider : AbstractKotlinInlayHintsProvider(HintType.RANGES) {
-    companion object {
-        const val PROVIDER_ID: String = "kotlin.values.hints"
-    }
-}
+class KotlinValuesHintsProvider : AbstractKotlinInlayHintsProvider(HintType.RANGES)

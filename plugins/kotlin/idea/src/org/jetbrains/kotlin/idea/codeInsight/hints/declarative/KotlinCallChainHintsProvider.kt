@@ -22,10 +22,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 
 class KotlinCallChainHintsProvider: AbstractDeclarativeCallChainProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
-    companion object {
-        const val PROVIDER_ID: String = "kotlin.method.chains"
-    }
-
     override fun KotlinType.buildTree(
         expression: PsiElement,
         project: Project,

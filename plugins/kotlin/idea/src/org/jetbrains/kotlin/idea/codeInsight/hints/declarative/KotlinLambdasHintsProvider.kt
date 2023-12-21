@@ -7,8 +7,6 @@ class KotlinLambdasHintsProvider :
     AbstractKotlinInlayHintsProvider(HintType.LAMBDA_RETURN_EXPRESSION, HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER) {
 
     companion object {
-        const val PROVIDER_ID: String = "kotlin.lambdas.hints"
-
         const val SHOW_RETURN_EXPRESSIONS = "hints.lambda.return"
         const val SHOW_IMPLICIT_RECEIVERS_AND_PARAMS = "hints.lambda.receivers.parameters"
     }

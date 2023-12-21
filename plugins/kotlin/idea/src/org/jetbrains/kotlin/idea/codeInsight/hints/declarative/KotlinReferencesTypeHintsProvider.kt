@@ -8,8 +8,6 @@ class KotlinReferencesTypeHintsProvider : AbstractKotlinInlayHintsProvider(
 ) {
 
     companion object {
-        const val PROVIDER_ID: String = "kotlin.references.types.hints"
-
         const val SHOW_PROPERTY_TYPES = "hints.type.property"
         const val SHOW_LOCAL_VARIABLE_TYPES = "hints.type.variable"
         const val SHOW_FUNCTION_RETURN_TYPES = "hints.type.function.return"

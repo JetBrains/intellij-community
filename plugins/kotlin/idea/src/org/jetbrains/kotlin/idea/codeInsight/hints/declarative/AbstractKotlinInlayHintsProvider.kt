@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.TypeInlayInfoDetail
 import kotlin.collections.filter
 import kotlin.collections.forEach
 import kotlin.collections.ifEmpty
-import kotlin.collections.isNotEmpty
 import kotlin.let
 
 abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: HintType): InlayHintsProvider {
@@ -36,29 +34,24 @@ abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: Hi
         editor: Editor
     ): InlayHintsCollector? {
         val project = editor.project ?: file.project
-        if (project.isDefault || DumbService.isDumb(project)) return null
+        if (project.isDefault) return null
 
         return object : SharedBypassCollector {
             override fun collectFromElement(
                 element: PsiElement,
                 sink: InlayTreeSink
             ) {
-                val project = editor.project ?: element.project
-                if (DumbService.isDumb(project)) return
                 val resolved = hintTypes.filter { it.isApplicable(element) }.ifEmpty { return }
 
                 resolved.forEach { hintType ->
-                    val provideHintDetails = hintType.provideHintDetails(element)
-                    if (provideHintDetails.isNotEmpty()) {
-                        provideHintDetails.forEach { details: InlayInfoDetails ->
-                            val inlayInfo: InlayInfo = details.inlayInfo
-                            if (details.option != null) {
-                                sink.whenOptionEnabled(details.option) {
-                                    addInlayInfo(sink, inlayInfo, details)
-                                }
-                            } else {
+                    hintType.provideHintDetails(element).forEach { details: InlayInfoDetails ->
+                        val inlayInfo: InlayInfo = details.inlayInfo
+                        if (details.option != null) {
+                            sink.whenOptionEnabled(details.option) {
                                 addInlayInfo(sink, inlayInfo, details)
                             }
+                        } else {
+                            addInlayInfo(sink, inlayInfo, details)
                         }
                     }
                 }
