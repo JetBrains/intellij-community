@@ -49,6 +49,11 @@ public class VcsShelveChangesSaver {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> allChanges = changeListManager.getAllChanges();
 
+    if (ContainerUtil.exists(allChanges, change -> change.getBeforeRevision() instanceof FakeRevision ||
+                                                   change.getAfterRevision() instanceof FakeRevision)) {
+      LOG.error("Local changes are not up-to-date yet. Changes saving may not be accurate.", new Throwable());
+    }
+
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     if (changeListManager.areChangeListsEnabled()) {
       for (LocalChangeList list : changeListManager.getChangeLists()) {
@@ -98,7 +103,8 @@ public class VcsShelveChangesSaver {
   }
 
   @NotNull
-  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
+  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes,
+                                            @NotNull Set<? extends VirtualFile> rootsToSave) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.filter(changes, change -> {
       return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
