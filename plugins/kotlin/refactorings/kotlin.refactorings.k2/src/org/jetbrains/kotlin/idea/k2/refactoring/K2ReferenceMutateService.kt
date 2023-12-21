@@ -92,8 +92,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     ): PsiElement {
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
-        val oldTarget = simpleNameReference.resolve()?.takeIf { (it as? KtCallableDeclaration)?.receiverTypeReference == null || it is KtClassLikeDeclaration }
-        if (oldTarget?.kotlinFqName == fqName) return expression
+        val oldTarget = simpleNameReference.resolve()
+        val isImportable = (oldTarget as? KtCallableDeclaration)?.receiverTypeReference == null || oldTarget is KtClassLikeDeclaration
+        if (isImportable && oldTarget?.kotlinFqName == fqName) return expression
         val parent = expression.parent
         val writableFqn = if (parent is KtCallableReferenceExpression && parent.callableReference == expression) {
             FqName.topLevel(fqName.shortName())
