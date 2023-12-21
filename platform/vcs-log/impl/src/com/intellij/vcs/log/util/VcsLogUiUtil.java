@@ -105,10 +105,6 @@ public final class VcsLogUiUtil {
     IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
-  public static @NotNull History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
-    return installNavigationHistory(ui, ui.getTable());
-  }
-
   public static @NotNull History installNavigationHistory(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogGraphTable table) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     table.getSelectionModel().addListSelectionListener((e) -> {
