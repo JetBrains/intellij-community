@@ -93,7 +93,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
     onVisiblePackUpdated(permGraphChanged);
 
-    fireFilterChangeEvent(myVisiblePack, permGraphChanged);
+    fireChangeEvent(myVisiblePack, permGraphChanged);
     getTable().repaint();
   }
 
@@ -230,7 +230,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     myLogListeners.remove(listener);
   }
 
-  protected void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
+  protected void fireChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
     ThreadingAssertions.assertEventDispatchThread();
 
     for (VcsLogListener listener : myLogListeners) {
