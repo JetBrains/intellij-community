@@ -72,7 +72,7 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
     }
 
     forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!)) {
-      val isUploaded = uploadFile(url = "${config.serverUrl}/$UPLOAD_PREFIX/${item.name}/${item.hash!!}.jar",
+      val isUploaded = uploadFile(url = "${config.serverUrl}/${config.uploadPrefix}/${item.name}/${item.hash!!}.jar",
                                   file = item.archive,
                                   useHead = fallbackToHeads,
                                   span = Span.current(),
