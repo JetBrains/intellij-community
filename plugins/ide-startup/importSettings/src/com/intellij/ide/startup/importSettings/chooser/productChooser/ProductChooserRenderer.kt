@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DuplicatedCode")
-
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -8,34 +6,48 @@ import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingCho
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
 
-@Suppress("DuplicatedCode")
 class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
+  private val component = ProductComponent()
+  private val withSeparator = ProductComponentWithSeparator()
+
   override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>,
                                             value: PopupFactoryImpl.ActionItem,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    return createRecentProjectPane(value, isSelected, getSeparator(list, value), index == 0)
+    val model = list.model as? ListPopupModel<*>
+
+    return if (model?.isSeparatorAboveOf(value) == true) {
+      val separator = getSeparator(list, value)
+
+      withSeparator.updateSeparator(separator?.text, index == 0)
+      withSeparator.update(value, isSelected)
+      withSeparator
+    }
+    else {
+      component.update(value, isSelected)
+      component
+    }.getComponent()
+
   }
+
 
   private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
     val model = list?.model as? ListPopupModel<*> ?: return null
@@ -46,7 +58,7 @@ class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     return ListSeparator(model.getCaptionAboveOf(value))
   }
 
-  data class Obj(val action: AnAction) {
+  private data class Obj(val action: AnAction) {
     var name: @Nls String? = null
     var comment: @Nls String? = null
     var icon: Icon? = null
@@ -68,83 +80,86 @@ class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     }
   }
 
-  private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem,
-                                      isSelected: Boolean,
-                                      separator: ListSeparator?,
-                                      hideLine: Boolean): JComponent {
-    val action = Obj(value.action)
+  private open class ProductComponent() {
+    protected var result: SelectablePanel
+    private lateinit var nameLbl: JEditorPane
 
-    lateinit var nameLbl: JLabel
-    var pathLbl: JLabel? = null
+    private lateinit var icon: JLabel
+    private lateinit var path: JEditorPane
 
-    val content = panel {
-      customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+    open fun getComponent(): JComponent = result
+
+    fun update(value: PopupFactoryImpl.ActionItem,
+               isSelected: Boolean) {
+      val action = Obj(value.action)
+      icon.icon = action.icon
+      icon.isVisible = action.icon != null
+
+      nameLbl.text = action.name ?: ""
+      nameLbl.foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getLabelForeground()
+
+      path.text = action.comment
+      path.isVisible = action.comment != null
+
+      result.selectionColor = if (isSelected) ListPluginComponent.SELECTION_COLOR else null
+    }
+
+    init {
+      val content = panel {
         row {
-          action.icon?.let {
-            icon(it)
-              .align(AlignY.TOP)
-              .customize(UnscaledGaps(right = 8))
-          }
-
+          icon = label("").customize(UnscaledGaps(right = 8)).align(AlignY.TOP).component
           panel {
             row {
-              nameLbl = label(action.name ?: "")
+              nameLbl = text("")
+                .align(AlignY.TOP)
+                .customize(UnscaledGaps(right = 8, bottom = 0))
                 .applyToComponent {
-                  foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
+                  foreground = UIUtil.getListForeground()
                 }.component
             }
-            action.comment?.let { txt ->
-              row {
-                pathLbl = label(txt)
-                  .customize(UnscaledGaps(top = 4))
-                  .applyToComponent {
-                    font = JBFont.smallOrNewUiMedium()
-                    foreground = UIUtil.getLabelInfoForeground()
-                  }.component
-
-              }
+            row {
+              path = comment("")
+                .align(AlignY.TOP)
+                .customize(UnscaledGaps(top = 0))
+                .component
             }
-          }.align(AlignY.CENTER).customize(UnscaledGaps(top = 1))
+          }
         }
+      }.apply {
+        border = JBUI.Borders.empty(8, 0)
+        isOpaque = false
       }
-    }.apply {
-      border = JBUI.Borders.empty(8, 0)
-      isOpaque = false
-    }
 
-    val result = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND)
-    PopupUtil.configListRendererFlexibleHeight(result)
-    if (isSelected) {
-      result.selectionColor = ListPluginComponent.SELECTION_COLOR
+      result = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND)
+      PopupUtil.configListRendererFlexibleHeight(result)
     }
-
-    pathLbl?.let {
-      AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", it)
-      AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", it)
-    }
-
-    if (separator == null) {
-      return result
-    }
-
-    val res = NonOpaquePanel(BorderLayout())
-    res.border = JBUI.Borders.empty()
-    res.add(createSeparator(separator, hideLine), BorderLayout.NORTH)
-    res.add(result, BorderLayout.CENTER)
-    return res
   }
-}
 
-private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JComponent {
-  val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
-  res.caption = separator.text
-  res.setHideLine(hideLine)
+  private class ProductComponentWithSeparator : ProductComponent() {
+    private val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
 
-  val panel = JPanel(BorderLayout())
-  panel.border = JBUI.Borders.empty()
-  panel.isOpaque = true
-  panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
-  panel.add(res)
+    private val separator = JPanel(BorderLayout()).apply {
+      border = JBUI.Borders.empty()
+      isOpaque = true
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
+      add(res)
+    }
 
-  return panel
+    fun updateSeparator(text: @NlsContexts.Separator String? = null, hideLine: Boolean = false) {
+      res.caption = text
+      res.setHideLine(hideLine)
+
+      res.revalidate()
+    }
+
+    private val withSeparator = NonOpaquePanel(BorderLayout()).apply {
+      border = JBUI.Borders.empty()
+      add(separator, BorderLayout.NORTH)
+      add(result, BorderLayout.CENTER)
+    }
+
+    override fun getComponent(): JComponent {
+      return withSeparator
+    }
+  }
 }
