@@ -109,8 +109,8 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
-        PsiFile containingFile = element.getContainingFile();
-        if (containingFile != null && Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
+        PsiFile containingFile = holder.getFile();
+        if (Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
           return;
         }
 
