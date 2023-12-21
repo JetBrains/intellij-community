@@ -72,7 +72,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
   }
 
   override fun getPolicy(): FileEditorPolicy {
-    return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR
+    return FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR
   }
 
   override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? {
