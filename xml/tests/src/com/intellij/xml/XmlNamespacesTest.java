@@ -37,17 +37,12 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefaultNamespace() {
-    doTestUnusedDefaultNamespace();
-  }
-
-  // TODO: remove this temporary private method and inline its content into the tests when duplication problem will be fixed
-  private void doTestUnusedDefaultNamespace() {
     doUnusedDeclarationTest("""
-                              <schema:schema\s
-                                          xmlns:schema="http://www.w3.org/2001/XMLSchema"
-                                          <warning descr="Namespace declaration is never used">xmlns="http://www.w3.org/2001/X<caret>Include"</warning>
-                                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                          <warning descr="Namespace location is never used">xsi:noNamespaceSchemaLocation="http://www.w3.org/2001/XInclude"</warning>>
+                              <schema:schema
+                                      xmlns:schema="http://www.w3.org/2001/XMLSchema"
+                                      <warning descr="Namespace declaration is never used">xmlns="http://www.w3.org/2001/X<caret>Include"</warning>
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                      <warning descr="Namespace location is never used">xsi:noNamespaceSchemaLocation="http://www.w3.org/2001/XInclude"</warning>>
                               </schema:schema>""",
 
                             """
@@ -56,13 +51,12 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                               >
                               </schema:schema>""", XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"), false);
-
     doOptimizeImportsTest("""
-                            <schema:schema\s
-                                        xmlns:schema="http://www.w3.org/2001/XMLSchema"
-                                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            >
-                            </schema:schema>""");
+                              <schema:schema
+                                      xmlns:schema="http://www.w3.org/2001/XMLSchema"
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              >
+                              </schema:schema>""");
   }
 
   public void testDifferentPrefixes() {

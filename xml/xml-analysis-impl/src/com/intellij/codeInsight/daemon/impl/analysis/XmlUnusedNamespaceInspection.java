@@ -2,23 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
@@ -30,9 +19,10 @@ import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -49,7 +39,21 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
         XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)file);
         if (refCountHolder == null) return;
+        XmlTag parent = attribute.getParent();
         if (!attribute.isNamespaceDeclaration()) {
+          if (getDefaultLocation(parent) == attribute) {
+             // check the parent has attribute with namespace decl
+            for (XmlAttribute other : parent.getAttributes()) {
+              if (!other.isNamespaceDeclaration()) continue;
+              String namespace = other.getValue();
+              String declaredPrefix = getDeclaredPrefix(other);
+              if (namespace != null && !refCountHolder.isInUse(declaredPrefix) && declaredPrefix.isEmpty() && !isUsedImplicitly(other)) {
+                holder.registerProblem(attribute, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                       new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
+                return;
+              }
+            }
+          }
           checkUnusedLocations(attribute, holder, refCountHolder);
           return;
         }
@@ -58,33 +62,32 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
         String declaredPrefix = getDeclaredPrefix(attribute);
         if (namespace != null && !refCountHolder.isInUse(declaredPrefix)) {
 
-          for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-            if (provider.isImplicitUsage(attribute)) return;
-          }
+          if (isUsedImplicitly(attribute)) return;
 
           XmlAttributeValue value = attribute.getValueElement();
           assert value != null;
           holder.registerProblem(attribute, XmlAnalysisBundle.message("xml.inspections.unused.schema.declaration"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new RemoveNamespaceDeclarationFix(declaredPrefix, false, !refCountHolder.isUsedNamespace(namespace)));
 
-          XmlTag parent = attribute.getParent();
-          if (declaredPrefix.isEmpty()) {
-            XmlAttribute location = getDefaultLocation(parent);
-            if (location != null) {
-              holder.registerProblem(location, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
-            }
-          }
-          else if (!refCountHolder.isUsedNamespace(namespace)) {
-            for (PsiReference reference : getLocationReferences(namespace, parent)) {
-              if (!XmlHighlightVisitor.hasBadResolve(reference, false))
-                holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
-                                                   new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
+          if (!declaredPrefix.isEmpty()) {
+            if (!refCountHolder.isUsedNamespace(namespace)) {
+              for (PsiReference reference : getLocationReferences(namespace, parent)) {
+                if (!XmlHighlightVisitor.hasBadResolve(reference, false))
+                  holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
+                                                     new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
+              }
             }
           }
         }
       }
     };
+  }
+
+  private boolean isUsedImplicitly(@NotNull XmlAttribute attribute) {
+    for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
+      if (provider.isImplicitUsage(attribute)) return true;
+    }
+    return false;
   }
 
   private static void removeReferencesOrAttribute(PsiReference[] references) {
