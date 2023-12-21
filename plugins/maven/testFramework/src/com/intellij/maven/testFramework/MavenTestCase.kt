@@ -672,7 +672,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
-    assertOrderedElementsAreEqual(actual, Arrays.asList(*expected))
+    assertOrderedElementsAreEqual(actual, expected.toList())
   }
 
   protected fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, expected: Collection<T>) {
@@ -684,18 +684,18 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun <T> assertUnorderedElementsAreEqual(actual: Array<T>, vararg expected: T) {
-    assertUnorderedElementsAreEqual(Arrays.asList(*actual), *expected)
+    assertUnorderedElementsAreEqual(actual.toList(), *expected)
   }
 
   protected fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
-    assertUnorderedElementsAreEqual(actual, Arrays.asList(*expected))
+    assertUnorderedElementsAreEqual(actual, expected.toList())
   }
 
   protected fun <T> assertContain(actual: Collection<T>, vararg expected: T) {
-    val expectedList = Arrays.asList(*expected)
+    val expectedList = expected.toList()
     if (actual.containsAll(expectedList)) return
     val absent: MutableSet<T> = HashSet(expectedList)
-    absent.removeAll(actual)
+    absent.removeAll(actual.toSet())
     fail("""
   expected: $expectedList
   actual: $actual
@@ -705,7 +705,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun <T> assertDoNotContain(actual: List<T>, vararg expected: T) {
     val actualCopy: MutableList<T> = ArrayList(actual)
-    actualCopy.removeAll(Arrays.asList(*expected))
+    actualCopy.removeAll(expected.toSet())
     assertEquals(actual.toString(), actualCopy.size, actual.size)
   }
 
