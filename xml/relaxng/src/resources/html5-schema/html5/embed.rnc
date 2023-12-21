@@ -22,6 +22,7 @@ namespace local = ""
 		&	img.attrs.ismap?
 		&	img.attrs.decoding?
 		&	img.attrs.loading?
+		&	common.attrs.fetchpriority?
 		&	img.attrs.border? # obsolete
 		&	referrerpolicy?
 		&	embedded.content.attrs.crossorigin?
@@ -606,6 +607,7 @@ namespace local = ""
 		&	shared-hyperlink.attrs.type?
 		&	area.attrs.shape?
 		&	(	common.attrs.aria.role.link
+			|	common.attrs.aria.role.button
 			|	common.attrs.aria.implicit.link
 			)?
 		)
