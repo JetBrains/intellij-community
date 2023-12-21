@@ -193,6 +193,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun isChild() = parent != null
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
+    if (isDisposed) return
+
     treeStep.updateTreeModelIfNeeded(tree, pattern)
     treeStep.setSearchPattern(pattern)
     val haveBranches = traverseNodesAndExpand()
@@ -254,6 +256,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun installRepoListener() {
     project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
       runInEdt {
+        if (isDisposed) return@runInEdt
+
         val state = TreeState.createOn(tree)
         applySearchPattern()
         state.applyTo(tree)

@@ -122,7 +122,10 @@ class GitBranchesTreePopupStep(internal val project: Project,
   }
 
   fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {
-    if (!isFirstStep || affectedRepositories.size == 1) return
+    if (!isFirstStep || affectedRepositories.size == 1) {
+      require(tree.model != null) { "Provided tree with null model" }
+      return
+    }
 
     val filterActive = !(pattern.isNullOrBlank() || pattern == "/")
     treeModel = createTreeModel(filterActive)
