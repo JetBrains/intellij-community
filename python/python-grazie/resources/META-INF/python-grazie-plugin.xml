@@ -1,7 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij.grazie">
-    <textExtractor language="Python" implementationClass="com.intellij.grazie.ide.language.python.PythonTextExtractor"/>
-    <problemFilter language="Python" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
-    <problemFilter language="Python" implementationClass="com.intellij.grazie.ide.language.python.PythonProblemFilter"/>
-  </extensions>
-</idea-plugin>

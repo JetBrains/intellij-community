@@ -1,0 +1,10 @@
+<idea-plugin package="com.intellij.python.grazie">
+<dependencies>
+  <plugin id="tanvd.grazi"/>
+</dependencies>
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <textExtractor language="Python" implementationClass="com.intellij.python.grazie.PythonTextExtractor"/>
+    <problemFilter language="Python" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
+    <problemFilter language="Python" implementationClass="com.intellij.python.grazie.PythonProblemFilter"/>
+  </extensions>
+</idea-plugin>

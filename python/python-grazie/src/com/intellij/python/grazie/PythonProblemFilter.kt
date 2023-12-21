@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.python
+package com.intellij.python.grazie
 
 import com.intellij.grazie.text.ProblemFilter
 import com.intellij.grazie.text.RuleGroup
