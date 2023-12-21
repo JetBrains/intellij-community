@@ -202,7 +202,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
     if (PlatformDataKeys.HELP_ID.`is`(dataId)) return HELP_ID
-    return null
+
+    // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
+    return commitPanel.getDataFromProviders(dataId)
   }
 
   fun updateLayout() {
