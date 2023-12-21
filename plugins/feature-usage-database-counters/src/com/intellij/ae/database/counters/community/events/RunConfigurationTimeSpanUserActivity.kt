@@ -12,7 +12,6 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.serviceAsync
@@ -95,16 +94,19 @@ enum class RunConfigurationEventKind(val eventName: String) {
 internal class RunConfigurationListener : ExecutionListener {
   override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
     val id = System.identityHashCode(handler) // not the best ID out there, but it works
-    if (env.runProfile.name.let { it.contains("[build") || it.lowercase().startsWith("build ") }) { // Skip Gradle build
-      return
-    }
-    when (env.executor) {
-      is DefaultDebugExecutor -> {
+
+    when {
+      env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) } -> {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id)
+        }
+      }
+      env.executor is DefaultDebugExecutor || env.executor.id.contains("debug", true) -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeRunConfigurationStart(RunConfigurationEventKind.Debug, id)
         }
       }
-      is DefaultRunExecutor -> {
+      else -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeRunConfigurationStart(RunConfigurationEventKind.Run, id)
         }
