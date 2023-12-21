@@ -79,6 +79,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     when {
       VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
       VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId) -> this.ui
+      VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId) -> this.ui.commitMessageUi
       Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
       else -> null
     }

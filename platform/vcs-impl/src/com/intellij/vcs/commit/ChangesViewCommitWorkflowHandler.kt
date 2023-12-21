@@ -91,6 +91,9 @@ internal class ChangesViewCommitWorkflowHandler(
       if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
         return if (isActive) ui else null
       }
+      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId)) {
+        return if (isActive) ui.commitMessageUi else null
+      }
       return superProvider.getData(dataId)
     }
   }
