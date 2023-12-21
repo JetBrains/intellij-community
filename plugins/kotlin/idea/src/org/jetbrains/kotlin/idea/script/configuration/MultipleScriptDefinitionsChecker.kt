@@ -8,17 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.HyperlinkLabel
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.BundledIdeScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
@@ -86,20 +84,13 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                 list.showUnderneathOf(label)
             }
 
-            createComponentActionLabel(KotlinBundle.message("script.action.text.ignore")) {
+            createActionLabel(KotlinBundle.message("script.action.text.ignore")) {
                 KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck = true
                 EditorNotifications.getInstance(project).updateAllNotifications()
             }
 
-            createComponentActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
+            createActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
                 ShowSettingsUtilImpl.showSettingsDialog(project, KotlinScriptingSettingsConfigurable.ID, "")
             }
         }
-
-    private fun EditorNotificationPanel.createComponentActionLabel(@Nls labelText: String, callback: (HyperlinkLabel) -> Unit) {
-        val label: Ref<HyperlinkLabel> = Ref.create()
-        label.set(createActionLabel(labelText) {
-            callback(label.get())
-        })
-    }
 }

@@ -4,13 +4,10 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.HyperlinkLabel
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -32,7 +29,7 @@ class K2ScriptSupportNotificationProvider: EditorNotificationProvider, DumbAware
         return Function {
             EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
                 text = K2HighlightingBundle.message("script.is.not.fully.supported")
-                createComponentActionLabel(K2HighlightingBundle.message("script.is.not.fully.supported.ignore")) {
+                createActionLabel(K2HighlightingBundle.message("script.is.not.fully.supported.ignore")) {
                     KotlinScriptingSettings.getInstance(project).showK2SupportWarning = false
                     EditorNotifications.getInstance(project).updateAllNotifications()
                 }
@@ -40,10 +37,4 @@ class K2ScriptSupportNotificationProvider: EditorNotificationProvider, DumbAware
         }
     }
 
-    private fun EditorNotificationPanel.createComponentActionLabel(@Nls labelText: String, callback: (HyperlinkLabel) -> Unit) {
-        val label: Ref<HyperlinkLabel> = Ref.create()
-        label.set(createActionLabel(labelText) {
-            callback(label.get())
-        })
-    }
 }

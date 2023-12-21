@@ -119,7 +119,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                         KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                     }
 
-                    createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
+                    createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
                         KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
                         EditorNotifications.getInstance(project).updateAllNotifications()
                     }

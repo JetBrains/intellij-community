@@ -8,13 +8,10 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.HyperlinkLabel
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
@@ -46,7 +43,7 @@ class IndexScriptDependenciesSourcesNotificationProvider : EditorNotificationPro
     private fun createNotification(fileEditor: FileEditor, project: Project): EditorNotificationPanel =
         EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
             text = KotlinBundle.message("kotlin.script.sources.not.yet.indexed")
-            createComponentActionLabel(KotlinBundle.message("kotlin.script.sources.index")) { _ ->
+            createActionLabel(KotlinBundle.message("kotlin.script.sources.index")) {
                 fileEditor.file?.findLibsWithSources(project)?.let { libsToIndex ->
                     runWriteAction {
                         WorkspaceModel.getInstance(project).updateProjectModel("Marking sources to index...") { storage ->
@@ -61,13 +58,6 @@ class IndexScriptDependenciesSourcesNotificationProvider : EditorNotificationPro
             }
 
         }
-
-    private fun EditorNotificationPanel.createComponentActionLabel(@Nls labelText: String, callback: (HyperlinkLabel) -> Unit) {
-        val label: Ref<HyperlinkLabel> = Ref.create()
-        label.set(createActionLabel(labelText) {
-            callback(label.get())
-        })
-    }
 }
 
 private fun VirtualFile.isScriptDependency(project: Project): Boolean = findDependentScripts(project)?.isNotEmpty() == true
