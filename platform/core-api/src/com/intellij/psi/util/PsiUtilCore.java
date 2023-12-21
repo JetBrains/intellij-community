@@ -15,8 +15,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtilCore.class);
@@ -255,12 +253,12 @@ public class PsiUtilCore {
     }
 
     @Override
-    public <T> T getCopyableUserData(Key<T> key) {
+    public <T> T getCopyableUserData(@NotNull Key<T> key) {
       throw createException();
     }
 
     @Override
-    public <T> void putCopyableUserData(Key<T> key, T value) {
+    public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
       throw createException();
     }
 
@@ -313,7 +311,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    public boolean isEquivalentTo(final PsiElement another) {
+    public boolean isEquivalentTo(PsiElement another) {
       return this == another;
     }
 
@@ -330,7 +328,7 @@ public class PsiUtilCore {
   public static Language getNotAnyLanguage(ASTNode node) {
     if (node == null) return Language.ANY;
 
-    final Language lang = node.getElementType().getLanguage();
+    Language lang = node.getElementType().getLanguage();
     return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
   }
 
@@ -342,7 +340,7 @@ public class PsiUtilCore {
     if (element instanceof PsiFileSystemItem) {
       return element.isValid() ? ((PsiFileSystemItem)element).getVirtualFile() : null;
     }
-    final PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile == null || !containingFile.isValid()) {
       return null;
     }
@@ -363,31 +361,30 @@ public class PsiUtilCore {
     if (element2 == null) return 1;
     if (element1.equals(element2)) return 0;
 
-    final PsiFile psiFile1 = element1.getContainingFile();
-    final PsiFile psiFile2 = element2.getContainingFile();
+    PsiFile psiFile1 = element1.getContainingFile();
+    PsiFile psiFile2 = element2.getContainingFile();
     if (psiFile1 == null && psiFile2 == null) return 0;
     if (psiFile1 == null) return -1;
     if (psiFile2 == null) return 1;
 
-    if (Comparing.equal(psiFile1, psiFile2)) {
-      if (element1 instanceof StubBasedPsiElement && element2 instanceof StubBasedPsiElement) {
-        StubElement<?> stub1 = ((StubBasedPsiElement<?>)element1).getStub();
-        StubElement<?> stub2 = ((StubBasedPsiElement<?>)element2).getStub();
-        if (stub1 != null && stub2 != null) {
-          return compareStubPositions(stub1, stub2);
-        }
-      }
-      final TextRange textRange1 = element1.getTextRange();
-      final TextRange textRange2 = element2.getTextRange();
-      if (textRange1 == null && textRange2 == null) return 0;
-      if (textRange1 == null) return -1;
-      if (textRange2 == null) return 1;
-      return textRange1.getStartOffset() - textRange2.getStartOffset();
+    if (!psiFile1.equals(psiFile2)) {
+      String name1 = psiFile1.getName();
+      String name2 = psiFile2.getName();
+      return name1.compareToIgnoreCase(name2);
     }
-
-    final String name1 = psiFile1.getName();
-    final String name2 = psiFile2.getName();
-    return name1.compareToIgnoreCase(name2);
+    if (element1 instanceof StubBasedPsiElement && element2 instanceof StubBasedPsiElement) {
+      StubElement<?> stub1 = ((StubBasedPsiElement<?>)element1).getStub();
+      StubElement<?> stub2 = ((StubBasedPsiElement<?>)element2).getStub();
+      if (stub1 != null && stub2 != null) {
+        return compareStubPositions(stub1, stub2);
+      }
+    }
+    TextRange textRange1 = element1.getTextRange();
+    TextRange textRange2 = element2.getTextRange();
+    if (textRange1 == null && textRange2 == null) return 0;
+    if (textRange1 == null) return -1;
+    if (textRange2 == null) return 1;
+    return Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(textRange1, textRange2);
   }
   
   private static int compareStubPositions(StubElement<?> stub1, StubElement<?> stub2) {
@@ -444,10 +441,10 @@ public class PsiUtilCore {
 
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
     if (element == null) return null;
-    final PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
-    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    FileViewProvider viewProvider = containingFile.getViewProvider();
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
@@ -466,7 +463,7 @@ public class PsiUtilCore {
   public static String getName(PsiElement element) {
     String name = null;
     if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
+      PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
       if (data != null) {
         name = data.getName(element);
       }
@@ -477,19 +474,21 @@ public class PsiUtilCore {
     return name;
   }
 
-  public static String getQualifiedNameAfterRename(String qName, String newName) {
+  @NotNull
+  public static String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
     if (qName == null) return newName;
     int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
 
+  @NotNull
   public static Language getDialect(@NotNull PsiElement element) {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  protected static Language narrowLanguage(final Language language, @NotNull Language candidate) {
-    if (candidate.isKindOf(language)) return candidate;
-    return language;
+  @NotNull
+  protected static Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
+    return candidate.isKindOf(language) ? candidate : language;
   }
 
   private static final boolean ourSleepDuringValidityCheck = Registry.is("psi.sleep.in.validity.check");
@@ -567,12 +566,12 @@ public class PsiUtilCore {
    */
   @Deprecated
   public static @Nullable <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
-    final PsiFile psiFile = psiElement.getContainingFile();
-    final PsiFile originalFile = psiFile.getOriginalFile();
+    PsiFile psiFile = psiElement.getContainingFile();
+    PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == psiFile) return psiElement;
-    final TextRange range = psiElement.getTextRange();
-    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    final int maxLength = range.getLength();
+    TextRange range = psiElement.getTextRange();
+    PsiElement element = originalFile.findElementAt(range.getStartOffset());
+    int maxLength = range.getLength();
     T parent = PsiTreeUtil.getParentOfType(element, elementClass, false);
     T next = parent ;
     while (next != null && next.getTextLength() <= maxLength) {
@@ -584,7 +583,7 @@ public class PsiUtilCore {
 
   public static @NotNull Language findLanguageFromElement(@NotNull PsiElement elt) {
     if (!(elt instanceof PsiFile) && elt.getFirstChild() == null) { //is leaf
-      final PsiElement parent = elt.getParent();
+      PsiElement parent = elt.getParent();
       if (parent != null) {
         return parent.getLanguage();
       }
@@ -594,14 +593,14 @@ public class PsiUtilCore {
   }
 
   public static @NotNull Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
-    final PsiElement elt = file.findElementAt(offset);
+    PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
     if (elt instanceof PsiWhiteSpace) {
       TextRange textRange = elt.getTextRange();
       if (!textRange.contains(offset)) {
         LOG.error("PSI corrupted: in file "+file+" ("+file.getViewProvider().getVirtualFile()+") offset="+offset+" returned element "+elt+" with text range "+textRange);
       }
-      final int decremented = textRange.getStartOffset() - 1;
+      int decremented = textRange.getStartOffset() - 1;
       if (decremented >= 0) {
         return getLanguageAtOffset(file, decremented);
       }
@@ -609,7 +608,7 @@ public class PsiUtilCore {
     return findLanguageFromElement(elt);
   }
 
-  public static @NotNull Project getProjectInReadAction(final @NotNull PsiElement element) {
+  public static @NotNull Project getProjectInReadAction(@NotNull PsiElement element) {
     return ReadAction.compute(() -> element.getProject());
   }
 
