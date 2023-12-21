@@ -726,7 +726,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   fun testResolvingSettingsModelProperties() = runBlocking {
     val profiles = updateSettingsXml("""
   <localRepository>
-  ${getRepositoryPath()}</localRepository>
+  ${repositoryPath}</localRepository>
   """.trimIndent())
 
     createProjectPom("""
@@ -926,11 +926,11 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
-  <name>${"$"}{<caret>env.${getEnvVar()}}</name>
+  <name>${"$"}{<caret>env.${envVar}}</name>
   """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, getEnvVar())!!.getPsiElement())
+      assertResolved(projectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, envVar)!!.getPsiElement())
     }
   }
 
@@ -1115,7 +1115,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     assertDoNotContain(variants, "project.maven.build.timestamp")
     assertContain(variants, "settingsXmlProp")
     assertContain(variants, "settings.localRepository")
-    assertContain(variants, "user.home", "env." + getEnvVar())
+    assertContain(variants, "user.home", "env." + envVar)
   }
 
   @Test

@@ -844,21 +844,19 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     return projectsTree.getModules(p)
   }
 
-  companion object {
-    private fun assertProblems(project: MavenProject, vararg expectedProblems: String) {
-      val actualProblems: MutableList<String?> = ArrayList()
-      for (each in project.getProblems()) {
-        actualProblems.add(each.description)
-      }
-      assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
+  private fun assertProblems(project: MavenProject, vararg expectedProblems: String) {
+    val actualProblems: MutableList<String?> = ArrayList()
+    for (each in project.getProblems()) {
+      actualProblems.add(each.description)
     }
+    assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
+  }
 
-    private fun assertContainsProblems(project: MavenProject, vararg expectedProblems: String) {
-      val actualProblems: MutableList<String?> = ArrayList()
-      for (each in project.getProblems()) {
-        actualProblems.add(each.description)
-      }
-      UsefulTestCase.assertContainsElements(actualProblems, *expectedProblems)
+  private fun assertContainsProblems(project: MavenProject, vararg expectedProblems: String) {
+    val actualProblems: MutableList<String?> = ArrayList()
+    for (each in project.getProblems()) {
+      actualProblems.add(each.description)
     }
+    UsefulTestCase.assertContainsElements(actualProblems, *expectedProblems)
   }
 }

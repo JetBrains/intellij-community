@@ -28,7 +28,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(dir, "/repo").path
     updateSettingsXml("""
                       <localRepository>
-                      ${getRepositoryPath()}</localRepository>
+                      ${repositoryPath}</localRepository>
                       """.trimIndent())
 
     createModulePom("__temp",
@@ -83,7 +83,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(dir, "/repo").path
     updateSettingsXml("""
   <localRepository>
-  ${getRepositoryPath()}</localRepository>
+  ${repositoryPath}</localRepository>
   """.trimIndent())
 
     val bom = createModulePom("bom",

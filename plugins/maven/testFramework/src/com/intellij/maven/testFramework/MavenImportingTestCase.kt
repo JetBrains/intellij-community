@@ -546,7 +546,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().shutdown(true)
     }
-    FileUtil.delete(File(getRepositoryPath(), relativePath))
+    FileUtil.delete(File(repositoryPath, relativePath))
   }
 
   protected fun setupJdkForModules(vararg moduleNames: String) {
@@ -694,41 +694,36 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     }
   }
 
-  companion object {
-    private fun getAbsolutePath(path: String?): String {
-      return if (path == null) "" else FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(VirtualFileManager.extractPath(path)))
-    }
+  private fun getAbsolutePath(path: String?): String {
+    return if (path == null) "" else FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(VirtualFileManager.extractPath(path)))
+  }
 
-    private fun assertModuleLibDepPath(lib: LibraryOrderEntry, type: OrderRootType, paths: List<String>?) {
-      if (paths == null) return
-      assertUnorderedPathsAreEqual(listOf(*lib.getRootUrls(type)), paths)
-      // also check the library because it may contain slight different set of urls (e.g. with duplicates)
-      assertUnorderedPathsAreEqual(listOf(*lib.getLibrary()!!.getUrls(type)), paths)
-    }
+  private fun assertModuleLibDepPath(lib: LibraryOrderEntry, type: OrderRootType, paths: List<String>?) {
+    if (paths == null) return
+    assertUnorderedPathsAreEqual(listOf(*lib.getRootUrls(type)), paths)
+    // also check the library because it may contain slight different set of urls (e.g. with duplicates)
+    assertUnorderedPathsAreEqual(listOf(*lib.getLibrary()!!.getUrls(type)), paths)
+  }
 
-    @JvmStatic
-    protected fun createJdk(): Sdk {
-      return IdeaTestUtil.getMockJdk17()
-    }
+  protected fun createJdk(): Sdk {
+    return IdeaTestUtil.getMockJdk17()
+  }
 
-    @JvmStatic
-    protected fun configConfirmationForYesAnswer(): AtomicInteger {
-      val counter = AtomicInteger()
-      TestDialogManager.setTestDialog {
-        counter.getAndIncrement()
-        Messages.YES
-      }
-      return counter
+  protected fun configConfirmationForYesAnswer(): AtomicInteger {
+    val counter = AtomicInteger()
+    TestDialogManager.setTestDialog {
+      counter.getAndIncrement()
+      Messages.YES
     }
+    return counter
+  }
 
-    @JvmStatic
-    protected fun configConfirmationForNoAnswer(): AtomicInteger {
-      val counter = AtomicInteger()
-      TestDialogManager.setTestDialog {
-        counter.getAndIncrement()
-        Messages.NO
-      }
-      return counter
+  protected fun configConfirmationForNoAnswer(): AtomicInteger {
+    val counter = AtomicInteger()
+    TestDialogManager.setTestDialog {
+      counter.getAndIncrement()
+      Messages.NO
     }
+    return counter
   }
 }

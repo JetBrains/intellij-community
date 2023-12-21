@@ -105,7 +105,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     val mFour = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ModuleId("m4"))
     assertNotNull(mFour)
-    val sourceEntitySource = mFour!!.contentRoots.first().sourceRoots.filter { it.url.url.endsWith("java") }.first().entitySource
+    val sourceEntitySource = mFour!!.contentRoots.first().sourceRoots.first { it.url.url.endsWith("java") }.entitySource
     assertTrue(sourceEntitySource is FileInDirectory)
   }
 
@@ -647,7 +647,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testParentInRemoteRepository() = runBlocking {
     val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = File(getRepositoryPath(), pathToJUnit)
+    val parentDir = File(repositoryPath, pathToJUnit)
 
     removeFromLocalRepository(pathToJUnit)
     assertFalse(parentDir.exists())

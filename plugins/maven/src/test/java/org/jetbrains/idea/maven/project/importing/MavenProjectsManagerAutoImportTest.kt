@@ -30,9 +30,9 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testResolvingEnvVariableInRepositoryPath() = runBlocking {
-    val temp = System.getenv(getEnvVar())
+    val temp = System.getenv(envVar)
     waitForImportWithinTimeout {
-      updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
+      updateSettingsXml("<localRepository>\${env." + envVar + "}/tmpRepo</localRepository>")
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)

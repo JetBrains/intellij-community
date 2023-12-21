@@ -128,7 +128,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
         val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
         projectPom = pomVFile
-        allPoms.add(projectPom)
+        addPom(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
             assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
@@ -143,7 +143,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
         val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
         projectPom = pomVFile
-        allPoms.add(projectPom)
+        addPom(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
             assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))

@@ -1500,7 +1500,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     assertPaths(expectedPaths, actualPaths);
   }
 
-  private static void assertPaths(String[] expectedPaths, List<String> actualPaths) {
+  private void assertPaths(String[] expectedPaths, List<String> actualPaths) {
     List<String> normalizedActualPaths = new ArrayList<>();
     List<String> normalizedExpectedPaths = new ArrayList<>();
 

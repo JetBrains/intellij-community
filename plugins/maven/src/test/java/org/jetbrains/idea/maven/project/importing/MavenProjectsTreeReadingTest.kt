@@ -613,7 +613,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               mavenProject,
               mavenGeneralSettings,
               embeddersManager,
-              mavenProgressIndicator
+              mavenProgressIndicator!!
       )
     }
     finally {
@@ -1817,7 +1817,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               parentProject!!,
               mavenGeneralSettings,
               embeddersManager,
-              mavenProgressIndicator)
+              mavenProgressIndicator!!)
     }
     finally {
       embeddersManager.releaseInTests()
@@ -1896,7 +1896,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               tree.rootProjects[0],
               mavenGeneralSettings,
               embeddersManager,
-              mavenProgressIndicator
+              mavenProgressIndicator!!
       )
     }
     finally {
@@ -2002,7 +2002,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               mavenProject,
               mavenGeneralSettings,
               embeddersManager,
-              mavenProgressIndicator
+              mavenProgressIndicator!!
       )
     }
     finally {
@@ -2192,7 +2192,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               mavenProject,
               mavenGeneralSettings,
               embeddersManager,
-              mavenProgressIndicator)
+              mavenProgressIndicator!!)
     }
     finally {
       embeddersManager.releaseInTests()

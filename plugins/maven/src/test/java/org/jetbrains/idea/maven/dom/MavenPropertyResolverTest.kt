@@ -238,7 +238,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResolvingSystemProperties() = runBlocking {
     val javaHome = System.getProperty("java.home")
-    val tempDir = System.getenv(getEnvVar())
+    val tempDir = System.getenv(envVar)
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -247,7 +247,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     assertEquals(javaHome, resolve("\${java.home}", projectPom))
-    assertEquals(tempDir, resolve("\${env." + getEnvVar() + "}", projectPom))
+    assertEquals(tempDir, resolve("\${env." + envVar + "}", projectPom))
   }
 
   @Test

@@ -69,9 +69,9 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -95,9 +95,9 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -122,9 +122,9 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
@@ -163,9 +163,9 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project", "m1")
     assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 

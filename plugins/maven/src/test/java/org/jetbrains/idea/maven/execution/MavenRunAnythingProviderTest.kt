@@ -70,16 +70,16 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
       UsefulTestCase.assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")
       UsefulTestCase.assertSameElements(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
     }
-    withVariantsFor("") { it: List<String>? ->
+    withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
       assertContain(it, "clean:clean", "clean:help", "compiler:testCompile", "compiler:compile", "compiler:help")
     }
-    withVariantsFor("clean ") { it: List<String>? ->
+    withVariantsFor("clean ") { it: List<String> ->
       assertDoNotContain(it, "clean", "clean clean")
       assertContain(it, "clean validate", "clean compile", "clean test")
       assertContain(it, "clean clean:clean", "clean clean:help")
     }
-    withVariantsFor("clean:clean ") { it: List<String>? ->
+    withVariantsFor("clean:clean ") { it: List<String> ->
       assertDoNotContain(it, "clean:clean", "clean:clean clean:clean")
       assertContain(it, "clean:clean clean", "clean:clean validate", "clean:clean compile", "clean:clean test")
       assertContain(it, "clean:clean clean:help")
@@ -112,11 +112,11 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         """.trimIndent())
     importProjects(m1, m2)
 
-    withVariantsFor("", "m1") { it: List<String>? ->
+    withVariantsFor("", "m1") { it: List<String> ->
       assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
       assertContain(it, "compiler:compile", "compiler:help")
     }
-    withVariantsFor("", "m2") { it: List<String>? ->
+    withVariantsFor("", "m2") { it: List<String> ->
       assertDoNotContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
       assertContain(it, "compiler:compile", "compiler:help")
     }

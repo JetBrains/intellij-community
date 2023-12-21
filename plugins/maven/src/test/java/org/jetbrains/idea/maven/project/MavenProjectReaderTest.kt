@@ -584,10 +584,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() {
-    val repositoryPath = File(dir, "repository")
-    setRepositoryPath(repositoryPath.path)
+    val repoPath = File(dir, "repository")
+    repositoryPath = repoPath.path
 
-    val parentFile = File(repositoryPath, "test/parent/1/parent-1.pom")
+    val parentFile = File(repoPath, "test/parent/1/parent-1.pom")
     parentFile.parentFile.mkdirs()
     FileUtil.writeToFile(parentFile, createPomXml("""
                                                     <groupId>test</groupId>
@@ -654,12 +654,12 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   fun testExpandingSystemAndEnvProperties() {
     createProjectPom("""
   <name>${"$"}{java.home}</name>
-  <packaging>${"$"}{env.${getEnvVar()}}</packaging>
+  <packaging>${"$"}{env.${envVar}}</packaging>
   """.trimIndent())
 
     val p = readProject(projectPom)
     assertEquals(System.getProperty("java.home"), p.name)
-    assertEquals(System.getenv(getEnvVar()), p.packaging)
+    assertEquals(System.getenv(envVar), p.packaging)
   }
 
   fun testExpandingPropertiesFromProfiles() {
@@ -880,10 +880,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testExpandingPropertiesFromParentInRepository() {
-    val repositoryPath = File(dir, "repository")
-    setRepositoryPath(repositoryPath.path)
+    val repoPath = File(dir, "repository")
+    repositoryPath = repoPath.path
 
-    val parentFile = File(repositoryPath, "org/test/parent/1/parent-1.pom")
+    val parentFile = File(repoPath, "org/test/parent/1/parent-1.pom")
     parentFile.parentFile.mkdirs()
     FileUtil.writeToFile(parentFile,
                          createPomXml("""
@@ -1450,14 +1450,14 @@ ${System.getProperty("os.name")}</value>
   }
 
   fun testActivatingProfilesByEnvProperty() {
-    val value = System.getenv(getEnvVar())
+    val value = System.getenv(envVar)
 
     createProjectPom("""<profiles>
   <profile>
     <id>one</id>
     <activation>
       <property>
-        <name>env.${getEnvVar()}</name>
+        <name>env.${envVar}</name>
         <value>
 $value</value>
       </property>

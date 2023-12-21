@@ -266,7 +266,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
                                          vararg expected: String?) {
     val actual = getCompletionVariants(f, lookupElementStringFunction)
     assertNotEmpty(actual)
-    assertUnorderedElementsAreEqual(actual, *expected)
+    assertUnorderedElementsAreEqual(actual!!.toList(), expected)
   }
 
   protected fun assertCompletionVariantsInclude(f: VirtualFile,

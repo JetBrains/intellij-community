@@ -132,7 +132,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
             })
         }
         projectPom = pom!!
-        allPoms.add(projectPom)
+        addPom(projectPom)
 
         ApplicationManager.getApplication().runWriteAction {
             projectPom.setBinaryContent(File(fileName).readBytes())

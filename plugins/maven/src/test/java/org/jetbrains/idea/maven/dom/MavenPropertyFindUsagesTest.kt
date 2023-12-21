@@ -96,8 +96,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
   <version>11</version>
-  <name>${"$"}{env.<caret>${getEnvVar()}}</name>
-  <description>${"$"}{env.${getEnvVar()}}</description>
+  <name>${"$"}{env.<caret>${envVar}}</name>
+  <description>${"$"}{env.${envVar}}</description>
   """.trimIndent())
 
     assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))

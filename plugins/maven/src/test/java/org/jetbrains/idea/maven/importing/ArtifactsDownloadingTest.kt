@@ -41,8 +41,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
@@ -68,8 +68,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
@@ -113,8 +113,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
-    val javadoc = File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
+    val sources = File(repositoryPath, "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
+    val javadoc = File(repositoryPath, "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
@@ -124,8 +124,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
-    assertFalse(File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar").exists())
-    assertFalse(File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists())
+    assertFalse(File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar").exists())
+    assertFalse(File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar").exists())
   }
 
   @Test
@@ -172,8 +172,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
@@ -239,15 +239,15 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                     </dependencies>
                     """.trimIndent())
 
-  val files1 = listOf(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
-                      File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
-                      File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-sources.jar"),
-                      File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
+  val files1 = listOf(File(repositoryPath, "/xxx/xxx/1/xxx-1-sources.jar"),
+                      File(repositoryPath, "/xxx/xxx/1/xxx-1-javadoc.jar"),
+                      File(repositoryPath, "/xxx/yyy/1/yyy-1-test-sources.jar"),
+                      File(repositoryPath, "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
 
-    val files2 = listOf(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-sources.jar"),
-                        File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
-                        File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
-                        File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
+    val files2 = listOf(File(repositoryPath, "/xxx/xxx/1/xxx-1-foo-sources.jar"),
+                        File(repositoryPath, "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
+                        File(repositoryPath, "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
+                        File(repositoryPath, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
 
     for (each in files1) {
       assertFalse(each.toString(), each.exists())
@@ -283,7 +283,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                       </build>
                       """.trimIndent())
 
-      val f = File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
+      val f = File(repositoryPath, "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 
       assertTrue(f.exists())
     }
@@ -295,7 +295,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
 
   @Test
   fun DownloadBuildExtensionsOnResolve() = runBlocking {
-    val f = File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
+    val f = File(repositoryPath, "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
     assertFalse(f.exists())
 
     importProjectAsync("""
