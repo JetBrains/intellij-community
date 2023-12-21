@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.async
 
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -12,7 +13,9 @@ import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -396,6 +399,44 @@ fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
       )
     }
   }
+
+/**
+ * Transforms the flow of some computation requests to a flow of computation states of this request
+ * Will not emit "loading" state if the computation was completed before handling its state
+ */
+fun <T> Flow<CompletableFuture<T>>.computationStateIn(cs: CoroutineScope): StateFlow<ComputedResult<T>> {
+  val loadingRequestFlow = this
+  val state = MutableStateFlow<ComputedResult<T>>(ComputedResult.loading())
+  cs.launchNow {
+    loadingRequestFlow.collectLatest { request ->
+      if (!request.isDone) {
+        state.value = ComputedResult.loading()
+      }
+      try {
+        val value = request.await()
+        state.value = ComputedResult.success(value)
+      }
+      catch (e: Exception) {
+        if (!CompletableFutureUtil.isCancellation(e)) {
+          state.value = ComputedResult.failure(e)
+        }
+      }
+    }
+  }
+  return state
+}
+
+/**
+ * Maps the flow of requests to a flow of successfully computed values
+ */
+fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
+  try {
+    it.await()
+  }
+  catch (_: Throwable) {
+    null
+  }
+}
 
 /**
  * Maps values in the flow to successful results and catches and wraps any exception into a failure result.

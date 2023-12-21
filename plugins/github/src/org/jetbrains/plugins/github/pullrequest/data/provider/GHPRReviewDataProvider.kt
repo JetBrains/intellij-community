@@ -4,9 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -92,4 +96,13 @@ interface GHPRReviewDataProvider {
 
   @RequiresEdt
   fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit)
+}
+
+fun GHPRReviewDataProvider.createThreadsRequestsFlow(): Flow<CompletableFuture<List<GHPullRequestReviewThread>>> = callbackFlow {
+  val disposable = Disposer.newDisposable()
+  addReviewThreadsListener(disposable) {
+    trySend(loadReviewThreads())
+  }
+  send(loadReviewThreads())
+  awaitClose { Disposer.dispose(disposable) }
 }

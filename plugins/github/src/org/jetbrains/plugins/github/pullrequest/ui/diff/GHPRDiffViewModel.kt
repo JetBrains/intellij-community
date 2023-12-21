@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.computationStateIn
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupport
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
@@ -79,23 +80,7 @@ internal class GHPRDiffViewModelImpl(
   }
 
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
-    channelFlow<ComputedResult<List<GHPullRequestReviewThread>>> {
-      val disposable = Disposer.newDisposable()
-      val listener: () -> Unit = {
-        reviewDataProvider.loadReviewThreads().handle { res, err ->
-          if (err != null && !CompletableFutureUtil.isCancellation(err)) {
-            trySend(ComputedResult.failure(err.cause ?: err))
-          }
-          else {
-            trySend(ComputedResult.success(res))
-          }
-        }
-      }
-      reviewDataProvider.addReviewThreadsListener(disposable, listener)
-      listener()
-      awaitClose { Disposer.dispose(disposable) }
-    }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
-
+    reviewDataProvider.createThreadsRequestsFlow().computationStateIn(cs)
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
