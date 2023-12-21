@@ -1075,6 +1075,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunctionWithCapturedOuterParameter.kt");
             }
 
+            @TestMetadata("localSubclass.kt")
+            public void testLocalSubclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localSubclass.kt");
+            }
+
             @TestMetadata("twoLocals.kt")
             public void testTwoLocals() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/twoLocals.kt");

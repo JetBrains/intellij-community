@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
-import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.psi.*
@@ -97,7 +93,7 @@ private fun analyzeCalls(
                 listOfNotNull(actualDeclaration, expectedDeclaration).forEach { files.add(it.containingFile as KtFile) }
             }
 
-            if (descriptor.visibility == DescriptorVisibilities.LOCAL) {
+            if (descriptor.visibility == DescriptorVisibilities.LOCAL && !descriptor.isValueDescriptorWithNonLocalType()) {
                 val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) ?: return
                 files.add(declaration.containingFile as KtFile)
             } else if (descriptor.dispatchReceiverParameter?.visibility == DescriptorVisibilities.LOCAL) {
@@ -114,6 +110,11 @@ private fun analyzeCalls(
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor((descriptor).constructedClass) ?: return
                 files.add(declaration.containingFile as? KtFile ?: return)
             }
+        }
+
+        private fun CallableDescriptor.isValueDescriptorWithNonLocalType(): Boolean {
+            val declarationDescriptor = (this as? ValueDescriptor)?.type?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
+            return declarationDescriptor.visibility != DescriptorVisibilities.LOCAL
         }
     })
 }
