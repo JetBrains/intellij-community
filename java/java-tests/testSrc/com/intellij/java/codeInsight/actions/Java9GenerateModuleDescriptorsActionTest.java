@@ -33,7 +33,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.util.LazyInitializer;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
@@ -203,7 +202,6 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
     private final Path myProjectPath;
     private String myOutputUrl;
     private LanguageLevel myLanguageLevel;
-    private Sdk mySdk;
     private final List<ModuleDescriptor> myModules = new ArrayList<>();
 
     private ProjectModel(Path path) {
@@ -216,20 +214,12 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
       }
     }
 
-    private Path getProjectPath() {
-      return myProjectPath;
-    }
-
     private String getOutputUrl() {
       return myOutputUrl;
     }
 
     private LanguageLevel getLanguageLevel() {
       return myLanguageLevel == null ? LanguageLevel.JDK_11 : myLanguageLevel;
-    }
-
-    private Sdk getSdk() {
-      return mySdk == null ? IdeaTestUtil.getMockJdk11() : mySdk;
     }
 
     private List<ModuleDescriptor> getModules() {
@@ -242,7 +232,6 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
                                                                   "ProjectRootManager");
 
       myLanguageLevel = parseLanguageLevel(miscXml.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE), LanguageLevel.JDK_11);
-      mySdk = IdeaTestUtil.getMockJdk(getLanguageLevel().toJavaVersion());
 
       myOutputUrl = prepare(miscXml.getChild(OUTPUT_TAG).getAttributeValue(JpsJavaModelSerializerExtension.URL_ATTRIBUTE));
 

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.java19api.DescriptorsGenerator.ModuleFiles;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -26,6 +27,9 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,14 +112,37 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
     indicator.setIndeterminate(true);
     indicator.setText(JavaRefactoringBundle.message("generate.module.descriptors.scanning.message"));
 
+    Map<String, JavaModuleSettingsEntity> moduleSettingsByName = new HashMap<>();
+    final Iterator<JavaModuleSettingsEntity> iterator = WorkspaceModel.getInstance(project).getCurrentSnapshot()
+      .entities(JavaModuleSettingsEntity.class).iterator();
+    while (iterator.hasNext()) {
+      final JavaModuleSettingsEntity moduleSettings = iterator.next();
+      moduleSettingsByName.put(moduleSettings.getModule().getName(), moduleSettings);
+    }
+
     List<ModuleFiles> moduleFiles = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!mayContainModuleInfo(module)) continue;
       try {
-        final String url = CompilerPaths.getModuleOutputPath(module, false);
-        if (url == null) continue;
-        final Path path = Paths.get(url);
-        Path production = Files.exists(path) ? path : null;
+        Path production = null;
+        final JavaModuleSettingsEntity moduleSettings = moduleSettingsByName.get(module.getName());
+        if (moduleSettings != null) {
+          final VirtualFileUrl compilerOutput = moduleSettings.getCompilerOutput();
+          if (compilerOutput != null) {
+            final String url = VirtualFileManager.extractPath(compilerOutput.getUrl());
+            final Path path = Paths.get(url);
+            production = Files.exists(path) ? path : null;
+          }
+        }
+
+        if (production == null) {
+          final String url = CompilerPaths.getModuleOutputPath(module, false);
+          if (url != null) {
+            final Path path = Paths.get(url);
+            production = Files.exists(path) ? path : null;
+          }
+        }
+
         moduleFiles.add(new ModuleFiles(module, collectClassFiles(production)));
       }
       catch (IOException e) {
