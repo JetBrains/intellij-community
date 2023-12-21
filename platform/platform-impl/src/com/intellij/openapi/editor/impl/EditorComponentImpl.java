@@ -1235,6 +1235,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       final Integer pos = event.getOffset();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
+        // Fire caret changed event when the document changes because caretPositionChanged might not be called in some cases
+        // (e.g., when deleting text or adding/removing tab indentation, see CaretListener#caretPositionChanged).
+        firePropertyChange(ACCESSIBLE_CARET_PROPERTY, null, pos);
         if (SystemInfo.isMac) {
           // For MacOSX we also need to fire a JTextComponent event to anyone listening
           // to our Document, since *that* rather than the accessible property
@@ -1244,6 +1247,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       } else {
         ApplicationManager.getApplication().invokeLater(() -> {
           firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
+          firePropertyChange(ACCESSIBLE_CARET_PROPERTY, null, pos);
           fireJTextComponentDocumentChange(event);
         });
       }
