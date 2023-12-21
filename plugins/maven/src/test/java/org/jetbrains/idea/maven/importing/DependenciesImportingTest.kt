@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
@@ -1382,7 +1381,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     val root = projectsTree.rootProjects[0]
     val modules = projectsTree.getModules(root)
 
-    assertOrderedElementsAreEqual<Any, MavenProjectProblem>(root.getProblems())
+    assertOrderedElementsAreEqual(root.getProblems())
     assertTrue(modules[0].getProblems()[0].description!!.contains("Unresolved dependency: 'xxx:yyy:pom:1'"))
   }
 
