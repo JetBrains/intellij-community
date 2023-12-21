@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,6 +85,53 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
   }
 
   @Test
+  public void secondPutWithSameKey_overridesValuePreviouslyPut() throws IOException {
+    String key = "testKey";
+    String value = "testValue";
+
+    storage.put(key, value);
+
+    String anotherValue = "anotherTestValue";
+    storage.put(key, anotherValue);
+
+    assertEquals(anotherValue,
+                 storage.get(key),
+                 "New value put must overwrite previous one");
+  }
+
+  @Test
+  public void forEachOfManyKeys_putWithSameKey_overridesValuesPreviouslyPut() throws IOException {
+    //store original values:
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+    }
+
+    //overwrite with new values:
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String newValue = entry.getValue() + "_random_Suffix";
+
+      storage.put(key, newValue);
+    }
+
+    //check new values is returned:
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String expectedValue = entry.getValue() + "_random_Suffix";
+      assertEquals(expectedValue,
+                   storage.get(key),
+                   "store[" + key + "] must return value from last put()");
+    }
+  }
+
+
+  @Test
   public void forEachOfManyMappings_AfterPutAndRemove_containsMappingReturnsFalse() throws IOException {
     for (int substrate : keyValuesSubstrate) {
       Map.Entry<String, String> entry = keyValue(substrate);
@@ -142,9 +190,4 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
     assertTrue(storage.isEmpty(),
                "Storage must be empty after removing all the keys");
   }
-
-  //TODO RC: test for value overwrite: same key, different values
-
-  //TODO RC: test for key.hash collision: map able to distinguish keys with same hash
-  //         ideally it should be many such keys, so everything above could be tested on them
 }
