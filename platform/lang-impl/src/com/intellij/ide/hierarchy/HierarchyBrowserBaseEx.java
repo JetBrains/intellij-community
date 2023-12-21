@@ -653,9 +653,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected static class BaseOnThisElementAction extends AnAction {
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    protected BaseOnThisElementAction(@NotNull Supplier<String> text,
-                                      @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
-      super(text);
+    protected BaseOnThisElementAction(@NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       myProviderLanguageExtension = providerLanguageExtension;
     }
 

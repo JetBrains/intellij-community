@@ -101,7 +101,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageCallHierarchy.INSTANCE);
+      super(LanguageCallHierarchy.INSTANCE);
     }
   }
 
