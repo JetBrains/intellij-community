@@ -254,6 +254,11 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     return (if (ignorePopup) editorTabs.selectedInfo else editorTabs.targetInfo)?.component
   }
 
+  fun getSelectedComposite(): EditorComposite? {
+    val selectedInfo = editorTabs.selectedInfo
+    return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
+  }
+
   fun insertTab(file: VirtualFile,
                 icon: Icon?,
                 component: JComponent,

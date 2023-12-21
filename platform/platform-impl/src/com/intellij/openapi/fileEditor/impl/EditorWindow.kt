@@ -689,20 +689,33 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       IdeGlassPaneUtil.find(component).addPainter(component, painter, disposable)
     }
-    component.repaint()
-    component.isFocusable = true
-    component.grabFocus()
-    component.focusTraversalKeysEnabled = false
+
+    //Reminder about UI components hierarchy:
+    //    EditorsSplitters
+    //    |-- EditorTabs                    // `tabbedPane.component` OR `component`
+    //        |-- EditorWindowTopComponent  //
+    //            |-- EditorCompositePanel  // `tabbedPane.getSelectedComposite()`
+    //                |-- JPanel            // `componentToFocus`
+    //                    |-- PsiAwareTextEditorComponent
+    //
+    //assuming that it's safe to `!!`, if `showSplitChooser` is called, we expect that selected editor exists and it's not null
+    val editorComposite: EditorComposite = tabbedPane.getSelectedComposite()!!
+    val componentToFocus: JComponent = editorComposite.component.getComponent(0) as JComponent
+
+    componentToFocus.repaint()
+    componentToFocus.isFocusable = true
+    componentToFocus.grabFocus()
+    componentToFocus.focusTraversalKeysEnabled = false
     val focusAdapter = object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
-        component.removeFocusListener(this)
+        componentToFocus.removeFocusListener(this)
         val splitterService = SplitterService.getInstance(project)
         if (splitterService.activeWindow == this@EditorWindow) {
           splitterService.stopSplitChooser(true)
         }
       }
     }
-    component.addFocusListener(focusAdapter)
+    componentToFocus.addFocusListener(focusAdapter)
     return object : SplitChooser {
       override val position: RelativePosition
         get() = painter.position
@@ -713,9 +726,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
       override fun dispose() {
         painter.rectangle = null
-        component.removeFocusListener(focusAdapter)
-        component.isFocusable = false
-        component.repaint()
+        componentToFocus.removeFocusListener(focusAdapter)
+        componentToFocus.isFocusable = false
+        componentToFocus.repaint()
         Disposer.dispose(disposable)
       }
     }
