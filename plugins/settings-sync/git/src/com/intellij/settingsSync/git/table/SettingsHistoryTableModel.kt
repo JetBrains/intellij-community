@@ -61,7 +61,8 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
       val recordId = row.record.id
       if (expandedRows.contains(recordId)) {
         expandedRows.remove(recordId)
-      } else {
+      }
+      else {
         expandedRows.add(recordId)
       }
       sorter.sort()
@@ -95,10 +96,12 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
 
     val commitIndexes = (0 until rowsTotal).mapNotNull { visiblePack.visibleGraph.getRowInfo(it).getCommit() }
     try {
-      commitDetailsGetter.loadCommitsDataSynchronously(commitIndexes, ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { _, commitDetails ->
+      commitDetailsGetter.loadCommitsDataSynchronously(commitIndexes, ProgressManager.getGlobalProgressIndicator()
+                                                                      ?: EmptyProgressIndicator()) { _, commitDetails ->
         commits.add(commitDetails)
       }
-    } catch (e: VcsException) {
+    }
+    catch (e: VcsException) {
       logger.error("Failed to load commit data", e)
     }
 

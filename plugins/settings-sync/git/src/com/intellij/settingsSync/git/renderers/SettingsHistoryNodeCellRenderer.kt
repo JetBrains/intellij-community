@@ -9,11 +9,7 @@ import com.intellij.settingsSync.git.table.TitleRow
 import com.intellij.util.ui.UIUtil
 import icons.SettingsSyncIcons
 import org.jetbrains.annotations.Nls
-import java.awt.AlphaComposite
-import java.awt.BasicStroke
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
+import java.awt.*
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
 
@@ -24,7 +20,11 @@ internal class SettingsHistoryNodeCellRenderer : SettingsHistoryCellRenderer() {
   private var row: SettingsHistoryTableRow? = null
   private var isGreyedOut: Boolean = false
 
-  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, hasFocus: Boolean, rowIndex: Int) {
+  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable,
+                                            row: SettingsHistoryTableRow,
+                                            selected: Boolean,
+                                            hasFocus: Boolean,
+                                            rowIndex: Int) {
     this.row = row
     this.isGreyedOut = isGreyedOut(table, rowIndex)
 
@@ -38,7 +38,8 @@ internal class SettingsHistoryNodeCellRenderer : SettingsHistoryCellRenderer() {
         ChangeRecord.ChangeOrigin.Local -> SettingsSyncBundle.message("ui.toolwindow.node.local")
         else -> SettingsSyncBundle.message("ui.toolwindow.node.remote")
       }
-    } else null
+    }
+    else null
   }
 
   override fun paintComponent(g: Graphics) {
@@ -52,7 +53,8 @@ internal class SettingsHistoryNodeCellRenderer : SettingsHistoryCellRenderer() {
 
     if (row is TitleRow) {
       drawNode(g2)
-    } else {
+    }
+    else {
       drawVerticalLine(g2, nodeCenterX, 0.0, height.toDouble())
     }
   }
@@ -63,7 +65,8 @@ internal class SettingsHistoryNodeCellRenderer : SettingsHistoryCellRenderer() {
 
     if (record.origin == ChangeRecord.ChangeOrigin.Local) {
       drawLocalNode(g2, record, centerY)
-    } else {
+    }
+    else {
       drawRemoteNode(g2, record, centerY)
     }
   }

@@ -3,10 +3,10 @@ package com.intellij.settingsSync.git.renderers
 import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.settingsSync.SettingsSyncBundle
+import com.intellij.settingsSync.git.record.HistoryRecord
 import com.intellij.settingsSync.git.table.SettingsHistoryTable
 import com.intellij.settingsSync.git.table.SettingsHistoryTableRow
 import com.intellij.settingsSync.git.table.TitleRow
-import com.intellij.settingsSync.git.record.HistoryRecord
 import com.intellij.util.ui.JBUI
 
 internal class SettingsHistoryRestoreCellRenderer : SettingsHistoryCellRenderer() {

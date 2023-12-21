@@ -11,13 +11,9 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import javax.swing.JComponent
 
-class SettingsHistoryLogUi(logId: String,
-                           logData: VcsLogData,
-                           refresher: VisiblePackRefresher,
-                           colorManager: VcsLogColorManager) : AbstractVcsLogUi(logId,
-                                                                             logData,
-                                                                             colorManager,
-                                                                             refresher) {
+class SettingsHistoryLogUi(logId: String, logData: VcsLogData, refresher: VisiblePackRefresher, colorManager: VcsLogColorManager) :
+  AbstractVcsLogUi(logId, logData, colorManager, refresher) {
+
   private val uiProperties = SettingsHistoryUiProperties<VcsLogUiPropertiesImpl.State>()
   private val settingsHistoryPanel = SettingsHistoryPanel(this, logData, refresher)
   private val filterUi = VcsLogFilterUi { VcsLogFilterObject.EMPTY_COLLECTION }

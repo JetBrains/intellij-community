@@ -7,7 +7,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
 
 // Properties are not needed for settings history toolwindow, so it's just a stub
-class SettingsHistoryUiProperties<T : VcsLogUiPropertiesImpl.State> : VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(ApplicationManager.getApplication().getService(VcsLogApplicationSettings::class.java)) {
+class SettingsHistoryUiProperties<T : VcsLogUiPropertiesImpl.State> : VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(
+  ApplicationManager.getApplication().getService(VcsLogApplicationSettings::class.java)) {
   override val logUiState: State = State()
 
   override fun <T : Any?> exists(property: VcsLogUiProperties.VcsLogUiProperty<T>): Boolean {

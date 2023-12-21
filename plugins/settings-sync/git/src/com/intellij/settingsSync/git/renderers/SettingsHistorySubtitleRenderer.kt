@@ -1,9 +1,9 @@
 package com.intellij.settingsSync.git.renderers
 
 import com.intellij.icons.AllIcons
+import com.intellij.settingsSync.git.record.ChangeRecord
 import com.intellij.settingsSync.git.table.SettingsHistoryTable
 import com.intellij.settingsSync.git.table.SettingsHistoryTableRow
-import com.intellij.settingsSync.git.record.ChangeRecord
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 
@@ -11,7 +11,11 @@ internal class SettingsHistorySubtitleRenderer : SettingsHistoryCellRenderer() {
   private val windowsIcon = AllIcons.FileTypes.MicrosoftWindows
   private val linuxIcon = AllIcons.Linux.Linux
 
-  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, hasFocus: Boolean, rowIndex: Int) {
+  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable,
+                                            row: SettingsHistoryTableRow,
+                                            selected: Boolean,
+                                            hasFocus: Boolean,
+                                            rowIndex: Int) {
     val record = row.record
     val textAttributes = if (isGreyedOut(table, rowIndex)) SimpleTextAttributes.GRAY_ATTRIBUTES else SimpleTextAttributes.GRAYED_ATTRIBUTES
 
@@ -23,7 +27,8 @@ internal class SettingsHistorySubtitleRenderer : SettingsHistoryCellRenderer() {
     }
     if (icon == null) {
       ipad = JBUI.insetsLeft(20)
-    } else {
+    }
+    else {
       ipad = JBUI.insetsLeft(22)
     }
 

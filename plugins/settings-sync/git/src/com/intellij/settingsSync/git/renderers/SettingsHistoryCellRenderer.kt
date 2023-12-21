@@ -16,7 +16,6 @@ import java.awt.AlphaComposite
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.lang.StringBuilder
 import javax.swing.BorderFactory
 import javax.swing.Icon
 import javax.swing.JTable
@@ -26,6 +25,7 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
     @JvmStatic
     protected val isOldUI: Boolean = !ExperimentalUI.isNewUI()
   }
+
   protected var iconOpacity: Float? = null
   private val tooltipTextFragments: MutableList<MutableList<TooltipTextFragment>> = mutableListOf()
 
@@ -34,7 +34,11 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
    * Same as com.intellij.ui.ColoredTableCellRenderer#customizeCellRenderer,
    * but with some basic styling already applied
    */
-  abstract fun customizeHistoryCellRenderer(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, hasFocus: Boolean, rowIndex: Int)
+  abstract fun customizeHistoryCellRenderer(table: SettingsHistoryTable,
+                                            row: SettingsHistoryTableRow,
+                                            selected: Boolean,
+                                            hasFocus: Boolean,
+                                            rowIndex: Int)
 
   final override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
     table as SettingsHistoryTable
@@ -61,7 +65,8 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
   private inline fun Graphics2D.withAlphaComposite(alpha: Float?, block: Graphics2D.() -> Unit) {
     if (alpha == null) {
       block()
-    } else {
+    }
+    else {
       val originalComposite = this.composite
       this.composite = AlphaComposite.SrcOver.derive(alpha)
       block()
@@ -88,11 +93,7 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
     return table.isFocusOwner && table.isResetHovered && rowIndex < table.hoveredRow
   }
 
-  private fun paintBackground(table: SettingsHistoryTable,
-                              row: SettingsHistoryTableRow,
-                              selected: Boolean,
-                              focused: Boolean,
-                              ) {
+  private fun paintBackground(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, focused: Boolean) {
     if (row is SeparatorRow) {
       background = JBUI.CurrentTheme.Table.BACKGROUND
       return

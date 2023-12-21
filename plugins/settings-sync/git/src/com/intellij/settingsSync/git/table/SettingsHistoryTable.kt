@@ -79,7 +79,8 @@ internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, priva
       // It's done only for one column because it affects the whole row and there is no need to do it for each column
       if (rowEntity is SeparatorRow) {
         setRowHeight(row, 16)
-      } else {
+      }
+      else {
         setRowHeight(row, 24)
       }
 
@@ -94,7 +95,8 @@ internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, priva
     if (column == 2) {
       return if (rowEntity is TitleRow) {
         return restoreRenderer
-      } else {
+      }
+      else {
         emptyRenderer
       }
     }
@@ -152,8 +154,9 @@ internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, priva
 
   private fun openChange(change: Change) {
     val showDiffContext = ShowDiffContext()
-      .apply { putChangeContext(change, DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE,
-                                SettingsSyncBundle.message("ui.toolwindow.editor.diff.tab.title", ChangesUtil.getFilePath(change).name))
+      .apply {
+        putChangeContext(change, DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE,
+                         SettingsSyncBundle.message("ui.toolwindow.editor.diff.tab.title", ChangesUtil.getFilePath(change).name))
       }
     ShowDiffAction.showDiffForChange(project, ListSelection.create(listOf(change), change), showDiffContext)
   }
@@ -183,11 +186,12 @@ internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, priva
       repaint()
     }
 
-    private fun handleTitleRowClick(row: SettingsHistoryTableRow,rowIndex: Int, e: MouseEvent) {
+    private fun handleTitleRowClick(row: SettingsHistoryTableRow, rowIndex: Int, e: MouseEvent) {
       val isMouseOverRevert = columnAtPoint(e.point) == 2
       if (isMouseOverRevert) {
         performRevertAtRow(rowIndex)
-      } else {
+      }
+      else {
         model.toggleRowExpanding(row as TitleRow)
       }
     }

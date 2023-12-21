@@ -5,7 +5,8 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.ui.VcsLogColorManager
-import com.intellij.vcs.log.visible.*
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl
+import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
 class SettingsHistoryLogUiFactory(private val colorManager: VcsLogColorManager) : VcsLogManager.VcsLogUiFactory<SettingsHistoryLogUi> {

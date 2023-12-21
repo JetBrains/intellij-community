@@ -8,11 +8,11 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.JPanel
 
 internal class SettingsHistoryPanel(logUi: AbstractVcsLogUi,
-                           logData: VcsLogData,
-                           refresher: VisiblePackRefresher) : JPanel() {
+                                    logData: VcsLogData,
+                                    refresher: VisiblePackRefresher) : JPanel() {
   private val graphTable = VcsLogGraphTable(logUi.id, logData, logUi.properties, logUi.colorManager, logUi::requestMore, logUi)
 
   init {

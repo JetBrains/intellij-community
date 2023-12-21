@@ -10,10 +10,15 @@ internal class SettingsHistoryTitleCellRenderer : SettingsHistoryCellRenderer() 
   private val expandedIcon = UIUtil.getTreeExpandedIcon()
   private val collapsedIcon = UIUtil.getTreeCollapsedIcon()
 
-  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, hasFocus: Boolean, rowIndex: Int) {
+  override fun customizeHistoryCellRenderer(table: SettingsHistoryTable,
+                                            row: SettingsHistoryTableRow,
+                                            selected: Boolean,
+                                            hasFocus: Boolean,
+                                            rowIndex: Int) {
     if (isExpanded(table, row)) {
       icon = expandedIcon
-    } else {
+    }
+    else {
       icon = collapsedIcon
     }
     iconTextGap = 4
