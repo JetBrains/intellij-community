@@ -35,8 +35,9 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
   init {
     refresher.addVisiblePackChangeListener(VisiblePackChangeListener { visiblePack ->
       val historyRecords = getHistoryRecords(visiblePack)
+      val newRows = historyRecords.mapNotNull { buildRows(it) }.flatten()
       runInEdt {
-        rows = historyRecords.mapNotNull { buildRows(it) }.flatten()
+        rows = newRows
         sorter.sort()
       }
     })
