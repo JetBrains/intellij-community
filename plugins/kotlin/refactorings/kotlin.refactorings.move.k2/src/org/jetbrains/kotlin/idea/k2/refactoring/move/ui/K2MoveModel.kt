@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -195,8 +196,11 @@ sealed class K2MoveModel {
                     val target = if (correctedTarget is KtFile) {
                         K2MoveTargetModel.File(correctedTarget)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val file = elementsFromFiles.firstOrNull()?.containingKtFile ?: error("No default target found")
-                        K2MoveTargetModel.File(file)
+                        val element = elementsToMove.firstOrNull() as KtNamedDeclaration
+                        val elementName = "${element.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
+                        val containingFile = element.containingKtFile
+                        val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
+                        K2MoveTargetModel.File(elementName, containingFile.packageFqName, psiDirectory)
                     }
                     Members(project, source, target, inSourceRoot)
                 }
