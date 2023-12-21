@@ -3,6 +3,7 @@ package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,15 @@ public abstract class CoverageRunner {
    */
   public boolean canBeLoaded(@NotNull File candidate) {
     return true;
+  }
+
+  /**
+   * @return {@link ThreeState#YES}, if hits are always calculated; <br/>
+   * {@link ThreeState#UNSURE}, if it depends on settings; <br/>
+   * {@link ThreeState#NO}, if never calculated
+   */
+  public ThreeState calculateExactHits() {
+    return ThreeState.NO;
   }
 
   /**

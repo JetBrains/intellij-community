@@ -30,7 +30,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
                                                                      coverageConfig)
     suite as JavaCoverageSuite
 
-    Assert.assertFalse(suite.isBranchCoverage)
+    Assert.assertTrue(suite.isBranchCoverage)
     Assert.assertFalse(suite.isCoverageByTestEnabled)
     Assert.assertTrue(suite.isCoverageByTestApplicable)
     Assert.assertFalse(suite.isTrackTestFolders)

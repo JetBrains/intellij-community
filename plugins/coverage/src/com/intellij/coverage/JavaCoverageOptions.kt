@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ArrayUtil
+import com.intellij.util.ThreeState
 import javax.swing.JComponent
 
 class JavaCoverageOptions(private val project: Project) : CoverageOptions() {
@@ -52,6 +53,12 @@ class JavaCoverageOptions(private val project: Project) : CoverageOptions() {
           checkBox(JavaCoverageBundle.message("settings.coverage.java.ignore.implicitly.declared.default.constructors"))
             .bindSelected(coverageOptionsProvider::ignoreImplicitConstructors)
             .visibleIf(isIdeaRunner)
+        }
+        row {
+          checkBox(JavaCoverageBundle.message("settings.coverage.java.exact.hits"))
+            .bindSelected(coverageOptionsProvider::calculateExactHits)
+            .comment(JavaCoverageBundle.message("settings.coverage.java.exact.hits.comment"))
+            .visibleIf(runner.selectedValueMatches { it?.calculateExactHits() == ThreeState.UNSURE })
         }
         row {
           val excludeAnnotationsPanel = object : AnnotationsPanel(
