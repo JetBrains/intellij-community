@@ -50,4 +50,6 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
         val descriptor = model.toDescriptor()
         invokeRefactoring(descriptor.refactoringProcessor())
     }
+
+    override fun hasHelpAction(): Boolean = false
 }
