@@ -57,6 +57,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private final Map<PsiReferenceExpression, ArgResultEquality> mySameArguments = new HashMap<>();
   private final Map<PsiCaseLabelElement, ThreeState> mySwitchLabelsReachability = new HashMap<>();
+  private final boolean myDebug;
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
@@ -75,6 +76,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   DataFlowInstructionVisitor(boolean strictMode) {
     myStrictMode = strictMode;
+    Application application = ApplicationManager.getApplication();
+    myDebug = application.isEAP() || application.isInternal() || application.isUnitTestMode();
   }
 
   @Override
@@ -281,11 +284,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
                                    @NotNull DfaMemoryState memState) {
-    if (!expression.isPhysical()) {
-      Application application = ApplicationManager.getApplication();
-      if (application.isEAP() || application.isInternal() || application.isUnitTestMode()) {
-        throw new IllegalStateException("Non-physical expression is passed");
-      }
+    if (myDebug && !expression.isPhysical()) {
+      throw new IllegalStateException("Non-physical expression is passed");
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression cast) {
