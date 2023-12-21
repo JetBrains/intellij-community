@@ -21,8 +21,8 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
+  const val MAIN_FRONTEND_MODULE_NAME = "kotlin.frontend"
 
-  @Suppress("SpellCheckingInspection")
   val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
     "kotlin.plugin.k1",
@@ -41,12 +41,10 @@ object KotlinPluginBuilder {
     "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
     "kotlin.base.code-insight",
-    "kotlin.base.code-insight.minimal",
     "kotlin.base.jps",
     "kotlin.base.analysis-api.utils",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.obsolete-compat",
-    "kotlin.base.resources",
     "kotlin.base.statistics",
     "kotlin.base.fe10.plugin",
     "kotlin.base.fe10.analysis",
@@ -183,7 +181,6 @@ object KotlinPluginBuilder {
     "kotlin.highlighting.shared",
     "kotlin.highlighting.k1",
     "kotlin.highlighting.k2",
-    "kotlin.highlighting.minimal",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
@@ -197,7 +194,12 @@ object KotlinPluginBuilder {
     "kotlin.bundled-compiler-plugins-support",
   )
 
-  @Suppress("SpellCheckingInspection")
+  private val MODULES_SHARED_WITH_CLIENT = persistentListOf(
+    "kotlin.base.resources",
+    "kotlin.base.code-insight.minimal",
+    "kotlin.highlighting.minimal",
+    )
+
   private val LIBRARIES = persistentListOf(
     "kotlinc.analysis-api-providers",
     "kotlinc.analysis-project-structure",
@@ -252,6 +254,10 @@ object KotlinPluginBuilder {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
       spec.directoryName = "Kotlin"
       spec.mainJarName = "kotlin-plugin.jar"
+
+      for (moduleName in MODULES_SHARED_WITH_CLIENT) {
+        spec.withModule(moduleName, "kotlin-plugin-shared.jar")
+      }
 
       for (moduleName in MODULES) {
         spec.withModule(moduleName)
