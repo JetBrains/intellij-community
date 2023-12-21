@@ -377,7 +377,7 @@
                  description="Generate sources for aggregator projects (instead of all projects) for better performance"/>
 
     <registryKey key="maven.max.parallel.tasks" defaultValue="-1"
-                 description="Maximal parallel tasks to read and resolve. If equal or less than zero, Runtime.getRuntime().availableProcessors()-1 used"/>
+                 description="Maximal parallel tasks to read and resolve. If equal or less than zero, no limitations applied"/>
 
     <intentionAction>
       <language>XML</language>

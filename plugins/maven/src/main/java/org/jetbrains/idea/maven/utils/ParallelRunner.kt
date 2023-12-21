@@ -13,19 +13,29 @@ import kotlinx.coroutines.sync.Semaphore
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
 
   suspend fun <T> runInParallel(collection: Collection<T>, method: suspend (T) -> Unit) {
-    if (collection.isEmpty()) return;
+    if (collection.isEmpty()) return
     if (collection.size == 1) {
       method.invoke(collection.first())
     }
     else {
-      val maxParallel = getMaxParallel()
+      val maxParallel = Registry.intValue("maven.max.parallel.tasks", -1)
       if (maxParallel == 1) {
         collection.forEach {
           method(it)
         }
       }
+      else if (maxParallel <= 0) {
+        val runScope = cs.namedChildScope("ParallelRunner.runInParallel-unbounded", Dispatchers.IO, true)
+        collection.map {
+          runScope.async {
+            method(it)
+          }
+        }.awaitAll()
+        runScope.cancel()
+
+      }
       else {
-        val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
+        val runScope = cs.namedChildScope("ParallelRunner.runInParallel-bounded", Dispatchers.IO, true)
         val semaphore = Semaphore(maxParallel)
         collection.map {
           semaphore.acquire()
@@ -38,15 +48,6 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
       }
 
     }
-
-  }
-
-  private fun getMaxParallel(): Int {
-    val registryValue = Registry.intValue("maven.max.parallel.tasks")
-    if (registryValue <= 0) {
-      return Math.max(Runtime.getRuntime().availableProcessors() - 1, 1)
-    }
-    return registryValue
   }
 
   companion object {
