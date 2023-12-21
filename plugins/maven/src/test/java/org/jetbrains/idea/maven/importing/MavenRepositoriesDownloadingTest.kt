@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
@@ -30,6 +31,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun ping(urlString: String) {
+    MavenLog.LOG.warn("Pinging $urlString")
     val url = URL(urlString)
     val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
     connection.setRequestMethod("GET")
