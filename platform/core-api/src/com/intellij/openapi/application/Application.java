@@ -132,7 +132,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread.
-   * The computation√ is executed immediately if no write action is currently running or the write action
+   * The computation is executed immediately if no write action is currently running or the write action
    * is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
