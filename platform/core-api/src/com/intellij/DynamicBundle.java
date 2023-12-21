@@ -61,7 +61,6 @@ public class DynamicBundle extends AbstractBundle {
       getBundleClassLoader(),
       baseLoader,
       loader -> {
-        getLocale();
         return super.findBundle(pathToBundle, loader, control, getLocale());
       }
     );

@@ -170,6 +170,7 @@ public class AbstractBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 
+  @ApiStatus.Internal
   protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle,
                                                @NotNull ClassLoader loader,
                                                @NotNull ResourceBundle.Control control,
