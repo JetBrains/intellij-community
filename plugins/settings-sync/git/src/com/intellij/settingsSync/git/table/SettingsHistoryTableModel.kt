@@ -39,6 +39,7 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
       runInEdt {
         rows = newRows
         sorter.sort()
+        fireTableDataChanged()
       }
     })
   }
