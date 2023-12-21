@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nls
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import javax.swing.JComboBox
+import javax.swing.JLabel
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -128,5 +130,58 @@ class SegmentedButtonTest {
 
     segmentedButton.selectedItem = 1
     assertEquals(segmentedButton.selectedItem, 1)
+  }
+
+  @Test
+  fun testLabelFor() {
+    val label = JLabel("label")
+    val panel = panel {
+      row(label) {
+        segmentedButton(listOf(1, 2, 3)) { text = "$it" }
+      }
+    }
+
+    val button = UIUtil.findComponentOfType(panel, ActionButtonWithText::class.java) ?: fail()
+    val segmentedButtonComponent = button.parent
+    assertEquals(segmentedButtonComponent, label.labelFor)
+  }
+
+  @Test
+  fun testLabelForSegmentedButtonAsComboBox() {
+    val label = JLabel("label")
+    val panel = panel {
+      row(label) {
+        segmentedButton(listOf(1, 2, 3)) { text = "$it" }
+          .apply {
+            maxButtonsCount(1) // Segmented button should now use combo box as its component
+          }
+      }
+    }
+
+    val comboBox = UIUtil.findComponentOfType(panel, JComboBox::class.java) ?: fail()
+    assertEquals(comboBox, label.labelFor)
+  }
+
+  @Test
+  fun testLabelForWhenChangingComponent() {
+    val label = JLabel("label")
+    lateinit var segmentedButton: SegmentedButton<Int>
+    val panel = panel {
+      row(label) {
+        segmentedButton = segmentedButton(listOf(1, 2, 3)) { text = "$it" }
+          .apply {
+            maxButtonsCount(3)
+          }
+      }
+    }
+
+    val button = UIUtil.findComponentOfType(panel, ActionButtonWithText::class.java) ?: fail()
+    val segmentedButtonComponent = button.parent
+    assertEquals(segmentedButtonComponent, label.labelFor)
+
+    segmentedButton.items = listOf(1, 2, 3, 4) // Exceeds maxButtonsCount and forces a rebuild of the SegmentedButton
+
+    val comboBox = UIUtil.findComponentOfType(panel, JComboBox::class.java) ?: fail()
+    assertEquals(comboBox, label.labelFor)
   }
 }

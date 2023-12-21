@@ -45,7 +45,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
 
     panel = panel {
       group("Segmented button test board") {
-        val segmentedButtonRow = row {
+        val segmentedButtonRow = row("Segmented button:") {
           segmentedButton = segmentedButton(generateItems(3)) {
             text = rendererText ?: it
             toolTipText = rendererToolTip
