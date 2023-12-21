@@ -34,7 +34,7 @@ class SettingsHistoryToolWindowFactory : ToolWindowFactory, DumbAware {
         return@executeOnPooledThread
       }
 
-      showExternalGitLogInToolwindow(project, toolWindow, { SettingsHistoryLogUiFactory(it.colorManager) }, GitVcs.getInstance(project),
+      showExternalGitLogInToolwindow(project, toolWindow, { SettingsHistoryLogUiFactory() }, GitVcs.getInstance(project),
                                      listOf(virtualFile), "", "")
     }
   }

@@ -10,7 +10,10 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import java.text.DateFormat
 import java.util.*
 
-internal sealed class HistoryRecord(private val commitDetails: VcsFullCommitDetails, val isFirstCommit: Boolean, isLastCommit: Boolean) {
+internal sealed class HistoryRecord(val commitId: Int,
+                                    private val commitDetails: VcsFullCommitDetails,
+                                    val isFirstCommit: Boolean,
+                                    isLastCommit: Boolean) {
   val id = commitDetails.id
   val position: RecordPosition
   val time: String
@@ -75,10 +78,12 @@ internal sealed class HistoryRecord(private val commitDetails: VcsFullCommitDeta
   }
 }
 
-internal class ChangeRecord(private val commitDetails: VcsFullCommitDetails,
+internal class ChangeRecord(commitId: Int,
+                            private val commitDetails: VcsFullCommitDetails,
                             isFirstCommit: Boolean,
                             isLastCommit: Boolean,
-                            private val commits: List<VcsFullCommitDetails>) : HistoryRecord(commitDetails, isFirstCommit, isLastCommit) {
+                            private val commits: List<VcsFullCommitDetails>) : HistoryRecord(commitId, commitDetails, isFirstCommit,
+                                                                                             isLastCommit) {
   companion object {
     private val logger = logger<ChangeRecord>()
   }
@@ -205,5 +210,5 @@ internal class ChangeRecord(private val commitDetails: VcsFullCommitDetails,
   }
 }
 
-internal class MergeRecord(private val commitDetails: VcsFullCommitDetails, isFirstCommit: Boolean, isLastCommit: Boolean) :
-  HistoryRecord(commitDetails, isFirstCommit, isLastCommit)
+internal class MergeRecord(commitId: Int, private val commitDetails: VcsFullCommitDetails, isFirstCommit: Boolean, isLastCommit: Boolean) :
+  HistoryRecord(commitId, commitDetails, isFirstCommit, isLastCommit)

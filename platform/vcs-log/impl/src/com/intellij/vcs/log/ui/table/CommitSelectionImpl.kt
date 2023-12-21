@@ -7,11 +7,13 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.VisibleGraph
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
-internal class CommitSelectionImpl(private val logData: VcsLogData,
-                                   private val visibleGraph: VisibleGraph<Int>,
-                                   override val rows: IntArray) : VcsLogCommitSelection {
+@ApiStatus.Internal
+class CommitSelectionImpl(private val logData: VcsLogData,
+                          private val visibleGraph: VisibleGraph<Int>,
+                          override val rows: IntArray) : VcsLogCommitSelection {
   override val ids: List<Int> get() = rows.lazyMap(::getIdAtRow)
 
   override val commits: List<CommitId>

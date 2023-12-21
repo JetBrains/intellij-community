@@ -8,15 +8,19 @@ import com.intellij.settingsSync.git.record.HistoryRecord
 import com.intellij.settingsSync.git.record.RecordService
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogDataProvider
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.table.VcsLogCommitListModel
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePackChangeListener
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.TableRowSorter
 
-internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: VisiblePackRefresher) : AbstractTableModel() {
+internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: VisiblePackRefresher) :
+  AbstractTableModel(), VcsLogCommitListModel {
+
   companion object {
     private val logger = logger<SettingsHistoryTableModel>()
   }
@@ -24,6 +28,10 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
   private val recordService = RecordService()
 
   lateinit var table: SettingsHistoryTable
+
+  @Volatile
+  internal var visiblePack: VisiblePack = VisiblePack.EMPTY
+    private set
   private var rows = listOf<SettingsHistoryTableRow>()
   val expandedRows = mutableSetOf<Hash>()
 
@@ -33,10 +41,11 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
   private val commitDetailsGetter = logData.commitDetailsGetter
 
   init {
-    refresher.addVisiblePackChangeListener(VisiblePackChangeListener { visiblePack ->
-      val historyRecords = getHistoryRecords(visiblePack)
+    refresher.addVisiblePackChangeListener(VisiblePackChangeListener { newVisiblePack ->
+      val historyRecords = getHistoryRecords(newVisiblePack)
       val newRows = historyRecords.mapNotNull { buildRows(it) }.flatten()
       runInEdt {
+        visiblePack = newVisiblePack
         rows = newRows
         sorter.sort()
         fireTableDataChanged()
@@ -51,9 +60,12 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
 
   private fun getHistoryRecords(visiblePack: VisiblePack): List<HistoryRecord> {
     val commitDetails = getAllCommits(visiblePack)
-    val historyRecords = commitDetails.withIndex()
-      .map { recordService.readRecord(it.value, it.index == commitDetails.lastIndex, it.index == 0, commitDetails) }
-      .toMutableList()
+    val historyRecords = buildList {
+      for ((index, details) in commitDetails.withIndex()) {
+        val id = visiblePack.visibleGraph.getRowInfo(index).getCommit()
+        add(recordService.readRecord(id, details, index == commitDetails.size - 1, index == 0, commitDetails))
+      }
+    }
     return historyRecords
   }
 
@@ -101,6 +113,12 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
       logger.error("Failed to load commit data", e)
       return emptyList()
     }
+  }
+
+  override val dataProvider: VcsLogDataProvider get() = logData
+
+  override fun getId(row: Int): Int {
+    return visiblePack.visibleGraph.getRowInfo(row).getCommit()
   }
 
   override fun getRowCount(): Int {

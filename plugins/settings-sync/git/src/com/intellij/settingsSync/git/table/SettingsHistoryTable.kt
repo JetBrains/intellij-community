@@ -19,12 +19,18 @@ import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.ui.table.CommitSelectionImpl
+import com.intellij.vcs.log.ui.table.VcsLogCommitList
+import com.intellij.vcs.log.ui.table.VcsLogCommitListModel
 import git4idea.repo.GitRepositoryManager
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.table.TableCellRenderer
 
-internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, private val project: Project) : JBTable(tableModel) {
+internal class SettingsHistoryTable(private val tableModel: SettingsHistoryTableModel, private val project: Project) :
+  JBTable(tableModel), VcsLogCommitList {
+
   companion object {
     val logger = logger<SettingsHistoryTable>()
   }
@@ -114,6 +120,16 @@ internal class SettingsHistoryTable(tableModel: SettingsHistoryTableModel, priva
   override fun getValueAt(row: Int, column: Int): SettingsHistoryTableRow {
     return super.getValueAt(row, column) as SettingsHistoryTableRow
   }
+
+  override val selection: VcsLogCommitSelection
+    get() {
+      val visibleGraphRows = selectionModel.selectedIndices.map {
+        tableModel.visiblePack.visibleGraph.getVisibleRowIndex(getRecordAtRow(it).commitId)
+      }.filterNotNull().distinct().toIntArray()
+      return CommitSelectionImpl(tableModel.logData, tableModel.visiblePack.visibleGraph, visibleGraphRows)
+    }
+
+  override val listModel: VcsLogCommitListModel get() = tableModel
 
   private fun getRecordAtRow(rowIndex: Int): HistoryRecord {
     return getValueAt(rowIndex, 0).record

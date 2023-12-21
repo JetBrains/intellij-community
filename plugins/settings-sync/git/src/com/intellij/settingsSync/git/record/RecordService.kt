@@ -7,8 +7,8 @@ import com.intellij.vcs.log.VcsFullCommitDetails
  * but at the moment only ChangeRecord are supported, so implementation is trivial
  */
 internal class RecordService {
-  fun readRecord(commit: VcsFullCommitDetails, isFirst: Boolean, isLast: Boolean, commits: List<VcsFullCommitDetails>): HistoryRecord {
+  fun readRecord(id: Int, commit: VcsFullCommitDetails, isFirst: Boolean, isLast: Boolean, commits: List<VcsFullCommitDetails>): HistoryRecord {
     // TODO merge records
-    return ChangeRecord(commit, isFirst, isLast, commits)
+    return ChangeRecord(id, commit, isFirst, isLast, commits)
   }
 }
