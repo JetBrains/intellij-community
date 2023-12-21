@@ -7,47 +7,28 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
-import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.diff.util.LineRange
-import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.containers.nullize
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.GHActor
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadComponent {
 
@@ -77,67 +58,6 @@ object GHPRReviewThreadComponent {
       })
     }
     return panel
-  }
-
-  fun createThreadDiffIn(cs: CoroutineScope,
-                         project: Project,
-                         thread: GHPRReviewThreadModel,
-                         selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
-    val vm = object : CollapsibleTimelineItemViewModel {
-      override val collapsible = MutableStateFlow(false)
-
-      init {
-        thread.addAndInvokeStateChangeListener {
-          collapsible.value = thread.isResolved || thread.isOutdated
-        }
-      }
-
-      override val collapsed: Flow<Boolean> =
-        combine(thread.collapsedState, collapsible) { collapsed, collapsible ->
-          if (collapsible) collapsed else false
-        }.distinctUntilChanged()
-
-      override fun setCollapsed(collapsed: Boolean) {
-        thread.collapsedState.value = collapsed
-      }
-    }
-
-    val fileNameClickListener = flowOf(ActionListener {
-      val commit = if (thread.isOutdated || thread.commit?.oid == null) {
-        thread.originalCommit?.oid
-      }
-      else {
-        null
-      }
-      selectInToolWindowHelper.selectChange(commit, thread.filePath)
-    })
-    return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, thread.filePath, fileNameClickListener) {
-      createDiff(thread, project)
-    }
-  }
-
-  private fun CoroutineScope.createDiff(thread: GHPRReviewThreadModel, project: Project): JComponent {
-    val hunk = thread.patchHunk
-    if (hunk == null || hunk.lines.isEmpty()) {
-      return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
-    }
-
-    val anchorLocation = thread.originalLocation
-    val startAnchorLocation = thread.originalStartLocation
-
-    val anchorLength = if (startAnchorLocation?.first == anchorLocation?.first) {
-      ((anchorLocation?.second ?: 0) - (startAnchorLocation?.second ?: 0)).coerceAtLeast(0)
-    }
-    else {
-      0
-    }
-
-    val hunkLength = anchorLength + TimelineDiffComponentFactory.DIFF_CONTEXT_SIZE
-    val truncatedHunk = PatchHunkUtil.truncateHunkBefore(hunk, hunk.lines.lastIndex - hunkLength)
-
-    val anchorRange = LineRange(truncatedHunk.lines.lastIndex - anchorLength, truncatedHunk.lines.size)
-    return TimelineDiffComponentFactory
-      .createDiffComponentIn(this, project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
   }
 
   private fun getThreadActionsComponent(
@@ -184,11 +104,11 @@ object GHPRReviewThreadComponent {
     }
   }
 
-  fun createUncollapsedThreadActionsComponent(project: Project, reviewDataProvider: GHPRReviewDataProvider,
-                                              thread: GHPRReviewThreadModel,
-                                              avatarIconsProvider: GHAvatarIconsProvider,
-                                              currentUser: GHUser,
-                                              onDone: () -> Unit): JComponent {
+  private fun createUncollapsedThreadActionsComponent(project: Project, reviewDataProvider: GHPRReviewDataProvider,
+                                                      thread: GHPRReviewThreadModel,
+                                                      avatarIconsProvider: GHAvatarIconsProvider,
+                                                      currentUser: GHUser,
+                                                      onDone: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
         thread.addComment(it)
@@ -240,79 +160,6 @@ object GHPRReviewThreadComponent {
     )
 
     return GHCommentTextFieldFactory(textFieldModel).create(actions, icon)
-  }
-
-  fun getCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
-                                         avatarIconsProvider: GHAvatarIconsProvider,
-                                         thread: GHPRReviewThreadModel,
-                                         ghostUser: GHUser,
-                                         onReply: () -> Unit): JComponent {
-    val authorsLabel = JLabel()
-    val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
-      onReply()
-    })
-    val lastReplyDateLabel = JLabel().apply {
-      foreground = UIUtil.getContextHelpForeground()
-    }
-
-    val repliesModel = thread.repliesModel
-    repliesModel.addListDataListener(object : ListDataListener {
-      init {
-        update()
-      }
-
-      private fun update() {
-        val authors = LinkedHashSet<GHActor>()
-        val repliesCount = repliesModel.size
-
-        repliesModel.items.mapTo(authors) {
-          it.author ?: ghostUser
-        }
-
-        authorsLabel.apply {
-          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE) }.nullize()?.let {
-            OverlaidOffsetIconsIcon(it)
-          }
-          isVisible = icon != null
-        }
-
-        repliesLink.apply {
-          text = if (repliesCount == 0) {
-            CollaborationToolsBundle.message("review.comments.reply.action")
-          }
-          else {
-            CollaborationToolsBundle.message("review.comments.replies.action", repliesCount)
-          }
-          isVisible = reviewDataProvider.canComment() || repliesCount > 0
-        }
-
-        lastReplyDateLabel.apply {
-          isVisible = repliesCount > 0
-          if (isVisible) {
-            text = repliesModel.getElementAt(repliesModel.size - 1).dateCreated.let {
-              DateFormatUtil.formatPrettyDateTime(it)
-            }
-          }
-        }
-      }
-
-      override fun intervalAdded(e: ListDataEvent) = update()
-      override fun intervalRemoved(e: ListDataEvent) = update()
-      override fun contentsChanged(e: ListDataEvent) = Unit
-    })
-
-    val repliesPanel = HorizontalListPanel(ActionsFolded.HORIZONTAL_GAP).apply {
-      add(authorsLabel)
-      add(repliesLink)
-      add(lastReplyDateLabel)
-    }
-
-    val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
-
-    return HorizontalListPanel(ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
-      add(repliesPanel)
-      unResolveLink?.also(::add)
-    }
   }
 
   private fun createUnResolveLink(reviewDataProvider: GHPRReviewDataProvider, thread: GHPRReviewThreadModel): LinkLabel<Any>? {

@@ -369,6 +369,7 @@ private class ReferentiallyComparedValue<T : Any>(val value: T) {
  *
  * This acts as a replacement of consecutive `asResultFlow` and `throwFailure` and avoids that exceptions cancel the flow.
  */
+@JvmName("transformConsecutiveResultSuccesses")
 fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
   transformer: suspend Flow<T>.() -> Flow<R>
@@ -395,6 +396,42 @@ fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
             successFlows.value = ReferentiallyComparedValue(MutableSharedFlow(1))
           }
           send(Result.failure(ex))
+        }
+      )
+    }
+  }
+
+/**
+ * Transforms a flow of consecutive successes. The flow is reset when a failure is encountered if [resetOnFailure] is `true`.
+ * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
+ * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
+ */
+fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
+  resetOnFailure: Boolean = true,
+  transformer: suspend Flow<T>.() -> Flow<R>
+): Flow<ComputedResult<R>> =
+  channelFlow {
+    val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
+
+    launchNow {
+      successFlows
+        .collectLatest { successes ->
+          successes.value
+            .transformer()
+            .collect {
+              send(ComputedResult.success(it))
+            }
+        }
+    }
+
+    collect {
+      it.result?.fold(
+        onSuccess = { v -> successFlows.value.value.emit(v) },
+        onFailure = { ex ->
+          if (resetOnFailure) {
+            successFlows.value = ReferentiallyComparedValue(MutableSharedFlow(1))
+          }
+          send(ComputedResult.failure(ex))
         }
       )
     }

@@ -7,9 +7,11 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
@@ -25,6 +27,17 @@ fun GitRepository.changesSignalFlow(): Flow<Unit> = channelFlow {
     })
   awaitClose()
 }
+
+fun GitRepository.infoStateIn(cs: CoroutineScope): StateFlow<GitRepoInfo> = channelFlow {
+  project.messageBus
+    .connect(this)
+    .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      if (it == this@infoStateIn) {
+        trySend(it.info)
+      }
+    })
+  awaitClose()
+}.stateIn(cs, SharingStarted.Eagerly, info)
 
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {

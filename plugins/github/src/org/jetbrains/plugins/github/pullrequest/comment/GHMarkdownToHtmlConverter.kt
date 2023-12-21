@@ -13,21 +13,24 @@ import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.parser.LinkMap
+import org.jetbrains.annotations.NonNls
 import java.net.URI
 
+// TODO: fix bug with CRLF line endings from markdown library
 class GHMarkdownToHtmlConverter(private val project: Project?) {
-  @NlsSafe
-  fun convertMarkdown(@NlsSafe markdownText: String): String {
-    val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
+
+  fun convertMarkdown(markdownText: @NlsSafe String): @NlsSafe String {
+    val text = markdownText.replace("\r", "")
     val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
 
-  @NlsSafe
-  fun convertMarkdownWithSuggestedChange(suggestedChange: GHSuggestedChange): String {
-    val text = suggestedChange.commentBody.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
-    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChange)
+  fun convertMarkdownWithSuggestedChange(markdownText: @NlsSafe String,
+                                         filePath: @NonNls String,
+                                         reviewContent: @NonNls String): @NlsSafe String {
+    val text = markdownText.replace("\r", "")
+    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, filePath, reviewContent)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)

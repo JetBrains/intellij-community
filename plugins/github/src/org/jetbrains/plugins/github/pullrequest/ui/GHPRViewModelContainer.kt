@@ -22,13 +22,15 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GHPRViewModelContainer(
   project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
-  pullRequestId: GHPRIdentifier,
+  private val projectVm: GHPRToolWindowProjectViewModel,
+  private val pullRequestId: GHPRIdentifier,
   cancelWith: Disposable
 ) {
   private val cs = parentCs.childScope().cancelledWith(cancelWith)
@@ -50,7 +52,9 @@ internal class GHPRViewModelContainer(
   }
 
   val timelineVm: GHPRTimelineViewModel by lazy {
-    GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider)
+    GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider).apply {
+      setup()
+    }
   }
 
   init {
@@ -77,6 +81,21 @@ internal class GHPRViewModelContainer(
         if (lazyInfoVm.isInitialized() && it != null) {
           lazyInfoVm.value.detailsVm.value.getOrNull()?.changesVm?.selectChange(it)
         }
+      }
+    }
+  }
+
+  private fun GHPRTimelineViewModelImpl.setup() {
+    cs.launchNow {
+      showCommitRequests.collect {
+        projectVm.viewPullRequest(pullRequestId, it)
+      }
+    }
+
+    cs.launchNow {
+      showDiffRequests.collect {
+        diffVm.showDiffFor(it)
+        projectVm.openPullRequestDiff(pullRequestId, true)
       }
     }
   }

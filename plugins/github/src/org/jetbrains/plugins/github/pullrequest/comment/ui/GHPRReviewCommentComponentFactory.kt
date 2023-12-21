@@ -7,7 +7,6 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
@@ -15,7 +14,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHe
 import javax.swing.JComponent
 
 
-class GHPRReviewCommentComponentFactory(
+internal class GHPRReviewCommentComponentFactory(
   private val project: Project,
   private val htmlImageLoader: AsyncHtmlImageLoader
 ) {
@@ -32,7 +31,11 @@ class GHPRReviewCommentComponentFactory(
     suggestedChangeHelper: GHPRSuggestedChangeHelper,
     maxTextWidth: Int
   ): JComponent {
-    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(suggestedChange)
+    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(
+      suggestedChange.commentBody,
+      suggestedChange.filePath,
+      suggestedChange.cutChangedContent().joinToString("\n") { it }
+    )
     val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
     val commentBlocks = collectCommentBlocks(content)
 
@@ -56,14 +59,12 @@ class GHPRReviewCommentComponentFactory(
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = maxTextWidth)
     }
 
-  @VisibleForTesting
-  enum class CommentType {
+  internal enum class CommentType {
     COMMENT,
     SUGGESTED_CHANGE
   }
 
-  @VisibleForTesting
-  data class CommentBlock(
+  internal data class CommentBlock(
     val commentType: CommentType,
     val content: String
   )
@@ -72,8 +73,7 @@ class GHPRReviewCommentComponentFactory(
     private const val SUGGESTED_CHANGE_START_TAG = "<code class=\"language-suggestion\">"
     private const val SUGGESTED_CHANGE_END_TAG = "</code>"
 
-    @VisibleForTesting
-    fun collectCommentBlocks(comment: String): List<CommentBlock> {
+    internal fun collectCommentBlocks(comment: String): List<CommentBlock> {
       val commentBlockRanges = collectCommentBlockRanges(comment)
 
       var isSuggestedChange = false

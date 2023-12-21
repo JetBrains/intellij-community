@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
@@ -40,7 +39,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import javax.swing.Action
@@ -50,8 +48,7 @@ import javax.swing.JPanel
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
-internal class GHPRFileEditorComponentFactory(private val project: Project,
-                                              private val timelineVm: GHPRTimelineViewModel,
+internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimelineViewModel,
                                               private val initialDetails: GHPRDetailsFull,
                                               private val cs: CoroutineScope) {
 
@@ -191,28 +188,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon)
   }
 
-  private fun createItemComponentFactory(): GHPRTimelineItemComponentFactory {
-    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(timelineVm.reviewData, uiDisposable)
-    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
-                                                           uiDisposable,
-                                                           timelineVm.repository,
-                                                           timelineVm.reviewData,
-                                                           timelineVm.detailsData)
-    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, timelineVm.prId)
-    return GHPRTimelineItemComponentFactory(
-      project,
-      timelineVm.commentsData,
-      timelineVm.reviewData,
-      timelineVm.htmlImageLoader,
-      timelineVm.avatarIconsProvider,
-      reviewThreadsModelsProvider,
-      selectInToolWindowHelper,
-      suggestedChangesHelper,
-      timelineVm.ghostUser,
-      initialDetails.author,
-      timelineVm.currentUser
-    )
-  }
+  private fun createItemComponentFactory() = GHPRTimelineItemComponentFactory(timelineVm)
 
   private val noDescriptionHtmlText by lazy {
     HtmlBuilder()

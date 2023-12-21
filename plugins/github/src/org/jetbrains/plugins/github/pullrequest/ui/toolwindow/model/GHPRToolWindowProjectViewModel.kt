@@ -37,6 +37,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 class GHPRToolWindowProjectViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
+  private val twVm: GHPRToolWindowViewModel,
   connection: GHRepositoryConnection
 ) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel> {
   private val cs = parentCs.childScope()
@@ -52,7 +53,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
-      GHPRViewModelContainer(project, cs, dataContext, id, it)
+      GHPRViewModelContainer(project, cs, dataContext, this, id, it)
     }
   }
 
@@ -92,14 +93,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
+    twVm.activate()
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
-    }
-  }
-
-  fun viewPullRequest(id: GHPRIdentifier, commitOid: String?, filePath: String) {
-    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
-      selectChange(commitOid, filePath)
     }
   }
 

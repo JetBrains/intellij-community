@@ -14,4 +14,7 @@ fragment pullRequestReviewThread on PullRequestReviewThread {
       ...pullRequestReviewComment
     }
   }
+  viewerCanReply
+  viewerCanResolve
+  viewerCanUnresolve
 }

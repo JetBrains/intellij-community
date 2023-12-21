@@ -29,11 +29,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 }
 
 @Service(Service.Level.PROJECT)
-private class GHPREditorProviderService(private val project: Project, parentCs: CoroutineScope) {
+private class GHPREditorProviderService(parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Main)
 
   fun createTimelineEditor(file: GHPRTimelineVirtualFile): FileEditor {
     val projectVm = file.findProjectVm() ?: throw ProcessCanceledException()
-    return GHPRTimelineFileEditor(project, cs, projectVm, file)
+    return GHPRTimelineFileEditor(cs, projectVm, file)
   }
 }

@@ -89,7 +89,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
 
   override val projectVm: StateFlow<GHPRToolWindowProjectViewModel?> by lazy {
     project.service<GHRepositoryConnectionManager>().connectionState
-      .mapScoped { ctx -> ctx?.let { GHPRToolWindowProjectViewModel(project, this, it) } }
+      .mapScoped { ctx -> ctx?.let { GHPRToolWindowProjectViewModel(project, this, this@GHPRToolWindowViewModel, it) } }
       .stateIn(cs, SharingStarted.Lazily, null)
   }
 

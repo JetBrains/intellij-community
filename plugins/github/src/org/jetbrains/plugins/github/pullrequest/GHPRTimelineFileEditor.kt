@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
-import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import kotlinx.coroutines.CoroutineName
@@ -24,13 +23,13 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.BorderLayout
 import java.awt.LayoutManager
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class GHPRTimelineFileEditor(private val project: Project,
-                                      parentCs: CoroutineScope,
+internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
                                       projectVm: GHPRToolWindowProjectViewModel,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
@@ -74,8 +73,9 @@ internal class GHPRTimelineFileEditor(private val project: Project,
                                 //further updates will be handled by the timeline itself
                                 panel.showTimeline(details)
                                 cancel()
-                              }, { _ ->
-                                //TODO: handle error
+                              }, { error ->
+                                panel.setLayoutAndComponent(SingleComponentCenteringLayout(),
+                                                            GHHtmlErrorPanel.create(GithubBundle.message("cannot.load.details"), error))
                               })
         }
       }
@@ -84,7 +84,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   }
 
   private fun JPanel.showTimeline(details: GHPRDetailsFull) {
-    val timeline = GHPRFileEditorComponentFactory(project, timelineVm, details, cs).create()
+    val timeline = GHPRFileEditorComponentFactory(timelineVm, details, cs).create()
     setLayoutAndComponent(BorderLayout(), timeline)
   }
 

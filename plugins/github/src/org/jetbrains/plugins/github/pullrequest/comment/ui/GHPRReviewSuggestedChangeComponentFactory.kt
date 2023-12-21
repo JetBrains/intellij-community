@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.CommonBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
@@ -41,7 +40,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.*
 
-class GHPRReviewSuggestedChangeComponentFactory(
+internal class GHPRReviewSuggestedChangeComponentFactory(
   private val project: Project,
   private val thread: GHPRReviewThreadModel,
   private val suggestionApplier: GHSuggestedChangeApplier,

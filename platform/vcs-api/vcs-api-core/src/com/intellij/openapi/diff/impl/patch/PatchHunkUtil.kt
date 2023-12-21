@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch
 
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 
@@ -186,6 +187,25 @@ object PatchHunkUtil {
         addLine(line)
       }
     }
+  }
+
+  fun getLinesInRange(hunk: PatchHunk, side: Side, range: LineRange): List<PatchLine> {
+    var lineIdx = hunk.startLineAfter
+    val result = mutableListOf<PatchLine>()
+    for (line in hunk.lines) {
+      val ignoredType = if (side == Side.RIGHT) PatchLine.Type.REMOVE else PatchLine.Type.ADD
+      if (line.type == ignoredType) {
+        continue
+      }
+      if (lineIdx >= range.start) {
+        result.add(line)
+      }
+      lineIdx++
+      if (lineIdx >= range.end) {
+        break
+      }
+    }
+    return result
   }
 }
 
