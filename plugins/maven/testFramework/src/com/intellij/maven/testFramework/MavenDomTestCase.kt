@@ -32,6 +32,7 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -356,13 +357,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun checkHighlighting(f: VirtualFile) {
     withContext(Dispatchers.EDT) {
+      dispatchAllInvocationEventsInIdeEventQueue()
       FileDocumentManager.getInstance().saveAllDocuments()
       doCheckHighlighting(f)
       FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 
-  private suspend fun doCheckHighlighting(f: VirtualFile) {
+  private fun doCheckHighlighting(f: VirtualFile) {
     MavenLog.LOG.warn("checkHighlighting started")
 
     VirtualFileManager.getInstance().syncRefresh()
