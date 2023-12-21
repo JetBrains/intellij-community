@@ -274,7 +274,7 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
               buffer = storage.getByteBuffer(offsetInFile, false);
               offsetInPage = 0;
             }
-            same = offsetInPage < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
+            same = offsetInFile < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
           }
         }
 
