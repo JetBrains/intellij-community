@@ -149,7 +149,7 @@ function addSuggestions(sessionDiv, popup, lookup) {
     if (lookup["selectedPosition"] == i) {
       p.setAttribute("style", "font-weight: bold;")
     }
-    p.innerHTML = suggestions[i].presentationText
+    p.innerHTML = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }
