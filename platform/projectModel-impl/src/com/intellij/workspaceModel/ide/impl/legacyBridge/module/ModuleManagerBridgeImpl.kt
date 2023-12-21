@@ -306,7 +306,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       .toList()
 
     if (unloadedModuleNames.isNotEmpty()) {
-      val moduleNames = if (useNewWorkspaceModelApi()) {
+      val moduleNames = if (useQueryCacheWorkspaceModelApi()) {
         project.workspaceModel.currentSnapshot.cached(moduleNamesQuery).asSequence()
       }
       else {
@@ -464,7 +464,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && moduleNameToUnloadedModuleDescription.isNotEmpty()) {
-        val moduleNames = if (useNewWorkspaceModelApi()) {
+        val moduleNames = if (useQueryCacheWorkspaceModelApi()) {
           event.storageAfter.cached(moduleNamesQuery).toList()
         }
         else {

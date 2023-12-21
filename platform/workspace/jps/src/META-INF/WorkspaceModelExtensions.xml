@@ -21,8 +21,8 @@
                  description="Enables storing of relative paths instead of absolute paths in the workspace model cache"/>
     <registryKey key="ide.workspace.model.load.cache.from.zip" defaultValue="false" restartRequired="true"
                  description="Enables loading shared workspace model cache from ZIP archive"/>
-    <registryKey key="ide.workspace.model.use.new.api" defaultValue="false" restartRequired="true"
-                 description="Enables various functionality in IDE to work via the new API for the workspace model"/>
+    <registryKey key="ide.workspace.model.use.query.cache.api" defaultValue="false" restartRequired="true"
+                 description="Enables various functionality in IDE to work via the query cache API for the workspace model"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

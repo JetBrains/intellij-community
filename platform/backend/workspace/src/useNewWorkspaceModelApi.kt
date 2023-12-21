@@ -3,6 +3,6 @@ package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.util.registry.Registry
 
-public fun useNewWorkspaceModelApi(): Boolean {
-  return Registry.`is`("ide.workspace.model.use.new.api")
+public fun useQueryCacheWorkspaceModelApi(): Boolean {
+  return Registry.`is`("ide.workspace.model.use.query.cache.api")
 }

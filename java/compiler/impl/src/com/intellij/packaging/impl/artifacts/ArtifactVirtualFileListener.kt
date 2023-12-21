@@ -18,7 +18,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
-import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
+import com.intellij.platform.backend.workspace.useQueryCacheWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -48,7 +48,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   }
 
   private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMillis {
-    val artifactEntities = if (useNewWorkspaceModelApi()) {
+    val artifactEntities = if (useQueryCacheWorkspaceModelApi()) {
       val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return@addMeasuredTimeMillis
       val storage = project.workspaceModel.entityStorage.current
       refs.map { it.resolve(storage)!! }
