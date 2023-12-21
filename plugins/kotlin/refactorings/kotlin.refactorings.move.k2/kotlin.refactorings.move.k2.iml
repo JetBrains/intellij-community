@@ -48,6 +48,5 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
-    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>
