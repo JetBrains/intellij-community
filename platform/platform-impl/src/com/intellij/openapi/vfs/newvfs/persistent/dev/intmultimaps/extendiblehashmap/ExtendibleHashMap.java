@@ -845,7 +845,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     @Override
     public String toString() {
       return "HashMapSegmentLayout[segmentNo=" + segmentIndex + ", segmentSize=" + segmentSize + "]" +
-             "[hashSuffix: " + hashSuffix() + ", depth: " + hashSuffixDepth() + "]";
+             "[hashSuffix: " + hashSuffix() + ", depth: " + hashSuffixDepth() + "]" +
+             "{" + aliveEntriesCount() + " alive entries of " + entriesCount() + "}";
     }
 
     public String dump() throws IOException {
@@ -1006,16 +1007,35 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         }
       }
 
+      //MAYBE RC: it could be there are not-so-many alive entries, but a lot of tombstones, and no free slots remain.
+      // This is because in the current design we never clear tombstones: during segment split we copy half of alive
+      // entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones in the old segment.
+      // Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic, and could be
+      // not very effective
+      if (aliveValues(table) == 0) {
+        //If there is 0 alive records => it is OK to clear all the tombstones.
+        // We can't clear all tombstones while there alive entries because such cleaning breaks lookup: we treat
+        // free slots and tombstones differently during the probing -- continue to probe over tombstones, but stop
+        // on free slots. Converting tombstone to free slot could stop probing earlier than it should stop, thus
+        // making some existing entries unreachable.
+        // But if there are no alive entries anymore -- we finally _can_ clear everything without breaking anything!
+
+        //This deals with the issue above -- table being overflowed by tombstones -- but only partially. This branch
+        // fixes correctness (table doesn't fail if there is at least 1 unfilled slot), but doesn't fix performance,
+        // which likely is awful long before we reach this branch due to looooong probing sequences
+        
+        for (int slot = 0; slot < capacity; slot++) {
+          table.updateEntry(slot, NO_VALUE, NO_VALUE);
+        }
+        return put(table, key, value);
+      }
+
+
       //Table must be resized well before such a condition occurs!
       throw new AssertionError(
         "Table is full: all " + capacity + " items were traversed, but no free slot found" +
         "table.aliveEntries: " + table.aliveEntriesCount() + ", table: " + table
       );
-      //MAYBE RC: actually, it could be there are not-so-many alive entries, but a lot of tombstones, and no free
-      // slots remain. This is because in the current design we never clear tombstones: during segment split we copy
-      // half of alive entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones
-      // in the old segment. Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is
-      // stochastic, and could be not very effective
     }
 
     public boolean remove(@NotNull HashTableData table,
