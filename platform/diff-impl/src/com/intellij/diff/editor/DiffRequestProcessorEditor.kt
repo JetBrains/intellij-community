@@ -18,8 +18,7 @@ open class DiffRequestProcessorEditor(
   val processor: DiffRequestProcessor
 ) : DiffEditorBase(file,
                    processor.component,
-                   processor,
-                   processor.context), FileEditorWithTextEditors {
+                   processor), FileEditorWithTextEditors {
 
   init {
     processor.addListener(MyProcessorListener(), this)

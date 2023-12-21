@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.diff.DiffContext
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -16,12 +15,13 @@ import java.awt.event.ContainerEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@Suppress("LeakingThis")
+/**
+ * @see [DiffRequestProcessorEditorCustomizer.Companion.customize]
+ */
 abstract class DiffEditorBase(
   private val file: VirtualFile,
   component: JComponent,
-  private val contentDisposable: CheckedDisposable,
-  protected val context: DiffContext
+  private val contentDisposable: CheckedDisposable
 ) : FileEditorBase() {
   companion object {
     private val LOG = logger<DiffEditorBase>()
@@ -33,8 +33,6 @@ abstract class DiffEditorBase(
     Disposer.register(contentDisposable, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
-
-    DiffRequestProcessorEditorCustomizer.customize(file, this, context)
   }
 
   override fun getComponent(): JComponent = panel

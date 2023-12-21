@@ -36,11 +36,17 @@ internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, Structure
         modelRepository.registerModel(sourceId, combinedDiffModel)
       }
       requireNotNull(combinedDiffModel) { "Combined diff model doesn't registered for $sourceId" }
-      return CombinedDiffEditor(file, project.service<CombinedDiffComponentFactoryProvider>().create(combinedDiffModel))
+      val factory = project.service<CombinedDiffComponentFactoryProvider>().create(combinedDiffModel)
+      val editor = CombinedDiffEditor(file, factory)
+      DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.model.context)
+      return editor
     }
-
-    val processor = (file as DiffVirtualFile).createProcessor(project)
-    return DiffRequestProcessorEditor(file, processor)
+    else {
+      val processor = (file as DiffVirtualFile).createProcessor(project)
+      val editor = DiffRequestProcessorEditor(file, processor)
+      DiffRequestProcessorEditorCustomizer.customize(file, editor, processor.context)
+      return editor
+    }
   }
 
   override fun disposeEditor(editor: FileEditor) {

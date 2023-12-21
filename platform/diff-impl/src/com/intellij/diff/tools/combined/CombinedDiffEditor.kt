@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import javax.swing.JComponent
 
 internal class CombinedDiffEditor(file: CombinedDiffVirtualFile, private val factory: CombinedDiffComponentFactory) :
-  DiffEditorBase(file, factory.getMainComponent(), factory.ourDisposable, factory.model.context), FileEditorWithTextEditors {
+  DiffEditorBase(file, factory.getMainComponent(), factory.ourDisposable), FileEditorWithTextEditors {
 
   override fun dispose() {
     Disposer.dispose(factory.ourDisposable)
@@ -18,6 +18,6 @@ internal class CombinedDiffEditor(file: CombinedDiffVirtualFile, private val fac
   override fun getPreferredFocusedComponent(): JComponent? = factory.getPreferredFocusedComponent()
 
   override fun getEmbeddedEditors(): List<Editor> {
-    return context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.editors.orEmpty()
+    return factory.model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.editors.orEmpty()
   }
 }
