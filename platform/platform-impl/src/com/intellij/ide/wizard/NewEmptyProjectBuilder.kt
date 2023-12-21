@@ -12,8 +12,8 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
-class NewEmptyProjectBuilder : GeneratorNewProjectWizardBuilderAdapter(EmptyNewModuleWizard()) {
-  class EmptyNewModuleWizard : GeneratorNewProjectWizard {
+class NewEmptyProjectBuilder : GeneratorNewProjectWizardBuilderAdapter(EmptyNewProjectWizard()) {
+  class EmptyNewProjectWizard : GeneratorNewProjectWizard {
     override val id: String = Generators.EMPTY_PROJECT
     override val name: String = UIBundle.message("label.project.wizard.empty.project.generator.name")
     override val description: String = UIBundle.message("label.project.wizard.empty.project.generator.description")
