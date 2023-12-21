@@ -21,7 +21,7 @@ import java.io.File
 class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
     fun `test json export with official code style`() = doTestWithJson(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyle")
     fun `test json export with obsolete code style`() = doTestWithJson(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyle")
-    fun `test compare code styles`() = compareCodeStyle { KotlinStyleGuideCodeStyle.apply(it) }
+    fun `test compare code styles`() = compareCodeStyle { KotlinOfficialStyleGuide.apply(it) }
     fun `test compare different import`() = compareCodeStyle {
         it.kotlinCustomSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry("not.my.package.name", true))
         it.kotlinCommonSettings.BRACE_STYLE = 10

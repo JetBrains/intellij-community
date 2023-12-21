@@ -49,8 +49,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
@@ -385,7 +385,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             Assert.assertEquals(
-                KotlinStyleGuideCodeStyle.CODE_STYLE_ID,
+                KotlinOfficialStyleGuide.CODE_STYLE_ID,
                 CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
             )
         }
@@ -3120,7 +3120,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             Assert.assertEquals(
-                KotlinObsoleteCodeStyle.CODE_STYLE_ID,
+                KotlinObsoleteStyleGuide.CODE_STYLE_ID,
                 CodeStyle.getSettings(project).kotlinCodeStyleDefaults()
             )
         }

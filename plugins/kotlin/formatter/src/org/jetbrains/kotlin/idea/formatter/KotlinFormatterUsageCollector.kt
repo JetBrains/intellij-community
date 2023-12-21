@@ -55,11 +55,11 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
 }
 
 private val KOTLIN_OFFICIAL_CODE_STYLE: CodeStyleSettings by lazy {
-    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinStyleGuideCodeStyle::apply)
+    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinOfficialStyleGuide::apply)
 }
 
 private val KOTLIN_OBSOLETE_CODE_STYLE: CodeStyleSettings by lazy {
-    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinObsoleteCodeStyle::apply)
+    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinObsoleteStyleGuide::apply)
 }
 
 private fun codeStylesIsEquals(lhs: CodeStyleSettings, rhs: CodeStyleSettings): Boolean =
@@ -71,13 +71,13 @@ fun getKotlinFormatterKind(project: Project): KotlinFormatterUsageCollector.Kotl
 
     val codeStyleDefaults = currentSettings.kotlinCodeStyleDefaults()
     return when (val supposedCodeStyleDefaults = currentSettings.supposedKotlinCodeStyleDefaults()) {
-        KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> when {
+        KotlinOfficialStyleGuide.CODE_STYLE_ID -> when {
             supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, isProject)
             codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE) -> paired(IDEA_OFFICIAL_KOTLIN, isProject)
             else -> paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
         }
 
-        KotlinObsoleteCodeStyle.CODE_STYLE_ID -> when {
+        KotlinObsoleteStyleGuide.CODE_STYLE_ID -> when {
             supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, isProject)
             codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE) -> paired(IDEA_OBSOLETE_KOTLIN, isProject)
             else -> paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)

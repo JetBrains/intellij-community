@@ -205,5 +205,6 @@
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
+    <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
   </component>
 </module>

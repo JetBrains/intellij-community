@@ -55,7 +55,7 @@ import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
@@ -470,7 +470,7 @@ fun configureCodeStyleAndRun(
 
 fun enableKotlinOfficialCodeStyle(project: Project) {
     val settings = CodeStyleSettingsManager.getInstance(project).createTemporarySettings()
-    KotlinStyleGuideCodeStyle.apply(settings)
+    KotlinOfficialStyleGuide.apply(settings)
     CodeStyle.setTemporarySettings(project, settings)
 }
 

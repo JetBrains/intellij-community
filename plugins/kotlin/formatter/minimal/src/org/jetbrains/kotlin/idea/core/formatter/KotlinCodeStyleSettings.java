@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.formatter;
 
 import com.intellij.configurationStore.Property;
@@ -11,7 +10,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide;
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide;
 import org.jetbrains.kotlin.idea.util.ReflectionUtil;
 
 public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
@@ -117,7 +118,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         if (CODE_STYLE_DEFAULTS != null) {
             KotlinCodeStyleSettings defaultKotlinCodeStyle = (KotlinCodeStyleSettings) parentSettings.clone();
 
-            FormatterUtilKt.applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultKotlinCodeStyle, false);
+            applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultKotlinCodeStyle, false);
 
             parentSettings = defaultKotlinCodeStyle;
         }
@@ -135,7 +136,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         KotlinCodeStyleSettings tempSettings = readExternalToTemp(parentElement);
         String customDefaults = tempSettings.CODE_STYLE_DEFAULTS;
 
-        FormatterUtilKt.applyKotlinCodeStyle(customDefaults, this, true);
+        applyKotlinCodeStyle(customDefaults, this, true);
 
         // Actual read
         super.readExternal(parentElement);
@@ -147,5 +148,24 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         tempSettings.readExternal(parentElement);
 
         return tempSettings;
+    }
+
+    private static void applyKotlinCodeStyle(
+            @Nullable String codeStyleId,
+            @NotNull KotlinCodeStyleSettings codeStyleSettings,
+            Boolean modifyCodeStyle
+    ) {
+        if (codeStyleId != null) {
+            switch (codeStyleId) {
+                case KotlinOfficialStyleGuide.CODE_STYLE_ID: {
+                    KotlinOfficialStyleGuide.applyToKotlinCustomSettings(codeStyleSettings, modifyCodeStyle);
+                    break;
+                }
+                case KotlinObsoleteStyleGuide.CODE_STYLE_ID: {
+                    KotlinObsoleteStyleGuide.applyToKotlinCustomSettings(codeStyleSettings, modifyCodeStyle);
+                    break;
+                }
+            }
+        }
     }
 }

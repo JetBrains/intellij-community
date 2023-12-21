@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -99,7 +100,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         val isNewProject = module.project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
         if (isNewProject) {
             ProjectCodeStyleImporter.apply(module.project, KotlinStyleGuideCodeStyle.INSTANCE)
-            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinStyleGuideCodeStyle.CODE_STYLE_SETTING)
+            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinOfficialStyleGuide.CODE_STYLE_SETTING)
         }
 
         val projectCreationStats = WizardStatsService.ProjectCreationStats("Gradle", this.presentableName, "gradleKotlin")

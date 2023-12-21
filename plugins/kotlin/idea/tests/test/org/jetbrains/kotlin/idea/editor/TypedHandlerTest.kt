@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.editor
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
@@ -1084,6 +1084,6 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private val enableKotlinObsoleteCodeStyle: (CodeStyleSettings) -> Unit = {
-        KotlinObsoleteCodeStyle.apply(it)
+        KotlinObsoleteStyleGuide.apply(it)
     }
 }

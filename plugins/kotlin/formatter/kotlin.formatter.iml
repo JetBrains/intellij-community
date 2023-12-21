@@ -23,6 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" />
+    <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
   </component>
 </module>

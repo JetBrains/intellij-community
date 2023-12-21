@@ -14,6 +14,6 @@ class KotlinCodeStylePropertyAccessor(private val kotlinCodeStyle: KotlinCodeSty
     override fun get(): String? = kotlinCodeStyle.container.kotlinCodeStyleDefaults()
     override fun parseString(string: String): String = string
     override fun valueToString(value: String): String = value
-    override fun getChoices(): List<String> = listOf(KotlinStyleGuideCodeStyle.CODE_STYLE_ID, KotlinObsoleteCodeStyle.CODE_STYLE_ID)
+    override fun getChoices(): List<String> = listOf(KotlinOfficialStyleGuide.CODE_STYLE_ID, KotlinObsoleteStyleGuide.CODE_STYLE_ID)
     override fun getPropertyName(): String = "code_style_defaults"
 }

@@ -105,6 +105,7 @@ object KotlinPluginBuilder {
     "kotlin.run-configurations.junit-fe10",
     "kotlin.run-configurations.testng",
     "kotlin.formatter",
+    "kotlin.formatter.minimal",
     "kotlin.repl",
     "kotlin.git",
     "kotlin.base.injection",

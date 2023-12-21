@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter;
 
@@ -12,8 +12,8 @@ import com.intellij.util.xmlb.XmlSerializer;
 import kotlin.collections.ArraysKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
-import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
 import org.jetbrains.kotlin.idea.util.ReflectionUtil;
 
 import java.lang.reflect.InvocationTargetException;
@@ -50,7 +50,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
         KotlinCommonCodeStyleSettings tempDeserialize = createForTempDeserialize();
         tempDeserialize.readExternal(element);
 
-        FormatterUtilKt.applyKotlinCodeStyle(tempDeserialize.CODE_STYLE_DEFAULTS, this, true);
+        applyKotlinCodeStyle(tempDeserialize.CODE_STYLE_DEFAULTS, this, true);
 
         super.readExternal(element);
     }
@@ -58,7 +58,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     @Override
     public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
         CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
-        FormatterUtilKt.applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
+        applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
 
         writeExternalBase(element, defaultSettings, provider);
     }
@@ -181,4 +181,23 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     private static final String INDENT_OPTIONS_TAG = "indentOptions";
     private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
     //</editor-fold>
+
+    private static void applyKotlinCodeStyle(
+            @Nullable String codeStyleId,
+            @NotNull CommonCodeStyleSettings codeStyleSettings,
+            Boolean modifyCodeStyle
+    ) {
+        if (codeStyleId != null) {
+            switch (codeStyleId) {
+                case KotlinOfficialStyleGuide.CODE_STYLE_ID: {
+                    KotlinOfficialStyleGuide.applyToCommonSettings(codeStyleSettings, modifyCodeStyle);
+                    break;
+                }
+                case  KotlinObsoleteStyleGuide.CODE_STYLE_ID: {
+                    KotlinObsoleteStyleGuide.applyToCommonSettings(codeStyleSettings, modifyCodeStyle);
+                    break;
+                }
+            }
+        }
+    }
 }
