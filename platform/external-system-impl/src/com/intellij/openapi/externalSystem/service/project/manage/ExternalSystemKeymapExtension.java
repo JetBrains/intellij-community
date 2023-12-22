@@ -39,6 +39,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import icons.ExternalSystemIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,15 +238,18 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
   }
 
   static void updateRunConfigurationActions(Project project, ProjectSystemId systemId) {
-    final AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(systemId);
+    ActionManager actionManager = ActionManager.getInstance();
+    List<@NonNls String> registeredActions = actionManager.getActionIdList(getActionPrefix(project, null)).stream()
+      .filter(a -> actionManager.getAction(a) instanceof ExternalSystemRunConfigurationAction)
+      .toList();
+
+    if (registeredActions.isEmpty()) return; // nothing to update
+
+    AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(systemId);
     if (configurationType == null) return;
 
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, null))) {
-      AnAction action = actionManager.getAction(eachAction);
-      if (action instanceof ExternalSystemRunConfigurationAction) {
-        actionManager.unregisterAction(eachAction);
-      }
+    for (String eachAction : registeredActions) {
+      actionManager.unregisterAction(eachAction);
     }
 
     Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
