@@ -20,7 +20,7 @@ object DotnetIconSync {
 
   private class SyncPath(val iconsPath: String, val devPath: String)
 
-  private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
+  private const val RIDER_ICONS_RELATIVE_PATH = "rider/icons"
   private const val RIDER_ICONS_REVISION_FILE = ".icons.last.revision"
 
   private val syncPaths = listOf(
@@ -153,20 +153,9 @@ object DotnetIconSync {
     }
   }
 
-  private fun findProjectHomePath(devRepoDir: Path): String {
-    var currentPath = devRepoDir
-    while (currentPath.parent != null) {
-      if (currentPath.resolve("Frontend").resolve(".idea").exists()) {
-        return currentPath.resolve("Frontend").toAbsolutePath().toString()
-      }
-      currentPath = currentPath.parent
-    }
-    error("can't find project home path for devRepoDir: $devRepoDir")
-  }
-
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconClasses(config = DotnetIconClasses(findProjectHomePath(context.devRepoDir)))
+    generateIconClasses()
   }
 
   private fun stageChanges(): Collection<String> {

@@ -12,6 +12,7 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xml.dom.readXmlAsModel
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconClasses
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -162,8 +163,18 @@ internal open class IconsClassGenerator(private val projectHome: Path,
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
-        return listOf(IconClassInfo(true, packageName, className, outFile, images))
+        val info = IconClassInfo(true, packageName, className, outFile, images)
+        return transformIconClassInfo(info, module, moduleConfig)
       }
+    }
+  }
+
+  private fun transformIconClassInfo(info: IconClassInfo,
+                                     module: JpsModule,
+                                     moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
+    return when (module.name) {
+      "intellij.rider.icons" -> DotnetIconClasses.transformIconClassInfo(info)
+      else -> listOf(info)
     }
   }
 
@@ -414,7 +425,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     }
   }
 
-  protected open fun isInlineClass(name: CharSequence) = false
+  protected open fun isInlineClass(name: CharSequence): Boolean {
+    return DotnetIconClasses.isInlineClass(name)
+  }
 
   private fun appendImage(image: ImageInfo, result: StringBuilder, level: Int, customLoad: Boolean, hasher: IconHasher) {
     val file = image.basicFile ?: return
