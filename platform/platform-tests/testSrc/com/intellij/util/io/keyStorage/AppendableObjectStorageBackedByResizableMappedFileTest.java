@@ -43,7 +43,7 @@ public class AppendableObjectStorageBackedByResizableMappedFileTest extends Appe
     }
     catch (IllegalStateException e) {
       assertTrue(
-        "Error message must be something ~ 'readLock must NOT be held', but [" + e.getMessage()+"]",
+        "Error message must be something ~ 'readLock must NOT be held', but [" + e.getMessage() + "]",
         e.getMessage().contains("readLock must NOT")
       );
     }
@@ -56,5 +56,16 @@ public class AppendableObjectStorageBackedByResizableMappedFileTest extends Appe
   protected @NotNull String generateValue() {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return BlobStorageTestBase.randomString(rnd, rnd.nextInt(128));
+  }
+
+  @Override
+  protected String mutateValue(@NotNull String value) {
+    char[] chars = value.toCharArray();
+    if(chars.length == 0){
+      return "abc";//guaranteed to not equal "" :)
+    }
+    int rndIndex = ThreadLocalRandom.current().nextInt(chars.length);
+    chars[rndIndex]++;
+    return new String(chars);
   }
 }

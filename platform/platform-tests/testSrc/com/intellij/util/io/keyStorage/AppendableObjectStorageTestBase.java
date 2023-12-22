@@ -66,6 +66,23 @@ public abstract class AppendableObjectStorageTestBase<V> {
   }
 
   @Test
+  public void valueAppendedToStorage_MustNotBeEqualToMutatedVersionOfItself() throws Exception {
+    final V valueWritten = generateValue();
+    appendableStorage.lockWrite();
+    try {
+      final int valueId = appendableStorage.append(valueWritten);
+      assertThat(
+        "Value just appended must NOT have same bytes as mutated version",
+        appendableStorage.checkBytesAreTheSame(valueId, mutateValue(valueWritten)),
+        is(false)
+      );
+    }
+    finally {
+      appendableStorage.unlockWrite();
+    }
+  }
+
+  @Test
   public void valueAppendedToStorage_ReadBackAsIs_WithProcessAll() throws Exception {
     V valueAppended = generateValue();
 
@@ -131,13 +148,39 @@ public abstract class AppendableObjectStorageTestBase<V> {
         int valueId = appendableStorage.append(valueToAppend);
         valuesAndValueIds.add(Pair.pair(valueId, valueToAppend));
       }
-      for (Pair<Integer, V> valuesAndvalueId : valuesAndValueIds) {
-        final V valueAppended = valuesAndvalueId.second;
-        final int valueId = valuesAndvalueId.first;
+      for (Pair<Integer, V> valuesAndValueId : valuesAndValueIds) {
+        final int valueId = valuesAndValueId.first;
+        final V valueAppended = valuesAndValueId.second;
         assertThat(
-          "Value appended ([" + valueAppended + "] at valueId " + appendableStorage + ") must have same bytes",
+          "Value appended [" + valueAppended + "] at [valueId: " + valueId + "] must have same bytes",
           appendableStorage.checkBytesAreTheSame(valueId, valueAppended),
           is(true)
+        );
+      }
+    }
+    finally {
+      appendableStorage.unlockWrite();
+    }
+  }
+
+  @Test
+  public void manyValuesAppendedToStorage_AreNotEqualToMutatedVersionsOfThemself() throws Exception {
+    List<V> valuesAppended = generateValues(ENOUGH_VALUES);
+
+    List<Pair<Integer, V>> valuesAndValueIds = new ArrayList<>();
+    appendableStorage.lockWrite();
+    try {
+      for (V valueToAppend : valuesAppended) {
+        int valueId = appendableStorage.append(valueToAppend);
+        valuesAndValueIds.add(Pair.pair(valueId, valueToAppend));
+      }
+      for (Pair<Integer, V> valuesAndValueId : valuesAndValueIds) {
+        final int valueId = valuesAndValueId.first;
+        final V valueAppended = mutateValue(valuesAndValueId.second);
+        assertThat(
+          "Value appended [" + valueAppended + "] at [valueId: " + valueId + "] must NOT have same bytes",
+          appendableStorage.checkBytesAreTheSame(valueId, valueAppended),
+          is(false)
         );
       }
     }
@@ -211,6 +254,9 @@ public abstract class AppendableObjectStorageTestBase<V> {
   protected abstract @NotNull AppendableObjectStorage<V> createStorage(Path path) throws IOException;
 
   protected abstract @NotNull V generateValue();
+
+  /** introduce some (random?) modification so returned value !equals value passed in */
+  protected abstract V mutateValue(@NotNull V value);
 
   @Before
   public void setUp() throws Exception {

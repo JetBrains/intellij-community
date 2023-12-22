@@ -268,13 +268,20 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
         @Override
         public void write(int b) throws IOException {
           if (same) {
-            if (pageSize == offsetInPage && offsetInFile < fileLength) {    // reached end of current byte buffer
-              offsetInFile += offsetInPage;
+            if (offsetInPage == pageSize) {    // reached end of current page
+              offsetInFile = ((offsetInFile / pageSize) + 1) * pageSize;
+              if (offsetInFile >= fileLength) {
+                same = false;
+                return;
+              }
+
               buffer.unlock();
               buffer = storage.getByteBuffer(offsetInFile, false);
               offsetInPage = 0;
             }
-            same = offsetInFile < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
+
+            same = buffer.get(offsetInPage, true) == (byte)b;
+            offsetInPage++;
           }
         }
 
