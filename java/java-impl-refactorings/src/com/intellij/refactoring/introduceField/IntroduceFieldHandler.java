@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +18,7 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurrences.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +40,24 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   @Override
   protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
     if (parentClass.isInterface()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.interface"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
+      String message = JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
+      showErrorMessage(parentClass.getProject(), editor, message);
+      return false;
+    }
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(selectedExpr.getType());
+    if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
+      String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
+                                                     RefactoringUIUtil.getDescription(aClass, false),
+                                                     RefactoringUIUtil.getDescription(parentClass, false));
+      showErrorMessage(aClass.getProject(), editor, StringUtil.capitalize(message));
       return false;
     }
     return true;
+  }
+
+  private void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+    message = RefactoringBundle.getCannotRefactorMessage(message);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
   }
 
   @Override
@@ -177,18 +192,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
+      showErrorMessage(project, editor, JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
       return false;
     }
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,
                                                PsiLocalVariable local,
-                                               PsiExpression[] occurences,
+                                               PsiExpression[] occurrences,
                                                boolean isStatic) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, local, statement);
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurrences, local, statement);
       }
 
       @Override
