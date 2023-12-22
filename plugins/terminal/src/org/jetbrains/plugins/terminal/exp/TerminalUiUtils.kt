@@ -61,6 +61,7 @@ object TerminalUiUtils {
       additionalColumnsCount = 0
       isAdditionalPageAtBottom = false
       isBlockCursor = true
+      isWhitespacesShown = false
     }
 
     editor.contextMenuGroupId = "Terminal.OutputContextMenu"
