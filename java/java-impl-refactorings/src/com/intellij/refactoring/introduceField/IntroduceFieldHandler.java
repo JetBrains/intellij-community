@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -17,12 +18,12 @@ import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurrences.*;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implements JavaIntroduceFieldHandlerBase {
-  private static final MyOccurrenceFilter MY_OCCURRENCE_FILTER = new MyOccurrenceFilter();
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
@@ -96,10 +97,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     boolean isInSuperOrThis = false;
     if (!declareStatic) {
       for (int i = 0; !declareStatic && i < occurrences.length; i++) {
-        PsiExpression occurrence = occurrences[i];
-        isInSuperOrThis = isInSuperOrThis(occurrence);
-        declareStatic = isInSuperOrThis;
+        declareStatic = isInSuperOrThis = isInSuperOrThis(occurrences[i]);
       }
+    }
+    if (isInSuperOrThis && HighlightingFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
+      isInSuperOrThis = false;
     }
     int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
@@ -167,12 +169,15 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   static boolean isInSuperOrThis(PsiExpression occurrence) {
-    return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
+    PsiMethod method = PsiTreeUtil.getParentOfType(occurrence, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
+    if (method == null || !method.isConstructor()) return false;
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+    return constructorCall != null && occurrence.getTextOffset() < constructorCall.getTextOffset() + constructorCall.getTextLength();
   }
 
   @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURRENCE_FILTER;
+    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : occurrence -> !isInSuperOrThis(occurrence);
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 
@@ -204,13 +209,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   protected int getChosenClassIndex(List<PsiClass> classes) {
     return classes.size() - 1;
-  }
-
-  private static class MyOccurrenceFilter implements OccurrenceFilter {
-    @Override
-    public boolean isOK(@NotNull PsiExpression occurrence) {
-      return !isInSuperOrThis(occurrence);
-    }
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringNameText() {
