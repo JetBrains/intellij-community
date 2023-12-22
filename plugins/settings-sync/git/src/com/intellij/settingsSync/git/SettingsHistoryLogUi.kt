@@ -12,7 +12,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import javax.swing.JComponent
 
 class SettingsHistoryLogUi(logId: String, logData: VcsLogData, refresher: VisiblePackRefresher) : VcsLogUiBase(logId, logData, refresher) {
-  private val uiProperties = SettingsHistoryUiProperties<VcsLogUiPropertiesImpl.State>()
+  private val uiProperties = SettingsHistoryUiProperties()
   private val settingsHistoryPanel = SettingsHistoryPanel(logData, refresher)
   private val filterUi = VcsLogFilterUi { VcsLogFilterObject.EMPTY_COLLECTION }
 
