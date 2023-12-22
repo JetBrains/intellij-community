@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -931,7 +932,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public static @DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, PsiElement element) {
-    if (checkUnableToInsertCodeBlock(methodBody, element,
+    if (!HighlightingFeature.STATEMENTS_BEFORE_SUPER.isAvailable(element) &&
+        checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");
     }
