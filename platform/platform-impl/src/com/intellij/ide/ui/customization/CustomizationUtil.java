@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -454,7 +453,7 @@ public final class CustomizationUtil {
     return objects.stream().map(o -> new ActionUrl(groupPath, o, 0, -1)).toArray(ActionUrl[]::new);
   }
 
-  public static @Nullable PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
+  public static @Nullable PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbar toolbar) {
     ActionGroup actionGroup = toolbar.getActionGroup();
     String groupID = getGroupID(actionGroup);
     if (groupID == null) {
@@ -464,13 +463,18 @@ public final class CustomizationUtil {
   }
 
   public static @Nullable PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
-                                                                          String groupID, JComponent component, String place) {
+                                                                          @Nullable String groupID,
+                                                                          @NotNull JComponent component,
+                                                                          @NotNull String place) {
     PopupHandler popupHandler = createToolbarCustomizationHandler(actionGroup, groupID, component, place);
     if (popupHandler != null) component.addMouseListener(popupHandler);
     return popupHandler;
   }
 
-  public static @Nullable PopupHandler createToolbarCustomizationHandler(@NotNull ActionGroup actionGroup, String groupID, JComponent component, String place) {
+  public static @Nullable PopupHandler createToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
+                                                                         @Nullable String groupID,
+                                                                         @NotNull JComponent component,
+                                                                         @NotNull String place) {
     if (groupID == null) {
       return null;
     }
@@ -488,7 +492,8 @@ public final class CustomizationUtil {
           return;
         }
 
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, customizationGroup);
+        String popupPlace = ActionPlaces.getPopupPlace(place);
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(popupPlace, customizationGroup);
         popupMenu.setTargetComponent(component);
         JPopupMenu menu = popupMenu.getComponent();
         menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
