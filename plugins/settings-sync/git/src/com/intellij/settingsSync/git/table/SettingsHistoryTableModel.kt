@@ -27,8 +27,6 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
 
   private val recordService = RecordService()
 
-  lateinit var table: SettingsHistoryTable
-
   @Volatile
   internal var visiblePack: VisiblePack = VisiblePack.EMPTY
     private set
@@ -54,7 +52,6 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
   }
 
   fun bindTable(table: SettingsHistoryTable) {
-    this.table = table
     table.rowSorter = sorter
   }
 
