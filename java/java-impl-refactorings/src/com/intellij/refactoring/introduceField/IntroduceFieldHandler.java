@@ -42,14 +42,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
-    else if (parentClass.isRecord()) {
-      final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(selectedExpr, parentClass);
-      boolean declareStatic = staticParentElement != null;
-      if (declareStatic) return true;
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.record"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
-      return false;
-    }
     return true;
   }
 
@@ -92,7 +84,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
     final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(getElement(expr, anchorElement), parentClass);
-    boolean declareStatic = staticParentElement != null;
+    boolean declareStatic = staticParentElement != null || parentClass != null && parentClass.isRecord();
 
     boolean isInSuperOrThis = false;
     if (!declareStatic) {

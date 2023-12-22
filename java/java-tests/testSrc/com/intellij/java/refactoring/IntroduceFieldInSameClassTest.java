@@ -116,17 +116,6 @@ public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase 
     }
   }
 
-  public void testDisallowFieldInRecord() {
-    configureByFile("beforeDisallowFieldInRecord.java");
-    try {
-      performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
-      fail("Should not proceed");
-    }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\nInstance fields are not allowed in a record.", e.getMessage());
-    }
-  }
-
   public void testStaticFieldInRecord() {
     doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, true);
   }
