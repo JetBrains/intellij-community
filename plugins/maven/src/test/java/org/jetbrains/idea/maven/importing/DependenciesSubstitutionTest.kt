@@ -7,7 +7,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
-  
   @Test
   fun `simple library substitution`() = runBlocking {
     val value = Registry.get("external.system.substitute.library.dependencies")

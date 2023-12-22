@@ -10,7 +10,6 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.junit.Test
 
 class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
-  
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)

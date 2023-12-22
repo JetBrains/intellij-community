@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
+
   @Test
   fun testFilesSavedOnAction() = runBlocking {
     val projectPom = createProjectPom("<groupId>test</groupId>" +

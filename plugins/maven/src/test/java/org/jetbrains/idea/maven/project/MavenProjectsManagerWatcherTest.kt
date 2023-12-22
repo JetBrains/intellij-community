@@ -17,6 +17,7 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
+
   private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
   override fun setUp() = runBlocking {

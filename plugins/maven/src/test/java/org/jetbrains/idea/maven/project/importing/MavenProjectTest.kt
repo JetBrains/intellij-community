@@ -18,7 +18,8 @@ import java.io.File
 import java.util.*
 
 class MavenProjectTest : MavenMultiVersionImportingTestCase() {
-  
+
+
   @Test
   fun testCollectingPlugins() = runBlocking {
     importProjectAsync("""

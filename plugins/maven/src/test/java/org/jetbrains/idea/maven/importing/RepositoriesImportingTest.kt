@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
+
   @Test
   fun testMirrorCentralImport() = runBlocking {
     val oldSettingsFile = mavenGeneralSettings.userSettingsFile
@@ -21,7 +22,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
               <name>mirror</name>
               <url>https://example.com/maven2</url>
               <mirrorOf>central</mirrorOf>
-            </mirror>
+            </mirror> 
           </mirrors>
         </settings>
         """.trimIndent())

@@ -53,6 +53,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                      <version>1</version>
                      """
 
+
   override fun setUp() {
     super.setUp()
     ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl

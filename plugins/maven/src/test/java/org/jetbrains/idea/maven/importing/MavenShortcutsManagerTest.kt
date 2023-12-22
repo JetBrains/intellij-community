@@ -18,6 +18,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   
   private var myShortcutsManager: MavenShortcutsManager? = null
 
+
   override fun setUp() {
     super.setUp()
     myShortcutsManager = MavenShortcutsManager.getInstance(project)

@@ -36,6 +36,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
 
   MavenIndicesTestFixture myIndicesFixture;
 
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

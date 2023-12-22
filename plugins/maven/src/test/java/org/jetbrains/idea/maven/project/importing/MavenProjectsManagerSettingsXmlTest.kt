@@ -10,7 +10,6 @@ import org.junit.Test
 import java.io.File
 
 class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase() {
-  
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenMultiVersionImportingTestCase {
+
   protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
 
   protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {

@@ -22,6 +22,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
+
   protected lateinit var myAnotherProjectRoot: VirtualFile
 
   override fun setUpInWriteAction() {

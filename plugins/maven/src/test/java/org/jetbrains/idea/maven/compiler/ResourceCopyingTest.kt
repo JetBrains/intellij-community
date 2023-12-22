@@ -32,6 +32,7 @@ import java.io.File
 import java.io.IOException
 
 class ResourceCopyingTest : MavenCompilingTestCase() {
+
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
 
