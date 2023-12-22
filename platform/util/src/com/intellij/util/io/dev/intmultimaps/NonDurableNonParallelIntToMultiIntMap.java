@@ -98,6 +98,18 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean forEach(@NotNull KeyValueProcessor processor) {
+    return multimap.forEach((key, value) -> {
+      try {
+        return processor.process(key, value);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
+
+  @Override
   public synchronized void flush() throws IOException {
     //nothing
   }

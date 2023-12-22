@@ -266,6 +266,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   /** @return false if iteration was cancelled early, by processor returning false, true if all items were processed */
+  @Override
   public synchronized boolean forEach(@NotNull KeyValueProcessor processor) throws IOException {
     checkNotClosed();
     int segmentSize = header.segmentSize();
@@ -1118,7 +1119,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
 
     public boolean forEach(@NotNull HashTableData table,
-                           @NotNull KeyValueProcessor processor) {
+                           @NotNull KeyValueProcessor processor) throws IOException {
       int capacity = capacity(table);
       for (int index = 0; index < capacity; index++) {
         int key = table.entryKey(index);
@@ -1176,10 +1177,5 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
     }
-  }
-
-  @FunctionalInterface
-  public interface KeyValueProcessor {
-    boolean process(int key, int value);
   }
 }

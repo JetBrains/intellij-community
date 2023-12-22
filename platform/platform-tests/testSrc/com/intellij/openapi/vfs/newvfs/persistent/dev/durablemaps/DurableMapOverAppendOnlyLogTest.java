@@ -1,17 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.KeyValueStoreTestBase;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.enumerator.StringAsUTF8;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,6 +37,8 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
       );
   }
 
+  //TODO RC: most of the tests are actual for PersistentMap also! So better extract them into
+  //         the superclass, if DurableMap/PersistentMap ifaces merge.
   @Test
   public void mapIsInitiallyEmpty() throws IOException {
     assertTrue(storage.isEmpty());
@@ -66,6 +72,20 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
       assertTrue(storage.containsMapping(key),
                  "store[" + key + "] must contain mapping");
     }
+  }
+
+  @Test
+  public void forEach_ListsSingleMappingPut() throws IOException {
+    String key = "testKey";
+    String value = "testValue";
+
+    storage.put(key, value);
+    List<Map.Entry<String, String>> entries = listAllEntries(storage);
+    assertEquals(
+      List.of(Map.entry(key, value)),
+      entries,
+      "forEach() must list the single entry that was put"
+    );
   }
 
 
@@ -132,6 +152,33 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
 
 
   @Test
+  public void forEach_ListsAllEntriesThatWerePutBefore() throws IOException {
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+    }
+
+    List<Map.Entry<String, String>> entries = listAllEntries(storage);
+    Set<Map.Entry<String, String>> entiresSet = new ObjectOpenHashSet<>(entries);
+    assertEquals(
+      entries.size(),
+      entiresSet.size(),
+      ".forEachEntry() must list entries without duplicates"
+    );
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      assertTrue(
+        entiresSet.contains(entry),
+        () -> "forEach() must list the " + entry + " that was put"
+      );
+    }
+  }
+
+
+  @Test
   public void forEachOfManyMappings_AfterPutAndRemove_containsMappingReturnsFalse() throws IOException {
     for (int substrate : keyValuesSubstrate) {
       Map.Entry<String, String> entry = keyValue(substrate);
@@ -186,8 +233,23 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
 
     assertEquals(0,
                  storage.size(),
-                 "Storage must be empty after removing all the keys");
+                 "Storage must be empty after removing all the entries");
     assertTrue(storage.isEmpty(),
-               "Storage must be empty after removing all the keys");
+               "Storage must be empty after removing all the entries");
+    List<Map.Entry<String, String>> entries = listAllEntries(storage);
+    assertTrue(entries.isEmpty(),
+               ".forEachEntry() must list nothing after removing all the entries");
+  }
+
+  ///////
+
+  private static @NotNull List<Map.Entry<String, String>> listAllEntries(@NotNull DurableMapOverAppendOnlyLog<String, String> storage1)
+    throws IOException {
+    List<Map.Entry<String, String>> entries = new ArrayList<>();
+    storage1.forEachEntry((k, v) -> {
+      entries.add(Map.entry(k, v));
+      return true;
+    });
+    return entries;
   }
 }

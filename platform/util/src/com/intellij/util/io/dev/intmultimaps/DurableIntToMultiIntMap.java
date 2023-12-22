@@ -85,6 +85,14 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
 
   boolean isEmpty() throws IOException;
 
+  /**
+   * Scans through all the records, and supply (key,value) pairs to processor. Stops iteration if
+   * processor returns false.
+   * @return true if scanned through all the records, false if iteration terminates
+   * prematurely because processor returns false
+   */
+  boolean forEach(@NotNull KeyValueProcessor processor) throws IOException;
+
 
   @FunctionalInterface
   interface ValueAcceptor {
@@ -96,5 +104,11 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
   interface ValueCreator {
     /** Method should never return {@link #NO_VALUE} */
     int newValueForKey(int key) throws IOException;
+  }
+
+  @FunctionalInterface
+  interface KeyValueProcessor {
+    boolean process(int key,
+                    int value) throws IOException;
   }
 }

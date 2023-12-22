@@ -164,17 +164,22 @@ public final class Int2IntMultimap {
     return false;
   }
 
-  public void forEach(@NotNull KeyValueProcessor processor) {
+  /**
+   * @return true if iteration scanned all the records, false if
+   * iteration was stopped prematurely because processor returns false
+   */
+  public boolean forEach(@NotNull KeyValueProcessor processor) {
     for (int i = 0; i < table.length; i += 2) {
       int key = table[i];
       int value = table[i + 1];
       if (key != NO_VALUE) {
         assert value != NO_VALUE : "value(table[" + (i + 1) + "]) = " + NO_VALUE + ", while key(table[" + i + "]) = " + key;
         if (!processor.process(key, value)) {
-          return;
+          return false;
         }
       }
     }
+    return true;
   }
 
   public int sizeInBytes() {

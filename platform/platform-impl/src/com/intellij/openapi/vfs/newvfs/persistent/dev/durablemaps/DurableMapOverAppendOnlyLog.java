@@ -3,8 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.durablemaps.DurableMap;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
@@ -16,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * Simplest implementation: (key, value) pairs stored in append-only log, {@link DurableIntToMultiIntMap} is used to keep
@@ -177,9 +183,32 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    //TODO currently no keyHashToIdMap.forEach() method
-    throw new UnsupportedOperationException("Method is not implemented yet");
+    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
+    //Keys listed via .forEach() are non-unique -- having 2 entries (key, value1), (key, value2) same key be listed twice.
+    //MAYBE RC: Having alreadyProcessed set is expensive for large maps, better have .forEachKey() method
+    //          in DurableIntToMultiIntMap
+    //TODO RC: forEachEntry() reads & deserializes both key and value -- but we don't need values here, only keys are needed.
+    //         Specialize method so it reads only keys?
+    return forEachEntry( (key, value) -> {
+      if (alreadyProcessed.add(key)) {
+        return processor.process(key);
+      }
+      return true;
+    });
   }
+
+  public boolean forEachEntry(@NotNull BiPredicate<? super K, ? super V> processor) throws IOException {
+    return keyHashToIdMap.forEach((keyHash, recordId) -> {
+      Pair<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
+      K key = entry.first;
+      V value = entry.second;
+      if (value != null) {
+        return processor.test(key, value);
+      }
+      return true;
+    });
+  }
+
 
   public boolean isEmpty() throws IOException {
     return keyHashToIdMap.isEmpty();
@@ -302,6 +331,26 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       ByteBuffer valueRecordSlice = recordBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
       V candidateValue = valueDescriptor.read(valueRecordSlice);
       return Pair.pair(expectedKey, candidateValue);
+    });
+  }
+
+  private Pair<K, V> readEntry(long logRecordId) throws IOException {
+    return keyValuesLog.read(logRecordId, recordBuffer -> {
+      int header = readHeader(recordBuffer);
+      int keyRecordSize = keySize(header);
+      boolean valueIsNull = isValueVoid(header);
+
+      ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
+      K key = keyDescriptor.read(keyRecordSlice);
+
+      if (valueIsNull) {
+        return Pair.pair(key, null);
+      }
+
+      int valueLength = recordBuffer.remaining() - keyRecordSize - Integer.BYTES;
+      ByteBuffer valueRecordSlice = recordBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
+      V candidateValue = valueDescriptor.read(valueRecordSlice);
+      return Pair.pair(key, candidateValue);
     });
   }
 
