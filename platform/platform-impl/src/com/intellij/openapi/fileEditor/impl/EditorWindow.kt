@@ -48,9 +48,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import java.time.Instant
@@ -690,6 +688,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       IdeGlassPaneUtil.find(component).addPainter(component, painter, disposable)
     }
 
+    // editor size can change when we increase tool window size using mouse or due to some other reasons
+    // we need to adapt the painter size accordingly
+    val updatePainterSizeOnTabbedPaneResizeListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        painter.updateRectangleAndRepaint()
+      }
+    }
+    component.addComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
     //Reminder about UI components hierarchy:
     //    EditorsSplitters
     //    |-- EditorTabs                    // `tabbedPane.component` OR `component`
@@ -706,8 +713,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     componentToFocus.isFocusable = true
     componentToFocus.grabFocus()
     componentToFocus.focusTraversalKeysEnabled = false
+
     val focusAdapter = object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
+        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
         componentToFocus.removeFocusListener(this)
         val splitterService = SplitterService.getInstance(project)
         if (splitterService.activeWindow == this@EditorWindow) {
@@ -716,6 +726,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
     }
     componentToFocus.addFocusListener(focusAdapter)
+
     return object : SplitChooser {
       override val position: RelativePosition
         get() = painter.position
@@ -725,6 +736,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
 
       override fun dispose() {
+        component.removeComponentListener(updatePainterSizeOnTabbedPaneResizeListener)
+
         painter.rectangle = null
         componentToFocus.removeFocusListener(focusAdapter)
         componentToFocus.isFocusable = false
@@ -1212,6 +1225,11 @@ private class MySplitPainter(
 
     showInfoPanel = false
     this.position = position
+
+    updateRectangleAndRepaint()
+  }
+
+  internal fun updateRectangleAndRepaint() {
     rectangle = null
     setNeedsRepaint(true)
     val r = tabbedPane.tabs.dropArea
