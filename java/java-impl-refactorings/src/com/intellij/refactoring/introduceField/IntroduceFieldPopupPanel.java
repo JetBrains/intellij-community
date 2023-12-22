@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
-  private @Nullable JComboBox myInitializerCombo;
+  private @Nullable JComboBox<BaseExpressionToFieldHandler.InitializationPlace> myInitializerCombo;
   private DefaultComboBoxModel<BaseExpressionToFieldHandler.InitializationPlace> myInitialisersPlaceModel;
 
   public IntroduceFieldPopupPanel(PsiClass parentClass,
@@ -49,6 +49,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       setEnabledInitializationPlaces(initializerExpression);
       if (!myAllowInitInMethod) {
         myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+      }
+      boolean inOnlyConstructor = myIsCurrentMethodConstructor && myParentClass.getConstructors().length == 1;
+      if (myWillBeDeclaredStatic || inOnlyConstructor) {
+        myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
       }
     } else {
       myInitialisersPlaceModel.removeAllElements();
