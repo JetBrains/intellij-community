@@ -12,15 +12,17 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.occurrences.*;
-import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -176,15 +178,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   static boolean isInSuperOrThis(PsiExpression occurrence) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(occurrence, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
-    if (method == null || !method.isConstructor()) return false;
-    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-    return constructorCall != null && occurrence.getTextOffset() < constructorCall.getTextOffset() + constructorCall.getTextLength();
+    return !NotInConstructorCallFilter.INSTANCE.isOK(occurrence);
   }
 
   @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : occurrence -> !isInSuperOrThis(occurrence);
+    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : NotInConstructorCallFilter.INSTANCE;
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 

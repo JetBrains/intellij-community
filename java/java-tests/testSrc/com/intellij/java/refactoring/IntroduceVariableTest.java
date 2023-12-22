@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -425,6 +425,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
+  public void testStatementsBeforeSuper() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest("c", false, false, false, "int"));
+  }
 
   public void testPutInLambdaBody() {
     UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("J: (Object a) -> {...}")));
