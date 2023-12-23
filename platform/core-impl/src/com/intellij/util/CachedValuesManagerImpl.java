@@ -45,9 +45,23 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   }
 
   @Override
+  public @NotNull <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                       @NotNull CachedValueProvider<T> provider,
+                                                       boolean trackValue) {
+    return myFactory.createCachedValue(userDataHolder, provider, trackValue);
+  }
+
+  @Override
   public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                                        boolean trackValue) {
     return myFactory.createParameterizedCachedValue(provider, trackValue);
+  }
+
+  @Override
+  protected @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                                                          @NotNull ParameterizedCachedValueProvider<T, P> provider,
+                                                                                          boolean trackValue) {
+    return myFactory.createParameterizedCachedValue(userDataHolder, provider, trackValue);
   }
 
   @Override
@@ -101,7 +115,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
     CachedValueLeakChecker.checkProviderDoesNotLeakPSI(provider, key, dh);
-    CachedValue<T> value = createCachedValue(provider, trackValue);
+    CachedValue<T> value = myFactory.createCachedValue(dh, provider, trackValue);
     assert ((CachedValueBase<?>)value).isFromMyProject(myProject);
     return value;
   }

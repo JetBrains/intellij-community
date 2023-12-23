@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -29,6 +30,13 @@ public interface CachedValuesFactory {
   <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue);
 
   @NotNull
+  <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder, @NotNull CachedValueProvider<T> provider, boolean trackValue);
+
+  @NotNull
   <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
 
+  @NotNull
+  <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                                     @NotNull ParameterizedCachedValueProvider<T,P> provider,
+                                                                     boolean trackValue);
 }

@@ -7,10 +7,16 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> implements ParameterizedCachedValue<T,P> {
   private final @NotNull Project myProject;
   private final ParameterizedCachedValueProvider<T,P> myProvider;
+  private volatile SoftReference<Data<T>> myData;
 
   ParameterizedCachedValueImpl(@NotNull Project project,
                                @NotNull ParameterizedCachedValueProvider<T, P> provider,
@@ -18,6 +24,16 @@ public final class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> 
     super(trackValue);
     myProject = project;
     myProvider = provider;
+  }
+
+  @Override
+  protected @Nullable Data<T> getRawData() {
+    return dereference(myData);
+  }
+
+  @Override
+  protected void setData(@Nullable Data<T> data) {
+    myData = data == null ? null : new SoftReference<>(data);
   }
 
   @Override
