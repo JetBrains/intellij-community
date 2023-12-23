@@ -49,7 +49,7 @@ sealed class K2MoveModel {
         fun KtFile.isTargetFile(): Boolean {
             return (target as? K2MoveTargetModel.File)?.let { fileTarget ->
                 containingDirectory == fileTarget.directory && name == fileTarget.fileName
-            } ?: true
+            } ?: false
         }
         if (source.elements.isEmpty()) return false
         val files = source.elements.map { it.containingKtFile }.toSet()
