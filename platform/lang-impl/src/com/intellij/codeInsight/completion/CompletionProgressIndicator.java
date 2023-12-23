@@ -978,15 +978,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myQueue.queue(myUpdate);
   }
 
-  @SuppressWarnings("unused") // for Rider
   @TestOnly
   public static void setGroupingTimeSpan(int timeSpan) {
     ourInsertSingleItemTimeSpan = timeSpan;
   }
 
-  /**
-   * @deprecated intended for Rider
-   */
   @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;

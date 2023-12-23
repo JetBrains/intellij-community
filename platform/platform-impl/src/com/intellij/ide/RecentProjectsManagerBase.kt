@@ -268,7 +268,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(projectStoreBaseDir: Path): String? {
@@ -285,7 +284,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return runBlocking { openProject(projectFile, openProjectOptions) }
   }
 
-  // open for Rider
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
     var effectiveOptions = options
     if (options.implOptions == null) {
@@ -488,7 +486,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  // open for Rider
   protected open fun isOpenProjectsOneByOneRequired(): Boolean {
     return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }

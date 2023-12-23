@@ -42,7 +42,6 @@ import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
-// for Rider purpose
 open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   protected open fun getExportableComponents(): Map<FileSpec, List<ExportableItem>> = filterExisting(getExportableComponentsMap(true))
 

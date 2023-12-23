@@ -840,7 +840,6 @@ public class CodeCompletionHandlerBase {
     return (int)Math.max(300, ourAutoInsertItemTimeout - (System.currentTimeMillis() - startTime));
   }
 
-  @SuppressWarnings("unused") // for Rider
   @TestOnly
   public static void setAutoInsertTimeout(int timeout) {
     ourAutoInsertItemTimeout = timeout;

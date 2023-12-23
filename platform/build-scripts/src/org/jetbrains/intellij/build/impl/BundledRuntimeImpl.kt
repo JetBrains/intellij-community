@@ -28,7 +28,6 @@ class BundledRuntimeImpl : BundledRuntime {
   private val error: (String) -> Unit
   private val info: (String) -> Unit
 
-  // Used in Rider codebase
   constructor(
     options: BuildOptions,
     paths: BuildPaths,

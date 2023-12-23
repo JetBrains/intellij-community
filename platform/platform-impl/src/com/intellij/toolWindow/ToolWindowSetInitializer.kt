@@ -42,7 +42,6 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
-// open for rider
 class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
