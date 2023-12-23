@@ -23,7 +23,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
@@ -111,8 +110,7 @@ public abstract class LocalToFieldHandler {
   }
 
   private boolean convertLocalToField(PsiLocalVariable local, PsiClass aClass, Editor editor, boolean isStatic) {
-    if (aClass.isInterface()) {
-      showErrorMessage(local.getProject(), editor, JavaRefactoringBundle.message("cannot.introduce.field.in.interface"));
+    if (!IntroduceFieldHandler.canIntroduceField(aClass, local.getType(), editor)) {
       return false;
     }
     final PsiExpression[] occurrences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
@@ -136,11 +134,6 @@ public abstract class LocalToFieldHandler {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable),
                                                   getRefactoringName(), null);
     return true;
-  }
-
-  private static void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
-    message = RefactoringBundle.getCannotRefactorMessage(message);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFieldHandler.getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
   }
 
   private static PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {

@@ -24,6 +24,7 @@ import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -41,12 +42,24 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   @Override
   protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
+    return canIntroduceField(parentClass, selectedExpr.getType(), editor);
+  }
+
+  /**
+   * Checks if a field of the specified type can be created in the specified class.
+   *
+   * @param parentClass  the class to create a field in
+   * @param type  the type of the field that should be created
+   * @param editor  to show error message for, if a problem is found
+   * @return true, if a field can be introduced. false, if there is a problem.
+   */
+  static boolean canIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type, Editor editor) {
     if (parentClass.isInterface()) {
       String message = JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
       showErrorMessage(parentClass.getProject(), editor, message);
       return false;
     }
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(selectedExpr.getType());
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
       String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
                                                      RefactoringUIUtil.getDescription(aClass, false),
@@ -57,9 +70,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     return true;
   }
 
-  private void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+  private static void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
     message = RefactoringBundle.getCannotRefactorMessage(message);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
   }
 
   @Override

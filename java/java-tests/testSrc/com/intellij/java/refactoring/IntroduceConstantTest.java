@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -21,10 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.VisibilityUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,9 +125,9 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   public void testPartialStringLiteralQualified() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    Assert.assertNotNull(psiClass);
+    assertNotNull(psiClass);
     final PsiClass targetClass = psiClass.findInnerClassByName("D", false);
-    Assert.assertNotNull(targetClass);
+    assertNotNull(targetClass);
     new MockIntroduceConstantHandler(targetClass).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
@@ -203,9 +189,9 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   public void testEscalateVisibility() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass[] classes = ((PsiJavaFile)getFile()).getClasses();
-    Assert.assertTrue(classes.length == 2);
+    assertEquals(2, classes.length);
     final PsiClass targetClass = classes[1];
-    Assert.assertNotNull(targetClass);
+    assertNotNull(targetClass);
     new MockIntroduceConstantHandler(targetClass){
       @Override
       protected String getVisibility() {
@@ -216,7 +202,13 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testResultedType() {
-    checkDefaultType(CommonClassNames.JAVA_LANG_OBJECT);
+    try {
+      checkDefaultType(CommonClassNames.JAVA_LANG_OBJECT);
+      fail();
+    } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Local class <b><code>C</code></b> is not visible to members of class <b><code>Test</code></b>", e.getMessage());
+    }
   }
 
   public void testResultedTypeWhenNonLocal() {
@@ -238,10 +230,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
         final TypeSelectorManagerImpl selectorManager =
           new TypeSelectorManagerImpl(project, type, PsiTreeUtil.getParentOfType(anchorElement, PsiMethod.class), expr, occurrences);
         final PsiType psiType = selectorManager.getDefaultType();
-        Assert.assertEquals(psiType.getCanonicalText(), expectedType);
+        assertEquals(psiType.getCanonicalText(), expectedType);
         return new Settings("xxx", expr, occurrences, true, true, true,
                             InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
-                         parentClass, false, false);
+                            parentClass, false, false);
       }
     }.invoke(getProject(), getEditor(), getFile(), null);
   }
