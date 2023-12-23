@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -23,6 +23,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
@@ -79,7 +80,7 @@ public abstract class LocalToFieldHandler {
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
                                          activeIntroducer.startsOnTheSameElement(null, local);
     if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
-      if (convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
+      if (!convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
@@ -110,14 +111,17 @@ public abstract class LocalToFieldHandler {
   }
 
   private boolean convertLocalToField(PsiLocalVariable local, PsiClass aClass, Editor editor, boolean isStatic) {
-    final PsiExpression[] occurences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
+    if (aClass.isInterface()) {
+      showErrorMessage(local.getProject(), editor, JavaRefactoringBundle.message("cannot.introduce.field.in.interface"));
+      return false;
+    }
+    final PsiExpression[] occurrences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
     if (editor != null) {
-      RefactoringUtil.highlightAllOccurrences(myProject, occurences, editor);
+      RefactoringUtil.highlightAllOccurrences(myProject, occurrences, editor);
     }
 
-    final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
-    if (settings == null) return true;
-    //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
+    final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurrences, isStatic);
+    if (settings == null) return false;
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
     if (destinationClass != null) {
@@ -128,10 +132,15 @@ public abstract class LocalToFieldHandler {
     final PsiClass aaClass = aClass;
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
-      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, occurences);
+      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, occurrences);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable),
                                                   getRefactoringName(), null);
-    return false;
+    return true;
+  }
+
+  private static void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+    message = RefactoringBundle.getCannotRefactorMessage(message);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFieldHandler.getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
   }
 
   private static PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {
