@@ -681,30 +681,6 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
         SoftwareBillOfMaterialsImpl(context, distDirs, distEntries).generate()
       }
     }
-    @Suppress("SpellCheckingInspection")
-    if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
-      @Suppress("SENSELESS_COMPARISON")
-      if (context.buildNumber == null) {
-        Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
-      }
-      else if (context.options.targetOs != OsFamily.ALL) {
-        Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
-      }
-      else {
-        context.executeStep(spanBuilder("build toolbox lite-gen links"), BuildOptions.TOOLBOX_LITE_GEN_STEP) {
-          val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-          checkNotNull(toolboxLiteGenVersion) {
-            "Toolbox Lite-Gen version is not specified!"
-          }
-
-          ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
-                                           toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
-                                           "/product-code=" + context.applicationInfo.productCode,
-                                           "/isEAP=" + context.applicationInfo.isEAP.toString(),
-                                           "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
-        }
-      }
-    }
     if (context.productProperties.buildCrossPlatformDistribution) {
       if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
         context.executeStep(spanBuilder("build cross-platform distribution"), BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {

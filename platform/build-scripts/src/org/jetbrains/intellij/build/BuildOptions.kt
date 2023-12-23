@@ -110,9 +110,6 @@ class BuildOptions(
     /** Build Frankenstein artifacts.  */
     const val CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
 
-    /** Toolbox links generator step  */
-    const val TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
-
     /** Generate files containing lists of used third-party libraries  */
     const val THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
 
