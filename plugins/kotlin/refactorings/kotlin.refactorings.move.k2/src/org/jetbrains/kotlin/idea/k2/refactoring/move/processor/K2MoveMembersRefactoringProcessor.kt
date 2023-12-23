@@ -39,7 +39,7 @@ class K2MoveMembersRefactoringProcessor(val descriptor: K2MoveDescriptor.Members
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
-      val targetFile = descriptor.target.getOrCreateFile()
+      val targetFile = descriptor.target.getOrCreateTarget()
 
       val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
 

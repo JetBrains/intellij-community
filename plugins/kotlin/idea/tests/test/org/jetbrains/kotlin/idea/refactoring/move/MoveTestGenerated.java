@@ -518,6 +518,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/classAlreadyInaccessible/classAlreadyInaccessible.test");
     }
 
+    @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test")
+    public void testKotlin_moveTopLevelDeclarations_createDirInProjectNonPkgDirStructure_CreateDirInProjectNonPkgDirStructure() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test")
+    public void testKotlin_moveTopLevelDeclarations_createDirInProjectPkgDirStructure_CreateDirInProjectPkgDirStructure() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test");
+    }
+
     @TestMetadata("kotlin/moveTopLevelDeclarations/functionAlreadyInaccessible/functionAlreadyInaccessible.test")
     public void testKotlin_moveTopLevelDeclarations_functionAlreadyInaccessible_FunctionAlreadyInaccessible() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/functionAlreadyInaccessible/functionAlreadyInaccessible.test");
