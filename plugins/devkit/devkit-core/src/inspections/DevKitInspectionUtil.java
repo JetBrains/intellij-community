@@ -57,12 +57,14 @@ public final class DevKitInspectionUtil {
   // TODO expand this check
   private static boolean isPluginFile(@NotNull PsiFile file) {
     String path = file.getVirtualFile().getPath();
-    boolean isPlatform = path.contains("/platform/") && !path.contains("/platform/cwm-") && !path.contains("/platform/rd-");
+    boolean isPlatform = path.contains("/platform/") &&
+                         !path.contains("/remote-dev/cwm-") &&
+                         !path.contains("/remote-dev/rd-");
 
     // Rider lives in other repository, but also kind-of platform for Rider IDE
-    boolean isRider = path.contains("/Rider/Frontend/rider/") ||
-                      path.contains("/Rider/Frontend/rider-cpp-core/") ||
-                      path.contains("/Rider/Frontend/rdclient-dotnet/");
+    boolean isRider = path.contains("/rider/") ||
+                      path.contains("/rider-cpp-core/") ||
+                      path.contains("/rdclient-dotnet/");
 
     return !isPlatform && !isRider;
   }
