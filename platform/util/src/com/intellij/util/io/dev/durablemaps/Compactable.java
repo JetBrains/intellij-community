@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.durablemaps;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public interface Compactable<C extends Compactable<C>> {
    * operational, but the returned instance contains same data, compacted.
    * Usually original data structure should not be modified during the compaction --
    */
-  @NotNull C compact() throws IOException;
+  public @NotNull <C1 extends C> C1 compact(@NotNull ThrowableComputable<C1, ? extends IOException> compactedMapFactory) throws IOException;
 
   class CompactionScore {
     private final double score;
@@ -38,20 +39,25 @@ public interface Compactable<C extends Compactable<C>> {
      * = 1    =>   can't work without compaction
      * </pre>
      */
-    double score() {
+    public double score() {
       return score;
     }
 
-    boolean compactionNotNeeded(){
+    public boolean compactionNotNeeded(){
       return score < 0.1;
     }
 
-    boolean compactionNeeded(){
+    public boolean compactionNeeded(){
       return score > 0.5;
     }
 
-    boolean compactionNeededUrgently(){
+    public boolean compactionNeededUrgently(){
       return score > 0.9;
+    }
+
+    @Override
+    public String toString() {
+      return "CompactionScore[=" + score + ']';
     }
   }
 

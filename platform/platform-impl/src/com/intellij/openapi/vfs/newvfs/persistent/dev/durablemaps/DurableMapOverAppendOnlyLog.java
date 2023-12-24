@@ -3,11 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.durablemaps.DurableMap;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
@@ -189,7 +188,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     //          in DurableIntToMultiIntMap
     //TODO RC: forEachEntry() reads & deserializes both key and value -- but we don't need values here, only keys are needed.
     //         Specialize method so it reads only keys?
-    return forEachEntry( (key, value) -> {
+    return forEachEntry((key, value) -> {
       if (alreadyProcessed.add(key)) {
         return processor.process(key);
       }
@@ -220,14 +219,48 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public @NotNull CompactionScore compactionScore() throws IOException {
-    //TODO return keyHashToIdMap.size() * 1.0/keyValuesLog.size()
-    throw new UnsupportedOperationException("Method is not implemented yet");
+    int activeRecords = keyHashToIdMap.size();
+    int totalRecords = keyValuesLog.recordsCount();
+
+    if (totalRecords == 0) {
+      return new CompactionScore(0);
+    }
+
+    //'% of wasted records -- out of all records stored'
+    double score = 1 - (activeRecords * 1.0 / totalRecords);
+
+    if (totalRecords < 512) {
+      // score could be too unstable if records number is small:
+      return new CompactionScore(Math.max(score, 0.1));
+    }
+
+    return new CompactionScore(score);
   }
 
   @Override
-  public @NotNull DurableMap<K, V> compact() throws IOException {
-    //TODO please, implement me
-    throw new UnsupportedOperationException("Method is not implemented yet");
+  public @NotNull <M extends DurableMap<K, V>> M compact(
+    @NotNull ThrowableComputable<M, ? extends IOException> compactedMapFactory
+  ) throws IOException {
+    //FIXME RC: design the new map creation: how/where to create it? Paths should somehow be
+    //          passed from outside, but also maybe tuned here?
+    //          Maybe just use the storageFactory? Keep the factory created the Map in a fields, and use either it,
+    //          or the one passed from outside?
+    //MAYBE RC: should we do a compaction if there is nothing to compact really -- i.e. if there is 0 wasted records?
+    //          Or maybe we should return current map in this case? Or reject explicitly, by throwing exception?
+    //          Or just leave it on caller decision?
+    return IOUtil.wrapSafely(
+      compactedMapFactory.compute(),
+      compactedMap -> {
+        keyHashToIdMap.forEach((keyHash, recordId) -> {
+          Pair<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
+          if (entry.second != null) {
+            compactedMap.put(entry.first, entry.second);
+          }
+          return true;
+        });
+        return compactedMap;
+      }
+    );
   }
 
 
