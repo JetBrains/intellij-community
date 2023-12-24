@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
+import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
@@ -21,6 +22,7 @@ import java.util.Objects;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
+import static java.lang.invoke.MethodHandles.privateLookupIn;
 import static java.nio.ByteOrder.nativeOrder;
 
 /**
@@ -407,6 +409,17 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
       nextRecordToBeCommittedOffset = successfullyRecoveredUntil;
       nextRecordToBeAllocatedOffset = successfullyRecoveredUntil;
+
+      //records count could be incorrect if wasn't properly closed => re-count records:
+      //FIXME RC: there is still a gap -- committed cursor update and recordsCount increment are not atomic,
+      //          so could be an app crash in the moment committed cursor has been already updated, but recordsCount
+      //          hasn't been incremented yet => we will not do recovery, because (committed==allocated), but records
+      //          count is actually lagging behind.
+      IntRef recordsCount = new IntRef(0);
+      forEachRecord((recordId, buffer) -> {
+        return true;
+      }, successfullyRecoveredUntil);
+      setIntHeaderField(HeaderLayout.RECORDS_COUNT_OFFSET, recordsCount.get());
     }
     else {
       startOfRecoveredRegion = -1;
@@ -589,65 +602,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @Override
   public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
-    int pageSize = storage.pageSize();
     long firstUnallocatedOffset = firstUnAllocatedOffset();
-
-    for (long recordOffsetInFile = HeaderLayout.HEADER_SIZE; recordOffsetInFile < firstUnallocatedOffset; ) {
-
-      Page page = storage.pageByOffset(recordOffsetInFile);
-      int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
-      ByteBuffer pageBuffer = page.rawPageBuffer();
-
-      if (pageSize - recordOffsetInPage < RecordLayout.RECORD_HEADER_SIZE) {
-        throw new IOException(
-          getClass().getSimpleName() + " corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
-          "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
-          "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
-        );
-      }
-
-      int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInPage);
-      if (recordHeader == 0) {
-        //the record wasn't even started to be written
-        // -> can't read the following records since we don't know there they are
-        return true;
-      }
-
-      int recordLength = RecordLayout.extractRecordLength(recordHeader);
-
-      if (RecordLayout.isDataHeader(recordHeader)) {
-        if (RecordLayout.isRecordCommitted(recordHeader)) {
-          int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
-          long recordId = recordOffsetToId(recordOffsetInFile);
-
-          if (!RecordLayout.isFitIntoPage(pageBuffer, recordOffsetInPage, payloadLength)) {
-            throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "].payloadLength(=" + payloadLength + "): " +
-                                  " is incorrect: page[0.." + pageBuffer.limit() + "]" +
-                                  moreDiagnosticInfo(recordOffsetInFile));
-          }
-          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
-            //.asReadOnlyBuffer()
-            .order(pageBuffer.order());
-
-          boolean shouldContinue = reader.read(recordId, recordDataSlice);
-          if (!shouldContinue) {
-            return false;
-          }
-        }//else: record not yet commited, we can't _read_ it -- but maybe _next_ record(s) are committed?
-      }
-      else if (RecordLayout.isPaddingHeader(recordHeader)) {
-        //just skip it
-      }
-      else {
-        //if header != 0 => it must be either padding, or (uncommitted?) data record:
-        throw new IOException("header(=" + recordHeader + "](@offset=" + recordOffsetInFile + "): not a padding, nor a data record");
-      }
-
-
-      recordOffsetInFile = nextRecordOffset(recordOffsetInFile, recordLength);
-    }
-
-    return true;
+    return forEachRecord(reader, firstUnallocatedOffset);
   }
 
   public void clear() throws IOException {
@@ -892,6 +848,73 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     );
   }
 
+  /**
+   * reads all the data records untilOffset (exclusive)
+   *
+   * @return true if stopped by itself because untilOffset reached, or untraverseable record met, false
+   * if iteration stopped by reader returning false
+   */
+  private boolean forEachRecord(@NotNull RecordReader reader,
+                                long untilOffset) throws IOException {
+    int pageSize = storage.pageSize();
+    for (long recordOffsetInFile = HeaderLayout.HEADER_SIZE; recordOffsetInFile < untilOffset; ) {
+
+      Page page = storage.pageByOffset(recordOffsetInFile);
+      int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
+      ByteBuffer pageBuffer = page.rawPageBuffer();
+
+      if (pageSize - recordOffsetInPage < RecordLayout.RECORD_HEADER_SIZE) {
+        throw new IOException(
+          getClass().getSimpleName() + " corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
+          "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
+          "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
+        );
+      }
+
+      int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInPage);
+      if (recordHeader == 0) {
+        //the record wasn't even started to be written
+        // -> can't read the following records since we don't know there they are
+        return true;
+      }
+
+      int recordLength = RecordLayout.extractRecordLength(recordHeader);
+
+      if (RecordLayout.isDataHeader(recordHeader)) {
+        if (RecordLayout.isRecordCommitted(recordHeader)) {
+          int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
+          long recordId = recordOffsetToId(recordOffsetInFile);
+
+          if (!RecordLayout.isFitIntoPage(pageBuffer, recordOffsetInPage, payloadLength)) {
+            throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "].payloadLength(=" + payloadLength + "): " +
+                                  " is incorrect: page[0.." + pageBuffer.limit() + "]" +
+                                  moreDiagnosticInfo(recordOffsetInFile));
+          }
+          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+            //.asReadOnlyBuffer()
+            .order(pageBuffer.order());
+
+          boolean shouldContinue = reader.read(recordId, recordDataSlice);
+          if (!shouldContinue) {
+            return false;
+          }
+        }//else: record not yet commited, we can't _read_ it -- but maybe _next_ record(s) are committed?
+      }
+      else if (RecordLayout.isPaddingHeader(recordHeader)) {
+        //just skip it
+      }
+      else {
+        //if header != 0 => it must be either padding, or (uncommitted?) data record:
+        throw new IOException("header(=" + recordHeader + "](@offset=" + recordOffsetInFile + "): not a padding, nor a data record");
+      }
+
+
+      recordOffsetInFile = nextRecordOffset(recordOffsetInFile, recordLength);
+    }
+
+    return true;
+  }
+
   private long recoverRegion(long nextRecordToBeCommittedOffset,
                              long nextRecordToBeAllocatedOffset) throws IOException {
     int pageSize = storage.pageSize();
@@ -913,7 +936,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       int recordLength = RecordLayout.extractRecordLength(recordHeader);
 
       if (recordLength == 0) {
-        //Can't recover farther: actual length of record is unknown length
+        //Can't recover farther: actual length of record is unknown
         return offsetInFile;
       }
       if (RecordLayout.isDataHeader(recordHeader)) {
