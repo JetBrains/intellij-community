@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -15,21 +16,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.IOUtil.readString;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AppendOnlyLogOverMMappedFileTest {
 
+
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static final int ENOUGH_RECORDS = 1 << 20;
-  public static final int MAX_RECORD_SIZE = 1024;
+
+  private static final int MAX_RECORD_SIZE = 1024;
+
+  private static final int THREADS_COUNT = 8;
 
   /** Make page smaller to increase the chance of page-border issues to manifest */
   private static final int PAGE_SIZE = 1 << 18;
@@ -42,6 +48,11 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   @Before
   public void setUp() throws IOException {
+    assertEquals("THREADS_COUNT(" + THREADS_COUNT + ") must divide ENOUGH_RECORDS(" + ENOUGH_RECORDS + ")",
+                 0,
+                 ENOUGH_RECORDS % THREADS_COUNT);
+
+
     Path tempDir = temporaryFolder.newFolder().toPath();
     Path storageFile = tempDir.resolve("appendOnlyLog");
     appendOnlyLog = openLog(storageFile);
@@ -92,12 +103,41 @@ public class AppendOnlyLogOverMMappedFileTest {
   }
 
   @Test
+  public void manyRecordsWritten_MultiThreaded_CouldBeReadBackAsIs() throws Exception {
+    String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
+
+    long[] recordsIds = writeRecords_MultiThreaded(stringsToWrite, THREADS_COUNT);
+
+    checkRecordsReadBack(recordsIds, stringsToWrite);
+    assertEquals(
+      "Expect .recordsCount() to return number of records just inserted",
+      recordsIds.length,
+      appendOnlyLog.recordsCount()
+    );
+  }
+
+  @Test
   public void manyRecordsWritten_CouldBeReadBackAsIs_viaForEach() throws Exception {
     String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
 
     long[] recordIds = writeRecords(stringsToWrite);
 
     checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+  }
+
+  @Test
+  public void manyRecordsWritten_MultiThreaded_CouldBeReadBackAsIs_viaForEach() throws Exception {
+    String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
+
+    long[] recordsIds = writeRecords_MultiThreaded(stringsToWrite, THREADS_COUNT);
+
+    checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
+
+    assertEquals(
+      "Expect .recordsCount() to return number of records just inserted",
+      recordsIds.length,
+      appendOnlyLog.recordsCount()
+    );
   }
 
   @Test
@@ -116,12 +156,12 @@ public class AppendOnlyLogOverMMappedFileTest {
   public void manyRecordsWritten_AfterReopen_CouldBeReadBackAsIs_viaForEach() throws Exception {
     String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
 
-    long[] recordIds = writeRecords(stringsToWrite);
+    long[] recordsIds = writeRecords(stringsToWrite);
 
     appendOnlyLog.close();
     appendOnlyLog = openLog(appendOnlyLog.storagePath());
 
-    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+    checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
   }
 
 
@@ -171,9 +211,15 @@ public class AppendOnlyLogOverMMappedFileTest {
       .limit(128)
       .toArray(String[]::new);
 
-    long[] recordIds = writeRecords(stringsToWrite);
+    long[] recordsIds = writeRecords(stringsToWrite);
 
-    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+    checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
+
+    assertEquals(
+      "Expect .recordsCount() to return number of records just inserted",
+      recordsIds.length,
+      appendOnlyLog.recordsCount()
+    );
   }
 
   @Test
@@ -187,12 +233,18 @@ public class AppendOnlyLogOverMMappedFileTest {
       .limit(128)
       .toArray(String[]::new);
 
-    long[] recordIds = writeRecords(stringsToWrite);
+    long[] recordsIds = writeRecords(stringsToWrite);
 
     appendOnlyLog.close();
     appendOnlyLog = openLog(appendOnlyLog.storagePath());
 
-    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+    checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
+
+    assertEquals(
+      "Expect .recordsCount() to return number of records inserted before re-open",
+      recordsIds.length,
+      appendOnlyLog.recordsCount()
+    );
   }
 
 
@@ -307,22 +359,22 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   //====================== infrastructure: ===========================================================================
 
-  private void checkRecordsReadBack_ViaForEach(long[] recordIds,
+  private void checkRecordsReadBack_ViaForEach(long[] recordsIds,
                                                String[] stringsWritten) throws IOException {
+    Long2ObjectOpenHashMap<Object> idToStringWritten = new Long2ObjectOpenHashMap<>();
+    for (int i = 0; i < recordsIds.length; i++) {
+      idToStringWritten.put(recordsIds[i], stringsWritten[i]);
+    }
     IntRef i = new IntRef(0);
     appendOnlyLog.forEachRecord((recordId, buffer) -> {
       String stringReadBack = readString(buffer);
-      String stringWritten = stringsWritten[i.get()];
-      long expectedRecordId = recordIds[i.get()];
-      if(!stringReadBack.equals(stringWritten)) {
-        assertEquals("[" + i + "]: data written[recordId: " + expectedRecordId + "] must be the data read back[recordId: " + recordId + "]",
+      Object stringWritten = idToStringWritten.get(recordId);
+      if (!stringReadBack.equals(stringWritten)) {
+        assertEquals("[" + i + "]: data written[recordId: " + recordId + "] must be the data read back[recordId: " + recordId + "]",
                      stringWritten,
                      stringReadBack);
       }
 
-      assertEquals("[" + i + "]: recordId must be the same for data written back",
-                   expectedRecordId,
-                   recordId);
       i.inc();
       return true;
     });
@@ -345,6 +397,32 @@ public class AppendOnlyLogOverMMappedFileTest {
       final String toWrite = stringsToWrite[i];
       long recordId = appendOnlyLog.append(toWrite.getBytes(UTF_8));
       recordsIds[i] = recordId;
+    }
+    return recordsIds;
+  }
+
+  private long[] writeRecords_MultiThreaded(String[] stringsToWrite,
+                                            int threadsCount) throws InterruptedException {
+    long[] recordsIds = new long[stringsToWrite.length];
+    ExecutorService pool = Executors.newFixedThreadPool(threadsCount);
+    try {
+      int recordsToWritePerThread = ENOUGH_RECORDS / threadsCount;
+      for (int threadNo = 0; threadNo < threadsCount; threadNo++) {
+        int finalThreadNo = threadNo;
+        pool.submit((Callable<Void>)() -> {
+          for (int recordNo = 0; recordNo < recordsToWritePerThread; recordNo++) {
+            int index = recordsToWritePerThread * finalThreadNo + recordNo;
+            String toWrite = stringsToWrite[index];
+            long recordId = appendOnlyLog.append(toWrite.getBytes(UTF_8));
+            recordsIds[index] = recordId;
+          }
+          return null;
+        });
+      }
+    }
+    finally {
+      pool.shutdown();
+      pool.awaitTermination(10, SECONDS);
     }
     return recordsIds;
   }

@@ -22,7 +22,6 @@ import java.util.Objects;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
-import static java.lang.invoke.MethodHandles.privateLookupIn;
 import static java.nio.ByteOrder.nativeOrder;
 
 /**
