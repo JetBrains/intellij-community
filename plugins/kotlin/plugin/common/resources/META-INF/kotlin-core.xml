@@ -256,6 +256,14 @@
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
+  <!-- Templates -->
+  <extensions defaultExtensionNs="com.intellij">
+    <defaultTemplatePropertiesProvider
+            order="last"
+            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
+    />
+  </extensions>
+
   <!-- Line markers -->
   <extensions defaultExtensionNs="com.intellij">
     <runLineMarkerContributor

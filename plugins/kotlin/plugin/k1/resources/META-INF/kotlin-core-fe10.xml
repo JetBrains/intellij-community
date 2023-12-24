@@ -122,10 +122,6 @@
 
   <!-- Templates -->
   <extensions defaultExtensionNs="com.intellij">
-    <defaultTemplatePropertiesProvider
-            order="last"
-            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"/>
-
     <lang.psiStructureViewFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
