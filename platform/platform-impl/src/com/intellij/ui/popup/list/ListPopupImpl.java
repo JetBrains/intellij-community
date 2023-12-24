@@ -339,7 +339,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList;
   }
 
- protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+  protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
     return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
   }
 

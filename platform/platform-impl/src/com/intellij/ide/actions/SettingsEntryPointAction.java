@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
@@ -186,7 +188,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       }
 
       if (count != group.getChildrenCount()) {
-        return new MyPopup(group, context);
+        return new MyPopup(group, context, new PresentationFactory());
       }
     }
 
@@ -194,9 +196,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   }
 
   private static class MyPopup extends PopupFactoryImpl.ActionGroupPopup {
-    private MyPopup(@NotNull ActionGroup group, @NotNull DataContext context) {
-      super(null, group, context, false, false, true, true, null, -1, null, null);
+    private MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
+      super(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false);
+      myPresentationFactory = presentationFactory;
     }
+    final @NotNull PresentationFactory myPresentationFactory;
 
     @Override
     protected JComponent createContent() {
@@ -218,8 +222,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction
                                                       boolean cellHasFocus) {
           if (value instanceof PopupFactoryImpl.ActionItem item) {
             AnAction action = item.getAction();
-            if (action instanceof LastAction lastAction) {
-              Presentation presentation = action.getTemplatePresentation();
+            Presentation presentation = myPresentationFactory.getPresentation(action);
+            //noinspection DialogTitleCapitalization
+            String text = item.getText();
+            //noinspection DialogTitleCapitalization
+            String secondText = presentation.getClientProperty(LastAction.SECOND_TEXT);
+            if (secondText != null) {
               JBLabel label = new JBLabel(presentation.getIcon());
               label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
@@ -241,11 +249,9 @@ public final class SettingsEntryPointAction extends DumbAwareAction
               panel.add(iconPanel, BorderLayout.WEST);
 
               JPanel lines = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(2)));
-              //noinspection DialogTitleCapitalization
-              lines.add(new JBLabel(presentation.getText()), BorderLayout.NORTH);
+              lines.add(new JBLabel(text), BorderLayout.NORTH);
 
-              //noinspection DialogTitleCapitalization
-              JLabel secondLine = new JBLabel(lastAction.getSecondText());
+              JLabel secondLine = new JBLabel(secondText);
               secondLine.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
               lines.add(secondLine, BorderLayout.SOUTH);
 
@@ -646,6 +652,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       super(text, description, icon);
     }
 
-    public abstract @NotNull @NlsActions.ActionText String getSecondText();
+    public @NotNull @NlsActions.ActionText String getSecondText() {
+      return "";
+    }
+
+    public static final Key<@NlsActions.ActionText String> SECOND_TEXT = Key.create("SECOND_TEXT");
   }
 }
