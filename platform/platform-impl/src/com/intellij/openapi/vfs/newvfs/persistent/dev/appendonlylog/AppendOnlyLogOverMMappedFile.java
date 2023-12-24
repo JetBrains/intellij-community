@@ -25,7 +25,11 @@ import static java.nio.ByteOrder.nativeOrder;
 
 /**
  * Implementation over memory-mapped file ({@link MMappedFileStorage}).
- * Thead-safe, non-blocking (factoring out the fact that OS page management is not non-blocking).
+ * <p>
+ * Thead-safe, non-blocking (leaving aside the fact that OS page management is not non-blocking).
+ * <p>
+ * Record size is limited by the underlying {@link MMappedFileStorage#pageSize()} (minus 4 bytes for record header)
+ * <p>
  * Durability relies on OS: appended record is durable if OS not crash (i.e. not loosing mmapped file content).
  */
 @ApiStatus.Internal
@@ -51,14 +55,74 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
 
+  //Implementation details:
+  //    1) 2 global cursors 'allocated' and 'committed', always{committed <= allocated}
+  //       'Allocated' cursor is bumped _before_ actual record write.
+  //       All the records < 'committed' cursor are fully written, and unmodifiable from now on.
+  //       Records in [committed..allocated] region are being written right now.
+  //    2) Record has 'length' and 'committed' status. Committed status is false initially, and set to true after all the
+  //       writes to the record are finished. If there is a continuous sequence of 'committed' records right after 'committed'
+  //       cursor => 'committed' cursor is moved forward through all the 'committed' records. I.e. there is an invariant:
+  //       "for all the records < committed cursor record.committed=true"
+  //    3) Record appending protocol:
+  //       a) Allocate space for record: atomically move 'allocated' cursor for recordLength bytes forward
+  //       b) Set record header (length=recordLength, committed=false)
+  //       c) Write record content
+  //       d) Set record header (committed=true)
+  //       e) Check is there a continuous sequence of 'committed' records right after 'committed' cursor
+  //          => atomically move 'committed' cursor forward as much as possible.
+  //
+  // Finer details:
+  //    1) Alignment: records are int32 aligned, because volatile/atomic instructions universally work only on
+  //       int32/int64-aligned addresses, and we need int32 volatile write for record header => record headers
+  //       must be int32-aligned. Record length in a record header is _actual_ length of the record(content+header).
+  //       Next record is (currentOffset+recordLength) rounded up to be int32-aligned.
+  //
+  //    2) Padding records: records are also page-aligned (MMappedFileStorage.pageSize). It was done mostly for
+  //       simplification: it is possible to split the record between the pages, but it complicates code a lot,
+  //       so I decided to avoid it. But page-alignment requires 'padding records' to fill the gap left if the
+  //       record not fit the current page and must be moved to the next one entirely. Padding records are just
+  //       records without content: they have length and committed status, but content is 'unused'. Padding
+  //       records are also used to 'clean' unfinished records during recovery.
+  //
+  //    3) Recovery: if app crashes, append-only log is able to keep its state, because OS is responsible for
+  //       flushing memory-mapped file content regardless of app status. Records < committed cursor are fully
+  //       written, so no problems with them. Records in [committed..allocated] range could be fully of partially
+  //       written, so we need to sort them out: if we see (committed < allocated) on log opening => we execute
+  //       'recovery' protocol to find out which records from that range were finished, and which were not. For
+  //       that we scan [committed..allocated] record-by-record, and check record 'committed' status. 'Un-committed'
+  //       records weren't finished, and there is nothing we can do about it => need to remove them from the log.
+  //       But we can't physically remove them because log is append-only => we change record type to 'padding
+  //       record'. 'Padding' plays the role of 'deleted' mark here, since all public accessors treat padding
+  //       record as non-existent. (See also #2 in todos about a durability hole here)
+  //
+  //    4) 'connectionStatus' (as in other storages) is not needed here: updates are atomic, every saved state is
+  //       at least self-consistent. We use (committed < allocated) as a marker of 'not everything was committed'
+  //       => recovery is needed
 
   //TODO/MAYBE/FIXME:
-  //    1) connectionStatus: do we need it? Updates are atomic, every saved state is at least self-consistent.
-  //       We could use (committed < allocated) as a marker of 'not everything was committed'
-  //    2) Make record header 'recognizable': i.e. reserve first byte for type+committed only -- so we can recognize
-  //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
-  //       the most applications. Maybe make it configurable: if user wants to spent additional 1-2-4 bytes per record
-  //       to (almost) ensure 'false id' recognition -- it could be turned on?
+  //    1. Protect from reading by 'false id': since id is basically a record offset, one could provide any value
+  //       to .read(id) method, and there is no reliable way to detect 'this is not an id of existing record'. I.e.
+  //       we could reject obviously incorrect ids -- negative, outside of allocated ids range, etc -- but in general
+  //       there is no way to detect is it a valid id.
+  //       I don't see cheap way to solve that 100%, but it is possible to have 90+% by making record header 'recognizable',
+  //       i.e. reserve 1-2 bytes for some easily identifiable bit pattern. E.g. put int8_hash(recordId) into a 1st byte
+  //       of record header, and check it on record read -- this gives us ~255/256 chance to identify 'false id'.
+  //       Maybe make it configurable: off by default, but if user wants to spent additional 1-2-4 bytes per record to
+  //       (almost) ensure 'false id' recognition -- it could be turned on.
+  //    2. Current implementation is not fully durable (even if OS don't crash): it could be .append() returns recordId,
+  //       but after app crash such record disappears. This could happen because record becomes unreachable for recovery
+  //       if some previous record header wasn't put in place. And this could happen because there is small but non-0
+  //       time window between record allocation ('allocated' cursor bumped up) and the write of 'uncommited' record header
+  //       with record length.
+  //       If app crashes during that window, record is left in not only uncommitted state, but in 'unknown length' state,
+  //       which means all the records after it can't be reached during recovery.
+  //       This could be solved by sacrificing 'non-blocking' property: we must lock {allocate record, put down 'uncommited'
+  //       header}, so following record append could NOT be started concurrently with those 2 actions. This is enough to get
+  //       rid of that hole in a durability. It is not a big sacrifice, really: those 2 actions are, basically, just 2 memory
+  //       writes (but keep in mind it is a writes to _mmapped_ memory, so it could be an IO behind the scene), so the lock
+  //       is very short, and very unlikely ever contended -- but still :)
+  //
 
   public static final class HeaderLayout {
     public static final int MAGIC_WORD_OFFSET = 0;
