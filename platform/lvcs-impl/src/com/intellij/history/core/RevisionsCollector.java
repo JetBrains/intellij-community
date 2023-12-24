@@ -20,7 +20,6 @@ import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,11 +54,11 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
   }
 
   @Override
-  protected Pair<String, List<ChangeSet>> collectChanges() {
+  protected List<ChangeSet> collectChanges() {
     // todo optimize to not collect all change sets + do not process changes twice
     ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
     myFacade.accept(v);
-    return Pair.create(v.getPath(), v.getChanges());
+    return v.getChanges();
   }
 
   @Override

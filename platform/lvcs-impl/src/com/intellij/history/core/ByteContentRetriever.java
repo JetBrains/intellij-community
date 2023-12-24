@@ -63,7 +63,7 @@ public final class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
   @Override
-  protected Pair<String, List<ChangeSet>> collectChanges() {
+  protected List<ChangeSet> collectChanges() {
     final List<ChangeSet> result = new ArrayList<>();
 
     myVcs.accept(new ChangeVisitor() {
@@ -73,7 +73,7 @@ public final class ByteContentRetriever extends ChangeSetsProcessor {
       }
     });
 
-    return Pair.create(myPath, result);
+    return result;
   }
 
   @Override

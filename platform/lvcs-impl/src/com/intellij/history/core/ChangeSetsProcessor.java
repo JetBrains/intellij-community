@@ -30,9 +30,8 @@ public abstract class ChangeSetsProcessor {
   }
 
   protected void process() {
-    Pair<String, List<ChangeSet>> pathAndChanges = collectChanges();
+    List<ChangeSet> changes = collectChanges();
 
-    List<ChangeSet> changes = pathAndChanges.second;
     if (changes.isEmpty()) {
       nothingToVisit();
       return;
@@ -43,7 +42,7 @@ public abstract class ChangeSetsProcessor {
     }
   }
 
-  protected abstract Pair<String, List<ChangeSet>> collectChanges();
+  protected abstract List<ChangeSet> collectChanges();
 
   protected abstract void nothingToVisit();
 
