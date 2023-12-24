@@ -24,7 +24,9 @@ import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
 
 /**
- * There are other caveats, pitfalls, and dragons, so beware
+ * Implementation over memory-mapped file ({@link MMappedFileStorage}).
+ * Thead-safe, non-blocking (factoring out the fact that OS page management is not non-blocking).
+ * Durability relies on OS: appended record is durable if OS not crash (i.e. not loosing mmapped file content).
  */
 @ApiStatus.Internal
 public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmappable {
@@ -50,7 +52,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
 
 
-  //TODO/MAYBE:
+  //TODO/MAYBE/FIXME:
   //    1) connectionStatus: do we need it? Updates are atomic, every saved state is at least self-consistent.
   //       We could use (committed < allocated) as a marker of 'not everything was committed'
   //    2) Make record header 'recognizable': i.e. reserve first byte for type+committed only -- so we can recognize
@@ -74,10 +76,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     /** Offset (in file) of the next-record-to-be-allocated */
     public static final int NEXT_RECORD_TO_BE_ALLOCATED_OFFSET = PAGE_SIZE_OFFSET + Integer.BYTES;
-    /** Records with offset < recordsCommittedUpToOffset are guaranteed to be already written. */
+    /** Records with offset < recordsCommittedUpToOffset are guaranteed to be all finished (written). */
     public static final int NEXT_RECORD_TO_BE_COMMITTED_OFFSET = NEXT_RECORD_TO_BE_ALLOCATED_OFFSET + Long.BYTES;
 
-    public static final int FIRST_UNUSED_OFFSET = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + Long.BYTES;
+    /**
+     * int32: total number of data records committed to the log.
+     * Only data records counted, padding records are not counted here -- they considered to be an implementation detail
+     * which should not be visible outside.
+     * Only committed records counted -- i.e. those < commited cursor
+     */
+    public static final int RECORDS_COUNT_OFFSET = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + Long.BYTES;
+
+    public static final int FIRST_UNUSED_OFFSET = RECORDS_COUNT_OFFSET + Integer.BYTES;
 
     //reserve [8 x int64] just in the case
     public static final int HEADER_SIZE = 8 * Long.BYTES;
@@ -360,6 +370,11 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   public void setDataVersion(int version) {
     setIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET, version);
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return getIntHeaderField(HeaderLayout.RECORDS_COUNT_OFFSET);
   }
 
   /** @return arbitrary (user-defined) value from the Log's header, previously set by {@link #setUserDefinedHeaderField(int, int)} */
@@ -697,47 +712,66 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   private void tryCommitRecord(long currentRecordOffsetInFile,
                                int totalRecordLength) throws IOException {
-    long committedOffset = firstUnCommittedOffset();
-    if (committedOffset == currentRecordOffsetInFile) {
-      long nextRecordOffsetInFile = nextRecordOffset(currentRecordOffsetInFile, totalRecordLength);
-      if (casFirstUnCommittedOffset(currentRecordOffsetInFile, nextRecordOffsetInFile)) {
-        //Now we're responsible for moving the 'committed' pointer as much forward as possible:
-        tryCommitFinalizedRecords();
-      }
-    }
+    //FIXME: This method involves unnecessary contention -- in current implementation _each_ thread finalizing
+    //       it's record also make an attempt to commit all records before the current one, and _all_ such
+    //       threads compete on updating 'commited' cursor.
+    //
+    //       This contention could be removed entirely by stating that only the 'most lagging' thread -- i.e. the
+    //       thread for which currentRecordOffsetInFile==firstUncommitedOffset() -- should update the 'commited'
+    //       cursor. This is very natural way to do it, not only because of less contention, but also because in
+    //       the most cases threads finalize their records in the same order they allocate them => each thread
+    //       commits it's own record _only_. And in such case the whole update is simplified down to the single
+    //       uncontended CAS, because everything needed for the update (=totalRecordLength) is already passed in
+    //       as param -- i.e. we don't even need re-read record header => the most frequent case also becomes the
+    //       fastest then.
+    //
+    //       Unfortunately, this logic currently breaks down because of end-of-page-padding record (see allocateSpaceForRecord):
+    //       end-of-page-padding is inserted before 'current' record, so currentRecordOffset points to the actual
+    //       record on the next page, while .nextRecordToBeCommitted keeps pointing to padding record, left on
+    //       previous page. Thus currentRecordOffsetInFile!=firstUncommitedOffset() even though current thread
+    //       _is_ the most lagging -- and after single such fault commited cursor is never updated anymore.
+    ///
+    //       This is not a fundamental flaw, just a feature of current implementation, it could be fixed. But
+    //       right now I postpone the fix, and work it around by made _every_ thread responsible for committing
+    //       finalized records.
+    //       Review it later, find way to avoid spending CPU on useless contention
 
-    if (committedOffset < currentRecordOffsetInFile) {
-      //some records before us are not yet committed
-
-      //FIXME: Ideally, we shouldn't do anything here -- the most lagging thread is responsible for
-      //       committing finalized records, to avoid useless concurrency on updating 'committed'
-      //       cursor.
-      //       But currently this logic breaks up on a end-of-page-padding record there currentRecord
-      //       points to the actual record on the next page, while nextRecordToBeCommitted keeps pointing
-      //       to padding record left on previous page.
-      //       I work it around by trying to commit records always.
-      //       Review it later, find way to avoid spending CPU
-      tryCommitFinalizedRecords();
-
-      return;
-    }
+    tryCommitFinalizedRecords();
   }
 
   private void tryCommitFinalizedRecords() throws IOException {
+    CAS_LOOP:
     while (true) {
-      long firstYetUncommittedRecord = firstUnCommittedOffset();
+      long firstUnCommittedRecordOffset = firstUnCommittedOffset();
+
+      long nextUncommittedRecordOffset = firstUnCommittedRecordOffset;
       long allocatedUpTo = firstUnAllocatedOffset();
-      if (firstYetUncommittedRecord == allocatedUpTo) {
-        return; //nothing more to commit (yet)
+      int dataRecordsToCommit = 0;//padding records not counted
+      while (nextUncommittedRecordOffset < allocatedUpTo) {//scanning through all finalized-not-yet-commited records
+        Page page = storage.pageByOffset(nextUncommittedRecordOffset);
+        int offsetInPage = storage.toOffsetInPage(nextUncommittedRecordOffset);
+        int recordHeader = RecordLayout.readHeader(page.rawPageBuffer(), offsetInPage);
+        int totalRecordLength = RecordLayout.extractRecordLength(recordHeader);
+        if (totalRecordLength == 0) {
+          break; //record is not finalized (yet)
+        }
+        if (RecordLayout.isDataHeader(recordHeader)) {
+          dataRecordsToCommit++;
+        }
+
+        nextUncommittedRecordOffset = nextRecordOffset(nextUncommittedRecordOffset, totalRecordLength);
       }
-      Page page = storage.pageByOffset(firstYetUncommittedRecord);
-      int offsetInPage = storage.toOffsetInPage(firstYetUncommittedRecord);
-      int totalRecordLength = RecordLayout.readRecordLength(page.rawPageBuffer(), offsetInPage);
-      if (totalRecordLength == 0) {
-        return; //firstYetUncommittedRecord is not finalized (yet)
+
+      if (nextUncommittedRecordOffset == firstUnCommittedRecordOffset) {
+        return;
       }
-      long nextUncommittedRecord = nextRecordOffset(firstYetUncommittedRecord, totalRecordLength);
-      casFirstUnCommittedOffset(firstYetUncommittedRecord, nextUncommittedRecord);
+
+      if (!casFirstUnCommittedOffset(firstUnCommittedRecordOffset, nextUncommittedRecordOffset)) {
+        continue CAS_LOOP;
+      }
+
+      addToDataRecordsCount(dataRecordsToCommit);
+      return;
     }
   }
 
@@ -786,6 +820,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     );
   }
 
+  private int addToDataRecordsCount(int recordsCommitted) {
+    return (int)INT32_OVER_BYTE_BUFFER.getAndAdd(
+      headerPage.rawPageBuffer(),
+      HeaderLayout.RECORDS_COUNT_OFFSET,
+      recordsCommitted
+    );
+  }
 
   private long recoverRegion(long nextRecordToBeCommittedOffset,
                              long nextRecordToBeAllocatedOffset) throws IOException {

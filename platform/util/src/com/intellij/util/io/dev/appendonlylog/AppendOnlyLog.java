@@ -53,6 +53,9 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   /** @return true if there are no records in the log */
   boolean isEmpty();
 
+  /** @return number of records appended to the log */
+  int recordsCount() throws IOException;
+
   interface RecordReader {
     /** @return true if reading should continue, false to stop the reading */
     boolean read(long recordId,
