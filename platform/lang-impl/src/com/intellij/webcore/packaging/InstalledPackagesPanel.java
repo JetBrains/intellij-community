@@ -111,7 +111,7 @@ public class InstalledPackagesPanel extends JPanel {
 
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+        return ActionUpdateThread.EDT;
       }
     };
     myInstallButton.setShortcut(CommonShortcuts.getNew());
