@@ -90,12 +90,13 @@ object JaegerJsonSpanExporterManager {
 
   suspend fun setOutput(file: Path, addShutDownHook: Boolean = true) {
     jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file = file, serviceName = "build"))?.shutdown()
-    if (shutdownHookAdded.compareAndSet(false, true)) {
-      Runtime.getRuntime().addShutdownHook(Thread({
-                                                    runBlocking {
-                                                      TraceManager.shutdown()
-                                                    }
-                                                  }, "close tracer"))
+    if (addShutDownHook && shutdownHookAdded.compareAndSet(false, true)) {
+      Runtime.getRuntime().addShutdownHook(
+        Thread({
+                 runBlocking {
+                   TraceManager.shutdown()
+                 }
+               }, "close tracer"))
     }
   }
 }
