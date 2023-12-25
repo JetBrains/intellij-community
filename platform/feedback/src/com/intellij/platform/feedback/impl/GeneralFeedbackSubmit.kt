@@ -4,6 +4,7 @@ package com.intellij.platform.feedback.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCollector
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
@@ -118,6 +119,7 @@ private fun sendFeedback(feedbackUrl: String,
                          feedbackData: FeedbackRequestDataHolder,
                          onDone: () -> Unit,
                          onError: () -> Unit) {
+  FeedbackSendActionCountCollector.logFeedbackSendSuccess()
   val requestData = feedbackData.toJsonObject().toString()
 
   try {
@@ -136,6 +138,7 @@ private fun sendFeedback(feedbackUrl: String,
             LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nStatus code:${connection.responseCode}\n" +
                      "Server response:${errorResponse}\nRequest ID:${requestId}")
             onError()
+            FeedbackSendActionCountCollector.logFeedbackSendFail()
             return@connect
           }
 
@@ -150,6 +153,7 @@ private fun sendFeedback(feedbackUrl: String,
                    "Server response:\n$errorResponse\n" +
                    "Exception: ${e.stackTraceToString()}")
           onError()
+          FeedbackSendActionCountCollector.logFeedbackSendFail()
           return@connect
         }
         onDone()
@@ -158,6 +162,7 @@ private fun sendFeedback(feedbackUrl: String,
   catch (e: IOException) {
     LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nError message:\n${e.message}")
     onError()
+    FeedbackSendActionCountCollector.logFeedbackSendFail()
     return
   }
 }
