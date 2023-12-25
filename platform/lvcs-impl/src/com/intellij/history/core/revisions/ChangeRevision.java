@@ -77,7 +77,7 @@ public final class ChangeRevision extends Revision {
     RootEntry rootCopy = myRoot.copy();
 
     boolean revertThis = myBefore;
-    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis, true);
+    String path = myFacade.revertUpToChange(rootCopy, myChangeToRevert, myEntryPath, revertThis, true);
 
     return rootCopy.findEntry(path);
   }

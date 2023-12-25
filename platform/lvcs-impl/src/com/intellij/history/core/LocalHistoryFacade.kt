@@ -113,7 +113,7 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
 
   private fun getByteContentBefore(root: RootEntry, path: String, change: Change): ByteContent {
     val rootCopy = root.copy()
-    val newPath = revertUpTo(rootCopy, path, null, change, false, false)
+    val newPath = revertUpToChange(rootCopy, change, path, false, false)
     val entry = rootCopy.findEntry(newPath)
     if (entry == null) return ByteContent(false, null)
     if (entry.isDirectory) return ByteContent(true, null)
@@ -140,41 +140,33 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
 
   fun accept(v: ChangeVisitor) = changeList.accept(v)
 
-  fun revertUpTo(root: RootEntry,
-                 path: String,
-                 targetChangeSet: ChangeSet?,
-                 targetChange: Change?,
-                 revertTargetChange: Boolean,
-                 warnOnFileNotFound: Boolean): String {
+  fun revertUpToChangeSet(root: RootEntry, targetChangeSet: ChangeSet, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
-    changeList.accept(object : ChangeVisitor() {
-      @Throws(StopVisitingException::class)
-      override fun begin(c: ChangeSet) {
-        if (!revertTargetChange && c == targetChangeSet) stop()
-      }
-
-      @Throws(StopVisitingException::class)
-      override fun end(c: ChangeSet) {
-        if (c == targetChangeSet) stop()
-      }
-
-      @Throws(StopVisitingException::class)
-      override fun visit(c: PutLabelChange) {
-        if (c == targetChange) stop()
-      }
-
-      @Throws(StopVisitingException::class)
-      override fun visit(c: StructuralChange) {
-        if (!revertTargetChange && c == targetChange) stop()
-
-        if (c.affectsPath(entryPath)) {
-          c.revertOn(root, warnOnFileNotFound)
-          entryPath = c.revertPath(entryPath)
+    for (changeSet in changes) {
+      if (!revertTarget && changeSet == targetChangeSet) break
+      for (change in changeSet.changes.reversed()) {
+        if (change is StructuralChange && change.affectsPath(entryPath)) {
+          change.revertOn(root, warnOnFileNotFound)
+          entryPath = change.revertPath(entryPath)
         }
-        if (c == targetChange) stop()
       }
-    })
+      if (revertTarget && changeSet == targetChangeSet) break
+    }
+    return entryPath
+  }
 
+  fun revertUpToChange(root: RootEntry, targetChange: Change, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
+    var entryPath = path
+    changeSetLoop@ for (changeSet in changes) {
+      for (change in changeSet.changes.reversed()) {
+        if (!revertTarget && change == targetChange) break@changeSetLoop
+        if (change is StructuralChange && change.affectsPath(entryPath)) {
+          change.revertOn(root, warnOnFileNotFound)
+          entryPath = change.revertPath(entryPath)
+        }
+        if (revertTarget && change == targetChange) break@changeSetLoop
+      }
+    }
     return entryPath
   }
 
