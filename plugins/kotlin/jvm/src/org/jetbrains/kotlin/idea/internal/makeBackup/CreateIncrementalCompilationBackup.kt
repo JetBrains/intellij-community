@@ -70,7 +70,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
             val gateway = localHistoryImpl.gateway!!
             val localHistoryFacade = localHistoryImpl.facade
 
-            val revisionsCollector = RevisionsCollector(
+            val revisions = RevisionsCollector.collect(
                 localHistoryFacade,
                 gateway.createTransientRootEntry(),
                 project.baseDir!!.path,
@@ -83,7 +83,6 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
             val patchesDir = File(backupDir, "patches")
             patchesDir.mkdirs()
 
-            val revisions = revisionsCollector.result
             for (rev in revisions) {
                 val label = rev.label
                 if (label != null && label.startsWith(HISTORY_LABEL_PREFIX)) {

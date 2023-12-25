@@ -27,35 +27,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RevisionsCollector {
-  private final LocalHistoryFacade myFacade;
-  private final RootEntry myRoot;
-  private final String myProjectId;
-  private final @NotNull String myPath;
-  private final String myPattern;
-  private final boolean myBefore;
-
-  private final List<Revision> myResult = new ArrayList<>();
-
-  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern, boolean before) {
-    myPath = path;
-    myFacade = facade;
-    myRoot = rootEntry;
-    myProjectId = projectId;
-    myPattern = pattern;
-    myBefore = before;
+  public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
+                                                RootEntry rootEntry,
+                                                @NotNull String path,
+                                                String projectId,
+                                                @Nullable String pattern) {
+    return collect(facade, rootEntry, path, projectId, pattern, true);
   }
 
-  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
-    this(facade, rootEntry, path, projectId, pattern, true);
-  }
-
-  public @NotNull List<Revision> getResult() {
+  public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
+                                                RootEntry rootEntry,
+                                                @NotNull String path,
+                                                String projectId,
+                                                @Nullable String pattern,
+                                                boolean before) {
+    List<Revision> result = new ArrayList<>();
     // todo optimize to not collect all change sets + do not process changes twice
-    ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
-    myFacade.accept(v);
+    ChangeCollectingVisitor v = new ChangeCollectingVisitor(path, projectId, pattern);
+    facade.accept(v);
     for (ChangeSet c : v.getChanges()) {
-      myResult.add(new ChangeRevision(myFacade, myRoot, myPath, c, myBefore));
+      result.add(new ChangeRevision(facade, rootEntry, path, c, before));
     }
-    return myResult;
+    return result;
   }
 }

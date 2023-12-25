@@ -59,7 +59,7 @@ private fun collectRevisionItems(project: Project,
                                  path: String,
                                  filter: String?,
                                  before: Boolean): List<RevisionItem> {
-  return mergeLabelsWithRevisions(RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result)
+  return mergeLabelsWithRevisions(RevisionsCollector.collect(facade, root, path, project.getLocationHash(), filter, before))
 }
 
 private fun mergeLabelsWithRevisions(revisions: List<Revision>): List<RevisionItem> {

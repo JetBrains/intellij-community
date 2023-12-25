@@ -157,7 +157,7 @@ public abstract class LocalHistoryTestCase extends Assert {
 
   public static @NotNull List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
     CurrentRevision currentRevision = new CurrentRevision(root, path);
-    List<Revision> revisions = new RevisionsCollector(facade, root, path, projectId, pattern).getResult();
+    List<Revision> revisions = RevisionsCollector.collect(facade, root, path, projectId, pattern);
     return ContainerUtil.concat(Arrays.asList(currentRevision), revisions);
   }
 
