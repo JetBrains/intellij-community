@@ -17,6 +17,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.max
 
+private const val iconTextUnscaledGap: Int = 4
+
 /**
  * RendererPanelsUtils and panels like [IconCompOptionalCompPanel] etc are dedicated to build
  * standard simple renderers, which should cover most single-lined cases. Below are the reasons why use renderers from this file:
@@ -41,12 +43,12 @@ import kotlin.math.max
 class RendererPanelsUtils {
 
   companion object {
-    internal const val iconTextUnscaledGap: Int = 4
 
     /**
      * Gap between icon and related text. Can be extracted into a separate UI constant later if needed
      */
     @JvmStatic
+    @Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt#listCellRenderer")
     val iconTextGap: Int get() = JBUI.scale(iconTextUnscaledGap)
 
   }
@@ -87,7 +89,7 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
     stripHorizontalInsets(center)
 
     createBuilder()
-      .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = RendererPanelsUtils.iconTextUnscaledGap))
+      .cell(iconLabel, baselineAlign = false, gaps = UnscaledGaps(right = iconTextUnscaledGap))
       .cell(center, resizableColumn = true)
   }
 }

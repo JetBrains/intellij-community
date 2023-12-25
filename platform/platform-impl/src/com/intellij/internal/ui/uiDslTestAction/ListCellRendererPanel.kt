@@ -123,27 +123,6 @@ internal class ListCellRendererPanel {
         cell(renderer.getListCellRendererComponent(JBList(), "Some text", 0, false, false) as JComponent)
       }
     }
-
-    group("Legacy") {
-      row {
-        jbList((1..100).map { "Item $it" }, com.intellij.ui.dsl.builder.listCellRenderer { text = it })
-
-        panel {
-          row("Few items:") {
-            comboBox(listOf("First", "Second", "Try with y", "Try with ()"), com.intellij.ui.dsl.builder.listCellRenderer { text = it })
-          }
-          row("Items with icon:") {
-            comboBox((1..100).map { "Item $it" }, SimpleListCellRenderer.create { label, value, index ->
-              label.icon = if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear
-              label.text = value
-            })
-          }
-          row("Long items:") {
-            comboBox((1..100).map { "$it " + "Item".repeat(10) }, com.intellij.ui.dsl.builder.listCellRenderer { text = it }).component
-          }
-        }.align(Align.FILL)
-      }
-    }
   }
 
   private fun <T> Row.jbList(items: List<T>, renderer: ListCellRenderer<T>): Cell<JBScrollPane> {

@@ -22,6 +22,8 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
@@ -381,11 +383,13 @@ interface Row {
 
   /**
    * @see listCellRenderer
+   * @see textListCellRenderer
    */
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   /**
    * @see listCellRenderer
+   * @see textListCellRenderer
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -130,6 +131,8 @@ data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? =
 
 fun UINumericRange.asRange(): IntRange = min..max
 
+@Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer instead")
+@ApiStatus.ScheduledForRemoval
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): SimpleListCellRenderer<T> {
   return object : SimpleListCellRenderer<T>() {
     override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {

@@ -14,7 +14,7 @@ internal annotation class LcrDslMarker
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
- * * Grey color has different color in selected state
+ * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
  *
