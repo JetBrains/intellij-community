@@ -26,17 +26,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RevisionsCollector extends ChangeSetsProcessor {
+public final class RevisionsCollector {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
   private final String myProjectId;
+  private final @NotNull String myPath;
   private final String myPattern;
   private final boolean myBefore;
 
   private final List<Revision> myResult = new ArrayList<>();
 
   public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern, boolean before) {
-    super(path);
+    myPath = path;
     myFacade = facade;
     myRoot = rootEntry;
     myProjectId = projectId;
@@ -49,24 +50,12 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
   }
 
   public @NotNull List<Revision> getResult() {
-    process();
-    return myResult;
-  }
-
-  @Override
-  protected List<ChangeSet> collectChanges() {
     // todo optimize to not collect all change sets + do not process changes twice
     ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
     myFacade.accept(v);
-    return v.getChanges();
-  }
-
-  @Override
-  protected void nothingToVisit() {
-  }
-
-  @Override
-  protected void visit(ChangeSet changeSet) {
-    myResult.add(new ChangeRevision(myFacade, myRoot, myPath, changeSet, myBefore));
+    for (ChangeSet c : v.getChanges()) {
+      myResult.add(new ChangeRevision(myFacade, myRoot, myPath, c, myBefore));
+    }
+    return myResult;
   }
 }

@@ -23,8 +23,8 @@ import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,15 +33,16 @@ import java.util.List;
 // correct number of timestamps for each possible revision for comparator.
 // Therefore we have to move along the changelist, revert only content changes
 // and record file and changeset timestamps to call comparator with.
-public final class ByteContentRetriever extends ChangeSetsProcessor {
+public final class ByteContentRetriever {
   private final LocalHistoryFacade myVcs;
   private final FileRevisionTimestampComparator myComparator;
+  private final @NotNull String myPath;
 
   private long myCurrentFileTimestamp;
   private Content myCurrentFileContent;
 
   public ByteContentRetriever(IdeaGateway gateway, LocalHistoryFacade vcs, VirtualFile file, FileRevisionTimestampComparator c) {
-    super(file.getPath());
+    myPath = file.getPath();
     myVcs = vcs;
     myComparator = c;
 
@@ -51,47 +52,37 @@ public final class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
   public byte[] getResult() {
-    try {
-      checkCurrentRevision(); // optimization: do not collect changes if current revision will do
-      process();
-    }
-    catch (ContentFoundException ignore) {
+    // optimization: do not collect changes if current revision will do
+    if (myComparator.isSuitable(myCurrentFileTimestamp)) {
       return myCurrentFileContent.getBytesIfAvailable();
+    }
+
+    List<ChangeSet> changes = collectChanges();
+
+    if (changes.isEmpty() && myComparator.isSuitable(myCurrentFileTimestamp)) {
+      // visit current version
+      return myCurrentFileContent.getBytesIfAvailable();
+    }
+
+    for (ChangeSet c : changes) {
+      if (myComparator.isSuitable(myCurrentFileTimestamp)) {
+        return myCurrentFileContent.getBytesIfAvailable();
+      }
+      recordContentAndTimestamp(c);
     }
 
     return null;
   }
 
-  @Override
-  protected List<ChangeSet> collectChanges() {
-    final List<ChangeSet> result = new ArrayList<>();
-
+  private @NotNull List<ChangeSet> collectChanges() {
+    List<ChangeSet> changes = new ArrayList<>();
     myVcs.accept(new ChangeVisitor() {
       @Override
       public void begin(ChangeSet c) {
-        if (c.affectsPath(myPath)) result.add(c);
+        if (c.affectsPath(myPath)) changes.add(c);
       }
     });
-
-    return result;
-  }
-
-  @Override
-  protected void nothingToVisit() {
-    // visit current version
-    checkCurrentRevision();
-  }
-
-  @Override
-  public void visit(ChangeSet changeSet) {
-    checkCurrentRevision();
-    recordContentAndTimestamp(changeSet);
-  }
-
-  private void checkCurrentRevision() {
-    if (myComparator.isSuitable(myCurrentFileTimestamp)) {
-      throw new ContentFoundException();
-    }
+    return changes;
   }
 
   private void recordContentAndTimestamp(ChangeSet c) {
@@ -103,9 +94,5 @@ public final class ByteContentRetriever extends ChangeSetsProcessor {
       myCurrentFileTimestamp = cc.getOldTimestamp();
       myCurrentFileContent = cc.getOldContent();
     }
-  }
-
-
-  private static final class ContentFoundException extends RuntimeException {
   }
 }
