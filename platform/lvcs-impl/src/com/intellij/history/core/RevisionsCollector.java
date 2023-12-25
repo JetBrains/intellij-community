@@ -16,10 +16,10 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +42,10 @@ public final class RevisionsCollector {
                                                 @Nullable String pattern,
                                                 boolean before) {
     List<Revision> result = new ArrayList<>();
-    // todo optimize to not collect all change sets + do not process changes twice
-    ChangeCollectingVisitor v = new ChangeCollectingVisitor(path, projectId, pattern);
-    facade.accept(v);
-    for (ChangeSet c : v.getChanges()) {
-      result.add(new ChangeRevision(facade, rootEntry, path, c, before));
-    }
+    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
+      result.add(new ChangeRevision(facade, rootEntry, path, changeSet, before));
+      return Unit.INSTANCE;
+    });
     return result;
   }
 }

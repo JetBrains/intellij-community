@@ -24,14 +24,18 @@ import com.intellij.history.core.tree.RootEntry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.regex.Pattern
 
 open class LocalHistoryFacade(private val changeList: ChangeList) {
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   @get:TestOnly
   val changeListInTests get() = changeList
+  internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
 
   fun beginChangeSet() {
     changeList.beginChangeSet()
@@ -202,4 +206,41 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
     open fun changeAdded(c: Change) = Unit
     open fun changeSetFinished() = Unit
   }
+}
+
+@ApiStatus.Experimental
+fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, patternString: String?, consumer: (ChangeSet) -> Unit) {
+  val pattern = patternString?.let { Pattern.compile(NameUtil.buildRegexp(it, 0, true, true), Pattern.CASE_INSENSITIVE) }
+
+  val processedChangesSets = mutableSetOf<Long>()
+  val processChangeSet = fun(changeSet: ChangeSet, change: Change, changePath: String) {
+    if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, pattern)) {
+      processedChangesSets.add(changeSet.id)
+      consumer(changeSet)
+    }
+  }
+
+  var path = startPath
+  var pathExists = true
+  for (changeSet in changes) {
+    for (change in changeSet.changes.reversed()) {
+      if (!pathExists) {
+        if (change is StructuralChange) path = change.revertPath(path)
+        if (change is DeleteChange && change.isDeletionOf(path)) {
+          processChangeSet(changeSet, change, path)
+          pathExists = true
+        }
+      } else {
+        processChangeSet(changeSet, change, path)
+        if (change is StructuralChange) path = change.revertPath(path)
+        if (change is CreateEntryChange && change.isCreationalFor(path)) pathExists = false
+      }
+    }
+  }
+}
+
+fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean {
+  if (!affectsPath(path) && !affectsProject(projectId)) return false
+  if (pattern != null && !affectsMatching(pattern)) return false
+  return true
 }
