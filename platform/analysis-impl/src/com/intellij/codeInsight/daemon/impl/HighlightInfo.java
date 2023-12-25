@@ -464,6 +464,7 @@ public class HighlightInfo implements Segment {
            info.startOffset == startOffset &&
            info.endOffset == endOffset &&
            Comparing.equal(info.type, type) &&
+           Comparing.equal(info.toolId, toolId) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
            Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
