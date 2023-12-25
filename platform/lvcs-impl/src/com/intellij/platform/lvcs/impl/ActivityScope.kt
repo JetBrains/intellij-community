@@ -27,6 +27,7 @@ val ActivityScope.presentableName: String
   get() {
     return when (this) {
       is ActivityScope.Recent -> LocalHistoryBundle.message("activity.recent.tab.title")
+      is ActivityScope.Selection -> file.presentableName + " " + from + ":" + to
       is ActivityScope.File -> file.presentableName
     }
   }
