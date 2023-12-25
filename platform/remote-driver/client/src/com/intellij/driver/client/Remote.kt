@@ -17,12 +17,13 @@ annotation class Remote(
   val value: String,
 
   /**
-   * Fully qualified name of service class in the IDE under test if differs from target class.
+   * Fully qualified name of service class in the IDE under test, use only if differs from target class.
    */
   val serviceInterface: String = "",
 
   /**
    * Identifier of a plugin where the class is located, e.g. `com.intellij.spring`.
+   * If the class is declared in a module of a plugin (not main), use the following format: `some.plugin.id/some.plugin.id.submodule`.
    */
   val plugin: String = ""
 )
