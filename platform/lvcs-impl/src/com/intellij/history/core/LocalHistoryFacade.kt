@@ -113,7 +113,7 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
 
   private fun getByteContentBefore(root: RootEntry, path: String, change: Change): ByteContent {
     val rootCopy = root.copy()
-    val newPath = revertUpToChange(rootCopy, change, path, false, false)
+    val newPath = revertUpToChange(rootCopy, change.id, path, false, false)
     val entry = rootCopy.findEntry(newPath)
     if (entry == null) return ByteContent(false, null)
     if (entry.isDirectory) return ByteContent(true, null)
@@ -140,31 +140,31 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
 
   fun accept(v: ChangeVisitor) = changeList.accept(v)
 
-  fun revertUpToChangeSet(root: RootEntry, targetChangeSet: ChangeSet, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
+  fun revertUpToChangeSet(root: RootEntry, changeSetId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     for (changeSet in changes) {
-      if (!revertTarget && changeSet == targetChangeSet) break
+      if (!revertTarget && changeSet.id == changeSetId) break
       for (change in changeSet.changes.reversed()) {
         if (change is StructuralChange && change.affectsPath(entryPath)) {
           change.revertOn(root, warnOnFileNotFound)
           entryPath = change.revertPath(entryPath)
         }
       }
-      if (revertTarget && changeSet == targetChangeSet) break
+      if (revertTarget && changeSet.id == changeSetId) break
     }
     return entryPath
   }
 
-  fun revertUpToChange(root: RootEntry, targetChange: Change, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
+  fun revertUpToChange(root: RootEntry, changeId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     changeSetLoop@ for (changeSet in changes) {
       for (change in changeSet.changes.reversed()) {
-        if (!revertTarget && change == targetChange) break@changeSetLoop
+        if (!revertTarget && change.id == changeId) break@changeSetLoop
         if (change is StructuralChange && change.affectsPath(entryPath)) {
           change.revertOn(root, warnOnFileNotFound)
           entryPath = change.revertPath(entryPath)
         }
-        if (revertTarget && change == targetChange) break@changeSetLoop
+        if (revertTarget && change.id == changeId) break@changeSetLoop
       }
     }
     return entryPath
