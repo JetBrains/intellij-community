@@ -12,14 +12,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
 abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(
@@ -79,11 +76,7 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
      * @param element is a non-physical [PsiElement]
      */
     final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
-        val containingFile = element.containingFile
-        val physicalKtFile = containingFile.originalFile as KtFile
-        val analyzeContext = analyzeInDependedAnalysisSession(physicalKtFile, element) {
-            invokeContext(element)
-        } ?: return
+        val analyzeContext = analyze(element) { invokeContext(element) } ?: return
         apply(element, AnalysisActionContext(analyzeContext, context), updater)
     }
 

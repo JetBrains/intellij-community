@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -69,33 +68,15 @@ fun shortenReferencesInRange(
     return shortenCommand.invokeShortening().firstOrNull()
 }
 
-@OptIn(KtAllowAnalysisOnEdt::class)
 fun shortenReferencesInRange(
-    elementToReanalyze: KtElement,
-    range: TextRange = elementToReanalyze.containingFile.originalFile.textRange,
+    element: KtElement,
+    range: TextRange = element.containingFile.originalFile.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
     classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
-    val ktFile = elementToReanalyze.containingFile as KtFile
-    val originalFile = ktFile.originalFile as KtFile
-    val shortenCommand =
-        if (!elementToReanalyze.isPhysical && originalFile.isPhysical) {
-            analyzeInDependedAnalysisSession(originalFile, elementToReanalyze) {
-                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
-            }
-        } else {
-            allowAnalysisOnEdt {
-                @OptIn(KtAllowAnalysisFromWriteAction::class)
-                allowAnalysisFromWriteAction {
-                    analyze(ktFile) {
-                        collectPossibleReferenceShortenings(ktFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
-                    }
-                }
-            }
-        }
-
-    return shortenCommand.invokeShortening().firstOrNull()
+    val ktFile = element.containingKtFile
+    return shortenReferencesInRange(ktFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }
 
 /**
