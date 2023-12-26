@@ -271,7 +271,7 @@ open class JBTabsImpl(private var project: Project?,
   protected open fun createTabPainterAdapter(): TabPainterAdapter = DefaultTabPainterAdapter(DEFAULT)
 
   private var tabLabelAtMouse: TabLabel? = null
-  private val scrollBar: JBScrollBar
+  protected val scrollBar: JBScrollBar
   private val scrollBarChangeListener: ChangeListener
   private var scrollBarOn = false
 
