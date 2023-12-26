@@ -33,6 +33,11 @@
                             implementationClass="com.intellij.python.community.impl.requirements.RequirementsPackageNameCompletionContributor"/>
     <completion.contributor language="Requirements"
                             implementationClass="com.intellij.python.community.impl.requirements.RequirementsVersionCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.intellij.python.community.impl.requirements.PoetryDependencyPackageNameCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.intellij.python.community.impl.requirements.PoetryDependencyVersionCompletionContributor"/>
+
   </extensions>
 
   <!-- Poetry. Can't extract module due to circular dependency between it and community.impl--> -->

@@ -18,14 +18,7 @@ class RequirementsPackageNameCompletionContributor : CompletionContributor() {
     val project = position.project
 
     if (parent is com.intellij.python.community.impl.requirements.psi.SimpleName) {
-      val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
-      val packages = repositoryManager.allPackages()
-      val maxPriority = packages.size
-      packages.asSequence().map {
-        LookupElementBuilder.create(it.lowercase()).withIcon(PythonIcons.Python.Python)
-      }.mapIndexed { index, lookupElementBuilder ->
-        PrioritizedLookupElement.withPriority(lookupElementBuilder, (maxPriority - index).toDouble())
-      }.forEach { result.addElement(it) }
+      completePackageNames(project, result)
     }
   }
 }
