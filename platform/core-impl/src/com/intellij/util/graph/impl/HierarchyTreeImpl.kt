@@ -23,7 +23,8 @@ class HierarchyTreeImpl<N : Any, GN : N> : HierarchyTree<N, GN> {
   private val nodes2ParentGroupsMap = mutableMapOf<N, GN>()
   private val groupNodes2Children = mutableMapOf<GN, MutableSet<N>>()
 
-  override fun getAllHierarchyNodes(): Set<N> = hierarchyNodes
+  override val allHierarchyNodes: Set<N>
+    get() = hierarchyNodes
 
   override fun getParent(node: N): GN? {
     return nodes2ParentGroupsMap[node]
@@ -41,6 +42,16 @@ class HierarchyTreeImpl<N : Any, GN : N> : HierarchyTree<N, GN> {
       }
     }
     return children
+  }
+
+  override fun getDepth(node: N): Int {
+    var depth = 0
+    var parent = getParent(node)
+    while (parent != null) {
+      depth++
+      parent = getParent(parent)
+    }
+    return depth
   }
 
   override fun connect(child: N, parent: GN) {

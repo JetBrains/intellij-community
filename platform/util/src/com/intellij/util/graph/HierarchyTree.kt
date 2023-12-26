@@ -29,7 +29,7 @@ interface HierarchyTree<N : Any, GN : N> {
    *
    * @return The set containing all the hierarchy nodes in the hierarchy tree.
    */
-  fun getAllHierarchyNodes(): Set<N>
+  val allHierarchyNodes: Set<N>
 
   /**
    * Retrieves the parent node of the given node.
@@ -48,6 +48,14 @@ interface HierarchyTree<N : Any, GN : N> {
    * @return The set of children nodes of the given group node.
    */
   fun getChildren(group: GN, isRecursively: Boolean = false): Set<N>
+
+  /**
+   * Retrieves the depth of the given node in the hierarchy tree.
+   *
+   * @param node The node for which to retrieve the depth.
+   * @return The depth of the given node in the hierarchy tree.
+   */
+  fun getDepth(node: N): Int
 
   /**
    * Connects a child node to a parent group node in the hierarchy tree.
