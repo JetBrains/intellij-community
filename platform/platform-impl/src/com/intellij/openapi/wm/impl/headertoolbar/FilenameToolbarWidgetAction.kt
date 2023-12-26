@@ -141,7 +141,7 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
       isOpaque = false
       leftIcons = listOf(presentation.icon)
       foreground = presentation.getClientProperty(FILE_COLOR)
-      text = presentation.text
+      text = presentation.textWithMnemonic
       toolTipText = presentation.description
       if (text.isNullOrEmpty()) {
         // A trick to avoid flashing the "unknown" icon on the toolbar during initialization,
