@@ -43,6 +43,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractMoveTest : AbstractMultifileRefactoringTest() {
+    override fun isEnabled(config: JsonObject): Boolean = config.getString("enabledInK1").toBooleanStrict()
+
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runMoveRefactoring(path, config, rootDir, project)
     }

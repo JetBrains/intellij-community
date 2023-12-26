@@ -4,5 +4,6 @@
   "methodToMove": "foo",
   "targetObject": "b.B",
   "outerInstanceParameter": "a",
+  "enabledInK1": "true",
   "enabledInK2": "false"
 }

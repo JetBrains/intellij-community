@@ -3,5 +3,6 @@
   "type": "MOVE_KOTLIN_NESTED_CLASS",
   "targetClass": "test.B",
   "withRuntime": "true",
-  "enableInK2": "false"
+  "enabledInK1": "true",
+  "enabledInK2": "false"
 }

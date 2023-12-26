@@ -4,5 +4,6 @@
   "targetPackage": "a",
   "outerInstanceParameterName": "outer",
   "withRuntime": "true",
+  "enabledInK1": "true",
   "enabledInK2": "true"
 }

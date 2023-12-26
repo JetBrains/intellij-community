@@ -2,5 +2,6 @@
   "mainFile": "a/main.java",
   "type": "MOVE_INNER_CLASS",
   "targetPackage": "a",
+  "enabledInK1": "true",
   "enabledInK2": "true"
 }

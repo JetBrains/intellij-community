@@ -3,5 +3,6 @@
   "type": "MOVE_MEMBERS",
   "targetClass": "B",
   "visibility": "private",
+  "enabledInK1": "true",
   "enabledInK2": "true"
 }

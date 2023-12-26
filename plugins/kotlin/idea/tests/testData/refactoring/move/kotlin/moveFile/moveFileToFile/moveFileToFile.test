@@ -3,5 +3,6 @@
   "mainFile": "test.txt",
   "type": "MOVE_FILES",
   "targetFile": "test.xml",
+  "enabledInK1": "true",
   "enabledInK2": "true"
 }
