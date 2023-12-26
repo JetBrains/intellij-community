@@ -9,11 +9,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.function.Supplier;
 
 public interface CustomComponentAction {
   Key<JComponent> COMPONENT_KEY = Key.create("customComponent");
-  Key<@NotNull Supplier<? extends @NotNull Dimension>> MINIMAL_DEMENTION_SUPPLIER = Key.create("minimalDementionSupplier");
   Key<AnAction> ACTION_KEY = Key.create("customComponentAction");
 
   /**

@@ -138,7 +138,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
-  private Supplier<? extends Dimension> myMinimumButtonSizeFunction = Dimension::new;
+  private Supplier<? extends Dimension> myMinimumButtonSizeSupplier = Dimension::new;
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   /** @see ActionToolbar#getLayoutPolicy() */
@@ -526,7 +526,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      presentation.putClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER, myMinimumButtonSizeFunction);
       customComponent = createCustomComponent((CustomComponentAction)action, presentation);
       if (customComponent.getParent() != null && customComponent.getClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING) == null) {
         customComponent.putClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING, true);
@@ -633,7 +632,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       action,
       getActionButtonLook(),
       myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSizeFunction);
+      myMinimumButtonSizeSupplier);
   }
 
   protected @Nullable ActionButtonLook getActionButtonLook() {
@@ -1271,25 +1270,29 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setMinimumButtonSize(final @NotNull Dimension size) {
+  public void setMinimumButtonSize(@NotNull Dimension size) {
     setMinimumButtonSize(() -> size);
   }
 
-  public void setMinimumButtonSize(final Supplier<? extends @NotNull Dimension> size) {
-    myMinimumButtonSizeFunction = size;
+  public void setMinimumButtonSize(@NotNull Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeSupplier = size;
     updateMinimumButtonSize();
     revalidate();
   }
 
+  public @NotNull Supplier<? extends @NotNull Dimension> getMinimumButtonSizeSupplier() {
+    return myMinimumButtonSizeSupplier;
+  }
+
   private void updateMinimumButtonSize() {
-    if (myMinimumButtonSizeFunction == null) {
+    if (myMinimumButtonSizeSupplier == null) {
       return; // called from the superclass constructor through updateUI()
     }
-    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get(), true);
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeSupplier.get(), true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton button) {
-        button.setMinimumButtonSize(myMinimumButtonSizeFunction);
+        button.setMinimumButtonSize(myMinimumButtonSizeSupplier);
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {
         Dimension dimension = new Dimension();
