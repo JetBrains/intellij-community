@@ -17,5 +17,9 @@
                             implementationClass="com.jetbrains.python.requirements.RequirementsPackageNameCompletionContributor"/>
     <completion.contributor language="Requirements"
                             implementationClass="com.jetbrains.python.requirements.RequirementsVersionCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.requirements.PoetryDependencyPackageNameCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.requirements.PoetryDependencyVersionCompletionContributor"/>
   </extensions>
 </idea-plugin>
