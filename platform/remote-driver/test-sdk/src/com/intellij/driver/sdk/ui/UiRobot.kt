@@ -7,7 +7,11 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
 import java.awt.Point
 
-fun Driver.ui(): UiRobot = UiRobot(this, service(RobotService::class))
+/**
+ * Provides access to UI actions with the IDE under test such as keyboard and mouse input.
+ */
+val Driver.ui
+  get(): UiRobot = UiRobot(this, service(RobotService::class))
 
 class UiRobot(override val driver: Driver, override val robotService: RobotService) : WithKeyboard, Finder {
 
@@ -39,6 +43,7 @@ class UiRobot(override val driver: Driver, override val robotService: RobotServi
 
   override val searchContext: SearchContext = object : SearchContext {
     override val context = "root"
+
     override fun findAll(xpath: String): List<Component> {
       return robotService.findAll(xpath)
     }

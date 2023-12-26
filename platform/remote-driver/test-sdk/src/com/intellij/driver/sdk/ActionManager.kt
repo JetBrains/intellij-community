@@ -8,7 +8,6 @@ import java.awt.event.InputEvent
 
 @Remote(value = "com.intellij.openapi.actionSystem.ActionManager")
 interface ActionManager {
-  fun getInstance(): ActionManager
   fun getAction(actionId: String): AnAction
 
   fun tryToExecute(action: AnAction,

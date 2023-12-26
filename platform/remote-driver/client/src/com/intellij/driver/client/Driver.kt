@@ -73,7 +73,7 @@ interface Driver : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
   /**
-   * Forcefully exits the application
+   * Forcefully exits the application.
    */
   fun exitApplication()
 
