@@ -114,13 +114,17 @@ internal class SoftwareBillOfMaterialsImpl(
 
   private val DistributionForOsTaskResult.files: List<Path>
     get() = when (builder.targetOs) {
-      OsFamily.LINUX -> sequenceOf(".tar.gz")
-      OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip")
-      OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip")
+      // Android Studio (b/316417922): add support for "-no-jbr" artifacts.
+      OsFamily.LINUX -> sequenceOf(".tar.gz", "-no-jbr.tar.gz")
+      OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip", ".mac.${arch.name}-no-jdk.zip")
+      OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip", "-no-jbr.win.zip")
     }.map { extension ->
       context.productProperties.getBaseArtifactName(context) +
-      OsSpecificDistributionBuilder.suffix(arch) +
-      extension
+      // Android Studio (b/316417922): the arch for Mac is already added above; it should not be added here.
+      when (builder.targetOs) {
+        OsFamily.MACOS -> extension
+        else -> OsSpecificDistributionBuilder.suffix(arch) + extension
+      }
     }.plus(
       when {
         builder is LinuxDistributionBuilder -> builder.snapArtifactName
