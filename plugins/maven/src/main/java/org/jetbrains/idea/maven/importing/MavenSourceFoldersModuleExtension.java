@@ -93,7 +93,8 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
                 eachFolder.getJpsElement().getProperties((JavaSourceRootType)eachFolder.getRootType());
 
               if (javaSourceRootProperties != null && jpsJavaSourceRootProperties != null) {
-                javaSourceRootProperties.applyChanges(jpsJavaSourceRootProperties);
+                javaSourceRootProperties.setPackagePrefix(jpsJavaSourceRootProperties.getPackagePrefix());
+                javaSourceRootProperties.setForGeneratedSources(jpsJavaSourceRootProperties.isForGeneratedSources());
               }
             }
 
