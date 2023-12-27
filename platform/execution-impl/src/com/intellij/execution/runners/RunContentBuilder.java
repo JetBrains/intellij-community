@@ -35,14 +35,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
-import static com.intellij.util.containers.ContainerUtil.filter;
 
 /**
  * Responsible for building the content of the Run or Debug tool window.
@@ -240,7 +238,7 @@ public final class RunContentBuilder extends RunTab {
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
     AnAction[] mainChildren = toolbarGroup.getChildren(null);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    actionGroup.addAll(mainChildren);
+    addAvoidingDuplicates(actionGroup, mainChildren);
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -253,7 +251,7 @@ public final class RunContentBuilder extends RunTab {
       moreGroup = new MoreActionGroup();
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      moreGroup.addAll(removeDuplicatesExceptSeparators(moreActionGroup.getChildren(null), Arrays.asList(mainChildren)));
+      addAvoidingDuplicates(moreGroup, moreActionGroup.getChildren(null), mainChildren);
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
@@ -408,15 +406,31 @@ public final class RunContentBuilder extends RunTab {
                                                @Nullable DefaultActionGroup moreGroup) {
     for (AnAction action : ContainerUtil.reverse(actions)) {
       if (moreGroup != null && action.getTemplatePresentation().getClientProperty(PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
-        moreGroup.add(action);
-      } else {
-        actionGroup.add(action, constraints);
+        addAvoidingDuplicates(moreGroup, new AnAction[]{action}, Constraints.LAST, AnAction.EMPTY_ARRAY);
+      }
+      else {
+        addAvoidingDuplicates(actionGroup, new AnAction[]{action}, constraints, AnAction.EMPTY_ARRAY);
       }
     }
   }
 
-  public static List<AnAction> removeDuplicatesExceptSeparators(AnAction[] actionsToFilter, Collection<AnAction> mainActions) {
-    HashSet<AnAction> visited = new HashSet<>(mainActions);
-    return filter(actionsToFilter, action -> action instanceof Separator || !visited.contains(action));
+  private static void addAvoidingDuplicates(DefaultActionGroup group,
+                                            AnAction[] actions,
+                                            Constraints constraints,
+                                            AnAction[] existingActions) {
+    HashSet<AnAction> visited = ContainerUtil.newHashSet(existingActions);
+    for (AnAction action : actions) {
+      if (action instanceof Separator || (!visited.contains(action) && !group.containsAction(action))) {
+        group.add(action, constraints);
+      }
+    }
+  }
+
+  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions, AnAction[] existingActions) {
+    addAvoidingDuplicates(group, actions, Constraints.LAST, existingActions);
+  }
+
+  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
+    addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
   }
 }

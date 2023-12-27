@@ -82,13 +82,12 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = headerGroup.getChildren(null).toList()
-    toolbar.addAll(headerActions)
+    val headerActions = headerGroup.getChildren(null)
+    RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
 
     val more = MoreActionGroup()
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    val moreActionsWithoutDuplicates = RunContentBuilder.removeDuplicatesExceptSeparators(moreGroup.getChildren(null), headerActions)
-    more.addAll(moreActionsWithoutDuplicates)
+    RunContentBuilder.addAvoidingDuplicates(more, moreGroup.getChildren(null), headerActions)
     more.addSeparator()
 
     // reversed because it was like this in the original tab
