@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
@@ -23,6 +24,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
 import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
@@ -254,43 +256,48 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
 
     val currentProject = projects.singleOrNull()
-
-    val windowToFocus =
-      if (currentProject != null) {
-        val projectIdeFrame = WindowManager.getInstance().getFrame(currentProject)
-        if (projectIdeFrame == null) {
-          LOG.info("'$actionTitle': No frame yet, nothing to focus")
-          return false
-        }
-        else {
-          projectIdeFrame
-        }
-      }
-      else {
-        val windows = Window.getWindows()
-        if (windows.size != 1) {
-          LOG.info("'$actionTitle': Can't choose a frame to focus. All windows: ${windows.joinToString(", ")}")
-          return false
-        }
-        else {
-          windows.single()
-        }
-      }
-
-    val windowString = "window '${windowToFocus.name}'"
-    if (windowToFocus.isFocusAncestor()) {
-      LOG.info("'$actionTitle': window '$windowString' is already focused")
-      return true
+    return if (currentProject == null) {
+      requestFocusNoProject(actionTitle)
     }
     else {
-      LOG.info("'$actionTitle': Requesting project focus for '$windowString'")
-      ProjectUtil.focusProjectWindow(currentProject, true)
-      if (!windowToFocus.isFocusAncestor()) {
-        LOG.error("Failed to request the focus.")
-        return false
-      }
-      return true
+      requestFocusWithProject(currentProject, actionTitle)
     }
+  }
+
+  private fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
+    val projectIdeFrame = WindowManager.getInstance().getFrame(project)
+    if (projectIdeFrame == null) {
+      LOG.info("$actionTitle: No frame yet, nothing to focus")
+      return false
+    }
+    else {
+      val windowString = "window '${projectIdeFrame.name}'"
+      AppIcon.getInstance().requestFocus(projectIdeFrame)
+      if (projectIdeFrame.isFocusAncestor()) {
+        LOG.info("$actionTitle: Window '$windowString' is already focused")
+        return true
+      }
+      else {
+        LOG.info("$actionTitle: Requesting project focus for '$windowString'")
+        ProjectUtil.focusProjectWindow(project, true)
+        if (!projectIdeFrame.isFocusAncestor()) {
+          LOG.error("Failed to request the focus.")
+          return false
+        }
+        return true
+      }
+    }
+  }
+
+  private fun requestFocusNoProject(actionTitle: String): Boolean {
+    val visibleWindows = Window.getWindows().filter { it.isShowing }
+    if (visibleWindows.size != 1) {
+      LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
+    }
+    visibleWindows.forEach {
+      AppIcon.getInstance().requestFocus(it)
+    }
+    return true
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
