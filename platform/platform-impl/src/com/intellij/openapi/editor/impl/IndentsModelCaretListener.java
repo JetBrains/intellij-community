@@ -49,7 +49,8 @@ public class IndentsModelCaretListener implements CaretListener {
 
   private boolean shouldShowHint(@NotNull IndentGuideDescriptor descriptor) {
     final Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    return myEditor.logicalLineToY(descriptor.startLine) < visibleArea.y;
+    boolean isLineBeforeVisibleArea = myEditor.logicalLineToY(descriptor.startLine) < visibleArea.y;
+    return isLineBeforeVisibleArea && !myEditor.shouldSuppressEditorFragmentHint(descriptor.startLine);
   }
 
   protected @Nullable IndentGuideDescriptor getCaretIndentGuide(final @NotNull CaretEvent event) {

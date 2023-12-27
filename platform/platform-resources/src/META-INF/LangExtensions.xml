@@ -1603,6 +1603,7 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.documentation.render.DocRenderPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.stickyLines.StickyLinesPassFactory"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory"/>

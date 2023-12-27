@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -343,6 +344,9 @@ public final class BraceHighlightingHandler {
         Document document = editor.getDocument();
         int line1 = document.getLineNumber(range.getStartOffset());
         int line2 = document.getLineNumber(range.getEndOffset());
+        if (editor instanceof EditorImpl editorImpl && editorImpl.shouldSuppressEditorFragmentHint(line1)) {
+          return;
+        }
         line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor) + 1);
         range = new TextRange(document.getLineStartOffset(line1), range.getEndOffset());
         LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);

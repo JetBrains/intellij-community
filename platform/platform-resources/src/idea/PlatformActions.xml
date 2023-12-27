@@ -1586,6 +1586,11 @@
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
     </group>
 
+    <group id="EditorStickyLinesSettings" popup="true">
+      <action id="EditorStickyLinesHide" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsHideAction"/>
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorBreadcrumbsSettings" anchor="after"/>
+    </group>
+
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>

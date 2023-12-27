@@ -28,6 +28,7 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +99,24 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
       result.add(new PsiCrumb(pair.first, pair.second, presentation));
     }
 
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<PsiElement> computePsiElements(@NotNull VirtualFile file, @NotNull Document document, int offset) {
+    boolean checkSettings = false;
+    BreadcrumbsProvider defaultInfoProvider = findProvider(file, myProject, true);
+    PsiElement element = findStartElement(document, offset, file, myProject, defaultInfoProvider, checkSettings); // TODO: check settings?
+    if (element == null) return Collections.emptyList();
+    ArrayList<PsiElement> result = new ArrayList<>();
+    while (element != null) {
+      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
+      if (provider != null && provider.acceptElement(element)) {
+        result.add(element);
+      }
+      element = getParent(element, provider);
+      if (element instanceof PsiDirectory) break;
+    }
     return result;
   }
 
