@@ -179,8 +179,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       @NotNull
       @Override
       public String getBaseDirectoryForLibrariesPath() {
-        ModuleBuilder builder = getSelectedBuilder();
-        return StringUtil.notNullize(builder.getContentEntryPath());
+        var builder = getSelectedBuilder();
+        var contentEntryPath = ObjectUtils.doIfNotNull(builder, it -> it.getContentEntryPath());
+        return StringUtil.notNullize(contentEntryPath);
       }
 
       @Override
@@ -311,7 +312,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private boolean isFrameworksMode() {
-    return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
+    return FRAMEWORKS_CARD.equals(myCurrentCard) && Objects.equals(getSelectedBuilder(), myContext.getProjectBuilder());
   }
 
   private @NotNull List<TemplatesGroup> fillTemplatesMap(@NotNull WizardContext context) {
@@ -471,7 +472,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       else {
         myFrameworksPanel.setProviders(providers);
       }
-      getSelectedBuilder().addModuleConfigurationUpdater(myConfigurationUpdater);
+      var selectedModuleBuilder = ObjectUtils.notNull(getSelectedBuilder(), groupModuleBuilder);
+      selectedModuleBuilder.addModuleConfigurationUpdater(myConfigurationUpdater);
 
       showCard(FRAMEWORKS_CARD);
     }
