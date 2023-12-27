@@ -117,7 +117,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
-          myProjectTypeList.setSelectedValue(groupToSelect, true);
+          setSelectedTemplateGroup(groupToSelect);
           try {
             configure.accept(getCustomStep());
           }
@@ -225,6 +225,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     }
 
+    restoreSelection(groups);
+    myTemplatesList.restoreSelection();
+  }
+
+  private void restoreSelection(@NotNull java.util.List<TemplatesGroup> groups) {
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
     LOG.debug("saved groupId=" + groupId);
     if (groupId != null) {
@@ -236,7 +241,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (myProjectTypeList.getSelectedValue() == null) {
       myProjectTypeList.setSelectedIndex(0);
     }
-    myTemplatesList.restoreSelection();
   }
 
   @NotNull
@@ -424,7 +428,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   // new TemplatesGroup selected
   private void projectTypeChanged() {
-    TemplatesGroup group = getSelectedGroup();
+    TemplatesGroup group = getSelectedTemplateGroup();
     if (group == null) {
       return;
     }
@@ -568,8 +572,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return myCustomSteps.get(myCurrentCard);
   }
 
-  private TemplatesGroup getSelectedGroup() {
+  private @Nullable TemplatesGroup getSelectedTemplateGroup() {
     return myProjectTypeList.getSelectedValue();
+  }
+
+  private void setSelectedTemplateGroup(@NotNull TemplatesGroup group) {
+    myProjectTypeList.setSelectedValue(group, true);
   }
 
   @Nullable
@@ -583,7 +591,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (template != null) {
       return myBuilders.get(template);
     }
-    TemplatesGroup group = getSelectedGroup();
+    TemplatesGroup group = getSelectedTemplateGroup();
     if (group == null) return null;
 
     return group.getModuleBuilder();
@@ -593,17 +601,23 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (!FRAMEWORKS_CARD.equals(myCurrentCard)) {
       return Collections.emptyList();
     }
-    else {
-      Collection<ProjectTemplate> templates = myTemplatesMap.get(getSelectedGroup());
-      List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
-      if (nodes.isEmpty()) return templates;
-      final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
-      return ContainerUtil.filter(templates, template -> {
-        if (!(template instanceof ArchivedProjectTemplate)) return true;
-        List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
-        return frameworks.containsAll(selectedFrameworks);
-      });
+    TemplatesGroup group = getSelectedTemplateGroup();
+    if (group == null) {
+      return Collections.emptyList();
     }
+    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+    List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
+    if (nodes.isEmpty()) {
+      return templates;
+    }
+    final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
+    return ContainerUtil.filter(templates, template -> {
+      if (template instanceof ArchivedProjectTemplate archivedTemplate) {
+        Set<String> frameworks = new HashSet<>(archivedTemplate.getFrameworks());
+        return frameworks.containsAll(selectedFrameworks);
+      }
+      return true;
+    });
   }
 
   @Override
@@ -733,7 +747,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       @Override
       public void onSuccess() {
         super.onSuccess();
-        TemplatesGroup group = getSelectedGroup();
+        TemplatesGroup group = getSelectedTemplateGroup();
         if (group == null) return;
         Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
         setTemplatesList(group, templates, true);
@@ -755,7 +769,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     ModuleBuilder builder = getSelectedBuilder();
-    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedTemplateGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
 
     myContext.setProjectBuilder(builder);
     if (builder != null) {
@@ -787,7 +801,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       if (group.equals(templatesGroup.getName())) {
         myProjectTypeList.setSelectedIndex(i);
         if (name == null) {
-          return getSelectedGroup().getName().equals(group);
+          return myProjectTypeList.getSelectedValue().getName().equals(group);
         }
         else {
           setTemplatesList(templatesGroup, myTemplatesMap.get(templatesGroup), false);
@@ -845,7 +859,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private void reportStatistics(String eventId) {
-    TemplatesGroup group = myProjectTypeList.getSelectedValue();
+    TemplatesGroup group = getSelectedTemplateGroup();
     if (group == null) return;
 
     FeatureUsageData data = new FeatureUsageData("FUS");
