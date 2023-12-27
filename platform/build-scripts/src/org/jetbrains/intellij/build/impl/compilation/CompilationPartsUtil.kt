@@ -39,12 +39,12 @@ class CompilationCacheUploadConfiguration(
   val checkFiles: Boolean = true,
   val uploadOnly: Boolean = false,
   branch: String? = null,
-  uploadPredix: String? = "intellij-compile/v2",
+  uploadPredix: String? = null,
 ) {
   val serverUrl: String by lazy { serverUrl ?: normalizeServerUrl() }
 
   val uploadPrefix: String by lazy {
-    uploadPredix ?: System.getProperty(UPLOAD_PREFIX).also {
+    uploadPredix ?: System.getProperty(UPLOAD_PREFIX, "intellij-compile/v2").also {
       check(!it.isNullOrBlank()) {
         "$UPLOAD_PREFIX system property should not be blank."
       }
