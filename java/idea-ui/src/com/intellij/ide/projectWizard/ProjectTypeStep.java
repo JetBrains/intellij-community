@@ -420,12 +420,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return groups;
   }
 
-  @TestOnly
-  @Nullable
-  ModuleWizardStep getSettingsStep() {
-    return mySettingsStep;
-  }
-
   // new TemplatesGroup selected
   private void projectTypeChanged() {
     TemplatesGroup group = getSelectedTemplateGroup();
@@ -560,11 +554,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     showCard(card);
 
     return true;
-  }
-
-  @TestOnly
-  public ModuleWizardStep getFrameworksStep() {
-    return getCustomStep();
   }
 
   @Nullable
@@ -814,11 +803,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   public static void resetGroupForTests() {
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null);
-  }
-
-  @TestOnly
-  public AddSupportForFrameworksPanel getFrameworksPanel() {
-    return myFrameworksPanel;
   }
 
   @Override
