@@ -143,7 +143,7 @@ object Launcher {
     }
   }
 
-  fun findFreeDebugPort(): Int {
+  fun findFreePort(): Int {
     synchronized(this) {
       val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
       val result = socket.localPort
