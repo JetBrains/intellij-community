@@ -2,9 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.ijent.IjentChildProcessAdapter
-import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
-import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -12,36 +9,31 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
-import com.intellij.platform.ijent.IjentChildProcess
-import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.computeDetached
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 
 /**
  * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
  */
 @ApiStatus.Experimental
 @Service
-@Suppress("RAW_RUN_BLOCKING")  // This class is called by different legacy code, a ProgressIndicator is not always available.
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
+
+  @DelicateCoroutinesApi
+  val processAdapterScope: CoroutineScope = scope
 
   /**
    * The returned instance is not supposed to be closed by the caller. [WslIjentManager] closes [IjentApi] by itself during shutdown.
@@ -64,54 +56,6 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         deployAndLaunchIjent(ijentScope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
       }
     }!!.getValue()
-  }
-
-  /**
-   * Runs a process inside a WSL container defined by [wslDistribution] using IJent.
-   *
-   * [project] is supposed to be used only for showing notifications with appropriate modality. Therefore, it may be almost safely omitted.
-   *
-   * [processBuilder] chosen as a convenient adapter for already written code. The functions uses command line arguments, environment
-   * variables and the working directory defined by [processBuilder].
-   *
-   * The function ignores [ProcessBuilder.redirectInput], [ProcessBuilder.redirectOutput], [ProcessBuilder.redirectError] and similar
-   * methods. Stdin, stdout, and stderr are always piped. The caller MUST drain both [Process.getInputStream] and [Process.getErrorStream].
-   * Otherwise, the remote operating system may suspend the remote process due to buffer overflow.
-   *
-   * [ProcessBuilder.directory] is a Windows path, and the constructor of [java.io.File] can corrupt the path. Therefore,
-   * [WSLCommandLineOptions.getRemoteWorkingDirectory] is preferred over [ProcessBuilder.directory].
-   */
-  @RequiresBackgroundThread
-  @RequiresBlockingContext
-  fun runProcessBlocking(
-    project: Project?,
-    wslDistribution: WSLDistribution,
-    processBuilder: ProcessBuilder,
-    options: WSLCommandLineOptions,
-    ptyOptions: LocalPtyOptions?,
-  ): Process {
-    return runBlocking {
-      val command = processBuilder.command()
-      val directory =
-        options.remoteWorkingDirectory
-        ?: processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
-
-      val pty = ptyOptions?.run {
-        IjentExecApi.Pty(initialColumns, initialRows, !consoleMode)
-      }
-
-      val ijentApi = getIjentApi(wslDistribution, project, options.isSudo)
-      when (val processResult = ijentApi.exec.executeProcessBuilder(FileUtil.toSystemIndependentName(command.first()))
-        .args(command.toList().drop(1))
-        .env(processBuilder.environment())
-        .pty(pty)
-        .workingDirectory(directory)
-        .execute()
-      ) {
-        is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
-        is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
-      }
-    }
   }
 
   @VisibleForTesting
@@ -147,12 +91,6 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     }
   }
 }
-
-private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: Boolean): Process =
-  if (isPty)
-    IjentChildPtyProcessAdapter(coroutineScope, this)
-  else
-    IjentChildProcessAdapter(coroutineScope, this)
 
 suspend fun deployAndLaunchIjent(
   ijentCoroutineScope: CoroutineScope,

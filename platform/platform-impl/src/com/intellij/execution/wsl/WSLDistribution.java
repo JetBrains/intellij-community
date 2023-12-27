@@ -236,7 +236,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         ptyOptions = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return WslIjentManager.getInstance().runProcessBlocking(project, this, processBuilder, options, ptyOptions);
+        return WslIjentJavaUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
       });
     }
     else {
