@@ -30,12 +30,12 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   override val id = "runconfig.running"
 
   // TODO pass time from build infra?
-  internal suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int) {
+  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int) {
     val data = mapOf("act" to kind.eventName)
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
 
-  internal suspend fun writeEnd(id: Int) {
+  suspend fun writeEnd(id: Int) {
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.End, null)
   }
 
