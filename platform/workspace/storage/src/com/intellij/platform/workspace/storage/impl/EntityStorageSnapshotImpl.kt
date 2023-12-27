@@ -89,8 +89,6 @@ internal open class EntityStorageSnapshotImpl(
     return if (entity !== NULL_ENTITY) entity as E else null
   }
 
-  override fun toSnapshot(): EntityStorageSnapshot = this
-
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T {
     val found = synchronized(entityCache) { entityCache[entityId] }
     if (found != null) {

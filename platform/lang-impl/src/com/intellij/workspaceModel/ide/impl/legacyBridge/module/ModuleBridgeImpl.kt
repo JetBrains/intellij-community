@@ -25,10 +25,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel

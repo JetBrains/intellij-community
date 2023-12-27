@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity

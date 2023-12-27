@@ -51,11 +51,6 @@ public interface EntityStorage {
    * given [sourceFilter]. 
    */
   public fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
-
-  /**
-   * Returns a snapshot of the current state. It won't be affected by future changes in this storage if it's mutable.
-   */
-  public fun toSnapshot(): EntityStorageSnapshot
 }
 
 /**
@@ -83,3 +78,16 @@ public fun EntityStorageSnapshot.toBuilder(): MutableEntityStorage {
   return MutableEntityStorage.from(this)
 }
 
+/**
+ * Convert entity storage to the snapshot. If the storage is a snapshot, return itself.
+ *
+ * This function is obsolete, use [MutableEntityStorage.toSnapshot].
+ */
+@ApiStatus.Obsolete
+public fun EntityStorage.toSnapshot(): EntityStorageSnapshot {
+  return when (this) {
+    is EntityStorageSnapshot -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
+}

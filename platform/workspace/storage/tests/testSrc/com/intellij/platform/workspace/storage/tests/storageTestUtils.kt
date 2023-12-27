@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.toSnapshot
 
 fun EntityStorage.checkConsistency() {
   if (this is EntityStorageSnapshotImpl) {

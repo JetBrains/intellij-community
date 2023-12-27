@@ -386,7 +386,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
   static void editWorkspaceModel(@NotNull Project project, @NotNull Consumer<MutableEntityStorage> consumer) {
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
     EntityStorage entityStorage = workspaceModel.getEntityStorage().getCurrent();
-    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(entityStorage.toSnapshot());
+    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(EntityStorageKt.toSnapshot(entityStorage));
     consumer.accept(preliminaryBuilder);
     workspaceModel.updateProjectModel("EntityIndexingServiceTest", storage -> {
       storage.addDiff(preliminaryBuilder);

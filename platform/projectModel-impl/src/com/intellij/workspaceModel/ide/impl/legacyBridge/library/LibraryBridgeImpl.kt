@@ -25,6 +25,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerat
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap

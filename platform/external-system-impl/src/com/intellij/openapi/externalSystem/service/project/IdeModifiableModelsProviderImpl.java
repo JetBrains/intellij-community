@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.EntityStorageKt;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.VersionedEntityStorage;
 import com.intellij.util.containers.ClassMap;
@@ -228,7 +229,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
     var initialStorage = storage.getCurrent();
-    return diff = MutableEntityStorage.from(initialStorage.toSnapshot());
+    return diff = MutableEntityStorage.from(EntityStorageKt.toSnapshot(initialStorage));
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {

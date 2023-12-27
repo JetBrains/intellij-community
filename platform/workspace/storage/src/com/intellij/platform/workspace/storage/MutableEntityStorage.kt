@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.currentStackTrace
-import com.intellij.platform.workspace.storage.query.StorageQuery
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -189,6 +187,11 @@ public interface MutableEntityStorage : EntityStorage {
    * * rider.backend.id
    */
   public fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
+
+  /**
+   * Returns a snapshot of the current state. It won't be affected by future changes.
+   */
+  public fun toSnapshot(): EntityStorageSnapshot
 
   public companion object {
     private val LOG = logger<MutableEntityStorage>()
