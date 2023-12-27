@@ -48,7 +48,7 @@ public class TwosideContentPanel extends JPanel {
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends @Nullable JComponent> titleComponents) {
     for (Side side : Side.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);

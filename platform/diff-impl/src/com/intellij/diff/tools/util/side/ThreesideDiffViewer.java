@@ -25,6 +25,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.DiffTitleHandler;
 import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
@@ -75,7 +76,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   protected void onInit() {
     super.onInit();
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    myContentPanel.setTitles(createTitles());
+    DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
   }
 
   @Override

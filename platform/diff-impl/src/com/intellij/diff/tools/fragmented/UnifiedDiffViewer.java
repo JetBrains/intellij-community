@@ -158,7 +158,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    myContentPanel.setTitle(createTitles());
+    DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
 
     UiNotifyConnector.installOn(getComponent(), new Activatable() {
       @Override

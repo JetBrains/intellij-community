@@ -1410,10 +1410,17 @@ public final class DiffUtil {
   }
 
   public static boolean canMakeWritable(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+
+    if (file != null && file.isInLocalFileSystem() && !file.isValid()) {
+      // Deleted files have writable Document, but are not writable.
+      // See 'com.intellij.openapi.editor.impl.EditorImpl.processKeyTyped(char)'
+      return false;
+    }
     if (document.isWritable()) {
       return true;
     }
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+
     if (file != null && file.isValid() && file.isInLocalFileSystem()) {
       if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
       // decompiled file can be writable, but Document with decompiled content is still read-only

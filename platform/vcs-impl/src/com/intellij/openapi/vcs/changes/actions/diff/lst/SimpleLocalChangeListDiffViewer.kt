@@ -77,7 +77,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
   }
 
   override fun createTitles(): List<JComponent> {
-    val titles = DiffUtil.createTextTitles(this, myRequest, editors)
+    val titles = super.createTitles()
     assert(titles.size == 2)
 
     val titleWithCheckbox = JBUI.Panels.simplePanel()
