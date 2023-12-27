@@ -2,19 +2,15 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
 /**
@@ -33,25 +29,12 @@ interface WslIjentManager {
    */
   suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi
 
+  @get:ApiStatus.Internal
+  val isIjentAvailable: Boolean
+
   companion object {
     @JvmStatic
-    fun isIjentAvailable(): Boolean {
-      val id = PluginId.getId("intellij.platform.ijent.impl")
-      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", false) && PluginManagerCore.getPlugin(id)?.isEnabled == true
-    }
-
-    @JvmStatic
     fun getInstance(): WslIjentManager = service()
-
-    @TestOnly
-    @JvmStatic
-    fun overrideIsIjentAvailable(value: Boolean): AutoCloseable {
-      val registry = Registry.get("wsl.use.remote.agent.for.launch.processes")
-      registry.setValue(value)
-      return AutoCloseable {
-        registry.resetToDefault()
-      }
-    }
   }
 }
 

@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
@@ -17,6 +20,12 @@ import org.jetbrains.annotations.VisibleForTesting
 @ApiStatus.Internal
 internal class ProductionWslIjentManager private constructor(private val scope: CoroutineScope) : WslIjentManager {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
+
+  override val isIjentAvailable: Boolean
+    get() {
+      val id = PluginId.getId("intellij.platform.ijent.impl")
+      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", false) && PluginManagerCore.getPlugin(id)?.isEnabled == true
+    }
 
   @DelicateCoroutinesApi
   override val processAdapterScope: CoroutineScope = scope

@@ -248,7 +248,7 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   @VisibleForTesting
   public static boolean mustRunCommandLineWithIjent(@NotNull WSLCommandLineOptions options) {
-    return WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe();
+    return WslIjentManager.getInstance().isIjentAvailable() && !options.isLaunchWithWslExe();
   }
 
   final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
@@ -514,7 +514,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
-    if (WslIjentManager.isIjentAvailable()) {
+    if (WslIjentManager.getInstance().isIjentAvailable()) {
       return WslIjentJavaUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
     }
     try {
