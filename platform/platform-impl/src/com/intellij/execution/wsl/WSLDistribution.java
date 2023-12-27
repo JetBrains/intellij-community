@@ -515,7 +515,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public @Nullable Map<String, String> getEnvironment() {
     if (WslIjentManager.isIjentAvailable()) {
-      return WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+      return WslIjentJavaUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
     }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
@@ -791,7 +791,7 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
-      Map<String, String> map = WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+      Map<String, String> map = WslIjentJavaUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
       return map.get(name);
     }
     WSLCommandLineOptions options = new WSLCommandLineOptions()

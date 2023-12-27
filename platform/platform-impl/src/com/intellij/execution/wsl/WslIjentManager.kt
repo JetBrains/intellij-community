@@ -66,14 +66,6 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     }!!.getValue()
   }
 
-  @RequiresBackgroundThread
-  @RequiresBlockingContext
-  fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
-    return runBlocking {
-      getIjentApi(wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
-    }
-  }
-
   /**
    * Runs a process inside a WSL container defined by [wslDistribution] using IJent.
    *
