@@ -918,7 +918,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
 
-  override fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int {
+  override fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int {
     return entitiesByType[entityClass.toClassId()]?.size() ?: 0
   }
 

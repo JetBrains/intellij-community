@@ -50,11 +50,11 @@ internal class ReadTracker private constructor(
     return super.entities(entityClass)
   }
 
-  override fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int {
+  override fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int {
     val trace = ReadTrace.EntitiesOfType(entityClass)
     log.trace { "Read trace of `entitiesAmount` function: $trace" }
     onRead(trace)
-    return super.entitiesAmount(entityClass)
+    return super.entityCount(entityClass)
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,

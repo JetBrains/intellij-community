@@ -27,6 +27,14 @@ public interface EntityStorageInstrumentation : EntityStorage {
   public fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
 
   public fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
+
+  /**
+   * Returns number of entities of the given type in the storage.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int
 }
 
 @EntityStorageInstrumentationApi

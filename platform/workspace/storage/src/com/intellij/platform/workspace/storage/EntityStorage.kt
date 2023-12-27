@@ -18,11 +18,6 @@ public interface EntityStorage {
   public fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
 
   /**
-   * Returns number of entities of the given type in the storage.
-   */
-  public fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
-
-  /**
    * Returns a sequence containing all entities of type [entityClass] which contains a [SymbolicEntityId] property equal to the given [id].
    * There are no guaranties about the order of the elements in the returned sequence.
    */

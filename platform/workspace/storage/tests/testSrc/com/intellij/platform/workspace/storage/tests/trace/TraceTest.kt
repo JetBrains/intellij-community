@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
@@ -83,7 +84,7 @@ class TraceTest {
   @Test
   fun `get entities amount`() {
     val traces = ReadTracker.trace(snapshot) {
-      it.entitiesAmount(NamedEntity::class.java)
+      (it as EntityStorageSnapshotInstrumentation).entityCount(NamedEntity::class.java)
     }
 
     assertEquals(ReadTrace.EntitiesOfType(NamedEntity::class.java), traces.single())

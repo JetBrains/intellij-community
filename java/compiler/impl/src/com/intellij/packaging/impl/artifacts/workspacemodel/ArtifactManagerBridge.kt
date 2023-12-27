@@ -29,6 +29,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -272,20 +273,21 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   // Initialize all artifact bridges
+  @OptIn(EntityStorageInstrumentationApi::class)
   @RequiresReadLock
   private fun initBridges() = initBridgesMs.addMeasuredTimeMillis {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val workspaceModel = project.workspaceModel
-    val current = workspaceModel.currentSnapshot
-    if (current.entitiesAmount(ArtifactEntity::class.java) != current.artifactsMap.size()) {
+    val current = workspaceModel.currentSnapshot as EntityStorageSnapshotInstrumentation
+    if (current.entityCount(ArtifactEntity::class.java) != current.artifactsMap.size()) {
 
       synchronized(lock) {
-        val currentInSync = workspaceModel.currentSnapshot
+        val currentInSync = workspaceModel.currentSnapshot as EntityStorageSnapshotInstrumentation
         val artifactsMap = currentInSync.artifactsMap
 
         // Double check
-        if (currentInSync.entitiesAmount(ArtifactEntity::class.java) != artifactsMap.size()) {
+        if (currentInSync.entityCount(ArtifactEntity::class.java) != artifactsMap.size()) {
           val newBridges = currentInSync
             .entities(ArtifactEntity::class.java)
             .mapNotNull {
