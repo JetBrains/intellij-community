@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -47,9 +47,7 @@ import java.util.function.BooleanSupplier;
  */
 public abstract class SyntheticLibrary {
 
-  @Nullable
-  @NonNls
-  private final String myComparisonId;
+  private final @Nullable @NonNls String myComparisonId;
   protected final ExcludeFileCondition myConstantExcludeCondition;
 
   /**
@@ -73,16 +71,13 @@ public abstract class SyntheticLibrary {
     return myComparisonId;
   }
 
-  @NotNull
-  public abstract Collection<VirtualFile> getSourceRoots();
+  public abstract @NotNull Collection<VirtualFile> getSourceRoots();
 
-  @NotNull
-  public Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull Collection<VirtualFile> getBinaryRoots() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public Set<VirtualFile> getExcludedRoots() {
+  public @NotNull Set<VirtualFile> getExcludedRoots() {
     return Collections.emptySet();
   }
 
@@ -104,21 +99,18 @@ public abstract class SyntheticLibrary {
    * @deprecated Use {@link SyntheticLibrary#getUnitedExcludeCondition()} to get filtering condition,
    * and {@link SyntheticLibrary#myConstantExcludeCondition} to provide it, as it allows incremental rescan of the library.
    */
-  @Nullable
   @Deprecated
-  public Condition<VirtualFile> getExcludeFileCondition() {
+  public @Nullable Condition<VirtualFile> getExcludeFileCondition() {
     return null;
   }
 
-  @Nullable
-  private Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
+  private @Nullable Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
     if (myConstantExcludeCondition == null) return null;
     Collection<VirtualFile> allRoots = getAllRoots();
     return myConstantExcludeCondition.transformToCondition(allRoots);
   }
 
-  @Nullable
-  public final Condition<VirtualFile> getUnitedExcludeCondition() {
+  public final @Nullable Condition<VirtualFile> getUnitedExcludeCondition() {
     Condition<VirtualFile> condition = getExcludeFileCondition();
     if (condition == null) return getConstantExcludeConditionAsCondition();
     Condition<VirtualFile> otherCondition = getConstantExcludeConditionAsCondition();
@@ -152,16 +144,14 @@ public abstract class SyntheticLibrary {
   @Override
   public abstract int hashCode();
 
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots) {
+  public static @NotNull SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots) {
     return newImmutableLibrary(sourceRoots, Collections.emptySet(), null);
   }
 
   /**
    * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
    */
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+  public static @NotNull SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable Condition<? super VirtualFile> excludeCondition) {
     return newImmutableLibrary(sourceRoots, Collections.emptyList(), excludedRoots, excludeCondition);
@@ -170,8 +160,7 @@ public abstract class SyntheticLibrary {
   /**
    * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
    */
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+  public static @NotNull SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull List<? extends VirtualFile> binaryRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable Condition<? super VirtualFile> excludeCondition) {
@@ -186,8 +175,7 @@ public abstract class SyntheticLibrary {
    *                         and retained for the same library between its invocations to enable rescan its changes incrementally
    * @param excludeCondition should depend only on its parameters
    */
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull String comparisonId,
+  public static @NotNull SyntheticLibrary newImmutableLibrary(@NotNull String comparisonId,
                                                      @NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull List<? extends VirtualFile> binaryRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
@@ -195,13 +183,11 @@ public abstract class SyntheticLibrary {
     return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
   }
 
-  @NotNull
-  public final Collection<VirtualFile> getAllRoots() {
+  public final @NotNull Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
-  @NotNull
-  private Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+  private @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();
       Collection<VirtualFile> binaryRoots = getBinaryRoots();
@@ -231,13 +217,11 @@ public abstract class SyntheticLibrary {
     return contains(file, true, true);
   }
 
-  @NotNull
-  private static Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
+  private static @NotNull Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof Set ? (Set<? extends VirtualFile>)collection : new HashSet<>(collection);
   }
 
-  @NotNull
-  private static List<? extends VirtualFile> asList(@NotNull Collection<? extends VirtualFile> collection) {
+  private static @NotNull List<? extends VirtualFile> asList(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof List ? (List<? extends VirtualFile>)collection : new ArrayList<>(collection);
   }
 
@@ -248,8 +232,7 @@ public abstract class SyntheticLibrary {
                           @NotNull BooleanSupplier isStrictRootChild,
                           @NotNull BooleanSupplier hasParentNotGrandparent);
 
-    @NotNull
-    default Condition<VirtualFile> transformToCondition(@NotNull Collection<? extends VirtualFile> allRoots) {
+    default @NotNull Condition<VirtualFile> transformToCondition(@NotNull Collection<? extends VirtualFile> allRoots) {
       return file -> shouldExclude(file.isDirectory(), file.getName(),
                                    () -> allRoots.contains(file),
                                    () -> {

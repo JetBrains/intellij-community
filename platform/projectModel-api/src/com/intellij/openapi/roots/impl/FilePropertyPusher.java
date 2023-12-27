@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -64,9 +64,8 @@ public interface FilePropertyPusher<T> {
    *
    * @deprecated use {@link #getFilePropertyKey()} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  default Key<T> getFileDataKey() {
+  default @NotNull Key<T> getFileDataKey() {
     // Existing plugins always override this method, so default body is never executed in the existing plugins.
     // Default implementation of `getFileDataKey` is only invoked from default implementation of `getFilePropertyKey`.
     // If new plugin observe this exception, this means that it did not override getFilePropertyKey nor getFileDataKey.
@@ -77,8 +76,7 @@ public interface FilePropertyPusher<T> {
   /**
    * After property was pushed it can be retrieved at any time using {@link FilePropertyKey#getPersistentValue(VirtualFile)}
    */
-  @NotNull
-  default FilePropertyKey<T> getFilePropertyKey() {
+  default @NotNull FilePropertyKey<T> getFilePropertyKey() {
     return new InMemoryFilePropertyKeyImpl<>(getFileDataKey());
   }
 

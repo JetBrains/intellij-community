@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -36,24 +36,21 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    *
    * @return the file index instance.
    */
-  @NotNull
-  public abstract ProjectFileIndex getFileIndex();
+  public abstract @NotNull ProjectFileIndex getFileIndex();
 
   /**
    * Creates new enumerator instance to process dependencies of all modules in the project. Only first level dependencies of
    * modules are processed so {@link OrderEnumerator#recursively()} option is ignored and {@link OrderEnumerator#withoutDepModules()} option is forced
    * @return new enumerator instance
    */
-  @NotNull
-  public abstract OrderEnumerator orderEntries();
+  public abstract @NotNull OrderEnumerator orderEntries();
 
   /**
    * Creates new enumerator instance to process dependencies of several modules in the project. Caching is not supported for this enumerator
    * @param modules modules to process
    * @return new enumerator instance
    */
-  @NotNull
-  public abstract OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules);
+  public abstract @NotNull OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules);
 
   /**
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
@@ -66,8 +63,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    *
    * @return the list of content root URLs.
    */
-  @NotNull
-  public abstract List<String> getContentRootUrls();
+  public abstract @NotNull List<String> getContentRootUrls();
 
     /**
     * Returns the list of content roots for all modules in the project.
@@ -89,27 +85,23 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * @param rootTypes types of source roots
    * @return list of source roots
    */
-  @NotNull
-  public abstract List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
+  public abstract @NotNull List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * @return the instance of the JDK selected for the project or null
    * if the name of the selected JDK does not correspond to any existing JDK instance
    */
-  @Nullable
-  public abstract Sdk getProjectSdk();
+  public abstract @Nullable Sdk getProjectSdk();
 
   /**
    * @return the name of the SDK selected for the project
    */
-  @Nullable
-  public abstract String getProjectSdkName();
+  public abstract @Nullable String getProjectSdkName();
 
   /**
    * @return the SDK type name (@link {@link SdkTypeId#getName()} of the current Project SDK
    */
-  @Nullable
-  public abstract String getProjectSdkTypeName();
+  public abstract @Nullable String getProjectSdkTypeName();
 
   /**
    * Sets the SDK to be used for the project.

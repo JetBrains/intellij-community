@@ -17,8 +17,7 @@ public abstract class PrimaryModuleManager {
   /**
    * @return main (primary) module for IDE that supports project attach
    */
-  @Nullable
-  public abstract Module getPrimaryModule(@NotNull Project project);
+  public abstract @Nullable Module getPrimaryModule(@NotNull Project project);
 
   private static Module getPrimaryModuleByContentRoot(@NotNull Project project) {
     VirtualFile baseDir = project.getBaseDir();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,8 +12,8 @@ import java.util.List;
 
 @ApiStatus.NonExtendable
 public abstract class LibraryTablesRegistrar {
-  @NonNls public static final String PROJECT_LEVEL = "project";
-  @NonNls public static final String APPLICATION_LEVEL = "application";
+  public static final @NonNls String PROJECT_LEVEL = "project";
+  public static final @NonNls String APPLICATION_LEVEL = "application";
 
   public static LibraryTablesRegistrar getInstance() {
     return ApplicationManager.getApplication().getService(LibraryTablesRegistrar.class);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -13,9 +13,8 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 import java.util.List;
 
 public abstract class StateSplitterEx implements StateSplitter {
-  @NotNull
   @Override
-  public abstract List<Pair<Element, String>> splitState(@NotNull Element state);
+  public abstract @NotNull List<Pair<Element, String>> splitState(@NotNull Element state);
 
   public void mergeStateInto(@NotNull Element target, @NotNull Element subState) {
     target.addContent(subState);
@@ -26,8 +25,7 @@ public abstract class StateSplitterEx implements StateSplitter {
     throw new IllegalStateException();
   }
 
-  @NotNull
-  protected static List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName) {
+  protected static @NotNull List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName) {
     UniqueNameGenerator generator = new UniqueNameGenerator();
     List<Pair<Element, String>> result = new SmartList<>();
     for (Element subState : state.getChildren()) {
@@ -38,8 +36,7 @@ public abstract class StateSplitterEx implements StateSplitter {
     return result;
   }
 
-  @NotNull
-  protected static Pair<Element, String> createItem(@NotNull String fileName, @NotNull UniqueNameGenerator generator, @NotNull Element element) {
+  protected static @NotNull Pair<Element, String> createItem(@NotNull String fileName, @NotNull UniqueNameGenerator generator, @NotNull Element element) {
     return Pair.create(element, generator.generateUniqueName(FileUtil.sanitizeFileName(fileName)) + ".xml");
   }
 

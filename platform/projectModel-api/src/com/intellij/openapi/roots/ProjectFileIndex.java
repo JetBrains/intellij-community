@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -33,8 +33,7 @@ public interface ProjectFileIndex extends FileIndex {
     }
   }
 
-  @NotNull
-  static ProjectFileIndex getInstance(@NotNull Project project) {
+  static @NotNull ProjectFileIndex getInstance(@NotNull Project project) {
     return project.getService(ProjectFileIndex.class);
   }
 
@@ -192,8 +191,7 @@ public interface ProjectFileIndex extends FileIndex {
    */
   @Deprecated
   @RequiresReadLock
-  @Nullable
-  default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
+  default @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;
   }
 

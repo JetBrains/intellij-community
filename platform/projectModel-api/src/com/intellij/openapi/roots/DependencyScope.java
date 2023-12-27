@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots;
 
@@ -55,8 +55,7 @@ public enum DependencyScope {
     myForTestRuntime = forTestRuntime;
   }
 
-  @NotNull
-  public static DependencyScope readExternal(@NotNull Element element) {
+  public static @NotNull DependencyScope readExternal(@NotNull Element element) {
     String scope = element.getAttributeValue(SCOPE_ATTR);
     if (scope != null) {
       try {
@@ -77,8 +76,8 @@ public enum DependencyScope {
     }
   }
 
-  @NotNull
-  public @NlsContexts.ListItem String getDisplayName() {
+  public @NotNull
+  @NlsContexts.ListItem String getDisplayName() {
     return myDisplayName.get();
   }
 

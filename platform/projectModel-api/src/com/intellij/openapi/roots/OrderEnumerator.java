@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -44,48 +30,39 @@ public abstract class OrderEnumerator {
    *
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator productionOnly();
+  public abstract @NotNull OrderEnumerator productionOnly();
 
   /**
    * Skip runtime-only dependencies
    *
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator compileOnly();
+  public abstract @NotNull OrderEnumerator compileOnly();
 
   /**
    * Skip compile-only dependencies
    *
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator runtimeOnly();
+  public abstract @NotNull OrderEnumerator runtimeOnly();
 
-  @NotNull
-  public abstract OrderEnumerator withoutSdk();
+  public abstract @NotNull OrderEnumerator withoutSdk();
 
-  @NotNull
-  public abstract OrderEnumerator withoutLibraries();
+  public abstract @NotNull OrderEnumerator withoutLibraries();
 
-  @NotNull
-  public abstract OrderEnumerator withoutDepModules();
+  public abstract @NotNull OrderEnumerator withoutDepModules();
 
   /**
    * Skip root module's entries
    * @return this
    */
-  @NotNull
-  public abstract OrderEnumerator withoutModuleSourceEntries();
+  public abstract @NotNull OrderEnumerator withoutModuleSourceEntries();
 
-  @NotNull
-  public OrderEnumerator librariesOnly() {
+  public @NotNull OrderEnumerator librariesOnly() {
     return withoutSdk().withoutDepModules().withoutModuleSourceEntries();
   }
 
-  @NotNull
-  public OrderEnumerator sdkOnly() {
+  public @NotNull OrderEnumerator sdkOnly() {
     return withoutDepModules().withoutLibraries().withoutModuleSourceEntries();
   }
 
@@ -103,16 +80,14 @@ public abstract class OrderEnumerator {
    *
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator recursively();
+  public abstract @NotNull OrderEnumerator recursively();
 
   /**
    * Skip not exported dependencies. If this method is called after {@link #recursively()} direct non-exported dependencies won't be skipped
    *
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator exportedOnly();
+  public abstract @NotNull OrderEnumerator exportedOnly();
 
   /**
    * Process only entries which satisfies the specified condition
@@ -120,8 +95,7 @@ public abstract class OrderEnumerator {
    * @param condition filtering condition
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator satisfying(@NotNull Condition<? super OrderEntry> condition);
+  public abstract @NotNull OrderEnumerator satisfying(@NotNull Condition<? super OrderEntry> condition);
 
   /**
    * Use {@code provider.getRootModel()} to process module dependencies
@@ -129,8 +103,7 @@ public abstract class OrderEnumerator {
    * @param provider provider
    * @return this instance
    */
-  @NotNull
-  public abstract OrderEnumerator using(@NotNull RootModelProvider provider);
+  public abstract @NotNull OrderEnumerator using(@NotNull RootModelProvider provider);
 
   /**
    * Determine if, given the current enumerator settings and handlers for a module, should the
@@ -145,28 +118,24 @@ public abstract class OrderEnumerator {
   /**
    * @return {@link OrderRootsEnumerator} instance for processing classes roots
    */
-  @NotNull
-  public abstract OrderRootsEnumerator classes();
+  public abstract @NotNull OrderRootsEnumerator classes();
 
   /**
    * @return {@link OrderRootsEnumerator} instance for processing source roots
    */
-  @NotNull
-  public abstract OrderRootsEnumerator sources();
+  public abstract @NotNull OrderRootsEnumerator sources();
 
   /**
    * @param rootType root type
    * @return {@link OrderRootsEnumerator} instance for processing roots of the specified type
    */
-  @NotNull
-  public abstract OrderRootsEnumerator roots(@NotNull OrderRootType rootType);
+  public abstract @NotNull OrderRootsEnumerator roots(@NotNull OrderRootType rootType);
 
   /**
    * @param rootTypeProvider custom root type provider
    * @return {@link OrderRootsEnumerator} instance for processing roots of the provided type
    */
-  @NotNull
-  public abstract OrderRootsEnumerator roots(@NotNull NotNullFunction<? super OrderEntry, ? extends OrderRootType> rootTypeProvider);
+  public abstract @NotNull OrderRootsEnumerator roots(@NotNull NotNullFunction<? super OrderEntry, ? extends OrderRootType> rootTypeProvider);
 
   /**
    * @return classes roots for all entries processed by this enumerator
@@ -185,16 +154,14 @@ public abstract class OrderEnumerator {
   /**
    * @return list containing classes roots for all entries processed by this enumerator
    */
-  @NotNull
-  public PathsList getPathsList() {
+  public @NotNull PathsList getPathsList() {
     return classes().getPathsList();
   }
 
   /**
    * @return list containing source roots for all entries processed by this enumerator
    */
-  @NotNull
-  public PathsList getSourcePathsList() {
+  public @NotNull PathsList getSourcePathsList() {
     return sources().getPathsList();
   }
 
@@ -235,8 +202,7 @@ public abstract class OrderEnumerator {
    * @param module module
    * @return new enumerator instance
    */
-  @NotNull
-  public static OrderEnumerator orderEntries(@NotNull Module module) {
+  public static @NotNull OrderEnumerator orderEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).orderEntries();
   }
 
@@ -247,8 +213,7 @@ public abstract class OrderEnumerator {
    * @param project project
    * @return new enumerator instance
    */
-  @NotNull
-  public static OrderEnumerator orderEntries(@NotNull Project project) {
+  public static @NotNull OrderEnumerator orderEntries(@NotNull Project project) {
     return ProjectRootManager.getInstance(project).orderEntries();
   }
 }

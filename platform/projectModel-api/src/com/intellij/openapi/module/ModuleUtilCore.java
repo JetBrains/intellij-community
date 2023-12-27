@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
@@ -36,8 +36,7 @@ public class ModuleUtilCore {
     }
   }
 
-  @NotNull
-  public static String getModuleNameInReadAction(@NotNull Module module) {
+  public static @NotNull String getModuleNameInReadAction(@NotNull Module module) {
     return ReadAction.compute(module::getName);
   }
 
@@ -57,8 +56,7 @@ public class ModuleUtilCore {
    * @return module where {@code containingFile} is located, 
    *         null for project files outside module content roots or library files
    */
-  @Nullable
-  public static Module findModuleForFile(@Nullable PsiFile containingFile) {
+  public static @Nullable Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
       VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile != null) {
@@ -72,8 +70,7 @@ public class ModuleUtilCore {
    * @return module where {@code file} is located, 
    *         null for project files outside module content roots or library files
    */
-  @Nullable
-  public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
+    public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }
@@ -86,8 +83,7 @@ public class ModuleUtilCore {
    * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
    * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
    */
-  @Nullable
-  public static Module findModuleForPsiElement(@NotNull PsiElement element) {
+  public static @Nullable Module findModuleForPsiElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     PsiElement highestPsi = containingFile == null ? element : containingFile;
     if (!highestPsi.isValid()) {
@@ -195,8 +191,7 @@ public class ModuleUtilCore {
     }
   }
 
-  @NotNull
-  public static List<Module> getAllDependentModules(@NotNull Module module) {
+  public static @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     List<Module> list = new ArrayList<>();
     Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
@@ -237,8 +232,7 @@ public class ModuleUtilCore {
     return VfsUtilCore.pathEqualsTo(dir, getModuleDirPath(module));
   }
 
-  @NotNull
-  public static String getModuleDirPath(@NotNull Module module) {
+  public static @NotNull String getModuleDirPath(@NotNull Module module) {
     return PathUtilRt.getParentPath(module.getModuleFilePath());
   }
 
