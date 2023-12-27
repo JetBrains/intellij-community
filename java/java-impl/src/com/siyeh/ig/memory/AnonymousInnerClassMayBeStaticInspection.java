@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,18 @@ public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspecti
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new MoveAnonymousToInnerClassFix(
-      InspectionGadgetsBundle.message(
-        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
+    return new MoveAnonymousToInnerClassFix(InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.quickfix"));
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
+    return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
   }
 
   @Override
@@ -48,8 +50,7 @@ public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspecti
     return new AnonymousInnerClassMayBeStaticVisitor();
   }
 
-  private static class AnonymousInnerClassMayBeStaticVisitor
-    extends BaseInspectionVisitor {
+  private static class AnonymousInnerClassMayBeStaticVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnonymousClass(@NotNull PsiAnonymousClass anonymousClass) {
