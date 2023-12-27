@@ -60,15 +60,14 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private var KtExpression.isOccurrence: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("OCCURRENCE"), false)
 
     private class IntroduceVariableContext(
-        private val expression: KtExpression,
+        project: Project,
         private val nameSuggestions: List<Collection<String>>,
-        private val container: PsiElement,
         private val replaceOccurrence: Boolean,
         private val expressionRenderedType: String,
         private val isDestructuringDeclaration: Boolean,
         renderedTypeArguments: String?,
     ) {
-        private val psiFactory = KtPsiFactory(expression.project)
+        private val psiFactory = KtPsiFactory(project)
 
         var introducedVariablePointer: SmartPsiElementPointer<KtDeclaration>? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
@@ -77,11 +76,12 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         var renderedTypeArgumentsIfMightBeNeeded: String? = renderedTypeArguments
 
         private fun replaceExpression(
+            actualExpression: KtExpression,
             expressionToReplace: KtExpression,
             addToReferences: Boolean,
             lambdaArgumentName: Name?
         ): KtExpression {
-            val isActualExpression = expression == expressionToReplace
+            val isActualExpression = actualExpression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
             val substringInfo = expressionToReplace.extractableSubstringInfo
@@ -155,7 +155,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
 
                     if (replaceOccurrence) {
-                        val exprAfterReplace = replaceExpression(expression, addToReferences = false, lambdaArgumentName)
+                        val exprAfterReplace = replaceExpression(expression, expression, addToReferences = false, lambdaArgumentName)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == expression) {
                             anchor = exprAfterReplace
@@ -235,7 +235,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
                 if (!needBraces) {
                     if (shouldReplaceOccurrence) {
-                        replaceExpression(expression, addToReferences = true, lambdaArgumentName)
+                        replaceExpression(expression, expression, addToReferences = true, lambdaArgumentName)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
@@ -282,7 +282,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        fun runRefactoring(project: Project, editor: Editor?, isVar: Boolean) {
+        fun runRefactoring(editor: Editor?, isVar: Boolean, expression: KtExpression, container: PsiElement) {
             if (container !is KtDeclarationWithBody) return runRefactoring(
                 isVar,
                 expression,
@@ -302,7 +302,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
 
             val newContainer = container.bodyBlockExpression ?: return showErrorHint(
-                project,
+                expression.project,
                 editor,
                 KotlinBundle.message("cannot.refactor.not.expression")
             )
@@ -428,9 +428,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
 
                 val introduceVariableContext = IntroduceVariableContext(
-                    expression,
+                    project,
                     suggestedNames,
-                    containers.targetContainer,
                     replaceOccurrence,
                     expressionRenderedType,
                     isDestructuringDeclaration,
@@ -438,7 +437,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 )
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
-                    introduceVariableContext.runRefactoring(project, editor, isVar)
+                    introduceVariableContext.runRefactoring(editor, isVar, expression, containers.targetContainer)
 
                     val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
 

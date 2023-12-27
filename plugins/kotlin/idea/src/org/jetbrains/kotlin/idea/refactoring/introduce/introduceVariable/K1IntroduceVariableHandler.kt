@@ -85,26 +85,28 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     }
 
     private class IntroduceVariableContext(
-        private val expression: KtExpression,
+        project: Project,
         private val nameSuggestions: List<Collection<String>>,
         private val allReplaces: List<KtExpression>,
-        private val commonContainer: PsiElement,
-        private val commonParent: PsiElement,
         private val replaceOccurrence: Boolean,
         private val noTypeInference: Boolean,
         private val expressionType: KotlinType?,
         private val isDestructuringDeclaration: Boolean,
         private val bindingContext: BindingContext,
-        private val resolutionFacade: ResolutionFacade
+        private val resolutionFacade: ResolutionFacade,
     ) {
-        private val psiFactory = KtPsiFactory(expression.project)
+        private val psiFactory = KtPsiFactory(project)
 
         var introducedVariablePointer: SmartPsiElementPointer<KtDeclaration>? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
         val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
 
-        private fun replaceExpression(expressionToReplace: KtExpression, addToReferences: Boolean): KtExpression {
-            val isActualExpression = expression == expressionToReplace
+        private fun replaceExpression(
+            actualExpression: KtExpression,
+            expressionToReplace: KtExpression,
+            addToReferences: Boolean
+        ): KtExpression {
+            val isActualExpression = actualExpression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
             val substringInfo = expressionToReplace.extractableSubstringInfo
@@ -177,7 +179,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                 if (replaceOccurrence) {
                     for (replace in allReplaces) {
-                        val exprAfterReplace = replaceExpression(replace, false)
+                        val exprAfterReplace = replaceExpression(expression, replace, false)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == replace) {
                             anchor = exprAfterReplace
@@ -265,7 +267,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     val replace = allReplaces[i]
 
                     if (if (i != 0) replaceOccurrence else replace.shouldReplaceOccurrence(bindingContext, commonContainer)) {
-                        replaceExpression(replace, true)
+                        replaceExpression(expression, replace, true)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(replace, PsiWhiteSpace::class.java)
                         if (sibling == property) {
@@ -282,7 +284,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        fun runRefactoring(isVar: Boolean) {
+        fun runRefactoring(isVar: Boolean, expression: KtExpression, commonContainer: PsiElement, commonParent: PsiElement) {
             if (commonContainer !is KtDeclarationWithBody) return runRefactoring(
                 isVar,
                 expression,
@@ -511,18 +513,18 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
 
                 val introduceVariableContext = IntroduceVariableContext(
-                    expression, suggestedNames, allReplaces, commonContainer, commonParent,
+                    project, suggestedNames, allReplaces,
                     replaceOccurrence, noTypeInference, expressionType, isDestructuringDeclaration, bindingContext, resolutionFacade
                 )
 
                 if (!containers.targetContainer.isPhysical) {
                     // Preview mode
-                    introduceVariableContext.runRefactoring(isVar)
+                    introduceVariableContext.runRefactoring(isVar, expression, commonContainer, commonParent)
                     return@chooseApplicableComponentFunctionsForVariableDeclaration
                 }
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
-                    runWriteAction { introduceVariableContext.runRefactoring(isVar) }
+                    runWriteAction { introduceVariableContext.runRefactoring(isVar, expression, commonContainer, commonParent) }
 
                     val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
 
