@@ -76,6 +76,13 @@ Any IDE class may have as many different `@Remote` mapped interfaces as needed, 
 
 Please put common platform `@Remote` mappings to `intellij.driver.sdk` module under `com.intellij.driver.sdk` package.
 
+## Invoking UI Actions
+
+There is a shorthand method to trigger actions from tests in Test SDK:
+```
+driver.invokeAction("SearchEverywhere")
+```
+
 ## Contexts and Remote References
 
 Managing references to objects that exist in another JVM process is a tricky business. Driver uses `WeakReference` for call results to not trigger a memory leak.

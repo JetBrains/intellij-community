@@ -3,6 +3,7 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.remote.Component
 import java.awt.event.InputEvent
 
@@ -24,7 +25,7 @@ interface AnAction
 interface ActionCallback
 
 fun Driver.invokeAction(actionId: String) {
-  withWriteAction {
+  withContext(OnDispatcher.EDT) {
     val actionManager = service<ActionManager>()
     val action = actionManager.getAction(actionId)
     actionManager.tryToExecute(action, null, null, null, true)
