@@ -67,10 +67,6 @@ class TestCustomSourceRootProperties(initialTestString: String?) : JpsElementBas
   override fun createCopy(): TestCustomSourceRootProperties {
     return TestCustomSourceRootProperties(testString)
   }
-
-  override fun applyChanges(modified: TestCustomSourceRootProperties) {
-    testString = modified.testString
-  }
 }
 
 class TestCustomSourceRootPropertiesSerializer(

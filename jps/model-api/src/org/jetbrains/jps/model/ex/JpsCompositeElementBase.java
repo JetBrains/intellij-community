@@ -31,11 +31,6 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
   }
 
   @Override
-  public void applyChanges(@NotNull Self modified) {
-    myContainer.applyChanges(modified.myContainer);
-  }
-
-  @Override
   @NotNull
   public JpsElementContainer getContainer() {
     return myContainer;

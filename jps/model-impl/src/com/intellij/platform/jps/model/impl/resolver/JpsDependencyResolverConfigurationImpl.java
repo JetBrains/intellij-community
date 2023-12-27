@@ -53,10 +53,4 @@ public class JpsDependencyResolverConfigurationImpl extends JpsElementBase<JpsDe
   public @NotNull JpsDependencyResolverConfigurationImpl createCopy() {
     return new JpsDependencyResolverConfigurationImpl(this);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsDependencyResolverConfigurationImpl modified) {
-    this.checksumVerificationEnabled = modified.checksumVerificationEnabled;
-    this.bindRepositoryEnabled = modified.bindRepositoryEnabled;
-  }
 }

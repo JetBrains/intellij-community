@@ -49,9 +49,4 @@ public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleEleme
   public JpsSimpleElementImpl<D> createCopy() {
     return new JpsSimpleElementImpl<>(this);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsSimpleElementImpl<D> modified) {
-    setData(modified.getData());
-  }
 }

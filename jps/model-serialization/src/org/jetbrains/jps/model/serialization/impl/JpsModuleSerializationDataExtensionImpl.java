@@ -39,10 +39,6 @@ public class JpsModuleSerializationDataExtensionImpl extends JpsElementBase<JpsM
     return new JpsModuleSerializationDataExtensionImpl(myBaseDirectory);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsModuleSerializationDataExtensionImpl modified) {
-  }
-
   @NotNull
   @Override
   public File getBaseDirectory() {

@@ -25,8 +25,4 @@ public final class JpsDummyElementImpl extends JpsElementBase<JpsDummyElementImp
   public JpsDummyElementImpl createCopy() {
     return new JpsDummyElementImpl();
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsDummyElementImpl modified) {
-  }
 }

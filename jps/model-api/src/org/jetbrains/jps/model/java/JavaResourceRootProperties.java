@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+
+import java.util.Objects;
 
 public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootProperties> {
   private String myRelativeOutputPath = "";
@@ -44,11 +45,5 @@ public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootP
       myForGeneratedSources = forGeneratedSources;
       fireElementChanged();
     }
-  }
-
-  @Override
-  public void applyChanges(@NotNull JavaResourceRootProperties modified) {
-    setRelativeOutputPath(modified.myRelativeOutputPath);
-    setForGeneratedSources(modified.myForGeneratedSources);
   }
 }

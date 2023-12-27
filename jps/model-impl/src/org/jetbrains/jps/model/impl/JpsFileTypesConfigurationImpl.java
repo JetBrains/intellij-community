@@ -51,9 +51,4 @@ public final class JpsFileTypesConfigurationImpl extends JpsElementBase<JpsFileT
       fireElementChanged();
     }
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsFileTypesConfigurationImpl modified) {
-    setIgnoredPatternString(modified.myIgnoredPatternString);
-  }
 }

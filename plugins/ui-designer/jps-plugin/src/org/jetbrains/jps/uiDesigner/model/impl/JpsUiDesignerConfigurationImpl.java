@@ -65,13 +65,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
     return myState.USE_DYNAMIC_BUNDLES;
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsUiDesignerConfigurationImpl modified) {
-    setCopyFormsRuntimeToOutput(modified.isCopyFormsRuntimeToOutput());
-    setInstrumentClasses(modified.isInstrumentClasses());
-    setUseDynamicBundles(modified.isUseDynamicBundles());
-  }
-
   public static class UiDesignerConfigurationState {
     public boolean INSTRUMENT_CLASSES = true;
     public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;

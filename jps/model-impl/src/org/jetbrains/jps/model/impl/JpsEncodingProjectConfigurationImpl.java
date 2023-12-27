@@ -110,8 +110,4 @@ public final class JpsEncodingProjectConfigurationImpl extends JpsElementBase<Jp
   public JpsEncodingProjectConfigurationImpl createCopy() {
     return new JpsEncodingProjectConfigurationImpl(myUrlToEncoding, myProjectEncoding);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsEncodingProjectConfigurationImpl modified) {
-  }
 }

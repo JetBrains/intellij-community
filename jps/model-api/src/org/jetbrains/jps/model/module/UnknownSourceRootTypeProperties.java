@@ -23,9 +23,4 @@ public class UnknownSourceRootTypeProperties<Data> extends JpsElementBase<Unknow
   public UnknownSourceRootTypeProperties<Data> createCopy() {
     return new UnknownSourceRootTypeProperties<>(myPropertiesData);
   }
-
-  @Override
-  public void applyChanges(@NotNull UnknownSourceRootTypeProperties modified) {
-    // not supported
-  }
 }

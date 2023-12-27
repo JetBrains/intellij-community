@@ -67,10 +67,4 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   public JpsJavaDependencyExtensionImpl createCopy() {
     return new JpsJavaDependencyExtensionImpl(this);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsJavaDependencyExtensionImpl modified) {
-    setExported(modified.myExported);
-    setScope(modified.myScope);
-  }
 }

@@ -35,11 +35,6 @@ public class JpsApplicationRunConfigurationPropertiesImpl extends JpsElementBase
   }
 
   @Override
-  public void applyChanges(@NotNull JpsApplicationRunConfigurationPropertiesImpl modified) {
-    XmlSerializerUtil.copyBean(modified.myState, myState);
-  }
-
-  @Override
   public String getMainClass() {
     return myState.MAIN_CLASS_NAME;
   }

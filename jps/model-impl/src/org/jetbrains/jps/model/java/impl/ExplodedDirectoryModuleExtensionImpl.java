@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
+
+import java.util.Objects;
 
 public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
                                                                                                                ExplodedDirectoryModuleExtension {
@@ -51,12 +52,6 @@ public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<Explode
   @Override
   public ExplodedDirectoryModuleExtensionImpl createCopy() {
     return new ExplodedDirectoryModuleExtensionImpl(this);
-  }
-
-  @Override
-  public void applyChanges(@NotNull ExplodedDirectoryModuleExtensionImpl modified) {
-    setExcludeExploded(modified.myExcludeExploded);
-    setExplodedUrl(modified.myExplodedUrl);
   }
 
   public static class ExplodedDirectoryModuleExtensionRole extends JpsElementChildRoleBase<ExplodedDirectoryModuleExtension> implements JpsElementCreator<ExplodedDirectoryModuleExtension> {

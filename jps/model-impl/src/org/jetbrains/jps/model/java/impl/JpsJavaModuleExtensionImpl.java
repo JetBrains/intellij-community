@@ -90,15 +90,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
-  public void applyChanges(@NotNull JpsJavaModuleExtensionImpl modified) {
-    setLanguageLevel(modified.myLanguageLevel);
-    setInheritOutput(modified.myInheritOutput);
-    setExcludeOutput(modified.myExcludeOutput);
-    setOutputUrl(modified.myOutputUrl);
-    setTestOutputUrl(modified.myTestOutputUrl);
-  }
-
-  @Override
   public boolean isInheritOutput() {
     return myInheritOutput;
   }

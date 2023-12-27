@@ -42,10 +42,6 @@ public class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsPathVar
   }
 
   @Override
-  public void applyChanges(@NotNull JpsPathVariablesConfigurationImpl modified) {
-  }
-
-  @Override
   public void addPathVariable(@NotNull String name, @NotNull String value) {
     myPathVariables.put(name, value);
   }

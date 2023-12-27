@@ -38,11 +38,6 @@ public final class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase
   }
 
   @Override
-  public void applyChanges(@NotNull JpsRemoteRepositoriesConfigurationImpl modified) {
-    setRepositories(modified.getRepositories());
-  }
-
-  @Override
   public List<JpsRemoteRepositoryDescription> getRepositories() {
     return Collections.unmodifiableList(repositories);
   }

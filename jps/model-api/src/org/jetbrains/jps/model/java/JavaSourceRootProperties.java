@@ -50,10 +50,4 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
       fireElementChanged();
     }
   }
-
-  @Override
-  public void applyChanges(@NotNull JavaSourceRootProperties modified) {
-    setPackagePrefix(modified.myPackagePrefix);
-    setForGeneratedSources(modified.myForGeneratedSources);
-  }
 }

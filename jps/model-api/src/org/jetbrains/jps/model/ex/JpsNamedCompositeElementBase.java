@@ -40,12 +40,6 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
   }
 
   @Override
-  public void applyChanges(@NotNull Self modified) {
-    super.applyChanges(modified);
-    setName(modified.getName());
-  }
-
-  @Override
   public void setName(@NlsSafe @NotNull String name) {
     myName = name;
   }

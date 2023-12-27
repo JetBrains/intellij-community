@@ -60,10 +60,6 @@ public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
     return new JpsGroovySettings(this);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsGroovySettings modified) {
-  }
-
   @NotNull
   public static JpsGroovySettings getSettings(@NotNull JpsProject project) {
     JpsGroovySettings settings = project.getContainer().getChild(ROLE);

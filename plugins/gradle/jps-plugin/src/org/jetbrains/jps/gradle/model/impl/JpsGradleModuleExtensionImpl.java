@@ -45,8 +45,4 @@ public class JpsGradleModuleExtensionImpl extends JpsElementBase<JpsGradleModule
   public JpsGradleModuleExtensionImpl createCopy() {
     return new JpsGradleModuleExtensionImpl(myModuleType);
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsGradleModuleExtensionImpl modified) {
-  }
 }

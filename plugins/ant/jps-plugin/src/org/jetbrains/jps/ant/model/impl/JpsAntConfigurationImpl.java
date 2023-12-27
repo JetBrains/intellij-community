@@ -55,10 +55,6 @@ public final class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigur
   }
 
   @Override
-  public void applyChanges(@NotNull JpsAntConfigurationImpl modified) {
-  }
-
-  @Override
   @NotNull
   public Collection<JpsAntBuildFileOptions> getOptionsForAllBuildFiles() {
     return myOptionsMap.values();
