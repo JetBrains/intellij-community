@@ -109,8 +109,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       }
 
       if (PsiUtil.isLocalClass(baseClass)) {
-        String message = JavaRefactoringBundle.message("error.not.supported.for.local",
-                                                       JavaRefactoringBundle.message("anonymousToInner.refactoring.name"));
+        String message = JavaRefactoringBundle.message("error.not.supported.for.local");
         showErrorMessage(editor, message);
         return;
       }
