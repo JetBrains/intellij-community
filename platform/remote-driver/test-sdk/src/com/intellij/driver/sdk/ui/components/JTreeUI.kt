@@ -42,19 +42,21 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private fun expandPath(vararg path: String, fullMatch: Boolean = true) {
     val expandedPath = mutableListOf<String>()
     path.forEach {
-      var currentPathPath = findExpandedPath(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-      if (currentPathPath == null) {
+      var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+      if (currentPathPaths.isEmpty()) {
         doubleClickPath(*expandedPath.toTypedArray(), fullMatch = fullMatch)
+        currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
       }
-      currentPathPath = findExpandedPath(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-      if (currentPathPath == null) {
+      if (currentPathPaths.isEmpty()) {
         throw PathNotFoundException(expandedPath + listOf(it) + " path not found")
       }
       expandedPath.add(it)
     }
   }
 
-  private fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = collectExpandedPaths().singleOrNull { expandedPath ->
+  private fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
+
+  private fun findExpandedPaths(vararg path: String, fullMatch: Boolean): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
     expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch) ||
     expandedPath.path.size - 1 == path.size && expandedPath.path.drop(1).containsAllNodes(*path, fullMatch = fullMatch)
   }
