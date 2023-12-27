@@ -9,17 +9,20 @@ Reports anonymous classes which can be replaced with method references.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        System.out.println();
-      }
-    };
+  Runnable r = new Runnable() {
+    @Override
+    public void run() {
+      System.out.println();
+    }
+  };
 </code></pre>
-<p>The quick-fix changes this code to the compact form: <code>Runnable r = System.out::println;</code>.</p>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  Runnable r = System.out::println;
+</code></pre>
 <!-- tooltip end -->
 <p>Use the <b>Report when interface is not annotated with @FunctionalInterface</b> option to enable this inspection for
-  interfaces which are not annotated with @FunctionalInterface.</p>
+  interfaces which are not annotated with <code>@FunctionalInterface</code>.</p>
 
 <p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
