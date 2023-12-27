@@ -22,6 +22,10 @@ fun <T : CommandChain> T.replaceBrowser(): T = apply {
   addCommand("${CMD_PREFIX}replaceBrowser")
 }
 
+fun <T : CommandChain> T.logout(): T = apply {
+  addCommand("${CMD_PREFIX}logout")
+}
+
 fun <T : CommandChain> T.action(id: String): T = apply {
   addCommand("${CMD_PREFIX}action $id")
 }
