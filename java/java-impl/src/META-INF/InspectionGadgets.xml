@@ -411,8 +411,8 @@
 
     <!--group.names.class.structure-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClass" bundle="messages.InspectionGadgetsBundle" key="anonymous.inner.class.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.classlayout.AnonymousInnerClassInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.classlayout.AnonymousInnerClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonStaticInitializer" shortName="ClassInitializer" bundle="messages.InspectionGadgetsBundle"
                      key="class.initializer.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.classlayout.ClassInitializerInspection"/>

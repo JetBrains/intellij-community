@@ -16,8 +16,10 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
@@ -49,6 +51,10 @@ public class MoveAnonymousToInnerClassFix extends RefactoringInspectionGadgetsFi
 
   @Override
   public PsiElement getElementToRefactor(PsiElement element) {
+    if (element instanceof PsiNewExpression newExpression) {
+      PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+      if (anonymousClass != null) return anonymousClass;
+    }
     return element instanceof PsiClass ? element : element.getParent();
   }
 }
