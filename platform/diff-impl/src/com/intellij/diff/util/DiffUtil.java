@@ -1377,7 +1377,12 @@ public final class DiffUtil {
                                             @NotNull Runnable task) {
     if (!makeWritable(project, document)) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+      String warning = "Document is read-only";
+      if (file != null) {
+        warning += ": " + file.getPresentableName();
+        if (!file.isValid()) warning += " (invalid)";
+      }
+      LOG.warn(warning);
       return false;
     }
 
