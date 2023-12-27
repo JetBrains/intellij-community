@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/allOpen_fake_plugin_old_registrar.jar -P plugin:org.jetbrains.kotlin.allopen:annotation=test.MyOpener
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/allOpen_fake_plugin_old_registrar.jar -P plugin:org.jetbrains.kotlin.allopen:annotation=test.MyOpener
 // FILE: main.kt
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY

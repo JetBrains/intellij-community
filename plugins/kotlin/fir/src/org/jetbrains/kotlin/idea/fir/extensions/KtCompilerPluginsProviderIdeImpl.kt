@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
@@ -192,12 +193,20 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         return storage
     }
 
+    /**
+     * Returns the paths defined in [CommonCompilerArguments.pluginClasspaths]
+     * in the absolute form with the expansion of the present path macros
+     * (like 'KOTLIN_BUNDLED').
+     */
     private fun CommonCompilerArguments.getOriginalPluginClassPaths(): List<Path> {
-        return this
-            .pluginClasspaths
-            ?.map { Path.of(it).toAbsolutePath() }
-            ?.toList()
-            .orEmpty()
+        val pluginClassPaths = this.pluginClasspaths
+
+        if (pluginClassPaths.isNullOrEmpty()) return emptyList()
+
+        val pathMacroManager = PathMacroManager.getInstance(project)
+        val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
+
+        return expandedPluginClassPaths.map { Path.of(it).toAbsolutePath() }
     }
 
     private fun CommonCompilerArguments.getSubstitutedPluginClassPaths(): List<Path> {
