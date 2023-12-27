@@ -58,13 +58,6 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
     return this;
   }
 
-  @Override
-  @NotNull
-  public abstract Self createCopy();
-
-  @Override
-  public abstract void applyChanges(@NotNull Self modified);
-
   public JpsElementBase getParent() {
     return myParent;
   }
