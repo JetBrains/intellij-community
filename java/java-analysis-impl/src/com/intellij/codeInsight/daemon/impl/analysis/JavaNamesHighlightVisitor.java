@@ -233,6 +233,12 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     else if (resolved instanceof PsiClass) {
       myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, element, colorsScheme));
     }
+    else if (element.getParent() instanceof PsiAnnotation) {
+      myHolder.add(HighlightNamesUtil.highlightClassName(null, element, colorsScheme));
+    }
+    else if (PsiTreeUtil.skipParentsOfType(element, PsiJavaCodeReferenceElement.class) instanceof PsiAnnotation) {
+      myHolder.add(HighlightNamesUtil.highlightPackage(null, element, colorsScheme));
+    }
   }
 
   @Override

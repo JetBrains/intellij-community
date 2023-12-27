@@ -236,6 +236,9 @@ public final class HighlightNamesUtil {
       PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
     }
+    if (aClass == null && element.getParent() instanceof PsiAnnotation) {
+      return JavaHighlightInfoTypes.ANNOTATION_NAME;
+    }
     // use class by default
     return JavaHighlightInfoTypes.CLASS_NAME;
   }
@@ -321,7 +324,7 @@ public final class HighlightNamesUtil {
     return textRange.getStartOffset();
   }
 
-  static @NotNull HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+  static @NotNull HighlightInfo highlightPackage(@Nullable PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
     PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
     TextRange range;
     if (referenceNameElement == null) {

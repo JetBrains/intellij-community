@@ -340,6 +340,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  public void testAnnotationHighlighting() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
+  }
+
   public void testMultiFieldDeclNames() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
