@@ -16,16 +16,12 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleTypeBase;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -57,7 +53,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +75,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     new ExtensionPointName<>("com.intellij.projectWizard.projectCategory");
 
   private static final ExtensionPointName<ProjectTemplateEP> TEMPLATE_EP = new ExtensionPointName<>("com.intellij.projectTemplate");
-
-  private static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
 
   private static final String EMPTY_CARD = "empty card";
   private static final String TEMPLATES_CARD = "templates card";
@@ -597,29 +590,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return group.getModuleBuilder();
   }
 
-  public Collection<ProjectTemplate> getAvailableTemplates() {
-    if (!FRAMEWORKS_CARD.equals(myCurrentCard)) {
-      return Collections.emptyList();
-    }
-    TemplatesGroup group = getSelectedTemplateGroup();
-    if (group == null) {
-      return Collections.emptyList();
-    }
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
-    if (nodes.isEmpty()) {
-      return templates;
-    }
-    final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
-    return ContainerUtil.filter(templates, template -> {
-      if (template instanceof ArchivedProjectTemplate archivedTemplate) {
-        Set<String> frameworks = new HashSet<>(archivedTemplate.getFrameworks());
-        return frameworks.containsAll(selectedFrameworks);
-      }
-      return true;
-    });
-  }
-
   @Override
   public void onWizardFinished() throws CommitStepException {
     if (isFrameworksMode()) {
@@ -713,53 +683,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       return Unit.INSTANCE;
     });
     return map;
-  }
-
-  void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
-    }
-    else {
-      startLoadingRemoteTemplates(chooseTemplateStep);
-    }
-  }
-
-  private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {
-    myTemplatesList.setPaintBusy(true);
-    chooseTemplateStep.getTemplateList().setPaintBusy(true);
-    ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), JavaUiBundle.message("progress.title.loading.templates")) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-        for (String group : factory.getGroups()) {
-          ProjectTemplate[] templates = factory.createTemplates(group, myContext);
-          for (ProjectTemplate template : templates) {
-            String id = ((ArchivedProjectTemplate)template).getCategory();
-            for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
-              if (Objects.equals(id, templatesGroup.getId()) || Objects.equals(group, templatesGroup.getName())) {
-                myTemplatesMap.putValue(templatesGroup, template);
-              }
-            }
-          }
-        }
-      }
-
-      @Override
-      public void onSuccess() {
-        super.onSuccess();
-        TemplatesGroup group = getSelectedTemplateGroup();
-        if (group == null) return;
-        Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-        setTemplatesList(group, templates, true);
-        chooseTemplateStep.updateStep();
-      }
-
-      @Override
-      public void onFinished() {
-        myTemplatesList.setPaintBusy(false);
-        chooseTemplateStep.getTemplateList().setPaintBusy(false);
-      }
-    });
   }
 
   private void updateSelection() {

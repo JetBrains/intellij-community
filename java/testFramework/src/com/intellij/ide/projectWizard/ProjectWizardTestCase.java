@@ -160,17 +160,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
       );
     }
-    if (step instanceof ChooseTemplateStep) {
-      if (name != null) {
-        ChooseTemplateStep chooseTemplateStep = (ChooseTemplateStep)step;
-        if (!chooseTemplateStep.setSelectedTemplate(name)) {
-          throw new IllegalArgumentException(
-            group + '/' + name + " template not found. " +
-            "Available groups: " + chooseTemplateStep.getTemplateList().availableProjectTemplatesToString()
-          );
-        }
-      }
-    }
   }
 
   protected void cancelWizardRun() {

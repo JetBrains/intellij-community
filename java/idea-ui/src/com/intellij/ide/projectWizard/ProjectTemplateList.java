@@ -25,7 +25,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * @author Dmitry Avdeev
@@ -147,10 +146,6 @@ public class ProjectTemplateList extends JPanel {
     myList.addListSelectionListener(listener);
   }
 
-  public void setPaintBusy(boolean b) {
-    myList.setPaintBusy(b);
-  }
-
   @TestOnly
   boolean setSelectedTemplate(@NotNull String name) {
     ListModel<ProjectTemplate> model1 = myList.getModel();
@@ -162,15 +157,5 @@ public class ProjectTemplateList extends JPanel {
     }
 
     return false;
-  }
-
-  @TestOnly
-  public String availableProjectTemplatesToString() {
-    ListModel<ProjectTemplate> model = myList.getModel();
-    StringJoiner builder = new StringJoiner(", ");
-    for (int i = 0; i < model.getSize(); i++) {
-      builder.add(model.getElementAt(i).getName());
-    }
-    return builder.toString();
   }
 }
