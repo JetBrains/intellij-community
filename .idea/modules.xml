@@ -1066,6 +1066,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" filepath="$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/commons-lang-v2-shim/intellij.platform.util.commonsLangV2Shim.iml" filepath="$PROJECT_DIR$/platform/util/commons-lang-v2-shim/intellij.platform.util.commonsLangV2Shim.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/coroutines/intellij.platform.util.coroutines.iml" filepath="$PROJECT_DIR$/platform/util/coroutines/intellij.platform.util.coroutines.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/coroutines/intellij.platform.util.coroutines.tests.iml" filepath="$PROJECT_DIR$/platform/util/coroutines/intellij.platform.util.coroutines.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/diff/intellij.platform.util.diff.iml" filepath="$PROJECT_DIR$/platform/util/diff/intellij.platform.util.diff.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" filepath="$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" filepath="$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" />
