@@ -28,7 +28,7 @@ public final class BaselinePanel extends NonOpaquePanel {
   private final JBValue myOffset = new JBValue.Float(8);
   private final JBValue myBeforeButtonOffset;
   private final JBValue myButtonOffset = new JBValue.Float(6);
-  private boolean myLeftOrder;
+  private final boolean myLeftOrder;
 
   private EventHandler myEventHandler;
 
@@ -74,7 +74,7 @@ public final class BaselinePanel extends NonOpaquePanel {
         }
 
         Insets insets = parent.getInsets();
-        return new Dimension(width, insets.top + baseSize.height + insets.bottom);
+        return new Dimension(width, Math.max(insets.top + baseSize.height + insets.bottom, getMinButtonsHeight()));
       }
 
       private int calculateBaseWidth(@NotNull Container parent) {
@@ -102,12 +102,12 @@ public final class BaselinePanel extends NonOpaquePanel {
       @Override
       public void layoutContainer(Container parent) {
         Dimension baseSize = myBaseComponent.getPreferredSize();
+        int baseComponentBaseline = myBaseComponent.getBaseline(baseSize.width, baseSize.height);
         int top = parent.getInsets().top;
-        int y = top + myBaseComponent.getBaseline(baseSize.width, baseSize.height);
-
+        int y = Math.max(top + baseComponentBaseline, getMinButtonsBaseline());
 
         if (!leftOrder) {
-          layoutRightOrderContainer(parent, y);
+          layoutRightOrderContainer(parent, y, baseComponentBaseline);
           return;
         }
 
@@ -119,7 +119,7 @@ public final class BaselinePanel extends NonOpaquePanel {
         }
 
         baseSize.width = Math.min(baseSize.width, calcBaseWidth);
-        myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);
+        myBaseComponent.setBounds(x, y - baseComponentBaseline, baseSize.width, baseSize.height);
 
         if (myProgressComponent != null) {
           Dimension size = myProgressComponent.getPreferredSize();
@@ -141,7 +141,21 @@ public final class BaselinePanel extends NonOpaquePanel {
         }
       }
 
-      private void layoutRightOrderContainer(Container parent, int y) {
+      private int getMinButtonsHeight() {
+        return myButtonComponents.stream()
+          .filter(component -> component.isVisible())
+          .mapToInt(component -> component.getPreferredSize().height)
+          .max().orElse(0);
+      }
+
+      private int getMinButtonsBaseline() {
+        return myButtonComponents.stream()
+          .filter(component -> component.isVisible())
+          .mapToInt(component -> component.getBaseline(getWidth(), getHeight()))
+          .max().orElse(-1);
+      }
+
+      private void layoutRightOrderContainer(Container parent, int y, int baseComponentBaseline) {
         if (myProgressComponent != null) {
           Dimension size = myProgressComponent.getPreferredSize();
           if (myProgressDisabledButton == null) {
@@ -179,7 +193,7 @@ public final class BaselinePanel extends NonOpaquePanel {
         }
 
         Dimension baseSize = myBaseComponent.getPreferredSize();
-        myBaseComponent.setBounds(x, parent.getInsets().top, width, baseSize.height);
+        myBaseComponent.setBounds(x, y - baseComponentBaseline, width, baseSize.height);
 
         if (myBaseComponent instanceof JLabel label) {
           label.setToolTipText(width < baseSize.width ? label.getText() : null);
