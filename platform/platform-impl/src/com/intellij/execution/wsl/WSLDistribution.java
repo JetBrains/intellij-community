@@ -72,7 +72,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   private static final String DEFAULT_WSL_IP = "127.0.0.1";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final String DEFAULT_SHELL = "/bin/sh";
+  static final String DEFAULT_SHELL = "/bin/sh";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";

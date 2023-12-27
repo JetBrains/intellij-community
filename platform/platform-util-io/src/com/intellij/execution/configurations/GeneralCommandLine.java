@@ -21,6 +21,7 @@ import com.intellij.util.io.IdeUtilIoBundle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -379,6 +380,11 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   public final void setProcessCreator(@Nullable Function<ProcessBuilder, Process> processCreator) {
     myProcessCreator = processCreator;
+  }
+
+  @TestOnly
+  public final boolean isProcessCreatorSet() {
+    return myProcessCreator != null;
   }
 
   public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {

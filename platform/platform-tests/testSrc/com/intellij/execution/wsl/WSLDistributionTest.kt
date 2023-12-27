@@ -4,19 +4,33 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.use
+import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.util.containers.orNull
+import com.intellij.util.io.Ksuid
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.be
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
-import org.junit.AssumptionViolatedException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.cancel
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -197,7 +211,9 @@ class WSLDistributionTest {
 
           when (strategy) {
             WslTestStrategy.Legacy -> Unit
-            WslTestStrategy.Ijent -> throw AssumptionViolatedException("not implemented yet")
+            WslTestStrategy.Ijent -> {
+              cmd.getUserData(TEST_ROOT_USER_SET) should be(true)
+            }
           }
 
           environment.entries should beEmpty()
@@ -332,12 +348,118 @@ class WSLDistributionTest {
 
     return when (this) {
       WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
-      WslTestStrategy.Ijent -> throw AssumptionViolatedException("Not implemented yet")
+      WslTestStrategy.Ijent -> passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
     }
   }
+
+  private fun passGeneralCommandLineThroughWslIjentManager(
+    mockWslDistribution: WSLDistribution,
+    sourceCommandLine: GeneralCommandLine,
+    options: WSLCommandLineOptions,
+  ): GeneralCommandLine =
+    Disposer.newDisposable().use { disposable ->
+      @Suppress("SSBasedInspection") val scope = CoroutineScope(CoroutineName("A mock scope that should not be actually used"))
+      Disposer.register(disposable) { scope.cancel() }
+
+      val adapter = GeneralCommandLine()
+
+      ApplicationManager.getApplication().replaceService(
+        WslIjentManager::class.java,
+        object : WslIjentManager {
+          @DelicateCoroutinesApi
+          override val processAdapterScope: CoroutineScope = scope
+
+          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
+            require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
+            return MockIjentApi(adapter, rootUser)
+          }
+
+          override val isIjentAvailable: Boolean = true
+        },
+        disposable,
+      )
+
+      options.isLaunchWithWslExe = false  // Exploiting the knowledge about internals of WSLDistribution.mustRunCommandLineWithIjent
+      mockWslDistribution.patchCommandLine(sourceCommandLine, null, options)
+      withClue("WslIjentManager substitutes setProcessCreator") {
+        sourceCommandLine.isProcessCreatorSet should be(true)
+      }
+
+      withClue("Checking that the mock works") {
+        val err = shouldThrow<ProcessNotCreatedException> {
+          sourceCommandLine.createProcess()
+        }
+        err.message should be(executeResultMock.message)
+      }
+      adapter
+    }
 }
 
 enum class WslTestStrategy { Legacy, Ijent }
+
+private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentApi {
+  override val id: IjentId get() = throw UnsupportedOperationException()
+
+  override val platform: IjentExecFileProvider.SupportedPlatform get() = throw UnsupportedOperationException()
+
+  override val isRunning: Boolean get() = true
+
+  override val info: IjentApi.Info get() = throw UnsupportedOperationException()
+
+  override fun close(): Unit = Unit
+
+  override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
+
+  override val fs: IjentFileSystemApi get() = throw UnsupportedOperationException()
+
+  override val tunnels: IjentTunnelsApi get() = throw UnsupportedOperationException()
+}
+
+private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
+  override fun executeProcessBuilder(exe: String): IjentExecApi.ExecuteProcessBuilder =
+    MockIjentApiExecuteProcessBuilder(adapter.apply { exePath = exe }, rootUser)
+
+  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+}
+
+private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }
+
+private class MockIjentApiExecuteProcessBuilder(
+  private val adapter: GeneralCommandLine,
+  rootUser: Boolean,
+) : IjentExecApi.ExecuteProcessBuilder {
+  init {
+    if (rootUser) {
+      adapter.putUserData(TEST_ROOT_USER_SET, true)
+    }
+  }
+
+  override fun args(args: List<String>): IjentExecApi.ExecuteProcessBuilder = apply {
+    adapter.parametersList.run {
+      clearAll()
+      addAll(args)
+    }
+  }
+
+  override fun env(env: Map<String, String>): IjentExecApi.ExecuteProcessBuilder = apply {
+    adapter.environment.run {
+      clear()
+      putAll(env)
+    }
+  }
+
+  override fun pty(pty: IjentExecApi.Pty?): IjentExecApi.ExecuteProcessBuilder = this
+
+  override fun workingDirectory(workingDirectory: String?): IjentExecApi.ExecuteProcessBuilder = apply {
+    adapter.setWorkDirectory(workingDirectory)
+  }
+
+  override suspend fun execute(): IjentExecApi.ExecuteProcessResult = executeResultMock
+}
+
+private val executeResultMock by lazy {
+  IjentExecApi.ExecuteProcessResult.Failure(errno = 12345, message = "mock result ${Ksuid.generate()}")
+}
 
 private class WslTestStrategyExtension
   : TestTemplateInvocationContextProvider,
