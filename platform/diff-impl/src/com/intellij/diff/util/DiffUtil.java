@@ -11,6 +11,7 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -656,11 +657,19 @@ public final class DiffUtil {
       components.addAll(createCustomNotifications(viewer, content));
     }
 
-    if (content instanceof DocumentContent) {
-      Document document = ((DocumentContent)content).getDocument();
+    if (content instanceof DocumentContent documentContent) {
+      Document document = documentContent.getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
         components.add(wrapEditorNotificationComponent(
           DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
+      }
+    }
+
+    if (content instanceof FileContent fileContent) {
+      VirtualFile file = fileContent.getFile();
+      if (file.isInLocalFileSystem() && !file.isValid()) {
+        components.add(wrapEditorNotificationComponent(
+          DiffNotifications.createNotification(DiffBundle.message("error.file.is.not.valid"))));
       }
     }
 
