@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Function;
@@ -24,12 +25,18 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 public class ProjectTypeListWithSearch<T> extends JPanel {
-  public ProjectTypeListWithSearch(@NotNull WizardContext context, @NotNull JBList<T> list, @NotNull JScrollPane scrollPane,
-                                   @NotNull Function<? super T, String> namer, @NotNull Runnable showEmptyStatus) {
+  public ProjectTypeListWithSearch(
+    @NotNull WizardContext context,
+    @NotNull JBList<T> list,
+    @NotNull Function<? super T, String> namer,
+    @NotNull Runnable showEmptyStatus
+  ) {
     super(new BorderLayout());
 
     SearchTextField searchTextField = new SearchTextField(false);
     searchTextField.getTextEditor().setBorder(JBUI.Borders.empty(2, 5, 2, 0));
+
+    JScrollPane scrollPane = new JBScrollPane(list);
     scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
 
     add(searchTextField, BorderLayout.NORTH);

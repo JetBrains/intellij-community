@@ -82,12 +82,15 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private static final ExtensionPointName<ProjectTemplateEP> TEMPLATE_EP = new ExtensionPointName<>("com.intellij.projectTemplate");
 
-  private static final Convertor<FrameworkSupportInModuleProvider, String> PROVIDER_STRING_CONVERTOR =
-    o -> o.getId();
+  private static final Convertor<FrameworkSupportInModuleProvider, String> PROVIDER_STRING_CONVERTOR = o -> o.getId();
   private static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
+
+  private static final String EMPTY_CARD = "empty card";
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
+
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
+
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
@@ -157,19 +160,15 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
                                               GridConstraints.SIZEPOLICY_WANT_GROW,
                                               null, null, null));
 
-    String emptyCard = "emptyCard";
-    ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
-      myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), getNamer(), () -> {
-      showCard(emptyCard);
-      wizard.updateButtons(true, false, true);
-    });
+    var projectTypeListWithSearch = new ProjectTypeListWithSearch<>(myContext, myProjectTypeList, getNamer(), getEmptyStatusPresenter());
+    myProjectTypePanel.add(projectTypeListWithSearch);
 
-    myProjectTypePanel.add(listWithFilter);
-
-    myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
+    JBPanelWithEmptyText panelWithEmptyText = new JBPanelWithEmptyText()
+      .withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure"));
+    myOptionsPanel.add(panelWithEmptyText, EMPTY_CARD);
 
     Border border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
-    listWithFilter.setBorder(border);
+    projectTypeListWithSearch.setBorder(border);
     mySettingsPanel.setBorder(border);
 
     myModulesProvider = modulesProvider;
@@ -255,6 +254,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       if (!(step instanceof NewProjectWizardStep)) return name;
 
       return String.join(" ", ContainerUtil.addAll(new ArrayList<>(((NewProjectWizardStep)step).getKeywords().toSet()), name));
+    };
+  }
+
+  private @NotNull Runnable getEmptyStatusPresenter() {
+    return () -> {
+      showCard(EMPTY_CARD);
+      myWizard.updateButtons(true, false, true);
     };
   }
 
