@@ -14,7 +14,7 @@ internal object FileNavigationLogger : CounterUsagesCollector() {
   private var session: IntEventField = EventFields.Int("session")
   private var performance: LongListEventField = EventFields.LongList("performance")
 
-  private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
+  private var anonymized_path: EventField<String?> = EventFields.AnonymizedField("file_path")
   private var opened: EncodedBooleanEventField = EncodedBooleanEventField("opened")
   private var source: EncodedEnumEventField<FilePredictionCandidateSource> = EncodedEnumEventField("source")
 

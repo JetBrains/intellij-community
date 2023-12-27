@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundLogarithmic
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.text.StringUtil
-import org.intellij.lang.annotations.Pattern
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.security.InvalidParameterException
@@ -17,6 +16,10 @@ import kotlin.reflect.KProperty
 
 sealed class EventField<T> {
   abstract val name: String
+
+  open val shouldBeAnonymized: Boolean
+    get() = false
+
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
   @Contract(pure = true)
@@ -238,6 +241,8 @@ data class BooleanEventField(@NonNls @EventFieldName override val name: String) 
 }
 
 data class AnonymizedEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<String?>() {
+  override val shouldBeAnonymized: Boolean = true
+
   override val validationRule: List<String>
     get() = listOf("{regexp#hash}")
 
@@ -247,6 +252,8 @@ data class AnonymizedEventField(@NonNls @EventFieldName override val name: Strin
 }
 
 internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<String?>() {
+  override val shouldBeAnonymized: Boolean = true
+
   override val validationRule: List<String>
     get() = listOf("{regexp#short_hash}")
 
@@ -257,6 +264,8 @@ internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override v
 
 internal data class DatedShortAnonymizedEventField<T>(@NonNls @EventFieldName override val name: String,
                                                       val dateAndValueProvider: (T) -> Pair<Long, String?>) : PrimitiveEventField<T>() {
+  override val shouldBeAnonymized: Boolean = true
+
   override val validationRule: List<String>
     get() = listOf("{regexp#date_short_hash}")
 

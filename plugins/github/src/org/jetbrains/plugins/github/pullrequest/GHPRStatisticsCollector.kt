@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -25,7 +23,7 @@ import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
 internal object GHPRStatisticsCollector: CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 5)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 6)
 
   override fun getGroup() = COUNTERS_GROUP
 
@@ -55,17 +53,8 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
   private val MERGED_EVENT = COUNTERS_GROUP.registerEvent("merged", EventFields.Enum<GithubPullRequestMergeMethod>("method") {
     it.name.uppercase(Locale.getDefault())
   })
-  private val anonymizedId = object : PrimitiveEventField<String>() {
+  private val anonymizedId = EventFields.AnonymizedId
 
-    override val name = "anonymized_id"
-
-    override fun addData(fuData: FeatureUsageData, value: String) {
-      fuData.addAnonymizedId(value)
-    }
-
-    override val validationRule: List<String>
-      get() = listOf("{regexp#hash}")
-  }
   private val SERVER_META_EVENT = COUNTERS_GROUP.registerEvent("server.meta.collected", anonymizedId, EventFields.Version)
 
   private val DETAILS_BRANCHES_EVENT = COUNTERS_GROUP.registerEvent("details.branches.opened")
