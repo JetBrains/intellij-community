@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,7 @@ public class SimpleDiffChangeUi {
     myOperations.add(createAcceptOperation(Side.RIGHT));
   }
 
+  @ApiStatus.Internal
   protected void createHighlighter(@NotNull Side side) {
     Editor editor = myViewer.getEditor(side);
 

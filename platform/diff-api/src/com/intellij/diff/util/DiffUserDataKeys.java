@@ -134,20 +134,4 @@ public interface DiffUserDataKeys {
    * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
    */
   Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
-
-  /**
-   * Controls whether the aligning view mode is available for a specific editor.
-   * This can be disabled for viewers, where this feature is not implemented (e.g. {@link com.intellij.jupyter.diff.util.JupyterDiffViewer})
-   *
-   * @see com.intellij.diff.actions.impl.ToggleDiffAligningModeAction#update
-   */
-  Key<Boolean> ALIGNING_VIEW_NOT_SUPPORTED = Key.create("Diff.DisableAligningView");
-
-  /**
-   * Determines if line markers should always be visible in the editor gutter, regardless of the current folding state.
-   * This can be particularly useful in specialized diff viewers (e.g., {@link com.intellij.jupyter.diff.util.JupyterDiffViewer})
-   *
-   * @see com.intellij.openapi.editor.impl.EditorGutterComponentImpl#isLineMarkerVisible
-   */
-  Key<Boolean> LINE_MARKER_ALWAYS_VISIBLE = Key.create("Diff.LineMarkerAlwaysVisible");
 }
