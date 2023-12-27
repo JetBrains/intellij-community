@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -221,6 +223,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
   }
 
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   @Test fun `test RootSetChanged should not be triggered resolving same artifact using Workspace API`() {
     val resolver = ExternalAnnotationsRepositoryResolver()
     val library = createLibrary()
@@ -245,7 +248,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     modifiableModel.addRoot("file:///fake.source", OrderRootType.SOURCES)
     runWriteAction { modifiableModel.commit() } // second write operation
 
-    val diff2 = MutableEntityStorage.from(workspaceModel.currentSnapshot)
+    val diff2 = MutableEntityStorage.from(workspaceModel.currentSnapshot) as MutableEntityStorageInstrumentation
     resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff2)
     assertFalse(diff2.hasChanges())
     runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff2)} } // third write operation

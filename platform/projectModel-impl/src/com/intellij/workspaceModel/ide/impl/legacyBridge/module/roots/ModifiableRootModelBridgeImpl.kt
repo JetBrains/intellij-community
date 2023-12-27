@@ -637,8 +637,9 @@ class ModifiableRootModelBridgeImpl(
   }
 
   // TODO compare by actual values
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun isChanged(): Boolean {
-    if (diff.hasChanges()) return true
+    if ((diff as MutableEntityStorageInstrumentation).hasChanges()) return true
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) return true
 

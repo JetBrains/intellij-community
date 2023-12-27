@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
@@ -77,7 +78,7 @@ public final class RemoteRepositoriesConfigurable implements SearchableConfigura
 
   @Override
   public boolean isModified() {
-    return isServiceListModified() || isRepoListModified() || myMutableEntityStorage.hasChanges();
+    return isServiceListModified() || isRepoListModified() || ((MutableEntityStorageInstrumentation)myMutableEntityStorage).hasChanges();
   }
 
   private boolean isServiceListModified() {
@@ -296,7 +297,7 @@ public final class RemoteRepositoriesConfigurable implements SearchableConfigura
     RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
     applyMutableEntityStorageChanges();
 
-    if (!newUrls.containsAll(oldUrls) || myMutableEntityStorage.hasChanges()) {
+    if (!newUrls.containsAll(oldUrls) || ((MutableEntityStorageInstrumentation)myMutableEntityStorage).hasChanges()) {
       RepositoryLibrariesReloaderKt.reloadAllRepositoryLibraries(myProject);
     }
 

@@ -203,9 +203,10 @@ class ArtifactModifiableModelBridge(
     eventDispatcher.removeListener(listener)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun isModified(): Boolean {
     // TODO: 03.02.2021 May give a wrong result
-    return diff.hasChanges()
+    return (diff as MutableEntityStorageInstrumentation).hasChanges()
   }
 
   @RequiresWriteLock

@@ -31,6 +31,8 @@ import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
@@ -289,8 +291,9 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     Notifications.Bus.notify(notification, project)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private suspend fun commitBuilderIfModified(workspaceModel: WorkspaceModel, builder: MutableEntityStorage) {
-    if (!builder.hasChanges()) return
+    if (!(builder as MutableEntityStorageInstrumentation).hasChanges()) return
 
     withContext(Dispatchers.EDT) {
       WriteAction.run<Throwable> {

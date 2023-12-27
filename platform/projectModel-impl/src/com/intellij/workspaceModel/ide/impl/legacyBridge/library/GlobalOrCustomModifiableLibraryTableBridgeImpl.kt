@@ -12,6 +12,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -94,7 +96,8 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
       .toList().toTypedArray()
   }
 
-  override fun isChanged(): Boolean = diff.hasChanges()
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun isChanged(): Boolean = (diff as MutableEntityStorageInstrumentation).hasChanges()
 
   override fun dispose() {
     modelIsCommittedOrDisposed = true

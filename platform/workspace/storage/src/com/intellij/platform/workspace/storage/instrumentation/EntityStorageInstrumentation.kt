@@ -55,6 +55,15 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public fun hasSameEntities(): Boolean
 
   /**
+   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
+   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun hasChanges(): Boolean
+
+  /**
    * Return changes in entities recorded in this instance.
    *
    * This function isn't supported to be used by client code directly. In order to subscribe to changes in entities inside the IDE process,

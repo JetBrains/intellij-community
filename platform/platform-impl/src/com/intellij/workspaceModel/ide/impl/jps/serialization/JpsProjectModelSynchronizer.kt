@@ -42,6 +42,8 @@ import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.*
@@ -112,6 +114,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   suspend fun reloadProjectEntities() = reloadProjectEntitiesTimeMs.addMeasuredTimeMillis {
     if (StoreReloadManager.getInstance(project).isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
@@ -141,9 +144,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Changed entity sources", reloadingResult.affectedSources)
 
     if (reloadingResult.affectedSources.isEmpty() &&
-        !reloadingResult.builder.hasChanges() &&
-        !reloadingResult.unloadedEntityBuilder.hasChanges() &&
-        !reloadingResult.orphanageBuilder.hasChanges()) {
+        !(reloadingResult.builder as MutableEntityStorageInstrumentation).hasChanges() &&
+        !(reloadingResult.unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges() &&
+        !(reloadingResult.orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
       return@addMeasuredTimeMillis
     }
 
@@ -156,7 +159,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val description = "Reload entities after changes in JPS configuration files"
 
       // Update builder of unloaded entities
-      if (reloadingResult.unloadedEntityBuilder.hasChanges()) {
+      if ((reloadingResult.unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
         WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { builder ->
           builder.replaceBySource(affectedEntityFilter, reloadingResult.unloadedEntityBuilder.toSnapshot())
         }
@@ -171,7 +174,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       addUnloadedModuleEntities(unloadedBuilder)
       sourcesToSave.removeAll(reloadingResult.affectedSources)
 
-      if (reloadingResult.orphanageBuilder.hasChanges()) {
+      if ((reloadingResult.orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
         EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
       }
     }
@@ -312,6 +315,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     return loadedProjectEntities
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) = applyLoadedStorageTimeMs.addMeasuredTimeMillis {
     if (projectEntities == null) {
       return@addMeasuredTimeMillis
@@ -325,7 +329,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         entitySource is JpsFileEntitySource || entitySource is JpsFileDependentEntitySource || entitySource is CustomModuleEntitySource
         || entitySource is DummyParentEntitySource
       }
-      if (projectEntities.unloadedEntitiesBuilder.hasChanges()) {
+      if ((projectEntities.unloadedEntitiesBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
         WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { updater ->
           updater.replaceBySource(sourceFilter, projectEntities.unloadedEntitiesBuilder)
         }
@@ -359,8 +363,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(builder, unloadedEntitiesBuilder)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun addUnloadedModuleEntities(diff: MutableEntityStorage) {
-    if (diff.hasChanges()) {
+    if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
       WorkspaceModel.getInstance(project).updateUnloadedEntities("Add new unloaded modules") { updater ->
         updater.addDiff(diff)
       }

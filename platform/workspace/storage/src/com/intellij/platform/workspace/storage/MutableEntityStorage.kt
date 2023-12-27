@@ -135,12 +135,6 @@ import org.jetbrains.annotations.NonNls
  */
 public interface MutableEntityStorage : EntityStorage {
   /**
-   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
-   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
-   */
-  public fun hasChanges(): Boolean
-
-  /**
    * Add the given entity to the storage. All children of the entity will also be added.
    *
    * If any of the children exists in a different storage, this child will be copied with all sub-children and added to the storage.

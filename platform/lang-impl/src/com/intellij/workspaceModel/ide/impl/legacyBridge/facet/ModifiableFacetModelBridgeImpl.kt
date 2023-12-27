@@ -21,6 +21,8 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
@@ -213,8 +215,9 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   @TestOnly
   fun getEntity(facet: Facet<*>): FacetEntity? = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun isModified(): Boolean {
-    return diff.hasChanges()
+    return (diff as MutableEntityStorageInstrumentation).hasChanges()
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {

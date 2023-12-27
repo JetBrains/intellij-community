@@ -12,6 +12,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.serialization.impl.JpsLibraryEntitiesSerializer
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -91,6 +93,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     }
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun readExternal(libraryTableTag: Element) {
     val mutableEntityStorage = MutableEntityStorage.create()
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
@@ -100,7 +103,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
       mutableEntityStorage.addEntity(libraryEntity)
     }
 
-    if (!mutableEntityStorage.hasChanges()) return
+    if (!(mutableEntityStorage as MutableEntityStorageInstrumentation).hasChanges()) return
 
     val runnable: () -> Unit = {
       GlobalWorkspaceModel.getInstance().updateModel("Custom library table ${libraryTableId.level} update") { builder ->

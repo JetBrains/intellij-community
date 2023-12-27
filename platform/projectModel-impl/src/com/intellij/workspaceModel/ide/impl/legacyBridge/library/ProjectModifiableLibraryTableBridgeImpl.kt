@@ -16,6 +16,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -140,7 +142,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
-  override fun isChanged(): Boolean = diff.hasChanges()
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun isChanged(): Boolean = (diff as MutableEntityStorageInstrumentation).hasChanges()
 
   companion object {
     val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()
