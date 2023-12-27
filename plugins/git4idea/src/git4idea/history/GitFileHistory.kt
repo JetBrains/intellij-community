@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.impl.isRenamed
-import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitFileRevision
@@ -126,7 +125,7 @@ class GitFileHistory internal constructor(private val project: Project,
     val records = parser.parse(output)
 
     return records.mapIndexedNotNull { i, record ->
-      record.statusInfos.firstOrNull { it.isRenamed && it.secondPath == VcsFileUtil.relativePath(root, filePath) }?.let { statusInfo ->
+      record.statusInfos.firstOrNull { it.isRenamed }?.let { statusInfo ->
         val parents = record.parentsHashes
         if (parents.isNotEmpty()) FileHistoryStart(parents[i], GitContentRevision.createPath(root, statusInfo.firstPath)) else null
       }
