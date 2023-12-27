@@ -44,9 +44,8 @@ class WSLDistributionTest {
     fun `simple case`() {
       val cmd = distro.patchCommandLine(GeneralCommandLine("true"), null, WSLCommandLineOptions())
       assertSoftly(cmd) {
-        exePath should be(wslExe)
-        parametersList.list should be(listOf(
-          "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "true",
+        argv should be(listOf(
+          wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "true",
         ))
         environment.entries should beEmpty()
       }
@@ -61,9 +60,8 @@ class WSLDistributionTest {
         WSLCommandLineOptions(),
       )
       assertSoftly(cmd) {
-        exePath should be(wslExe)
-        parametersList.list should be(listOf(
-          "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c",
+        argv should be(listOf(
+          wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c",
           """export FOOBAR=''"'"'o"ops 2'"'"'' && printf foo bar ''"'"'o"ops 1'"'"''"""
         ))
         environment.entries should beEmpty()
@@ -84,9 +82,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "date",
           ))
           environment.entries should beEmpty()
         }
@@ -103,9 +100,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(commandLine, null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "printenv",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "printenv",
           ))
           environment should be(mapOf(
             "FOO" to "BAR",
@@ -127,9 +123,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-i", "-l", "-c", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-i", "-l", "-c", "date",
           ))
           environment.entries should beEmpty()
         }
@@ -147,9 +142,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-c", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-c", "date",
           ))
           environment.entries should beEmpty()
         }
@@ -167,9 +161,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "$toolsRoot/ttyfix", "\$SHELL", "-c", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "$toolsRoot/ttyfix", "\$SHELL", "-c", "date",
           ))
           environment.entries should beEmpty()
         }
@@ -187,9 +180,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "-u", "root", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "-u", "root", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "date",
           ))
           environment.entries should beEmpty()
         }
@@ -206,9 +198,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "cd /foo/bar/baz && date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "cd /foo/bar/baz && date",
           ))
           environment.entries should beEmpty()
         }
@@ -230,9 +221,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(commandLine, null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "date",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c", "date",
           ))
           environment should be(mapOf(
             "FOO" to "BAR",
@@ -255,9 +245,8 @@ class WSLDistributionTest {
 
         val cmd = distro.patchCommandLine(GeneralCommandLine("date"), null, options)
         assertSoftly(cmd) {
-          exePath should be(wslExe)
-          parametersList.list should be(listOf(
-            "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c",
+          argv should be(listOf(
+            wslExe, "--distribution", "mock-wsl-id", "--exec", "$toolsRoot/ttyfix", "/bin/bash", "-l", "-c",
             "printf 'foo bar' && echo 'hurr durr' && whoami && date",
           ))
           environment.entries should beEmpty()
@@ -265,4 +254,7 @@ class WSLDistributionTest {
       }
     }
   }
+
+  private val GeneralCommandLine.argv: List<String>
+    get() = listOf(exePath) + parametersList.list
 }
