@@ -24,7 +24,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.platform.ijent.IjentExecApi;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -229,24 +228,15 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     if (mustRunCommandLineWithIjent(options)) {
-      String wslSpecificWorkingDirectory = options.getRemoteWorkingDirectory();
-      IjentExecApi.Pty ijentPty;
+      LocalPtyOptions ptyOptions;
       if (commandLine instanceof PtyCommandLine ptyCommandLine) {
-        var ptyOptions = ptyCommandLine.getPtyOptions();
-        ijentPty = new IjentExecApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
+        ptyOptions = ptyCommandLine.getPtyOptions();
       }
       else {
-        ijentPty = null;
+        ptyOptions = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return WslIjentManager.getInstance().runProcessBlocking(
-          this,
-          project,
-          processBuilder,
-          ijentPty,
-          options.isSudo(),
-          wslSpecificWorkingDirectory
-        );
+        return WslIjentManager.getInstance().runProcessBlocking(project, this, processBuilder, options, ptyOptions);
       });
     }
     else {

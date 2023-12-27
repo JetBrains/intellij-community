@@ -4,6 +4,7 @@ package com.intellij.execution.wsl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.ijent.IjentChildProcessAdapter
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
+import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -85,29 +86,29 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
    * methods. Stdin, stdout, and stderr are always piped. The caller MUST drain both [Process.getInputStream] and [Process.getErrorStream].
    * Otherwise, the remote operating system may suspend the remote process due to buffer overflow.
    *
-   * [isSudo] allows to start IJent inside WSL through sudo. It implies that all children processes, including [processBuilder] will run
-   * from the root user as well.
-   *
-   * [wslSpecificWorkingDirectory] takes precedence over [ProcessBuilder.directory]. This option is required because
-   * [ProcessBuilder.directory] is a Windows path, and the constructor of [java.io.File] can corrupt the path.
+   * [ProcessBuilder.directory] is a Windows path, and the constructor of [java.io.File] can corrupt the path. Therefore,
+   * [WSLCommandLineOptions.getRemoteWorkingDirectory] is preferred over [ProcessBuilder.directory].
    */
   @RequiresBackgroundThread
   @RequiresBlockingContext
   fun runProcessBlocking(
-    wslDistribution: WSLDistribution,
     project: Project?,
+    wslDistribution: WSLDistribution,
     processBuilder: ProcessBuilder,
-    pty: IjentExecApi.Pty?,
-    isSudo: Boolean,
-    wslSpecificWorkingDirectory: String?,
+    options: WSLCommandLineOptions,
+    ptyOptions: LocalPtyOptions?,
   ): Process {
     return runBlocking {
       val command = processBuilder.command()
       val directory =
-        wslSpecificWorkingDirectory
+        options.remoteWorkingDirectory
         ?: processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
 
-      val ijentApi = getIjentApi(wslDistribution, project, isSudo)
+      val pty = ptyOptions?.run {
+        IjentExecApi.Pty(initialColumns, initialRows, !consoleMode)
+      }
+
+      val ijentApi = getIjentApi(wslDistribution, project, options.isSudo)
       when (val processResult = ijentApi.exec.executeProcessBuilder(FileUtil.toSystemIndependentName(command.first()))
         .args(command.toList().drop(1))
         .env(processBuilder.environment())
