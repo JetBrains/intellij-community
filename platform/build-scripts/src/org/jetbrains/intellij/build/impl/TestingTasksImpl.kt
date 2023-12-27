@@ -175,6 +175,11 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                            systemProperties: Map<String, String>,
                                            context: CompilationContext) {
     context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
+    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT) {
+      context.messages.warning(
+        "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
+        "while only '${JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT.serialized}' is supported. Scope will be ignored")
+    }
     try {
       runTestsProcess(mainModule = runConfigurationProperties.moduleName,
                       testGroups = null,
