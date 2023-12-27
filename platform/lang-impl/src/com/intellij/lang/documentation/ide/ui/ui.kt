@@ -6,10 +6,8 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
@@ -38,18 +36,6 @@ internal fun toolbarComponent(actions: ActionGroup, contextComponent: JComponent
     it.setReservePlaceAutoPopupIcon(false)
   }
   return toolbar.component
-}
-
-internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): JComponent {
-  val presentation = Presentation().also {
-    it.icon = AllIcons.Actions.More
-    it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-  }
-  val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {
-    override fun getDataContext(): DataContext = DataManager.getInstance().getDataContext(contextComponent)
-  }
-  button.setNoIconsInPopup(true)
-  return button
 }
 
 fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {

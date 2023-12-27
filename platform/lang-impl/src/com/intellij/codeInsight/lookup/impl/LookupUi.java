@@ -97,11 +97,7 @@ final class LookupUi {
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-    myMenuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     DataManager.registerDataProvider(myMenuButton, dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myLookup.getProject();
@@ -464,8 +460,10 @@ final class LookupUi {
   }
 
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    private MenuAction() {
-      setPopup(true);
+    MenuAction() {
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      getTemplatePresentation().setPopupGroup(true);
     }
   }
 
