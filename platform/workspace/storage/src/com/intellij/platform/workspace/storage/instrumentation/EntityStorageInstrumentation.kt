@@ -45,6 +45,16 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public val modificationCount: Long
 
   /**
+   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from.
+   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * with the same properties was added.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @ApiStatus.Internal
+  public fun hasSameEntities(): Boolean
+
+  /**
    * Replaces existing children of a given parent with a new list of children.
    *
    * The old children of the parent will be removed from the storage if they have a not-null reference to the parent

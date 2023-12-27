@@ -200,13 +200,6 @@ public interface MutableEntityStorage : EntityStorage {
   public fun addDiff(diff: MutableEntityStorage)
 
   /**
-   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
-   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
-   * with the same properties was added.
-   */
-  public fun hasSameEntities(): Boolean
-
-  /**
    * Returns an existing or create a new mapping with the given [identifier].
    * By convention, identifier should be a dot-separated string prepended with the product name, e.g.
    * * intellij.modules.bridge
