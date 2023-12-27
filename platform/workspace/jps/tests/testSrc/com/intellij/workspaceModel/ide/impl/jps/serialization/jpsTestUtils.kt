@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
@@ -27,6 +29,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase
@@ -371,8 +375,8 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
                                          forceAllFilesRewrite: Boolean = false) {
   val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNameHolder, checkConsistencyAfterLoading,
                                        externalStorageConfigurationManager)
-  val builder = MutableEntityStorage.from(projectData.storage)
-  val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
+  val builder = MutableEntityStorage.from(projectData.storage) as MutableEntityStorageInstrumentation
+  val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage) as MutableEntityStorageInstrumentation
   change(builder, projectData.orphanage.toBuilder(), unloadedEntitiesBuilder, projectData.configLocation)
   val changesList = builder.collectChanges().values + unloadedEntitiesBuilder.collectChanges().values
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->

@@ -55,6 +55,17 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public fun hasSameEntities(): Boolean
 
   /**
+   * Return changes in entities recorded in this instance.
+   *
+   * This function isn't supported to be used by client code directly. In order to subscribe to changes in entities inside the IDE process,
+   * use [WorkspaceModelChangeListener][com.intellij.platform.backend.workspace.WorkspaceModelChangeListener].
+   *
+   * To understand how the changes are collected see the KDoc for [com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
+   */
+  @ApiStatus.Internal
+  public fun collectChanges(): Map<Class<*>, List<EntityChange<*>>>
+
+  /**
    * Replaces existing children of a given parent with a new list of children.
    *
    * The old children of the parent will be removed from the storage if they have a not-null reference to the parent

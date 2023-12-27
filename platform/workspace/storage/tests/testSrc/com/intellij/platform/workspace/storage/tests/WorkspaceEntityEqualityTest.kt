@@ -3,6 +3,8 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
@@ -12,15 +14,16 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
+@OptIn(EntityStorageInstrumentationApi::class)
 class WorkspaceEntityEqualityTest {
 
-  private lateinit var builderOne: MutableEntityStorage
-  private lateinit var builderTwo: MutableEntityStorage
+  private lateinit var builderOne: MutableEntityStorageInstrumentation
+  private lateinit var builderTwo: MutableEntityStorageInstrumentation
 
   @BeforeEach
   fun setUp() {
-    builderOne = MutableEntityStorage.create()
-    builderTwo = MutableEntityStorage.create()
+    builderOne = MutableEntityStorage.create() as MutableEntityStorageInstrumentation
+    builderTwo = MutableEntityStorage.create() as MutableEntityStorageInstrumentation
   }
 
   @Test
@@ -124,7 +127,7 @@ class WorkspaceEntityEqualityTest {
     assertEquals(entityInEvent, entityInSnapshot)
     assertEquals(entityInSnapshot, entityInEvent)
 
-    val newBuilder = MutableEntityStorage.from(snapshot)
+    val newBuilder = MutableEntityStorage.from(snapshot) as MutableEntityStorageInstrumentation
     newBuilder.modifyEntity(entityInSnapshot) {
       stringProperty = "Data"
     }

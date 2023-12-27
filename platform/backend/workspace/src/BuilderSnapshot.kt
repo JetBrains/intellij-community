@@ -40,8 +40,9 @@ public class BuilderSnapshot @ApiStatus.Internal constructor(private val version
    * Execution of this function may take considerable time, so it's better to invoke it from a background thread, and only pass its result
    * to [WorkspaceModel.replaceProjectModel] under write-lock.
    */
+  @OptIn(EntityStorageInstrumentationApi::class)
   public fun getStorageReplacement(): StorageReplacement {
-    val changes = builder.collectChanges()
+    val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
     return StorageReplacement(version, builder, changes)
   }
 }

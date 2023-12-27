@@ -11,6 +11,8 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntities
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.tests.checkConsistency
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -26,6 +28,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.*
 import java.io.File
 
+@OptIn(EntityStorageInstrumentationApi::class)
 class ImlReplaceBySourceTest {
   @Rule
   @JvmField
@@ -71,7 +74,7 @@ class ImlReplaceBySourceTest {
     val projectDir = temp.root.toVirtualFileUrl(virtualFileManager)
     val configLocation = JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
 
-    var builder = MutableEntityStorage.create()
+    var builder = MutableEntityStorage.create() as MutableEntityStorageInstrumentation
     JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter,
                                         SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation)))
 
@@ -97,7 +100,7 @@ class ImlReplaceBySourceTest {
 
     val before = builder.toSnapshot()
 
-    builder = before.toBuilder()
+    builder = before.toBuilder() as MutableEntityStorageInstrumentation
     builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
     val changes = builder.collectChanges().values.flatten()
@@ -120,7 +123,7 @@ class ImlReplaceBySourceTest {
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
-    var storageBuilder1 = MutableEntityStorage.create()
+    var storageBuilder1 = MutableEntityStorage.create() as MutableEntityStorageInstrumentation
     val data = com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject(projectFile.asConfigLocation(virtualFileManager),
                                                                                   storageBuilder1, storageBuilder1, virtualFileManager)
 
@@ -132,7 +135,7 @@ class ImlReplaceBySourceTest {
     }
 
     val before = storageBuilder1.toSnapshot()
-    storageBuilder1 = before.toBuilder()
+    storageBuilder1 = before.toBuilder() as MutableEntityStorageInstrumentation
     storageBuilder1.checkConsistency()
     storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toSnapshot())
     storageBuilder1.checkConsistency()

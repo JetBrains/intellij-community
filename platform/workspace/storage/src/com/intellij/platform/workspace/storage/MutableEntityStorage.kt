@@ -180,18 +180,6 @@ public interface MutableEntityStorage : EntityStorage {
   public fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
-   * Return changes in entities recorded in this instance. [original] parameter is used to get the old instances of modified
-   * and removed entities.
-   * 
-   * This function isn't supported to be used by client code directly. In order to subscribe to changes in entities inside the IDE process,
-   * use [WorkspaceModelTopics][com.intellij.platform.backend.workspace.WorkspaceModelTopics].
-   *
-   * To understand how the changes are collected see the KDoc for [com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
-   */
-  @ApiStatus.Internal
-  public fun collectChanges(): Map<Class<*>, List<EntityChange<*>>>
-
-  /**
    * Merges changes from [diff] to this storage. 
    * It's supposed that [diff] was created either via [MutableEntityStorage.create] function, or via [MutableEntityStorage.from] with the 
    * same base storage as this one. 

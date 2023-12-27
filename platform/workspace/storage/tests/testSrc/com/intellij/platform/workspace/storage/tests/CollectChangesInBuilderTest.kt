@@ -5,6 +5,8 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.BeforeEach
@@ -328,16 +330,18 @@ class CollectChangesInBuilderTest {
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
                                   original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
-    val changes = myBuilder.collectChanges()
+    val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
     assertEquals(size, changes.values.flatten().size)
     return changes
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
-    val changes = builder.collectChanges()
+    val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
     if (changes.isEmpty()) return emptyList()
     return changes.entries.single().value as List<EntityChange<SampleEntity>>
   }

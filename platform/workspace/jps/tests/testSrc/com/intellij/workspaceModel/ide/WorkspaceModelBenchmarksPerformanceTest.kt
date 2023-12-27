@@ -21,6 +21,8 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
@@ -456,10 +458,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
     //    val metrics = mapOf("duration" to duration, "duration_replace" to applyStorageTime)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   @Test
   fun `collect changes`(testInfo: TestInfo) {
     val builders = List(1000) {
-      val builder = MutableEntityStorage.create()
+      val builder = MutableEntityStorage.create() as MutableEntityStorageInstrumentation
 
       // Set initial state
       repeat(1000) {
@@ -493,7 +496,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
             this.parentEntity = null
           }
         }
-      }
+      } as MutableEntityStorageInstrumentation
     }
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {

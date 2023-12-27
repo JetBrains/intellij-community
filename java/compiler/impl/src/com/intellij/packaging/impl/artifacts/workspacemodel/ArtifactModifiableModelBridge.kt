@@ -22,6 +22,8 @@ import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -213,6 +215,7 @@ class ArtifactModifiableModelBridge(
     manager.commit(this)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun dispose() = disposeMs.addMeasuredTimeMillis {
     val artifacts: MutableList<Artifact> = ArrayList()
 
@@ -227,7 +230,7 @@ class ArtifactModifiableModelBridge(
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
 
     val current = WorkspaceModel.getInstance(project).currentSnapshot
-    val changes = diff.collectChanges()[ArtifactEntity::class.java] ?: emptyList()
+    val changes = (diff as MutableEntityStorageInstrumentation).collectChanges()[ArtifactEntity::class.java] ?: emptyList()
 
     val added = mutableListOf<ArtifactBridge>()
     val changed = mutableListOf<ArtifactBridge>()

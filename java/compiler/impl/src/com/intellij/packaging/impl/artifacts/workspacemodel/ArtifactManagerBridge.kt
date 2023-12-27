@@ -28,6 +28,8 @@ import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
@@ -156,6 +158,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     return modificationTracker
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   @RequiresWriteLock
   fun commit(artifactModel: ArtifactModifiableModelBridge) = commitMs.addMeasuredTimeMillis {
     // XXX @RequiresReadLock annotation doesn't work for kt now
@@ -164,7 +167,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     updateCustomElements(artifactModel.diff)
 
     val current = project.workspaceModel.currentSnapshot
-    val changes = artifactModel.diff.collectChanges()[ArtifactEntity::class.java] ?: emptyList()
+    val changes = (artifactModel.diff as MutableEntityStorageInstrumentation).collectChanges()[ArtifactEntity::class.java] ?: emptyList()
 
     val removed = mutableSetOf<ArtifactBridge>()
     val added = mutableListOf<ArtifactBridge>()

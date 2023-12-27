@@ -17,6 +17,8 @@ import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -121,6 +123,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     loadedFromCache = false
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   @Synchronized
   final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -144,7 +147,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges()
+        changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
@@ -201,6 +204,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    *
    * **N.B** For more information on why this and other methods were marked by Synchronized see IDEA-313151
    */
+  @OptIn(EntityStorageInstrumentationApi::class)
   @ApiStatus.Obsolete
   @Synchronized
   fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -212,7 +216,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     val generalTime = measureTimeMillis {
       val before = entityStorage.current
-      val builder = MutableEntityStorage.from(entityStorage.current)
+      val builder = MutableEntityStorage.from(entityStorage.current) as MutableEntityStorageInstrumentation
       updateTimeMillis = measureTimeMillis {
         updater(builder)
       }
@@ -262,13 +266,14 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 
     val time = measureTimeMillis {
       val before = currentSnapshotOfUnloadedEntities
-      val builder = MutableEntityStorage.from(before)
+      val builder = MutableEntityStorage.from(before) as MutableEntityStorageInstrumentation
       updater(builder)
       startPreUpdateHandlers(before, builder)
       val changes = builder.collectChanges()
