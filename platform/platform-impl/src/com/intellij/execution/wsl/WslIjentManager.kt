@@ -3,21 +3,14 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSessionProvider
-import com.intellij.platform.util.coroutines.namedChildScope
-import com.intellij.util.SuspendingLazy
 import com.intellij.util.io.computeDetached
-import com.intellij.util.suspendingLazy
-import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
@@ -28,49 +21,19 @@ import org.jetbrains.annotations.VisibleForTesting
  * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
  */
 @ApiStatus.Experimental
-@Service
-class WslIjentManager private constructor(private val scope: CoroutineScope) {
-  private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
-
+interface WslIjentManager {
+  /**
+   * This coroutine scope is for usage in [com.intellij.execution.ijent.IjentChildProcessAdapter] and things like that.
+   */
   @DelicateCoroutinesApi
-  val processAdapterScope: CoroutineScope = scope
+  val processAdapterScope: CoroutineScope
 
   /**
    * The returned instance is not supposed to be closed by the caller. [WslIjentManager] closes [IjentApi] by itself during shutdown.
    */
-  suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
-    return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
-      val validOldHolder = when (oldHolder?.isInitialized()) {
-        true ->
-          if (oldHolder.getInitialized().isRunning) oldHolder
-          else null
-        false -> oldHolder
-        null -> null
-      }
-
-      validOldHolder ?: scope.suspendingLazy {
-        val scopeName = "IJent on WSL $wslDistribution"
-        val ijentScope = scope.namedChildScope(scopeName, CoroutineExceptionHandler { _, err ->
-          LOG.error("Unexpected error in $scopeName", err)
-        })
-        deployAndLaunchIjent(ijentScope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
-      }
-    }!!.getValue()
-  }
-
-  @VisibleForTesting
-  fun dropCache() {
-    myCache.values.removeAll { ijent ->
-      if (ijent.isInitialized()) {
-        ijent.getInitialized().close()
-      }
-      true
-    }
-  }
+  suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi
 
   companion object {
-    private val LOG = logger<WslIjentManager>()
-
     @JvmStatic
     fun isIjentAvailable(): Boolean {
       val id = PluginId.getId("intellij.platform.ijent.impl")

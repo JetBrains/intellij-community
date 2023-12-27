@@ -166,6 +166,9 @@
                  defaultValue="true"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
+                        serviceImplementation="com.intellij.execution.wsl.ProductionWslIjentManager"/>
+
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
