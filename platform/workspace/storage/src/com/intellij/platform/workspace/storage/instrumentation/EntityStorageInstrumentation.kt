@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.asString
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Instrumentation level of the storage.
@@ -33,6 +34,16 @@ public interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, E
 
 @EntityStorageInstrumentationApi
 public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
+  /**
+   * Returns a number which is incremented after each change in the storage.
+   *
+   * The number is not precise. A single operation may cause multiple increments.
+   *
+   * This internal API may be removed in the future, so it should not be used to build any functionality with it.
+   */
+  @get:ApiStatus.Internal
+  public val modificationCount: Long
+
   /**
    * Replaces existing children of a given parent with a new list of children.
    *

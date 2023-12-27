@@ -215,11 +215,6 @@ public interface MutableEntityStorage : EntityStorage {
    */
   public fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
 
-  /**
-   * Returns a number which is incremented after each change in the storage.
-   */
-  public val modificationCount: Long
-
   public companion object {
     private val LOG = logger<MutableEntityStorage>()
     /**

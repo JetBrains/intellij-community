@@ -5,8 +5,12 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.*
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeNanosec
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
+import com.intellij.platform.diagnostic.telemetry.helpers.fromNanosecToMillis
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -123,8 +127,9 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   private val valuesCache: ValuesCache
     get() = getCurrentSnapshot().cache
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
-    get() = builder.modificationCount
+    get() = builder.instrumentation.modificationCount
 
   override val current: EntityStorageSnapshot
     get() = getCurrentSnapshot().storage
@@ -141,10 +146,11 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
     valuesCache.clearCachedValue(value, parameter)
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun getCurrentSnapshot(): StorageSnapshotCache {
     val snapshotCache = currentSnapshot.get()
-    if (snapshotCache == null || builder.modificationCount != snapshotCache.storageVersion) {
-      val storageSnapshotCache = StorageSnapshotCache(builder.modificationCount, ValuesCache(), builder.toSnapshot())
+    if (snapshotCache == null || builder.instrumentation.modificationCount != snapshotCache.storageVersion) {
+      val storageSnapshotCache = StorageSnapshotCache(builder.instrumentation.modificationCount, ValuesCache(), builder.toSnapshot())
       currentSnapshot.set(storageSnapshotCache)
       return storageSnapshotCache
     }
@@ -175,8 +181,9 @@ public class VersionedEntityStorageOnSnapshot(private val storage: EntityStorage
 }
 
 public class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
+  @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
-    get() = builder.modificationCount
+    get() = builder.instrumentation.modificationCount
 
   override val current: EntityStorage
     get() = builder
