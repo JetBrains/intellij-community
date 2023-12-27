@@ -13,7 +13,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +31,6 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   private static final Logger LOG = Logger.getInstance(PsiCatchSectionImpl.class);
 
   private final Object myTypesCacheLock = new Object();
-  private CachedValue<List<PsiType>> myTypesCache;
 
   public PsiCatchSectionImpl() {
     super(CATCH_SECTION);
@@ -59,28 +59,13 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     final PsiParameter parameter = getParameter();
     if (parameter == null) return Collections.emptyList();
 
-    return getTypesCache().getValue();
+    return getTypesCache();
   }
 
-  @Override
-  public void clearCaches() {
-    super.clearCaches();
-    synchronized (myTypesCacheLock) {
-      myTypesCache = null;
-    }
-  }
-
-  private CachedValue<List<PsiType>> getTypesCache() {
-    synchronized (myTypesCacheLock) {
-      if (myTypesCache == null) {
-        final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
-        myTypesCache = cacheManager.createCachedValue(() -> {
-          final List<PsiType> types = computePreciseCatchTypes(getParameter());
-          return CachedValueProvider.Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
-        }, false);
-      }
-      return myTypesCache;
-    }
+  private List<PsiType> getTypesCache() {
+    return CachedValuesManager.getProjectPsiDependentCache(this, section ->
+      computePreciseCatchTypes(section.getParameter())
+    );
   }
 
   private List<PsiType> computePreciseCatchTypes(@Nullable final PsiParameter parameter) {

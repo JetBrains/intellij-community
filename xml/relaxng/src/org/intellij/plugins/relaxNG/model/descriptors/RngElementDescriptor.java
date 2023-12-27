@@ -76,7 +76,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   RngElementDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern) {
     myNsDescriptor = nsDescriptor;
     myElementPattern = pattern;
-    myCachedElement = new PsiCachedValueImpl<>(nsDescriptor.getDescriptorFile().getManager(), () -> {
+    myCachedElement = new PsiCachedValueImpl.Soft<>(nsDescriptor.getDescriptorFile().getManager(), () -> {
       final PsiElement decl = myNsDescriptor.getDeclaration();
       if (decl == null/* || !decl.isValid()*/) {
         return CachedValueProvider.Result.create(null, ModificationTracker.EVER_CHANGED);

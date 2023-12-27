@@ -31,6 +31,7 @@ import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -49,11 +50,21 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static final String[] IMPLICIT_IMPORTS = { CommonClassNames.DEFAULT_PACKAGE };
 
   private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
+  private final CachedValue<Map<String, Iterable<ResultWithContext>>> myCachedDeclarations;
   private volatile String myPackageName;
 
   protected PsiJavaFileBaseImpl(@NotNull IElementType elementType, @NotNull IElementType contentElementType, @NotNull FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
-    myResolveCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new MyCacheBuilder(this), false);
+
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myManager.getProject());
+    myResolveCache = cachedValuesManager.createCachedValue(new MyCacheBuilder(this), false);
+    myCachedDeclarations = cachedValuesManager.createCachedValue(() -> {
+      Map<String, Iterable<ResultWithContext>> declarations = findEnumeratedDeclarations();
+      if (!this.isPhysical()) {
+        return Result.create(declarations, this.getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+      return Result.create(declarations, PsiModificationTracker.MODIFICATION_COUNT);
+    }, false);
   }
 
   @Override
@@ -299,45 +310,48 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return processOnDemandPackages(state, place, processor);
   }
 
-  @NotNull
-  private Map<String, Iterable<ResultWithContext>> getEnumeratedDeclarations() {
-    return CachedValuesManager.getCachedValue(this, () -> {
-      MultiMap<String, PsiClass> ownClasses = MultiMap.create();
-      MultiMap<String, PsiImportStatement> typeImports = MultiMap.create();
-      MultiMap<String, PsiImportStaticStatement> staticImports = MultiMap.create();
+  private @NotNull Map<String, Iterable<ResultWithContext>> getEnumeratedDeclarations() {
+    return myCachedDeclarations.getValue();
+  }
 
-      for (PsiClass psiClass : getClasses()) {
-        String name = psiClass.getName();
-        if (name != null) {
-          ownClasses.putValue(name, psiClass);
+  private @NotNull Map<String, Iterable<ResultWithContext>> findEnumeratedDeclarations() {
+    MultiMap<String, PsiClass> ownClasses = MultiMap.create();
+    MultiMap<String, PsiImportStatement> typeImports = MultiMap.create();
+    MultiMap<String, PsiImportStaticStatement> staticImports = MultiMap.create();
+
+    for (PsiClass psiClass : getClasses()) {
+      String name = psiClass.getName();
+      if (name != null) {
+        ownClasses.putValue(name, psiClass);
+      }
+    }
+    for (PsiImportStatement anImport : getImportStatements()) {
+      if (!anImport.isOnDemand()) {
+        String qName = anImport.getQualifiedName();
+        if (qName != null) {
+          typeImports.putValue(StringUtil.getShortName(qName), anImport);
         }
       }
-      for (PsiImportStatement anImport : getImportStatements()) {
-        if (!anImport.isOnDemand()) {
-          String qName = anImport.getQualifiedName();
-          if (qName != null) {
-            typeImports.putValue(StringUtil.getShortName(qName), anImport);
-          }
-        }
+    }
+    for (PsiImportStaticStatement staticImport : getImportStaticStatements()) {
+      String name = staticImport.getReferenceName();
+      if (name != null) {
+        staticImports.putValue(name, staticImport);
       }
-      for (PsiImportStaticStatement staticImport : getImportStaticStatements()) {
-        String name = staticImport.getReferenceName();
-        if (name != null) {
-          staticImports.putValue(name, staticImport);
-        }
-      }
+    }
 
-      for (PsiImportStaticStatement staticImport : PsiImplUtil.getImplicitStaticImports(this)) {
-        staticImports.putValue(staticImport.getReferenceName(), staticImport);
-      }
+    for (PsiImportStaticStatement staticImport : PsiImplUtil.getImplicitStaticImports(this)) {
+      staticImports.putValue(staticImport.getReferenceName(), staticImport);
+    }
 
-      Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
-      for (String name : ContainerUtil.newLinkedHashSet(ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
-        NotNullLazyValue<Iterable<ResultWithContext>> lazy = NotNullLazyValue.volatileLazy(() -> findExplicitDeclarations(name, ownClasses, typeImports, staticImports));
-        result.put(name, () -> lazy.getValue().iterator());
-      }
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    });
+    Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
+    for (String name : ContainerUtil.newLinkedHashSet(
+      ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
+      NotNullLazyValue<Iterable<ResultWithContext>> lazy =
+        NotNullLazyValue.volatileLazy(() -> findExplicitDeclarations(name, ownClasses, typeImports, staticImports));
+      result.put(name, () -> lazy.getValue().iterator());
+    }
+    return result;
   }
 
   private static @NotNull Iterable<ResultWithContext> findExplicitDeclarations(@NotNull String name,

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
@@ -64,7 +65,7 @@ public final class ElementPresentationUtil {
   public static final int FLAGS_JUNIT_TEST = 0x2000;
   public static final int FLAGS_RUNNABLE = 0x4000;
 
-  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND_KEY");
+  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND");
 
   public static int getBasicClassKind(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
@@ -86,8 +87,9 @@ public final class ElementPresentationUtil {
 
     CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
     if (value == null) {
-      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(
-        () -> CachedValueProvider.Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(aClass, () ->
+        Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false
+      );
       aClass.putUserData(CLASS_KIND_KEY, value);
     }
     return value.getValue().intValue();

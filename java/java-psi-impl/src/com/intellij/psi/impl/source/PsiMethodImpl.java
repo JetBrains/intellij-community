@@ -31,16 +31,13 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.reference.SoftReference.dereference;
-
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
-  private SoftReference<PsiType> myCachedType;
+  private PsiType myCachedType;
   private volatile String myCachedName;
 
   public PsiMethodImpl(PsiMethodStub stub) {
@@ -178,10 +175,10 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
     PsiMethodStub stub = getStub();
     if (stub != null) {
-      PsiType type = dereference(myCachedType);
+      PsiType type = myCachedType;
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getReturnTypeText());
-        myCachedType = new SoftReference<>(type);
+        myCachedType = type;
       }
       return type;
     }

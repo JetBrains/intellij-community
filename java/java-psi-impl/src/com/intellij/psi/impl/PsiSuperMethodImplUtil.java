@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
@@ -10,7 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.NotNullFunction;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -24,14 +25,11 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class PsiSuperMethodImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiSuperMethodImplUtil.class);
-  private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_FOR_CLASS_KEY = PsiCacheKey
-    .create("SIGNATURES_FOR_CLASS_KEY",
-            (NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>)dom -> buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true,
-                                                                                                                      new HashSet<>(), false, dom.getResolveScope()));
-  private static final PsiCacheKey<Map<Pair<String, GlobalSearchScope>, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
-    .create("SIGNATURES_BY_NAME_KEY", psiClass -> ConcurrentFactoryMap.createMap(
-      pair -> buildMethodHierarchy(psiClass, pair.first, PsiSubstitutor.EMPTY, true, new HashSet<>(), false,
-                                         pair.second)));
+
+  private static final Key<CachedValue<Map<MethodSignature, HierarchicalMethodSignature>>> SIGNATURES_FOR_CLASS_KEY =
+    Key.create("SIGNATURES_FOR_CLASS");
+  private static final Key<CachedValue<Map<Pair<String, GlobalSearchScope>, Map<MethodSignature, HierarchicalMethodSignature>>>> SIGNATURES_BY_NAME_KEY =
+    Key.create("SIGNATURES_BY_NAME");
 
   private PsiSuperMethodImplUtil() {
   }
@@ -405,21 +403,31 @@ public final class PsiSuperMethodImplUtil {
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
         HierarchicalMethodSignature result = null;
         if (aClass != null) {
-          result = SIGNATURES_BY_NAME_KEY.getValue(aClass).get(Pair.create(method.getName(), scope)).get(signature);
+          result = getSignaturesByName(aClass)
+            .get(Pair.create(method.getName(), scope)).get(signature);
         }
         if (result == null) {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)signature);
         }
         return result;
       });
-      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
     });
     return signatures.get(resolveScope);
   }
 
-  @NotNull
-  private static Map<MethodSignature, HierarchicalMethodSignature> getSignaturesMap(@NotNull PsiClass aClass) {
-    return SIGNATURES_FOR_CLASS_KEY.getValue(aClass);
+  private static @NotNull Map<Pair<String, GlobalSearchScope>, Map<MethodSignature, HierarchicalMethodSignature>> getSignaturesByName(@NotNull PsiClass psiClass) {
+    return CachedValuesManager.getCachedValue(psiClass, SIGNATURES_BY_NAME_KEY, () ->
+      Result.create(ConcurrentFactoryMap.createMap(pair -> buildMethodHierarchy(psiClass, pair.first, PsiSubstitutor.EMPTY, true, new HashSet<>(), false, pair.second)),
+                    PsiModificationTracker.MODIFICATION_COUNT)
+    );
+  }
+
+  private static @NotNull Map<MethodSignature, HierarchicalMethodSignature> getSignaturesMap(@NotNull PsiClass psiClass) {
+    return CachedValuesManager.getCachedValue(psiClass, SIGNATURES_FOR_CLASS_KEY, () ->
+      Result.create(buildMethodHierarchy(psiClass, null, PsiSubstitutor.EMPTY, true, new HashSet<>(), false, psiClass.getResolveScope()),
+                    PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
   // uses hierarchy signature tree if available, traverses class structure by itself otherwise
@@ -431,7 +439,7 @@ public final class PsiSuperMethodImplUtil {
 
     if (!canHaveSuperMethod(method, true, false)) return false;
 
-    Map<MethodSignature, HierarchicalMethodSignature> cachedMap = SIGNATURES_BY_NAME_KEY.getValue(aClass).get(Pair.create(method.getName(), method.getResolveScope()));
+    Map<MethodSignature, HierarchicalMethodSignature> cachedMap = getSignaturesByName(aClass).get(Pair.create(method.getName(), method.getResolveScope()));
     HierarchicalMethodSignature signature = cachedMap.get(method.getSignature(PsiSubstitutor.EMPTY));
     if (signature != null) {
       List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
