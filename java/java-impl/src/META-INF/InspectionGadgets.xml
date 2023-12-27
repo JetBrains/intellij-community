@@ -462,7 +462,7 @@
                      implementationClass="com.siyeh.ig.classlayout.InnerClassOnInterfaceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LimitedScopeInnerClass" bundle="messages.InspectionGadgetsBundle"
                      key="limited.scope.inner.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.class.structure" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.classlayout.LimitedScopeInnerClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ListenerMayUseAdapter" bundle="messages.InspectionGadgetsBundle"
                      key="listener.may.use.adapter.display.name" groupBundle="messages.InspectionsBundle"
