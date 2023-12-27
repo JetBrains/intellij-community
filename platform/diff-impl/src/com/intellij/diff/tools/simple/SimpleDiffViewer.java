@@ -57,15 +57,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @NotNull protected SimpleDiffModel myModel = new SimpleDiffModel(this);
   @NotNull private final AlignedDiffModel myAlignedDiffModel;
 
-  @NotNull protected final MyFoldingModel myFoldingModel;
+  @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final ModifierProvider myModifierProvider;
 
   @NotNull protected final TwosideTextDiffProvider myTextDiffProvider;
 
+  protected boolean aligningViewModeSupported;
+
+
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
+    this.aligningViewModeSupported = true;
     mySyncScrollable = new MySyncScrollable();
     myAlignedDiffModel = new SimpleAlignedDiffModel(this);
 
@@ -96,6 +100,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     super.onDispose();
   }
 
+  @ApiStatus.Internal
   protected void setModel(@NotNull SimpleDiffModel model) {
     this.myModel = model;
   }
@@ -394,6 +399,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   protected boolean isEditable(@NotNull Side side) {
     return DiffUtil.isEditable(getEditor(side));
+  }
+
+  public boolean isAligningViewModeSupported() {
+    return aligningViewModeSupported;
   }
 
   //
@@ -750,7 +759,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
   }
 
-  protected class MyDividerPainter implements DiffSplitter.Painter {
+  private class MyDividerPainter implements DiffSplitter.Painter {
     @DirtyUI
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
@@ -796,14 +805,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
   }
 
-  protected static class MyFoldingModel extends FoldingModelSupport {
-    protected final MyPaintable myPaintable = new MyPaintable(0, 1);
+  private static class MyFoldingModel extends FoldingModelSupport {
+    private final MyPaintable myPaintable = new MyPaintable(0, 1);
     private final TwosideContentPanel myContentPanel;
 
-    protected MyFoldingModel(@Nullable Project project,
-                             @NotNull List<? extends EditorEx> editors,
-                             @NotNull TwosideContentPanel contentPanel,
-                             @NotNull Disposable disposable) {
+    MyFoldingModel(@Nullable Project project,
+                   @NotNull List<? extends EditorEx> editors,
+                   @NotNull TwosideContentPanel contentPanel,
+                   @NotNull Disposable disposable) {
       super(project, editors.toArray(new EditorEx[0]), disposable);
       myContentPanel = contentPanel;
     }

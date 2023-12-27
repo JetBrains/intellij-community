@@ -8,6 +8,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +18,13 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleDiffModel {
-  @NotNull protected final SimpleDiffViewer myViewer;
+  @NotNull @ApiStatus.Internal protected final SimpleDiffViewer myViewer;
 
   @NotNull private final List<SimpleDiffChange> myValidChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
   @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull protected final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+  @NotNull @ApiStatus.Internal protected final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
@@ -104,15 +105,14 @@ public class SimpleDiffModel {
     myValidChanges.removeAll(invalidated);
   }
 
-  protected void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
+  public void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
     MyPaintable paintable = new MyPaintable(myPresentations);
     DiffDividerDrawUtil.paintPolygons(g, divider.getWidth(), myViewer.getEditor1(), myViewer.getEditor2(), paintable);
   }
 
-  protected static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
+  private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
     private final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations;
-
-    protected MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
+    private MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
       myPresentations = presentations;
     }
 

@@ -72,6 +72,7 @@ open class DiffLineMarkerRenderer(
     }
   }
 
+  @ApiStatus.Internal
   fun drawMarker(editor: Editor, g: Graphics2D,
                  x1: Int, x2: Int, y1: Int, y2: Int,
                  alignedSides: Boolean, mode: PaintMode) {
