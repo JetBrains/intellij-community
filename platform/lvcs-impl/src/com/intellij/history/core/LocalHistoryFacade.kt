@@ -13,225 +13,193 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.history.core
 
-package com.intellij.history.core;
+import com.intellij.history.ByteContent
+import com.intellij.history.core.changes.*
+import com.intellij.history.core.revisions.ChangeRevision
+import com.intellij.history.core.revisions.RecentChange
+import com.intellij.history.core.tree.Entry
+import com.intellij.history.core.tree.RootEntry
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.TestOnly
 
-import com.intellij.history.ByteContent;
-import com.intellij.history.core.changes.*;
-import com.intellij.history.core.revisions.ChangeRevision;
-import com.intellij.history.core.revisions.RecentChange;
-import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.Entry;
-import com.intellij.history.core.tree.RootEntry;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+open class LocalHistoryFacade(private val changeList: ChangeList) {
+  private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-import java.util.ArrayList;
-import java.util.List;
+  @get:TestOnly
+  val changeListInTests get() = changeList
 
-public class LocalHistoryFacade {
-  private final ChangeList myChangeList;
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  public LocalHistoryFacade(ChangeList changeList) {
-    myChangeList = changeList;
+  fun beginChangeSet() {
+    changeList.beginChangeSet()
   }
 
-  public void beginChangeSet() {
-    myChangeList.beginChangeSet();
-  }
-
-  public void forceBeginChangeSet() {
-    if (myChangeList.forceBeginChangeSet()) {
-      fireChangeSetFinished();
+  fun forceBeginChangeSet() {
+    if (changeList.forceBeginChangeSet()) {
+      fireChangeSetFinished()
     }
   }
 
-  public void endChangeSet(@NlsContexts.Label String name) {
-    if (myChangeList.endChangeSet(name)) {
-      fireChangeSetFinished();
+  fun endChangeSet(name: @NlsContexts.Label String?) {
+    if (changeList.endChangeSet(name)) {
+      fireChangeSetFinished()
     }
   }
 
-  public void created(String path, boolean isDirectory) {
-    addChange(isDirectory ? new CreateDirectoryChange(myChangeList.nextId(), path)
-                          : new CreateFileChange(myChangeList.nextId(), path));
+  fun created(path: String, isDirectory: Boolean) {
+    addChange(if (isDirectory) CreateDirectoryChange(changeList.nextId(), path)
+              else CreateFileChange(changeList.nextId(), path))
   }
 
-  public void contentChanged(String path, Content oldContent, long oldTimestamp) {
-    addChange(new ContentChange(myChangeList.nextId(), path, oldContent, oldTimestamp));
+  fun contentChanged(path: String, oldContent: Content, oldTimestamp: Long) {
+    addChange(ContentChange(changeList.nextId(), path, oldContent, oldTimestamp))
   }
 
-  public void renamed(String path, String oldName) {
-    addChange(new RenameChange(myChangeList.nextId(), path, oldName));
+  fun renamed(path: String, oldName: String) {
+    addChange(RenameChange(changeList.nextId(), path, oldName))
   }
 
-  public void readOnlyStatusChanged(String path, boolean oldStatus) {
-    addChange(new ROStatusChange(myChangeList.nextId(), path, oldStatus));
+  fun readOnlyStatusChanged(path: String, oldStatus: Boolean) {
+    addChange(ROStatusChange(changeList.nextId(), path, oldStatus))
   }
 
-  public void moved(String path, String oldParent) {
-    addChange(new MoveChange(myChangeList.nextId(), path, oldParent));
+  fun moved(path: String, oldParent: String) {
+    addChange(MoveChange(changeList.nextId(), path, oldParent))
   }
 
-  public void deleted(String path, Entry deletedEntry) {
-    addChange(new DeleteChange(myChangeList.nextId(), path, deletedEntry));
+  fun deleted(path: String, deletedEntry: Entry) {
+    addChange(DeleteChange(changeList.nextId(), path, deletedEntry))
   }
 
-  public LabelImpl putSystemLabel(@NlsContexts.Label String name, String projectId, int color) {
-    return putLabel(new PutSystemLabelChange(myChangeList.nextId(), name, projectId, color));
+  fun putSystemLabel(name: @NlsContexts.Label String, projectId: String, color: Int): LabelImpl {
+    return putLabel(PutSystemLabelChange(changeList.nextId(), name, projectId, color))
   }
 
-  public LabelImpl putUserLabel(@NlsContexts.Label String name, String projectId) {
-    return putLabel(new PutLabelChange(myChangeList.nextId(), name, projectId));
+  fun putUserLabel(name: @NlsContexts.Label String, projectId: String): LabelImpl {
+    return putLabel(PutLabelChange(changeList.nextId(), name, projectId))
   }
 
-  private void addChange(@NotNull Change c) {
-    beginChangeSet();
-    myChangeList.addChange(c);
-    fireChangeAdded(c);
-    endChangeSet(null);
-  }
-
-  @TestOnly
-  public void addChangeInTests(@NotNull StructuralChange c) {
-    addChange(c);
-  }
-
-  private LabelImpl putLabel(final @NotNull PutLabelChange c) {
-    addChange(c);
-    return new LabelImpl() {
-
-      @Override
-      public long getLabelChangeId() {
-        return c.getId();
-      }
-
-      @Override
-      public ByteContent getByteContent(RootEntry root, String path) {
-        return getByteContentBefore(root, path, c);
-      }
-    };
+  private fun addChange(c: Change) {
+    beginChangeSet()
+    changeList.addChange(c)
+    fireChangeAdded(c)
+    endChangeSet(null)
   }
 
   @TestOnly
-  public void putLabelInTests(final PutLabelChange c) {
-    putLabel(c);
+  fun addChangeInTests(c: StructuralChange) {
+    addChange(c)
+  }
+
+  private fun putLabel(c: PutLabelChange): LabelImpl {
+    addChange(c)
+    return object : LabelImpl {
+      override fun getLabelChangeId() = c.id
+      override fun getByteContent(root: RootEntry, path: String) = getByteContentBefore(root, path, c)
+    }
   }
 
   @TestOnly
-  public ChangeList getChangeListInTests() {
-    return myChangeList;
+  fun putLabelInTests(c: PutLabelChange) {
+    putLabel(c)
   }
 
-  private ByteContent getByteContentBefore(RootEntry root, String path, Change change) {
-    root = root.copy();
-    String newPath = revertUpTo(root, path, null, change, false, false);
-    Entry entry = root.findEntry(newPath);
-    if (entry == null) return new ByteContent(false, null);
-    if (entry.isDirectory()) return new ByteContent(true, null);
+  private fun getByteContentBefore(root: RootEntry, path: String, change: Change): ByteContent {
+    val rootCopy = root.copy()
+    val newPath = revertUpTo(rootCopy, path, null, change, false, false)
+    val entry = rootCopy.findEntry(newPath)
+    if (entry == null) return ByteContent(false, null)
+    if (entry.isDirectory) return ByteContent(true, null)
 
-    return new ByteContent(false, entry.getContent().getBytesIfAvailable());
+    return ByteContent(false, entry.content.bytesIfAvailable)
   }
 
-  public @NotNull List<RecentChange> getRecentChanges(RootEntry root) {
-    List<RecentChange> result = new ArrayList<>();
+  fun getRecentChanges(root: RootEntry): List<RecentChange> {
+    val result = mutableListOf<RecentChange>()
 
-    for (ChangeSet c : myChangeList.iterChanges()) {
-      if (c.isContentChangeOnly()) continue;
-      if (c.isLabelOnly()) continue;
-      if (c.getName() == null) continue;
+    for (c in changeList.iterChanges()) {
+      if (c.isContentChangeOnly) continue
+      if (c.isLabelOnly) continue
+      if (c.name == null) continue
 
-      Revision before = new ChangeRevision(this, root, "", c, true);
-      Revision after = new ChangeRevision(this, root, "", c, false);
-      result.add(new RecentChange(before, after));
-      if (result.size() >= 20) break;
+      val before = ChangeRevision(this, root, "", c, true)
+      val after = ChangeRevision(this, root, "", c, false)
+      result.add(RecentChange(before, after))
+      if (result.size >= 20) break
     }
 
-    return result;
+    return result
   }
 
-  public void accept(ChangeVisitor v) {
-    myChangeList.accept(v);
-  }
+  fun accept(v: ChangeVisitor) = changeList.accept(v)
 
-  public String revertUpTo(final @NotNull RootEntry root,
-                           @NotNull String path,
-                           final ChangeSet targetChangeSet,
-                           final Change targetChange,
-                           final boolean revertTargetChange,
-                           final boolean warnOnFileNotFound) {
-    final String[] result = {path};
-    myChangeList.accept(new ChangeVisitor() {
-      @Override
-      public void begin(ChangeSet c) throws StopVisitingException {
-        if (!revertTargetChange && c.equals(targetChangeSet)) stop();
+  fun revertUpTo(root: RootEntry,
+                 path: String,
+                 targetChangeSet: ChangeSet?,
+                 targetChange: Change?,
+                 revertTargetChange: Boolean,
+                 warnOnFileNotFound: Boolean): String {
+    var entryPath = path
+    changeList.accept(object : ChangeVisitor() {
+      @Throws(StopVisitingException::class)
+      override fun begin(c: ChangeSet) {
+        if (!revertTargetChange && c == targetChangeSet) stop()
       }
 
-      @Override
-      public void end(ChangeSet c) throws StopVisitingException {
-        if (c.equals(targetChangeSet)) stop();
+      @Throws(StopVisitingException::class)
+      override fun end(c: ChangeSet) {
+        if (c == targetChangeSet) stop()
       }
 
-      @Override
-      public void visit(PutLabelChange c) throws StopVisitingException {
-        if (c.equals(targetChange)) stop();
+      @Throws(StopVisitingException::class)
+      override fun visit(c: PutLabelChange) {
+        if (c == targetChange) stop()
       }
 
-      @Override
-      public void visit(StructuralChange c) throws StopVisitingException {
-        if (!revertTargetChange && c.equals(targetChange)) stop();
+      @Throws(StopVisitingException::class)
+      override fun visit(c: StructuralChange) {
+        if (!revertTargetChange && c == targetChange) stop()
 
-        if (c.affectsPath(result[0])) {
-          c.revertOn(root, warnOnFileNotFound);
-          result[0] = c.revertPath(result[0]);
+        if (c.affectsPath(entryPath)) {
+          c.revertOn(root, warnOnFileNotFound)
+          entryPath = c.revertPath(entryPath)
         }
-        if (c.equals(targetChange)) stop();
+        if (c == targetChange) stop()
       }
-    });
+    })
 
-    return result[0];
+    return entryPath
   }
 
-  public void addListener(final @NotNull Listener l, @Nullable Disposable parent) {
-    myListeners.add(l);
+  fun addListener(l: Listener, parent: Disposable?) {
+    listeners.add(l)
 
     if (parent != null) {
-      Disposer.register(parent, new Disposable() {
-        @Override
-        public void dispose() {
-          myListeners.remove(l);
-        }
-      });
+      Disposer.register(parent) { listeners.remove(l) }
     }
   }
 
-  public void removeListener(@NotNull Listener l) {
-    myListeners.remove(l);
+  fun removeListener(l: Listener) {
+    listeners.remove(l)
   }
 
-  private void fireChangeAdded(Change c) {
-    for (Listener each : myListeners) {
-      each.changeAdded(c);
-    }
-  }
-
-  private void fireChangeSetFinished() {
-    for (Listener each : myListeners) {
-      each.changeSetFinished();
+  private fun fireChangeAdded(c: Change) {
+    for (each in listeners) {
+      each.changeAdded(c)
     }
   }
 
-  public abstract static class Listener {
-    public void changeAdded(Change c) {
+  private fun fireChangeSetFinished() {
+    for (each in listeners) {
+      each.changeSetFinished()
     }
+  }
 
-    public void changeSetFinished() {
-    }
+  abstract class Listener {
+    open fun changeAdded(c: Change) = Unit
+    open fun changeSetFinished() = Unit
   }
 }

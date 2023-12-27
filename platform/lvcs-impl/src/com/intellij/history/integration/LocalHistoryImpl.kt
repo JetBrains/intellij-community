@@ -116,7 +116,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       storage = InMemoryChangeListStorage()
     }
     changeList = ChangeList(storage)
-    facade = LocalHistoryFacade(changeList)
+    facade = LocalHistoryFacade(changeList!!)
     gateway = IdeaGateway()
     eventDispatcher = LocalHistoryEventDispatcher(facade, gateway)
   }
