@@ -53,7 +53,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
@@ -82,7 +81,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private static final ExtensionPointName<ProjectTemplateEP> TEMPLATE_EP = new ExtensionPointName<>("com.intellij.projectTemplate");
 
-  private static final Convertor<FrameworkSupportInModuleProvider, String> PROVIDER_STRING_CONVERTOR = o -> o.getId();
   private static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
 
   private static final String EMPTY_CARD = "empty card";
@@ -450,38 +448,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (groupModuleBuilder == null) {
       showTemplates(group);
     }
-    else if (!showCustomOptions(groupModuleBuilder)){
-      List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(groupModuleBuilder);
-      final ProjectCategory category = group.getProjectCategory();
-      if (category != null) {
-        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, provider -> matchFramework(category, provider));
-        // add associated
-        Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), PROVIDER_STRING_CONVERTOR);
-        Set<FrameworkSupportInModuleProvider> set = new HashSet<>(filtered);
-        for (FrameworkSupportInModuleProvider provider : filtered) {
-          for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
-            FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
-            if (dependency == null) {
-              if (!depId.isOptional()) {
-                LOG.error("Cannot find provider '" + depId.getFrameworkId() + "' which is required for '" + provider.getId() + "'");
-              }
-              continue;
-            }
-            set.add(dependency);
-          }
-        }
-
-        myFrameworksPanel.setProviders(new ArrayList<>(set),
-                                       Set.of(category.getAssociatedFrameworkIds()),
-                                       Set.of(category.getPreselectedFrameworkIds()));
-      }
-      else {
-        myFrameworksPanel.setProviders(providers);
-      }
-      var selectedModuleBuilder = ObjectUtils.notNull(getSelectedBuilder(), groupModuleBuilder);
-      selectedModuleBuilder.addModuleConfigurationUpdater(myConfigurationUpdater);
-
-      showCard(FRAMEWORKS_CARD);
+    else if (!showCustomOptions(groupModuleBuilder)) {
+      showFrameworks(group, groupModuleBuilder);
     }
 
     myHeaderPanel.setVisible(myHeaderPanel.getComponentCount() > 0);
@@ -562,6 +530,41 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     showCard(card);
 
     return true;
+  }
+
+  private void showFrameworks(@NotNull TemplatesGroup group, @NotNull ModuleBuilder moduleBuilder) {
+    ProjectCategory category = group.getProjectCategory();
+
+    List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(moduleBuilder);
+    if (category != null) {
+      List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, provider -> matchFramework(category, provider));
+      // add associated
+      Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), o -> o.getId());
+      Set<FrameworkSupportInModuleProvider> set = new HashSet<>(filtered);
+      for (FrameworkSupportInModuleProvider provider : filtered) {
+        for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
+          FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
+          if (dependency == null) {
+            if (!depId.isOptional()) {
+              LOG.error("Cannot find provider '" + depId.getFrameworkId() + "' which is required for '" + provider.getId() + "'");
+            }
+            continue;
+          }
+          set.add(dependency);
+        }
+      }
+
+      myFrameworksPanel.setProviders(new ArrayList<>(set),
+                                     Set.of(category.getAssociatedFrameworkIds()),
+                                     Set.of(category.getPreselectedFrameworkIds()));
+    }
+    else {
+      myFrameworksPanel.setProviders(providers);
+    }
+
+    moduleBuilder.addModuleConfigurationUpdater(myConfigurationUpdater);
+
+    showCard(FRAMEWORKS_CARD);
   }
 
   @Nullable
