@@ -115,7 +115,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.diff.util.DiffUserDataKeys.LINE_MARKER_ALWAYS_VISIBLE;
 import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getStandardLineNumberConverter;
 
 /**
@@ -1300,12 +1299,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private boolean isLineMarkerVisible(RangeHighlighter highlighter) {
-    if (Boolean.TRUE.equals(myEditor.getUserData(LINE_MARKER_ALWAYS_VISIBLE))) { return true; }
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
     FoldRegion startFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    if (startFoldRegion == null) return true; // Marker is visible if start of the region is not folded
+
     FoldRegion endFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
-    return startFoldRegion == null || !startFoldRegion.equals(endFoldRegion);
+    if (!startFoldRegion.equals(endFoldRegion)) return true; // Start and end are folded, but the middle highlighter part is visible
+
+    if (startOffset == endOffset) {
+      // Show highlighters at the edge of the folded area
+      return startFoldRegion.getStartOffset() == startOffset || startFoldRegion.getEndOffset() == startOffset;
+    }
+    return false; // Marker is folded
   }
 
   @Override

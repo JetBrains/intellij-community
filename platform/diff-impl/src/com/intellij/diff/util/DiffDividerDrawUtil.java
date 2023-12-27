@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public final class DiffDividerDrawUtil {
     new BasicStroke(2.3f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{2, 2}, 0.0f);
 
   /*
-   * Clip given graphics of divider component such that result graphics is aligned with base component by 'y' coordinate.
+   * Clip given graphics of a divider component such that result graphics is aligned with base component by 'y' coordinate.
    */
   @NotNull
   public static Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider, @NotNull Component base) {
@@ -93,6 +94,7 @@ public final class DiffDividerDrawUtil {
     return handler.getPolygons();
   }
 
+  @ApiStatus.Internal
   public static boolean isIntervalFolded(@NotNull Editor editor, int startLine, int endLine) {
     TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
     return FoldingUtil.isTextRangeFolded(editor, range);
@@ -125,6 +127,7 @@ public final class DiffDividerDrawUtil {
     return separators;
   }
 
+  @ApiStatus.Internal
   public static int getEditorTopOffset(@NotNull final Editor editor) {
     final JComponent header = editor.getHeaderComponent();
     int headerOffset = header == null ? 0 : header.getHeight();
@@ -157,6 +160,7 @@ public final class DiffDividerDrawUtil {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public static LineRange getVisibleInterval(Editor editor) {
     return ReadAction.compute(() -> {
       Rectangle area = editor.getScrollingModel().getVisibleArea();
@@ -185,6 +189,7 @@ public final class DiffDividerDrawUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DividerPaintableHandlerImpl implements DividerPaintable.Handler {
     private final Editor myEditor1;
     private final Editor myEditor2;
@@ -193,6 +198,7 @@ public final class DiffDividerDrawUtil {
     private final LineRange myRightInterval;
     private final List<DividerPolygon> myPolygons = new ArrayList<>();
 
+    @ApiStatus.Internal
     public DividerPaintableHandlerImpl(@NotNull Editor editor1,
                                         @NotNull Editor editor2) {
       myEditor1 = editor1;
@@ -235,12 +241,12 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter) {
       return process(startLine1, endLine1, startLine2, endLine2, painter, false);
     }
 
-    public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter, boolean withAlignedHeight) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
@@ -255,6 +261,7 @@ public final class DiffDividerDrawUtil {
       return true;
     }
 
+    @ApiStatus.Internal
     public static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
                                       int startLine1, int startLine2,
                                       @NotNull TextDiffType type) {
@@ -308,9 +315,11 @@ public final class DiffDividerDrawUtil {
       return type;
     }
 
+    @ApiStatus.Internal
     public static class DefaultPainter implements Painter {
       private final TextDiffType myType;
 
+      @ApiStatus.Internal
       public DefaultPainter(@NotNull TextDiffType type) {
         myType = type;
       }
@@ -341,10 +350,12 @@ public final class DiffDividerDrawUtil {
       }
     }
 
+    @ApiStatus.Internal
     public static class ResolvablePainter implements Painter {
       private final TextDiffType myType;
       private final boolean myResolved;
 
+      @ApiStatus.Internal
       public ResolvablePainter(@NotNull TextDiffType type, boolean resolved) {
         myType = type;
         myResolved = resolved;
@@ -376,11 +387,13 @@ public final class DiffDividerDrawUtil {
       }
     }
 
+    @ApiStatus.Internal
     public static class ExcludablePainter implements Painter {
       private final TextDiffType myType;
       private final boolean myExcluded;
       private final boolean mySkipped;
 
+      @ApiStatus.Internal
       public ExcludablePainter(@NotNull TextDiffType type, boolean excluded, boolean skipped) {
         myType = type;
         myExcluded = excluded;
@@ -414,6 +427,7 @@ public final class DiffDividerDrawUtil {
       }
     }
 
+    @ApiStatus.Internal
     public interface Painter {
       @Nullable Color getFillColor(@NotNull Editor editor, boolean isFolded);
 

@@ -689,11 +689,11 @@ public final class DiffDrawUtil {
       this(editor, line, placement, 0);
     }
 
-    public LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement, int layerPriority) {
+    private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement, int layerPriority) {
       this.editor = editor;
       this.placement = placement;
 
-      // We won't use addLineHighlighter as it will fail to add marker into empty document.
+      // We won't use addLineHighlighter as it will fail to add marker into an empty document.
       // RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
       offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
@@ -869,10 +869,12 @@ public final class DiffDrawUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DiffStripeMarkerTextAttributes extends TextAttributes {
     private final @NotNull TextDiffType myType;
     private final @NotNull Editor myEditor;
 
+    @ApiStatus.Internal
     public DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
       myType = type;
       myEditor = editor;
@@ -924,7 +926,7 @@ public final class DiffDrawUtil {
     }
   }
 
-  public static class DiffDefaultBorderRenderer implements LineSeparatorRenderer {
+  private static class DiffDefaultBorderRenderer implements LineSeparatorRenderer {
     private final @Nullable RangeHighlighter myParentHighlighter;
     private final @NotNull Editor myEditor;
     private final @NotNull SeparatorPlacement myPlacement;
