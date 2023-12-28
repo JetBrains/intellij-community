@@ -18,7 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
-internal class ProductionWslIjentManager private constructor(private val scope: CoroutineScope) : WslIjentManager {
+@VisibleForTesting
+class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
 
   override val isIjentAvailable: Boolean
