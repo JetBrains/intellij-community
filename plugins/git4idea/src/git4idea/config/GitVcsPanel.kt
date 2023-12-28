@@ -51,6 +51,8 @@ import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashTabAvailable
+import git4idea.stash.ui.setStashesAndShelvesTabEnabled
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
@@ -75,7 +77,7 @@ private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = 
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), { applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }, groupName = gitOptionGroupName)
 private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), {gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }, groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
 private val cdEnableStagingArea                                         get() = CheckboxDescriptor(message("settings.enable.staging.area"), { applicationSettings.isStagingAreaEnabled }, { enableStagingArea(it) }, groupName = gitOptionGroupName, comment = message("settings.enable.staging.area.comment"))
-// @formatter:on
+private val cdCombineStashesAndShelves                                  get() = CheckboxDescriptor(message("settings.enable.stashes.and.shelves"), { applicationSettings.isCombinedStashesAndShelvesTabEnabled }, { setStashesAndShelvesTabEnabled(it) }, groupName = gitOptionGroupName)// @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
@@ -240,6 +242,11 @@ internal class GitVcsPanel(private val project: Project) :
     branchUpdateInfoRow()
     row {
       checkBox(cdOverrideCredentialHelper)
+    }
+    if (isStashTabAvailable()) {
+      row {
+        checkBox(cdCombineStashesAndShelves)
+      }
     }
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
