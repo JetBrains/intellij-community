@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
-import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexUpdateWriter;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.util.indexing.contentQueue.IndexUpdateRunner.*;
+import static com.intellij.util.indexing.contentQueue.IndexUpdateWriter.*;
 
 @ApiStatus.Internal
 public final class FileIndexesValuesApplier {
@@ -205,7 +205,7 @@ public final class FileIndexesValuesApplier {
    * Applying modifications to the index.
    *
    * @param indexerFilter executor index of appliers and removers to proceed, or {@code -1} if we should proceed all of them.
-   * @see IndexUpdateRunner#getExecutorIndex(IndexId)
+   * @see IndexUpdateWriter#getExecutorIndex(IndexId)
    */
   private void applyModifications(@NotNull VirtualFile file,
                                   int indexerFilter,
