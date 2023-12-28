@@ -79,4 +79,6 @@ abstract class UastFakeLightMethodBase(
     }
 
     override fun getParent(): PsiElement? = containingClass
+
+    override fun toString(): String = "${this::class.simpleName} of $name"
 }

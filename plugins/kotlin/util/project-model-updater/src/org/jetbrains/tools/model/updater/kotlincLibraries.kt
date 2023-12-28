@@ -74,6 +74,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
+
+        // bootstrap version of kotlin-jps-plugin-classpath required for testing
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", kotlincCoordinates, jpsLibraryName = "jetbrains.kotlin.jps.plugin.classpath")
     }
 }
 
@@ -105,11 +108,12 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     postfix: String = "",
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
-    repository: JpsRemoteRepository = KOTLIN_IDE_DEPS_REPOSITORY
+    repository: JpsRemoteRepository = KOTLIN_IDE_DEPS_REPOSITORY,
+    jpsLibraryName: String = name,
 ) {
     require(name.startsWith("kotlinc."))
     val jpsLibrary = singleJarMavenLibrary(
-        name = name,
+        jpsLibraryName = jpsLibraryName,
         mavenCoordinates = "$ktGroup:${name.removePrefix("kotlinc.")}$postfix:${coordinates.version}",
         transitive = transitive,
         includeSources = includeSources,
@@ -120,7 +124,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
 }
 
 private fun singleJarMavenLibrary(
-    name: String,
+    jpsLibraryName: String,
     mavenCoordinates: String,
     excludes: List<MavenId> = emptyList(),
     transitive: Boolean = true,
@@ -129,7 +133,7 @@ private fun singleJarMavenLibrary(
 ): JpsLibrary {
     val mavenId = MavenId.parse(mavenCoordinates)
     return JpsLibrary(
-        name,
+        jpsLibraryName,
         JpsLibrary.LibraryType.Repository(mavenId, includeTransitive = transitive, excludes = excludes, remoteRepository = repository),
         classes = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId))),
         sources = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId, classifier = "sources"))).takeIf { includeSources } ?: emptyList()
