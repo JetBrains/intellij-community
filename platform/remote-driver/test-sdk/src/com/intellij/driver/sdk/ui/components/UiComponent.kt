@@ -12,7 +12,6 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
 import com.intellij.driver.sdk.waitFor
 import java.awt.Point
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -20,8 +19,7 @@ data class ComponentData(val xpath: String,
                          val driver: Driver,
                          val robotService: RobotService,
                          val parentSearchContext: SearchContext,
-                         val foundComponent: Component?,
-                         val timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds)
+                         val foundComponent: Component?)
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   val component: Component by lazy {
@@ -29,7 +27,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   private fun findThisComponent(): Component {
-    waitFor(data.timeout,
+    waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
             errorMessage = "Can't find component with '${data.xpath}' in ${searchContext.context}") {
       data.parentSearchContext.findAll(data.xpath).size == 1
     }
@@ -136,9 +134,5 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun moveMouse(point: Point) {
     robotService.robot.moveMouse(component, point)
-  }
-
-  fun withTimeout(duration: Duration): UiComponent {
-    return UiComponent(this.data.copy(timeout = duration))
   }
 }
