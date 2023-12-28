@@ -54,6 +54,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @ApiStatus.Internal
   public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
+  /**
+   * The helper UserData keys that will be cleaned at the end of the tree building to reduce memory footprint.
+   */
+  private static final @NotNull List<Key<?>> TEMP_CACHE_KEYS =
+    Arrays.asList(DIRECTORY_CACHE, IS_CACHING_ROOT, SimpleChangesGroupingPolicy.GROUP_NODE_CACHE);
+
   @Nullable
   public final Project myProject;
 
@@ -507,6 +513,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
         }).executeSynchronously();
       }
     }
+
+    myRoot.traverse().forEach(node -> {
+      for (Key<?> key : TEMP_CACHE_KEYS) {
+        node.putUserData(key, null);
+      }
+    });
 
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
     return myModel;

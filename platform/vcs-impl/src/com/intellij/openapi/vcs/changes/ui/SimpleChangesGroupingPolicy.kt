@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.util.NotNullLazyKey
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
 abstract class SimpleChangesGroupingPolicy<T : Any>(val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
@@ -40,7 +41,9 @@ abstract class SimpleChangesGroupingPolicy<T : Any>(val model: DefaultTreeModel)
   protected abstract fun createGroupRootNode(value: T): ChangesBrowserNode<*>?
 
   companion object {
-    private val GROUP_NODE_CACHE: NotNullLazyKey<MutableMap<Any, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> =
+    @JvmField
+    @ApiStatus.Internal
+    val GROUP_NODE_CACHE: NotNullLazyKey<MutableMap<Any, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> =
       NotNullLazyKey.createLazyKey("SimpleChangesGroupingPolicy.GroupNodeCache") { HashMap() }
   }
 }
