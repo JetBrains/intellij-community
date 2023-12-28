@@ -27,6 +27,7 @@ import org.jetbrains.jewel.ui.component.SimpleTabContent
 import org.jetbrains.jewel.ui.component.TabData
 import org.jetbrains.jewel.ui.component.TabStrip
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.util.thenIf
@@ -54,13 +55,13 @@ private fun DefaultTabShowcase() {
         tabIds.mapIndexed { index, id ->
             TabData.Default(
                 selected = index == selectedTabIndex,
-                content = {
+                content = { tabState ->
                     val iconProvider =
                         rememberResourcePainterProvider("icons/search.svg", StandaloneSampleIcons::class.java)
-                    val icon by iconProvider.getPainter()
+                    val icon by iconProvider.getPainter(Stateful(tabState))
                     SimpleTabContent(
-                        state = it,
-                        title = "Default Tab $id",
+                        label = "Default Tab $id",
+                        state = tabState,
                         icon = icon,
                     )
                 },
@@ -99,22 +100,20 @@ private fun EditorTabShowcase() {
             TabData.Editor(
                 selected = index == selectedTabIndex,
                 content = { tabState ->
-                    Row {
-                        SimpleTabContent(
-                            modifier = Modifier,
-                            state = tabState,
-                            label = { Text("Editor tab $id") },
-                            icon = {
-                                Icon(
-                                    resource = "icons/search.svg",
-                                    contentDescription = "SearchIcon",
-                                    iconClass = StandaloneSampleIcons::class.java,
-                                    modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),
-                                    tint = Color.Magenta,
-                                )
-                            },
-                        )
-                    }
+                    SimpleTabContent(
+                        state = tabState,
+                        modifier = Modifier,
+                        icon = {
+                            Icon(
+                                resource = "icons/search.svg",
+                                contentDescription = null,
+                                iconClass = StandaloneSampleIcons::class.java,
+                                modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),
+                                tint = Color.Magenta,
+                            )
+                        },
+                        label = { Text("Editor tab $id") },
+                    )
                     Box(
                         modifier = Modifier
                             .size(12.dp)

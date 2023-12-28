@@ -53,30 +53,30 @@ public interface TabContentScope {
 
     @Composable
     public fun Modifier.tabContentAlpha(state: TabState): Modifier =
-        this.alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
+        alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
 }
 
 internal class TabContentScopeContainer : TabContentScope
 
 @Composable
 public fun TabContentScope.SimpleTabContent(
-    title: String,
+    label: String,
     state: TabState,
-    icon: Painter?,
     modifier: Modifier = Modifier,
+    icon: Painter? = null,
 ) {
     SimpleTabContent(
-        modifier = modifier,
-        label = { Text(title) },
-        icon = icon?.let { { Icon(painter = icon, contentDescription = null) } },
         state = state,
+        modifier = modifier,
+        icon = icon?.let { { Icon(painter = icon, contentDescription = null) } },
+        label = { Text(label) },
     )
 }
 
 @Composable
 public fun TabContentScope.SimpleTabContent(
-    modifier: Modifier = Modifier,
     state: TabState,
+    modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = null,
     label: @Composable () -> Unit,
 ) {
@@ -127,8 +127,9 @@ internal fun TabImpl(
     val lineThickness = tabStyle.metrics.underlineThickness
     val backgroundColor by tabStyle.colors.backgroundFor(state = tabState)
 
-    val resolvedContentColor = tabStyle.colors.contentFor(tabState)
-        .value.takeOrElse { LocalContentColor.current }
+    val resolvedContentColor =
+        tabStyle.colors.contentFor(tabState).value
+            .takeOrElse { LocalContentColor.current }
 
     CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
         Row(
