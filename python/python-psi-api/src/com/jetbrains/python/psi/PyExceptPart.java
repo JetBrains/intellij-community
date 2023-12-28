@@ -16,17 +16,22 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstExceptPart;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
+public interface PyExceptPart extends PyAstExceptPart, PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
   PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
 
+  @Override
   @Nullable
-  PyExpression getExceptClass();
+  default PyExpression getExceptClass() {
+    return (PyExpression)PyAstExceptPart.super.getExceptClass();
+  }
 
+  @Override
   @Nullable
-  PyExpression getTarget();
-
-  boolean isStar();
+  default PyExpression getTarget() {
+    return (PyExpression)PyAstExceptPart.super.getTarget();
+  }
 }

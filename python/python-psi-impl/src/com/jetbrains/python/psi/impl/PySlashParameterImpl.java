@@ -3,10 +3,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.stubs.PySlashParameterStub;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class PySlashParameterImpl extends PyBaseElementImpl<PySlashParameterStub> implements PySlashParameter {
@@ -17,37 +17,6 @@ public class PySlashParameterImpl extends PyBaseElementImpl<PySlashParameterStub
 
   public PySlashParameterImpl(PySlashParameterStub stub) {
     super(stub, PyElementTypes.SLASH_PARAMETER);
-  }
-
-  @Override
-  public PyNamedParameter getAsNamed() {
-    return null;
-  }
-
-  @Override
-  public PyTupleParameter getAsTuple() {
-    return null;
-  }
-
-  @Override
-  public PyExpression getDefaultValue() {
-    return null;
-  }
-
-  @Override
-  public boolean hasDefaultValue() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultValueText() {
-    return null;
-  }
-
-  @Override
-  public boolean isSelf() {
-    return false;
   }
 
   @Override

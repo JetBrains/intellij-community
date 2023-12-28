@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstDecoratorList;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,12 +24,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A list of function decorators.
  */
-public interface PyDecoratorList extends PyElement, StubBasedPsiElement<PyDecoratorListStub> {
+public interface PyDecoratorList extends PyAstDecoratorList, PyElement, StubBasedPsiElement<PyDecoratorListStub> {
   /**
    * @return decorators of function, in order of declaration (outermost first).
    */
+  @Override
   PyDecorator @NotNull [] getDecorators();
 
+  @Override
   @Nullable
-  PyDecorator findDecorator(String name);
+  default PyDecorator findDecorator(String name) {
+    return (PyDecorator)PyAstDecoratorList.super.findDecorator(name);
+  }
 }

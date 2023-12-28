@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyLiteralExpression extends PyExpression {
+import com.jetbrains.python.ast.PyAstLiteralExpression;
+
+public interface PyLiteralExpression extends PyAstLiteralExpression, PyExpression {
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
       if (first_param_name == null || first_param_name.length() < 1) return null; // ignore cases of incorrect code
       // is it a static method?
       PyFunction.Modifier modifier = method.getModifier();
-      if (modifier == PyFunction.Modifier.STATICMETHOD) return null; // these may do whatever they please
+      if (modifier == PyAstFunction.Modifier.STATICMETHOD) return null; // these may do whatever they please
       return first_param_name;
     }
 

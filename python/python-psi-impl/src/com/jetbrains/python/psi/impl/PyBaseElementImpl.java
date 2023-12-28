@@ -10,17 +10,13 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,59 +63,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyElement(this);
-  }
-
-  protected <T extends PyElement> T @NotNull [] childrenToPsi(TokenSet filterSet, T[] array) {
-    final ASTNode[] nodes = getNode().getChildren(filterSet);
-    return PyPsiUtils.nodesToPsi(nodes, array);
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(TokenSet filterSet, int index) {
-    final ASTNode[] nodes = getNode().getChildren(filterSet);
-    if (nodes.length <= index) {
-      return null;
-    }
-    //noinspection unchecked
-    return (T)nodes[index].getPsi();
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(IElementType elType) {
-    final ASTNode node = getNode().findChildByType(elType);
-    if (node == null) {
-      return null;
-    }
-
-    //noinspection unchecked
-    return (T)node.getPsi();
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(@NotNull TokenSet elTypes) {
-    final ASTNode node = getNode().findChildByType(elTypes);
-    //noinspection unchecked
-    return node != null ? (T)node.getPsi() : null;
-  }
-
-  @NotNull
-  protected <T extends PyElement> T childToPsiNotNull(TokenSet filterSet, int index) {
-    final PyElement child = childToPsi(filterSet, index);
-    if (child == null) {
-      throw new RuntimeException("child must not be null: expression text " + getText());
-    }
-    //noinspection unchecked
-    return (T)child;
-  }
-
-  @NotNull
-  protected <T extends PyElement> T childToPsiNotNull(IElementType elType) {
-    final PyElement child = childToPsi(elType);
-    if (child == null) {
-      throw new RuntimeException("child must not be null; expression text " + getText());
-    }
-    //noinspection unchecked
-    return (T)child;
   }
 
   /**
@@ -176,28 +119,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   @Nullable
-  protected static <T extends StubBasedPsiElement<? extends PyAnnotationOwnerStub> & PyAnnotationOwner>
-  String getAnnotationContentFromStubOrPsi(@NotNull T elem) {
-    final PyAnnotationOwnerStub stub = elem.getStub();
-    if (stub != null) {
-      return stub.getAnnotation();
-    }
-    return getAnnotationContentFromPsi(elem);
-  }
-
-  @Nullable
-  protected static <T extends PyAnnotationOwner> String getAnnotationContentFromPsi(@NotNull T elem) {
-    final PyAnnotation annotation = elem.getAnnotation();
-    if (annotation != null) {
-      final PyExpression annotationValue = annotation.getValue();
-      if (annotationValue != null) {
-        return annotationValue.getText();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   protected static <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner>
   String getTypeCommentAnnotationFromStubOrPsi(@NotNull T elem) {
     final PyTypeCommentOwnerStub stub = elem.getStub();
@@ -209,5 +130,10 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
       return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
     }
     return null;
+  }
+
+  @Override
+  public <E extends PsiElement> @Nullable E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
+    return super.getStubOrPsiParentOfType(parentClass);
   }
 }

@@ -4,15 +4,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implements PyExceptPart {
 
@@ -27,42 +24,6 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyExceptBlock(this);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getExceptClass() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getTarget() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
-  }
-
-  @Override
-  public boolean isStar() {
-    return getNode().findChildByType(PyTokenTypes.MULT) != null;
-  }
-
-  @Override
-  @NotNull
-  public PyStatementList getStatementList() {
-    return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
-  }
-
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTarget());
-    final List<PsiNamedElement> results = new ArrayList<>();
-    for (PyExpression expression : expressions) {
-      if (expression instanceof PsiNamedElement) {
-        results.add((PsiNamedElement)expression);
-      }
-    }
-    return results;
   }
 
   @Nullable

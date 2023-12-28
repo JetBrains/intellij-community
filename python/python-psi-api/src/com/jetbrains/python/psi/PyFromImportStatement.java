@@ -18,7 +18,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.ast.PyAstFromImportStatement;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,49 +28,26 @@ import java.util.List;
 /**
  * Describes "from ... import" statements.
  */
-public interface PyFromImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub>,
+public interface PyFromImportStatement extends PyAstFromImportStatement, PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub>,
                                                PyImplicitImportNameDefiner {
-  boolean isStarImport();
-
   /**
    * Returns a reference the module from which import is required.
    * @return reference to module. If the 'from' reference is relative and consists entirely of dots, null is returned.
    */
-  @Nullable PyReferenceExpression getImportSource();
-
+  @Override
   @Nullable
-  QualifiedName getImportSourceQName();
+  default PyReferenceExpression getImportSource() {
+    return (PyReferenceExpression)PyAstFromImportStatement.super.getImportSource();
+  }
 
   /**
    * @return the star in "from ... import *"
    */
-  @Nullable PyStarImportElement getStarImportElement();
-
-  /**
-   * @return number of dots in relative "from" clause, or 0 in absolute import.
-   */
-  int getRelativeLevel();
-
-  /**
-   * @return true iff the statement is an import from __future__.
-   */
-  boolean isFromFuture();
-
-  /**
-   * If the from ... import statement uses an import list in parentheses, returns the opening parenthesis.
-   *
-   * @return opening parenthesis token or null
-   */
+  @Override
   @Nullable
-  PsiElement getLeftParen();
-
-  /**
-   * If the from ... import statement uses an import list in parentheses, returns the closing parenthesis.
-   *
-   * @return closing parenthesis token or null
-   */
-  @Nullable
-  PsiElement getRightParen();
+  default PyStarImportElement getStarImportElement() {
+    return (PyStarImportElement)PyAstFromImportStatement.super.getStarImportElement();
+  }
 
   /**
    * Resolves the import source qualified name to a file or directory. Note: performs a Python only resolve,

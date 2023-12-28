@@ -18,9 +18,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarParameterStub> implements PySingleStarParameter {
@@ -30,37 +30,6 @@ public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarPar
 
   public PySingleStarParameterImpl(PySingleStarParameterStub stub) {
     super(stub, PyElementTypes.SINGLE_STAR_PARAMETER);
-  }
-
-  @Override
-  public PyNamedParameter getAsNamed() {
-    return null;
-  }
-
-  @Override
-  public PyTupleParameter getAsTuple() {
-    return null;
-  }
-
-  @Override
-  public PyExpression getDefaultValue() {
-    return null;
-  }
-
-  @Override
-  public boolean hasDefaultValue() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultValueText() {
-    return null;
-  }
-
-  @Override
-  public boolean isSelf() {
-    return false;
   }
 
   @Override

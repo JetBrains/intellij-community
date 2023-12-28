@@ -35,11 +35,6 @@ public abstract class PySequenceExpressionImpl extends PyElementImpl implements 
   }
 
   @Override
-  public boolean isEmpty() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens()) == null;
-  }
-
-  @Override
   public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getElements());
   }

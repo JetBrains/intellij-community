@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.psi;
+package com.jetbrains.python.ast;
+
+import org.jetbrains.annotations.ApiStatus;
 
 /**
- * The "for" part of list comprehensions and generators.
+ * The 'while' part of a cycle.
+ * @see PyAstElsePart
  */
-public interface PyComprehensionForComponent extends PyComprehensionComponent {
-  PyExpression getIteratorVariable();
-  PyExpression getIteratedList();
-  boolean isAsync();
+@ApiStatus.Experimental
+public interface PyAstWhilePart extends PyAstConditionalStatementPart {
 }

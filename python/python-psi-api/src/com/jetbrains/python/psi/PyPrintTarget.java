@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyPrintTarget extends PyElement {
+import com.jetbrains.python.ast.PyAstPrintTarget;
+
+public interface PyPrintTarget extends PyAstPrintTarget, PyElement {
 }

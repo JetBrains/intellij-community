@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyLoopStatement extends PyCompoundStatement {
+import com.jetbrains.python.ast.PyAstLoopStatement;
+
+public interface PyLoopStatement extends PyAstLoopStatement, PyCompoundStatement {
 }

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstParameterList;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +25,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents function parameter list.
  */
-public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub> {
+public interface PyParameterList extends PyAstParameterList, PyElement, StubBasedPsiElement<PyParameterListStub> {
 
   /**
    * Extracts the individual parameters.
    * Note that tuple parameters are flattened by this method.
    * @return a possibly empty array of named paramaters.
    */
+  @Override
   PyParameter @NotNull [] getParameters();
 
   @Nullable
@@ -48,7 +50,7 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    * @return true iff this list contains an '*args'-type parameter.
    */
   boolean hasPositionalContainer();
-  
+
   /**
    * @return true iff this list contains a '**kwargs'-type parameter.
    */

@@ -19,9 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implements PyAnnotation {
@@ -31,12 +29,6 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
 
   public PyAnnotationImpl(PyAnnotationStub stub) {
     super(stub, PyElementTypes.ANNOTATION);
-  }
-
-  @Nullable
-  @Override
-  public PyExpression getValue() {
-    return findChildByClass(PyExpression.class);
   }
 
   @Override

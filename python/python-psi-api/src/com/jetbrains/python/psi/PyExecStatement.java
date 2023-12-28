@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyExecStatement extends PyStatement {
+import com.jetbrains.python.ast.PyAstExecStatement;
+
+public interface PyExecStatement extends PyAstExecStatement, PyStatement {
 }

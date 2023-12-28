@@ -15,15 +15,19 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstConditionalStatementPart;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A statement part that has a condition before it.
  */
-public interface PyConditionalStatementPart extends PyStatementPart {
+public interface PyConditionalStatementPart extends PyAstConditionalStatementPart, PyStatementPart {
   /**
    * @return the condition expression.
    */
+  @Override
   @Nullable
-  PyExpression getCondition();
+  default PyExpression getCondition() {
+    return (PyExpression)PyAstConditionalStatementPart.super.getCondition();
+  }
 }

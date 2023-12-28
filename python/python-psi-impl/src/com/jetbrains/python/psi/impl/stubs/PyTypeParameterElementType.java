@@ -29,7 +29,7 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   @Override
   @NotNull
   public PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
-    return new PyTypeParameterStubImpl(psi.getName(), getTypeParameterKindFromPsi(psi), psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
+    return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(), psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
                                        parentStub, getStubElementType());
   }
 
@@ -61,17 +61,5 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   @NotNull
   protected IStubElementType getStubElementType() {
     return PyElementTypes.TYPE_PARAMETER;
-  }
-
-  @NotNull
-  public static PyTypeParameter.Kind getTypeParameterKindFromPsi(PyTypeParameter psi) {
-    String paramText = psi.getText();
-    if (paramText.startsWith("**")) {
-      return PyTypeParameter.Kind.ParamSpec;
-    }
-    else if (paramText.startsWith("*")) {
-      return PyTypeParameter.Kind.TypeVarTuple;
-    }
-    else return PyTypeParameter.Kind.TypeVar;
   }
 }

@@ -3,7 +3,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.ast.PyAstImportElement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.NotNull;
@@ -12,27 +12,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public interface PyImportElement extends PyElement, PyImportedNameDefiner, StubBasedPsiElement<PyImportElementStub> {
+public interface PyImportElement extends PyAstImportElement, PyElement, PyImportedNameDefiner, StubBasedPsiElement<PyImportElementStub> {
+  @Override
   @Nullable
-  PyReferenceExpression getImportReferenceExpression();
+  default PyReferenceExpression getImportReferenceExpression() {
+    return (PyReferenceExpression)PyAstImportElement.super.getImportReferenceExpression();
+  }
 
+  @Override
   @Nullable
-  QualifiedName getImportedQName();
+  default PyTargetExpression getAsNameElement() {
+    return (PyTargetExpression)PyAstImportElement.super.getAsNameElement();
+  }
 
-  @Nullable
-  PyTargetExpression getAsNameElement();
+  @Override
+  default PyStatement getContainingImportStatement() {
+    return (PyStatement)PyAstImportElement.super.getContainingImportStatement();
+  }
 
-  @Nullable
-  String getAsName();
-
-  /**
-   * @return name under which the element is visible, that is, "as name" is there is one, or just name.
-   */
-  @Nullable
-  String getVisibleName();
-
-  PyStatement getContainingImportStatement();
-  
   @Nullable
   PsiElement getElementNamed(String name, boolean resolveImportElement);
 

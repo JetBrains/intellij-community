@@ -15,12 +15,23 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstTypeDeclarationStatement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public interface PyTypeDeclarationStatement extends PyStatement, PyAnnotationOwner {
+public interface PyTypeDeclarationStatement extends PyAstTypeDeclarationStatement, PyStatement, PyAnnotationOwner {
   @NotNull
-  PyExpression getTarget();
+  @Override
+  default PyExpression getTarget() {
+    return (PyExpression)PyAstTypeDeclarationStatement.super.getTarget();
+  }
+
+  @Nullable
+  @Override
+  default PyAnnotation getAnnotation() {
+    return (PyAnnotation)PyAstTypeDeclarationStatement.super.getAnnotation();
+  }
 }

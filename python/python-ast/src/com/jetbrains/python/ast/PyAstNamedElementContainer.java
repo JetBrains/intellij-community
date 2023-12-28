@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.psi;
+package com.jetbrains.python.ast;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
- * The "if" part of list comprehensions and generators.
+ * PSI element that contains named children that are visible in the current scope.
  */
-public interface PyComprehensionIfComponent extends PyComprehensionComponent {
-  @Nullable  
-  PyExpression getTest();
+@ApiStatus.Experimental
+public interface PyAstNamedElementContainer extends PsiElement {
+  /**
+   * Return named children visible in the current scope.
+   */
+  @NotNull
+  List<PsiNamedElement> getNamedElements();
 }

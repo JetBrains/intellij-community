@@ -2,25 +2,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReprExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PyReprExpressionImpl extends PyElementImpl implements PyReprExpression {
   public PyReprExpressionImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getExpression() {
-    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
   @Override

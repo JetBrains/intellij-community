@@ -189,22 +189,6 @@ public final class ParamHelper {
     return sb.toString();
   }
 
-  /**
-   * @param defaultValue expression returned by {@link PyCallableParameter#getDefaultValue()} or {@link PyParameter#getDefaultValue()}.
-   * @return {@code defaultValue} value surrounded by quotes if it is a multi-line string literal, {@code defaultValue} text otherwise.
-   */
-  @Nullable
-  public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
-    if (defaultValue instanceof PyStringLiteralExpression) {
-      final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue.getText());
-      if (quotes != null) {
-        return quotes.getFirst() + ((PyStringLiteralExpression)defaultValue).getStringValue() + quotes.getSecond();
-      }
-    }
-
-    return defaultValue == null ? null : defaultValue.getText();
-  }
-
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
     return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
   }

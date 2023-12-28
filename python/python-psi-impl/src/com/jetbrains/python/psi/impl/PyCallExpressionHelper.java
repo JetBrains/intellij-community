@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -25,7 +26,6 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,37 +137,6 @@ public final class PyCallExpressionHelper {
     }
 
     return PyUnionType.union(callableTypes);
-  }
-
-  @Nullable
-  public static PyExpression getReceiver(@NotNull PyCallExpression call, @Nullable PyCallable resolvedCallee) {
-    if (resolvedCallee instanceof PyFunction function) {
-      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
-        return null;
-      }
-    }
-
-    final PyExpression callee = call.getCallee();
-    if (callee != null && isImplicitlyInvokedMethod(resolvedCallee) && !Objects.equals(resolvedCallee.getName(), callee.getName())) {
-      return callee;
-    }
-
-    if (callee instanceof PyQualifiedExpression) {
-      return ((PyQualifiedExpression)callee).getQualifier();
-    }
-
-    return null;
-  }
-
-  @Contract("null -> false")
-  private static boolean isImplicitlyInvokedMethod(@Nullable PyCallable resolvedCallee) {
-    if (PyUtil.isInitOrNewMethod(resolvedCallee)) return true;
-
-    if (resolvedCallee instanceof PyFunction function) {
-      return PyNames.CALL.equals(function.getName()) && function.getContainingClass() != null;
-    }
-
-    return false;
   }
 
   /**
@@ -327,9 +296,9 @@ public final class PyCallExpressionHelper {
       if (wrapperInfo != null) {
         final String wrapperName = wrapperInfo.getFirst();
         final PyFunction.Modifier wrappedModifier = PyNames.CLASSMETHOD.equals(wrapperName)
-                                                    ? PyFunction.Modifier.CLASSMETHOD
+                                                    ? PyAstFunction.Modifier.CLASSMETHOD
                                                     : PyNames.STATICMETHOD.equals(wrapperName)
-                                                      ? PyFunction.Modifier.STATICMETHOD
+                                                      ? PyAstFunction.Modifier.STATICMETHOD
                                                       : null;
 
         final ClarifiedResolveResult result = new ClarifiedResolveResult(resolveResult, wrapperInfo.getSecond(), wrappedModifier, false);
@@ -460,10 +429,10 @@ public final class PyCallExpressionHelper {
     }
 
     // decorators?
-    if (modifier == PyFunction.Modifier.STATICMETHOD) {
+    if (modifier == PyAstFunction.Modifier.STATICMETHOD) {
       if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
     }
-    else if (modifier == PyFunction.Modifier.CLASSMETHOD) {
+    else if (modifier == PyAstFunction.Modifier.CLASSMETHOD) {
       if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
     }
     return implicit_offset;

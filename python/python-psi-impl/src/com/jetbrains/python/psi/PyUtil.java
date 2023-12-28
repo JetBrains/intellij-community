@@ -36,6 +36,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -59,8 +60,8 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 
 /**
  * Assorted utility methods for Python code insight.
@@ -78,32 +79,6 @@ public final class PyUtil {
   }
 
   /**
-   * @see PyUtil#flattenedParensAndTuples
-   */
-  private static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
-                                                      boolean unfoldListLiterals, boolean unfoldStarExpressions) {
-    // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
-    for (PyExpression exp : targets) {
-      if (exp instanceof PyParenthesizedExpression parenExpr) {
-        unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyTupleExpression tupleExpr) {
-        unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyListLiteralExpression listLiteral && unfoldListLiterals) {
-        unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        unfoldParentheses(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
-      }
-      else if (exp != null) {
-        receiver.add(exp);
-      }
-    }
-    return receiver;
-  }
-
-  /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
    * Typical usage: {@code flattenedParensAndTuples(some_tuple.getExpressions())}.
@@ -113,17 +88,20 @@ public final class PyUtil {
    */
   @NotNull
   public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, false);
+    //noinspection unchecked,rawtypes
+    return (List)PyUtilCore.flattenedParensAndTuples(targets);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), true, true);
+    //noinspection unchecked
+    return (List)PyUtilCore.flattenedParensAndLists(targets);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
+    //noinspection unchecked,rawtypes
+    return (List)PyUtilCore.flattenedParensAndStars(targets);
   }
 
   /**
@@ -1041,7 +1019,7 @@ public final class PyUtil {
    * @return 0 if null or no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
   public static int getInitialUnderscores(@Nullable String name) {
-    return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
+    return PyUtilCore.getInitialUnderscores(name);
   }
 
   /**
@@ -1206,21 +1184,7 @@ public final class PyUtil {
 
   @Nullable
   public static List<String> strListValue(PyExpression value) {
-    while (value instanceof PyParenthesizedExpression) {
-      value = ((PyParenthesizedExpression)value).getContainedExpression();
-    }
-    if (value instanceof PySequenceExpression) {
-      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-      List<String> result = new ArrayList<>(elements.length);
-      for (PyExpression element : elements) {
-        if (!(element instanceof PyStringLiteralExpression)) {
-          return null;
-        }
-        result.add(((PyStringLiteralExpression)element).getStringValue());
-      }
-      return result;
-    }
-    return null;
+    return PyUtilCore.strListValue(value);
   }
 
   @NotNull
@@ -1540,11 +1504,7 @@ public final class PyUtil {
    */
   @Contract("null -> false")
   public static boolean isInitOrNewMethod(@Nullable PsiElement element) {
-    final PyFunction function = as(element, PyFunction.class);
-    if (function == null) return false;
-
-    final String name = function.getName();
-    return (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+    return PyUtilCore.isInitOrNewMethod(element);
   }
 
   /**
@@ -1654,31 +1614,12 @@ public final class PyUtil {
   }
 
   public static boolean isStringLiteral(@Nullable PyStatement stmt) {
-    if (stmt instanceof PyExpressionStatement) {
-      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
-      if (expr instanceof PyStringLiteralExpression) {
-        return true;
-      }
-    }
-    return false;
+    return PyUtilCore.isStringLiteral(stmt);
   }
 
   @Nullable
   public static PyLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
-    return breakOrContinue instanceof PyContinueStatement || breakOrContinue instanceof PyBreakStatement
-           ? getCorrespondingLoopImpl(breakOrContinue)
-           : null;
-  }
-
-  @Nullable
-  private static PyLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
-    final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class, true, ScopeOwner.class);
-
-    if (loop instanceof PyStatementWithElse && PsiTreeUtil.isAncestor(((PyStatementWithElse)loop).getElsePart(), element, true)) {
-      return getCorrespondingLoopImpl(loop);
-    }
-
-    return loop;
+    return (PyLoopStatement)PyUtilCore.getCorrespondingLoop(breakOrContinue);
   }
 
   public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {

@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -31,12 +30,6 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
   @Override
   public PyTargetExpression @NotNull [] getGlobals() {
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
-  }
-
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    return Arrays.asList(getGlobals());
   }
 
   @Nullable

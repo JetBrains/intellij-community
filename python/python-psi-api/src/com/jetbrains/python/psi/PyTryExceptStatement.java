@@ -15,19 +15,26 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The 'try/except/else/finally' statement.
  */
-public interface PyTryExceptStatement extends PyCompoundStatement, PyStatementWithElse {
+public interface PyTryExceptStatement extends PyAstTryExceptStatement, PyCompoundStatement, PyStatementWithElse {
+  @Override
   @NotNull
-  PyTryPart getTryPart();
+  default PyTryPart getTryPart() {
+    return (PyTryPart)PyAstTryExceptStatement.super.getTryPart();
+  }
 
+  @Override
   PyExceptPart @NotNull [] getExceptParts();
 
+  @Override
   @Nullable
-  PyFinallyPart getFinallyPart();
-
+  default PyFinallyPart getFinallyPart() {
+    return (PyFinallyPart)PyAstTryExceptStatement.super.getFinallyPart();
+  }
 }

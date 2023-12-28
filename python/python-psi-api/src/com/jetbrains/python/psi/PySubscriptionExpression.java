@@ -1,44 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
+import com.jetbrains.python.ast.PyAstSubscriptionExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-
-public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
-
-  @Nullable
-  @Override
-  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return getOperand();
-  }
-
-  @NotNull
-  @Override
-  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
-    if (AccessDirection.of(this) == AccessDirection.WRITE) {
-      final PsiElement parent = getParent();
-      if (parent instanceof PyAssignmentStatement) {
-        return Arrays.asList(getIndexExpression(), ((PyAssignmentStatement)parent).getAssignedValue());
-      }
-    }
-    return Collections.singletonList(getIndexExpression());
-  }
+public interface PySubscriptionExpression extends PyAstSubscriptionExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
   /**
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions
    */
+  @Override
   @NotNull
-  PyExpression getRootOperand();
+  default PyExpression getRootOperand() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getRootOperand();
+  }
 
+  @Override
   @NotNull
-  PyExpression getOperand();
+  default PyExpression getOperand() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getOperand();
+  }
 
+  @Override
   @Nullable
-  PyExpression getIndexExpression();
+  default PyExpression getIndexExpression() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getIndexExpression();
+  }
+
+  @Override
+  @Nullable
+  default PyExpression getQualifier() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getQualifier();
+  }
 }

@@ -17,16 +17,17 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.ast.PyAstTypeCommentOwner;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public interface PyTypeCommentOwner extends PsiElement {
+public interface PyTypeCommentOwner extends PyAstTypeCommentOwner, PsiElement {
   /**
-   * Returns a special comment that follows element definition and starts with conventional "type:" prefix. 
+   * Returns a special comment that follows element definition and starts with conventional "type:" prefix.
    * It is supposed to contain type annotation in PEP 484 compatible format. For further details see sections
-   * <a href="https://www.python.org/dev/peps/pep-0484/#type-comments">Type Comments</a> and 
+   * <a href="https://www.python.org/dev/peps/pep-0484/#type-comments">Type Comments</a> and
    * <a href="https://www.python.org/dev/peps/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code">Suggested syntax for Python 2.7 and straddling code</a> and
    * in PEP 484.
    * <p/>

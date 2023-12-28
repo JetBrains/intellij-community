@@ -10,6 +10,7 @@ import java.nio.file.Files
 object PythonCommunityPluginModules {
   @JvmStatic
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
+    "intellij.python.ast",
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",

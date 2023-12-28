@@ -16,5 +16,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyExpressionCodeFragment extends PyFile {
+import com.jetbrains.python.ast.PyAstExpressionCodeFragment;
+
+public interface PyExpressionCodeFragment extends PyAstExpressionCodeFragment, PyFile {
 }

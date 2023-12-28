@@ -2,12 +2,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -17,7 +15,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 
 public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasStatementStub> implements PyTypeAliasStatement {
   public PyTypeAliasStatementImpl(ASTNode astNode) {
@@ -40,17 +37,6 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
 
   @Override
   @Nullable
-  public PyExpression getTypeExpression() {
-    PsiElement child = getLastChild();
-    while (child != null && !(child instanceof PyExpression)) {
-      if (child instanceof PsiErrorElement) return null;
-      child = child.getPrevSibling();
-    }
-    return (PyExpression)child;
-  }
-
-  @Override
-  @Nullable
   public String getTypeExpressionText() {
     PyTypeAliasStatementStub stub = getStub();
 
@@ -61,19 +47,6 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
       PyExpression typeExpression = getTypeExpression();
       return typeExpression != null ? typeExpression.getText() : null;
     }
-  }
-
-  @Override
-  @Nullable
-  public PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNameIdentifier() {
-    ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    return nameNode != null ? nameNode.getPsi() : null;
   }
 
   @Override

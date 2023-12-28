@@ -16,12 +16,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
-import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,18 +34,6 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = context.getType(getOperand());
     return getSliceType(type, context);
-  }
-
-  @NotNull
-  @Override
-  public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @Nullable
-  @Override
-  public PySliceItem getSliceItem() {
-    return PsiTreeUtil.getChildOfType(this, PySliceItem.class);
   }
 
   @Nullable

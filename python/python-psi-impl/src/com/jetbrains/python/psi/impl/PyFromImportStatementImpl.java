@@ -13,7 +13,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -48,17 +49,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public boolean isStarImport() {
-    return getStarImportElement() != null;
-  }
-
-  @Override
-  @Nullable
-  public PyReferenceExpression getImportSource() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens(), 0);
-  }
-
-  @Override
   public QualifiedName getImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
@@ -69,11 +59,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       return qName;
     }
 
-    final PyReferenceExpression importSource = getImportSource();
-    if (importSource == null) {
-      return null;
-    }
-    return importSource.asQualifiedName();
+    return PyFromImportStatement.super.getImportSourceQName();
   }
 
   @Override
@@ -101,44 +87,13 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  @Nullable
-  public PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
-  }
-
-  @Override
   public int getRelativeLevel() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getRelativeLevel();
     }
 
-    int result = 0;
-    ASTNode seeker = getNode().getFirstChildNode();
-    while (seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
-      seeker = seeker.getTreeNext();
-    }
-    while (seeker != null && seeker.getElementType() == PyTokenTypes.DOT) {
-      result++;
-      seeker = seeker.getTreeNext();
-    }
-    return result;
-  }
-
-  @Override
-  public boolean isFromFuture() {
-    final QualifiedName qName = getImportSourceQName();
-    return qName != null && qName.matches(PyNames.FUTURE_MODULE);
-  }
-
-  @Override
-  public PsiElement getLeftParen() {
-    return findChildByType(PyTokenTypes.LPAR);
-  }
-
-  @Override
-  public PsiElement getRightParen() {
-    return findChildByType(PyTokenTypes.RPAR);
+    return PyFromImportStatement.super.getRelativeLevel();
   }
 
   @Override
@@ -247,23 +202,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFullyQualifiedObjectNames() {
-    final QualifiedName source = getImportSourceQName();
-
-    final String prefix = (source != null) ? (source.join(".") + '.') : "";
-
-    final List<String> unqualifiedNames = PyImportStatementImpl.getImportElementNames(getImportElements());
-
-    final List<String> result = new ArrayList<>(unqualifiedNames.size());
-
-    for (final String unqualifiedName : unqualifiedNames) {
-      result.add(prefix + unqualifiedName);
-    }
-    return result;
   }
 
   @NotNull

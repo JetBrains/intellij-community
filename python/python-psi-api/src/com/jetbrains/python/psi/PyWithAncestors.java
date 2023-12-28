@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstWithAncestors;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public interface PyWithAncestors {
+public interface PyWithAncestors extends PyAstWithAncestors {
   /**
    * Returns types of all ancestors from the hierarchy.
    */

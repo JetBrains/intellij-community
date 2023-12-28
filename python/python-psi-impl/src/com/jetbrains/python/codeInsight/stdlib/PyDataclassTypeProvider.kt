@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
@@ -32,7 +33,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       referenceTarget is PyClass && anchor is PyCallExpression -> getDataclassTypeForClass(referenceTarget, context)
       referenceTarget is PyParameter && referenceTarget.isSelf && anchor is PyCallExpression -> {
         PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
-          ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+          ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
           ?.containingClass
           ?.let { getDataclassTypeForClass(it, context) }
       }

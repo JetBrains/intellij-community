@@ -19,7 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,34 +40,12 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  @Nullable
-  public PyNamedParameter getAsNamed() {
-    return null;  // we're not named
-  }
-
-  @Override
-  @NotNull
-  public PyTupleParameter getAsTuple() {
-    return this;
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getDefaultValue() {
-    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
-    if (nodes.length > 0) {
-      return (PyExpression)nodes[0].getPsi();
-    }
-    return null;
-  }
-
-  @Override
   public boolean hasDefaultValue() {
     final PyTupleParameterStub stub = getStub();
     if (stub != null) {
       return stub.getDefaultValueText() != null;
     }
-    return getDefaultValue() != null;
+    return PyTupleParameter.super.hasDefaultValue();
   }
 
   @Override
@@ -75,7 +55,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
     if (stub != null) {
       return stub.getDefaultValueText();
     }
-    return ParamHelper.getDefaultValueText(getDefaultValue());
+    return PyTupleParameter.super.getDefaultValueText();
   }
 
   @Override
@@ -86,11 +66,6 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   @Override
   public PyParameter @NotNull [] getContents() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.getInstance().getParameterTokens(), new PyParameter[0]);
-  }
-
-  @Override
-  public boolean isSelf() {
-    return false;
   }
 
   @Override

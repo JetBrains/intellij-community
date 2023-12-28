@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -49,7 +50,7 @@ import java.util.List;
  * @see PyPlainStringElement
  * @see PyFormattedStringElement
  */
-public interface PyStringLiteralExpression extends PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
+public interface PyStringLiteralExpression extends PyAstStringLiteralExpression, PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
   @NotNull
   List<ASTNode> getStringNodes();
 

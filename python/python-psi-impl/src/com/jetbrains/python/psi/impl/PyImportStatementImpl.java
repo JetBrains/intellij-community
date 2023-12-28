@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -59,29 +58,6 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
     super.deleteChildInternal(child);
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFullyQualifiedObjectNames() {
-    return getImportElementNames(getImportElements());
-  }
-
-  /**
-   * Returns list of qualified names of import elements filtering out nulls
-   * @param elements import elements
-   * @return list of qualified names
-   */
-  @NotNull
-  public static List<String> getImportElementNames(final PyImportElement @NotNull ... elements) {
-    final List<String> result = new ArrayList<>(elements.length);
-    for (final PyImportElement element : elements) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null) {
-        result.add(qName.toString());
-      }
-    }
-    return result;
   }
 
   @NotNull

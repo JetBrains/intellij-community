@@ -104,22 +104,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return stub.getName();
     }
     else {
-      ASTNode node = getNameNode();
-      return node != null ? node.getText() : null;
+      return PyClass.super.getName();
     }
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getNameIdentifier() {
-    final ASTNode nameNode = getNameNode();
-    return nameNode != null ? nameNode.getPsi() : null;
-  }
-
-  @Nullable
-  @Override
-  public ASTNode getNameNode() {
-    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
   @Override
@@ -130,29 +116,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyClass(this);
-  }
-
-  @Override
-  @NotNull
-  public PyStatementList getStatementList() {
-    final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
-    assert statementList != null : "Statement list missing for class " + getText();
-    return statementList;
-  }
-
-  @Override
-  @Nullable
-  public PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
-  }
-
-  @Override
-  public PyArgumentList getSuperClassExpressionList() {
-    final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-    if (argList != null && argList.getFirstChild() != null) {
-      return argList;
-    }
-    return null;
   }
 
   @Override
@@ -246,12 +209,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable
   @Override
-  public PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
-  }
-
-  @Nullable
-  @Override
   public String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
   }
@@ -293,16 +250,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return stub.getSlots();
     }
 
-    final PyTargetExpression slots = ContainerUtil.find(getClassAttributes(), target -> PyNames.SLOTS.equals(target.getName()));
-    if (slots != null) {
-      final PyExpression value = slots.findAssignedValue();
-
-      return value instanceof PyStringLiteralExpression
-             ? Collections.singletonList(((PyStringLiteralExpression)value).getStringValue())
-             : PyUtil.strListValue(value);
-    }
-
-    return null;
+    return PyClass.super.getOwnSlots();
   }
 
   @Override
@@ -1054,24 +1002,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final PyTargetExpression[] children = stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
       return Arrays.asList(children);
     }
-    List<PyTargetExpression> result = new ArrayList<>();
-    for (PsiElement psiElement : getStatementList().getChildren()) {
-      if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
-        final PyExpression[] targets = assignmentStatement.getTargets();
-        for (PyExpression target : targets) {
-          if (target instanceof PyTargetExpression) {
-            result.add((PyTargetExpression)target);
-          }
-        }
-      }
-      else if (psiElement instanceof PyTypeDeclarationStatement) {
-        final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
-        if (target instanceof PyTargetExpression) {
-          result.add((PyTargetExpression)target);
-        }
-      }
-    }
-    return result;
+    return PyClass.super.getClassAttributes();
   }
 
   @Override
@@ -1315,19 +1246,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return name != null ? name.getStartOffset() : super.getTextOffset();
   }
 
-  @Nullable
-  @Override
-  public PyStringLiteralExpression getDocStringExpression() {
-    return DocStringUtil.findDocStringExpression(getStatementList());
-  }
-
   @Override
   public String getDocStringValue() {
     final PyClassStub stub = getStub();
     if (stub != null) {
       return stub.getDocString();
     }
-    return DocStringUtil.getDocStringValue(this);
+    return PyClass.super.getDocStringValue();
   }
 
   @Nullable

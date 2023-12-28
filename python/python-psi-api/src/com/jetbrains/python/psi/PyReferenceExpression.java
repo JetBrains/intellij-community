@@ -16,16 +16,24 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
+import com.jetbrains.python.ast.PyAstReferenceExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenceOwner {
+public interface PyReferenceExpression extends PyAstReferenceExpression, PyQualifiedExpression, PyReferenceOwner {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
+
+  @Override
+  @Nullable
+  default PyExpression getQualifier() {
+    return (PyExpression)PyAstReferenceExpression.super.getQualifier();
+  }
 
   /**
    * Goes through a chain of assignment statements until a non-assignment expression is encountered.

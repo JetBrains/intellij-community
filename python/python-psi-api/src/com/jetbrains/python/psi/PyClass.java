@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
@@ -23,6 +22,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -38,15 +38,17 @@ import java.util.Map;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors,
                                  PyTypeParameterListOwner {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
-  @Nullable
-  ASTNode getNameNode();
-
+  @Override
+  @NotNull
+  default PyStatementList getStatementList() {
+    return (PyStatementList)PyAstClass.super.getStatementList();
+  }
 
   /**
    * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.
@@ -82,14 +84,18 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    * <p/>
    * Operates at the AST level.
    */
+  @Override
   @Nullable
-  PyArgumentList getSuperClassExpressionList();
+  default PyArgumentList getSuperClassExpressionList() {
+    return (PyArgumentList)PyAstClass.super.getSuperClassExpressionList();
+  }
 
   /**
    * Returns PSI elements for the expressions in the super classes list.
    * <p/>
    * Operates at the AST level.
    */
+  @Override
   PyExpression @NotNull [] getSuperClassExpressions();
 
   /**
@@ -204,7 +210,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    *
    * @see #getClassAttributesInherited(TypeEvalContext)
    */
-  List<PyTargetExpression> getClassAttributes();
+  @Override
+   default List<PyTargetExpression> getClassAttributes() {
+    //noinspection unchecked
+    return (List<PyTargetExpression>)PyAstClass.super.getClassAttributes();
+  }
 
 
   /**
@@ -284,19 +294,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   @Nullable
   List<String> getSlots(@Nullable TypeEvalContext context);
 
-  /**
-   * Returns the list of names in the class' __slots__ attribute, or null if the class
-   * does not define such an attribute.
-   *
-   * @return the list of names or null.
-   */
-  @Nullable
-  List<String> getOwnSlots();
-
-  @Override
-  @Nullable
-  String getDocStringValue();
-
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
 
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
@@ -354,4 +351,22 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    */
   @Nullable
   PyClassLikeType getType(@NotNull TypeEvalContext context);
+
+  @Override
+  @Nullable
+  default PyTypeParameterList getTypeParameterList() {
+    return (PyTypeParameterList)PyAstClass.super.getTypeParameterList();
+  }
+
+  @Override
+  @Nullable
+  default PyDecoratorList getDecoratorList() {
+    return (PyDecoratorList)PyAstClass.super.getDecoratorList();
+  }
+
+  @Override
+  @Nullable
+  default PyStringLiteralExpression getDocStringExpression() {
+    return (PyStringLiteralExpression)PyAstClass.super.getDocStringExpression();
+  }
 }

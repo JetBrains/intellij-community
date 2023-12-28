@@ -153,11 +153,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  public boolean isValidHost() {
-    return true;
-  }
-
-  @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyFile file = PyUtil.as(FileContextUtil.getContextFile(this), PyFile.class);
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(file == null ? this : file);
@@ -218,11 +213,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return AllIcons.Nodes.Variable;
       }
     };
-  }
-
-  @Override
-  public PsiLanguageInjectionHost updateText(@NotNull String text) {
-    return ElementManipulators.handleContentChange(this, text);
   }
 
   @Override

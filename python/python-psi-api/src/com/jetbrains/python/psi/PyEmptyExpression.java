@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyEmptyExpression extends PyExpression {
+import com.jetbrains.python.ast.PyAstEmptyExpression;
+
+public interface PyEmptyExpression extends PyAstEmptyExpression, PyExpression {
 }

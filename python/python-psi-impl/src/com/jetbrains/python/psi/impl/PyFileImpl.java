@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -363,17 +364,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public List<PyStatement> getStatements() {
-    List<PyStatement> stmts = new ArrayList<>();
-    for (PsiElement child : getChildren()) {
-      if (child instanceof PyStatement statement) {
-        stmts.add(statement);
-      }
-    }
-    return stmts;
-  }
-
-  @Override
   @NotNull
   public List<PyClass> getTopLevelClasses() {
     return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyClass.class);
@@ -704,7 +694,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public String extractDeprecationMessage() {
     if (canHaveDeprecationMessage(getText())) {
-      return PyFunctionImpl.extractDeprecationMessage(getStatements());
+      return PyAstFunction.extractDeprecationMessage(getStatements());
     }
     else {
       return null;

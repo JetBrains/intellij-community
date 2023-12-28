@@ -16,10 +16,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +31,6 @@ public final class PyPsiUtils {
   private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
 
   private PyPsiUtils() {
-  }
-
-  static <T extends PyElement> T @NotNull [] nodesToPsi(ASTNode[] nodes, T[] array) {
-    T[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
-    for (int i = 0; i < nodes.length; i++) {
-      //noinspection unchecked
-      psiElements[i] = (T)nodes[i].getPsi();
-    }
-    return psiElements;
   }
 
   /**
@@ -147,10 +137,7 @@ public final class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
-    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
-      return start;
-    }
-    return PsiTreeUtil.skipWhitespacesAndCommentsForward(start);
+    return PyPsiUtilsCore.getNextNonCommentSibling(start, strict);
   }
 
   /**
@@ -218,7 +205,7 @@ public final class PyPsiUtils {
     return null;
   }
 
-    /**
+  /**
    * Returns first child psi element with specified element type or {@code null} if no such element exists.
    * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
    *
@@ -242,12 +229,7 @@ public final class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getChildByFilter(@NotNull PsiElement element, @NotNull TokenSet filter, int number) {
-    final ASTNode node = element.getNode();
-    if (node != null) {
-      final ASTNode[] children = node.getChildren(filter);
-      return (0 <= number && number < children.length) ? children[number].getPsi() : null;
-    }
-    return null;
+    return PyPsiUtilsCore.getChildByFilter(element, filter, number);
   }
 
   public static void addBeforeInParent(@NotNull final PsiElement anchor, final PsiElement @NotNull ... newElements) {
@@ -567,7 +549,7 @@ public final class PyPsiUtils {
 
   @Nullable
   public static String strValue(@Nullable PyExpression expression) {
-    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
+    return PyPsiUtilsCore.strValue(expression);
   }
 
   public static boolean isBefore(@NotNull final PsiElement element, @NotNull final PsiElement element2) {
@@ -577,7 +559,7 @@ public final class PyPsiUtils {
 
   @Nullable
   public static QualifiedName asQualifiedName(@Nullable PyExpression expr) {
-    return expr instanceof PyQualifiedExpression ? ((PyQualifiedExpression)expr).asQualifiedName() : null;
+    return PyPsiUtilsCore.asQualifiedName(expr);
   }
 
   @NotNull
@@ -606,36 +588,14 @@ public final class PyPsiUtils {
 
   @Nullable
   public static QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
-    final List<String> path = new LinkedList<>();
-    final String firstName = expr.getReferencedName();
-    if (firstName == null) {
-      return null;
-    }
-    path.add(firstName);
-    PyExpression qualifier = expr.getQualifier();
-    while (qualifier != null) {
-      final PyReferenceExpression qualifierReference = ObjectUtils.tryCast(qualifier, PyReferenceExpression.class);
-      if (qualifierReference == null) {
-        return null;
-      }
-      final String qualifierName = qualifierReference.getReferencedName();
-      if (qualifierName == null) {
-        return null;
-      }
-      path.add(0, qualifierName);
-      qualifier = qualifierReference.getQualifier();
-    }
-    return QualifiedName.fromComponents(path);
+    return PyPsiUtilsCore.asQualifiedName(expr);
   }
 
   /**
    * Wrapper for {@link PsiUtilCore#ensureValid(PsiElement)} that skips nulls
    */
   public static void assertValid(@Nullable final PsiElement element) {
-    if (element == null) {
-      return;
-    }
-    PsiUtilCore.ensureValid(element);
+    PyPsiUtilsCore.assertValid(element);
   }
 
   public static void assertValid(@NotNull final Module module) {

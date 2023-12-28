@@ -21,6 +21,7 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
@@ -217,7 +218,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       val functionParent = PsiTreeUtil.getParentOfType(node, PyFunction::class.java)
       if (functionParent != null) {
-        if (PyFunction.Modifier.STATICMETHOD == functionParent.modifier) {
+        if (PyAstFunction.Modifier.STATICMETHOD == functionParent.modifier) {
           registerProblemForSelves(PyPsiBundle.message("INSP.type.hints.self.use.in.staticmethod"))
         }
 
@@ -226,7 +227,7 @@ class PyTypeHintsInspection : PyInspection() {
           val firstParameter = parameters[0]
           val annotation = (firstParameter as? PyNamedParameter)?.annotation
           if (annotation != null && firstParameter.isSelf && annotation.findSelvesInAnnotation(myTypeEvalContext).isEmpty()) {
-            val message = if (PyFunction.Modifier.CLASSMETHOD == functionParent.modifier)
+            val message = if (PyAstFunction.Modifier.CLASSMETHOD == functionParent.modifier)
               PyPsiBundle.message("INSP.type.hints.self.use.for.cls.parameter.with.self.annotation")
             else
               PyPsiBundle.message("INSP.type.hints.self.use.for.self.parameter.with.self.annotation")
@@ -861,7 +862,7 @@ class PyTypeHintsInspection : PyInspection() {
       val cls = node.containingClass
       val modifier = node.modifier
 
-      val hasSelf = cls != null && modifier != PyFunction.Modifier.STATICMETHOD
+      val hasSelf = cls != null && modifier != PyAstFunction.Modifier.STATICMETHOD
 
       if (commentParametersSize < actualParametersSize - if (hasSelf) 1 else 0) {
         registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.signature.has.too.few.arguments"))
@@ -872,7 +873,7 @@ class PyTypeHintsInspection : PyInspection() {
       else if (hasSelf && actualParametersSize == commentParametersSize) {
         val actualSelfType =
           (myTypeEvalContext.getType(cls!!) as? PyInstantiableType<*>)
-            ?.let { if (modifier == PyFunction.Modifier.CLASSMETHOD) it.toClass() else it.toInstance() }
+            ?.let { if (modifier == PyAstFunction.Modifier.CLASSMETHOD) it.toClass() else it.toInstance() }
           ?: return
 
         val commentSelfType =

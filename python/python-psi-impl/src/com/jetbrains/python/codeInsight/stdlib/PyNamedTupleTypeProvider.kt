@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
@@ -74,7 +75,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
         referenceTarget is PyClass && anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
         referenceTarget is PyParameter && anchor is PyCallExpression && referenceTarget.isSelf -> {
           PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
-            ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+            ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
             ?.let { method ->
               method.containingClass?.let { getNamedTupleTypeForClass(it, context, anchor) }
             }

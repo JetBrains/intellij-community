@@ -4,10 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstStringElement;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +59,9 @@ public class PyStringLiteralDecoder {
     return map;
   }
 
-  private final PyStringElement myNode;
+  private final PyAstStringElement myNode;
 
-  public PyStringLiteralDecoder(@NotNull PyStringElement node) {
+  public PyStringLiteralDecoder(@NotNull PyAstStringElement node) {
     myNode = node;
   }
 
@@ -157,7 +157,7 @@ public class PyStringLiteralDecoder {
       return true;
     }
     final PsiFile file = myNode.getContainingFile();
-    if (file instanceof PyFile pyFile) {
+    if (file instanceof PyAstFile pyFile) {
       return pyFile.hasImportFromFuture(FutureFeature.UNICODE_LITERALS);
     }
     return false;

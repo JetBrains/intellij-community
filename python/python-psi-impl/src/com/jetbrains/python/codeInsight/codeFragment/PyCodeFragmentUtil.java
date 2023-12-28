@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -101,7 +102,7 @@ public final class PyCodeFragmentUtil {
               if (parameters.length > 0) {
                 if (resolved == parameters[0]) {
                   final PyFunction.Modifier modifier = function.getModifier();
-                  if (modifier == null || modifier == PyFunction.Modifier.CLASSMETHOD) {
+                  if (modifier == null || modifier == PyAstFunction.Modifier.CLASSMETHOD) {
                     return true;
                   }
                 }

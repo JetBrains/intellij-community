@@ -2,14 +2,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -28,17 +26,5 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
       valueType = context.getType(value);
     }
     return PyTupleType.create(this, Arrays.asList(keyType, valueType));
-  }
-
-  @Override
-  @NotNull
-  public PyExpression getKey() {
-    return (PyExpression)getNode().getFirstChildNode().getPsi();
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getValue() {
-    return PsiTreeUtil.getNextSiblingOfType(getKey(), PyExpression.class);
   }
 }

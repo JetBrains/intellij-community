@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstCallSiteExpression;
+import com.jetbrains.python.ast.PyAstCallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ import java.util.List;
  * Marker interface for Python expressions that are call sites for explicit or implicit function calls.
  *
  */
-public interface PyCallSiteExpression extends PyExpression {
+public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyExpression {
 
   /**
    * Returns an expression that is treated as a receiver for this explicit or implicit (read, operator) call.
@@ -37,8 +39,13 @@ public interface PyCallSiteExpression extends PyExpression {
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
    */
   @Nullable
-  PyExpression getReceiver(@Nullable PyCallable resolvedCallee);
+  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return (PyExpression)getReceiver((PyAstCallable)resolvedCallee);
+  }
 
   @NotNull
-  List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee);
+  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    //noinspection unchecked
+    return (List<PyExpression>)getArguments((PyAstCallable)resolvedCallee);
+  }
 }

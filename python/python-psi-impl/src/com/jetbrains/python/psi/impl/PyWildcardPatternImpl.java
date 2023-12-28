@@ -13,9 +13,4 @@ public class PyWildcardPatternImpl extends PyElementImpl implements PyWildcardPa
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitWildcardPattern(this);
   }
-
-  @Override
-  public boolean isIrrefutable() {
-    return true;
-  }
 }

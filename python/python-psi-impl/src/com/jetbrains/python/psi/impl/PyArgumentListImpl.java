@@ -14,7 +14,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -35,43 +34,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList,
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyArgumentList(this);
-  }
-
-  @Override
-  @NotNull
-  public Collection<PyExpression> getArgumentExpressions() {
-    final PyExpression[] arguments = getArguments();
-    final Collection<PyExpression> result = new ArrayList<>(arguments.length);
-    for (final PyExpression expression : arguments) {
-      if (expression instanceof PyKeywordArgument) {
-        final PyExpression valueExpression = ((PyKeywordArgument)expression).getValueExpression();
-        result.add(valueExpression);
-      }
-      if (expression instanceof PyReferenceExpression) {
-        result.add(expression);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public PyExpression @NotNull [] getArguments() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
-  }
-
-  @Override
-  @Nullable
-  public PyKeywordArgument getKeywordArgument(String name) {
-    ASTNode node = getNode().getFirstChildNode();
-    while (node != null) {
-      if (node.getElementType() == PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION) {
-        PyKeywordArgument arg = (PyKeywordArgument)node.getPsi();
-        String keyword = arg.getKeyword();
-        if (keyword != null && keyword.equals(name)) return arg;
-      }
-      node = node.getTreeNext();
-    }
-    return null;
   }
 
   @Override
@@ -200,14 +162,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList,
     }
   }
 
-  @Override
-  @Nullable
-  public ASTNode getClosingParen() {
-    ASTNode node = getNode();
-    final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
-    return children.length == 0 ? null : children[children.length - 1];
-  }
-
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
     ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
     ASTNode node = getNode();
@@ -270,12 +224,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList,
       }
       node = node.getTreeNext();
     }
-  }
-
-  @Override
-  @Nullable
-  public PyCallExpression getCallExpression() {
-    return PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
   }
 
   @Override

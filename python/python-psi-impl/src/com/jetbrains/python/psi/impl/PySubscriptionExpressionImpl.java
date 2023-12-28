@@ -18,11 +18,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
@@ -41,28 +36,6 @@ import java.util.Optional;
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  @NotNull
-  public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @NotNull
-  @Override
-  public PyExpression getRootOperand() {
-    PyExpression operand = getOperand();
-    while (operand instanceof PySubscriptionExpression) {
-      operand = ((PySubscriptionExpression)operand).getOperand();
-    }
-    return operand;
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getIndexExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override
@@ -100,35 +73,5 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Override
   public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
-  }
-
-  @Override
-  public PyExpression getQualifier() {
-    return getOperand();
-  }
-
-  @Nullable
-  @Override
-  public QualifiedName asQualifiedName() {
-    return PyPsiUtils.asQualifiedName(this);
-  }
-
-  @Override
-  public boolean isQualified() {
-    return getQualifier() != null;
-  }
-
-  @Override
-  public String getReferencedName() {
-    return switch (AccessDirection.of(this)) {
-      case READ -> PyNames.GETITEM;
-      case WRITE -> PyNames.SETITEM;
-      case DELETE -> PyNames.DELITEM;
-    };
-  }
-
-  @Override
-  public ASTNode getNameElement() {
-    return getNode().findChildByType(PyTokenTypes.LBRACKET);
   }
 }

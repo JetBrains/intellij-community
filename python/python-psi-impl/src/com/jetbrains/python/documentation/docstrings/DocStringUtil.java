@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.toolbox.Substring;
@@ -28,7 +29,7 @@ public final class DocStringUtil {
 
   @Nullable
   public static String getDocStringValue(@NotNull PyDocStringOwner owner) {
-    return PyPsiUtils.strValue(owner.getDocStringExpression());
+    return DocStringUtilCore.getDocStringValue(owner);
   }
 
   /**
@@ -220,12 +221,7 @@ public final class DocStringUtil {
    */
   @Nullable
   public static PyStringLiteralExpression findDocStringExpression(@Nullable PyElement parent) {
-    if (parent != null) {
-      PsiElement seeker = PyPsiUtils.getNextNonCommentSibling(parent.getFirstChild(), false);
-      if (seeker instanceof PyExpressionStatement) seeker = PyPsiUtils.getNextNonCommentSibling(seeker.getFirstChild(), false);
-      if (seeker instanceof PyStringLiteralExpression) return (PyStringLiteralExpression)seeker;
-    }
-    return null;
+    return (PyStringLiteralExpression)DocStringUtilCore.findDocStringExpression(parent);
   }
 
   @Nullable

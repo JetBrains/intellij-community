@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
@@ -31,18 +30,6 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
     final PyDecorator[] decoarray = new PyDecorator[0];
     return getStubOrPsiChildren(PyElementTypes.DECORATOR_CALL, decoarray);
     //return decoarray;
-  }
-
-  @Override
-  public PyDecorator findDecorator(String name) {
-    final PyDecorator[] decorators = getDecorators();
-    for (PyDecorator decorator : decorators) {
-      final QualifiedName qName = decorator.getQualifiedName();
-      if (qName != null && name.equals(qName.toString())) {
-        return decorator;
-      }
-    }
-    return null;
   }
 
   @Override
