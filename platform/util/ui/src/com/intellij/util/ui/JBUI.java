@@ -461,7 +461,7 @@ public final class JBUI {
         return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
       }
 
-      public static Dimension minimumSize() {
+      public static @NotNull Dimension minimumSize() {
         return size("Button.minimumSize", size(72, 24));
       }
 
@@ -472,6 +472,12 @@ public final class JBUI {
 
           public static final @NotNull Color ICON_COLOR = JBColor.namedColor("Button.Split.default.iconColor", 0xFFFFFF);
         }
+      }
+    }
+
+    public static final class ComboBox {
+      public static @NotNull Dimension minimumSize() {
+        return size("ComboBox.minimumSize", size(49, 24));
       }
     }
 
@@ -855,6 +861,12 @@ public final class JBUI {
       }
     }
 
+    public static final class Spinner {
+      public static @NotNull Dimension minimumSize() {
+        return size("Spinner.minimumSize", size(72, 0));
+      }
+    }
+
     public static final class StatusBar {
       public static final Color BACKGROUND = JBColor.namedColor("StatusBar.background", JBColor.PanelBackground);
       public static final Color BORDER_COLOR = JBColor.namedColor("StatusBar.borderColor", Gray.x91);
@@ -947,6 +959,12 @@ public final class JBUI {
 
       }
 
+    }
+
+    public static final class TextField {
+      public static @NotNull Dimension minimumSize() {
+        return size("TextField.minimumSize", size(49, 24));
+      }
     }
 
     public static final class ToolWindow {

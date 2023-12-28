@@ -470,6 +470,7 @@
       "disabledBackground": "#ededed",
       "focusedBorderColor": "#0784de",
       "hoverBorderColor": "#a1a1a1",
+      "minimumSize": "49,22",
       "UI": "com.intellij.laf.win10.WinIntelliJTextFieldUI"
     },
 

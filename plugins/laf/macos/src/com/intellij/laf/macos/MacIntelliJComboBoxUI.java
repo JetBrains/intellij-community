@@ -2,7 +2,6 @@
 package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.util.ColoredItem;
@@ -11,6 +10,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, JBUI.CurrentTheme.ComboBox.minimumSize().width + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;

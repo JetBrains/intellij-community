@@ -275,7 +275,10 @@ public final class DarculaUIUtil {
     return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
   }
 
-  public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
+  /**
+   * @deprecated Use correspondent {@link JBUI.CurrentTheme.ComboBox#minimumSize()}, {@link JBUI.CurrentTheme.TextField#minimumSize()} etc
+   */
+  @Deprecated
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);

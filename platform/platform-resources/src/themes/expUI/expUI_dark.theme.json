@@ -211,6 +211,7 @@
         "background": "Grey2",
         "nonEditableBackground": "Grey3"
       },
+      "minimumSize": "49,28",
       "nonEditableBackground": "Grey3"
     },
 
@@ -251,9 +252,8 @@
       "Gray": "#35363B"
     },
 
-    "TextField.background": "Grey2",
-
     "Component": {
+      "arc": "8",
       "borderColor": "Grey5",
       "focusedBorderColor": "Grey2",
       "errorFocusColor": "Red5",
@@ -540,6 +540,10 @@
       "errorForeground": "Red7"
     },
 
+    "Spinner": {
+      "minimumSize": "72,28"
+    },
+
     "StatusBar": {
       "Widget": {
         "foreground": "Grey9",
@@ -572,6 +576,11 @@
     },
 
     "Tag.background": "Grey3",
+
+    "TextField": {
+      "background": "Grey2",
+      "minimumSize": "49,28"
+    },
 
     "ToolBar.separatorColor": "Grey4",
 

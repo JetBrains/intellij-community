@@ -121,6 +121,10 @@
       "description": "Size of CheckBox icon"
     },
     {
+      "key": "ComboBox.minimumSize",
+      "description": "Minimum size of ComboBox"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -1392,6 +1396,10 @@
       "key": "SpeedSearch.foreground"
     },
     {
+      "key": "Spinner.minimumSize",
+      "description": "Minimum size of spinners"
+    },
+    {
       "key": "List.hoverBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in a focused list if hover is allowed."
@@ -1440,6 +1448,10 @@
       "key": "TabbedPane.tabSelectionArc",
       "since": "2022.2",
       "description": "Selection border corners radius of TabbedPane underline"
+    },
+    {
+      "key": "TextField.minimumSize",
+      "description": "Minimum size of text fields"
     },
     {
       "key": "Tree.hoverBackground",

@@ -17,6 +17,7 @@ package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -24,7 +25,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
-import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 public final class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
@@ -77,6 +77,6 @@ public final class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   protected int getMinimumHeight(int originHeight) {
     JComponent component = getComponent();
     Insets insets = component.getInsets();
-    return MINIMUM_HEIGHT.get() + insets.top + insets.bottom;
+    return JBUI.CurrentTheme.TextField.minimumSize().height + insets.top + insets.bottom;
   }
 }

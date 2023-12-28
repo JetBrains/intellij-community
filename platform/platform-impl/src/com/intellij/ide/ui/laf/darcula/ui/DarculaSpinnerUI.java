@@ -22,7 +22,6 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
-  protected static final JBValue MINIMUM_WIDTH = new JBValue.Float(72);
   private static final JBValue ARROW_WIDTH = new JBValue.Float(9);
   private static final JBValue ARROW_HEIGHT = new JBValue.Float(5);
 
@@ -127,7 +126,9 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     Dimension arrowSize = nextButton.getPreferredSize();
-    Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, arrowSize.height * 2);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, arrowSize.height * 2));
     size = maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();

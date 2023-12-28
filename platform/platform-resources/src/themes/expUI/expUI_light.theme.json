@@ -201,6 +201,7 @@
     "ComboBox": {
       "background": "Grey14",
       "disabledBackground": "Grey13",
+      "minimumSize": "49,28",
       "ArrowButton": {
         "background": "Grey14",
         "nonEditableBackground": "Grey14"
@@ -217,10 +218,10 @@
       }
     },
 
-    "TextField.background": "Grey14",
     "PasswordField.background": "Grey14",
 
     "Component": {
+      "arc": "8",
       "borderColor": "Grey9",
       "focusedBorderColor": "Grey14",
       "errorFocusColor": "Red4",
@@ -543,6 +544,10 @@
       "borderColor": "Grey12"
     },
 
+    "Spinner": {
+      "minimumSize": "72,28"
+    },
+
     "StatusBar": {
       "background": "Grey13",
       "Widget": {
@@ -579,6 +584,11 @@
     "Tag.background": "Grey12",
 
     "TextArea.background": "Grey14",
+
+    "TextField": {
+      "background": "Grey14",
+      "minimumSize": "49,28"
+    },
 
     "ToolBar.separatorColor": "Grey11",
 

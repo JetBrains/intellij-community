@@ -232,7 +232,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   static @NotNull Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
-    int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
+    int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.ComboBox.minimumSize().height) + i.top + i.bottom;
     return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, height);
   }
 
@@ -564,16 +564,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode
     }
 
+    Dimension minSize = JBUI.CurrentTheme.ComboBox.minimumSize();
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, minSize.width + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;
 
     width = Math.max(editorWidth + abSize.width, width + padding.left);
     height = Math.max(Math.max(editorHeight, Math.max(abSize.height, height)),
-                      (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom);
+                      (isCompact(comboBox) ? COMPACT_HEIGHT.get() : minSize.height) + i.top + i.bottom);
 
     return new Dimension(width, height);
   }
@@ -587,7 +588,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public Dimension getMinimumSize(JComponent c) {
     Dimension minSize = super.getMinimumSize(c);
     Insets i = c.getInsets();
-    minSize.width = MINIMUM_WIDTH.get() + ARROW_BUTTON_WIDTH.get() + i.left + i.right;
+    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + ARROW_BUTTON_WIDTH.get() + i.left + i.right;
     return getSizeWithButton(minSize, editor != null ? editor.getMinimumSize() : null);
   }
 

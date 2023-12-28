@@ -19,7 +19,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +30,6 @@ import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
  * @author Konstantin Bulenkov
  */
 public final class WinIntelliJTextBorder extends DarculaTextBorder {
-  static final JBValue MINIMUM_HEIGHT = new JBValue.Float(22);
 
   @Override
   public Insets getBorderInsets(Component c) {

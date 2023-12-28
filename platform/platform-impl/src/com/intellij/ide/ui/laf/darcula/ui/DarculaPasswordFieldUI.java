@@ -66,14 +66,14 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {
     JBInsets.addTo(size, ((JTextComponent)c).getMargin());
     size.height = Math.max(size.height, getMinimumHeight(size.height));
-    size.width = Math.max(size.width, MINIMUM_WIDTH.get());
+    size.width = Math.max(size.width, JBUI.CurrentTheme.TextField.minimumSize().width);
     return size;
   }
 
   protected int getMinimumHeight(int originHeight) {
     JComponent component = getComponent();
     Insets insets = component.getInsets();
-    return (isCompact(component) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + insets.top + insets.bottom;
+    return (isCompact(component) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.TextField.minimumSize().height) + insets.top + insets.bottom;
   }
 
   @Override

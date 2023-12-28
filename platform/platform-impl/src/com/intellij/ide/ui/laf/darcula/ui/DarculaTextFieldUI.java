@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
 
     Insets i = getComponent().getInsets();
-    return (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
+    return (isCompact(c) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.TextField.minimumSize().height)+ i.top + i.bottom;
   }
 
   @Override

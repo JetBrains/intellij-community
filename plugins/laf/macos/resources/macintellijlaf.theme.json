@@ -319,6 +319,7 @@
     "TextField": {
       "border": "com.intellij.laf.macos.MacIntelliJTextBorder",
       "disabledBackground": "#ececec",
+      "minimumSize": "49,21",
       "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
     },
 
