@@ -38,7 +38,13 @@ import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
 import java.nio.file.FileSystems
 import java.util.stream.Stream
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
+/**
+ * This unit test is supposed to ensure that there are no sudden changes in the behaviour of [WSLDistribution.patchCommandLine],
+ * and that the adapter [WslIjentManager] behaves the same way as the original [WSLDistribution].
+ */
 @TestApplication
 @ExtendWith(WslTestStrategyExtension::class)
 class WSLDistributionTest {
@@ -48,6 +54,38 @@ class WSLDistributionTest {
   ) {
     WSLDistribution.testOverriddenWslExe(FileSystems.getDefault().getPath(wslExe), disposable)
     testOverrideWslToolRoot(toolsRoot, disposable)
+  }
+
+  @Test
+  fun `no sudden changes in WSLCommandLineOptions`() {
+    val options = WSLCommandLineOptions()
+    val defaultValues = WSLCommandLineOptions::class.memberProperties
+      .map { property ->
+        property.isAccessible = true
+        "${property.name} = ${property.get(options)}"
+      }
+      .sorted()
+      .joinToString("\n")
+
+    withClue("""
+      Changes in WSLCommandLineOptions should be performed cautiously. 
+      There is WslIjentManager that tries to behave the same way as WSLDistribution.patchCommandLine.
+      If any new logic is added to WSLDistribution, the corresponding logic should be implemented in WslIjentManager.
+      Please, update this test after doing all the necessary changes to fix the current state of WSLCommandLineOptions.
+    """.trimIndent()) {
+      defaultValues should be("""
+        myExecuteCommandInDefaultShell = false
+        myExecuteCommandInInteractiveShell = false
+        myExecuteCommandInLoginShell = true
+        myExecuteCommandInShell = true
+        myInitShellCommands = []
+        myLaunchWithWslExe = true
+        myPassEnvVarsUsingInterop = false
+        myRemoteWorkingDirectory = null
+        mySleepTimeoutSec = 0.0
+        mySudo = false
+      """.trimIndent())
+    }
   }
 
   @Nested
