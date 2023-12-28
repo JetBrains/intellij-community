@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
-import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -28,7 +28,7 @@ fun <T> timeoutRunBlocking(
         Result.success(value)
       }
       catch (e: TimeoutCancellationException) {
-        println(dumpCoroutines())
+        println(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump)
         job.cancel(e)
         Result.failure(AssertionError(e))
       }
