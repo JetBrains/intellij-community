@@ -77,10 +77,13 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   override fun isEmpty() = !stashTracker.isNotEmpty()
 
-  override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
+  override fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean) {
     val stashesMap = stashTracker.stashes
-    val stashesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(tag)
-    modelBuilder.insertSubtreeRoot(stashesRoot)
+    val stashesRoot = if (showRootNode) {
+      SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also { modelBuilder.insertSubtreeRoot(it) }
+    } else {
+      modelBuilder.myRoot
+    }
     for ((root, stashesList) in stashesMap) {
       val rootNode = if (stashesMap.size > 1 &&
                          !(stashesList is GitStashTracker.Stashes.Loaded && stashesList.stashes.isEmpty())) {

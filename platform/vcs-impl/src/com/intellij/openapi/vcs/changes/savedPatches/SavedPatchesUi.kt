@@ -8,14 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
 import com.intellij.util.containers.orNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitActionsPanel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
@@ -40,8 +38,10 @@ open class SavedPatchesUi(project: Project,
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
 
+  private val visibleProviders = providers.toMutableSet()
+
   init {
-    tree = SavedPatchesTree(project, providers, this)
+    tree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
     PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
     changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
@@ -68,10 +68,10 @@ open class SavedPatchesUi(project: Project,
     }
     providers.forEach { provider ->
       provider.subscribeToPatchesListChanges(this) {
-        treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+        treeChangesSplitter.secondComponent.isVisible = providers.any { visibleProviders.contains(it) && !it.isEmpty() }
       }
     }
-    treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+    treeChangesSplitter.secondComponent.isVisible = providers.any { visibleProviders.contains(it) && !it.isEmpty() }
 
     treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
@@ -159,8 +159,14 @@ open class SavedPatchesUi(project: Project,
   }
 
   fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
-    val tagNode = VcsTreeModelData.findTagNode(tree, provider.tag) ?: return
-    tree.expandPath(TreeUtil.getPathFromRoot(tagNode))
+    tree.expandPatchesByProvider(provider)
+  }
+
+  @ApiStatus.Internal
+  fun setVisibleProviders(newVisibleProviders: Collection<SavedPatchesProvider<*>>) {
+    visibleProviders.clear()
+    visibleProviders.addAll(newVisibleProviders)
+    tree.rebuildTree()
   }
 
   companion object {
