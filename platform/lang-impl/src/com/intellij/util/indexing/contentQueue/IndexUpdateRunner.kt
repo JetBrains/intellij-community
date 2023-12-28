@@ -1,608 +1,579 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.indexing.contentQueue;
+package com.intellij.util.indexing.contentQueue
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.WrappedProgressIndicator;
-import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.dependencies.FileIndexingStamp;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
-import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
-import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
-import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
-import com.intellij.util.progress.SubTaskProgressIndicator;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.NoSuchFileException;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
-
-import static com.intellij.util.indexing.contentQueue.IndexUpdateWriter.TOTAL_WRITERS_NUMBER;
-import static com.intellij.util.indexing.contentQueue.IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.WrappedProgressIndicator
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
+import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.indexing.*
+import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.dependencies.IndexingRequestToken
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
+import com.intellij.util.progress.SubTaskProgressIndicator
+import org.jetbrains.annotations.ApiStatus
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.nio.file.NoSuchFileException
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.max
+import kotlin.math.min
 
 @ApiStatus.Internal
-public final class IndexUpdateRunner {
-  private static final Logger LOG = Logger.getInstance(IndexUpdateRunner.class);
+class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
+                        private val indexingRequest: IndexingRequestToken,
+                        numberOfIndexingThreads: Int) {
 
-  private static final CopyOnWriteArrayList<IndexingJob> ourIndexingJobs = new CopyOnWriteArrayList<>();
+  private val myIndexingExecutor: ExecutorService = GLOBAL_INDEXING_EXECUTOR
 
-  private final FileBasedIndexImpl myFileBasedIndex;
-  
-  private final @NotNull IndexingRequestToken indexingRequest;
+  private val myNumberOfIndexingThreads: Int
 
-  private final ExecutorService myIndexingExecutor;
+  private val myIndexingAttemptCount = AtomicInteger()
+  private val myIndexingSuccessfulCount = AtomicInteger()
 
-  private final int myNumberOfIndexingThreads;
-
-  private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
-  private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
-
-
-  /**
-   * Number of indexing threads. We are reserving writing threads number here.
-   */
-  private static final int INDEXING_THREADS_NUMBER =
-    Math.max(UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - TOTAL_WRITERS_NUMBER, 1);
-
-  /**
-   * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
-   * indexing threads are sleeping.
-   *
-   * @see #signalThatFileIsUnloaded(long)
-   */
-  private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_THREADS_NUMBER * 4L * FileUtilRt.MEGABYTE;
-
-  /**
-   * Indexing workers
-   */
-  private static final ExecutorService GLOBAL_INDEXING_EXECUTOR =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER);
-
-  /**
-   * Memory optimization to prevent OutOfMemory on loading file contents.
-   * <p>
-   * "Soft" total limit of bytes loaded into memory in the whole application is {@link #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}.
-   * It is "soft" because one (and only one) "indexable" file can exceed this limit.
-   * <p>
-   * "Indexable" file is any file for which {@link FileBasedIndexImpl#isTooLarge(VirtualFile)} returns {@code false}.
-   * Note that this method may return {@code false} even for relatively big files with size greater than {@link #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}.
-   * This is because for some files (or file types) the size limit is ignored.
-   * <p>
-   * So in its maximum we will load {@code SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY + <size of not "too large" file>}, which seems acceptable,
-   * because we have to index this "not too large" file anyway (even if its size is 4 Gb), and {@code SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}
-   * additional bytes are insignificant.
-   */
-  private static long ourTotalBytesLoadedIntoMemory = 0;
-  private static final Lock ourLoadedBytesLimitLock = new ReentrantLock();
-  private static final Condition ourLoadedBytesAreReleasedCondition = ourLoadedBytesLimitLock.newCondition();
-
-  public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex,
-                           @NotNull IndexingRequestToken indexingRequest, int numberOfIndexingThreads) {
-    myFileBasedIndex = fileBasedIndex;
-    this.indexingRequest = indexingRequest;
-    myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
+  init {
     if (numberOfIndexingThreads > INDEXING_THREADS_NUMBER) {
-      LOG.debug("Got request to index using " + numberOfIndexingThreads + " when pool has only " + INDEXING_THREADS_NUMBER +
-               " falling back to max available");
-      numberOfIndexingThreads = INDEXING_THREADS_NUMBER;
+      LOG.debug(
+        "Got request to index using $numberOfIndexingThreads when pool has only $INDEXING_THREADS_NUMBER falling back to max available")
     }
-    LOG.info("Using " + numberOfIndexingThreads + " indexing  and " + TOTAL_WRITERS_NUMBER + " writing threads for indexing");
-    myNumberOfIndexingThreads = numberOfIndexingThreads;
+
+    myNumberOfIndexingThreads = min(numberOfIndexingThreads, INDEXING_THREADS_NUMBER)
+    LOG.info("Using $myNumberOfIndexingThreads indexing and ${IndexUpdateWriter.TOTAL_WRITERS_NUMBER} writing threads for indexing")
   }
 
   /**
    * This exception contains indexing statistics accumulated by the time of a thrown exception.
    */
-  public static final class IndexingInterruptedException extends Exception {
-    public IndexingInterruptedException(@NotNull Throwable cause) {
-      super(cause);
-    }
+  class IndexingInterruptedException(cause: Throwable) : Exception(cause)
+
+  class FileSet @JvmOverloads constructor(project: Project, val debugName: String, val files: Collection<VirtualFile>,
+                                          val progressText: @NlsContexts.ProgressText String? = null) {
+    val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
   }
 
-  public static final class FileSet {
-    public final String debugName;
-    public final @Nullable @NlsContexts.ProgressText String progressText;
-    public final Collection<VirtualFile> files;
-    public final IndexingFileSetStatistics statistics;
-
-    public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
-      this(project, debugName, files, null);
-    }
-
-    public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files,
-                   @Nullable @NlsContexts.ProgressText String progressText) {
-      this.debugName = debugName;
-      this.files = files;
-      this.progressText = progressText;
-      statistics = new IndexingFileSetStatistics(project, debugName);
-    }
-  }
-
-  public void indexFiles(@NotNull Project project,
-                         @NotNull List<FileSet> fileSets,
-                         @NotNull ProgressIndicator indicator,
-                         @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) throws IndexingInterruptedException {
-    long startTime = System.nanoTime();
+  @Throws(IndexingInterruptedException::class)
+  fun indexFiles(project: Project,
+                 fileSets: List<FileSet>,
+                 indicator: ProgressIndicator,
+                 projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
+    val startTime = System.nanoTime()
     try {
-      doIndexFiles(project, fileSets, indicator);
+      doIndexFiles(project, fileSets, indicator)
     }
-    catch (RuntimeException e) {
-      throw new IndexingInterruptedException(e);
+    catch (e: RuntimeException) {
+      throw IndexingInterruptedException(e)
     }
     finally {
-      long visibleProcessingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      projectDumbIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
-                                                                     ? 0
-                                                                     : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
+      val visibleProcessingTime = System.nanoTime() - startTime
+      val totalProcessingTimeInAllThreads = fileSets.sumOf { b: FileSet -> b.statistics.processingTimeInAllThreads }
+      projectDumbIndexingHistory.visibleTimeToAllThreadsTimeRatio = if (totalProcessingTimeInAllThreads == 0L
+      ) 0.0
+      else (visibleProcessingTime.toDouble()) / totalProcessingTimeInAllThreads
 
-      IndexUpdateWriter.waitWritingThreadsToFinish();
+      IndexUpdateWriter.waitWritingThreadsToFinish()
     }
   }
 
-  private void doIndexFiles(@NotNull Project project, @NotNull List<FileSet> fileSets, @NotNull ProgressIndicator indicator) {
-    if (ContainerUtil.and(fileSets, b -> b.files.isEmpty())) {
-      return;
+  private fun doIndexFiles(project: Project, fileSets: List<FileSet>, indicator: ProgressIndicator) {
+    if (fileSets.all { b: FileSet -> b.files.isEmpty() }) {
+      return
     }
-    indicator.checkCanceled();
-    indicator.setIndeterminate(false);
+    indicator.checkCanceled()
+    indicator.isIndeterminate = false
 
-    CachedFileContentLoader contentLoader = new CurrentProjectHintedCachedFileContentLoader(project);
-    ProgressIndicator originalIndicator = unwrapAll(indicator);
-    ProgressSuspender originalSuspender = ProgressSuspender.getSuspender(originalIndicator);
-    IndexingJob indexingJob = new IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender);
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
+    val originalIndicator = unwrapAll(indicator)
+    val originalSuspender = ProgressSuspender.getSuspender(originalIndicator)
+    val indexingJob = IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender)
+    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       // If the current thread has acquired the write lock, we can't grant it to worker threads, so we must do the work in the current thread.
       while (!indexingJob.areAllFilesProcessed()) {
-        indexOneFileOfJob(indexingJob);
+        indexOneFileOfJob(indexingJob)
       }
     }
     else {
-      ourIndexingJobs.add(indexingJob);
+      ourIndexingJobs.add(indexingJob)
       try {
-        AtomicInteger numberOfRunningWorkers = new AtomicInteger();
-        Runnable worker = () -> {
+        val numberOfRunningWorkers = AtomicInteger()
+        val worker = Runnable {
           try {
-            indexJobsFairly();
+            indexJobsFairly()
           }
           finally {
-            numberOfRunningWorkers.decrementAndGet();
+            numberOfRunningWorkers.decrementAndGet()
           }
-        };
-        for (int i = 0; i < myNumberOfIndexingThreads; i++) {
-          myIndexingExecutor.execute(worker);
-          numberOfRunningWorkers.incrementAndGet();
         }
-        while (!project.isDisposed() && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
+        for (i in 0 until myNumberOfIndexingThreads) {
+          myIndexingExecutor.execute(worker)
+          numberOfRunningWorkers.incrementAndGet()
+        }
+        while (!project.isDisposed && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
           // Internally checks for suspension of the indexing and blocks the current thread if necessary.
-          indicator.checkCanceled();
+          indicator.checkCanceled()
           // Add workers if the previous have stopped for whatever reason.
-          int toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get();
-          for (int i = 0; i < toAddWorkersNumber; i++) {
-            myIndexingExecutor.execute(worker);
-            numberOfRunningWorkers.incrementAndGet();
+          val toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get()
+          for (i in 0 until toAddWorkersNumber) {
+            myIndexingExecutor.execute(worker)
+            numberOfRunningWorkers.incrementAndGet()
           }
           try {
             if (indexingJob.myAllFilesAreProcessedLatch.await(100, TimeUnit.MILLISECONDS)) {
-              break;
+              break
             }
           }
-          catch (InterruptedException e) {
-            throw new ProcessCanceledException(e);
+          catch (e: InterruptedException) {
+            throw ProcessCanceledException(e)
           }
         }
-        Throwable error = indexingJob.myError.get();
-        if (error instanceof ProcessCanceledException) {
+        val error = indexingJob.myError.get()
+        if (error is ProcessCanceledException) {
           // The original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
-          ProcessCanceledException pce = new ProcessCanceledException();
-          pce.addSuppressed(error);
-          throw pce;
+          val pce = ProcessCanceledException()
+          pce.addSuppressed(error)
+          throw pce
         }
         if (error != null) {
-          throw new RuntimeException("Indexing of " + project.getName() + " has failed", error);
+          throw RuntimeException("Indexing of " + project.name + " has failed", error)
         }
       }
       finally {
-        ourIndexingJobs.remove(indexingJob);
+        ourIndexingJobs.remove(indexingJob)
       }
     }
   }
 
   // Index jobs one by one while there are some. Jobs may belong to different projects, and we index them fairly.
   // Drops finished, canceled and failed jobs from {@code ourIndexingJobs}. Does not throw exceptions.
-  private void indexJobsFairly() {
+  private fun indexJobsFairly() {
     while (!ourIndexingJobs.isEmpty()) {
-      boolean allJobsAreSuspended = true;
-      for (IndexingJob job : ourIndexingJobs) {
-        ProgressIndicator jobIndicator = job.myIndicator;
-        if (job.myProject.isDisposed()
-            || job.myNoMoreFilesInQueue.get()
-            || jobIndicator.isCanceled()
-            || job.myError.get() != null) {
-          ourIndexingJobs.remove(job);
-          allJobsAreSuspended = false;
-          continue;
+      var allJobsAreSuspended = true
+      for (job in ourIndexingJobs) {
+        val jobIndicator = job.myIndicator
+        if ((job.myProject.isDisposed
+             || job.myNoMoreFilesInQueue.get()
+             || jobIndicator.isCanceled) || job.myError.get() != null) {
+          ourIndexingJobs.remove(job)
+          allJobsAreSuspended = false
+          continue
         }
-        ProgressSuspender suspender = job.myOriginalProgressSuspender;
-        if (suspender != null && suspender.isSuspended()) {
-          continue;
+        val suspender = job.myOriginalProgressSuspender
+        if (suspender != null && suspender.isSuspended) {
+          continue
         }
-        allJobsAreSuspended = false;
+        allJobsAreSuspended = false
         try {
-          Runnable work = () -> indexOneFileOfJob(job);
+          val work = Runnable { indexOneFileOfJob(job) }
           if (suspender != null) {
             // Here it is important to use the original progress indicator which is directly associated with the ProgressSuspender.
-            suspender.executeNonSuspendableSection(job.myOriginalProgressIndicator, work);
-          } else {
-            work.run();
+            suspender.executeNonSuspendableSection(job.myOriginalProgressIndicator, work)
+          }
+          else {
+            work.run()
           }
         }
-        catch (Throwable e) {
-          job.myError.compareAndSet(null, e);
-          ourIndexingJobs.remove(job);
+        catch (e: Throwable) {
+          job.myError.compareAndSet(null, e)
+          ourIndexingJobs.remove(job)
         }
 
-        if(WRITE_INDEXES_ON_SEPARATE_THREAD){
-          IndexUpdateWriter.sleepIfWriterQueueLarge(myNumberOfIndexingThreads);
+        if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+          IndexUpdateWriter.sleepIfWriterQueueLarge(myNumberOfIndexingThreads)
         }
       }
       if (allJobsAreSuspended) {
         // To avoid busy-looping.
-        break;
+        break
       }
     }
   }
 
-  private void indexOneFileOfJob(@NotNull IndexingJob indexingJob) throws ProcessCanceledException {
-    long startTime = System.nanoTime();
-    long contentLoadingTime;
-    ContentLoadingResult loadingResult;
+  @Throws(ProcessCanceledException::class)
+  private fun indexOneFileOfJob(indexingJob: IndexingJob) {
+    val startTime = System.nanoTime()
+    val contentLoadingTime: Long
+    val loadingResult: ContentLoadingResult
 
-    FileIndexingJob fileIndexingJob = indexingJob.myQueueOfFiles.poll();
+    val fileIndexingJob = indexingJob.myQueueOfFiles.poll()
     if (fileIndexingJob == null) {
-      indexingJob.myNoMoreFilesInQueue.set(true);
-      return;
+      indexingJob.myNoMoreFilesInQueue.set(true)
+      return
     }
 
-    VirtualFile file = fileIndexingJob.file;
+    val file = fileIndexingJob.file
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
+    val indexingStamp = indexingRequest.getFileIndexingStamp(file)
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing (see IndexingJob.myError).
-      loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
+      loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader)
     }
-    catch (ProcessCanceledException e) {
-      indexingJob.myQueueOfFiles.add(fileIndexingJob);
-      throw e;
+    catch (e: ProcessCanceledException) {
+      indexingJob.myQueueOfFiles.add(fileIndexingJob)
+      throw e
     }
-    catch (TooLargeContentException e) {
-      indexingJob.oneMoreFileProcessed();
-      IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
-      synchronized (statistics) {
-        statistics.addTooLargeForIndexingFile(e.getFile());
+    catch (e: TooLargeContentException) {
+      indexingJob.oneMoreFileProcessed()
+      val statistics = indexingJob.getStatistics(fileIndexingJob)
+      synchronized(statistics) {
+        statistics.addTooLargeForIndexingFile(e.file)
       }
-      FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
-      return;
+      FileBasedIndexImpl.LOG.info("File: " + e.file.url + " is too large for indexing")
+      return
     }
-    catch (FailedToLoadContentException e) {
-      indexingJob.oneMoreFileProcessed();
-      logFailedToLoadContentException(e);
-      return;
+    catch (e: FailedToLoadContentException) {
+      indexingJob.oneMoreFileProcessed()
+      logFailedToLoadContentException(e)
+      return
     }
     finally {
-      contentLoadingTime = System.nanoTime() - startTime;
+      contentLoadingTime = System.nanoTime() - startTime
     }
 
-    CachedFileContent fileContent = loadingResult.cachedFileContent;
-    long length = loadingResult.fileLength;
+    val fileContent = loadingResult.cachedFileContent
+    val length = loadingResult.fileLength
 
-    if (file.isDirectory()) {
-      LOG.info("Directory was passed for indexing unexpectedly: " + file.getPath());
+    if (file.isDirectory) {
+      LOG.info("Directory was passed for indexing unexpectedly: " + file.path)
     }
-    
+
     try {
-      indexingJob.setLocationBeingIndexed(fileIndexingJob);
-      @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
-      FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
-      FileIndexesValuesApplier applier = ReadAction
-        .nonBlocking(() -> {
-          myIndexingAttemptCount.incrementAndGet();
-          FileType fileType = fileTypeChangeChecker.get() ? type : null;
-          return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType, indexingStamp);
-        })
+      indexingJob.setLocationBeingIndexed(fileIndexingJob)
+      val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
+      val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
+      val applier = ReadAction
+        .nonBlocking<FileIndexesValuesApplier> {
+          myIndexingAttemptCount.incrementAndGet()
+          val fileType = if (fileTypeChangeChecker.get()) type else null
+          myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType, indexingStamp)
+        }
         .expireWith(indexingJob.myProject)
         .wrapProgress(indexingJob.myIndicator)
-        .executeSynchronously();
-      myIndexingSuccessfulCount.incrementAndGet();
-      if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
-        LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
+        .executeSynchronously()
+      myIndexingSuccessfulCount.incrementAndGet()
+      if (LOG.isTraceEnabled && myIndexingSuccessfulCount.toLong() % 10000 == 0L) {
+        LOG.trace(
+          "File indexing attempts = " + myIndexingAttemptCount.toLong() + ", indexed file count = " + myIndexingSuccessfulCount.toLong())
       }
 
-      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime);
+      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime)
     }
-    catch (ProcessCanceledException e) {
+    catch (e: ProcessCanceledException) {
       // Push back the file.
-      indexingJob.myQueueOfFiles.add(fileIndexingJob);
-      releaseFile(file, length);
-      throw e;
+      indexingJob.myQueueOfFiles.add(fileIndexingJob)
+      releaseFile(file, length)
+      throw e
     }
-    catch (Throwable e) {
-      indexingJob.oneMoreFileProcessed();
-      releaseFile(file, length);
-      FileBasedIndexImpl.LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" +
-                                   "To reindex this file IDEA has to be restarted", e);
+    catch (e: Throwable) {
+      indexingJob.oneMoreFileProcessed()
+      releaseFile(file, length)
+      FileBasedIndexImpl.LOG.error("""
+  Error while indexing ${file.presentableUrl}
+  To reindex this file IDEA has to be restarted
+  """.trimIndent(), e)
     }
   }
 
-  private static void writeIndexesForFile(@NotNull IndexingJob indexingJob,
-                                   @NotNull FileIndexingJob fileIndexingJob,
-                                   @NotNull FileIndexesValuesApplier applier,
-                                   long startTime,
-                                   long length,
-                                   long contentLoadingTime) {
-    signalThatFileIsUnloaded(length);
-    long preparingTime = System.nanoTime() - startTime;
-    applier.apply(fileIndexingJob.file, () -> {
-      IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
-      synchronized (statistics) {
-        var applicationTime = applier.getSeparateApplicationTimeNanos();
-        statistics.addFileStatistics(fileIndexingJob.file,
-                                     applier.stats,
-                                     preparingTime + applicationTime,
-                                     contentLoadingTime,
-                                     length,
-                                     applicationTime
-        );
-      }
-      indexingJob.oneMoreFileProcessed();
-      doReleaseFile(fileIndexingJob.file);
-    }, false);
-  }
-
-  private static void releaseFile(VirtualFile file, long length) {
-    signalThatFileIsUnloaded(length);
-    doReleaseFile(file);
-  }
-
-  private static void doReleaseFile(VirtualFile file) {
-    IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
-    IndexingFlag.unlockFile(file);
-  }
-
-  private @NotNull ContentLoadingResult loadContent(@NotNull ProgressIndicator indicator,
-                                                    @NotNull VirtualFile file,
-                                                    @NotNull CachedFileContentLoader loader)
-    throws TooLargeContentException, FailedToLoadContentException {
-
+  @Throws(TooLargeContentException::class, FailedToLoadContentException::class)
+  private fun loadContent(indicator: ProgressIndicator,
+                          file: VirtualFile,
+                          loader: CachedFileContentLoader): ContentLoadingResult {
     if (myFileBasedIndex.isTooLarge(file)) {
-      throw new TooLargeContentException(file);
+      throw TooLargeContentException(file)
     }
 
-    long fileLength;
+    val fileLength: Long
     try {
-      fileLength = file.getLength();
+      fileLength = file.length
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    catch (e: ProcessCanceledException) {
+      throw e
     }
-    catch (Throwable e) {
-      throw new FailedToLoadContentException(file, e);
+    catch (e: Throwable) {
+      throw FailedToLoadContentException(file, e)
     }
 
     // Reserve bytes for the file.
-    waitForFreeMemoryToLoadFileContent(indicator, fileLength);
+    waitForFreeMemoryToLoadFileContent(indicator, fileLength)
 
     try {
-      CachedFileContent fileContent = loader.loadContent(file);
-      return new ContentLoadingResult(fileContent, fileLength);
+      val fileContent = loader.loadContent(file)
+      return ContentLoadingResult(fileContent, fileLength)
     }
-    catch (Throwable e) {
-      signalThatFileIsUnloaded(fileLength);
-      throw e;
-    }
-  }
-
-  private record ContentLoadingResult(@NotNull CachedFileContent cachedFileContent, long fileLength) {
-  }
-
-  private static void waitForFreeMemoryToLoadFileContent(@NotNull ProgressIndicator indicator,
-                                                         long fileLength) throws ProcessCanceledException {
-    ourLoadedBytesLimitLock.lock();
-    try {
-      while (ourTotalBytesLoadedIntoMemory >= SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
-        indicator.checkCanceled();
-        try {
-          ourLoadedBytesAreReleasedCondition.await(100, TimeUnit.MILLISECONDS);
-        }
-        catch (InterruptedException e) {
-          throw new ProcessCanceledException(e);
-        }
-      }
-      ourTotalBytesLoadedIntoMemory += fileLength;
-    }
-    finally {
-      ourLoadedBytesLimitLock.unlock();
+    catch (e: Throwable) {
+      signalThatFileIsUnloaded(fileLength)
+      throw e
     }
   }
 
-  /**
-   * @see #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY
-   */
-  private static void signalThatFileIsUnloaded(long fileLength) {
-    ourLoadedBytesLimitLock.lock();
-    try {
-      LOG.assertTrue(ourTotalBytesLoadedIntoMemory >= fileLength);
-      ourTotalBytesLoadedIntoMemory -= fileLength;
-      if (ourTotalBytesLoadedIntoMemory < SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
-        ourLoadedBytesAreReleasedCondition.signalAll();
-      }
-    }
-    finally {
-      ourLoadedBytesLimitLock.unlock();
-    }
-  }
+  @JvmRecord
+  private data class ContentLoadingResult(val cachedFileContent: CachedFileContent, val fileLength: Long)
 
-  private static void logFailedToLoadContentException(@NotNull FailedToLoadContentException e) {
-    Throwable cause = e.getCause();
-    VirtualFile file = e.getFile();
-    String fileUrl = "File: " + file.getUrl();
-    if (cause instanceof FileNotFoundException || cause instanceof NoSuchFileException) {
-      // It is possible to not observe file system change until refresh finish, we handle missed file properly anyway.
-      FileBasedIndexImpl.LOG.debug(fileUrl, e);
-    }
-    else if (cause instanceof IndexOutOfBoundsException ||
-             cause instanceof InvalidVirtualFileAccessException ||
-             cause instanceof IOException) {
-      FileBasedIndexImpl.LOG.info(fileUrl, e);
-    }
-    else {
-      FileBasedIndexImpl.LOG.error(fileUrl, e);
-    }
-  }
+  @JvmRecord
+  private data class FileIndexingJob(val file: VirtualFile, val fileSet: FileSet)
 
-  @NotNull
-  public static @NlsSafe String getPresentableLocationBeingIndexed(@NotNull Project project, @NotNull VirtualFile file) {
-    VirtualFile actualFile = file;
-    if (actualFile.getFileSystem() instanceof ArchiveFileSystem) {
-      actualFile = VfsUtil.getLocalFile(actualFile);
-    }
-    String path = getProjectRelativeOrAbsolutePath(project, actualFile);
-    path = "/".equals(path) ? actualFile.getName() : path;
-    return FileUtil.toSystemDependentName(path);
-  }
+  private class IndexingJob(val myProject: Project,
+                            val myIndicator: ProgressIndicator,
+                            contentLoader: CachedFileContentLoader,
+                            fileSets: List<FileSet>,
+                            originalProgressIndicator: ProgressIndicator,
+                            originalProgressSuspender: ProgressSuspender?) {
+    val myContentLoader: CachedFileContentLoader
+    val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
+    val myTotalFiles: Int
+    val myNoMoreFilesInQueue: AtomicBoolean = AtomicBoolean()
+    val myAllFilesAreProcessedLatch: CountDownLatch
+    val myOriginalProgressIndicator: ProgressIndicator
+    val myOriginalProgressSuspender: ProgressSuspender?
+    val myError: AtomicReference<Throwable?> = AtomicReference()
 
-  @NotNull
-  private static String getProjectRelativeOrAbsolutePath(@NotNull Project project, @NotNull VirtualFile file) {
-    String projectBase = project.getBasePath();
-    if (StringUtil.isNotEmpty(projectBase)) {
-      String filePath = file.getPath();
-      if (FileUtil.isAncestor(projectBase, filePath, true)) {
-        String projectDirName = PathUtil.getFileName(projectBase);
-        String relativePath = FileUtil.getRelativePath(projectBase, filePath, '/');
-        if (StringUtil.isNotEmpty(projectDirName) && StringUtil.isNotEmpty(relativePath)) {
-          return projectDirName + "/" + relativePath;
-        }
-      }
-    }
-    return file.getPath();
-  }
-
-  private static @NotNull ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
-    // Can't use "ProgressWrapper.unwrapAll" here because it unwraps "ProgressWrapper"s only (not any "WrappedProgressIndicator")
-    while (indicator instanceof WrappedProgressIndicator) {
-      indicator = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
-    }
-    return indicator;
-  }
-
-  private record FileIndexingJob(VirtualFile file, FileSet fileSet) {
-  }
-
-  private static final class IndexingJob {
-    final Project myProject;
-    final CachedFileContentLoader myContentLoader;
-    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // the size for Community sources is about 615K entries
-    final ProgressIndicator myIndicator;
-    final int myTotalFiles;
-    final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
-    final CountDownLatch myAllFilesAreProcessedLatch;
-    final ProgressIndicator myOriginalProgressIndicator;
-    @Nullable final ProgressSuspender myOriginalProgressSuspender;
-    final AtomicReference<Throwable> myError = new AtomicReference<>();
-
-    IndexingJob(@NotNull Project project,
-                @NotNull ProgressIndicator indicator,
-                @NotNull CachedFileContentLoader contentLoader,
-                @NotNull List<FileSet> fileSets,
-                @NotNull ProgressIndicator originalProgressIndicator,
-                @Nullable ProgressSuspender originalProgressSuspender) {
-      myProject = project;
-      myIndicator = indicator;
-      int maxFilesCount = fileSets.stream().mapToInt(fileSet -> fileSet.files.size()).sum();
-      myQueueOfFiles = new ArrayBlockingQueue<>(maxFilesCount);
+    init {
+      val maxFilesCount = fileSets.sumOf { fileSet: FileSet -> fileSet.files.size }
+      myQueueOfFiles = ArrayBlockingQueue(maxFilesCount)
       // UnindexedFilesIndexer may produce duplicates during merging.
       // E.g., Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
       // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
       // instead of processing and merging queue snapshots
-      IndexableFilesDeduplicateFilter deduplicateFilter = IndexableFilesDeduplicateFilter.create();
-      for (FileSet fileSet : fileSets) {
-        for (VirtualFile file : fileSet.files) {
+      val deduplicateFilter = IndexableFilesDeduplicateFilter.create()
+      for (fileSet in fileSets) {
+        for (file in fileSet.files) {
           if (deduplicateFilter.accept(file)) {
-            myQueueOfFiles.add(new FileIndexingJob(file, fileSet));
+            myQueueOfFiles.add(FileIndexingJob(file, fileSet))
           }
         }
       }
       // todo: maybe we want to do something with statistics: deduplicateFilter.getNumberOfSkippedFiles();
-      myTotalFiles = myQueueOfFiles.size();
-      myContentLoader = contentLoader;
-      myAllFilesAreProcessedLatch = new CountDownLatch(myTotalFiles);
-      myOriginalProgressIndicator = originalProgressIndicator;
-      myOriginalProgressSuspender = originalProgressSuspender;
+      myTotalFiles = myQueueOfFiles.size
+      myContentLoader = contentLoader
+      myAllFilesAreProcessedLatch = CountDownLatch(myTotalFiles)
+      myOriginalProgressIndicator = originalProgressIndicator
+      myOriginalProgressSuspender = originalProgressSuspender
     }
 
-    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull FileIndexingJob fileIndexingJob) {
-      return fileIndexingJob.fileSet.statistics;
+    fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
+      return fileIndexingJob.fileSet.statistics
     }
 
-    public void oneMoreFileProcessed() {
-      myAllFilesAreProcessedLatch.countDown();
-      double newFraction = 1.0 - myAllFilesAreProcessedLatch.getCount() / (double) myTotalFiles;
+    fun oneMoreFileProcessed() {
+      myAllFilesAreProcessedLatch.countDown()
+      val newFraction = 1.0 - myAllFilesAreProcessedLatch.count / myTotalFiles.toDouble()
       try {
-        myIndicator.setFraction(newFraction);
+        myIndicator.fraction = newFraction
       }
-      catch (Exception ignored) {
+      catch (ignored: Exception) {
         //Unexpected here. A misbehaved progress indicator must not break our code flow.
       }
     }
 
-    boolean areAllFilesProcessed() {
-      return myAllFilesAreProcessedLatch.getCount() == 0;
+    fun areAllFilesProcessed(): Boolean {
+      return myAllFilesAreProcessedLatch.count == 0L
     }
 
-    public void setLocationBeingIndexed(@NotNull FileIndexingJob fileIndexingJob) {
-      String presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.file);
-      if (myIndicator instanceof SubTaskProgressIndicator) {
-        myIndicator.setText(presentableLocation);
+    fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
+      val presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.file)
+      if (myIndicator is SubTaskProgressIndicator) {
+        myIndicator.setText(presentableLocation)
       }
       else {
-        FileSet fileSet = fileIndexingJob.fileSet;
-        if (fileSet.progressText != null && !fileSet.progressText.equals(myIndicator.getText())) {
-          myIndicator.setText(fileSet.progressText);
+        val fileSet = fileIndexingJob.fileSet
+        if (fileSet.progressText != null && fileSet.progressText != myIndicator.text) {
+          myIndicator.text = fileSet.progressText
         }
-        myIndicator.setText2(presentableLocation);
+        myIndicator.text2 = presentableLocation
       }
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
+
+    private val ourIndexingJobs = CopyOnWriteArrayList<IndexingJob>()
+
+    /**
+     * Number of indexing threads. We are reserving writing threads number here.
+     */
+    private val INDEXING_THREADS_NUMBER = max(
+      (UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - IndexUpdateWriter.TOTAL_WRITERS_NUMBER).toDouble(), 1.0).toInt()
+
+    /**
+     * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
+     * indexing threads are sleeping.
+     *
+     * @see .signalThatFileIsUnloaded
+     */
+    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_THREADS_NUMBER * 4L * FileUtilRt.MEGABYTE
+
+    /**
+     * Indexing workers
+     */
+    private val GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER)
+
+    /**
+     * Memory optimization to prevent OutOfMemory on loading file contents.
+     *
+     *
+     * "Soft" total limit of bytes loaded into memory in the whole application is [.SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY].
+     * It is "soft" because one (and only one) "indexable" file can exceed this limit.
+     *
+     *
+     * "Indexable" file is any file for which [FileBasedIndexImpl.isTooLarge] returns `false`.
+     * Note that this method may return `false` even for relatively big files with size greater than [.SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY].
+     * This is because for some files (or file types) the size limit is ignored.
+     *
+     *
+     * So in its maximum we will load `SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY + <size of not "too large" file>`, which seems acceptable,
+     * because we have to index this "not too large" file anyway (even if its size is 4 Gb), and `SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY`
+     * additional bytes are insignificant.
+     */
+    private var ourTotalBytesLoadedIntoMemory: Long = 0
+    private val ourLoadedBytesLimitLock: Lock = ReentrantLock()
+    private val ourLoadedBytesAreReleasedCondition: Condition = ourLoadedBytesLimitLock.newCondition()
+
+    private fun writeIndexesForFile(indexingJob: IndexingJob,
+                                    fileIndexingJob: FileIndexingJob,
+                                    applier: FileIndexesValuesApplier,
+                                    startTime: Long,
+                                    length: Long,
+                                    contentLoadingTime: Long) {
+      signalThatFileIsUnloaded(length)
+      val preparingTime = System.nanoTime() - startTime
+      applier.apply(fileIndexingJob.file, {
+        val statistics = indexingJob.getStatistics(fileIndexingJob)
+        synchronized(statistics) {
+          val applicationTime = applier.separateApplicationTimeNanos
+          statistics.addFileStatistics(fileIndexingJob.file,
+                                       applier.stats,
+                                       preparingTime + applicationTime,
+                                       contentLoadingTime,
+                                       length,
+                                       applicationTime
+          )
+        }
+        indexingJob.oneMoreFileProcessed()
+        doReleaseFile(fileIndexingJob.file)
+      }, false)
+    }
+
+    private fun releaseFile(file: VirtualFile, length: Long) {
+      signalThatFileIsUnloaded(length)
+      doReleaseFile(file)
+    }
+
+    private fun doReleaseFile(file: VirtualFile) {
+      IndexingStamp.flushCache(FileBasedIndex.getFileId(file))
+      unlockFile(file)
+    }
+
+    @Throws(ProcessCanceledException::class)
+    private fun waitForFreeMemoryToLoadFileContent(indicator: ProgressIndicator,
+                                                   fileLength: Long) {
+      ourLoadedBytesLimitLock.lock()
+      try {
+        while (ourTotalBytesLoadedIntoMemory >= SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
+          indicator.checkCanceled()
+          try {
+            ourLoadedBytesAreReleasedCondition.await(100, TimeUnit.MILLISECONDS)
+          }
+          catch (e: InterruptedException) {
+            throw ProcessCanceledException(e)
+          }
+        }
+        ourTotalBytesLoadedIntoMemory += fileLength
+      }
+      finally {
+        ourLoadedBytesLimitLock.unlock()
+      }
+    }
+
+    /**
+     * @see .SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY
+     */
+    private fun signalThatFileIsUnloaded(fileLength: Long) {
+      ourLoadedBytesLimitLock.lock()
+      try {
+        LOG.assertTrue(ourTotalBytesLoadedIntoMemory >= fileLength)
+        ourTotalBytesLoadedIntoMemory -= fileLength
+        if (ourTotalBytesLoadedIntoMemory < SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
+          ourLoadedBytesAreReleasedCondition.signalAll()
+        }
+      }
+      finally {
+        ourLoadedBytesLimitLock.unlock()
+      }
+    }
+
+    private fun logFailedToLoadContentException(e: FailedToLoadContentException) {
+      val cause = e.cause
+      val file = e.file
+      val fileUrl = "File: " + file.url
+      when (cause) {
+        is FileNotFoundException, is NoSuchFileException -> {
+          // It is possible to not observe file system change until refresh finish, we handle missed file properly anyway.
+          FileBasedIndexImpl.LOG.debug(fileUrl, e)
+        }
+        is IndexOutOfBoundsException, is InvalidVirtualFileAccessException, is IOException -> {
+          FileBasedIndexImpl.LOG.info(fileUrl, e)
+        }
+        else -> {
+          FileBasedIndexImpl.LOG.error(fileUrl, e)
+        }
+      }
+    }
+
+    fun getPresentableLocationBeingIndexed(project: Project, file: VirtualFile): @NlsSafe String {
+      var actualFile = file
+      if (actualFile.fileSystem is ArchiveFileSystem) {
+        actualFile = VfsUtil.getLocalFile(actualFile)
+      }
+      var path = getProjectRelativeOrAbsolutePath(project, actualFile)
+      path = if ("/" == path) actualFile.name else path
+      return FileUtil.toSystemDependentName(path)
+    }
+
+    private fun getProjectRelativeOrAbsolutePath(project: Project, file: VirtualFile): String {
+      val projectBase = project.basePath
+      if (StringUtil.isNotEmpty(projectBase)) {
+        val filePath = file.path
+        if (FileUtil.isAncestor(projectBase!!, filePath, true)) {
+          val projectDirName = PathUtil.getFileName(projectBase)
+          val relativePath = FileUtil.getRelativePath(projectBase, filePath, '/')
+          if (StringUtil.isNotEmpty(projectDirName) && StringUtil.isNotEmpty(relativePath)) {
+            return "$projectDirName/$relativePath"
+          }
+        }
+      }
+      return file.path
+    }
+
+    private fun unwrapAll(indicator: ProgressIndicator): ProgressIndicator {
+      // Can't use "ProgressWrapper.unwrapAll" here because it unwraps "ProgressWrapper"s only (not any "WrappedProgressIndicator")
+      var unwrapped = indicator
+      while (unwrapped is WrappedProgressIndicator) {
+        unwrapped = unwrapped.originalProgressIndicator
+      }
+      return unwrapped
     }
   }
 }

@@ -144,7 +144,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
     try {
       fileSets.forEach(b -> {
-        projectDumbIndexingHistory.addProviderStatistics(b.statistics);
+        projectDumbIndexingHistory.addProviderStatistics(b.getStatistics());
       });
     }
     catch (Exception e) {
