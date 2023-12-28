@@ -1080,9 +1080,19 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localSubclass.kt");
             }
 
+            @TestMetadata("localVariableWithDelegate.kt")
+            public void testLocalVariableWithDelegate() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localVariableWithDelegate.kt");
+            }
+
             @TestMetadata("twoLocals.kt")
             public void testTwoLocals() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/twoLocals.kt");
+            }
+
+            @TestMetadata("valueParameterOfLocalType.kt")
+            public void testValueParameterOfLocalType() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/valueParameterOfLocalType.kt");
             }
 
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping.kt")
