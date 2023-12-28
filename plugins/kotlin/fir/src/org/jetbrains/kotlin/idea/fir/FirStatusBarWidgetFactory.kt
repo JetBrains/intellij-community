@@ -20,13 +20,13 @@ private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
         const val ID = "kotlin.fir.ide"
 
         @NlsSafe
-        private const val DISPLAY_NAME = "Kotlin K2 Plugin"
+        private const val DISPLAY_NAME = "K2 Kotlin Mode"
     }
 }
 
 private class Widget : StatusBarWidget, StatusBarWidget.IconPresentation {
     override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
     override fun ID(): String = FirStatusBarWidgetFactory.ID
-    override fun getTooltipText(): String = "Kotlin K2 Plugin"
+    override fun getTooltipText(): String = "K2 Kotlin Mode"
     override fun getIcon(): Icon = KotlinIcons.FIR
 }
