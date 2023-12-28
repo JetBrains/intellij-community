@@ -14,7 +14,7 @@ private class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.messageP
                                                DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.place == ActionPlaces.MAIN_TOOLBAR &&
+    e.presentation.isEnabledAndVisible = e.place == ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR) &&
                                          !UISettings.getInstance().separateMainMenu &&
                                          ProjectWindowCustomizerService.getInstance().isAvailable()
   }
