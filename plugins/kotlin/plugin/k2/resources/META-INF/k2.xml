@@ -55,6 +55,11 @@
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastCodeGenerationPlugin"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
                     serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
@@ -92,6 +97,11 @@
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
                  description="Allow only bundled K2 compiler plugins to be used"
                  defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.show.fir.statusbar.icon"
+                 description="Show K2 FIR tree icon in the status bar"
+                 defaultValue="false"
                  restartRequired="false"/>
 
     <!-- shared completion -->
