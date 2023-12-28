@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
-import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
 class RepositoryChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Repository>(model) {
@@ -36,10 +35,11 @@ class RepositoryChangesGroupingPolicy(val project: Project, model: DefaultTreeMo
   private fun getRepositoryFor(filePath: FilePath): Repository? {
     val repository = repositoryManager.getRepositoryForFile(filePath, true)
 
-    // assign submodule change to the parent repository
+    // Assign submodule change to the parent repository.
+    // We can't check for 'FilePath.isDirectory' here, as git4idea is passing 'false' for submodule changes.
     if (repository != null &&
         !repository.vcs.areDirectoriesVersionedItems() &&
-        Objects.equals(repository.root.path, filePath.path)) {
+        repositoryManager.getRepositoryForRootQuick(filePath) == repository) {
       val parentRepo = repositoryManager.getRepositoryForFile(repository.root.parent, true)
       if (parentRepo != null) return parentRepo
     }
