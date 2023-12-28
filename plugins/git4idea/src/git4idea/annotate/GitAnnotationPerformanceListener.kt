@@ -3,7 +3,6 @@ package git4idea.annotate
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -19,7 +18,7 @@ interface GitAnnotationPerformanceListener {
 
   fun onAnnotationFinished(project: Project,
                            root: VirtualFile,
-                           path: FilePath,
+                           file: VirtualFile,
                            revision: VcsRevisionNumber?,
                            annotation: GitFileAnnotation,
                            duration: Duration,

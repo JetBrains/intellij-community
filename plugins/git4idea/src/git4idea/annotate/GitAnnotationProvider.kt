@@ -2,7 +2,6 @@
 package git4idea.annotate
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.VcsCacheManager
@@ -31,7 +30,7 @@ internal fun getAnnotationFromCache(project: Project, file: VirtualFile): FileAn
 
 fun reportAnnotationFinished(project: Project,
                              root: VirtualFile,
-                             filePath: FilePath,
+                             file: VirtualFile,
                              revision: VcsRevisionNumber?,
                              annotation: GitFileAnnotation,
                              startMs: Long,
@@ -39,6 +38,6 @@ fun reportAnnotationFinished(project: Project,
   val duration = (System.currentTimeMillis() - startMs).toDuration(DurationUnit.MILLISECONDS)
 
   GitAnnotationPerformanceListener.EP_NAME.extensionList.forEach {
-    it.onAnnotationFinished(project, root, filePath, revision, annotation, duration, provider)
+    it.onAnnotationFinished(project, root, file, revision, annotation, duration, provider)
   }
 }
