@@ -145,7 +145,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                     @NotNull List<? extends C> selection,
                     @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
                     @NotNull Runnable onFinishAction) {
-      super(IdeBundle.message("plugins.configurable.uninstall"),
+      //noinspection unchecked
+      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, IdeaPluginDescriptor>)pluginDescriptor)
+                              ? "plugins.configurable.uninstall.bundled.update"
+                              : "plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
             selection,
@@ -155,6 +158,15 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       myUiParent = uiParent;
       myOnFinishAction = onFinishAction;
+    }
+
+    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, IdeaPluginDescriptor> pluginDescriptor) {
+      for (Object o : selection) {
+        if (!MyPluginModel.isBundledUpdate(pluginDescriptor.apply(o))) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,8 +45,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -1078,12 +1081,35 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
+  public static boolean isBundledUpdate(@Nullable IdeaPluginDescriptor descriptor) {
+    if (descriptor == null || descriptor.isBundled()) {
+      return false;
+    }
+    if (PluginManagerCore.isUpdatedBundledPlugin(descriptor)) {
+      return true;
+    }
+    if (PluginEnabler.HEADLESS.isDisabled(descriptor.getPluginId())) {
+      Path path = descriptor.getPluginPath();
+      if (path == null) {
+        return false;
+      }
+      Path name = path.getFileName();
+      if (name == null) {
+        return false;
+      }
+      return new File(PathManager.getPreInstalledPluginsPath(), name.toString()).exists();
+    }
+    return false;
+  }
+
   private boolean performUninstall(@NotNull IdeaPluginDescriptorImpl descriptorImpl) {
     boolean needRestartForUninstall = true;
     try {
-      PluginEnabler enabler = PluginEnabler.HEADLESS;
-      if (enabler.isDisabled(descriptorImpl.getPluginId())) {
-        enabler.enable(Collections.singletonList(descriptorImpl));
+      if (!isBundledUpdate(descriptorImpl)) {
+        PluginEnabler enabler = PluginEnabler.HEADLESS;
+        if (enabler.isDisabled(descriptorImpl.getPluginId())) {
+          enabler.enable(Collections.singletonList(descriptorImpl));
+        }
       }
       descriptorImpl.setDeleted(true);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptorImpl);
