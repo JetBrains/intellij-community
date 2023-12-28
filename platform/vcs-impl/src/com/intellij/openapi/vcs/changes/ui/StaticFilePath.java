@@ -5,32 +5,29 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StaticFilePath {
-  private final String myKey;
-  private final String myPath;
-  private final boolean myIsDirectory;
+  private final String myKey; // canonical path form for case-insensitive systems
+  private final FilePath myPath;
 
-  public StaticFilePath(boolean isDirectory, @NotNull String path) {
-    this(isDirectory, path, FilePathsHelper.convertPath(path));
+  public StaticFilePath(@NotNull FilePath path) {
+    this(path, FilePathsHelper.convertPath(path));
   }
 
-  private StaticFilePath(boolean isDirectory, @NotNull String path, @NotNull String key) {
-    myIsDirectory = isDirectory;
+  private StaticFilePath(@NotNull FilePath path, @NotNull String key) {
     myPath = path;
     myKey = key;
   }
 
   public boolean isDirectory() {
-    return myIsDirectory;
+    return myPath.isDirectory();
   }
 
   @NotNull
   public String getPath() {
-    return myPath;
+    return myPath.getPath();
   }
 
   @NotNull
@@ -49,14 +46,15 @@ public class StaticFilePath {
 
   @NotNull
   public FilePath getFilePath() {
-    return VcsUtil.getFilePath(myPath, myIsDirectory);
+    return myPath;
   }
 
   @Nullable
   public StaticFilePath getParent() {
-    final int idx = myKey.lastIndexOf('/');
-    if (idx == -1 || idx == 0) return null;
-    return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx));
+    FilePath parentPath = myPath.getParentPath();
+    if (parentPath == null) return null;
+    String parentKey = myKey.substring(0, parentPath.getPath().length());
+    return new StaticFilePath(parentPath, parentKey);
   }
 
   @Nullable
