@@ -123,4 +123,6 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     }
 
     override fun hashCode(): Int = original.hashCode()
+
+    override fun toString(): String = "${this::class.simpleName} of ${original.name}"
 }
