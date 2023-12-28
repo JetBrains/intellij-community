@@ -32,13 +32,14 @@ object ConvertToBlockBodyUtils {
         declaration: KtDeclarationWithBody,
         shortenReferences: ShortenReferencesFacility,
         reformat: Boolean,
+        isErrorReturnTypeAllowed: Boolean = false,
     ): ConvertToBlockBodyContext? {
         if (!isConvertibleByPsi(declaration)) return null
 
         val body = declaration.bodyExpression ?: return null
 
         val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
-        if (returnType is KtErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
+        if (!isErrorReturnTypeAllowed && returnType is KtErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }
 

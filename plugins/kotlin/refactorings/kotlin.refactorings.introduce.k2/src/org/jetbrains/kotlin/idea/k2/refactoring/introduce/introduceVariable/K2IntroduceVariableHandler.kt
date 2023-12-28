@@ -51,6 +51,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
 
@@ -293,13 +295,18 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
             expression.putCopyableUserData(EXPRESSION_KEY, true)
 
-            analyzeInModalWindow(container, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                ConvertToBlockBodyUtils.createContext(container, ShortenReferencesFacility.getInstance(), reformat = false)
-            }?.let { context ->
-                application.runWriteAction {
-                    ConvertToBlockBodyUtils.convert(container, context)
-                }
+            val convertToBlockBodyContext = analyzeInModalWindow(container, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+                ConvertToBlockBodyUtils.createContext(
+                    container,
+                    ShortenReferencesFacility.getInstance(),
+                    reformat = false,
+                    isErrorReturnTypeAllowed = true,
+                )
+            } ?: errorWithAttachment("Failed to create context for converting expression body to block body") {
+                withPsiEntry("declaration", container)
             }
+
+            application.runWriteAction { ConvertToBlockBodyUtils.convert(container, convertToBlockBodyContext) }
 
             val newContainer = container.bodyBlockExpression ?: return showErrorHint(
                 expression.project,

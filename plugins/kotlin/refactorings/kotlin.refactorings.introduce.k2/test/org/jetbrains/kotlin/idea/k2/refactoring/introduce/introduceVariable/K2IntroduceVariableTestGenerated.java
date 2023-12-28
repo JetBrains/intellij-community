@@ -396,6 +396,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/dynamicType.kt");
         }
 
+        @TestMetadata("expressionBodyErrorType.kt")
+        public void testExpressionBodyErrorType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
+        }
+
         @TestMetadata("FewOccurrences.kt")
         public void testFewOccurrences() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/FewOccurrences.kt");

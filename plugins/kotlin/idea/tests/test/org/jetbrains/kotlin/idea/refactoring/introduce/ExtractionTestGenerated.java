@@ -398,6 +398,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/dynamicType.kt");
             }
 
+            @TestMetadata("expressionBodyErrorType.kt")
+            public void testExpressionBodyErrorType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
+            }
+
             @TestMetadata("FewOccurrences.kt")
             public void testFewOccurrences() throws Exception {
                 runTest("testData/refactoring/introduceVariable/FewOccurrences.kt");
