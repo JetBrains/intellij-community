@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -128,11 +127,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
   fun upload() {
     if (remoteCache.shouldBeUploaded) {
       uploader.upload(context.messages)
-      val metadataFile = context.paths.artifactDir.resolve(COMPILATION_CACHE_METADATA_JSON)
-      Files.createDirectories(metadataFile.parent)
-      Files.writeString(metadataFile, "This is stub file required only for TeamCity artifact dependency. " +
-                                      "Compiled classes will be resolved via ${remoteCache.url}")
-      context.messages.artifactBuilt("$metadataFile")
     }
   }
 

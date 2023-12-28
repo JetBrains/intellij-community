@@ -83,12 +83,6 @@ internal object CompiledClasses {
           AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString(),
         ))
       }
-      PortableCompilationCache.IS_ENABLED -> {
-        span.addEvent("JPS remote cache will be used for compilation")
-        val jpsCache = PortableCompilationCache(context)
-        jpsCache.downloadCacheAndCompileProject()
-        jpsCache.upload()
-      }
       context.options.pathToCompiledClassesArchive != null -> {
         span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
                                                            context.options.pathToCompiledClassesArchive.toString()))
@@ -96,7 +90,7 @@ internal object CompiledClasses {
       }
       context.options.pathToCompiledClassesArchivesMetadata != null -> {
         span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
-                                                           context.options.pathToCompiledClassesArchive.toString()))
+                                                           context.options.pathToCompiledClassesArchivesMetadata.toString()))
         val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
         fetchAndUnpackCompiledClasses(
           reportStatisticValue = context.messages::reportStatisticValue,
@@ -108,6 +102,12 @@ internal object CompiledClasses {
            */
           saveHash = !forInstallers,
         )
+      }
+      PortableCompilationCache.IS_ENABLED -> {
+        span.addEvent("JPS remote cache will be used for compilation")
+        val jpsCache = PortableCompilationCache(context)
+        jpsCache.downloadCacheAndCompileProject()
+        jpsCache.upload()
       }
       else -> {
         if (context.options.incrementalCompilation) {
