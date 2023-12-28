@@ -29,12 +29,12 @@ internal fun getAnnotationFromCache(project: Project, file: VirtualFile): FileAn
   return GitFileAnnotation(project, file, lastRevision, annotationData.lines)
 }
 
-internal fun reportAnnotationFinished(project: Project,
-                                      root: VirtualFile,
-                                      filePath: FilePath,
-                                      revision: VcsRevisionNumber?,
-                                      startMs: Long,
-                                      provider: String) {
+fun reportAnnotationFinished(project: Project,
+                             root: VirtualFile,
+                             filePath: FilePath,
+                             revision: VcsRevisionNumber?,
+                             startMs: Long,
+                             provider: String) {
   val duration = (System.currentTimeMillis() - startMs).toDuration(DurationUnit.MILLISECONDS)
 
   GitAnnotationPerformanceListener.EP_NAME.extensionList.forEach {
