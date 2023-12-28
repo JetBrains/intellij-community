@@ -210,6 +210,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       InstalledPluginsState.getInstance().setRestartRequired(true);
     }
 
+    updateButtons();
+
     isUIDisposedWithApply = true;
 
     return !needRestart;
@@ -1033,6 +1035,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public void setCancelInstallCallback(@NotNull Consumer<? super IdeaPluginDescriptor> callback) {
     myCancelInstallCallback = callback;
+  }
+
+  private void updateButtons() {
+    for (ListPluginComponent component : myInstalledPluginComponents) {
+      component.updateButtons();
+    }
+    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
+      for (ListPluginComponent plugin : plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          plugin.updateButtons();
+        }
+      }
+    }
+    for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
+      detailPanel.updateAll();
+    }
   }
 
   private void updateAfterEnableDisable() {

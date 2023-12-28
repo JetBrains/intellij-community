@@ -796,6 +796,17 @@ public final class ListPluginComponent extends JPanel {
     PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
   }
 
+  public void updateButtons() {
+    if (myIsAvailable) {
+      removeButtons(false);
+      if (myRestartButton != null) {
+        myLayout.removeButtonComponent(myRestartButton);
+        myRestartButton = null;
+      }
+      createButtons();
+    }
+  }
+
   public void updateEnabledState() {
     if (myMarketplace && myInstalledDescriptorForMarketplace == null) {
       return;

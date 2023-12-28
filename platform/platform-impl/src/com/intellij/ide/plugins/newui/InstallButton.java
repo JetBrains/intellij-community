@@ -50,7 +50,7 @@ public class InstallButton extends ColorButton {
     super.updateUI();
 
     if (getParent() != null) {
-      setTextAndSize();
+      setEnabled(isEnabled(), getText());
     }
   }
 

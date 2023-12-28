@@ -1378,7 +1378,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  public void updateButtons() {
+  public void updateAll() {
+    showPluginImpl(myPlugin, myUpdateDescriptor);
+  }
+
+  private void updateButtons() {
     if (!myIsPluginAvailable) {
       myRestartButton.setVisible(false);
       myInstallButton.setVisible(false);
