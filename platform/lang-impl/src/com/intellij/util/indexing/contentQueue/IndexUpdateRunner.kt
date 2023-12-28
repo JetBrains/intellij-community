@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -109,60 +108,53 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     val originalIndicator = unwrapAll(indicator)
     val originalSuspender = ProgressSuspender.getSuspender(originalIndicator)
     val indexingJob = IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender)
-    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      // If the current thread has acquired the write lock, we can't grant it to worker threads, so we must do the work in the current thread.
-      while (!indexingJob.areAllFilesProcessed()) {
-        indexOneFileOfJob(indexingJob)
-      }
-    }
-    else {
-      ourIndexingJobs.add(indexingJob)
-      try {
-        val numberOfRunningWorkers = AtomicInteger()
-        val worker = Runnable {
-          try {
-            indexJobsFairly()
-          }
-          finally {
-            numberOfRunningWorkers.decrementAndGet()
-          }
+
+    ourIndexingJobs.add(indexingJob)
+    try {
+      val numberOfRunningWorkers = AtomicInteger()
+      val worker = Runnable {
+        try {
+          indexJobsFairly()
         }
-        for (i in 0 until myNumberOfIndexingThreads) {
+        finally {
+          numberOfRunningWorkers.decrementAndGet()
+        }
+      }
+      for (i in 0 until myNumberOfIndexingThreads) {
+        myIndexingExecutor.execute(worker)
+        numberOfRunningWorkers.incrementAndGet()
+      }
+      while (!project.isDisposed && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
+        // Internally checks for suspension of the indexing and blocks the current thread if necessary.
+        indicator.checkCanceled()
+        // Add workers if the previous have stopped for whatever reason.
+        val toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get()
+        for (i in 0 until toAddWorkersNumber) {
           myIndexingExecutor.execute(worker)
           numberOfRunningWorkers.incrementAndGet()
         }
-        while (!project.isDisposed && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
-          // Internally checks for suspension of the indexing and blocks the current thread if necessary.
-          indicator.checkCanceled()
-          // Add workers if the previous have stopped for whatever reason.
-          val toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get()
-          for (i in 0 until toAddWorkersNumber) {
-            myIndexingExecutor.execute(worker)
-            numberOfRunningWorkers.incrementAndGet()
-          }
-          try {
-            if (indexingJob.myAllFilesAreProcessedLatch.await(100, TimeUnit.MILLISECONDS)) {
-              break
-            }
-          }
-          catch (e: InterruptedException) {
-            throw ProcessCanceledException(e)
+        try {
+          if (indexingJob.myAllFilesAreProcessedLatch.await(100, TimeUnit.MILLISECONDS)) {
+            break
           }
         }
-        val error = indexingJob.myError.get()
-        if (error is ProcessCanceledException) {
-          // The original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
-          val pce = ProcessCanceledException()
-          pce.addSuppressed(error)
-          throw pce
-        }
-        if (error != null) {
-          throw RuntimeException("Indexing of " + project.name + " has failed", error)
+        catch (e: InterruptedException) {
+          throw ProcessCanceledException(e)
         }
       }
-      finally {
-        ourIndexingJobs.remove(indexingJob)
+      val error = indexingJob.myError.get()
+      if (error is ProcessCanceledException) {
+        // The original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
+        val pce = ProcessCanceledException()
+        pce.addSuppressed(error)
+        throw pce
       }
+      if (error != null) {
+        throw RuntimeException("Indexing of " + project.name + " has failed", error)
+      }
+    }
+    finally {
+      ourIndexingJobs.remove(indexingJob)
     }
   }
 
