@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.services.impl.RegisteredDirectivesParser
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 import java.io.FileNotFoundException
 import java.lang.reflect.Modifier
@@ -106,12 +107,34 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
-        val expectedPath = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
+        val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
+
+        if (pluginKind == KotlinPluginKind.FIR_PLUGIN) {
+            val expectedPath = Paths.get(testDataPath, expectedPathString)
+
+            val k2ExpectedPathString = getExpectedPath(".fir" + expectedSuffix, addSuffixAfterExtension)
+            val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
+
+            if (k2ExpectedPath.exists()) {
+                checkContentByExpectedPath(k2ExpectedPathString)
+                IgnoreTests.cleanUpIdenticalFirTestFile(
+                    originalTestFile = expectedPath.toFile(),
+                    firTestFile = k2ExpectedPath.toFile()
+                )
+
+                return
+            }
+        }
+
+        checkContentByExpectedPath(expectedPathString)
+    }
+
+    private fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedPathString: String) {
         try {
-            checkResultByFile(expectedPath, /* ignoreTrailingWhitespaces = */ true)
+            checkResultByFile(expectedPathString, /* ignoreTrailingWhitespaces = */ true)
         } catch (e: RuntimeException) {
             if (e.cause is FileNotFoundException) {
-                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPath)
+                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPathString)
                 if (!absoluteExpectedPath.exists()) {
                     val mainFile = file
                     val originalVirtualFile = when (val virtualFile = mainFile.virtualFile) {
