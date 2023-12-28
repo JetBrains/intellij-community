@@ -31,10 +31,10 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
   public static final StorageFactory<? extends AppendOnlyLog> DEFAULT_VALUES_LOG_FACTORY = AppendOnlyLogFactory
     .withDefaults()
     .pageSize(DEFAULT_PAGE_SIZE)
-    .cleanFileIfIncompatible()
+    .cleanIfFileIncompatible()
     .failIfDataFormatVersionNotMatch(DurableEnumerator.DATA_FORMAT_VERSION);
 
-  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults()
+  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.mediumSize()
     .cleanIfFileIncompatible()
     .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP);
 

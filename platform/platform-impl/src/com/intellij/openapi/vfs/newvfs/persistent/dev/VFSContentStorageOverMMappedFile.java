@@ -96,7 +96,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       FileUtil.delete(mapPath);
     }
 
-    hashToContentRecordIdMap = ExtendibleMapFactory.defaults()
+    hashToContentRecordIdMap = ExtendibleMapFactory.mediumSize()
       .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP)
       .cleanIfFileIncompatible()
       .open(mapPath);

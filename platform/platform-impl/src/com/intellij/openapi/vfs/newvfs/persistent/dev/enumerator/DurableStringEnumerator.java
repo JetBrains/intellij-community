@@ -81,7 +81,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     .pageSize(PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION)
     .checkIfFileCompatibleEagerly(true)
-    .cleanFileIfIncompatible();
+    .cleanIfFileIncompatible();
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
     return VALUES_LOG_FACTORY.wrapStorageSafely(

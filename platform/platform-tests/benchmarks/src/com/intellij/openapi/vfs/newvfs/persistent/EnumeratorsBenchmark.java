@@ -81,7 +81,7 @@ public class EnumeratorsBenchmark {
       Path file = tempDir.resolve("enumerator");
       if (newImplementation) {
         return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
-          .mapFactory(ExtendibleMapFactory.large())
+          .mapFactory(ExtendibleMapFactory.largeSize())
           .open(file);
       }
       else {

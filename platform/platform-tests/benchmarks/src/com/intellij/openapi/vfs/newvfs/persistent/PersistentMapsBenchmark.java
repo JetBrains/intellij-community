@@ -81,7 +81,7 @@ public class PersistentMapsBenchmark {
       if (newImplementation) {
         return AppendOnlyLogFactory.withDefaults().wrapStorageSafely(
           storagePath,
-          aoLog -> ExtendibleMapFactory.large().wrapStorageSafely(
+          aoLog -> ExtendibleMapFactory.largeSize().wrapStorageSafely(
             storagePath.resolveSibling(storagePath.getFileName() + ".map"),
             map -> new DurableMapOverAppendOnlyLog<>(
               aoLog,

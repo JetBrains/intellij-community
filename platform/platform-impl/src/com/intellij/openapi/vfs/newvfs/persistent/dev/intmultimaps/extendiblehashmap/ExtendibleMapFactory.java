@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap.HeaderLayout;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
@@ -59,7 +58,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     this.cleanFileIfIncompatible = cleanFileIfIncompatible;
   }
 
-  public static ExtendibleMapFactory defaults() {
+  public static ExtendibleMapFactory mediumSize() {
     //approx. 16M (key,value) pairs
     return new ExtendibleMapFactory(
       ExtendibleHashMap.DEFAULT_STORAGE_PAGE_SIZE,
@@ -70,7 +69,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     );
   }
 
-  public static ExtendibleMapFactory large() {
+  public static ExtendibleMapFactory largeSize() {
     //approx. 64M (key,value) pairs
     int segmentSize = ExtendibleHashMap.DEFAULT_SEGMENT_SIZE * 2;
     int pageSize = segmentSize * ExtendibleHashMap.DEFAULT_SEGMENTS_PER_PAGE;

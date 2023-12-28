@@ -114,7 +114,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = ExtendibleMapFactory.large().open(file.toPath());
+      map = ExtendibleMapFactory.largeSize().open(file.toPath());
 
 
       generatedKeyValues = generateKeyValues(TOTAL_KEYS);

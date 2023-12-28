@@ -60,7 +60,7 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     StorageTestingUtils.emulateImproperClose(multimap);
 
     multimap = open(
-      ExtendibleMapFactory.defaults().ifNotClosedProperly(IGNORE_AND_HOPE_FOR_THE_BEST),
+      ExtendibleMapFactory.mediumSize().ifNotClosedProperly(IGNORE_AND_HOPE_FOR_THE_BEST),
       storagePath
     );
     assertFalse(
@@ -80,7 +80,7 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     StorageTestingUtils.emulateImproperClose(multimap);
 
     multimap = open(
-      ExtendibleMapFactory.defaults().ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP),
+      ExtendibleMapFactory.mediumSize().ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP),
       storagePath
     );
     assertTrue(
@@ -103,7 +103,7 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
       CorruptedException.class,
       () -> {
         multimap = open(
-          ExtendibleMapFactory.defaults().ifNotClosedProperly(FAIL_SPECTACULARLY),
+          ExtendibleMapFactory.mediumSize().ifNotClosedProperly(FAIL_SPECTACULARLY),
           storagePath
         );
       });
@@ -136,7 +136,7 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
   }
 
   protected ExtendibleHashMap openFile(@NotNull Path storagePath) throws IOException {
-    return open(ExtendibleMapFactory.defaults(), storagePath);
+    return open(ExtendibleMapFactory.mediumSize(), storagePath);
   }
 
   private ExtendibleHashMap open(@NotNull ExtendibleMapFactory factory,

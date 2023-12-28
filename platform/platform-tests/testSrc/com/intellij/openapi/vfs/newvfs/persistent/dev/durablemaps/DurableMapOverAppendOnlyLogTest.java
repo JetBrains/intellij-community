@@ -28,7 +28,7 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
   protected @NotNull StorageFactory<DurableMapOverAppendOnlyLog<String, String>> factory() {
     return storagePath -> AppendOnlyLogFactory.withDefaults().wrapStorageSafely(
       storagePath,
-      aoLog -> ExtendibleMapFactory.defaults().wrapStorageSafely(
+      aoLog -> ExtendibleMapFactory.mediumSize().wrapStorageSafely(
         storagePath.resolveSibling(storagePath.getFileName() + ".map"),
         map -> new DurableMapOverAppendOnlyLog<>(aoLog,
                                                  map,
