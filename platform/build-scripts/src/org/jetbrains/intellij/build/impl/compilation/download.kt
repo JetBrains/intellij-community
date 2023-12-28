@@ -65,10 +65,7 @@ internal fun downloadCompilationCache(serverUrl: String,
           val digest = sha256()
           writeFile(item.file, response, bufferPool, url, digest)
           val computedHash = digestToString(digest)
-          if (computedHash == item.hash) {
-            null
-          }
-          else {
+          if (computedHash != item.hash) {
             Span.current().addEvent("hash mismatch", Attributes.of(
               AttributeKey.stringKey("name"), item.file.name,
               AttributeKey.stringKey("expected"), item.hash,

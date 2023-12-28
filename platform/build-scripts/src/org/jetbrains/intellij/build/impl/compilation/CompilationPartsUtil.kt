@@ -354,10 +354,12 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
 
       reportStatisticValue("compile-parts:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
-      val downloadedBytes = toDownload.sumOf { Files.size(it.file) }
+      val downloadedSuccessfully = toDownload - failed.toSet()
+      val downloadedSuccessfullyBytes = downloadedSuccessfully.sumOf { Files.size(it.file) }
 
-      reportStatisticValue("compile-parts:downloaded:bytes", downloadedBytes.toString())
-      reportStatisticValue("compile-parts:downloaded:count", toDownload.size.toString())
+      reportStatisticValue("compile-parts:downloaded:bytes", downloadedSuccessfullyBytes.toString())
+      reportStatisticValue("compile-parts:downloaded:count", downloadedSuccessfully.size.toString())
+      reportStatisticValue("compile-parts:failed:count", failed.size.toString())
 
       if (!failed.isEmpty()) {
         error("Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
