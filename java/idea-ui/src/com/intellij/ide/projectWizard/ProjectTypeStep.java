@@ -470,18 +470,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private void showTemplates(TemplatesGroup group) {
-    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    setTemplatesList(group, templates, false);
+    setTemplatesList(group);
     showCard(TEMPLATES_CARD);
   }
 
-  private void setTemplatesList(TemplatesGroup group, Collection<? extends ProjectTemplate> templates, boolean preserveSelection) {
-    List<ProjectTemplate> list = new ArrayList<>(templates);
+  private void setTemplatesList(@NotNull TemplatesGroup group) {
+    List<ProjectTemplate> list = new ArrayList<>(myTemplatesMap.get(group));
     ModuleBuilder moduleBuilder = group.getModuleBuilder();
     if (moduleBuilder != null && !(moduleBuilder instanceof TemplateModuleBuilder)) {
       list.add(0, new BuilderBasedTemplate(moduleBuilder));
     }
-    myTemplatesList.setTemplates(list, preserveSelection);
+    myTemplatesList.setTemplates(list, false);
   }
 
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
@@ -727,7 +726,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           return myProjectTypeList.getSelectedValue().getName().equals(group);
         }
         else {
-          setTemplatesList(templatesGroup, myTemplatesMap.get(templatesGroup), false);
+          setTemplatesList(templatesGroup);
           return myTemplatesList.setSelectedTemplate(name);
         }
       }
