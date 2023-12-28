@@ -3,8 +3,8 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import com.siyeh.ig.junit.TestClassNamingConvention;
-import com.siyeh.ig.junit.TestSuiteNamingConvention;
+import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
+import com.intellij.execution.junit.codeInspection.naming.TestSuiteNamingConvention;
 
 /**
  * @author Bas Leijdekkers

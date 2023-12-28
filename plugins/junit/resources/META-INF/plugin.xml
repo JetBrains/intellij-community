@@ -119,6 +119,33 @@
                      groupKey="junit.inspections.group.name" key="jvm.inspections.junit.malformed.declaration.name"
                      implementationClass="com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspection"/>
     <inspectionElementsMerger implementation="com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspectionMerger"/>
+    <localInspection language="JAVA" enabledByDefault="false" level="WARNING" shortName="ParameterizedParametersStaticCollection"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="inspection.parameterized.parameters.static.collection.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.ParameterizedParametersStaticCollectionInspection"/>
+    <localInspection language="JAVA" enabledByDefault="false" level="WARNING" shortName="ExpectedExceptionNeverThrown"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="expected.exception.never.thrown.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.ExpectedExceptionNeverThrownInspection"/>
+    <localInspection language="JAVA" enabledByDefault="true" level="WARNING" shortName="JUnit3StyleTestMethodInJUnit4Class"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="junit3.style.test.method.in.junit4.class.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
+    <localInspection language="JAVA" enabledByDefault="false" cleanupTool="true" level="WARNING"
+                     shortName="MultipleExceptionsDeclaredOnTestMethod"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="multiple.exceptions.declared.on.test.method.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.MultipleExceptionsDeclaredOnTestMethodInspection" />
+    <localInspection language="JAVA" enabledByDefault="false" cleanupTool="true" shortName="UseOfObsoleteAssert"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="usage.of.obsolete.assert.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.UseOfObsoleteAssertInspection" />
+
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.TestSuiteNamingConvention" id="TestSuiteNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
+    <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="first"/>
+    <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="after JUnit3MethodNamingConvention"/>
   </extensions>
 
   <extensionPoints>

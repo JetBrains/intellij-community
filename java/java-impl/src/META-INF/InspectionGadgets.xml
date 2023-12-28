@@ -1370,40 +1370,21 @@
                      bundle="messages.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ExpectedExceptionNeverThrown" bundle="messages.InspectionGadgetsBundle"
-                     key="expected.exception.never.thrown.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.ExpectedExceptionNeverThrownInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ParameterizedParametersStaticCollection"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.ParameterizedParametersStaticCollectionInspection"
-                     key="inspection.parameterized.parameters.static.collection.display.name" bundle="messages.InspectionGadgetsBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantAssertArgument" bundle="messages.InspectionGadgetsBundle"
                      key="constant.junit.assert.argument.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.ConstantAssertArgumentMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit3StyleTestMethodInJUnit4Class" bundle="messages.InspectionGadgetsBundle"
-                     key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArguments"
                      bundle="messages.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MultipleExceptionsDeclaredOnTestMethod" bundle="messages.InspectionGadgetsBundle"
-                     key="multiple.exceptions.declared.on.test.method.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.MultipleExceptionsDeclaredOnTestMethodInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAssertion" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection" cleanupTool="true"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.SimplifiableAssertionMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UseOfObsoleteAssert" bundle="messages.InspectionGadgetsBundle" key="usage.of.obsolete.assert.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.UseOfObsoleteAssertInspection" cleanupTool="true"/>
 
     <!--group.names.logging.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="ClassWithMultipleLoggers" bundle="messages.InspectionGadgetsBundle" key="multiple.loggers.display.name"
@@ -1557,9 +1538,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.class" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.TestSuiteNamingConvention" id="TestSuiteNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
+
     <naming.convention.class implementation="com.siyeh.ig.naming.TypeParameterNamingConvention" id="TypeParameterNamingConvention" order="after JUnitTestClassNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.AnnotationNamingConvention" id="AnnotationNamingConvention" order="after TypeParameterNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.EnumeratedClassNamingConvention" id="EnumeratedClassNamingConvention" order="after AnnotationNamingConvention"/>
@@ -1575,8 +1554,6 @@
     <naming.convention.method implementation="com.siyeh.ig.naming.InstanceMethodNamingConvention" id="InstanceMethodNamingConvention" order="last"/>
     <naming.convention.method implementation="com.siyeh.ig.naming.StaticMethodNamingConvention" id="StaticMethodNamingConvention" order="before InstanceMethodNamingConvention"/>
     <naming.convention.method implementation="com.siyeh.ig.naming.NativeMethodNamingConvention" id="NativeMethodNamingConvention" order="before StaticMethodNamingConvention"/>
-    <naming.convention.method implementation="com.siyeh.ig.junit.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="before NativeMethodNamingConvention"/>
-    <naming.convention.method implementation="com.siyeh.ig.junit.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="before JUnit4MethodNamingConvention"/>
 
     <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="BooleanMethodNameMustStartWithQuestion" bundle="messages.InspectionGadgetsBundle"
                      key="boolean.method.name.must.start.with.question.display.name" groupBundle="messages.InspectionsBundle"
