@@ -37,7 +37,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   public void testNonStaticContainerForCompileTimeConstant() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-    new MockLocalToFieldHandler(getProject(), true, false){
+    new MockLocalToFieldHandler(getProject(), true, false) {
       @Override
       protected int getChosenClassIndex(List<PsiClass> classes) {
         return 0;
@@ -46,6 +46,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     .convertLocalToField(local, getEditor());
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
+
+  public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
+  public void testStaticFieldInAnonymous() { doTest(); }
+  public void testStaticFieldInAnonymousJava8() { doTest(); }
 
   private void doTest(boolean makeEnumConstant) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -60,7 +64,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
 
   public void testUnresolvedReferenceInEnum() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    new MockIntroduceConstantHandler(((PsiJavaFile)getFile()).getClasses()[0]).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
   
@@ -70,7 +74,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
 
   public void testFromEnumConstantInitializer2() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    new MockIntroduceConstantHandler(((PsiJavaFile)getFile()).getClasses()[0]).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 

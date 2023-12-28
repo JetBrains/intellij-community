@@ -4,6 +4,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
@@ -32,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,12 +57,11 @@ public abstract class LocalToFieldHandler {
 
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     boolean tempIsStatic = myIsConstant;
-    PsiElement parent = local.getParent();
-    PsiType localType = local.getType();
-    boolean runtimeConstant = (localType instanceof PsiPrimitiveType || localType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) && PsiUtil.isConstantExpression(local.getInitializer());
+    boolean compileTimeConstant = isCompileTimeConstant(local.getInitializer(), local.getType());
     final List<PsiClass> classes = new ArrayList<>();
+    PsiElement parent = local.getParent();
     while (parent != null && parent.getContainingFile() != null) {
-      if (parent instanceof PsiClass && (runtimeConstant || !myIsConstant || mayContainConstants((PsiClass) parent))) {
+      if (parent instanceof PsiClass && (compileTimeConstant || !myIsConstant || isStaticFieldAllowed((PsiClass) parent))) {
         classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
@@ -100,9 +101,31 @@ public abstract class LocalToFieldHandler {
     return true;
   }
 
+  public static boolean isCompileTimeConstant(@Nullable PsiExpression initializer, @Nullable PsiType type) {
+    return type != null && (type instanceof PsiPrimitiveType || type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) &&
+           PsiUtil.isConstantExpression(initializer);
+  }
+
+  /**
+   * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
+   */
+  @Deprecated
   public static boolean mayContainConstants(@NotNull PsiClass aClass) {
-    return aClass.hasModifierProperty(PsiModifier.STATIC) || 
-           aClass.getParent() instanceof PsiJavaFile;
+    return isStaticFieldAllowed(aClass);
+  }
+
+  /**
+   * Checks if adding a static field is allowed in the specified class.
+   * Before Java 16 this was only allowed for inner, local and anonymous classes,
+   * if the static field was a compile-time constant.
+   * @param aClass  the class to check
+   * @return true, if adding a non-compile-time constants static field to the specified class is allowed. False otherwise.
+   */
+  public static boolean isStaticFieldAllowed(@NotNull PsiClass aClass) {
+    if (HighlightingFeature.INNER_STATICS.isAvailable(aClass)) {
+      return true;
+    }
+    return aClass.hasModifierProperty(PsiModifier.STATIC) || aClass.getParent() instanceof PsiJavaFile;
   }
 
   protected int getChosenClassIndex(List<PsiClass> classes) {
