@@ -24,12 +24,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     private var isAlreadyUpdated = false
   }
 
-  init {
-    require(IS_ENABLED) {
-      "JPS Caches are expected to be enabled"
-    }
-  }
-
   private val git = Git(context.paths.projectHome)
 
   /**
@@ -104,6 +98,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
       if (isAlreadyUpdated) {
         context.messages.info("PortableCompilationCache is already updated")
         return
+      }
+      check(IS_ENABLED) {
+        "JPS Caches are expected to be enabled"
       }
       if (forceRebuild || forceDownload) {
         clean()

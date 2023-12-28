@@ -53,10 +53,9 @@ internal class PortableCompilationCacheUploader(
   }
 
   fun upload(messages: BuildMessages) {
-    if (!Files.exists(sourcesStateProcessor.sourceStateFile)) {
-      messages.warning("Compilation outputs doesn't contain source state file, " +
-                       "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
-      return
+    check(Files.exists(sourcesStateProcessor.sourceStateFile)) {
+      "Compilation outputs doesn't contain source state file, " +
+      "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag"
     }
 
     val start = System.nanoTime()
