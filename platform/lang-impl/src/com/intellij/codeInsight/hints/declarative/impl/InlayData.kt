@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.codeInsight.daemon.impl.ZombieInlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayPayload
 import com.intellij.codeInsight.hints.declarative.InlayPosition
@@ -150,8 +151,8 @@ data class InlayData(
     }
 
     private fun readProviderClass(input: DataInput): Class<*> {
-      val className = readUTF(input)
-      return Class.forName(className)
+      readUTF(input) // TODO: remove when format changed
+      return ZombieInlayHintsProvider::class.java
     }
   }
 }

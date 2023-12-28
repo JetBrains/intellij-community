@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
@@ -24,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -131,4 +134,10 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
   }
 
   private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk")
+}
+
+class ZombieInlayHintsProvider : InlayHintsProvider {
+  override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+    throw UnsupportedOperationException("Zombie provider does not support inlay collecting")
+  }
 }
