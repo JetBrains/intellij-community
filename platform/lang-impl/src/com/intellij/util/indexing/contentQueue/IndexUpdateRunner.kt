@@ -39,28 +39,19 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.math.max
-import kotlin.math.min
 
 @ApiStatus.Internal
 class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
-                        private val indexingRequest: IndexingRequestToken,
-                        numberOfIndexingThreads: Int) {
+                        private val indexingRequest: IndexingRequestToken) {
 
   private val myIndexingExecutor: ExecutorService = GLOBAL_INDEXING_EXECUTOR
 
-  private val myNumberOfIndexingThreads: Int
+  private val myNumberOfIndexingThreads: Int = INDEXING_THREADS_NUMBER
 
   private val myIndexingAttemptCount = AtomicInteger()
   private val myIndexingSuccessfulCount = AtomicInteger()
 
   init {
-    if (numberOfIndexingThreads > INDEXING_THREADS_NUMBER) {
-      LOG.debug(
-        "Got request to index using $numberOfIndexingThreads when pool has only $INDEXING_THREADS_NUMBER falling back to max available")
-    }
-
-    myNumberOfIndexingThreads = min(numberOfIndexingThreads, INDEXING_THREADS_NUMBER)
     LOG.info("Using $myNumberOfIndexingThreads indexing and ${IndexUpdateWriter.TOTAL_WRITERS_NUMBER} writing threads for indexing")
   }
 
@@ -404,10 +395,9 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     private val ourIndexingJobs = CopyOnWriteArrayList<IndexingJob>()
 
     /**
-     * Number of indexing threads. We are reserving writing threads number here.
+     * Number of indexing threads. Writing threads are counted separately, because they are "mostly waiting IO" threads.
      */
-    private val INDEXING_THREADS_NUMBER = max(
-      (UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - IndexUpdateWriter.TOTAL_WRITERS_NUMBER).toDouble(), 1.0).toInt()
+    private val INDEXING_THREADS_NUMBER: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
 
     /**
      * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed

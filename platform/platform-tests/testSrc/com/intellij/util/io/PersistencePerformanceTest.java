@@ -12,7 +12,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
@@ -110,7 +109,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       Thread.sleep(100);
       IndexingRequestToken indexingRequest =
         getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
-      new IndexUpdateRunner(index, indexingRequest, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+      new IndexUpdateRunner(index, indexingRequest)
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
                     new EmptyProgressIndicator(), new ProjectDumbIndexingHistoryImpl(getProject()));
     }
