@@ -43,8 +43,8 @@ import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcs.log.ui.filter.FileFilterModel
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
@@ -253,7 +253,7 @@ internal class GitVcsPanel(private val project: Project) :
     row(message("settings.filter.update.info")) {
       val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
       val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-      val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+      val model = FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
       val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model,
                                                              VcsLogColorManagerFactory.create(roots)) {
         override fun shouldDrawLabel(): DrawLabelMode = DrawLabelMode.NEVER

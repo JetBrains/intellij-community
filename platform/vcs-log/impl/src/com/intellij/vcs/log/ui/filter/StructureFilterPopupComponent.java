@@ -47,8 +47,7 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
-public class StructureFilterPopupComponent
-  extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, VcsLogClassicFilterUi.FileFilterModel> {
+public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, FileFilterModel> {
   private static final String PATHS = "Paths";
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
@@ -59,7 +58,7 @@ public class StructureFilterPopupComponent
   private final @NotNull VcsLogColorManager myColorManager;
 
   public StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
-                                       @NotNull VcsLogClassicFilterUi.FileFilterModel filterModel,
+                                       @NotNull FileFilterModel filterModel,
                                        @NotNull VcsLogColorManager colorManager) {
     super(VcsLogBundle.messagePointer("vcs.log.filter.popup.paths"), filterModel);
     myUiProperties = uiProperties;
@@ -201,7 +200,7 @@ public class StructureFilterPopupComponent
 
   private @NotNull List<VcsLogStructureFilter> getRecentFilters() {
     List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(PATHS);
-    return ContainerUtil.map(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
+    return ContainerUtil.map(filterValues, values -> FileFilterModel.createStructureFilter(values));
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -438,7 +437,7 @@ public class StructureFilterPopupComponent
 
   private void setStructureFilter(@NotNull VcsLogStructureFilter newFilter) {
     myFilterModel.setFilter(new FilterPair<>(newFilter, null));
-    myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
+    myUiProperties.addRecentlyFilteredGroup(PATHS, FileFilterModel.getFilterValues(newFilter));
   }
 
   private final class SelectFromHistoryAction extends ToggleAction implements DumbAware {
