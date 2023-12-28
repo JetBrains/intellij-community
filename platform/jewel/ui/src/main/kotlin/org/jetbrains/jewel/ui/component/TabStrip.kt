@@ -24,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -50,8 +49,7 @@ public fun TabStrip(
             modifier = Modifier.horizontalScroll(scrollState)
                 .scrollable(
                     orientation = Orientation.Vertical,
-                    reverseDirection =
-                    ScrollableDefaults.reverseDirection(
+                    reverseDirection = ScrollableDefaults.reverseDirection(
                         LocalLayoutDirection.current,
                         Orientation.Vertical,
                         false,
@@ -81,8 +79,7 @@ public fun TabStrip(
 public sealed class TabData {
 
     public abstract val selected: Boolean
-    public abstract val label: String
-    public abstract val icon: Painter?
+    public abstract val content: @Composable TabContentScope.(tabState: TabState) -> Unit
     public abstract val closable: Boolean
     public abstract val onClose: () -> Unit
     public abstract val onClick: () -> Unit
@@ -91,8 +88,7 @@ public sealed class TabData {
     @GenerateDataFunctions
     public class Default(
         override val selected: Boolean,
-        override val label: String,
-        override val icon: Painter? = null,
+        override val content: @Composable TabContentScope.(tabState: TabState) -> Unit,
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
@@ -102,8 +98,7 @@ public sealed class TabData {
     @GenerateDataFunctions
     public class Editor(
         override val selected: Boolean,
-        override val label: String,
-        override val icon: Painter? = null,
+        override val content: @Composable TabContentScope.(tabState: TabState) -> Unit,
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
@@ -135,14 +130,13 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): TabStripState =
-        of(
-            enabled = enabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            active = active,
-        )
+    ): TabStripState = of(
+        enabled = enabled,
+        focused = focused,
+        pressed = pressed,
+        hovered = hovered,
+        active = active,
+    )
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +

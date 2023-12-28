@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isTertiary
@@ -47,6 +48,49 @@ import org.jetbrains.jewel.ui.NoIndication
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
+
+public interface TabContentScope {
+
+    @Composable
+    public fun Modifier.tabContentAlpha(state: TabState): Modifier =
+        this.alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
+}
+
+internal class TabContentScopeContainer : TabContentScope
+
+@Composable
+public fun TabContentScope.SimpleTabContent(
+    title: String,
+    state: TabState,
+    icon: Painter?,
+    modifier: Modifier = Modifier,
+) {
+    SimpleTabContent(
+        modifier = modifier,
+        label = { Text(title) },
+        icon = icon?.let { { Icon(painter = icon, contentDescription = null) } },
+        state = state,
+    )
+}
+
+@Composable
+public fun TabContentScope.SimpleTabContent(
+    modifier: Modifier = Modifier,
+    state: TabState,
+    icon: (@Composable () -> Unit)? = null,
+    label: @Composable () -> Unit,
+) {
+    Row(
+        modifier.tabContentAlpha(state),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(space = JewelTheme.defaultTabStyle.metrics.tabContentSpacing),
+    ) {
+        if (icon != null) {
+            icon()
+        }
+        label()
+    }
+}
 
 @Composable
 internal fun TabImpl(
@@ -72,10 +116,7 @@ internal fun TabImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> tabState = tabState.copy(pressed = true)
-                is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> tabState = tabState.copy(pressed = false)
-
+                is PressInteraction.Cancel, is PressInteraction.Release -> tabState = tabState.copy(pressed = false)
                 is HoverInteraction.Enter -> tabState = tabState.copy(hovered = true)
                 is HoverInteraction.Exit -> tabState = tabState.copy(hovered = false)
             }
@@ -90,9 +131,6 @@ internal fun TabImpl(
         .value.takeOrElse { LocalContentColor.current }
 
     CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
-        val labelAlpha by tabStyle.contentAlpha.labelFor(tabState)
-        val iconAlpha by tabStyle.contentAlpha.iconFor(tabState)
-
         Row(
             modifier.height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
@@ -123,15 +161,8 @@ internal fun TabImpl(
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            tabData.icon?.let { icon ->
-                Image(modifier = Modifier.alpha(iconAlpha), painter = icon, contentDescription = null)
-            }
+            tabData.content(TabContentScopeContainer(), tabState)
 
-            Text(
-                modifier = Modifier.alpha(labelAlpha),
-                text = tabData.label,
-                color = tabStyle.colors.contentFor(tabState).value,
-            )
             val showCloseIcon =
                 when (tabData) {
                     is TabData.Default -> tabData.closable
@@ -166,7 +197,7 @@ internal fun TabImpl(
                         )
                         .size(16.dp),
                     painter = closePainter,
-                    contentDescription = "Close tab ${tabData.label}",
+                    contentDescription = "Close tab",
                 )
             } else if (tabData.closable) {
                 Spacer(Modifier.size(16.dp))

@@ -594,11 +594,18 @@ public final class org/jetbrains/jewel/ui/component/SplitLayoutKt {
 	public static final fun VerticalSplitLayout-BssWTFQ (Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)V
 }
 
+public abstract interface class org/jetbrains/jewel/ui/component/TabContentScope {
+	public abstract fun tabContentAlpha-A_ZS63w (Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/Modifier;
+}
+
+public final class org/jetbrains/jewel/ui/component/TabContentScope$DefaultImpls {
+	public static fun tabContentAlpha-A_ZS63w (Lorg/jetbrains/jewel/ui/component/TabContentScope;Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/Modifier;
+}
+
 public abstract class org/jetbrains/jewel/ui/component/TabData {
 	public static final field $stable I
 	public abstract fun getClosable ()Z
-	public abstract fun getIcon ()Landroidx/compose/ui/graphics/painter/Painter;
-	public abstract fun getLabel ()Ljava/lang/String;
+	public abstract fun getContent ()Lkotlin/jvm/functions/Function4;
 	public abstract fun getOnClick ()Lkotlin/jvm/functions/Function0;
 	public abstract fun getOnClose ()Lkotlin/jvm/functions/Function0;
 	public abstract fun getSelected ()Z
@@ -606,12 +613,11 @@ public abstract class org/jetbrains/jewel/ui/component/TabData {
 
 public final class org/jetbrains/jewel/ui/component/TabData$Default : org/jetbrains/jewel/ui/component/TabData {
 	public static final field $stable I
-	public fun <init> (ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLkotlin/jvm/functions/Function4;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (ZLkotlin/jvm/functions/Function4;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getClosable ()Z
-	public fun getIcon ()Landroidx/compose/ui/graphics/painter/Painter;
-	public fun getLabel ()Ljava/lang/String;
+	public fun getContent ()Lkotlin/jvm/functions/Function4;
 	public fun getOnClick ()Lkotlin/jvm/functions/Function0;
 	public fun getOnClose ()Lkotlin/jvm/functions/Function0;
 	public fun getSelected ()Z
@@ -621,12 +627,11 @@ public final class org/jetbrains/jewel/ui/component/TabData$Default : org/jetbra
 
 public final class org/jetbrains/jewel/ui/component/TabData$Editor : org/jetbrains/jewel/ui/component/TabData {
 	public static final field $stable I
-	public fun <init> (ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLkotlin/jvm/functions/Function4;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (ZLkotlin/jvm/functions/Function4;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getClosable ()Z
-	public fun getIcon ()Landroidx/compose/ui/graphics/painter/Painter;
-	public fun getLabel ()Ljava/lang/String;
+	public fun getContent ()Lkotlin/jvm/functions/Function4;
 	public fun getOnClick ()Lkotlin/jvm/functions/Function0;
 	public fun getOnClose ()Lkotlin/jvm/functions/Function0;
 	public fun getSelected ()Z
@@ -702,6 +707,11 @@ public final class org/jetbrains/jewel/ui/component/TabStripState : org/jetbrain
 public final class org/jetbrains/jewel/ui/component/TabStripState$Companion {
 	public final fun of-zFr0jqg (ZZZZZ)J
 	public static synthetic fun of-zFr0jqg$default (Lorg/jetbrains/jewel/ui/component/TabStripState$Companion;ZZZZZILjava/lang/Object;)J
+}
+
+public final class org/jetbrains/jewel/ui/component/TabsKt {
+	public static final fun SimpleTabContent-A5h6_LM (Lorg/jetbrains/jewel/ui/component/TabContentScope;Landroidx/compose/ui/Modifier;JLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleTabContent-A5h6_LM (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;JLandroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextAreaKt {
@@ -1796,20 +1806,20 @@ public final class org/jetbrains/jewel/ui/component/styling/TabContentAlpha {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha$Companion;
 	public fun <init> (FFFFFFFFFF)V
+	public final fun contentFor-UXw_FYk (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContentDisabled ()F
+	public final fun getContentHovered ()F
+	public final fun getContentNormal ()F
+	public final fun getContentPressed ()F
+	public final fun getContentSelected ()F
 	public final fun getIconDisabled ()F
 	public final fun getIconHovered ()F
 	public final fun getIconNormal ()F
 	public final fun getIconPressed ()F
 	public final fun getIconSelected ()F
-	public final fun getLabelDisabled ()F
-	public final fun getLabelHovered ()F
-	public final fun getLabelNormal ()F
-	public final fun getLabelPressed ()F
-	public final fun getLabelSelected ()F
 	public fun hashCode ()I
 	public final fun iconFor-UXw_FYk (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public final fun labelFor-UXw_FYk (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1832,9 +1842,10 @@ public final class org/jetbrains/jewel/ui/component/styling/TabIcons$Companion {
 public final class org/jetbrains/jewel/ui/component/styling/TabMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabMetrics$Companion;
-	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;FFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCloseContentGap-D9Ej5fM ()F
+	public final fun getTabContentSpacing-D9Ej5fM ()F
 	public final fun getTabHeight-D9Ej5fM ()F
 	public final fun getTabPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getUnderlineThickness-D9Ej5fM ()F

@@ -2,6 +2,7 @@
 
 package org.jetbrains.jewel.samples.standalone.view.component
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,16 +15,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.SimpleTabContent
 import org.jetbrains.jewel.ui.component.TabData
 import org.jetbrains.jewel.ui.component.TabStrip
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
+import org.jetbrains.jewel.ui.util.thenIf
 import kotlin.math.max
 
 @Composable
@@ -48,7 +54,16 @@ private fun DefaultTabShowcase() {
         tabIds.mapIndexed { index, id ->
             TabData.Default(
                 selected = index == selectedTabIndex,
-                label = "Default tab $id",
+                content = {
+                    val iconProvider =
+                        rememberResourcePainterProvider("icons/search.svg", StandaloneSampleIcons::class.java)
+                    val icon by iconProvider.getPainter()
+                    SimpleTabContent(
+                        state = it,
+                        title = "Default Tab $id",
+                        icon = icon,
+                    )
+                },
                 onClose = {
                     tabIds = tabIds.toMutableList().apply { removeAt(index) }
                     if (selectedTabIndex >= index) {
@@ -83,7 +98,35 @@ private fun EditorTabShowcase() {
         tabIds.mapIndexed { index, id ->
             TabData.Editor(
                 selected = index == selectedTabIndex,
-                label = "Editor tab $id",
+                content = { tabState ->
+                    Row {
+                        SimpleTabContent(
+                            modifier = Modifier,
+                            state = tabState,
+                            label = { Text("Editor tab $id") },
+                            icon = {
+                                Icon(
+                                    resource = "icons/search.svg",
+                                    contentDescription = "SearchIcon",
+                                    iconClass = StandaloneSampleIcons::class.java,
+                                    modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),
+                                    tint = Color.Magenta,
+                                )
+                            },
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .thenIf(tabState.isHovered) {
+                                drawWithCache {
+                                    onDrawBehind {
+                                        drawCircle(color = Color.Magenta.copy(alpha = .4f), radius = 6.dp.toPx())
+                                    }
+                                }
+                            },
+                    )
+                },
                 onClose = {
                     tabIds = tabIds.toMutableList().apply { removeAt(index) }
                     if (selectedTabIndex >= index) {
