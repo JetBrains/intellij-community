@@ -338,10 +338,8 @@ object CodeWithMeClientDownloader {
   suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
     return progressStep(1.0, RemoteDevUtilBundle.message("launcher.get.client.info")) {
       withRawProgressReporter {
-        blockingContext {
-          blockingContextToIndicator {
-            downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
-          }
+        coroutineToIndicator {
+          downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
         }
       }
     }
