@@ -14,6 +14,7 @@ import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,10 @@ import java.util.function.BiPredicate;
  * <p/>
  * Map doesn't allow null keys. It does allow null values, but {@code .put(key,null)} is equivalent to {@code .remove(key)}
  * Map needs a compaction from time to time
+ * <p/>
+ * Construct with {@link DurableMapFactory}, not with constructor
  */
+@ApiStatus.Internal
 public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   //TODO RC: current implementation is almost single-threaded -- all the operations, including (potential) IO, happen
@@ -55,6 +59,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
    */
   private final KeyDescriptorEx<V> valueDescriptor;
 
+  /** Ctor is for internal use mostly, use {@link DurableMapFactory} to configure and create the map */
   public DurableMapOverAppendOnlyLog(@NotNull AppendOnlyLog keyValuesLog,
                                      @NotNull DurableIntToMultiIntMap keyHashToIdMap,
                                      @NotNull KeyDescriptorEx<K> keyDescriptor,

@@ -2,8 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
 import com.intellij.openapi.vfs.newvfs.persistent.StorageTestingUtils;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.KeyValueStoreTestBase;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.durablemaps.Compactable.CompactionScore;
@@ -26,17 +24,7 @@ public class DurableMapOverAppendOnlyLogTest extends KeyValueStoreTestBase<Durab
 
   @Override
   protected @NotNull StorageFactory<DurableMapOverAppendOnlyLog<String, String>> factory() {
-    return storagePath -> AppendOnlyLogFactory.withDefaults().wrapStorageSafely(
-      storagePath,
-      aoLog -> ExtendibleMapFactory.mediumSize().wrapStorageSafely(
-        storagePath.resolveSibling(storagePath.getFileName() + ".map"),
-        map -> new DurableMapOverAppendOnlyLog<>(aoLog,
-                                                 map,
-                                                 StringAsUTF8.INSTANCE,
-                                                 StringAsUTF8.INSTANCE
-        )
-      )
-    );
+    return DurableMapFactory.withDefaults(StringAsUTF8.INSTANCE, StringAsUTF8.INSTANCE);
   }
 
   //TODO RC: most of the tests are actual for PersistentMap also! So better extract them into

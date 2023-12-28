@@ -2,8 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps.DurableMapOverAppendOnlyLog;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps.DurableMapFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.*;
 import com.intellij.util.io.dev.enumerator.StringAsUTF8;
@@ -79,18 +78,10 @@ public class PersistentMapsBenchmark {
     private KeyValueStore<String, String> createStore() throws IOException {
       Path storagePath = tempDir.resolve("map");
       if (newImplementation) {
-        return AppendOnlyLogFactory.withDefaults().wrapStorageSafely(
-          storagePath,
-          aoLog -> ExtendibleMapFactory.largeSize().wrapStorageSafely(
-            storagePath.resolveSibling(storagePath.getFileName() + ".map"),
-            map -> new DurableMapOverAppendOnlyLog<>(
-              aoLog,
-              map,
-              StringAsUTF8.INSTANCE,
-              StringAsUTF8.INSTANCE
-            )
-          )
-        );
+        return DurableMapFactory
+          .withDefaults(StringAsUTF8.INSTANCE, StringAsUTF8.INSTANCE)
+          .mapFactory(ExtendibleMapFactory.largeSize())
+          .open(storagePath);
       }
       else {
         Files.deleteIfExists(storagePath);
