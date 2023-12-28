@@ -68,7 +68,7 @@ public class MavenSpyOutputParser {
       parse(threadId, eventType, parameters, messageConsumer);
     }
     catch (Exception e) {
-      MavenLog.LOG.error(e);
+      MavenLog.LOG.error("Error processing line " + spyLine, e);
     }
   }
 
@@ -285,7 +285,8 @@ public class MavenSpyOutputParser {
     if (context.getProjectFailure()) {
       messageConsumer
         .accept(new FinishBuildEventImpl(context.getMyTaskId(), null, System.currentTimeMillis(), "", new FailureResultImpl()));
-    } else {
+    }
+    else {
       messageConsumer
         .accept(new FinishBuildEventImpl(context.getMyTaskId(), null, System.currentTimeMillis(), "", new SuccessResultImpl()));
     }
