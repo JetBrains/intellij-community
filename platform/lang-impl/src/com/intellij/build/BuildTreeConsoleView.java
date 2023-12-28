@@ -88,7 +88,7 @@ import java.util.function.Supplier;
 import static com.intellij.build.BuildConsoleUtils.getMessageTitle;
 import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
+import static com.intellij.uireg.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 import static com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED;
@@ -543,7 +543,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   }
 
   private @Nullable Runnable showErrorIfFirst(@NotNull ExecutionNode node, @Nullable Navigatable navigatable) {
-    if (!Registry.is("run.toolwindow.navigate.to.first.error")) {return null}
+    if (!Registry.is("run.toolwindow.navigate.to.first.error")) {
+      return null;
+    }
     if (myShownFirstError.compareAndSet(false, true)) {
       return () -> {
         TreeUtil.promiseSelect(myTree, visitor(node));
