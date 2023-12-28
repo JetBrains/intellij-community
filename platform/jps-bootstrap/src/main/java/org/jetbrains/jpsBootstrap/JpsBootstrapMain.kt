@@ -110,7 +110,8 @@ class JpsBootstrapMain(args: Array<String>?) {
     val communityHomeString = System.getenv(COMMUNITY_HOME_ENV)
       ?: error("Please set $COMMUNITY_HOME_ENV environment variable")
     communityHome = BuildDependenciesCommunityRoot(Path.of(communityHomeString))
-    jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work")
+    jpsBootstrapWorkDir = System.getenv(JPS_BOOTSTRAP_WORKDIR)?.let { Path.of(it) }
+                          ?: projectHome.resolve("build").resolve("jps-bootstrap-work")
     info("Working directory: $jpsBootstrapWorkDir")
     Files.createDirectories(jpsBootstrapWorkDir)
     buildTargetXmx = if (cmdline.hasOption(OPT_BUILD_TARGET_XMX)) cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) else DEFAULT_BUILD_SCRIPT_XMX
@@ -325,6 +326,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     private const val DEFAULT_BUILD_SCRIPT_XMX = "4g"
     private const val CLASSPATH_FILE_TARGET_ENV = "JPS_BOOTSTRAP_CLASSPATH_FILE_TARGET"
     private const val COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME"
+    private const val JPS_BOOTSTRAP_WORKDIR = "JPS_BOOTSTRAP_WORKDIR"
     private const val JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE"
     private val OPT_HELP = Option.builder("h").longOpt("help").build()
     private val OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build()
