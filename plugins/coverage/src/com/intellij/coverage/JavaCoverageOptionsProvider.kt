@@ -39,6 +39,7 @@ class JavaCoverageOptionsProvider(private val project: Project) : PersistentStat
 
   override fun getState(): State = state
   override fun loadState(loaded: State) {
+    state.myRunnerId = loaded.myRunnerId
     state.myBranchCoverage = loaded.myBranchCoverage
     state.myTestTracking = loaded.myTestTracking
     state.myTestModulesCoverage = loaded.myTestModulesCoverage
