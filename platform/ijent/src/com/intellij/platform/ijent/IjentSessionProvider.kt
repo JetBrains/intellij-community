@@ -77,8 +77,14 @@ interface IjentSessionProvider {
           if (process.waitFor(10, TimeUnit.MILLISECONDS)) {
             val exitValue = process.exitValue()
             LOG.debug { "$ijentId exit code $exitValue" }
-            check(exitValue == 0) { "Process has exited with code $exitValue" }
-            cancel()
+            val message = "Process has exited with code $exitValue"
+            if (exitValue == 0) {
+              cancel(message)
+            }
+            else {
+              LOG.error(message)
+              error(message)
+            }
             break
           }
           delay(100)
