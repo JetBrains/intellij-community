@@ -241,7 +241,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
     GitFileAnnotation annotation = parseAnnotations(revision, file, root, output);
 
-    GitAnnotationProviderKt.reportAnnotationFinished(myProject, root, filePath, revision, start, "default");
+    GitAnnotationProviderKt.reportAnnotationFinished(myProject, root, filePath, revision, annotation, start, "default");
 
     return annotation;
   }

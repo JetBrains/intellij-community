@@ -33,11 +33,12 @@ fun reportAnnotationFinished(project: Project,
                              root: VirtualFile,
                              filePath: FilePath,
                              revision: VcsRevisionNumber?,
+                             annotation: GitFileAnnotation,
                              startMs: Long,
                              provider: String) {
   val duration = (System.currentTimeMillis() - startMs).toDuration(DurationUnit.MILLISECONDS)
 
   GitAnnotationPerformanceListener.EP_NAME.extensionList.forEach {
-    it.onAnnotationFinished(project, root, filePath, revision, duration, provider)
+    it.onAnnotationFinished(project, root, filePath, revision, annotation, duration, provider)
   }
 }

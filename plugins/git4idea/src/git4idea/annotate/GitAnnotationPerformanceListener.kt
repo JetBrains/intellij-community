@@ -21,6 +21,7 @@ interface GitAnnotationPerformanceListener {
                            root: VirtualFile,
                            path: FilePath,
                            revision: VcsRevisionNumber?,
+                           annotation: GitFileAnnotation,
                            duration: Duration,
                            provider: String)
 }
