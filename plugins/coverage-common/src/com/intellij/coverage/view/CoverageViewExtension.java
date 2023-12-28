@@ -50,6 +50,10 @@ public abstract class CoverageViewExtension {
   @NotNull
   public abstract AbstractTreeNode<?> createRootNode();
 
+  public boolean hasChildren(AbstractTreeNode<?> node) {
+    return !getChildrenNodes(node).isEmpty();
+  }
+
   public boolean hasVCSFilteredNodes() {
     return false;
   }

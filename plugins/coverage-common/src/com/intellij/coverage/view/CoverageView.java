@@ -135,7 +135,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (myTreeStructure.getRootElement() instanceof AbstractTreeNode<?> root) {
       if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified()
           && myStateBean.isDefaultFilters()) {
-        if (root.getChildren().isEmpty()) {
+        if (!myViewExtension.hasChildren(root)) {
           myStateBean.setShowOnlyModified(false);
           resetView();
         }

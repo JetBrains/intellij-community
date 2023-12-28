@@ -46,6 +46,12 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
     state.addListener(this) { buildClassesTree() }
   }
 
+  fun hasChildren(id: String): Boolean {
+    val node = nodeMap[id] ?: return false
+    return node.childCount > 0
+  }
+
+
   fun getChildrenInfo(id: String): List<CoverageNodeInfo> {
     val node = nodeMap[id] ?: return emptyList()
     return node.children().toList().map { (it as CoverageTreeNode).userObject }

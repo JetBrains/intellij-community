@@ -107,6 +107,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
+  public boolean hasChildren(AbstractTreeNode<?> node) {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.hasChildren(getNodeId(node));
+  }
+
+  @Override
   public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     CoverageClassStructure structure = myAnnotator.getStructure();
