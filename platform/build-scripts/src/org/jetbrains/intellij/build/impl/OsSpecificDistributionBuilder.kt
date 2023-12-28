@@ -79,6 +79,13 @@ interface OsSpecificDistributionBuilder {
 
   fun writeVmOptions(distBinDir: Path): Path
 
+  /**
+   * @return .dmg, .tag.gz, .exe or other distribution files built
+   */
+  fun distributionFilesBuilt(arch: JvmArchitecture): List<Path>
+
+  fun isRuntimeBundled(file: Path): Boolean
+
   private class MatchedFile(val relativePath: String, val isValid: Boolean, val patterns: Collection<PathMatcher>) {
     override fun toString() = relativePath
   }

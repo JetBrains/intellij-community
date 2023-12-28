@@ -113,22 +113,7 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   private val DistributionForOsTaskResult.files: List<Path>
-    get() = when (builder.targetOs) {
-      OsFamily.LINUX -> sequenceOf(".tar.gz")
-      OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip")
-      OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip")
-    }.map { extension ->
-      context.productProperties.getBaseArtifactName(context) +
-      OsSpecificDistributionBuilder.suffix(arch) +
-      extension
-    }.plus(
-      when {
-        builder is LinuxDistributionBuilder -> builder.snapArtifactName
-        else -> null
-      }
-    ).filterNotNull()
-      .map(context.paths.artifactDir::resolve)
-      .filter { it.exists() }.toList()
+    get() = builder.distributionFilesBuilt(arch)
 
   private fun spdxDocument(name: String): SpdxDocument {
     val uri = "$documentNamespace/$specVersion/$name.spdx"
@@ -215,7 +200,7 @@ internal class SoftwareBillOfMaterialsImpl(
             } ?: SpdxConstants.NOASSERTION_VALUE)
         }
         document.documentDescribes.add(rootPackage)
-        val runtimePackage = if (isRuntimeBundled(it.path, distribution.builder.targetOs)) {
+        val runtimePackage = if (distribution.builder.isRuntimeBundled(it.path)) {
           document.runtimePackage(distribution.builder.targetOs, distribution.arch)
         } else null
         generate(
@@ -224,14 +209,6 @@ internal class SoftwareBillOfMaterialsImpl(
           distributionDir = distribution.outDir
         )
       }
-    }
-  }
-
-  private fun isRuntimeBundled(file: Path, os: OsFamily): Boolean {
-    return when (os) {
-      OsFamily.LINUX -> !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX)
-      OsFamily.MACOS -> !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
-      OsFamily.WINDOWS -> true
     }
   }
 

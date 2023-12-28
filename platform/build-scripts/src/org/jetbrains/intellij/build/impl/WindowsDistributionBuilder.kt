@@ -19,7 +19,9 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.name
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -290,6 +292,23 @@ internal class WindowsDistributionBuilder(
           targetFile
         }
     }
+  }
+
+  override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
+    val archSuffix = suffix(arch)
+    return sequenceOf(
+      "$archSuffix.exe",
+      archSuffix + customizer.zipArchiveWithBundledJreSuffix + ".zip",
+      archSuffix + customizer.zipArchiveWithoutBundledJreSuffix + ".zip"
+    ).map { suffix ->
+      context.productProperties.getBaseArtifactName(context) + suffix
+    }.map(context.paths.artifactDir::resolve)
+      .filter { it.exists() }
+      .toList()
+  }
+
+  override fun isRuntimeBundled(file: Path): Boolean {
+    return !file.name.contains(customizer.zipArchiveWithoutBundledJreSuffix)
   }
 }
 

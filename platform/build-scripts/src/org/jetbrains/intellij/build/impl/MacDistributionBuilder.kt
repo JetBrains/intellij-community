@@ -25,13 +25,15 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.util.function.BiConsumer
 import java.util.zip.Deflater
+import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
-  internal companion object {
+  private companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jdk"
   }
 
@@ -424,6 +426,26 @@ class MacDistributionBuilder(override val context: BuildContext,
         }
       }
     }
+  }
+
+  override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
+    val archSuffix = suffix(arch)
+    return sequenceOf(
+      "$archSuffix.dmg",
+      "$archSuffix.sit",
+      ".mac.${arch.name}.zip",
+      "$NO_RUNTIME_SUFFIX$archSuffix.dmg",
+      "$NO_RUNTIME_SUFFIX$archSuffix.sit",
+      ".mac.${arch.name}$NO_RUNTIME_SUFFIX.zip"
+    ).map { suffix ->
+      context.productProperties.getBaseArtifactName(context) + suffix
+    }.map(context.paths.artifactDir::resolve)
+      .filter { it.exists() }
+      .toList()
+  }
+
+  override fun isRuntimeBundled(file: Path): Boolean {
+    return !file.name.contains(NO_RUNTIME_SUFFIX)
   }
 }
 

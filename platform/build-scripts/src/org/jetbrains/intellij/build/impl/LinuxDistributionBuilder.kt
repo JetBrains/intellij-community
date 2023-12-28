@@ -21,6 +21,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.minutes
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.minutes
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
                                private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
-  internal companion object {
+  private companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jbr"
   }
 
@@ -293,6 +294,22 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return unSquashed.resolve("squashfs-root")
   }
 
+  override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
+    val archSuffix = suffix(arch)
+    return sequenceOf(
+      "$archSuffix.tar.gz",
+      "$NO_RUNTIME_SUFFIX$archSuffix.tar.gz"
+    ).map { suffix ->
+      context.productProperties.getBaseArtifactName(context) + suffix
+    }.plus(snapArtifactName).filterNotNull()
+      .map(context.paths.artifactDir::resolve)
+      .filter { it.exists() }
+      .toList()
+  }
+
+  override fun isRuntimeBundled(file: Path): Boolean {
+    return !file.name.contains(NO_RUNTIME_SUFFIX)
+  }
 }
 
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
