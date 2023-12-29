@@ -6,9 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
@@ -51,23 +49,8 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
         val file = files.first() as KtFile
 
         withCustomCompilerOptions(file.text, project, module) {
-            enforceResolve(file)
+            ensureFilesResolved(file)
             super.doMultiFileTest(files, globalDirectives)
-        }
-    }
-
-    /**
-     * Highlighting tests combined with compiler plugins can be flaky for some reason,
-     * so we do some resolve beforehand just in case.
-     */
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun enforceResolve(file: KtFile) {
-        allowAnalysisOnEdt {
-            analyze(file) {
-                file.declarations.forEach {
-                    it.getSymbol()
-                }
-            }
         }
     }
 
