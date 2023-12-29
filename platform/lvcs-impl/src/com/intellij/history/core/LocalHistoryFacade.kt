@@ -225,7 +225,8 @@ fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, pat
           processChangeSet(changeSet, change, path)
           pathExists = true
         }
-      } else {
+      }
+      else {
         processChangeSet(changeSet, change, path)
         if (change is StructuralChange) path = change.revertPath(path)
         if (change is CreateEntryChange && change.isCreationalFor(path)) pathExists = false
@@ -246,30 +247,26 @@ internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
                                                 changeSets: Set<Long>,
                                                 before: Boolean,
                                                 processor: (Long, String?) -> Boolean) {
-  var path: String? = startPath
-  accept(object : ChangeVisitor() {
-    private fun processContent(changeSetId: Long): Boolean {
-      if (!changeSets.contains(changeSetId)) return true
-      val entry = root.findEntry(path)
-      return processor(changeSetId, entry?.content?.getString(entry, gateway))
-    }
+  val processContents = fun(changeSetId: Long, path: String): Boolean {
+    if (!changeSets.contains(changeSetId)) return true
+    val entry = root.findEntry(path)
+    return processor(changeSetId, entry?.content?.getString(entry, gateway))
+  }
 
-    override fun begin(c: ChangeSet) {
-      ProgressManager.checkCanceled()
-      if (Thread.currentThread().isInterrupted) throw ProcessCanceledException()
-      if (!before && !processContent(c.id)) stop()
-    }
+  var path = startPath
+  for (changeSet in changes) {
 
-    @Throws(StopVisitingException::class)
-    override fun end(c: ChangeSet) {
-      if (before && !processContent(c.id)) stop()
-    }
+    ProgressManager.checkCanceled()
+    if (Thread.currentThread().isInterrupted) throw ProcessCanceledException()
+    if (!before && !processContents(changeSet.id, path)) break
 
-    override fun visit(c: StructuralChange) {
-      if (c.affectsPath(path)) {
-        c.revertOn(root, false)
-        path = c.revertPath(path)
+    for (change in changeSet.changes.reversed()) {
+      if (change is StructuralChange && change.affectsPath(path)) {
+        change.revertOn(root, false)
+        path = change.revertPath(path)
       }
     }
-  })
+
+    if (before && !processContents(changeSet.id, path)) break
+  }
 }
