@@ -4,9 +4,9 @@ Reports JUnit test method <code>throws</code> clauses with more than one excepti
 Such clauses are unnecessarily verbose.
 Test methods will not be called from other project code, so there is no need to handle these exceptions separately.
 <p>For example:</p>
-<pre><code>
+<pre><code lang="java">
   @Test
-  <b>public void</b> testReflection() <b>throws</b> NoSuchMethodException,
+  public void testReflection() throws NoSuchMethodException,
       InvocationTargetException, IllegalAccessException {
     String result = (String) String.class.getMethod("trim")
         .invoke(" hello ");
@@ -14,9 +14,9 @@ Test methods will not be called from other project code, so there is no need to 
   }
 </code></pre>
 <p>A quick fix is provided to replace the exception declarations with a single exception:</p>
-<pre><code>
+<pre><code lang="java">
   @Test
-  <b>public void</b> testReflection() <b>throws</b> Exception {
+  public void testReflection() throws Exception {
     String result = (String) String.class.getMethod("trim")
         .invoke(" hello ");
     assertEquals("hello", result);

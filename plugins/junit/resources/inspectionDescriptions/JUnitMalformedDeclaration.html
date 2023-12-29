@@ -43,13 +43,17 @@ The following problems are reported by this inspection:
 Note that in Kotlin, suspending functions do have arguments and a non-void return type. Therefore, they also will not be executed by the
 JUnit test runner. This inspection will also report about this problem.
 
-<p><b>Malformed <code>@Before</code> method example (Java):</b></p>
-<pre><code>@Before private int foo(int arg) { ... } </code></pre>
+<p><b>Malformed <code>@Before</code> method example:</b></p>
+<pre><code lang="java">
+  @Before private int foo(int arg) { }
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>@Before public void foo() { ... } </code></pre>
+<pre><code lang="java">
+  @Before public void foo() { }
+</code></pre>
 
 <p><b>Missing method source example (Kotlin):</b></p>
-<pre><code>
+<pre><code lang="kotlin">
   class Example {
     @MethodSource("parameters")
     @ParameterizedTest
@@ -57,7 +61,7 @@ JUnit test runner. This inspection will also report about this problem.
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="kotlin">
   class Example {
     @MethodSource("parameters")
     @ParameterizedTest

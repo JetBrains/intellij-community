@@ -8,35 +8,35 @@ The data provider method should be <code>public</code> and <code>static</code> a
 <p>Suggests creating an empty parameter provider method or changing the signature of the incorrect data provider method.</p>
 
 <p><b>Example:</b><p>
-<pre><code>
+<pre><code lang="java">
   @RunWith(Parameterized.class)
-  <b>public class</b> ImportantTest {
-    <b>private int</b> input;
-    <b>private int</b> expected;
+  public class ImportantTest {
+    private int input;
+    private int expected;
 
-    ImportantTest(<b>int</b> input, <b>int</b> expected) {
-      <b>this</b>.input = input;
-      <b>this</b>.expected = expected;
+    ImportantTest(int input, int expected) {
+      this.input = input;
+      this.expected = expected;
     }
 
     // ... test cases
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   @RunWith(Parameterized.class)
-  <b>public class</b> ImportantTest {
-    <b>private int</b> input;
-    <b>private int</b> expected;
+  public class ImportantTest {
+    private int input;
+    private int expected;
 
-    ImportantTest(<b>int</b> input, <b>int</b> expected) {
-      <b>this</b>.input = input;
-      <b>this</b>.expected = expected;
+    ImportantTest(int input, int expected) {
+      this.input = input;
+      this.expected = expected;
     }
 
     @Parameters
-    <b>public static</b> Iterable&lt;Object[]> parameters() {
-      <b>return null</b>;
+    public static Iterable&lt;Object[]> parameters() {
+      return null;
     }
 
     // ... test cases
