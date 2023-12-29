@@ -77,7 +77,7 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
         return modules;
       }
 
-      private void scheduleTooltip(@NotNull Project project) {
+      private static void scheduleTooltip(@NotNull Project project) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
           if (ProjectView.getInstance(project).getCurrentProjectViewPane() != null) {
             showTooltip(project);
@@ -93,9 +93,11 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
         });
       }
 
-      private void showTooltip(Project project) {
+      private static void showTooltip(Project project) {
         ApplicationManager.getApplication().invokeLater(() -> {
           JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+          if (tree == null) return; // too early
+
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
           GotItTooltip tooltip =
             new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
