@@ -31,6 +31,8 @@ import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.index.showToolWindowTab
 import git4idea.stash.GitStashTracker
+import git4idea.stash.GitStashTrackerListener
+import git4idea.stash.isNotEmpty
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -124,7 +126,7 @@ internal class GitStashContentPreloader(val project: Project) : ChangesViewConte
 }
 
 internal class GitStashContentVisibilityPredicate : Predicate<Project> {
-  override fun test(project: Project) = isStashTabAvailable()
+  override fun test(project: Project) = isStashTabVisible(project)
 }
 
 internal class GitStashDisplayNameSupplier(private val project: Project) : Supplier<String> {
@@ -147,6 +149,15 @@ internal class GitStashStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val gitStashTracker = project.service<GitStashTracker>()
 
+    gitStashTracker.addListener(object : GitStashTrackerListener {
+      private var hasStashes = gitStashTracker.isNotEmpty()
+      override fun stashesUpdated() {
+        if (hasStashes != gitStashTracker.isNotEmpty()) {
+          hasStashes = gitStashTracker.isNotEmpty()
+          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        }
+      }
+    }, gitStashTracker)
     stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         gitStashTracker.scheduleRefresh()
@@ -171,6 +182,10 @@ interface GitStashSettingsListener {
 
 internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.enable.stash.toolwindow")
 internal fun isStashTabAvailable(): Boolean = stashToolWindowRegistryOption().asBoolean()
+internal fun isStashTabVisible(project: Project): Boolean {
+  if (!isStashTabAvailable()) return false
+  return isStashesAndShelvesTabEnabled(project) || project.service<GitStashTracker>().isNotEmpty()
+}
 
 internal fun isStashesAndShelvesTabEnabled(project: Project): Boolean {
   return ShelvedChangesViewManager.hideDefaultShelfTab(project)
