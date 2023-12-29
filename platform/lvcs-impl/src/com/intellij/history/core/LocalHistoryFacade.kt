@@ -21,7 +21,10 @@ import com.intellij.history.core.revisions.ChangeRevision
 import com.intellij.history.core.revisions.RecentChange
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
+import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.NameUtil
@@ -235,4 +238,38 @@ fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean
   if (!affectsPath(path) && !affectsProject(projectId)) return false
   if (pattern != null && !affectsMatching(pattern)) return false
   return true
+}
+
+internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
+                                                root: RootEntry,
+                                                startPath: String,
+                                                changeSets: Set<Long>,
+                                                before: Boolean,
+                                                processor: (Long, String?) -> Boolean) {
+  var path: String? = startPath
+  accept(object : ChangeVisitor() {
+    private fun processContent(changeSetId: Long): Boolean {
+      if (!changeSets.contains(changeSetId)) return true
+      val entry = root.findEntry(path)
+      return processor(changeSetId, entry?.content?.getString(entry, gateway))
+    }
+
+    override fun begin(c: ChangeSet) {
+      ProgressManager.checkCanceled()
+      if (Thread.currentThread().isInterrupted) throw ProcessCanceledException()
+      if (!before && !processContent(c.id)) stop()
+    }
+
+    @Throws(StopVisitingException::class)
+    override fun end(c: ChangeSet) {
+      if (before && !processContent(c.id)) stop()
+    }
+
+    override fun visit(c: StructuralChange) {
+      if (c.affectsPath(path)) {
+        c.revertOn(root, false)
+        path = c.revertPath(path)
+      }
+    }
+  })
 }

@@ -3,20 +3,15 @@ package com.intellij.history.integration.ui.models
 
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.RevisionsCollector
-import com.intellij.history.core.changes.ChangeSet
-import com.intellij.history.core.changes.ChangeVisitor
-import com.intellij.history.core.changes.StructuralChange
+import com.intellij.history.core.processContents
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.util.PairProcessor
-import java.util.*
 
 data class RevisionData(val currentRevision: Revision, val revisions: List<RevisionItem>)
 
@@ -76,39 +71,16 @@ internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway, file: Virt
   if (revisionMap.isEmpty()) return
 
   val root = revisionMap.values.first().root.copy()
-  var path: String? = gateway.getPathOrUrl(file)
+  val path = gateway.getPathOrUrl(file)
 
-  accept(object : ChangeVisitor() {
-    init {
-      processContent(revisionMap[null])
-    }
+  val currentRevision = revisionMap[null]
+  if (currentRevision != null) {
+    val entry = root.findEntry(path)
+    processor.process(currentRevision, entry?.content?.getString(entry, gateway))
+  }
 
-    private fun processContent(revision: Revision?): Boolean {
-      if (revision == null) return true
-      val entry = root.findEntry(path)
-      val content = entry?.content
-      val text = content?.getString(entry, gateway)
-      return processor.process(revision, text)
-    }
-
-    override fun begin(c: ChangeSet) {
-      ProgressManager.checkCanceled()
-      if (Thread.currentThread().isInterrupted) {
-        throw ProcessCanceledException()
-      }
-      if (!before && !processContent(revisionMap[c.id])) stop()
-    }
-
-    @Throws(StopVisitingException::class)
-    override fun end(c: ChangeSet) {
-      if (before && !processContent(revisionMap[c.id])) stop()
-    }
-
-    override fun visit(c: StructuralChange) {
-      if (c.affectsPath(path)) {
-        c.revertOn(root, false)
-        path = c.revertPath(path)
-      }
-    }
-  })
+  processContents(gateway, root, path, revisionMap.keys.filterNotNullTo(mutableSetOf()), before) { changeSetId, content ->
+    val revision = revisionMap[changeSetId]
+    revision == null || processor.process(revision, content)
+  }
 }
