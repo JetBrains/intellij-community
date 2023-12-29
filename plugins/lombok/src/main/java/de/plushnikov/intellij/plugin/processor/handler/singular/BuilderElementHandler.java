@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +24,19 @@ public interface BuilderElementHandler {
     return "this." + info.renderFieldName();
   }
 
-  default String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return "this." + psiVariable.getName() + "=b." + fieldName + ";\n";
+  default String renderSuperBuilderConstruction(@NotNull BuilderInfo info) {
+    if (info.hasBuilderDefaultAnnotation()) {
+      final String block = """
+        if (b.{0}) '{'
+            this.{1} = b.{2};
+        '}' else '{'
+            this.{1} = {3}();
+        '}'
+        """;
+      return MessageFormat.format(block, info.renderFieldDefaultSetName(), info.getVariable().getName(), info.renderFieldName(),
+                                  info.renderFieldDefaultProviderName());
+    }
+    return "this." + info.getVariable().getName() + "=b." + info.renderFieldName() + ";\n";
   }
 
   default String renderToBuilderCall(@NotNull BuilderInfo info) {

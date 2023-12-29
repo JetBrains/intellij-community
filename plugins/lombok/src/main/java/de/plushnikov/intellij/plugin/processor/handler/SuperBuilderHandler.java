@@ -120,7 +120,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withParameter(BUILDER_VARIABLE_NAME, psiTypeBaseWithGenerics);
 
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, builderClass);
-    //dont need initBuilderInfosBuilderClassType here
+    //don't need initBuilderInfosBuilderClassType here
 
     final String buildMethodPrepare = builderInfos.stream()
       .map(BuilderInfo::renderSuperBuilderConstruction)

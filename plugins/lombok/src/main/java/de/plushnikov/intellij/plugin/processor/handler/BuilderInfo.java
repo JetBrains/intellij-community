@@ -277,7 +277,7 @@ public class BuilderInfo {
   }
 
   public String renderSuperBuilderConstruction() {
-    return builderElementHandler.renderSuperBuilderConstruction(variableInClass, fieldInBuilderName);
+    return builderElementHandler.renderSuperBuilderConstruction(this);
   }
 
   public String renderFieldName() {

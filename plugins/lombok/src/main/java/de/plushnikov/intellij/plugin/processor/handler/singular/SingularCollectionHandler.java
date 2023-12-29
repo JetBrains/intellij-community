@@ -103,7 +103,9 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   }
 
   @Override
-  public String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  public String renderSuperBuilderConstruction(@NotNull BuilderInfo info) {
+    final PsiVariable psiVariable = info.getVariable();
+    final String fieldName = info.renderFieldName();
     return renderBuildCode(psiVariable, fieldName, "b") + "this." + psiVariable.getName() + "=" + fieldName + ";\n";
   }
 
