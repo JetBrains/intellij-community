@@ -76,7 +76,11 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
 
         // bootstrap version of kotlin-jps-plugin-classpath required for testing
-        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", kotlincCoordinates, jpsLibraryName = "jetbrains.kotlin.jps.plugin.classpath")
+        kotlincWithStandardNaming(
+            "kotlinc.kotlin-jps-plugin-classpath",
+            kotlincCoordinates,
+            jpsLibraryName = "kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests",
+        )
     }
 }
 
