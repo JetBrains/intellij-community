@@ -1,6 +1,10 @@
-package com.jetbrains.python.sdk.poetry
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.impl.poetry
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -9,8 +13,13 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.sdk.*
-import org.toml.lang.psi.*
+import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.poetry.PoetryOutdatedVersion
+import com.jetbrains.python.sdk.poetry.PyPoetryPackageManager
+import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.poetry.pyProjectToml
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlTable
 
 /**
  *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>

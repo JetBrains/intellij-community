@@ -17,8 +17,9 @@
   <!-- Requirements.txt support -->
   <xi:include href="/META-INF/python-requirements-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <!-- Poetry -->
-  <depends optional="true" config-file="poetry-toml.xml">org.toml.lang</depends>
+  <content>
+    <module name="intellij.python.community.impl/poetry"/>
+  </content>
 
   <projectListeners>
     <listener
