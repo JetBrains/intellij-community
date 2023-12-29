@@ -5,11 +5,15 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +102,125 @@ public final class PythonPatterns extends PlatformPatterns {
           .anyMatch(cls -> classQualifiedName.equals(cls.getQualifiedName()));
       }
     });
+  }
+
+  /**
+   * Checks whether the element is assigned to a specific variable via regular expression. The target
+   * variable is described in terms of its origin (module.class.member).
+   * Example:
+   * test.py with the following contents:
+   * <pre>
+   * {@code
+   *   class MyClass():
+   *     def __init__(self):
+   *       self.abc = "ABC"
+   * }
+   * </pre>
+   * Then the target of the assignment would be described as test.MyClass.abc.
+   *
+   * @param targetRegexp The regular expression to match.
+   * @return The capture for this element pattern.
+   */
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyAssignedTo(@NotNull String targetRegexp) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        var expression = getAssignmentTarget(o);
+
+        if (expression != null) {
+          final var typeEvalContext = TypeEvalContext.codeAnalysis(expression.getProject(), expression.getContainingFile());
+          final var name = getFullyQualifiedOrigin(expression, typeEvalContext);
+          return name != null && name.matches(targetRegexp);
+        }
+
+        return false;
+      }
+    });
+  }
+
+  /**
+   * Tries to resolve an expression to its origin, such that it ends up with that pattern:
+   * module.class.member
+   * or
+   * module.member
+   *
+   * @param expression      The expression to resolve.
+   * @param typeEvalContext The type evaluation context.
+   * @return A string describing the fully qualified origin.
+   */
+  private static String getFullyQualifiedOrigin(PyExpression expression, TypeEvalContext typeEvalContext) {
+    // if it is an attribute of a class, prepend the class' qualified name
+    // e.g. "module.Class.attribute"
+    if (expression instanceof PyQualifiedExpression qualifiedExpression) {
+      final var qualifiedExpressionName = qualifiedExpression.getReferencedName();
+      final var qualifier = qualifiedExpression.getQualifier();
+      if (qualifier != null && qualifiedExpressionName != null) {
+        final var type = typeEvalContext.getType(qualifier);
+        PyClassType pyClassType = null;
+        if (type instanceof PyClassType cls) {
+          pyClassType = cls;
+        }
+        else if (type instanceof PyModuleType mod) {
+          final var modcls = mod.getModuleClassType();
+          if (modcls != null) {
+            pyClassType = modcls;
+          }
+        }
+
+        if (pyClassType != null) {
+          final var cls = pyClassType.getPyClass();
+          final var prop = cls.findProperty(qualifiedExpressionName, true, typeEvalContext);
+          if (prop != null) {
+            return pyClassType.getClassQName() + "." + prop.getName();
+          }
+          else {
+            final var instAttr = cls.findInstanceAttribute(qualifiedExpressionName, true);
+            if (instAttr != null) {
+              return pyClassType.getClassQName() + "." + instAttr.getName();
+            }
+            else {
+              final var classAttr = cls.findClassAttribute(qualifiedExpressionName, true, typeEvalContext);
+              if (classAttr != null) {
+                return pyClassType.getClassQName() + "." + classAttr.getName();
+              }
+              else {
+                final var method = cls.findMethodByName(qualifiedExpressionName, true, typeEvalContext);
+                if (method != null) {
+                  return pyClassType.getClassQName() + "." + method.getName();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // fallback to whatever names are available
+    if (expression instanceof PyQualifiedNameOwner qualifiedNameOwner) {
+      return qualifiedNameOwner.getQualifiedName();
+    }
+    else if (expression instanceof PsiNamedElement namedElement) {
+      return namedElement.getName();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyExpression getAssignmentTarget(Object expression) {
+    if (expression instanceof PyExpression) {
+      final var assignment = PsiTreeUtil.getParentOfType((PyExpression)expression, PyAssignmentStatement.class);
+      if (assignment != null) {
+        for (var mapping : assignment.getTargetsToValuesMapping()) {
+          if (mapping.second == expression) {
+            return mapping.first;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @NotNull
