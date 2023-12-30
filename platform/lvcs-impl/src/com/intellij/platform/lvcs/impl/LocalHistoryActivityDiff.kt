@@ -1,30 +1,36 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffContentFactoryEx
 import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.requests.ErrorDiffRequest
+import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Difference
+import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.revisions.Revision.getDifferencesBetween
+import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.integration.revertion.SelectionReverter
 import com.intellij.history.integration.ui.models.*
 import com.intellij.history.integration.ui.views.DirectoryChange
 import com.intellij.history.integration.ui.views.RevisionProcessingProgressAdapter
-import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -135,11 +141,51 @@ internal class FileActivityChangeWrapper(project: Project?,
   override fun hashCode(): Int = Objects.hash(scope, selection)
 }
 
-private class ErrorDiffRequestProducer(val presentableName: @Nls String) : DiffRequestProducer {
-  override fun getName(): String = presentableName
-  override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    return ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"))
+internal class DifferenceDiffRequestProducer(private val project: Project?,
+                                             private val gateway: IdeaGateway,
+                                             private val scope: ActivityScope,
+                                             private val selection: RevisionSelection,
+                                             private val difference: Difference) : DiffRequestProducer {
+  override fun getName(): String {
+    val entry = difference.left ?: difference.right
+    if (entry == null) return scope.presentableName
+    return FileUtil.toSystemDependentName(entry.path)
   }
+
+  override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
+    val leftContent = createContent(difference.left, selection.leftRevision.isCurrent)
+    val rightContent = createContent(difference.right, selection.rightRevision.isCurrent)
+
+    val leftContentTitle = getTitle(selection.leftRevision)
+    val rightContentTitle = getTitle(selection.rightRevision)
+
+    return SimpleDiffRequest(name, leftContent, rightContent, leftContentTitle, rightContentTitle)
+  }
+
+  private fun createContent(entry: Entry?, isCurrent: Boolean): DiffContent {
+    if (entry == null) return DiffContentFactory.getInstance().createEmpty()
+    if (isCurrent) return createCurrentDiffContent(project, gateway, entry.path)
+    return createDiffContent(project, gateway, entry)
+  }
+
+  private fun getTitle(revision: Revision): @Nls String {
+    if (revision.isCurrent) return LocalHistoryBundle.message("current.revision")
+    return DateFormatUtil.formatDateTime(revision.timestamp)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is DifferenceDiffRequestProducer) return false
+    if (!super.equals(other)) return false
+
+    if (scope != other.scope) return false
+    if (selection != other.selection) return false
+    if (difference != other.difference) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = Objects.hash(scope, selection, difference)
 }
 
 private class DifferenceWrapper(private val gateway: IdeaGateway,
@@ -159,8 +205,7 @@ private class DifferenceWrapper(private val gateway: IdeaGateway,
   override fun getUserObject(): Any = difference
   override fun getPresentableName(): String = targetFilePath.name
   override fun createProducer(project: Project?): DiffRequestProducer {
-    val change = difference.getChange(gateway, scope)
-    return ChangeDiffRequestProducer.create(project, change) ?: ErrorDiffRequestProducer(presentableName)
+    return DifferenceDiffRequestProducer(project, gateway, scope, selection, difference)
   }
 
   override fun equals(other: Any?): Boolean {

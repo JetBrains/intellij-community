@@ -1,15 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.EntryDiffContentKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,22 +53,11 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
   protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
     if (myRight == null) return null;
 
-    Document d = myGateway.getDocument(myRight.getPath());
-    if (d == null) return null;
-
-    return DiffContentFactory.getInstance().create(myProject, d);
+    return EntryDiffContentKt.createCurrentDiffContent(myProject, myGateway, myRight.getPath());
   }
 
   private @Nullable DiffContent getDiffContent(@Nullable Entry e) {
     if (e == null) return null;
-    byte[] content = e.getContent().getBytes();
-    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
-    if (virtualFile != null) {
-      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, virtualFile);
-    }
-    else {
-      FileType fileType = myGateway.getFileType(e.getName());
-      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, fileType, e.getName());
-    }
+    return EntryDiffContentKt.createDiffContent(myProject, myGateway, e);
   }
 }

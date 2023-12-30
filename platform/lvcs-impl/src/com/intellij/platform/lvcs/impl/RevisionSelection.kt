@@ -12,6 +12,8 @@ data class RevisionSelection(val leftRevision: Revision,
   val rightEntry: Entry? by lazy { rightRevision.findEntry() }
 }
 
+val Revision.isCurrent get() = this is CurrentRevision
+
 private fun ActivityScope.File.createCurrentRevision(revision: Revision): CurrentRevision {
   return CurrentRevision(revision.root, filePath.path)
 }
