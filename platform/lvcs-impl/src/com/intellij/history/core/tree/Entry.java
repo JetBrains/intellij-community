@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static java.lang.String.format;
 
@@ -239,23 +240,27 @@ public abstract class Entry {
                                                                 @Nullable Entry right,
                                                                 boolean isRightContentCurrent) {
     List<Difference> result = new SmartList<>();
+    BiConsumer<Entry, Entry> consumer = (leftEntry, rightEntry) -> {
+      result.add(new Difference(leftEntry, rightEntry, isRightContentCurrent));
+    };
+
     if (left != null && right != null) {
-      left.collectDifferencesWith(right, result, isRightContentCurrent);
+      left.collectDifferencesWith(right, consumer);
     }
     else if (right != null) {
-      right.collectCreatedDifferences(result, isRightContentCurrent);
+      right.collectCreatedDifferences(consumer);
     }
     else if (left != null) {
-      left.collectDeletedDifferences(result, isRightContentCurrent);
+      left.collectDeletedDifferences(consumer);
     }
     return result;
   }
 
-  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull BiConsumer<Entry, Entry> consumer);
 
-  protected abstract void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer);
 
-  protected abstract void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer);
 
   @Override
   public String toString() {

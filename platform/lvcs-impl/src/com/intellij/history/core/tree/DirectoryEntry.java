@@ -3,7 +3,6 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
@@ -122,11 +122,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull BiConsumer<Entry, Entry> consumer) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
-      result.add(new Difference(this, e, isRightContentCurrent));
+      consumer.accept(this, e);
     }
 
     // most often we have the same children, so try processing it directly
@@ -140,7 +140,7 @@ public class DirectoryEntry extends Entry {
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
       if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
-        childEntry.collectDifferencesWith(rightChildEntry, result, isRightContentCurrent);
+        childEntry.collectDifferencesWith(rightChildEntry, consumer);
       } else {
         break;
       }
@@ -189,16 +189,16 @@ public class DirectoryEntry extends Entry {
 
     for (Entry child : e.myChildren) {
       if (uniqueNameIdToRightChildEntries.containsKey(child.getNameId())) {
-        child.collectCreatedDifferences(result, isRightContentCurrent);
+        child.collectCreatedDifferences(consumer);
       }
     }
 
     for (Entry child : myChildren) {
       if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
-        child.collectDeletedDifferences(result, isRightContentCurrent);
+        child.collectDeletedDifferences(consumer);
       } else {
         Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
-        if (itsChild != null) child.collectDifferencesWith(itsChild, result, isRightContentCurrent);
+        if (itsChild != null) child.collectDifferencesWith(itsChild, consumer);
       }
     }
   }
@@ -215,20 +215,20 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(null, this, isRightContentCurrent));
+  protected void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(null, this);
 
     for (Entry child : myChildren) {
-      child.collectCreatedDifferences(result, isRightContentCurrent);
+      child.collectCreatedDifferences(consumer);
     }
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(this, null, isRightContentCurrent));
+  protected void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(this, null);
 
     for (Entry child : myChildren) {
-      child.collectDeletedDifferences(result, isRightContentCurrent);
+      child.collectDeletedDifferences(consumer);
     }
   }
 }

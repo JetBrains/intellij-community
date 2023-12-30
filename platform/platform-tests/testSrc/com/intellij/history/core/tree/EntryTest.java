@@ -18,11 +18,10 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.revisions.Difference;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.function.BiConsumer;
 
 public class EntryTest extends LocalHistoryTestCase {
   @Test
@@ -60,17 +59,17 @@ public class EntryTest extends LocalHistoryTestCase {
     }
 
     @Override
-    public void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+    public void collectDifferencesWith(@NotNull Entry e, @NotNull BiConsumer<Entry, Entry> consumer) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+    protected void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+    protected void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
       throw new UnsupportedOperationException();
     }
   }
