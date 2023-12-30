@@ -13,6 +13,11 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
   LocalHistoryFacade myVcs = new InMemoryLocalHistoryFacade();
   RootEntry myRoot = new RootEntry();
 
+  @Override
+  public long nextId() {
+    return myVcs.getChangeListInTests().nextId();
+  }
+
   @Test
   public void testUserLabels() {
     add(myVcs, createFile(myRoot, "file"));

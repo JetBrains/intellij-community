@@ -36,10 +36,10 @@ public abstract class LocalHistoryTestCase extends Assert {
   @Rule
   public TestRule watcher = TestLoggerFactory.createTestWatcher();
 
-  private static long myCurrentId = 0;
+  private long myCurrentId = 0;
   private static IdeaProjectTestFixture fixture; // to initialize FSRecords
 
-  public static long nextId() {
+  public long nextId() {
     return myCurrentId++;
   }
 
@@ -182,15 +182,15 @@ public abstract class LocalHistoryTestCase extends Assert {
     return Arrays.asList(objects);
   }
 
-  protected static ChangeSet cs(Change... changes) {
+  protected ChangeSet cs(Change... changes) {
     return cs(null, changes);
   }
 
-  protected static ChangeSet cs(String name, Change... changes) {
+  protected ChangeSet cs(String name, Change... changes) {
     return cs(0, name, changes);
   }
 
-  protected static ChangeSet cs(long timestamp, String name, Change... changes) {
+  protected ChangeSet cs(long timestamp, String name, Change... changes) {
     ChangeSet result = new ChangeSet(nextId(), timestamp);
     result.setName(name);
     for (Change each : changes) {
