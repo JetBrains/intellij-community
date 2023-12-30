@@ -30,6 +30,7 @@ import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 
 class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope) :
@@ -50,7 +51,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
-    val scrollPane = ScrollPaneFactory.createScrollPane(activityList).apply { border = IdeBorderFactory.createBorder(SideBorder.TOP) }
+    val scrollPane = ScrollPaneFactory.createScrollPane(activityList,
+                                                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
     val progressStripe = ProgressStripe(scrollPane, this)
     add(progressStripe, BorderLayout.CENTER)
 
