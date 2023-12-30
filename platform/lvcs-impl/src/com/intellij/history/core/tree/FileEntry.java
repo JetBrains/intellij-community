@@ -101,16 +101,16 @@ public final class FileEntry extends Entry {
         && myContent.equals(e.getContent())
         && isReadOnly == e.isReadOnly()) return;
     
-    result.add(new Difference(true, this, e, isRightContentCurrent));
+    result.add(new Difference(this, e, isRightContentCurrent));
   }
 
   @Override
   protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(true, null, this, isRightContentCurrent));
+    result.add(new Difference(null, this, isRightContentCurrent));
   }
 
   @Override
   protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(true, this, null, isRightContentCurrent));
+    result.add(new Difference(this, null, isRightContentCurrent));
   }
 }

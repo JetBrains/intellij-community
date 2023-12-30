@@ -126,7 +126,7 @@ public class DirectoryEntry extends Entry {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
-      result.add(new Difference(false, this, e, isRightContentCurrent));
+      result.add(new Difference(this, e, isRightContentCurrent));
     }
 
     // most often we have the same children, so try processing it directly
@@ -216,7 +216,7 @@ public class DirectoryEntry extends Entry {
 
   @Override
   protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(false, null, this, isRightContentCurrent));
+    result.add(new Difference(null, this, isRightContentCurrent));
 
     for (Entry child : myChildren) {
       child.collectCreatedDifferences(result, isRightContentCurrent);
@@ -225,7 +225,7 @@ public class DirectoryEntry extends Entry {
 
   @Override
   protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(false, this, null, isRightContentCurrent));
+    result.add(new Difference(this, null, isRightContentCurrent));
 
     for (Entry child : myChildren) {
       child.collectDeletedDifferences(result, isRightContentCurrent);
