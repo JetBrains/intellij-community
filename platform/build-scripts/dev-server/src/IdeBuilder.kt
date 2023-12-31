@@ -328,7 +328,7 @@ private fun getBuildDateInSeconds(): Long {
   val now = OffsetDateTime.now()
   // licence expired - 30 days
   return now
-    .with(if (now.dayOfMonth == 30) TemporalAdjusters.previous(DayOfWeek.MONDAY) else TemporalAdjusters.firstDayOfMonth())
+    .with(if (now.dayOfMonth >= 30) TemporalAdjusters.previous(DayOfWeek.MONDAY) else TemporalAdjusters.firstDayOfMonth())
     .toEpochSecond()
 }
 
