@@ -16,17 +16,12 @@
 
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.EntryDiffContentKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,27 +83,13 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
     Entry rightEntry = getRightEntry();
     if (rightEntry == null) return null;
 
-    Document d = myGateway.getDocument(rightEntry.getPath());
-    if (d == null) return null;
-
-    int fromOffset = d.getLineStartOffset(myFrom);
-    int toOffset = d.getLineEndOffset(myTo);
-
-    return DiffContentFactory.getInstance().createFragment(myProject, d, new TextRange(fromOffset, toOffset));
+    return EntryDiffContentKt.createCurrentDiffContent(myProject, myGateway, rightEntry.getPath(), myFrom, myTo);
   }
 
-  private @Nullable DocumentContent getDiffContent(@NotNull Revision r, RevisionProcessingProgress p) {
+  private @Nullable DiffContent getDiffContent(@NotNull Revision r, RevisionProcessingProgress p) {
     Entry e = r.findEntry();
     if (e == null) return null;
 
-    String content = myCalculator.getSelectionFor(r, p).getBlockContent();
-    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
-    if (virtualFile != null) {
-      return DiffContentFactory.getInstance().create(content, virtualFile);
-    }
-    else {
-      FileType fileType = myGateway.getFileType(e.getName());
-      return DiffContentFactory.getInstance().create(content, fileType);
-    }
+    return EntryDiffContentKt.createDiffContent(myGateway, e, r, myCalculator, p);
   }
 }

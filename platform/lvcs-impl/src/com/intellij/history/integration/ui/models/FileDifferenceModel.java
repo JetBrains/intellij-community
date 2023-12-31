@@ -98,14 +98,6 @@ public abstract class FileDifferenceModel {
     return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
   }
 
-  public boolean isLeftContentAvailable() {
-    return isLeftContentAvailable(new RevisionProcessingProgress.Empty());
-  }
-
-  public boolean isRightContentAvailable() {
-    return isRightContentAvailable(new RevisionProcessingProgress.Empty());
-  }
-
   protected abstract boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p);
 
   protected abstract boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p);

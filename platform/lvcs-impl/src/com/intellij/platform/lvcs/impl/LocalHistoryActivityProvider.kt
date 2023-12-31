@@ -3,6 +3,7 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.RevisionsCollector
+import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
@@ -46,13 +47,13 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
     val revisionSelection = selection.toRevisionSelection(scope) ?: return null
-    if (scope is ActivityScope.Directory || scope is ActivityScope.Recent) {
-      return ActivityDiffDataWithDifferences(gateway, scope, revisionSelection, revisionSelection.diff)
+    val differences = if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) {
+      listOf(Difference(revisionSelection.leftEntry, revisionSelection.rightEntry, revisionSelection.rightRevision.isCurrent))
     }
-    if (scope is ActivityScope.File) {
-      return ActivityDiffDataFromModel(gateway, scope, revisionSelection)
+    else {
+      revisionSelection.diff
     }
-    return null
+    return ActivityDiffDataWithDifferences(gateway, scope, revisionSelection, differences)
   }
 
   override fun isScopeFilterSupported(scope: ActivityScope): Boolean {

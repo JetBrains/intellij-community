@@ -2,13 +2,11 @@
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffContentFactoryEx
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.history.core.LocalHistoryFacade
-import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.revisions.Revision.getDifferencesBetween
@@ -18,9 +16,12 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.integration.revertion.SelectionReverter
-import com.intellij.history.integration.ui.models.*
+import com.intellij.history.integration.ui.models.DirectoryChangeModel
+import com.intellij.history.integration.ui.models.RevisionProcessingProgress
+import com.intellij.history.integration.ui.models.SelectionCalculator
 import com.intellij.history.integration.ui.views.DirectoryChange
 import com.intellij.history.integration.ui.views.RevisionProcessingProgressAdapter
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
@@ -72,34 +73,6 @@ internal fun ActivityScope.createReverter(project: Project,
   return DifferenceReverter(project, facade, gateway, selection.diff, selection.leftRevision)
 }
 
-internal fun ActivityScope.diffModel(project: Project?, gateway: IdeaGateway, selection: RevisionSelection): FileDifferenceModel {
-  if (this is ActivityScope.Selection) {
-    val calculator = createSelectionCalculator(gateway, selection)
-    return SelectionDifferenceModel(project, gateway, calculator, selection.leftRevision, selection.rightRevision,
-                                    from, to, selection.rightRevision is CurrentRevision)
-  }
-  return EntireFileDifferenceModel(project, gateway, selection.leftEntry, selection.rightEntry, selection.rightRevision is CurrentRevision)
-}
-
-internal class FileActivityDiffRequestProducer(private val scope: ActivityScope,
-                                               private val selection: RevisionSelection,
-                                               private val diffModel: FileDifferenceModel) : DiffRequestProducer {
-  override fun getName(): String = diffModel.title
-
-  override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    val progressAdapter = RevisionProcessingProgressAdapter(indicator)
-    return FileDifferenceModel.createRequest(diffModel, progressAdapter)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is FileActivityDiffRequestProducer) return false
-    return scope == other.scope && selection == other.selection
-  }
-
-  override fun hashCode() = Objects.hash(scope, selection)
-}
-
 private fun fileStatus(leftContentAvailable: Boolean, rightContentAvailable: Boolean): FileStatus {
   if (leftContentAvailable == rightContentAvailable) {
     return FileStatus.MODIFIED
@@ -108,44 +81,11 @@ private fun fileStatus(leftContentAvailable: Boolean, rightContentAvailable: Boo
   return FileStatus.DELETED
 }
 
-internal class FileActivityChangeWrapper(project: Project?,
-                                         gateway: IdeaGateway,
-                                         private val scope: ActivityScope.File,
-                                         private val selection: RevisionSelection) : ChangeViewDiffRequestProcessor.Wrapper() {
-  private val diffModel = scope.diffModel(project, gateway, selection)
-
-  override fun getFilePath() = scope.filePath
-  override fun getFileStatus(): FileStatus {
-    val leftContentAvailable = diffModel.isLeftContentAvailable
-    val rightContentAvailable = diffModel.isRightContentAvailable
-    return fileStatus(leftContentAvailable, rightContentAvailable)
-  }
-
-  override fun getUserObject() = scope.file
-  override fun getPresentableName() = filePath.name
-  override fun createProducer(project: Project?): DiffRequestProducer {
-    return FileActivityDiffRequestProducer(scope, selection, diffModel)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is FileActivityChangeWrapper) return false
-    if (!super.equals(other)) return false
-
-    if (scope != other.scope) return false
-    if (selection != other.selection) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int = Objects.hash(scope, selection)
-}
-
-internal class DifferenceDiffRequestProducer(private val project: Project?,
-                                             private val gateway: IdeaGateway,
-                                             private val scope: ActivityScope,
-                                             private val selection: RevisionSelection,
-                                             private val difference: Difference) : DiffRequestProducer {
+internal open class DifferenceDiffRequestProducer(protected val project: Project?,
+                                                  protected val gateway: IdeaGateway,
+                                                  protected open val scope: ActivityScope,
+                                                  protected val selection: RevisionSelection,
+                                                  protected val difference: Difference) : DiffRequestProducer {
   override fun getName(): String {
     val entry = difference.left ?: difference.right
     if (entry == null) return scope.presentableName
@@ -164,11 +104,11 @@ internal class DifferenceDiffRequestProducer(private val project: Project?,
 
   private fun createContent(entry: Entry?, isCurrent: Boolean): DiffContent {
     if (entry == null) return DiffContentFactory.getInstance().createEmpty()
-    if (isCurrent) return createCurrentDiffContent(project, gateway, entry.path)
+    if (isCurrent) return runReadAction { createCurrentDiffContent(project, gateway, entry.path) }
     return createDiffContent(project, gateway, entry)
   }
 
-  private fun getTitle(revision: Revision): @Nls String {
+  protected fun getTitle(revision: Revision): @Nls String {
     if (revision.isCurrent) return LocalHistoryBundle.message("current.revision")
     return DateFormatUtil.formatDateTime(revision.timestamp)
   }
@@ -188,13 +128,13 @@ internal class DifferenceDiffRequestProducer(private val project: Project?,
   override fun hashCode(): Int = Objects.hash(scope, selection, difference)
 }
 
-private class DifferenceWrapper(private val gateway: IdeaGateway,
-                                private val scope: ActivityScope,
-                                private val selection: RevisionSelection,
-                                private val difference: Difference,
-                                private val targetFilePath: FilePath) : ChangeViewDiffRequestProcessor.Wrapper() {
+private open class DifferenceWrapper(protected val gateway: IdeaGateway,
+                                     protected open val scope: ActivityScope,
+                                     protected val selection: RevisionSelection,
+                                     protected val difference: Difference,
+                                     private val targetFilePath: FilePath) : ChangeViewDiffRequestProcessor.Wrapper() {
 
-  constructor(gateway: IdeaGateway, scope: ActivityScope.Directory, selection: RevisionSelection, difference: Difference) :
+  constructor(gateway: IdeaGateway, scope: ActivityScope.File, selection: RevisionSelection, difference: Difference) :
     this(gateway, scope, selection, difference, difference.filePath ?: scope.filePath)
 
   override fun getFilePath() = targetFilePath
@@ -223,27 +163,66 @@ private class DifferenceWrapper(private val gateway: IdeaGateway,
   override fun hashCode() = Objects.hash(scope, selection, difference)
 }
 
+private class SelectionDiffRequestProducer(project: Project?,
+                                           gateway: IdeaGateway,
+                                           override val scope: ActivityScope.Selection,
+                                           selection: RevisionSelection,
+                                           difference: Difference,
+                                           private val selectionCalculator: SelectionCalculator)
+  : DifferenceDiffRequestProducer(project, gateway, scope, selection, difference) {
+
+  override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
+    val leftContent = createContent(difference.left, selection.leftRevision, selection.leftRevision.isCurrent, indicator)
+    val rightContent = createContent(difference.right, selection.rightRevision, selection.rightRevision.isCurrent, indicator)
+
+    val leftContentTitle = getTitle(selection.leftRevision)
+    val rightContentTitle = getTitle(selection.rightRevision)
+
+    return SimpleDiffRequest(name, leftContent, rightContent, leftContentTitle, rightContentTitle)
+  }
+
+  private fun createContent(entry: Entry?, revision: Revision, isCurrent: Boolean, indicator: ProgressIndicator): DiffContent {
+    if (entry == null) return DiffContentFactory.getInstance().createEmpty()
+    if (isCurrent) return createCurrentDiffContent(project, gateway, entry.path, scope.from, scope.to)
+    return createDiffContent(gateway, entry, revision, selectionCalculator, RevisionProcessingProgressAdapter(indicator))
+  }
+}
+
+private class SelectionDifferenceWrapper(gateway: IdeaGateway, override val scope: ActivityScope.Selection, selection: RevisionSelection,
+                                         difference: Difference, private val selectionCalculator: SelectionCalculator) :
+  DifferenceWrapper(gateway, scope, selection, difference) {
+  override fun getFileStatus(): FileStatus {
+    val isLeftContentAvailable = difference.left != null && selectionCalculator.canCalculateFor(selection.leftRevision,
+                                                                                                RevisionProcessingProgress.Empty())
+    val isRightContentAvailable = difference.right != null && selectionCalculator.canCalculateFor(selection.rightRevision,
+                                                                                                  RevisionProcessingProgress.Empty())
+    return fileStatus(isLeftContentAvailable, isRightContentAvailable)
+  }
+
+  override fun createProducer(project: Project?): DiffRequestProducer {
+    return SelectionDiffRequestProducer(project, gateway, scope, selection, difference, selectionCalculator)
+  }
+}
+
 internal data class ActivityDiffDataWithDifferences(val gateway: IdeaGateway,
                                                     val scope: ActivityScope,
                                                     val selection: RevisionSelection,
                                                     val differences: List<Difference>) : ActivityDiffData {
   override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-    if (scope is ActivityScope.Directory) {
-      return JBIterable.from(differences).filter { it.isFile }.map { DifferenceWrapper(gateway, scope, selection, it) }
+    val fileDifferences = JBIterable.from(differences).filter { it.isFile }
+    return when (scope) {
+      is ActivityScope.Selection -> {
+        val calculator = scope.createSelectionCalculator(gateway, selection)
+        fileDifferences.map { SelectionDifferenceWrapper(gateway, scope, selection, it, calculator) }
+      }
+      is ActivityScope.File -> {
+        fileDifferences.map { DifferenceWrapper(gateway, scope, selection, it) }
+      }
+      ActivityScope.Recent -> {
+        fileDifferences.map { difference ->
+          difference.filePath?.let { DifferenceWrapper(gateway, scope, selection, difference, it) }
+        }.filterNotNull()
+      }
     }
-    if (scope is ActivityScope.Recent) {
-      return JBIterable.from(differences).filter { it.isFile }.map { difference ->
-        difference.filePath?.let { DifferenceWrapper(gateway, scope, selection, difference, it) }
-      }.filterNotNull()
-    }
-    return emptyList()
-  }
-}
-
-internal data class ActivityDiffDataFromModel(val gateway: IdeaGateway,
-                                              val scope: ActivityScope.File,
-                                              val selection: RevisionSelection) : ActivityDiffData {
-  override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-    return listOf(FileActivityChangeWrapper(project, gateway, scope, selection))
   }
 }
