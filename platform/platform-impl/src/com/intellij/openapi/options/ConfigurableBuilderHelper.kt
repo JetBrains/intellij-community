@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -48,6 +49,7 @@ class ConfigurableBuilderHelper {
             .onApply { field.apply() }
             .onIsModified { field.isModified }
             .onReset { field.reset() }
+          UIUtil.applyDeprecatedBackground(field.component)
         }
       }
     }

@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,6 +229,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 
+  @ApiStatus.Internal
   public static @Nullable String getConfigurableTitle(@NotNull UnnamedConfigurable configurable) {
     if (configurable instanceof BeanConfigurable<?>) {
       return ((BeanConfigurable<?>)configurable).getTitle();

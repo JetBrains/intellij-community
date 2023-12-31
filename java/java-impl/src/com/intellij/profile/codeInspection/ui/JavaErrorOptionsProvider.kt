@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.profile.codeInspection.ui
 
-package com.intellij.profile.codeInspection.ui;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.options.BeanConfigurable
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.options.ConfigurableBuilder;
+class JavaErrorOptionsProvider : BeanConfigurable<DaemonCodeAnalyzerSettings>(
+  DaemonCodeAnalyzerSettings.getInstance()), ErrorOptionsProvider {
 
-public final class JavaErrorOptionsProvider extends ConfigurableBuilder implements ErrorOptionsProvider {
-  public JavaErrorOptionsProvider() {
-    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    checkBox(JavaBundle.message("checkbox.suppress.with.suppresswarnings"),
-             settings::isSuppressWarnings, settings::setSuppressWarnings);
+  init {
+    checkBox(JavaBundle.message("checkbox.suppress.with.suppresswarnings"), instance::isSuppressWarnings, instance::setSuppressWarnings)
   }
 }
