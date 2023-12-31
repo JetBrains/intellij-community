@@ -184,10 +184,10 @@ internal data class ActivityDiffDataWithDifferences(val gateway: IdeaGateway,
                                                     val differences: List<Difference>) : ActivityDiffData {
   override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
     if (scope is ActivityScope.Directory) {
-      return JBIterable.from(differences).map { DifferenceWrapper(gateway, scope, selection, it) }
+      return JBIterable.from(differences).filter { it.isFile }.map { DifferenceWrapper(gateway, scope, selection, it) }
     }
     if (scope is ActivityScope.Recent) {
-      return JBIterable.from(differences).map { difference ->
+      return JBIterable.from(differences).filter { it.isFile }.map { difference ->
         difference.filePath?.let { DifferenceWrapper(gateway, scope, selection, difference, it) }
       }.filterNotNull()
     }
