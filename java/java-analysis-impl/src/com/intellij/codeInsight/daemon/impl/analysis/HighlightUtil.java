@@ -2673,13 +2673,21 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression,
-                                                                    @Nullable PsiElement resolved,
-                                                                    @NotNull PsiFile containingFile,
-                                                                    @NotNull Function<? super PsiElement, ? extends PsiClass> insideConstructorOfClass) {
-    if (insideConstructorOfClass.apply(expression) == null) {
+                                                                            @Nullable PsiElement resolved,
+                                                                            @NotNull Function<? super PsiElement, ? extends PsiMethod> surroundingConstructor) {
+    PsiMethod constructor = surroundingConstructor.apply(expression);
+    if (constructor == null) {
       // not inside expression inside constructor
       return null;
     }
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+    if (constructorCall == null) {
+      return null;
+    }
+    if (expression.getTextOffset() > constructorCall.getTextOffset() + constructorCall.getTextLength()) {
+      return null;
+    }
+    // is in or before this() or super() call
 
     PsiClass referencedClass;
     String resolvedName;
@@ -2784,80 +2792,73 @@ public final class HighlightUtil {
       return null;
     }
 
-    PsiElement element = parent;
-    while (element != null) {
-      // check if expression inside super()/this() call
+    PsiClass parentClass = constructor.getContainingClass();
+    if (parentClass == null) {
+      return null;
+    }
 
-      if (JavaPsiConstructorUtil.isConstructorCall(element)) {
-        PsiClass parentClass = insideConstructorOfClass.apply(element);
-        if (parentClass == null) {
-          return null;
-        }
-
-        // references to private methods from the outer class are not calls to super methods
-        // even if the outer class is the super class
-        if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) {
-          return null;
-        }
-        // field or method should be declared in this class or super
-        if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return null;
-        // and point to our instance
-        if (expression instanceof PsiReferenceExpression ref) {
-          PsiExpression qualifier = ref.getQualifierExpression();
-          if (!isThisOrSuperReference(qualifier, parentClass)) {
-            return null;
-          }
-          else if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-            if (((PsiQualifiedExpression)qualifier).getQualifier() != null) return null;
-          }
-        }
-
-        if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
-          if (referencedClass != parentClass) return null;
-        }
-
-        if (expression instanceof PsiJavaCodeReferenceElement) {
-          if (!parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
-              PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
-            return null;
-          }
-
-          if (PsiTreeUtil.getParentOfType(expression, PsiClassObjectAccessExpression.class) != null) {
-            return null;
-          }
-
-          if (parent instanceof PsiNewExpression newExpression &&
-              newExpression.isArrayCreation() &&
-              newExpression.getClassOrAnonymousClassReference() == expression) {
-            return null;
-          }
-          if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) return null;
-        }
-
-        HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
-        if (expression instanceof PsiReferenceExpression ref && PsiUtil.isInnerClass(parentClass)) {
-          String referenceName = ref.getReferenceName();
-          PsiClass containingClass = parentClass.getContainingClass();
-          LOG.assertTrue(containingClass != null);
-          PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
-          if (fieldInContainingClass != null && ref.getQualifierExpression() == null) {
-            builder.registerFix(new QualifyWithThisFix(containingClass, ref), null, null, null, null);
-          }
-        }
-
-        return builder;
-      }
-
-      element = element.getParent();
-      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, referencedClass, true)) {
-        if ((expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) &&
-            ((PsiQualifiedExpression)expression).getQualifier() != null) {
-          continue;
-        }
+    // references to private methods from the outer class are not calls to super methods
+    // even if the outer class is the super class
+    if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) {
+      return null;
+    }
+    // field or method should be declared in this class or super
+    if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return null;
+    // and point to our instance
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiExpression qualifier = ref.getQualifierExpression();
+      if (!isThisOrSuperReference(qualifier, parentClass)) {
         return null;
       }
+      else if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        if (((PsiQualifiedExpression)qualifier).getQualifier() != null) return null;
+      }
     }
-    return null;
+
+    if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+      if (referencedClass != parentClass) return null;
+    }
+
+    if (expression instanceof PsiJavaCodeReferenceElement) {
+      if (!parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+          PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
+        return null;
+      }
+
+      if (PsiTreeUtil.getParentOfType(expression, PsiClassObjectAccessExpression.class) != null) {
+        return null;
+      }
+
+      if (parent instanceof PsiNewExpression newExpression &&
+          newExpression.isArrayCreation() &&
+          newExpression.getClassOrAnonymousClassReference() == expression) {
+        return null;
+      }
+      if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) return null;
+    }
+    if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
+        ((PsiQualifiedExpression)expression).getQualifier() == null) {
+      PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class, true);
+      while (expressionClass != null && parentClass != expressionClass) {
+        if (InheritanceUtil.isInheritorOrSelf(expressionClass, referencedClass, true)) {
+          return null;
+        }
+        expressionClass = PsiTreeUtil.getParentOfType(expressionClass, PsiClass.class, true);
+      }
+    }
+
+    HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
+    if (expression instanceof PsiReferenceExpression ref && PsiUtil.isInnerClass(parentClass)) {
+      String referenceName = ref.getReferenceName();
+      PsiClass containingClass = parentClass.getContainingClass();
+      LOG.assertTrue(containingClass != null);
+      PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
+      if (fieldInContainingClass != null && ref.getQualifierExpression() == null) {
+        builder.registerFix(new QualifyWithThisFix(containingClass, ref), null, null, null, null);
+      }
+    }
+
+    return builder;
   }
 
   @NotNull

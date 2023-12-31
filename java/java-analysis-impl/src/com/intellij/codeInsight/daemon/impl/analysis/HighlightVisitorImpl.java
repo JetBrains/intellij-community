@@ -90,8 +90,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
-  private final Function<? super PsiElement, ? extends PsiClass> myInsideConstructorOfClass = entry -> findInsideConstructorClass(entry);
-  private final Map<PsiElement, PsiClass> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
+  private final Function<? super PsiElement, ? extends PsiMethod> mySurroundingConstructor = entry -> findSurroundingConstructor(entry);
+  private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
 
   @NotNull
   protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
@@ -109,30 +109,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return myHolder.getProject();
   }
 
-  // element -> class inside which there is a constructor inside which this element is contained
-  private PsiClass findInsideConstructorClass(@NotNull PsiElement entry) {
-    PsiClass result = null;
-    PsiElement parent;
+  // element -> a constructor inside which this element is contained
+  private PsiMethod findSurroundingConstructor(@NotNull PsiElement entry) {
+    PsiMethod result = null;
     PsiElement element;
-    for (element = entry; element != null && !(element instanceof PsiFile); element = parent) {
-      result = myInsideConstructorOfClassCache.get(entry);
-      if (result != null || myInsideConstructorOfClassCache.containsKey(entry)) {
-        return result;
+    for (element = entry; element != null && !(element instanceof PsiFile); element = element.getParent()) {
+      result = myInsideConstructorOfClassCache.get(element);
+      if (result != null || myInsideConstructorOfClassCache.containsKey(element)) {
+        break;
       }
-      parent = element.getParent();
-      if (parent instanceof PsiExpressionStatement) {
-        PsiElement p2 = parent.getParent();
-        if (p2 instanceof PsiCodeBlock) {
-          PsiElement p3 = p2.getParent();
-          if (p3 instanceof PsiMethod && ((PsiMethod)p3).isConstructor()) {
-            PsiElement p4 = p3.getParent();
-            if (p4 instanceof PsiClass) {
-              result = (PsiClass)p4;
-            }
-          }
-        }
-      }
-      if (result != null) {
+      if (element instanceof PsiMethod method && method.isConstructor()) {
+        result = method;
         break;
       }
     }
@@ -1342,7 +1329,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       add(HighlightUtil.checkRestrictedIdentifierReference(ref, (PsiClass)resolved, myLanguageLevel));
     }
     if (!hasErrorResults()) {
-      add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile, myInsideConstructorOfClass));
+      add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, mySurroundingConstructor));
     }
 
     return result;
@@ -1786,7 +1773,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!(expr.getParent() instanceof PsiReceiverParameter)) {
       add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
       if (!hasErrorResults()) {
-        add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, myFile, myInsideConstructorOfClass));
+        add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
       }
       if (!hasErrorResults()) visitExpression(expr);
     }
