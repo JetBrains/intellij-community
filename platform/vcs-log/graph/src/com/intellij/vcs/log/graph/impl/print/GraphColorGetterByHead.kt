@@ -11,10 +11,8 @@ private class GraphColorGetterByHead<CommitId>(private val permanentGraphInfo: P
   override fun getNodeColor(nodeId: Int, layoutIndex: Int): Int {
     val headNodeId = if (nodeId < 0) 0 else permanentGraphInfo.permanentGraphLayout.getOneOfHeadNodeIndex(nodeId)
     val headCommitId = permanentGraphInfo.permanentCommitsInfo.getCommitId(headNodeId)
-    if (layoutIndex == permanentGraphInfo.permanentGraphLayout.getLayoutIndex(headNodeId)) {
-      return colorManager.getColorOfBranch(headCommitId)
-    }
-    return colorManager.getColorOfFragment(headCommitId, layoutIndex)
+    val headLayoutIndex = permanentGraphInfo.permanentGraphLayout.getLayoutIndex(headNodeId)
+    return colorManager.getColor(headCommitId, headLayoutIndex, layoutIndex)
   }
 }
 
