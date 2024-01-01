@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,10 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   
   public void testRecordCustomConstructor3() {
     doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
+  }
+
+  public void testRecordCustomConstructorOrder() {
+    doTestRecordConstructor((aClass, m) -> ArrayUtil.reverseArray(m));
   }
 
   private void doTest() {

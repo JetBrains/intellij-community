@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
@@ -216,14 +216,19 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return JavaBundle.message("generate.constructor.already.exists");
   }
 
-  public static PsiMethod generateConstructorPrototype(PsiClass aClass,
+  public static PsiMethod generateConstructorPrototype(@NotNull PsiClass aClass,
                                                        PsiMethod baseConstructor,
                                                        boolean copyJavaDoc,
-                                                       PsiField[] fields) throws IncorrectOperationException {
-    PsiManager manager = aClass.getManager();
+                                                       PsiField[] fields) {
+    if (aClass.isRecord()) {
+      PsiField[] classFields = aClass.getFields();
+      if (classFields.length == fields.length) {
+        fields = classFields; // keep original order
+      }
+    }
     Project project = aClass.getProject();
     JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), project);
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     String className = aClass.getName();
     assert className != null : aClass;
@@ -316,7 +321,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
-    LOG.assertTrue(false);
-    return null;
+    throw new UnsupportedOperationException();
   }
 }
