@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -849,18 +849,28 @@ public final class GenericsHighlightUtil {
   }
 
   //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
-  static HighlightInfo.Builder checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr, @NotNull JavaResolveResult result) {
+  static HighlightInfo.Builder checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr,
+                                                                         @NotNull JavaResolveResult result) {
     PsiField field = ObjectUtils.tryCast(result.getElement(), PsiField.class);
     if (field == null) return null;
 
     PsiClass enumClass = getEnumClassForExpressionInInitializer(expr);
     if (enumClass == null || !isRestrictedStaticEnumField(field, enumClass)) return null;
 
-    String description = JavaErrorBundle.message(
-      "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
-      HighlightMessageUtil.getSymbolName(field, result.getSubstitutor())
-    );
-
+    int fieldType = field instanceof PsiEnumConstant ? 2 : 1;
+    PsiMember initializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
+    int initializerType;
+    if (initializer instanceof PsiMethod) {
+      initializerType = 1;
+    }
+    else if (initializer instanceof PsiField) {
+      initializerType = 2;
+    }
+    else {
+      initializerType = 3;
+    }
+    String description = JavaErrorBundle.message("illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
+                                                 fieldType, initializerType);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description);
   }
 
@@ -889,15 +899,14 @@ public final class GenericsHighlightUtil {
   public static @Nullable PsiClass getEnumClassForExpressionInInitializer(@NotNull PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) return null;
     PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
-    if (constructorOrInitializer == null) return null;
-    if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
-                      (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
+    if (constructorOrInitializer == null || constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
+    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer
+                         ? (PsiClass)constructorOrInitializer
+                         : constructorOrInitializer.getContainingClass();
     if (enumClass instanceof PsiEnumConstantInitializer) {
       enumClass = enumClass.getSuperClass();
     }
-    if (enumClass == null || !enumClass.isEnum()) return null;
-    return enumClass;
+    return enumClass != null && enumClass.isEnum() ? enumClass : null;
   }
 
   static HighlightInfo.Builder checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {

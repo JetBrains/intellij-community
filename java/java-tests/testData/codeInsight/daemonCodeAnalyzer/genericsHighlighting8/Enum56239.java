@@ -1,10 +1,10 @@
 enum IDEA56239 {
   A, B() {
     {
-      System.out.println(<error descr="It is illegal to access static member 'A' from enum constructor or instance initializer">A</error>);
-      System.out.println(<error descr="It is illegal to access static member 'FOO' from enum constructor or instance initializer">FOO</error>);
+      System.out.println(<error descr="Accessing enum constant from enum instance initializer is not allowed">A</error>);
+      System.out.println(<error descr="Accessing static field from enum instance initializer is not allowed">FOO</error>);
       System.out.println(FOO1);
-      System.out.println(<error descr="It is illegal to access static member 'C' from enum constructor or instance initializer">C</error>);
+      System.out.println(<error descr="Accessing enum constant from enum instance initializer is not allowed">C</error>);
     }
   }, C(<error descr="Cannot refer to enum constant 'D' before its definition">D</error>), D;
 
@@ -15,14 +15,14 @@ enum IDEA56239 {
   }
 
   IDEA56239(IDEA56239 t) {
-    System.out.println(<error descr="It is illegal to access static member 'A' from enum constructor or instance initializer">A</error>);
-    System.out.println(<error descr="It is illegal to access static member 'FOO' from enum constructor or instance initializer">FOO</error>);
+    System.out.println(<error descr="Accessing enum constant from enum constructor is not allowed">A</error>);
+    System.out.println(<error descr="Accessing static field from enum constructor is not allowed">FOO</error>);
     System.out.println(FOO1);
   }
 
   {
-    System.out.println(<error descr="It is illegal to access static member 'A' from enum constructor or instance initializer">A</error>);
-    System.out.println(<error descr="It is illegal to access static member 'FOO' from enum constructor or instance initializer">FOO</error>);
+    System.out.println(<error descr="Accessing enum constant from enum instance initializer is not allowed">A</error>);
+    System.out.println(<error descr="Accessing static field from enum instance initializer is not allowed">FOO</error>);
     System.out.println(FOO1);
   }
 

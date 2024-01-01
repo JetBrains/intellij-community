@@ -3,9 +3,9 @@ enum Operation {
   static int s = 0;
   public static final String constS = "";
   Operation() {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum constructor is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum constructor is not allowed">s</error>;
+    <error descr="Accessing static field from enum constructor is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -18,12 +18,12 @@ enum Operation {
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
-    //Operation o = X;
+    Operation o = X;
   }
   {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum instance initializer is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum instance initializer is not allowed">s</error>;
+    <error descr="Accessing static field from enum instance initializer is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
