@@ -2410,6 +2410,7 @@
     <notificationGroup id="Accepted language levels" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.language.level"/>
     <notificationGroup id="Quarantine Cleaner" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON" bundle="messages.JavaUiBundle" key="notification.group.build.script.found"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.ide.SetupJavaProjectFromSourcesNotificationIds"/>
     <notificationGroup id="Java Preview Features" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.preview.features"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.redundant.exports"/>
     <notificationGroup id="Setup SDK" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.sdk"/>
