@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.IconUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
@@ -85,7 +84,7 @@ internal class KotlinPluginKindSwitcherController {
                 }.onChanged {
                     chosenKind = if (it.isSelected) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
                 }.gap(RightGap.SMALL)
-                icon(IconUtil.scale(AllIcons.General.Beta, ancestor = null, scale = .9f)).align(AlignY.BOTTOM)
+                icon(AllIcons.General.Alpha).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
                 comment(KotlinPreferencesBundle.message("kotlin.plugin.type.restart.required.comment"))
             }

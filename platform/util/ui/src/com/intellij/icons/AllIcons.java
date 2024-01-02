@@ -444,6 +444,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ActualZoom = load("general/actualZoom.svg", -749904846, 2);
     /** 16x16 */ public static final @NotNull Icon Add = load("general/add.svg", -906460278, 2);
     /** 16x16 */ public static final @NotNull Icon AddJdk = load("general/addJdk.svg", 1591845252, 2);
+    /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowDown = load("general/arrowDown.svg", 2097510840, 2);
     /** 9x5 */ public static final @NotNull Icon ArrowDownSmall = load("general/arrowDownSmall.svg", -53159950, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowLeft = load("general/arrowLeft.svg", -1023615143, 2);
