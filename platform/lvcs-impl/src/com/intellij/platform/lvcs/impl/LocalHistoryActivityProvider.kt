@@ -16,6 +16,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+private const val USE_OLD_CONTENT = true
+
 internal class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
   private val facade = LocalHistoryImpl.getInstanceImpl().facade!!
 
@@ -28,7 +30,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
         gateway.registerUnsavedDocuments(facade)
         return@runReadAction RevisionsCollector.collect(facade, gateway.createTransientRootEntry(),
                                                         gateway.getPathOrUrl(scope.file),
-                                                        project.getLocationHash(), scopeFilter, false)
+                                                        project.getLocationHash(), scopeFilter, USE_OLD_CONTENT)
       }.map {
         RevisionActivityItem(it)
       }
@@ -41,7 +43,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (activityFilter.isNullOrEmpty() || revisions.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
-    val revisionIds = facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = false)
+    val revisionIds = facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = USE_OLD_CONTENT)
     return items.filterTo(mutableSetOf()) { (it is RevisionActivityItem) && revisionIds.contains(it.revision.changeSetId) }
   }
 

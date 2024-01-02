@@ -60,4 +60,6 @@ public abstract class Revision {
   }
 
   public abstract RootEntry getRoot();
+
+  public abstract boolean isOldContentUsed();
 }

@@ -110,7 +110,12 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
 
   protected fun getTitle(revision: Revision): @Nls String {
     if (revision.isCurrent) return LocalHistoryBundle.message("current.revision")
-    return DateFormatUtil.formatDateTime(revision.timestamp)
+
+    val formattedTimestamp = DateFormatUtil.formatDateTime(revision.timestamp)
+    if (revision.isOldContentUsed && !revision.isLabel) {
+      return LocalHistoryBundle.message("activity.diff.content.title", formattedTimestamp)
+    }
+    return formattedTimestamp
   }
 
   override fun equals(other: Any?): Boolean {
