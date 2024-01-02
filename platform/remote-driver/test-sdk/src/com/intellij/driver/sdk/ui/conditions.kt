@@ -70,4 +70,12 @@ fun <T : UiComponent> T.should(message: String = "",
 
 val visible: UiComponent.() -> Boolean = { isVisible() }
 
+val enabled: UiComponent.() -> Boolean = { isEnabled() }
+
+val notEnabled: UiComponent.() -> Boolean = { !isEnabled() }
+
+val present: UiComponent.() -> Boolean = { present() }
+
+val notPresent: UiComponent.() -> Boolean = { notPresent() }
+
 fun text(value: String): UiComponent.() -> Boolean = { hasText(value) }
