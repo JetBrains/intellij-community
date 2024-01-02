@@ -211,10 +211,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             true
           }
         }
-
-        session.shutdown.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
+        /**
+         * Includes closing the project
+         */
+        session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
           lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-            LOG.info("Shutting down the application...")
+            LOG.info("Exiting the application...")
             app.exit(true, true, false)
           }
         }
