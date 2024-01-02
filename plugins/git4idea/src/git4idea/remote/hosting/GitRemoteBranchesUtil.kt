@@ -7,7 +7,12 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
@@ -52,66 +57,92 @@ object GitRemoteBranchesUtil {
                                            remote: HostedGitRepositoryRemote,
                                            remoteBranch: String,
                                            newLocalBranchPrefix: String?) {
-    val branchToCheckout = withBackgroundProgress(
-      repository.project,
-      CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
-    ) {
-      withRawProgressReporter {
-        withContext(Dispatchers.Default) {
-          findRemoteBranch(repository, remote, remoteBranch)?.takeIf {
-            fetchRemoteBranch(repository, it)
-          }
-        }
-      }
-    } ?: return
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val branch = findRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
 
-    withContext(Dispatchers.Main) {
-      checkoutRemoteBranch(repository, branchToCheckout, newLocalBranchPrefix)
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      withContext(Dispatchers.Main) {
+        checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
+      }
     }
   }
 
   suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
-    val fetchOk = withBackgroundProgress(
-      repository.project,
-      CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
-    ) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      withContext(Dispatchers.Main) {
+        checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
+      }
+    }
+  }
+
+  suspend fun fetchAndShowRemoteBranchInLog(repository: GitRepository,
+                                            remote: HostedGitRepositoryRemote,
+                                            remoteBranch: String,
+                                            targetBranch: String?) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.show.remote.branch.in.log.action.description")) {
+      val branchRef = findRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+      val targetBranchRef = targetBranch?.let { findRemoteBranch(repository, remote, targetBranch) }
+
+      val fetchOk = fetchBranch(repository, branchRef)
+      if (!fetchOk) return@withBackgroundProgress
+
+      showRemoteBranchInLog(repository, branchRef, targetBranchRef)
+    }
+  }
+
+  suspend fun fetchAndShowRemoteBranchInLog(repository: GitRepository, branch: GitRemoteBranch, targetBranch: GitRemoteBranch?) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.show.remote.branch.in.log.action.description")) {
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      showRemoteBranchInLog(repository, branch, targetBranch)
+    }
+  }
+
+  private suspend fun fetchBranch(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    val fetchResult = indeterminateStep {
       withRawProgressReporter {
         withContext(Dispatchers.Default) {
-          fetchRemoteBranch(repository, branch)
+          coroutineToIndicator {
+            GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, branch.nameForRemoteOperations)
+          }
         }
       }
-    }
-    if (!fetchOk) return
-
-    withContext(Dispatchers.Main) {
-      checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
-    }
-  }
-
-  private suspend fun findRemoteBranch(repository: GitRepository,
-                                       remote: HostedGitRepositoryRemote,
-                                       remoteBranch: String): GitRemoteBranch? {
-    val headRemote = coroutineToIndicator {
-      Git.getInstance().findOrCreateRemote(repository, remote)
-    }
-    if (headRemote == null) {
-      withContext(Dispatchers.Main) {
-        notifyRemoteError(repository.project, remote)
-      }
-      return null
-    }
-    return GitStandardRemoteBranch(headRemote, remoteBranch)
-  }
-
-  private suspend fun fetchRemoteBranch(repository: GitRepository, branch: GitRemoteBranch): Boolean {
-    val fetchResult = coroutineToIndicator {
-      GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, branch.nameForRemoteOperations)
     }
     return withContext(Dispatchers.Main) {
       fetchResult.showNotificationIfFailed(GitBundle.message("notification.title.fetch.failure"))
     }
   }
 
+  private suspend fun findRemoteBranch(repository: GitRepository,
+                                       remote: HostedGitRepositoryRemote,
+                                       remoteBranch: String): GitRemoteBranch? {
+    val headRemote = indeterminateStep {
+      withRawProgressReporter {
+        withContext(Dispatchers.Default) {
+          coroutineToIndicator {
+            Git.getInstance().findOrCreateRemote(repository, remote)
+          }
+        }
+      }
+    }
+    if (headRemote == null) {
+      notifyRemoteError(repository.project, remote)
+      return null
+    }
+    return GitStandardRemoteBranch(headRemote, remoteBranch)
+  }
+
+  @RequiresEdt
   fun checkoutRemoteBranch(repository: GitRepository,
                            branch: GitRemoteBranch,
                            newLocalBranchPrefix: String? = null,
@@ -125,23 +156,43 @@ object GitRemoteBranchesUtil {
       .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
   }
 
-  private fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
-    var failedMessage = CollaborationToolsBundle.message("review.details.action.branch.checkout.failed.remote")
-    val httpUrl = remote.httpUrl //NON-NLS
-    val sshUrl = remote.sshUrl //NON-NLS
-    if (httpUrl != null) {
-      failedMessage += "\n$httpUrl"
+
+  private suspend fun showRemoteBranchInLog(repository: GitRepository,
+                                            branch: GitRemoteBranch,
+                                            targetBranch: GitRemoteBranch?) {
+    withContext(Dispatchers.Main) {
+      val branchFilter = if (targetBranch != null) {
+        VcsLogFilterObject.fromRange(targetBranch.nameForLocalOperations, branch.nameForLocalOperations)
+      }
+      else {
+        VcsLogFilterObject.fromBranch(branch.nameForLocalOperations)
+      }
+      val repoFilter = VcsLogFilterObject.fromRoots(listOf(repository.root))
+      val filters = VcsLogFilterObject.collection(branchFilter, repoFilter)
+      VcsProjectLog.getInstance(repository.project).openLogTab(filters)
     }
-    if (sshUrl != null) {
-      failedMessage += "\n$sshUrl"
-    }
-    VcsNotifier.getInstance(project).notifyError(
-      CollaborationToolsNotificationIdsHolder.REVIEW_BRANCH_CHECKOUT_FAILED,
-      CollaborationToolsBundle.message("review.details.action.branch.checkout.failed"),
-      failedMessage
-    )
   }
 
+  private suspend fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
+    withContext(Dispatchers.Main) {
+      var failedMessage = CollaborationToolsBundle.message("review.details.action.branch.checkout.failed.remote")
+      val httpUrl = remote.httpUrl //NON-NLS
+      val sshUrl = remote.sshUrl //NON-NLS
+      if (httpUrl != null) {
+        failedMessage += "\n$httpUrl"
+      }
+      if (sshUrl != null) {
+        failedMessage += "\n$sshUrl"
+      }
+      VcsNotifier.getInstance(project).notifyError(
+        CollaborationToolsNotificationIdsHolder.REVIEW_BRANCH_CHECKOUT_FAILED,
+        CollaborationToolsBundle.message("review.details.action.branch.checkout.failed"),
+        failedMessage
+      )
+    }
+  }
+
+  @RequiresBackgroundThread
   private fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
     val existingRemote = findRemote(repository, remote)
     if (existingRemote != null) return existingRemote

@@ -56,6 +56,15 @@ internal class GitLabMergeRequestBranchesViewModel(
     GitLabStatistics.logMrActionExecuted(gitRepository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
   }
 
+  override val canShowInLog: Boolean = true
+  override fun fetchAndShowInLog() {
+    cs.launch {
+      val details = mergeRequest.details.first()
+      GitLabMergeRequestBranchUtil.fetchAndShowRemoteBranchInLog(mapping, details)
+    }
+    GitLabStatistics.logMrActionExecuted(gitRepository.project, GitLabStatistics.MergeRequestAction.SHOW_BRANCH_IN_LOG)
+  }
+
   override fun showBranches() {
     cs.launch {
       val details = mergeRequest.details.first()

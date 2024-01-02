@@ -52,12 +52,19 @@ object CodeReviewDetailsBranchComponentFactory {
       scope.launchNow {
         branchesVm.showBranchesRequests.collectLatest { (source, target) ->
           val point = RelativePoint.getSouthWestOf(this@apply)
-          JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(ReviewAction.Checkout))
+          val actions = buildList<ReviewAction> {
+            add(ReviewAction.Checkout)
+            if (branchesVm.canShowInLog) {
+              ReviewAction.ShowInLog
+            }
+          }
+          JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
             .setRenderer(popupActionsRenderer(source))
             .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
             .setItemChosenCallback { action ->
-              when (action) {
+              return@setItemChosenCallback when (action) {
                 is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
+                is ReviewAction.ShowInLog -> branchesVm.fetchAndShowInLog()
               }
             }
             .createPopup()
@@ -86,10 +93,14 @@ private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<ReviewA
       is ReviewAction.Checkout -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
       )
+      is ReviewAction.ShowInLog -> PopupItemPresentation.Simple(
+        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log", sourceBranch)
+      )
     }
   }
 }
 
 private sealed interface ReviewAction {
   data object Checkout : ReviewAction
+  data object ShowInLog : ReviewAction
 }

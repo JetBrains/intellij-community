@@ -65,6 +65,15 @@ class GHPRBranchesViewModel internal constructor(
     }
   }
 
+  override val canShowInLog: Boolean = true
+  override fun fetchAndShowInLog() {
+    cs.launch {
+      val details = detailsState.first()
+      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
+      GitRemoteBranchesUtil.fetchAndShowRemoteBranchInLog(gitRepository, remoteDescriptor, details.headRefName, details.baseRefName)
+    }
+  }
+
   override fun showBranches() {
     cs.launchNow {
       val source = sourceBranch.value

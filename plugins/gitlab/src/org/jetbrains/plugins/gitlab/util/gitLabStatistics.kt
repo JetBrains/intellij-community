@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 18)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 19)
 
   /**
    * Server metadata was fetched
@@ -158,7 +158,8 @@ internal object GitLabStatistics {
     POST_DRAFT_NOTE,
     SUBMIT_DRAFT_NOTES,
     POST_REVIEW,
-    BRANCH_CHECKOUT
+    BRANCH_CHECKOUT,
+    SHOW_BRANCH_IN_LOG
   }
 
   enum class MergeRequestNoteActionPlace {
