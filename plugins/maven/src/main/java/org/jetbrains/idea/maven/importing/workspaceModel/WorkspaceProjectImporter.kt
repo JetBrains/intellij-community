@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -47,6 +47,7 @@ import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
+import org.jetbrains.idea.maven.statistics.MavenNotificationDisplayIds
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -172,6 +173,7 @@ internal class WorkspaceProjectImporter(
           SyncBundle.message("maven.workspace.external.storage.notification.title"),
           SyncBundle.message("maven.workspace.external.storage.notification.text"),
           NotificationType.INFORMATION)
+        .setDisplayId(MavenNotificationDisplayIds.WORKSPACE_EXTERNAL_STORAGE)
 
       notification.addAction(object : AnAction(
         SyncBundle.message("maven.sync.quickfixes.open.settings")) {
@@ -702,6 +704,7 @@ private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
           SyncBundle.message("maven.workspace.first.import.notification.title"),
           SyncBundle.message("maven.workspace.first.import.notification.text"),
           NotificationType.INFORMATION)
+        .setDisplayId(MavenNotificationDisplayIds.FIRST_IMPORT_NOTIFICATION)
 
       notification.addAction(object : AnAction(
         SyncBundle.message("maven.sync.quickfixes.open.settings")) {
