@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -13,11 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,6 +61,13 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
 
     List<PsiMethod> ctors =
       CreateConstructorParameterFromFieldFix.filterConstructorsIfFieldAlreadyAssigned(myClass.getConstructors(), field);
+    for (Iterator<PsiMethod> iterator = ctors.iterator(); iterator.hasNext(); ) {
+      PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(iterator.next());
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(constructorCall)) {
+        // otherwise final field can be initialized multiple times, which does not compile
+        iterator.remove();
+      }
+    }
 
     List<PsiMethodMember> allMembers = ContainerUtil.map(ctors, PsiMethodMember::new);
     if (ctors.size() == 1) {
