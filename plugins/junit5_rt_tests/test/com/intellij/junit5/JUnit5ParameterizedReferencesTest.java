@@ -121,10 +121,7 @@ public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
                               "    void single() {} " +
                               "}");
     PsiReference reference = myFixture.getReferenceAtCaretPosition();
-    assertNotNull(reference);
-    PsiElement resolved = reference.resolve();
-    assertNull(resolved);
-    assertVariants(reference, false);
+    assertReference(reference);
   }
 
   @Test
