@@ -714,7 +714,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Misnamed, actually it checks only parameter hints.
-   * @see #testInlays()
+   * @see #testInlays(Function, Predicate)
    */
   void testInlays();
 
