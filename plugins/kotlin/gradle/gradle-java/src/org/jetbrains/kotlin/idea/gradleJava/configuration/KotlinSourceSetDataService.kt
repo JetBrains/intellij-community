@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.SimplePlatform
@@ -85,7 +87,8 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             val platform = kotlinSourceSet.actualPlatforms
             val rootModel = modelsProvider.getModifiableRootModel(ideModule)
 
-            if (platform.platforms.any { it != KotlinPlatform.JVM && it != KotlinPlatform.ANDROID }) {
+            if (platform.platforms.any { (it != KotlinPlatform.JVM && it != KotlinPlatform.ANDROID)} ||
+                listOf(COMMON_MAIN_SOURCE_SET_NAME, COMMON_TEST_SOURCE_SET_NAME).contains(sourceSetData.moduleName)) {
                 migrateNonJvmSourceFolders(rootModel, ExternalSystemApiUtil.toExternalSource(nodeToImport.data.owner))
                 populateNonJvmSourceRootTypes(nodeToImport, ideModule)
             }
