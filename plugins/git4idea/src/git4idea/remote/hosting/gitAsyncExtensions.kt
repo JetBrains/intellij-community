@@ -4,8 +4,8 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.api.ServerPath
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
@@ -41,17 +41,16 @@ fun GitRepository.infoStateIn(cs: CoroutineScope): StateFlow<GitRepoInfo> = chan
 
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {
-    val disposable = Disposer.newDisposable()
-    project.messageBus.connect(disposable).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
-      trySend(GitRepositoryManager.getInstance(project).collectRemotes())
+    val repoManager = project.serviceAsync<GitRepositoryManager>()
+    val cs = this
+    project.messageBus.connect(cs).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
+      trySend(repoManager.collectRemotes())
     })
-    project.messageBus.connect(disposable).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      trySend(GitRepositoryManager.getInstance(project).collectRemotes())
+    project.messageBus.connect(cs).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      trySend(repoManager.collectRemotes())
     })
-    send(GitRepositoryManager.getInstance(project).collectRemotes())
-    awaitClose {
-      Disposer.dispose(disposable)
-    }
+    send(repoManager.collectRemotes())
+    awaitClose()
   }
 
 private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> {
