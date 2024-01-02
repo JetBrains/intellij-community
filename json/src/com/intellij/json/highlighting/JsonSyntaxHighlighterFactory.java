@@ -6,7 +6,6 @@ import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.JsonLexer;
 import com.intellij.lang.Language;
-import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -89,13 +88,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
-      LayeredLexer layeredLexer = new LayeredLexer(getLexer());
-      boolean isPermissiveDialect = isPermissiveDialect();
-      layeredLexer.registerSelfStoppingLayer(new JsonStringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, isCanEscapeEol(), isPermissiveDialect),
-                                             new IElementType[]{JsonElementTypes.DOUBLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
-      layeredLexer.registerSelfStoppingLayer(new JsonStringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, isCanEscapeEol(), isPermissiveDialect),
-                                             new IElementType[]{JsonElementTypes.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
-      return layeredLexer;
+      return new JsonHighlightingLexer(isPermissiveDialect(), isCanEscapeEol(), getLexer());
     }
 
     private boolean isPermissiveDialect() {
