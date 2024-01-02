@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.junit.jupiter.api.Assertions.*
@@ -278,7 +279,7 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(13, 1)))
 
     requiresAuthentication { api ->
-      val mrs = api.graphQL.findMergeRequestsByBranch(glTest1Coordinates, "changes-on-b").body()
+      val mrs = api.graphQL.findMergeRequestsByBranch(glTest1Coordinates, GitLabMergeRequestState.ALL, "changes-on-b").body()
 
       assertNotNull(mrs)
       assertEquals(listOf("3"), mrs!!.nodes.map { it.iid })

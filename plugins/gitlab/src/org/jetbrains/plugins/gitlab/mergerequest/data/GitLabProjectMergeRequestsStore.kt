@@ -49,9 +49,12 @@ interface GitLabProjectMergeRequestsStore {
   suspend fun reloadMergeRequest(iid: String)
 
   /**
-   * Find merge requests on a remote with a source branch name [sourceBranchName] and a target branch name [targetBranchName]
+   * Find merge requests in specified [state] on a remote
+   * with a source branch name [sourceBranchName] and a target branch name [targetBranchName]
    */
-  suspend fun findByBranches(sourceBranchName: String, targetBranchName: String? = null): List<GitLabMergeRequestByBranchDTO>
+  suspend fun findByBranches(state: GitLabMergeRequestState,
+                             sourceBranchName: String,
+                             targetBranchName: String? = null): List<GitLabMergeRequestByBranchDTO>
 }
 
 class CachingGitLabProjectMergeRequestsStore(private val project: Project,
@@ -97,9 +100,11 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     }
   }
 
-  override suspend fun findByBranches(sourceBranchName: String, targetBranchName: String?): List<GitLabMergeRequestByBranchDTO> =
+  override suspend fun findByBranches(state: GitLabMergeRequestState,
+                                      sourceBranchName: String,
+                                      targetBranchName: String?): List<GitLabMergeRequestByBranchDTO> =
     withContext(Dispatchers.IO) {
-      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, sourceBranchName, targetBranchName).body()!!.nodes
+      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, state, sourceBranchName, targetBranchName).body()!!.nodes
     }
 
   override fun findCachedDetails(iid: String): GitLabMergeRequestDetails? = detailsCache.getIfPresent(iid)

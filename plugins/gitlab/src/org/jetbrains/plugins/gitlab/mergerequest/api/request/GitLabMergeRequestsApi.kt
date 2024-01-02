@@ -16,6 +16,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBra
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
+import org.jetbrains.plugins.gitlab.mergerequest.data.asApiParameter
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
@@ -49,11 +51,13 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
 @SinceGitLab("13.1")
 suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
   project: GitLabProjectCoordinates,
+  state: GitLabMergeRequestState,
   sourceBranch: String,
   targetBranch: String? = null
 ): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>?> {
   val parameters = mutableMapOf(
     "projectId" to project.projectPath.fullPath(),
+    "state" to state.asApiParameter(),
     "sourceBranches" to listOf(sourceBranch),
     "targetBranches" to targetBranch?.let { listOf(it) }
   )

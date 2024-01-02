@@ -30,3 +30,8 @@ enum class GitLabMergeRequestState {
    */
   OPENED;
 }
+
+/**
+ * Convert to a form accepted by the API
+ */
+fun GitLabMergeRequestState.asApiParameter(): String = name.lowercase()
