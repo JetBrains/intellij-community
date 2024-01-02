@@ -21,10 +21,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * User: anna
  * Checks that a non-public field is referenced in fx:id attribute or a non-public method is referenced as an event handler in FXML
  */
-public final class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
+final class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
@@ -76,8 +75,23 @@ public final class JavaFxImplicitUsageProvider implements ImplicitUsageProvider 
       if (isInjectedByFxmlLoader(field)) {
         return true;
       }
-      final Collection<VirtualFile> containingFiles = JavaFxIdsIndex.getContainingFiles(project, fieldName);
-      if (containingFiles.isEmpty()) return false;
+
+      if (field.getType() instanceof PsiClassType controllerClassType) {
+        PsiClass controllerClass = controllerClassType.resolve();
+        if (controllerClass != null
+            && controllerClass.getQualifiedName() != null
+            && !InheritanceUtil.isInheritor(controllerClass, "javafx.scene.Node")
+            && !JavaFxControllerClassIndex.findFxmlsWithController(project, controllerClass.getQualifiedName()).isEmpty()) {
+          // another controller injected here
+          return true;
+        }
+      }
+
+      Collection<VirtualFile> containingFiles = JavaFxIdsIndex.getContainingFiles(project, fieldName);
+      if (containingFiles.isEmpty()) {
+        return false;
+      }
+
       // is the field declared in a controller class?
       final List<VirtualFile> fxmls = JavaFxControllerClassIndex.findFxmlsWithController(project, qualifiedName);
       for (VirtualFile fxml : fxmls) {
