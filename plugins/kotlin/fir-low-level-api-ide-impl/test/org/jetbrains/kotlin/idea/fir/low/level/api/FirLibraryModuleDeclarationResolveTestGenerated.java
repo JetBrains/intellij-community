@@ -28,6 +28,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         runTest("testData/libraryModuleResolve/annotationArgs.kt");
     }
 
+    @TestMetadata("companionObject.kt")
+    public void testCompanionObject() throws Exception {
+        runTest("testData/libraryModuleResolve/companionObject.kt");
+    }
+
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("testData/libraryModuleResolve/enumEntry.kt");
@@ -71,6 +76,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
     @TestMetadata("memberProperty.kt")
     public void testMemberProperty() throws Exception {
         runTest("testData/libraryModuleResolve/memberProperty.kt");
+    }
+
+    @TestMetadata("object.kt")
+    public void testObject() throws Exception {
+        runTest("testData/libraryModuleResolve/object.kt");
     }
 
     @TestMetadata("requireCall.kt")
