@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -11,17 +13,12 @@ import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
 internal open class PluginStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) : Unit = blockingContext {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
-        setupReportingFromRelease()
-
-        //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
-        //KotlinSdkType.Companion.setUpIfNeeded();
 
         executeExtraActions(project)
 
