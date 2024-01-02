@@ -59,9 +59,11 @@ class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProje
               MavenLog.LOG.debug("Duplicate dependencies in the same file: ${dependencyToString(d)}, ${dependencyToString(dependency)}")
 
               val siblingDependencies = (dependencyParent as MavenDomDependencies).dependencies
-              MavenLog.LOG.debug("Sibling dependencies: ${siblingDependencies.size}")
 
-              duplicateDependencies.add(d)
+              MavenLog.LOG.debug("Sibling dependencies: ${siblingDependencies.size}")
+              if (siblingDependencies.contains(d)) {
+                duplicateDependencies.add(d)
+              }
             }
             else {
               if (scope(d) == scope(dependency) && d.version.stringValue == dependency.version.stringValue) {
