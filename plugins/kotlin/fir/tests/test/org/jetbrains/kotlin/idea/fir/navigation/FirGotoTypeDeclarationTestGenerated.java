@@ -28,6 +28,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/builtinTypeStdlib.test");
     }
 
+    @TestMetadata("classInstance.test")
+    public void testClassInstance() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/classInstance.test");
+    }
+
     @TestMetadata("explicitParameterInLambda.test")
     public void testExplicitParameterInLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");

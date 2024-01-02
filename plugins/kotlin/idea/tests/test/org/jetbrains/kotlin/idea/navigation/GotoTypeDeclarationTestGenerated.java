@@ -28,6 +28,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/builtinTypeStdlib.test");
     }
 
+    @TestMetadata("classInstance.test")
+    public void testClassInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/classInstance.test");
+    }
+
     @TestMetadata("explicitParameterInLambda.test")
     public void testExplicitParameterInLambda() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");

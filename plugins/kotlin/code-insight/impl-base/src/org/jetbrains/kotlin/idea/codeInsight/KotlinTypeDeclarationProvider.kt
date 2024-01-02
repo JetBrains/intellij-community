@@ -33,6 +33,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
                 else PsiElement.EMPTY_ARRAY
             }
             is KtCallableDeclaration -> symbol.getTypeDeclarationFromCallable { callableSymbol -> callableSymbol.returnType }
+            is KtClassOrObject -> getClassTypeDeclaration(symbol)
             else -> PsiElement.EMPTY_ARRAY
         }
     }
@@ -41,6 +42,13 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         return symbol.getTypeDeclarationFromCallable { callableSymbol ->
             (callableSymbol as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull()?.returnType ?: callableSymbol.receiverType
         }
+    }
+
+    private fun getClassTypeDeclaration(symbol: KtClassOrObject): Array<PsiElement> {
+        analyze(symbol) {
+            (symbol.getSymbol() as? KtNamedClassOrObjectSymbol)?.psi?.let { return arrayOf(it) }
+        }
+        return PsiElement.EMPTY_ARRAY
     }
 
     private fun KtCallableDeclaration.getTypeDeclarationFromCallable(typeFromSymbol: (KtCallableSymbol) -> KtType?): Array<PsiElement> {
