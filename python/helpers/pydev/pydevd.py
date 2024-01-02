@@ -1838,6 +1838,8 @@ def _locked_settrace(
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
 
+        pydev_log.debug("pydev debugger: process %d debugging initialization is finished\n" % os.getpid())
+
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
