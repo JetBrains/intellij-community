@@ -24,7 +24,6 @@ import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
-import com.intellij.util.progress.SubTaskProgressIndicator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -33,7 +32,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
@@ -91,31 +89,25 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     indicator.isIndeterminate = false
 
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
-    val originalIndicator = unwrapAll(indicator)
-    val originalSuspender = ProgressSuspender.getSuspender(originalIndicator)
-    // we store indicator in the IndexingJob, because want to report progress. This indicator is not used for checkCancelled()
-    val indexingJob = IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender)
+    val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
+    val progressReporter = IndexingProgressReporter2(indicator)
+    val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSets)
 
     runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
         launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$it)")) {
           while (!indexingJob.areAllFilesProcessed()) {
             ensureActive()
-            val suspender = indexingJob.myOriginalProgressSuspender
-            while (suspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
+            while (originalSuspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
             GLOBAL_INDEXING_SEMAPHORE.withPermit {
               blockingContext {
-                // note that outer progress indicator does not propagate through launch(). Here (after blockingContext) we have no
-                // progress indicator in the context, but ProgressManager.checkCancel() should work using outer coroutine context.
-                if (suspender != null) {
-                  suspender.executeNonSuspendableSection(indexingJob.myOriginalProgressIndicator) {
-                    indexOneFileOfJob(indexingJob)
-                  }
-                }
-                else {
-                  indexOneFileOfJob(indexingJob)
-                }
+                LOG.assertTrue(ProgressManager.getGlobalProgressIndicator() == null,
+                               "There should be no global progress indicator, because it does not propagate implicitly through launch()")
+
+                // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
+                // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
+                indexOneFileOfJob(indexingJob)
 
                 if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
                   // TODO: suspend, not block
@@ -137,7 +129,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
 
     val fileIndexingJob = indexingJob.myQueueOfFiles.poll()
     if (fileIndexingJob == null) {
-      indexingJob.myNoMoreFilesInQueue.set(true)
       return
     }
 
@@ -251,18 +242,10 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
   private data class FileIndexingJob(val file: VirtualFile, val fileSet: FileSet)
 
   private class IndexingJob(val myProject: Project,
-                            private val indicatorForProgressReporting: ProgressIndicator, // should only be used for progress reporting
-                            contentLoader: CachedFileContentLoader,
-                            fileSets: List<FileSet>,
-                            originalProgressIndicator: ProgressIndicator,
-                            originalProgressSuspender: ProgressSuspender?) {
-    val myContentLoader: CachedFileContentLoader
+                            val progressReporter: IndexingProgressReporter2,
+                            val myContentLoader: CachedFileContentLoader,
+                            fileSets: List<FileSet>) {
     val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
-    val myTotalFiles: Int
-    val myNoMoreFilesInQueue: AtomicBoolean = AtomicBoolean()
-    val myAllFilesAreProcessedLatch: CountDownLatch
-    val myOriginalProgressIndicator: ProgressIndicator
-    val myOriginalProgressSuspender: ProgressSuspender?
 
     init {
       val maxFilesCount = fileSets.sumOf { fileSet: FileSet -> fileSet.files.size }
@@ -280,11 +263,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
         }
       }
       // todo: maybe we want to do something with statistics: deduplicateFilter.getNumberOfSkippedFiles();
-      myTotalFiles = myQueueOfFiles.size
-      myContentLoader = contentLoader
-      myAllFilesAreProcessedLatch = CountDownLatch(myTotalFiles)
-      myOriginalProgressIndicator = originalProgressIndicator
-      myOriginalProgressSuspender = originalProgressSuspender
+      progressReporter.setTotalFiles(myQueueOfFiles.size)
     }
 
     fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
@@ -292,32 +271,16 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
 
     fun oneMoreFileProcessed() {
-      myAllFilesAreProcessedLatch.countDown()
-      val newFraction = 1.0 - myAllFilesAreProcessedLatch.count / myTotalFiles.toDouble()
-      try {
-        indicatorForProgressReporting.fraction = newFraction
-      }
-      catch (ignored: Exception) {
-        //Unexpected here. A misbehaved progress indicator must not break our code flow.
-      }
+      progressReporter.oneMoreFileProcessed()
     }
 
     fun areAllFilesProcessed(): Boolean {
-      return myAllFilesAreProcessedLatch.count == 0L
+      return myQueueOfFiles.isEmpty()
     }
 
     fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
       val presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.file)
-      if (indicatorForProgressReporting is SubTaskProgressIndicator) {
-        indicatorForProgressReporting.setText(presentableLocation)
-      }
-      else {
-        val fileSet = fileIndexingJob.fileSet
-        if (fileSet.progressText != null && fileSet.progressText != indicatorForProgressReporting.text) {
-          indicatorForProgressReporting.text = fileSet.progressText
-        }
-        indicatorForProgressReporting.text2 = presentableLocation
-      }
+      progressReporter.setLocationBeingIndexed(fileIndexingJob.fileSet.progressText, presentableLocation)
     }
   }
 
