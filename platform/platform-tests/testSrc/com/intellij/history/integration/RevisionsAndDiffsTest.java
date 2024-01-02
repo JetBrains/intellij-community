@@ -391,4 +391,21 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
     assertEquals(3, getRevisionsFor(restoredFile).size());
   }
+
+  public void testRenameAndDeleteInTheSameChangeSet() throws Exception {
+    String oldFileName = "old.foo.txt";
+    String newFileName = "new.foo.txt";
+
+    VirtualFile file = createFile(oldFileName);
+
+    getVcs().beginChangeSet();
+    rename(file, newFileName);
+    delete(file);
+    getVcs().endChangeSet("renamed and deleted file");
+    VirtualFile restoredFile = createFile(newFileName);
+
+    List<Revision> revisions = getRevisionsFor(restoredFile);
+    System.err.println(revisions);
+    assertEquals(4, revisions.size());
+  }
 }
