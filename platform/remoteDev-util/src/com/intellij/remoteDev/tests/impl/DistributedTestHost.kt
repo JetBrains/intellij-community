@@ -194,8 +194,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
           }
         }
-
-        session.isResponding.setSuspendPreserveClientId { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
@@ -218,13 +219,17 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspendPreserveClientId { _, actionTitle ->
-          withContext(Dispatchers.EDT) {
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, actionTitle ->
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             requestFocus(actionTitle)
           }
         }
 
-        session.makeScreenshot.setSuspendPreserveClientId { _, fileName ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
           makeScreenshot(fileName)
         }
 
