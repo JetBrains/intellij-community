@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -27,10 +28,17 @@ public final class PyNumericViewUtil {
     return 0;
   }
 
-  public static Color rangedValueToColor(double rangedValue)
-  {
-    //noinspection UseJBColor
-    return  new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130);
+  public static Color rangedValueToColor(double rangedValue) {
+    // Old variant of coloring.
+    // noinspection UseJBColor
+    // return  new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130);
+
+    if (JBColor.isBright()) {
+      return Color.getHSBColor(240 / 360f, (float)rangedValue * 0.7f, 1f);
+    }
+    else {
+      return Color.getHSBColor(240 / 360f, 220 / 360f, (float)rangedValue * 0.7f);
+    }
   }
 
   /**
