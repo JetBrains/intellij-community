@@ -2,16 +2,20 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.project.MavenProject
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
 class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
+  private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(WorkspaceModuleImporter.EXTERNAL_SOURCE_ID)
+
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     // find all poms with maven-shade-plugin
     val shadeProjectsWithModules = context.mavenProjectsWithModules.filter {
@@ -53,12 +57,11 @@ class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
     addLibraryEntity(
       builder,
-      libraryId,
-      {
-        listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED))
-      },
-      module.entitySource
-    )
+      project,
+      libraryId
+    ) {
+      listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED))
+    }
 
     val scope = ModuleDependencyItem.DependencyScope.COMPILE
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, scope)
@@ -70,11 +73,15 @@ class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
   private fun addLibraryEntity(
     builder: MutableEntityStorage,
+    project: Project,
     libraryId: LibraryId,
-    libraryRootsProvider: () -> List<LibraryRoot>, // lazy provider to avoid roots creation for already added libraries
-    entitySource: EntitySource) {
+    // lazy provider to avoid roots creation for already added libraries
+    libraryRootsProvider: () -> List<LibraryRoot>) {
     if (libraryId in builder) return
 
-    builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), entitySource)
+    // TODO: fileInDirectoryNames?
+    val librarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
+
+    builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), librarySource)
   }
 }
