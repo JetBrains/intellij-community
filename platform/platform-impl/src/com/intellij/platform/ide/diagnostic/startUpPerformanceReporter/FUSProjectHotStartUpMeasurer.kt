@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
@@ -222,6 +223,8 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.NoMoreEditorsEvent())
   }
 
+  private data class LastHandledEvent(val event: Event.FUSReportableEvent, val durationReportedToFUS: Duration)
+
   private fun applyFrameVisibleEventIfPossible(
     afterSplash: Boolean,
     splashBecameVisibleEvent: Event.SplashBecameVisibleEvent?,
@@ -229,16 +232,19 @@ object FUSProjectHotStartUpMeasurer {
     projectTypeReportEvent: Event.ProjectTypeReportEvent?,
     projectPathReportEvent: Event.ProjectPathReportEvent?,
     ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
-  ): Event.FUSReportableEvent? {
+    lastHandledEvent: LastHandledEvent?,
+  ): LastHandledEvent? {
     if (!afterSplash && splashBecameVisibleEvent != null &&
         (frameBecameVisibleEvent == null || splashBecameVisibleEvent.time <= frameBecameVisibleEvent.time)) {
-      FIRST_UI_SHOWN_EVENT.log(getDurationFromStart(splashBecameVisibleEvent.time).getValueForFUS(), UIResponseType.Splash)
-      return splashBecameVisibleEvent
+      val durationFromStart = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent)
+      FIRST_UI_SHOWN_EVENT.log(durationFromStart.getValueForFUS(), UIResponseType.Splash)
+      return LastHandledEvent(splashBecameVisibleEvent, durationFromStart)
     }
 
     if (frameBecameVisibleEvent != null) {
       if (ideStarterStartedEvent == null) throw CancellationException()
-      val durationForFUS = getDurationFromStart(frameBecameVisibleEvent.time).getValueForFUS()
+      val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, lastHandledEvent)
+      val durationForFUS = durationFromStart.getValueForFUS()
       if (!afterSplash) {
         FIRST_UI_SHOWN_EVENT.log(durationForFUS, UIResponseType.Frame)
       }
@@ -251,7 +257,7 @@ object FUSProjectHotStartUpMeasurer {
         FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationForFUS), PROJECTS_TYPE.with(projectsType),
                                        HAS_SETTINGS.with(settingsExist))
       }
-      return frameBecameVisibleEvent
+      return LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
     }
     return null
   }
@@ -260,10 +266,10 @@ object FUSProjectHotStartUpMeasurer {
     violation: Violation,
     time: Long,
     ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
-    lastHandledEvent: Event.FUSReportableEvent?,
+    lastHandledEvent: LastHandledEvent?,
   ): Nothing {
-    val duration = getDurationFromStart(time).getValueForFUS()
-    if ((lastHandledEvent == null || lastHandledEvent is Event.SplashBecameVisibleEvent) && (ideStarterStartedEvent != null)) {
+    val duration = getDurationFromStart(time, lastHandledEvent).getValueForFUS()
+    if ((lastHandledEvent == null || lastHandledEvent.event is Event.SplashBecameVisibleEvent) && (ideStarterStartedEvent != null)) {
       if (lastHandledEvent == null) {
         FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame)
       }
@@ -273,11 +279,13 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private fun applyFrameInteractiveEventIfPossible(
-    frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent?
-  ): Event.FUSReportableEvent? {
+    frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent?,
+    lastHandledEvent: LastHandledEvent
+  ): LastHandledEvent? {
     if (frameBecameInteractiveEvent != null) {
-      FRAME_BECAME_INTERACTIVE_EVENT.log(getDurationFromStart(frameBecameInteractiveEvent.time).getValueForFUS())
-      return frameBecameInteractiveEvent
+      val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastHandledEvent)
+      FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart.getValueForFUS())
+      return LastHandledEvent(frameBecameInteractiveEvent, durationFromStart)
     }
     return null
   }
@@ -287,6 +295,7 @@ object FUSProjectHotStartUpMeasurer {
     noEditorEvent: Event.NoMoreEditorsEvent?,
     markupResurrectedFileIds: IntOpenHashSet,
     projectPathReportEvent: Event.ProjectPathReportEvent?,
+    lastHandledEvent: LastHandledEvent,
   ) {
     if (firstEditorEvent == null && noEditorEvent == null) {
       return
@@ -304,7 +313,7 @@ object FUSProjectHotStartUpMeasurer {
       val hasLoadedMarkup = file is VirtualFileWithId && markupResurrectedFileIds.contains(file.id)
       val fileType = readAction { file.fileType }
       ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(firstEditorEvent.time).getValueForFUS()),
+                           DURATION.with(getDurationFromStart(firstEditorEvent.time, lastHandledEvent).getValueForFUS()),
                            EventFields.FileType.with(fileType),
                            LOADED_CACHED_MARKUP_FIELD.with(hasLoadedMarkup),
                            NO_EDITORS_TO_OPEN_FIELD.with(false),
@@ -313,7 +322,7 @@ object FUSProjectHotStartUpMeasurer {
     }
     else if (noEditorEvent != null) {
       ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(noEditorEvent.time).getValueForFUS()),
+                           DURATION.with(getDurationFromStart(noEditorEvent.time, lastHandledEvent).getValueForFUS()),
                            NO_EDITORS_TO_OPEN_FIELD.with(true))
     }
 
@@ -332,7 +341,7 @@ object FUSProjectHotStartUpMeasurer {
 
   private suspend fun handleStatisticEvents() {
     val markupResurrectedFileIds = IntOpenHashSet()
-    var lastHandledEvent: Event.FUSReportableEvent? = null
+    var lastHandledEvent: LastHandledEvent? = null
     var ideStarterStartedEvent: Event.IdeStarterStartedEvent? = null
     var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null
     var frameBecameVisibleEvent: Event.FrameBecameVisibleEvent? = null
@@ -351,12 +360,12 @@ object FUSProjectHotStartUpMeasurer {
           frameBecameVisibleEvent = event
         }
         is Event.WelcomeScreenEvent -> {
-          val welcomeScreedDurationForFUS = getDurationFromStart(event.time).getValueForFUS()
+          val welcomeScreedDurationForFUS = getDurationFromStart(event.time, lastHandledEvent).getValueForFUS()
           if (splashBecameVisibleEvent == null) {
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(false))
           }
           else {
-            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time).getValueForFUS()
+            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent).getValueForFUS()
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
                                      SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
           }
@@ -375,16 +384,16 @@ object FUSProjectHotStartUpMeasurer {
       }
 
       while (true) {
-        val newLastHandledEvent: Event.FUSReportableEvent? = when (lastHandledEvent) {
+        val newLastHandledEvent: LastHandledEvent? = when (lastHandledEvent?.event) {
           null ->
             applyFrameVisibleEventIfPossible(false, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, ideStarterStartedEvent)
+                                             projectPathReportEvent, ideStarterStartedEvent, lastHandledEvent = null)
           is Event.SplashBecameVisibleEvent ->
             applyFrameVisibleEventIfPossible(true, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, ideStarterStartedEvent)
-          is Event.FrameBecameVisibleEvent -> applyFrameInteractiveEventIfPossible(frameBecameInteractiveEvent)
+                                             projectPathReportEvent, ideStarterStartedEvent, lastHandledEvent)
+          is Event.FrameBecameVisibleEvent -> applyFrameInteractiveEventIfPossible(frameBecameInteractiveEvent, lastHandledEvent)
           is Event.FrameBecameInteractiveEvent -> {
-            applyEditorEventIfPossible(firstEditorEvent, noEditorEvent, markupResurrectedFileIds, projectPathReportEvent)
+            applyEditorEventIfPossible(firstEditorEvent, noEditorEvent, markupResurrectedFileIds, projectPathReportEvent, lastHandledEvent)
             break
           }
         }
@@ -402,10 +411,12 @@ object FUSProjectHotStartUpMeasurer {
     override val key: CoroutineContext.Key<*>
       get() = this
   }
-}
 
-private fun getDurationFromStart(finishTimestampNano: Long = System.nanoTime()): Duration {
-  return (finishTimestampNano - StartUpMeasurer.getStartTime()).toDuration(DurationUnit.NANOSECONDS)
+  private fun getDurationFromStart(finishTimestampNano: Long = System.nanoTime(),
+                                   lastReportedEvent: LastHandledEvent?): Duration {
+    val duration = (finishTimestampNano - StartUpMeasurer.getStartTime()).toDuration(DurationUnit.NANOSECONDS)
+    return if (lastReportedEvent == null) duration else ComparatorUtil.max(duration, lastReportedEvent.durationReportedToFUS)
+  }
 }
 
 private fun Duration.getValueForFUS(): Long {
