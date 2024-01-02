@@ -4,7 +4,7 @@ package com.intellij.execution.junit.codeInspection
 import com.intellij.junit.testFramework.TestCaseWithMultipleRunnersInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-class TestCaseWithMultipleRunnersInspectionJavaTest : TestCaseWithMultipleRunnersInspectionTestBase() {
+class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunnersInspectionTestBase() {
   fun `test parent annotation`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
