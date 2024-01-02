@@ -41,7 +41,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
-    PyDataView.getInstance(project).show(debugValue);
+    PyDataView.Companion.getInstance(project).show(debugValue);
   }
 
   @Override

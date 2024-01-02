@@ -15,14 +15,13 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +44,7 @@ public class PyDataViewDialog extends DialogWrapper {
     setCrossClosesWindow(true);
 
     myMainPanel = new JPanel(new GridBagLayout());
-    myDataViewerPanel = createDataViewerPanel(project, value.getFrameAccessor());
+    myDataViewerPanel = new PyDataViewerPanel(project, value.getFrameAccessor());
     myDataViewerPanel.apply(value, false);
     myDataViewerPanel.setPreferredSize(JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT));
 
@@ -53,7 +52,7 @@ public class PyDataViewDialog extends DialogWrapper {
 
     myDataViewerPanel.addListener(new PyDataViewerPanel.Listener() {
       @Override
-      public void onNameChanged(String name) {
+      public void onNameChanged(@NlsContexts.TabTitle @NotNull String name) {
         setTitle(name);
       }
     });
@@ -68,8 +67,8 @@ public class PyDataViewDialog extends DialogWrapper {
     final JBCheckBox colored = new JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"));
     final JBCheckBox resize = new JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"));
 
-    resize.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.AUTO_RESIZE, true));
-    colored.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.COLORED_BY_DEFAULT, true));
+    resize.setSelected(PyDataView.Companion.isAutoResizeEnabled(myProject));
+    colored.setSelected(PyDataView.Companion.isColoringEnabled(myProject));
 
     colored.addActionListener(new ActionListener() {
       @Override
@@ -91,10 +90,6 @@ public class PyDataViewDialog extends DialogWrapper {
     myMainPanel.add(colored, checkBoxConstraints);
     checkBoxConstraints.gridy = 2;
     myMainPanel.add(resize, checkBoxConstraints);
-  }
-
-  protected PyDataViewerPanel createDataViewerPanel(@NotNull Project project, @NotNull PyFrameAccessor frameAccessor) {
-    return new PyDataViewerPanel(project, frameAccessor);
   }
 
   @Override

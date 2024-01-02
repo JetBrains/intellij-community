@@ -1,388 +1,342 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.debugger.containerview;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.debugger.containerview
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.Label;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.TextFieldCompletionProvider;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.frame.XNamedValue;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.*;
-import com.jetbrains.python.debugger.array.AbstractDataViewTable;
-import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
-import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.EditorTextField
+import com.intellij.ui.JBColor
+import com.intellij.ui.dsl.builder.*
+import com.intellij.util.TextFieldCompletionProvider
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.debugger.*
+import com.jetbrains.python.debugger.array.AbstractDataViewTable
+import com.jetbrains.python.debugger.array.AsyncArrayTableModel
+import com.jetbrains.python.debugger.array.JBTableWithRowHeaders
+import java.awt.BorderLayout
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.BorderFactory
+import javax.swing.JEditorPane
+import javax.swing.JPanel
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) : JPanel(
+  BorderLayout()), Disposable {
+  val sliceTextField = createEditorField()
 
-public class PyDataViewerPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance(PyDataViewerPanel.class);
-  protected final Project myProject;
-  @NotNull protected final PyFrameAccessor myFrameAccessor;
-  private EditorTextField mySliceTextField;
-  protected AbstractDataViewTable myTable;
-  private EditorTextField myFormatTextField;
-  private JPanel myMainPanel;
-  private JBLabel myErrorLabel;
-  @SuppressWarnings("unused") private JBScrollPane myScrollPane;
-  protected JPanel bottomPanel;
-  private JPanel myFormatPanel;
-  private boolean myColored;
-  List<Listener> myListeners;
-  private @NlsSafe String myOriginalVarName;
-  private String myModifiedVarName;
+  protected val tablePanel = JPanel(BorderLayout())
 
-  private static final String MODIFIED_VARIABLE_FORMAT = "%s*";
-  protected PyDebugValue myDebugValue;
-
-  public PyDataViewerPanel(@NotNull Project project, @NotNull PyFrameAccessor frameAccessor) {
-    super(new BorderLayout());
-    myProject = project;
-    myFrameAccessor = frameAccessor;
-    myErrorLabel.setVisible(false);
-    myErrorLabel.setForeground(JBColor.RED);
-    setBorder(JBUI.Borders.empty(5));
-    add(myMainPanel, BorderLayout.CENTER);
-    myColored = PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.COLORED_BY_DEFAULT, true);
-    myListeners = new CopyOnWriteArrayList<>();
-    setupChangeListener();
+  val table: AbstractDataViewTable by lazy {
+    createMainTable()
   }
 
-  private void setupChangeListener() {
-    myFrameAccessor.addFrameListener(new PyFrameListener() {
-      @Override
-      public void frameChanged() {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel());
-      }
-    });
-  }
+  private var formatTextField: EditorTextField = createEditorField()
 
-  private void updateModel() {
-    AsyncArrayTableModel model = getModel();
-    if (model == null) {
-      return;
+  private var colored = PyDataView.isColoringEnabled(project)
+
+  private val listeners = CopyOnWriteArrayList<Listener>()
+
+  var originalVarName: @NlsSafe String? = null
+    private set
+
+  private var modifiedVarName: String? = null
+
+  protected var debugValue: PyDebugValue? = null
+
+  val format: String
+    get() {
+      val format = formatTextField.getText()
+      return format.ifEmpty { "%" }
     }
-    model.invalidateCache();
-    if (isModified()) {
-      apply(getModifiedVarName(), true);
+
+  var isColored: Boolean
+    get() = colored
+    set(state) {
+      colored = state
+      if (!table.isEmpty) {
+        (table.getDefaultRenderer(table.getColumnClass(0)) as ColoredCellRenderer).setColored(state)
+        table.repaint()
+      }
+    }
+
+  private val model: AsyncArrayTableModel?
+    get() {
+      val model = table.model
+      return if (model is AsyncArrayTableModel) {
+        table.model as AsyncArrayTableModel
+      }
+      else null
+    }
+
+  var isModified = false
+    private set
+
+  private lateinit var errorLabel: Cell<JEditorPane>
+
+  protected val showFooter = AtomicBooleanProperty(true)
+
+  init {
+    border = JBUI.Borders.empty(5)
+
+    sliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5))
+    PyDataViewCompletionProvider().apply(sliceTextField)
+    formatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7))
+
+    val panel = panel {
+      row { cell(tablePanel).align(Align.FILL).resizableColumn() }.resizableRow()
+      row {
+        cell(sliceTextField).align(AlignX.FILL).resizableColumn()
+        label(PyBundle.message("form.data.viewer.format"))
+        cell(formatTextField)
+      }.visibleIf(showFooter)
+      row { errorLabel = text("").apply { component.setForeground(JBColor.RED) } }
+    }
+
+    add(panel, BorderLayout.CENTER)
+
+    setupChangeListener()
+  }
+
+  override fun dispose() = Unit
+
+  private fun setupChangeListener() {
+    frameAccessor.addFrameListener(object : PyFrameListener {
+      override fun frameChanged() {
+        ApplicationManager.getApplication().executeOnPooledThread { updateModel() }
+      }
+    })
+  }
+
+  private fun updateModel() {
+    val model = model ?: return
+    model.invalidateCache()
+    if (isModified) {
+      apply(modifiedVarName, true)
     }
     else {
-      updateDebugValue(model);
-      ApplicationManager.getApplication().invokeLater(() -> {
+      updateDebugValue(model)
+      ApplicationManager.getApplication().invokeLater {
         if (isShowing()) {
-          model.fireTableDataChanged();
+          model.fireTableDataChanged()
         }
-      });
+      }
     }
   }
 
-  private boolean myModified = false;
-
-  public boolean isModified() {
-    return myModified;
-  }
-
-  private void updateDebugValue(@NotNull AsyncArrayTableModel model) {
-    PyDebugValue oldValue = model.getDebugValue();
-    if (oldValue != null && !oldValue.isTemporary() || mySliceTextField.getText().isEmpty()) {
-      return;
+  private fun updateDebugValue(model: AsyncArrayTableModel) {
+    val oldValue = model.debugValue
+    if (oldValue != null && !oldValue.isTemporary || sliceTextField.getText().isEmpty()) {
+      return
     }
-    PyDebugValue newValue = getDebugValue(mySliceTextField.getText(), false, false);
+    val newValue = getDebugValue(sliceTextField.getText(), false, false)
     if (newValue != null) {
-      model.setDebugValue(newValue);
+      model.debugValue = newValue
     }
   }
 
-  public String getOriginalVarName() {
-    return myOriginalVarName;
+  protected open fun createMainTable(): AbstractDataViewTable {
+    val mainTable = JBTableWithRowHeaders(PyDataView.isAutoResizeEnabled(project))
+    tablePanel.add(mainTable.scrollPane, BorderLayout.CENTER)
+    return mainTable
   }
 
-  public String getModifiedVarName() {
-    return myModifiedVarName;
-  }
-
-  @NotNull
-  public PyFrameAccessor getFrameAccessor() {
-    return myFrameAccessor;
-  }
-
-  public AbstractDataViewTable getTable() {
-    return myTable;
-  }
-
-  public JPanel getMainPanel() {
-    return myMainPanel;
-  }
-
-  protected AbstractDataViewTable createMainTable() {
-    return new JBTableWithRowHeaders(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.AUTO_RESIZE, true));
-  }
-
-  protected void createUIComponents() {
-    mySliceTextField = createEditorField();
-    mySliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-    addCompletion();
-    myFormatTextField = createEditorField();
-    myFormatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7));
-
-    myTable = createMainTable();
-    myScrollPane = myTable.getScrollPane();
-  }
-
-  private void addCompletion() {
-    new PyDataViewCompletionProvider().apply(mySliceTextField);
-  }
-
-  @NotNull
-  private EditorTextField createEditorField() {
-    return new EditorTextField(EditorFactory.getInstance().createDocument(""), myProject, PythonFileType.INSTANCE, false, true) {
-      @Override
-      protected @NotNull EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.getContentComponent().addKeyListener(new KeyAdapter() {
-          @Override
-          public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-              apply(mySliceTextField.getText(), false);
+  private fun createEditorField(): EditorTextField {
+    return object : EditorTextField(EditorFactory.getInstance().createDocument(""), project, PythonFileType.INSTANCE, false, true) {
+      override fun createEditor(): EditorEx {
+        val editor = super.createEditor()
+        editor.settings.additionalColumnsCount = 5
+        editor.getContentComponent().addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(e: KeyEvent) {
+            if (e.keyCode == KeyEvent.VK_ENTER) {
+              apply(sliceTextField.getText(), false)
             }
           }
-        });
-        return editor;
+        })
+        return editor
       }
-    };
-  }
-
-  public void apply(String name, boolean modifier) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      PyDebugValue debugValue = getDebugValue(name, true, modifier);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (debugValue != null) {
-          apply(debugValue, modifier);
-        }
-      });
-    });
-  }
-
-  public void apply(@NotNull PyDebugValue debugValue, boolean modifier) {
-    myErrorLabel.setVisible(false);
-    String type = debugValue.getType();
-    DataViewStrategy strategy = DataViewStrategy.getStrategy(type);
-    if (strategy == null) {
-      setError(PyBundle.message("debugger.data.view.type.is.not.supported", type), modifier);
-      return;
     }
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        doStrategyInitExecution(debugValue.getFrameAccessor(), strategy);
-        ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, 0, 0, getFormat());
-        ApplicationManager.getApplication().invokeLater(() -> {
-          updateUI(arrayChunk, debugValue, strategy, modifier);
-          myModified = modifier;
-          myDebugValue = debugValue;
-        });
-      }
-      catch (IllegalArgumentException e) {
-        ApplicationManager.getApplication().invokeLater(() -> setError(e.getLocalizedMessage(), modifier)); //NON-NLS
-      }
-      catch (PyDebuggerException e) {
-        LOG.error(e);
-      }
-    });
   }
 
-  protected void doStrategyInitExecution(PyFrameAccessor frameAccessor, DataViewStrategy strategy) throws PyDebuggerException { }
+  fun apply(name: String?, modifier: Boolean) {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val debugValue = getDebugValue(name, true, modifier)
+      ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier) } }
+    }
+  }
 
-  private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue originalDebugValue,
-                        @NotNull DataViewStrategy strategy, boolean modifier) {
-    PyDebugValue debugValue = chunk.getValue();
-    AsyncArrayTableModel model = strategy.createTableModel(chunk.getRows(), chunk.getColumns(), this, debugValue);
-    model.addToCache(chunk);
+  fun apply(debugValue: PyDebugValue, modifier: Boolean) {
+    errorLabel.visible(false)
+    val type = debugValue.type
+    val strategy = DataViewStrategy.getStrategy(type)
+    if (strategy == null) {
+      setError(PyBundle.message("debugger.data.view.type.is.not.supported", type), modifier)
+      return
+    }
+    ApplicationManager.getApplication().executeOnPooledThread {
+      try {
+        doStrategyInitExecution(debugValue.frameAccessor, strategy)
+        val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, format)
+        ApplicationManager.getApplication().invokeLater {
+          updateUI(arrayChunk, debugValue, strategy, modifier)
+          isModified = modifier
+          this.debugValue = debugValue
+        }
+      }
+      catch (e: IllegalArgumentException) {
+        ApplicationManager.getApplication().invokeLater { setError(e.localizedMessage, modifier) } //NON-NLS
+      }
+      catch (e: PyDebuggerException) {
+        LOG.error(e)
+      }
+    }
+  }
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myTable.setModel(model, modifier);
+  @Throws(PyDebuggerException::class)
+  protected open fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy) = Unit
+
+  protected open fun updateUI(chunk: ArrayChunk, originalDebugValue: PyDebugValue,
+                              strategy: DataViewStrategy, modifier: Boolean) {
+    val debugValue = chunk.value
+    val model = strategy.createTableModel(chunk.rows, chunk.columns, this, debugValue)
+    model.addToCache(chunk)
+    UIUtil.invokeLaterIfNeeded {
+      table.setModel(model, modifier)
       // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
-      @NlsSafe String realName =
-        debugValue.getName().equals(originalDebugValue.getTempName()) ? originalDebugValue.getName() : chunk.getSlicePresentation();
-
-      String shownName = realName;
-      if (modifier && !myOriginalVarName.equals(shownName)) {
-        shownName = String.format(MODIFIED_VARIABLE_FORMAT, myOriginalVarName);
+      val realName = if (debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
+      var shownName = realName
+      if (modifier && originalVarName != shownName) {
+        shownName = String.format(MODIFIED_VARIABLE_FORMAT, originalVarName)
       }
       else {
-        myOriginalVarName = realName;
+        originalVarName = realName
       }
-      mySliceTextField.setText(myOriginalVarName);
+      sliceTextField.setText(originalVarName)
 
       // Modifier flag means that variable changes are temporary
-      myModifiedVarName = realName;
-
-      if (mySliceTextField.getEditor() != null) {
-        mySliceTextField.getCaretModel().moveToOffset(myOriginalVarName.length());
+      modifiedVarName = realName
+      if (sliceTextField.editor != null) {
+        sliceTextField.getCaretModel().moveToOffset(originalVarName!!.length)
       }
-      for (Listener listener : myListeners) {
-        listener.onNameChanged(shownName);
+      for (listener in listeners) {
+        listener.onNameChanged(shownName)
       }
-      myFormatTextField.setText(chunk.getFormat());
-      ColoredCellRenderer cellRenderer = strategy.createCellRenderer(Double.MIN_VALUE, Double.MAX_VALUE, chunk);
-      cellRenderer.setColored(myColored);
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
-      if (myTable.getColumnCount() > 0) {
-        myTable.setDefaultRenderer(myTable.getColumnClass(0), cellRenderer);
+      formatTextField.text = chunk.format
+      val cellRenderer = strategy.createCellRenderer(Double.MIN_VALUE, Double.MAX_VALUE, chunk)
+      cellRenderer.setColored(colored)
+      model.fireTableDataChanged()
+      model.fireTableCellUpdated(0, 0)
+      if (table.columnCount > 0) {
+        table.setDefaultRenderer(table.getColumnClass(0), cellRenderer)
       }
-      myTable.setShowColumns(strategy.showColumnHeader());
-    });
+      table.setShowColumns(strategy.showColumnHeader())
+    }
   }
 
-  private PyDebugValue getDebugValue(@NlsSafe String expression, boolean pooledThread, boolean modifier) {
-    try {
-      PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
-      if (value == null || value.isErrorOnEval()) {
-
-        Runnable runnable = () -> setError(value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression), modifier);
+  private fun getDebugValue(expression: @NlsSafe String?, pooledThread: Boolean, modifier: Boolean): PyDebugValue? {
+    return try {
+      val value = frameAccessor.evaluate(expression, false, true)
+      if (value == null || value.isErrorOnEval) {
+        val runnable = Runnable {
+          setError(if (value != null && value.value != null) value.value!!
+                   else PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression), modifier)
+        }
         if (pooledThread) {
-          ApplicationManager.getApplication().invokeLater(runnable);
+          ApplicationManager.getApplication().invokeLater(runnable)
         }
         else {
-          runnable.run();
+          runnable.run()
         }
-
-        return null;
+        return null
       }
-      return value;
+      value
     }
-    catch (PyDebuggerException e) {
-      Runnable runnable = () -> setError(e.getTracebackError(), modifier); //NON-NLS
+    catch (e: PyDebuggerException) {
+      val runnable = Runnable { setError(e.getTracebackError(), modifier) } //NON-NLS
       if (pooledThread) {
-        ApplicationManager.getApplication().invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable)
       }
       else {
-        runnable.run();
+        runnable.run()
       }
-      return null;
+      null
     }
   }
 
-  public void resize(boolean autoResize) {
-    myTable.setAutoResize(autoResize);
-    apply(getSliceTextField().getText(), false);
+  fun resize(autoResize: Boolean) {
+    table.setAutoResize(autoResize)
+    apply(sliceTextField.getText(), false)
   }
 
-  private void setError(@Label String text, boolean modifier) {
+  private fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
+    var text = text
     if (modifier) {
-      text = PyBundle.message("debugger.dataviewer.modifier.error", text);
+      text = PyBundle.message("debugger.dataviewer.modifier.error", text)
     }
-    myErrorLabel.setVisible(true);
-    myErrorLabel.setText(text);
+    errorLabel.visible(true)
+    errorLabel.text(text)
     if (!modifier) {
-      myTable.setEmpty();
-      for (Listener listener : myListeners) {
-        listener.onNameChanged(PyBundle.message("debugger.data.view.empty.tab"));
+      table.setEmpty()
+      for (listener in listeners) {
+        listener.onNameChanged(PyBundle.message("debugger.data.view.empty.tab"))
       }
     }
   }
 
-  public String getFormat() {
-    String format = myFormatTextField.getText();
-    return format.isEmpty() ? "%" : format;
+  fun addListener(listener: Listener) {
+    listeners.add(listener)
   }
 
-  public boolean isColored() {
-    return myColored;
+  fun interface Listener {
+    fun onNameChanged(name: @NlsContexts.TabTitle String)
   }
 
-  public void setColored(boolean state) {
-    myColored = state;
-    if (!myTable.isEmpty()) {
-      ((ColoredCellRenderer)myTable.getDefaultRenderer(myTable.getColumnClass(0))).setColored(state);
-    }
-  }
-
-  public EditorTextField getSliceTextField() {
-    return mySliceTextField;
-  }
-
-  public JPanel getFormatPanel() {
-    return myFormatPanel;
-  }
-
-  @Nullable
-  public AsyncArrayTableModel getModel() {
-    TableModel model = myTable.getModel();
-    if (model instanceof AsyncArrayTableModel) {
-      return ((AsyncArrayTableModel)myTable.getModel());
-    }
-    return null;
-  }
-
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
-  }
-
-  public interface Listener {
-    void onNameChanged(@NlsContexts.TabTitle String name);
-  }
-
-  private class PyDataViewCompletionProvider extends TextFieldCompletionProvider {
-    @Override
-    protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-      List<PyDebugValue> values = getAvailableValues();
-      values.sort(Comparator.comparing(XNamedValue::getName));
-      for (int i = 0; i < values.size(); i++) {
-        PyDebugValue value = values.get(i);
-        LookupElementBuilder element = LookupElementBuilder.create(value.getName()).withTypeText(value.getType(), true);
-        result.addElement(PrioritizedLookupElement.withPriority(element, -i));
+  private inner class PyDataViewCompletionProvider : TextFieldCompletionProvider() {
+    override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
+      val values = availableValues.sortedBy { obj: PyDebugValue -> obj.name }
+      for (i in values.indices) {
+        val value = values[i]
+        val element = LookupElementBuilder.create(value.name).withTypeText(value.type, true)
+        result.addElement(PrioritizedLookupElement.withPriority(element, -i.toDouble()))
       }
     }
 
-    private List<PyDebugValue> getAvailableValues() {
-      List<PyDebugValue> values = new ArrayList<>();
-      try {
-        XValueChildrenList list = myFrameAccessor.loadFrame(null);
-        if (list == null) {
-          return values;
-        }
-        for (int i = 0; i < list.size(); i++) {
-          PyDebugValue value = (PyDebugValue)list.getValue(i);
-          String type = value.getType();
-          if (DataViewStrategy.getStrategy(type) != null) {
-            values.add(value);
+    private val availableValues: List<PyDebugValue>
+      get() {
+        val values: MutableList<PyDebugValue> = ArrayList()
+        try {
+          val list = frameAccessor.loadFrame(null) ?: return values
+          for (i in 0 until list.size()) {
+            val value = list.getValue(i) as PyDebugValue
+            val type = value.type
+            if (DataViewStrategy.getStrategy(type) != null) {
+              values.add(value)
+            }
           }
         }
+        catch (e: Exception) {
+          LOG.error(e)
+        }
+        return values
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return values;
-    }
   }
 
-  public void closeEditorTabs() {}
+  open fun closeEditorTabs() {}
+
+  companion object {
+    private val LOG = Logger.getInstance(PyDataViewerPanel::class.java)
+    private const val MODIFIED_VARIABLE_FORMAT = "%s*"
+  }
 }
