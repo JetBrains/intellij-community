@@ -6,8 +6,8 @@ import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ModulesByName
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ProjectLibrariesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
 
 /**

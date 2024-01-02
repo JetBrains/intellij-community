@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.name

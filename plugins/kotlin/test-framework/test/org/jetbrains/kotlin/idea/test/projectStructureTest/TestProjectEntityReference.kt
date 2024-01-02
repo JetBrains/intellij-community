@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.test.projectStructureTest
 
 import com.google.gson.JsonObject
-import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
+import org.jetbrains.kotlin.idea.base.util.getNullableString
 
 /**
  * A reference that points to a library or module in the test project structure.

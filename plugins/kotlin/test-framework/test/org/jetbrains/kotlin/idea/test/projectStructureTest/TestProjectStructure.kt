@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.fir.analysis.providers
+package org.jetbrains.kotlin.idea.test.projectStructureTest
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsStringList
-import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.base.util.getAsStringList
+import org.jetbrains.kotlin.idea.base.util.getString
 import java.util.UUID
 
 interface TestProjectStructure {
