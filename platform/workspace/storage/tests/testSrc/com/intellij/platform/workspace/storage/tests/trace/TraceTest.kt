@@ -82,6 +82,7 @@ class TraceTest {
   }
 
   @Test
+  @OptIn(EntityStorageInstrumentationApi::class)
   fun `get entities amount`() {
     val traces = ReadTracker.trace(snapshot) {
       (it as ImmutableEntityStorageInstrumentation).entityCount(NamedEntity::class.java)
