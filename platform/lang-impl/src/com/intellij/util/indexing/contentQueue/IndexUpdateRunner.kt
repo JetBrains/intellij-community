@@ -4,10 +4,7 @@ package com.intellij.util.indexing.contentQueue
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.WrappedProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -21,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
 import com.intellij.util.indexing.dependencies.IndexingRequestToken
@@ -29,6 +25,9 @@ import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.progress.SubTaskProgressIndicator
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -36,7 +35,6 @@ import java.nio.file.NoSuchFileException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -44,16 +42,11 @@ import java.util.concurrent.locks.ReentrantLock
 @ApiStatus.Internal
 class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
                         private val indexingRequest: IndexingRequestToken) {
-
-  private val myIndexingExecutor: ExecutorService = GLOBAL_INDEXING_EXECUTOR
-
-  private val myNumberOfIndexingThreads: Int = INDEXING_THREADS_NUMBER
-
   private val myIndexingAttemptCount = AtomicInteger()
   private val myIndexingSuccessfulCount = AtomicInteger()
 
   init {
-    LOG.info("Using $myNumberOfIndexingThreads indexing and ${IndexUpdateWriter.TOTAL_WRITERS_NUMBER} writing threads for indexing")
+    LOG.info("Using $INDEXING_THREADS_NUMBER indexing and ${IndexUpdateWriter.TOTAL_WRITERS_NUMBER} writing threads for indexing")
   }
 
   /**
@@ -100,99 +93,38 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
     val originalIndicator = unwrapAll(indicator)
     val originalSuspender = ProgressSuspender.getSuspender(originalIndicator)
-    // we store indicator in the IndexingJob, because the job will be executed in myIndexingExecutor without global ProgressIndicator
+    // we store indicator in the IndexingJob, because want to report progress. This indicator is not used for checkCancelled()
     val indexingJob = IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender)
 
-    ourIndexingJobs.add(indexingJob)
-    try {
-      val numberOfRunningWorkers = AtomicInteger()
-      val worker = Runnable {
-        try {
-          indexJobsFairly()
-        }
-        finally {
-          numberOfRunningWorkers.decrementAndGet()
-        }
-      }
-      for (i in 0 until myNumberOfIndexingThreads) {
-        myIndexingExecutor.execute(worker)
-        numberOfRunningWorkers.incrementAndGet()
-      }
-      while (!project.isDisposed && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
-        // Internally checks for suspension of the indexing and blocks the current thread if necessary.
-        indicator.checkCanceled()
-        // Add workers if the previous have stopped for whatever reason.
-        val toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get()
-        for (i in 0 until toAddWorkersNumber) {
-          myIndexingExecutor.execute(worker)
-          numberOfRunningWorkers.incrementAndGet()
-        }
-        try {
-          if (indexingJob.myAllFilesAreProcessedLatch.await(100, TimeUnit.MILLISECONDS)) {
-            break
-          }
-        }
-        catch (e: InterruptedException) {
-          throw ProcessCanceledException(e)
-        }
-      }
-      val error = indexingJob.myError.get()
-      if (error is ProcessCanceledException) {
-        // The original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
-        val pce = ProcessCanceledException()
-        pce.addSuppressed(error)
-        throw pce
-      }
-      if (error != null) {
-        throw RuntimeException("Indexing of " + project.name + " has failed", error)
-      }
-    }
-    finally {
-      ourIndexingJobs.remove(indexingJob)
-    }
-  }
+    runBlockingCancellable {
+      repeat(INDEXING_THREADS_NUMBER) {
+        launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$it)")) {
+          while (!indexingJob.areAllFilesProcessed()) {
+            ensureActive()
+            val suspender = indexingJob.myOriginalProgressSuspender
+            while (suspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
-  // Index jobs one by one while there are some. Jobs may belong to different projects, and we index them fairly.
-  // Drops finished, canceled and failed jobs from {@code ourIndexingJobs}. Does not throw exceptions.
-  private fun indexJobsFairly() {
-    while (!ourIndexingJobs.isEmpty()) {
-      var allJobsAreSuspended = true
-      for (job in ourIndexingJobs) {
-        val jobIndicator = job.myIndicator
-        if ((job.myProject.isDisposed
-             || job.myNoMoreFilesInQueue.get()
-             || jobIndicator.isCanceled) || job.myError.get() != null) {
-          ourIndexingJobs.remove(job)
-          allJobsAreSuspended = false
-          continue
-        }
-        val suspender = job.myOriginalProgressSuspender
-        if (suspender != null && suspender.isSuspended) {
-          continue
-        }
-        allJobsAreSuspended = false
-        try {
-          val work = Runnable { indexOneFileOfJob(job) }
-          if (suspender != null) {
-            // Here it is important to use the original progress indicator which is directly associated with the ProgressSuspender.
-            suspender.executeNonSuspendableSection(job.myOriginalProgressIndicator, work)
-          }
-          else {
-            work.run()
-          }
-        }
-        catch (e: Throwable) {
-          job.myError.compareAndSet(null, e)
-          ourIndexingJobs.remove(job)
-        }
+            GLOBAL_INDEXING_SEMAPHORE.withPermit {
+              blockingContext {
+                // note that outer progress indicator does not propagate through launch(). Here (after blockingContext) we have no
+                // progress indicator in the context, but ProgressManager.checkCancel() should work using outer coroutine context.
+                if (suspender != null) {
+                  suspender.executeNonSuspendableSection(indexingJob.myOriginalProgressIndicator) {
+                    indexOneFileOfJob(indexingJob)
+                  }
+                }
+                else {
+                  indexOneFileOfJob(indexingJob)
+                }
 
-        if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
-          IndexUpdateWriter.sleepIfWriterQueueLarge(myNumberOfIndexingThreads)
+                if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+                  // TODO: suspend, not block
+                  IndexUpdateWriter.sleepIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
+                }
+              }
+            }
+          }
         }
-      }
-      if (allJobsAreSuspended) {
-        // To avoid busy-looping.
-        break
       }
     }
   }
@@ -213,8 +145,8 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
     val indexingStamp = indexingRequest.getFileIndexingStamp(file)
     try {
-      // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing (see IndexingJob.myError).
-      loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader)
+      // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
+      loadingResult = loadContent(file, indexingJob.myContentLoader)
     }
     catch (e: ProcessCanceledException) {
       indexingJob.myQueueOfFiles.add(fileIndexingJob)
@@ -256,7 +188,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
           myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType, indexingStamp)
         }
         .expireWith(indexingJob.myProject)
-        .wrapProgress(indexingJob.myIndicator)
         .executeSynchronously()
       myIndexingSuccessfulCount.incrementAndGet()
       if (LOG.isTraceEnabled && myIndexingSuccessfulCount.toLong() % 10000 == 0L) {
@@ -283,8 +214,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
   }
 
   @Throws(TooLargeContentException::class, FailedToLoadContentException::class)
-  private fun loadContent(indicator: ProgressIndicator,
-                          file: VirtualFile,
+  private fun loadContent(file: VirtualFile,
                           loader: CachedFileContentLoader): ContentLoadingResult {
     if (myFileBasedIndex.isTooLarge(file)) {
       throw TooLargeContentException(file)
@@ -302,7 +232,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
 
     // Reserve bytes for the file.
-    waitForFreeMemoryToLoadFileContent(indicator, fileLength)
+    waitForFreeMemoryToLoadFileContent(fileLength)
 
     try {
       val fileContent = loader.loadContent(file)
@@ -321,7 +251,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
   private data class FileIndexingJob(val file: VirtualFile, val fileSet: FileSet)
 
   private class IndexingJob(val myProject: Project,
-                            val myIndicator: ProgressIndicator,
+                            private val indicatorForProgressReporting: ProgressIndicator, // should only be used for progress reporting
                             contentLoader: CachedFileContentLoader,
                             fileSets: List<FileSet>,
                             originalProgressIndicator: ProgressIndicator,
@@ -333,7 +263,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     val myAllFilesAreProcessedLatch: CountDownLatch
     val myOriginalProgressIndicator: ProgressIndicator
     val myOriginalProgressSuspender: ProgressSuspender?
-    val myError: AtomicReference<Throwable?> = AtomicReference()
 
     init {
       val maxFilesCount = fileSets.sumOf { fileSet: FileSet -> fileSet.files.size }
@@ -366,7 +295,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
       myAllFilesAreProcessedLatch.countDown()
       val newFraction = 1.0 - myAllFilesAreProcessedLatch.count / myTotalFiles.toDouble()
       try {
-        myIndicator.fraction = newFraction
+        indicatorForProgressReporting.fraction = newFraction
       }
       catch (ignored: Exception) {
         //Unexpected here. A misbehaved progress indicator must not break our code flow.
@@ -379,23 +308,21 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
 
     fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
       val presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.file)
-      if (myIndicator is SubTaskProgressIndicator) {
-        myIndicator.setText(presentableLocation)
+      if (indicatorForProgressReporting is SubTaskProgressIndicator) {
+        indicatorForProgressReporting.setText(presentableLocation)
       }
       else {
         val fileSet = fileIndexingJob.fileSet
-        if (fileSet.progressText != null && fileSet.progressText != myIndicator.text) {
-          myIndicator.text = fileSet.progressText
+        if (fileSet.progressText != null && fileSet.progressText != indicatorForProgressReporting.text) {
+          indicatorForProgressReporting.text = fileSet.progressText
         }
-        myIndicator.text2 = presentableLocation
+        indicatorForProgressReporting.text2 = presentableLocation
       }
     }
   }
 
   companion object {
     private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
-
-    private val ourIndexingJobs = CopyOnWriteArrayList<IndexingJob>()
 
     /**
      * Number of indexing threads. Writing threads are counted separately, because they are "mostly waiting IO" threads.
@@ -413,7 +340,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     /**
      * Indexing workers
      */
-    private val GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER)
+    private val GLOBAL_INDEXING_SEMAPHORE = Semaphore(INDEXING_THREADS_NUMBER)
 
     /**
      * Memory optimization to prevent OutOfMemory on loading file contents.
@@ -472,12 +399,11 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
 
     @Throws(ProcessCanceledException::class)
-    private fun waitForFreeMemoryToLoadFileContent(indicator: ProgressIndicator,
-                                                   fileLength: Long) {
+    private fun waitForFreeMemoryToLoadFileContent(fileLength: Long) {
       ourLoadedBytesLimitLock.lock()
       try {
         while (ourTotalBytesLoadedIntoMemory >= SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
-          indicator.checkCanceled()
+          ProgressManager.checkCanceled()
           try {
             ourLoadedBytesAreReleasedCondition.await(100, TimeUnit.MILLISECONDS)
           }
