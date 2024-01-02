@@ -19,7 +19,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -514,7 +514,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 @OptIn(EntityStorageInstrumentationApi::class)
 private class StatisticsData(val project: Project, val rootProjects: Int) {
 
-  val modulesBefore = (WorkspaceModel.getInstance(project).currentSnapshot as EntityStorageSnapshotInstrumentation)
+  val modulesBefore = (WorkspaceModel.getInstance(project).currentSnapshot as ImmutableEntityStorageInstrumentation)
     .entityCount(ModuleEntity::class.java)
   fun add(forest: List<ProjectTree>, allProjects: ArrayList<MavenProject>) {
     val time = System.currentTimeMillis()
@@ -522,7 +522,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
       linkedProject = forest.size
       resolvedDependencies = forest.flatMap { it.projectsData() }.sumOf { it.resolvedDependencies.size }
       totalDependencies = forest.flatMap { it.projectsData() }.sumOf { it.declaredDependencies.size }
-      addedModules = (WorkspaceModel.getInstance(project).currentSnapshot as EntityStorageSnapshotInstrumentation)
+      addedModules = (WorkspaceModel.getInstance(project).currentSnapshot as ImmutableEntityStorageInstrumentation)
                        .entityCount(ModuleEntity::class.java) - modulesBefore
       totalProjects = allProjects.size
 

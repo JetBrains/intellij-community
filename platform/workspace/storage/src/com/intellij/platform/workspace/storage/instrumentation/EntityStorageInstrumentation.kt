@@ -38,7 +38,7 @@ public interface EntityStorageInstrumentation : EntityStorage {
 }
 
 @EntityStorageInstrumentationApi
-public interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
+public interface ImmutableEntityStorageInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
 public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
@@ -161,8 +161,8 @@ internal val EntityStorage.instrumentation: EntityStorageInstrumentation
   get() = this as EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
-internal val EntityStorageSnapshot.instrumentation: EntityStorageSnapshotInstrumentation
-  get() = this as EntityStorageSnapshotInstrumentation
+internal val EntityStorageSnapshot.instrumentation: ImmutableEntityStorageInstrumentation
+  get() = this as ImmutableEntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
 internal val MutableEntityStorage.instrumentation: MutableEntityStorageInstrumentation

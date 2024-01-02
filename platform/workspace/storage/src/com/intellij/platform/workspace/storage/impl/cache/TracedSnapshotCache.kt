@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker.cacheReset
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import org.jetbrains.annotations.TestOnly
 
@@ -16,7 +16,7 @@ internal interface TracedSnapshotCache {
   /**
    * Thread-safe
    */
-  fun <T> cached(query: StorageQuery<T>, snapshot: EntityStorageSnapshotInstrumentation): T
+  fun <T> cached(query: StorageQuery<T>, snapshot: ImmutableEntityStorageInstrumentation): T
 
   /**
    * Not thread-safe

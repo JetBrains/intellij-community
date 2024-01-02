@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.query.compile
 import com.intellij.platform.workspace.storage.trace.ReadTrace
@@ -104,7 +104,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private fun updateCellIndex(chainId: CellChainId,
                               externalMappingChanges: HashMap<String, MutableSet<EntityId>>,
                               changes: WorkspaceBuilderChangeLog,
-                              newSnapshot: EntityStorageSnapshotInstrumentation) {
+                              newSnapshot: ImmutableEntityStorageInstrumentation) {
     val cellIndex = cellChainToCellIndex.getValue(chainId)
     val externalMappingTraces: ReadTraceHashSet = externalMappingChanges.entries
       .filter { it.value.isNotEmpty() }
@@ -126,7 +126,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun <T> cached(query: StorageQuery<T>, snapshot: EntityStorageSnapshotInstrumentation): T {
+  override fun <T> cached(query: StorageQuery<T>, snapshot: ImmutableEntityStorageInstrumentation): T {
     check(!pullingCache) {
       "It's not allowed to request query when the cache is pulled from other snapshot"
     }

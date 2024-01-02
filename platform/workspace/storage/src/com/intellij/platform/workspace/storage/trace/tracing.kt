@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.ClosableHashSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.util.*
@@ -232,7 +232,7 @@ internal sealed interface ReadTrace {
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal fun ChangeLog.toTraces(newSnapshot: EntityStorageSnapshotInstrumentation): ReadTraceHashSet {
+internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   val patternSet = ReadTraceHashSet()
   this@toTraces.forEach { (id, change) ->
     when (change) {

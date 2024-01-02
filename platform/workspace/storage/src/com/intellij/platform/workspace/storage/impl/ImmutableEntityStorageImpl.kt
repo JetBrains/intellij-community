@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.storage.impl.external.MutableExternalEnti
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
@@ -64,7 +64,7 @@ internal open class ImmutableEntityStorageImpl(
   override val refs: RefsTable,
   override val indexes: StorageIndexes,
   internal val snapshotCache: TracedSnapshotCache = TracedSnapshotCacheImpl(),
-) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
+) : ImmutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
   init {
     entityStorageSnapshotImplInstancesCounter.incrementAndGet()
