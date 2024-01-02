@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
@@ -54,6 +54,7 @@ class UnlinkedProjectNotificationAware(
     }
     notifiedNotifications.computeIfAbsent(projectId) {
       notificationGroup.createNotification(notificationContent, NotificationType.INFORMATION)
+        .setDisplayId(UNLINKED_NOTIFICATION_ID)
         .setSuggestionType(true)
         .setNotificationHelp(textProvider.getUPNHelpText())
         .addAction(createSimpleExpiring(textProvider.getUPNLinkActionText()) { callback() })
@@ -135,6 +136,7 @@ The correct usage:
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
 
     private const val NOTIFICATION_GROUP_ID = "External System Auto-Link Notification Group"
+    private const val UNLINKED_NOTIFICATION_ID = "external.system.autolink.unlinked.project.notification"
 
     @JvmStatic
     fun getInstance(project: Project): UnlinkedProjectNotificationAware {
