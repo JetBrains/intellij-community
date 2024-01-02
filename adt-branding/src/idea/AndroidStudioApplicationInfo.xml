@@ -19,40 +19,12 @@
   <version major="2023" minor="3" micro="0" patch="0" full="dev build" suffix="" eap="true"/>
   <company name="Google" url="http://developer.android.com"/>
   <build number="AI-__BUILD__" date="__BUILD_DATE__"/>
-  <logo url="/artwork/studio_splash.png" textcolor="cccccc" progressColor="d7effe" progressY="397" progressHeight="3" />
-  <about url="/artwork/studio_about.png" foreground="cccccc"/>
+  <logo url="/artwork/studio_splash.png"/>
   <icon svg="/artwork/androidstudio.svg" svg-small="/artwork/androidstudio-small.svg" ico="artwork/androidstudio.ico"/>
   <icon-eap svg="/artwork/preview/androidstudio.svg" svg-small="/artwork/preview/androidstudio-small.svg"/>
-  <package code="AI"/> <!-- used only in adrt -->
   <names product="Studio" fullname="Android Studio" script="studio"/> <!-- fullname is used by NPW to show default folder for projects as -->
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
   <essential-plugin>org.jetbrains.android</essential-plugin>
   <essential-plugin>com.android.tools.design</essential-plugin>
-
-  <welcome-screen logo-url="/artwork/welcome.png"/>
-
-  <editor background-url="/artwork/studio_logo_background.png"/>
-
-  <plugins url="https://plugins.jetbrains.com"/>
-  <update-urls check="https://dl.google.com/android/studio/patches/updates.xml"
-               patches="https://dl.google.com/android/studio/patches/"/>
-
-  <documentation url="http://developer.android.com/r/studio-ui/menu-start.html"/>
-  <feedback url="https://issuetracker.google.com/issues/new?component=192708&amp;template=840533&amp;foundIn=$STUDIO_VERSION&amp;format=MARKDOWN&amp;description=%60%60%60%0ABuild%3A%20__BUILD_NUMBER__%2C%20__BUILD_DATE__%2C%20$DESCR%0A%0AIMPORTANT%3A%20Please%20read%20https%3A%2F%2Fdeveloper.android.com%2Fstudio%2Freport-bugs.html%20carefully%20and%20supply%20all%20required%20information.%0A%60%60%60" />
-  <whatsnew url="https://developer.android.com/r/studio-ui/menu-whats-new.html"/>
-  <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
-          mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
-  <jetbrains-tv url="https://www.youtube.com/c/AndroidDevelopers"/>
-
-  <!--
-  Temporarily disabled: There is a bug in IDEA which prevents having a single plugins page extension.
-  <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
-  -->
-
-  <statistics settings="https://dl.google.com/android/studio/stats/stat-assistant.xml"
-              service="https://dl.google.com/android/studio/stats/upload"
-              event-log-settings=""
-              service-key="android-studio" />
-
 </component>
