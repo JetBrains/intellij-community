@@ -1,5 +1,25 @@
 <problems>
   <problem>
+    <file>paramPropertySuppressed.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <package>paramPropertySuppressed</package>
+    <entry_point TYPE="class" FQNAME="paramPropertySuppressed.MyClass3" />
+    <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+    <description>Class &quot;MyClass3&quot; is never used</description>
+  </problem>
+
+  <problem>
+    <file>paramPropertySuppressed.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <package>paramPropertySuppressed</package>
+    <entry_point TYPE="method" FQNAME="paramPropertySuppressed.MyClass3 MyClass3(java.lang.String param)" />
+    <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+    <description>Property &quot;param&quot; is never used</description>
+  </problem>
+
+  <problem>
     <file>paramPropertyUnused.kt</file>
     <line>1</line>
     <module>light_idea_test_case</module>
