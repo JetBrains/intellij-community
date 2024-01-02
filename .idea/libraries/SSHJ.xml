@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="SSHJ" type="repository">
-    <properties maven-id="com.hierynomus:sshj:0.35.0">
+    <properties maven-id="org.jetbrains.intellij.deps:sshj:0.35.0-idea1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.35.0/sshj-0.35.0.jar">
-          <sha256sum>d3b3d71f3e834c7e52d022036c2e96c2b21c8ec7baa20270965c4d59e2e4d86e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.35.0-idea1/sshj-0.35.0-idea1.jar">
+          <sha256sum>0ae84d6003980a2a8d7331e5f43b6c886cba82dac911480940ba4a1823be2f07</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar">
           <sha256sum>e4f70fd92849b52240048b8ebace0c9a17d3bb7b9c882b3c7778cec3458495f5</sha256sum>
@@ -20,13 +20,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.35.0/sshj-0.35.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.35.0-idea1/sshj-0.35.0-idea1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/sshj/0.35.0/sshj-0.35.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.35.0-idea1/sshj-0.35.0-idea1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0-sources.jar!/" />
     </SOURCES>
