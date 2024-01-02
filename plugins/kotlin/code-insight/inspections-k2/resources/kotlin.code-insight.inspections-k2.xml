@@ -306,5 +306,12 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      level="WEAK WARNING" key="can.be.joined.with.assignment" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceArrayOfWithLiteralInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="inspection.replace.array.of.with.literal.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

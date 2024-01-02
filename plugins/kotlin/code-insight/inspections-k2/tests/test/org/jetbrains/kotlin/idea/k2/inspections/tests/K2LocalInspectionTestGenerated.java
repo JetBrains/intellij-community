@@ -3705,6 +3705,69 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral")
+    public static class ReplaceArrayOfWithLiteral extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/base.kt");
+        }
+
+        @TestMetadata("default.kt")
+        public void testDefault() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/default.kt");
+        }
+
+        @TestMetadata("defaultNotAnnotation.kt")
+        public void testDefaultNotAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/defaultNotAnnotation.kt");
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/empty.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/intArray.kt");
+        }
+
+        @TestMetadata("kclass.kt")
+        public void testKclass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/kclass.kt");
+        }
+
+        @TestMetadata("noAnnotation.kt")
+        public void testNoAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/noAnnotation.kt");
+        }
+
+        @TestMetadata("noArray.kt")
+        public void testNoArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/noArray.kt");
+        }
+
+        @TestMetadata("unnamed.kt")
+        public void testUnnamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/unnamed.kt");
+        }
+
+        @TestMetadata("unnamedVararg.kt")
+        public void testUnnamedVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/unnamedVararg.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayOfWithLiteral/vararg.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
