@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.ChangeLog
 import com.intellij.platform.workspace.storage.impl.EntityId
@@ -20,7 +20,7 @@ internal class CellChain(
   val cells: PersistentList<Cell<*>>,
   val id: CellChainId,
 ) {
-  fun snapshotInput(snapshot: EntityStorageSnapshot): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
+  fun snapshotInput(snapshot: ImmutableEntityStorage): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     val newChain = cells.mutate {
       var tokens = TokenSet()
@@ -49,7 +49,7 @@ internal class CellChain(
     return newChain to traces
   }
 
-  fun changeInput(newSnapshot: EntityStorageSnapshot,
+  fun changeInput(newSnapshot: ImmutableEntityStorage,
                   changeRequest: CellUpdateInfo,
                   changes: ChangeLog,
                   externalMappingChanges: Map<String, Set<EntityId>>,

@@ -50,8 +50,8 @@ public class CachedValueWithParameter<P, R>(public val source: (EntityStorage, P
  * As this is not a list of change operations, but a list of changes, the order of events is not defined.
  */
 public abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
-  public abstract val storageBefore: EntityStorageSnapshot
-  public abstract val storageAfter: EntityStorageSnapshot
+  public abstract val storageBefore: ImmutableEntityStorage
+  public abstract val storageAfter: ImmutableEntityStorage
 
   /**
    * Get changes for some type of entity.

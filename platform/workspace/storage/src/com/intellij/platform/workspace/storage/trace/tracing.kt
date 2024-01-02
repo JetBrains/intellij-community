@@ -28,7 +28,7 @@ import java.util.*
  * The argument for deligation is clearer architecture ([ImmutableEntityStorageImpl] is not open).
  */
 internal class ReadTracker private constructor(
-  snapshot: EntityStorageSnapshot,
+  snapshot: ImmutableEntityStorage,
   internal val onRead: (ReadTrace) -> Unit,
 ) : ImmutableEntityStorageImpl(
   (snapshot as ImmutableEntityStorageImpl).entitiesByType,
@@ -124,7 +124,7 @@ internal class ReadTracker private constructor(
   companion object {
     private val log = logger<ReadTracker>()
 
-    fun trace(snapshot: EntityStorageSnapshot, action: (EntityStorageSnapshot) -> Unit): Set<ReadTrace> {
+    fun trace(snapshot: ImmutableEntityStorage, action: (ImmutableEntityStorage) -> Unit): Set<ReadTrace> {
       return ClosableHashSet<ReadTrace>().use { traces ->
         val traced = ReadTracker(snapshot) { traces.add(it) }
         action(traced)
@@ -132,7 +132,7 @@ internal class ReadTracker private constructor(
       }
     }
 
-    fun <T> traceHashes(snapshot: EntityStorageSnapshot, action: (EntityStorageSnapshot) -> T): Pair<ReadTraceHashSet, T> {
+    fun <T> traceHashes(snapshot: ImmutableEntityStorage, action: (ImmutableEntityStorage) -> T): Pair<ReadTraceHashSet, T> {
       val res = ClosableHashSet<ReadTraceHash>().use { traces ->
         val traced = ReadTracker(snapshot) { traces.add(it.hash) }
         val res = action(traced)

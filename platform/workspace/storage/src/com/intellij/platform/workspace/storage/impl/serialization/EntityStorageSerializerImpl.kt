@@ -89,7 +89,7 @@ public class EntityStorageSerializerImpl(
     return kryo to classCache
   }
 
-  override fun serializeCache(file: Path, storage: EntityStorageSnapshot): SerializationResult {
+  override fun serializeCache(file: Path, storage: ImmutableEntityStorage): SerializationResult {
     storage as ImmutableEntityStorageImpl
 
     val output = createKryoOutput(file)

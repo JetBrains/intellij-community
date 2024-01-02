@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -15,7 +15,7 @@ import kotlin.test.*
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
-  private lateinit var initialStorage: EntityStorageSnapshot
+  private lateinit var initialStorage: ImmutableEntityStorage
   private lateinit var builder: MutableEntityStorage
 
   @BeforeEach
@@ -333,7 +333,7 @@ class CollectChangesInBuilderTest {
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
-                                  original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
+                                  original: ImmutableEntityStorage = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
     val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
     assertEquals(size, changes.values.flatten().size)
     return changes

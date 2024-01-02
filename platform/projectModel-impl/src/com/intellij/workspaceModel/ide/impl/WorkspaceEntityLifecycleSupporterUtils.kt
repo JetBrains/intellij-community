@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.toBuilder
@@ -44,7 +44,7 @@ object WorkspaceEntityLifecycleSupporterUtils {
 
   private fun <E : WorkspaceEntity> ensureInitialized(project: Project,
                                                       provider: WorkspaceEntityLifecycleSupporter<E>,
-                                                      snapshot: EntityStorageSnapshot,
+                                                      snapshot: ImmutableEntityStorage,
                                                       builderRef: Ref<MutableEntityStorage?>) {
     val expectedEntity = provider.createSampleEntity(project)
     val actualEntities = snapshot.entities(provider.getEntityClass()).toList()

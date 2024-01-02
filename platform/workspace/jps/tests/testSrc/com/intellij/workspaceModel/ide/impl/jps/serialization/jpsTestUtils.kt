@@ -60,9 +60,9 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
                                                "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
 
 internal data class LoadedProjectData(
-  val storage: EntityStorageSnapshot,
-  val orphanage: EntityStorageSnapshot,
-  val unloadedEntitiesStorage: EntityStorageSnapshot,
+  val storage: ImmutableEntityStorage,
+  val orphanage: ImmutableEntityStorage,
+  val unloadedEntitiesStorage: ImmutableEntityStorage,
   val serializers: JpsProjectSerializersImpl,
   val configLocation: JpsProjectConfigLocation,
   val originalProjectDir: File

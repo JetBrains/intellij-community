@@ -19,7 +19,7 @@ import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
@@ -846,7 +846,7 @@ class ModuleBridgesTest {
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
-  val project = WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
+  val project = WorkspaceModelInitialTestContent.withInitialContent(ImmutableEntityStorage.empty()) {
     PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
   return project

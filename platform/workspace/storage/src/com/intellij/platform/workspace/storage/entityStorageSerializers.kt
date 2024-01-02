@@ -7,7 +7,7 @@ import java.nio.file.Path
 public interface EntityStorageSerializer {
   public val serializerDataFormatVersion: String
 
-  public fun serializeCache(file: Path, storage: EntityStorageSnapshot): SerializationResult
+  public fun serializeCache(file: Path, storage: ImmutableEntityStorage): SerializationResult
 
   public fun deserializeCache(file: Path): Result<MutableEntityStorage?>
 }

@@ -2,7 +2,7 @@
 package com.intellij.platform.backend.workspace
 
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -23,7 +23,7 @@ public class StorageReplacement internal constructor(
  * Its instance can be obtained from [WorkspaceModel.getBuilderSnapshot].
  * This class can be used without global read or write lock, but it isn't a thread safe.
  */
-public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: EntityStorageSnapshot) {
+public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: ImmutableEntityStorage) {
   /**
    * Provides access to [MutableEntityStorage] which can be used to prepare the new state.
    */

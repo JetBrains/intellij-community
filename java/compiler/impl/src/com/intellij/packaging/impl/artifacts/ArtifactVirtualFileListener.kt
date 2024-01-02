@@ -82,7 +82,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   private val parentPathToArtifactReferences: Map<String, List<EntityReference<ArtifactEntity>>>
     get() {
       val storage = project.workspaceModel.entityStorage.current
-      return (storage as EntityStorageSnapshot).cached(query)
+      return (storage as ImmutableEntityStorage).cached(query)
     }
 
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>

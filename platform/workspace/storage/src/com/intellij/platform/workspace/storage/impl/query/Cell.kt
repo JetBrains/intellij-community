@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.cache.PropagationResult
@@ -21,11 +21,11 @@ import kotlin.reflect.KClass
  *   Cells can be chained in [CellChain] to represent all parts of the query.
  */
 internal sealed class Cell<T>(val id: CellId) {
-  open fun snapshotInput(snapshot: EntityStorageSnapshot): PropagationResult<T> {
+  open fun snapshotInput(snapshot: ImmutableEntityStorage): PropagationResult<T> {
     throw NotImplementedError()
   }
 
-  abstract fun input(prevData: TokenSet, newSnapshot: EntityStorageSnapshot): PropagationResult<T>
+  abstract fun input(prevData: TokenSet, newSnapshot: ImmutableEntityStorage): PropagationResult<T>
   abstract fun data(): T
 }
 
@@ -36,7 +36,7 @@ internal class EntityCell<T : WorkspaceEntity>(
   id: CellId,
   val type: KClass<T>,
 ) : Cell<List<T>>(id) {
-  override fun snapshotInput(snapshot: EntityStorageSnapshot): PropagationResult<List<T>> {
+  override fun snapshotInput(snapshot: ImmutableEntityStorage): PropagationResult<List<T>> {
     val newCell = EntityCell(this.id, this.type)
     val tokens = snapshot
       .entities(type.java)
@@ -48,7 +48,7 @@ internal class EntityCell<T : WorkspaceEntity>(
   }
 
   override fun input(prevData: TokenSet,
-                     newSnapshot: EntityStorageSnapshot): PropagationResult<List<T>> {
+                     newSnapshot: ImmutableEntityStorage): PropagationResult<List<T>> {
     val tokenSet = TokenSet()
     prevData.addedTokens()
       .filter { (it as Token.WithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
@@ -71,14 +71,14 @@ internal class EntityCell<T : WorkspaceEntity>(
 @Suppress("UNCHECKED_CAST")
 internal class FlatMapCell<T, K>(
   id: CellId,
-  val mapping: (T, EntityStorageSnapshot) -> Iterable<K>,
+  val mapping: (T, ImmutableEntityStorage) -> Iterable<K>,
   private val memory: PersistentMultiOccurenceMap<Any?, Iterable<K>>,
 ) : Cell<List<K>>(id) {
 
   private var dataCache: List<K>? = null
 
   override fun input(prevData: TokenSet,
-                     newSnapshot: EntityStorageSnapshot): PropagationResult<List<K>> {
+                     newSnapshot: ImmutableEntityStorage): PropagationResult<List<K>> {
     val generatedTokens = TokenSet()
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = memory.mutate { mutableMemory ->
@@ -132,7 +132,7 @@ internal class GroupByCell<T, K, V>(
   private var mapCache: Map<K, List<V>>? = null
 
   override fun input(prevData: TokenSet,
-                     newSnapshot: EntityStorageSnapshot): PropagationResult<Map<K, List<V>>> {
+                     newSnapshot: ImmutableEntityStorage): PropagationResult<Map<K, List<V>>> {
     val generatedTokens = TokenSet()
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = myMemory.mutate { mutableMemory ->

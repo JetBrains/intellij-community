@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -39,7 +39,7 @@ public enum class Operation {
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal fun Token.getData(snapshot: EntityStorageSnapshot): Any? {
+internal fun Token.getData(snapshot: ImmutableEntityStorage): Any? {
   return when (this) {
     is WithEntityId -> (snapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(this.entityId).createEntity(snapshot)
     is WithInfo -> this.info

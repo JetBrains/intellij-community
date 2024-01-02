@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.cache
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
@@ -139,14 +139,14 @@ class CacheApiWithImplTest {
     assertEquals(1, tracedCache3.getCellChainToCellIndex().size)
   }
 
-  private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): EntityStorageSnapshot {
+  private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): ImmutableEntityStorage {
     val builder = createEmptyBuilder()
     builder addEntity NamedEntity("MyName", MySource)
     builder.also()
     return builder.toSnapshot()
   }
 
-  private fun EntityStorageSnapshot.update(fc: (MutableEntityStorage) -> Unit): EntityStorageSnapshot {
+  private fun ImmutableEntityStorage.update(fc: (MutableEntityStorage) -> Unit): ImmutableEntityStorage {
     return this.toBuilder().also(fc).toSnapshot()
   }
 }

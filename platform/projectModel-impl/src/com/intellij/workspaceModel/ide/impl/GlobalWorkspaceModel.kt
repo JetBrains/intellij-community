@@ -53,7 +53,7 @@ class GlobalWorkspaceModel : Disposable {
                                                                      || entitySource is LegacyCustomLibraryEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
-  val currentSnapshot: EntityStorageSnapshot
+  val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
   var loadedFromCache = false
@@ -85,7 +85,7 @@ class GlobalWorkspaceModel : Disposable {
       }
       else -> MutableEntityStorage.create()
     }
-    entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+    entityStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
@@ -119,7 +119,7 @@ class GlobalWorkspaceModel : Disposable {
         this.initializeBridges(changes, builder)
       }
 
-      val newStorage: EntityStorageSnapshot
+      val newStorage: ImmutableEntityStorage
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
       }

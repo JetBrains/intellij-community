@@ -5,7 +5,6 @@ import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
@@ -474,11 +473,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   @TestOnly
   override fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter) {
     moduleListSerializersByUrl.values.forEach {
-      saveModulesList(it, storage, EntityStorageSnapshot.empty(), writer)
+      saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
     }
 
     val allSources = storage.entitiesBySource { true }.keys
-    saveEntities(storage, EntityStorageSnapshot.empty(), allSources, writer)
+    saveEntities(storage, ImmutableEntityStorage.empty(), allSources, writer)
   }
 
   internal fun getActualFileUrl(source: EntitySource): String? {

@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
-  private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
-  override val currentSnapshot: EntityStorageSnapshot
+  private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
+  override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -39,7 +39,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
 
     checkIfParentsAlreadyExist(changes, builder)
 
-    val newStorage: EntityStorageSnapshot = builder.toSnapshot()
+    val newStorage: ImmutableEntityStorage = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
 
     log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")

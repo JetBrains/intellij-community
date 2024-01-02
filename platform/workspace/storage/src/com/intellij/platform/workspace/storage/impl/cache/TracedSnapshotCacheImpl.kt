@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.cache
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.query.*
@@ -50,7 +50,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private var pullingCache = false
 
   override fun pullCache(
-    newSnapshot: EntityStorageSnapshot,
+    newSnapshot: ImmutableEntityStorage,
     from: TracedSnapshotCache,
     changes: WorkspaceBuilderChangeLog,
     externalMappingChanges: Map<String, MutableSet<EntityId>>

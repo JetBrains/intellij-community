@@ -3,7 +3,7 @@
 
 package com.intellij.platform.workspace.storage.tests.trace
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -22,7 +22,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class TraceTest {
-  lateinit var snapshot: EntityStorageSnapshot
+  lateinit var snapshot: ImmutableEntityStorage
 
   @BeforeEach
   fun setUp() {

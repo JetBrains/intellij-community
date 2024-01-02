@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 public interface EntityStorageInstrumentation : EntityStorage {
   /**
    * Create entity using [newInstance] function.
-   * In some implementations of the storage ([EntityStorageSnapshot]), the entity is cached and the new instance is created only once.
+   * In some implementations of the storage ([ImmutableEntityStorage]), the entity is cached and the new instance is created only once.
    */
   public fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
   public fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
@@ -38,7 +38,7 @@ public interface EntityStorageInstrumentation : EntityStorage {
 }
 
 @EntityStorageInstrumentationApi
-public interface ImmutableEntityStorageInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
+public interface ImmutableEntityStorageInstrumentation : ImmutableEntityStorage, EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
 public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
@@ -161,7 +161,7 @@ internal val EntityStorage.instrumentation: EntityStorageInstrumentation
   get() = this as EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
-internal val EntityStorageSnapshot.instrumentation: ImmutableEntityStorageInstrumentation
+internal val ImmutableEntityStorage.instrumentation: ImmutableEntityStorageInstrumentation
   get() = this as ImmutableEntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi

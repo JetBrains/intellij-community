@@ -3,7 +3,7 @@ package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -38,7 +38,7 @@ public interface WorkspaceModel {
    * Returns snapshot of the workspace model storage. 
    * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
    */
-  public val currentSnapshot: EntityStorageSnapshot
+  public val currentSnapshot: ImmutableEntityStorage
 
   /**
    * Returns instance holding reference to the current snapshot of the storage and caches associated with it. If you just need to read
@@ -64,7 +64,7 @@ public interface WorkspaceModel {
    * 
    * Currently, unloaded entities correspond to modules which are unloaded using 'Load/Unload Modules' action. 
    */
-  public val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+  public val currentSnapshotOfUnloadedEntities: ImmutableEntityStorage
 
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.

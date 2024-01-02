@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.query
 
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.reflect.full.isSubclassOf
 
@@ -42,14 +42,14 @@ public fun <T, K> CollectionQuery<T>.map(mapping: (T) -> K): CollectionQuery<K> 
   return this.flatMap { item, _ -> setOf(mapping(item)) }
 }
 
-public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline mapping: (T, EntityStorageSnapshot) -> K): CollectionQuery<K> {
+public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline mapping: (T, ImmutableEntityStorage) -> K): CollectionQuery<K> {
   // The map function can be represented using the flatMap.
   // This is probably less efficient, but it will reduce the amount of code to implement for now.
   // The question of performance can be reviewed later.
   return this.flatMap { item, snapshot -> setOf(mapping(item, snapshot)) }
 }
 
-public fun <T, K> CollectionQuery<T>.flatMap(mapping: (T, EntityStorageSnapshot) -> Iterable<K>): CollectionQuery<K> {
+public fun <T, K> CollectionQuery<T>.flatMap(mapping: (T, ImmutableEntityStorage) -> Iterable<K>): CollectionQuery<K> {
   return CollectionQuery.FlatMapTo(this, mapping)
 }
 

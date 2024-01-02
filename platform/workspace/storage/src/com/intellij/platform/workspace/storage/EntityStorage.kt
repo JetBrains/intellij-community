@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
- * A base interface for immutable [EntityStorageSnapshot] and [MutableEntityStorage].
+ * A base interface for immutable [ImmutableEntityStorage] and [MutableEntityStorage].
  */
 public interface EntityStorage {
   /**
@@ -59,7 +59,7 @@ public interface EntityStorage {
  * 
  * Use [com.intellij.platform.backend.workspace.WorkspaceModel.currentSnapshot] to get an instance representing entities inside the IDE process. 
  */
-public interface EntityStorageSnapshot : EntityStorage {
+public interface ImmutableEntityStorage : EntityStorage {
   /**
    * This function is under development, please don't use it.
    */
@@ -67,14 +67,14 @@ public interface EntityStorageSnapshot : EntityStorage {
   public fun <T> cached(query: StorageQuery<T>): T
 
   public companion object {
-    public fun empty(): EntityStorageSnapshot = ImmutableEntityStorageImpl.EMPTY
+    public fun empty(): ImmutableEntityStorage = ImmutableEntityStorageImpl.EMPTY
   }
 }
 
 /**
  * Creates a mutable copy of `this` storage.
  */
-public fun EntityStorageSnapshot.toBuilder(): MutableEntityStorage {
+public fun ImmutableEntityStorage.toBuilder(): MutableEntityStorage {
   return MutableEntityStorage.from(this)
 }
 
@@ -84,9 +84,9 @@ public fun EntityStorageSnapshot.toBuilder(): MutableEntityStorage {
  * This function is obsolete, use [MutableEntityStorage.toSnapshot].
  */
 @ApiStatus.Obsolete
-public fun EntityStorage.toSnapshot(): EntityStorageSnapshot {
+public fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
   return when (this) {
-    is EntityStorageSnapshot -> this
+    is ImmutableEntityStorage -> this
     is MutableEntityStorage -> this.toSnapshot()
     else -> error("Unexpected storage: $this")
   }

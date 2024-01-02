@@ -51,7 +51,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    */
   override val changesEventFlow: Flow<VersionedStorageChange> = updatesFlow.asSharedFlow()
 
-  override val currentSnapshot: EntityStorageSnapshot
+  override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
@@ -71,18 +71,18 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     val cache = WorkspaceModelCache.getInstance(project)
     val (projectEntities, unloadedEntities) = when {
       initialContent != null -> {
-        loadedFromCache = initialContent !== EntityStorageSnapshot.empty()
-        initialContent.toBuilder() to EntityStorageSnapshot.empty()
+        loadedFromCache = initialContent !== ImmutableEntityStorage.empty()
+        initialContent.toBuilder() to ImmutableEntityStorage.empty()
       }
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("cache loading")
         val cacheLoadingStart = System.currentTimeMillis()
 
         val previousStorage: MutableEntityStorage?
-        val previousStorageForUnloaded: EntityStorageSnapshot
+        val previousStorageForUnloaded: ImmutableEntityStorage
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()
-          previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: EntityStorageSnapshot.empty()
+          previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: ImmutableEntityStorage.empty()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -98,7 +98,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         activity.end()
         storage to previousStorageForUnloaded
       }
-      else -> MutableEntityStorage.create() to EntityStorageSnapshot.empty()
+      else -> MutableEntityStorage.create() to ImmutableEntityStorage.empty()
     }
 
     @Suppress("LeakingThis")
@@ -110,7 +110,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     loadingTotalTimeMs.addElapsedTimeMillis(start)
   }
 
-  override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+  override val currentSnapshotOfUnloadedEntities: ImmutableEntityStorage
     get() = unloadedEntitiesStorage.current
 
   /**
@@ -153,7 +153,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         this.initializeBridges(changes, builder)
       }
 
-      val newStorage: EntityStorageSnapshot
+      val newStorage: ImmutableEntityStorage
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
       }
@@ -210,7 +210,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     checkRecursiveUpdate()
 
-    val newStorage: EntityStorageSnapshot
+    val newStorage: ImmutableEntityStorage
     val updateTimeMillis: Long
     val toSnapshotTimeMillis: Long
 

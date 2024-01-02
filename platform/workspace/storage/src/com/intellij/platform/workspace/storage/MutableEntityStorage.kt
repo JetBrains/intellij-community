@@ -191,7 +191,7 @@ public interface MutableEntityStorage : EntityStorage {
   /**
    * Returns a snapshot of the current state. It won't be affected by future changes.
    */
-  public fun toSnapshot(): EntityStorageSnapshot
+  public fun toSnapshot(): ImmutableEntityStorage
 
   public companion object {
     private val LOG = logger<MutableEntityStorage>()
@@ -199,13 +199,13 @@ public interface MutableEntityStorage : EntityStorage {
      * Creates an empty mutable storage. It may be populated with new entities and passed to [addDiff] or [replaceBySource].  
      */
     @JvmStatic
-    public fun create(): MutableEntityStorage = from(EntityStorageSnapshot.empty())
+    public fun create(): MutableEntityStorage = from(ImmutableEntityStorage.empty())
 
     /**
      * Creates a mutable copy of the given [storage] snapshot.
      */
     @JvmStatic
-    public fun from(storage: EntityStorageSnapshot): MutableEntityStorage {
+    public fun from(storage: ImmutableEntityStorage): MutableEntityStorage {
       storage as ImmutableEntityStorageImpl
       val newBuilder = MutableEntityStorageImpl(originalSnapshot = storage)
       LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }

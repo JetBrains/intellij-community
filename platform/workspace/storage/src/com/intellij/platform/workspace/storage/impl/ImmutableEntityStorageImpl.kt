@@ -522,7 +522,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun toSnapshot(): EntityStorageSnapshot = toSnapshotTimeMs.addMeasuredTimeMillis {
+  override fun toSnapshot(): ImmutableEntityStorage = toSnapshotTimeMs.addMeasuredTimeMillis {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()

@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
@@ -67,7 +66,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCacheToFile(storage: EntityStorageSnapshot,
+  internal fun saveCacheToFile(storage: ImmutableEntityStorage,
                                file: Path,
                                userPreProcessor: Boolean = false): SaveInfo = saveCacheToFileTimeMs.addMeasuredTimeMillis {
     val start = System.currentTimeMillis()
@@ -105,7 +104,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     val loadedSize: Long?,
   )
 
-  private fun cachePreProcess(storage: EntityStorageSnapshot): EntityStorageSnapshot {
+  private fun cachePreProcess(storage: ImmutableEntityStorage): ImmutableEntityStorage {
     val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
       .filter { it.entitySource == NonPersistentEntitySource }

@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * but they are supposed to be used only for interoperability with code which uses the old project model API. 
  * The plugins should define and use their own types of entities if they need to store framework-specific data. 
  *
- * Instances of [WorkspaceEntity] obtained from an [EntityStorageSnapshot] are immutable, further modifications will not affect them. This
+ * Instances of [WorkspaceEntity] obtained from an [ImmutableEntityStorage] are immutable, further modifications will not affect them. This
  * means that they can be used without any locks. However, references to [WorkspaceEntity] instances must not be saved in long-living data 
  * structures, because each instance holds a reference to the whole snapshot, and this will create a memory leak. 
  * If you need to refer to entities from some caches, use [EntityReference] or [ExternalEntityMapping].

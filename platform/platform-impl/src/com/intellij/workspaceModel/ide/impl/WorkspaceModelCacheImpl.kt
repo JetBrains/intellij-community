@@ -13,7 +13,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.isConsistent
@@ -105,7 +105,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       val (time, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       WorkspaceModelFusLogger.logCacheSave(time, size ?: -1)
       //todo check that where are no entities in the storage instead
-      if (unloadedStorage != EntityStorageSnapshot.empty()) {
+      if (unloadedStorage != ImmutableEntityStorage.empty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
         cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)
       }
