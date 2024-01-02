@@ -225,9 +225,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     private static @NotNull @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors) {
-      return descriptors.size() == 1 ?
-             IdeBundle.message("prompt.uninstall.plugin", descriptors.iterator().next().getName()) :
-             IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
+      if (descriptors.size() == 1) {
+        IdeaPluginDescriptorImpl descriptor = descriptors.iterator().next();
+        return IdeBundle.message("prompt.uninstall.plugin", descriptor.getName(), MyPluginModel.isBundledUpdate(descriptor) ? 1 : 0);
+      }
+      return IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
     }
 
     private static @NotNull @Nls String getUninstallDependentsMessage(@NotNull IdeaPluginDescriptorImpl descriptor,
@@ -238,7 +240,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       String message = IdeBundle.message("dialog.message.following.plugin.depend.on",
                                          dependents.size(),
                                          descriptor.getName(),
-                                         listOfDeps);
+                                         listOfDeps,
+                                         MyPluginModel.isBundledUpdate(descriptor) ? 1 : 0);
       return XmlStringUtil.wrapInHtml(message);
     }
 
