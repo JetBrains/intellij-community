@@ -99,23 +99,22 @@ abstract class AbstractPerformanceCompletionIncrementalResolveTest : KotlinLight
     }
 
     private fun innerPerfTest(name: String, setUpBody: (TestData<Unit, Array<LookupElement>>) -> Unit) {
-        CompletionBindingContextProvider.ENABLED = true
-        try {
-            performanceTest {
-                name(name)
-                stats(stats)
-                setUp(setUpBody)
-                test { it.value = perfTestCore() }
-                tearDown {
-                    // no reasons to validate output as it is a performance test
-                    assertNotNull(it.value)
-                    runWriteAction {
-                        myFixture.file.delete()
-                    }
+        require(CompletionBindingContextProvider.ENABLED) {
+            "This test expects ${CompletionBindingContextProvider::class.simpleName} to be enabled"
+        }
+
+        performanceTest {
+            name(name)
+            stats(stats)
+            setUp(setUpBody)
+            test { it.value = perfTestCore() }
+            tearDown {
+                // no reasons to validate output as it is a performance test
+                assertNotNull(it.value)
+                runWriteAction {
+                    myFixture.file.delete()
                 }
             }
-        } finally {
-            CompletionBindingContextProvider.ENABLED = false
         }
     }
 

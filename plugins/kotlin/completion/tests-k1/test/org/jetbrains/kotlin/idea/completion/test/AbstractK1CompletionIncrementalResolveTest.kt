@@ -7,16 +7,14 @@ import org.jetbrains.kotlin.test.utils.withExtension
 
 abstract class AbstractK1CompletionIncrementalResolveTest : AbstractCompletionIncrementalResolveTest() {
     override fun doTest(testPath: String) {
-        CompletionBindingContextProvider.ENABLED = true
+        require(CompletionBindingContextProvider.ENABLED) {
+            "This test expects ${CompletionBindingContextProvider::class.simpleName} to be enabled"
+        }
 
         val testLog = StringBuilder()
         CompletionBindingContextProvider.getInstance(project).TEST_LOG = testLog
 
-        try {
-            super.doTest(testPath)
-        } finally {
-            CompletionBindingContextProvider.ENABLED = false
-        }
+        super.doTest(testPath)
 
         KotlinTestUtils.assertEqualsToFile(dataFile().withExtension(".log"), testLog.toString())
     }

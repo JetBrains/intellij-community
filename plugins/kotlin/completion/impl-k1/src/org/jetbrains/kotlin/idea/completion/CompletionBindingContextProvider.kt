@@ -41,7 +41,7 @@ class CompletionBindingContextProvider(project: Project) {
     companion object {
         fun getInstance(project: Project): CompletionBindingContextProvider = project.service()
 
-        var ENABLED = false
+        var ENABLED = true
     }
 
     private class CompletionData(
