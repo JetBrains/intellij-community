@@ -52,12 +52,16 @@ object CodeReviewDetailsBranchComponentFactory {
       scope.launchNow {
         branchesVm.showBranchesRequests.collectLatest { (source, target) ->
           val point = RelativePoint.getSouthWestOf(this@apply)
-          JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(CHECKOUT_ACTION_MARKER))
+          JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(ReviewAction.Checkout))
             .setRenderer(popupActionsRenderer(source))
             .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
+            .setItemChosenCallback { action ->
+              when (action) {
+                is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
+              }
+            }
             .createPopup()
             .showAndAwait(point, ShowDirection.BELOW)
-          branchesVm.fetchAndCheckoutRemoteBranch()
         }
       }
     }
@@ -76,15 +80,16 @@ object CodeReviewDetailsBranchComponentFactory {
   }
 }
 
-private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<Any> {
+private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<ReviewAction> {
   return SimplePopupItemRenderer.create { item ->
     when (item) {
-      CHECKOUT_ACTION_MARKER -> PopupItemPresentation.Simple(
+      is ReviewAction.Checkout -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
       )
-      else -> PopupItemPresentation.ToString(item)
     }
   }
 }
 
-private val CHECKOUT_ACTION_MARKER = Any()
+private sealed interface ReviewAction {
+  data object Checkout : ReviewAction
+}
