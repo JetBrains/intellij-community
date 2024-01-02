@@ -54,6 +54,13 @@ public interface EntityStorage {
 }
 
 /**
+ * Kotlin shortcut for `EntityStorage.entities(E::class.java)`.
+ */
+public inline fun <reified E: WorkspaceEntity> EntityStorage.entities(): Sequence<E> {
+  return this.entities(E::class.java)
+}
+
+/**
  * An immutable snapshot of the storage state. 
  * It isn't affected by the further modifications of the storage.
  * 
