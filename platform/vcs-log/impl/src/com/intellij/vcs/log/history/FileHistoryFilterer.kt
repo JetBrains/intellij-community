@@ -187,7 +187,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                               sortType: PermanentGraph.SortType,
                               filters: VcsLogFilterCollection,
                               commitCount: CommitCountStage): VisiblePack {
-      val isFastStart = commitCount == CommitCountStage.INITIAL
+      val isFastStart = commitCount == CommitCountStage.INITIAL && fileHistoryHandler.isFastStartSupported
       val start = markNow()
 
       val (revisions, isDone) = if (isFastStart) {

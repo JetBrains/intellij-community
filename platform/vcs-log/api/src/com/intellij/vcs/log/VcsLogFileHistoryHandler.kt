@@ -16,6 +16,8 @@ interface VcsLogFileHistoryHandler {
 
   val supportedVcs: VcsKey
 
+  val isFastStartSupported: Boolean get() = true
+
   @Throws(VcsException::class)
   fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, commitCount: Int): List<VcsFileRevisionEx>
 
