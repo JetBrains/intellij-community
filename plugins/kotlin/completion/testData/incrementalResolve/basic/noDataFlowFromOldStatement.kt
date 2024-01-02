@@ -7,4 +7,5 @@ fun bar(s: String, p: Int) { }
 
 // BACKSPACES: 4
 // TYPE: "."
+// COMPLETION_TYPE: BASIC
 // EXIST: { itemText: "substring", attributes: "grayed" }
