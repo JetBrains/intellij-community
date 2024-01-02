@@ -435,6 +435,7 @@ private abstract class FileHistoryTask(val project: Project, val handler: VcsLog
         return Pair(getRevisionsSnapshot(), true)
       }
       catch (_: TimeoutException) {
+        ProgressManager.checkCanceled()
       }
     }
     return Pair(getRevisionsSnapshot(), false)
