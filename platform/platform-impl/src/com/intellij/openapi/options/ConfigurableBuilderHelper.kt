@@ -13,6 +13,7 @@ class ConfigurableBuilderHelper {
   companion object {
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
+    @ApiStatus.Internal
     @Deprecated("Will be removed")
     internal fun Panel.buildFieldsPanel(@NlsContexts.BorderTitle title: String?, fields: List<ConfigurableBuilder.BeanField<*, *>>) {
       if (title != null) {

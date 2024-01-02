@@ -4,6 +4,7 @@ package com.intellij.openapi.options
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
 
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Internal
 @Deprecated("Use BeanConfigurable or other suitable API")
 abstract class CheckBoxConfigurable : UnnamedConfigurable {
