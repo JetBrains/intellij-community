@@ -76,7 +76,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.translate(r.x, r.y);
 
       if (component.isEnabled() && component.isEditable()) {
-        float arc = isSearchField(component) || DarculaTextFieldProperties.isTextFieldRounded(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+        float arc = isSearchField(component) || component.getBorder() instanceof DarculaTextBorderNew ? COMPONENT_ARC.getFloat() : 0.0f;
         float bw = bw();
 
         g2.setColor(component.getBackground());

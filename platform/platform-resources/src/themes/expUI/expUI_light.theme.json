@@ -218,8 +218,6 @@
       }
     },
 
-    "PasswordField.background": "Grey14",
-
     "Component": {
       "arc": "8",
       "borderColor": "Grey9",
@@ -449,6 +447,11 @@
       "Notification.hoverBackground": "Grey13"
     },
 
+    "PasswordField": {
+      "background": "Grey14",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"
+    },
+
     "Plugins": {
       "background": "Grey14",
       "SearchField.background": "Grey14",
@@ -588,6 +591,7 @@
 
     "TextField": {
       "background": "Grey14",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew",
       "minimumSize": "49,28"
     },
 

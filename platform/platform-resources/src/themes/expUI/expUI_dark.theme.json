@@ -425,6 +425,10 @@
 
     "OnePixelDivider.background": "Grey3",
 
+    "PasswordField": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"
+    },
+
     "Plugins": {
       "SectionHeader.background": "Grey3",
       "Button": {
@@ -580,6 +584,7 @@
 
     "TextField": {
       "background": "Grey2",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew",
       "minimumSize": "49,28"
     },
 
