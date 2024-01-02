@@ -2,10 +2,10 @@
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.core.RevisionsCollector
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.history.integration.ui.models.collectRevisionItems
 import com.intellij.history.integration.ui.models.filterContents
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
@@ -23,7 +23,12 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
     if (scope is ActivityScope.File) {
-      return collectRevisionItems(project, gateway, facade, scope.file, scopeFilter, false).map {
+      return runReadAction {
+        gateway.registerUnsavedDocuments(facade)
+        return@runReadAction RevisionsCollector.collect(facade, gateway.createTransientRootEntry(),
+                                                        gateway.getPathOrUrl(scope.file),
+                                                        project.getLocationHash(), scopeFilter, false)
+      }.map {
         RevisionActivityItem(it)
       }
     }
@@ -31,12 +36,12 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 
   override fun filterActivityList(scope: ActivityScope, items: List<ActivityItem>, activityFilter: String?): Set<ActivityItem>? {
-    val revisions = items.mapNotNull { (it as? RevisionActivityItem)?.revisionItem }
+    val revisions = items.mapNotNull { (it as? RevisionActivityItem)?.revision }
     if (activityFilter.isNullOrEmpty() || revisions.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
     val revisionIds = facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = false)
-    return items.filterTo(mutableSetOf()) { (it is RevisionActivityItem) && revisionIds.contains(it.revisionItem.revision.changeSetId) }
+    return items.filterTo(mutableSetOf()) { (it is RevisionActivityItem) && revisionIds.contains(it.revision.changeSetId) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
@@ -60,7 +65,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
     return when (item) {
-      is RevisionActivityItem -> item.revisionItem.revision.createPresentation()
+      is RevisionActivityItem -> item.revision.createPresentation()
       is RecentChangeActivityItem -> item.recentChange.revisionAfter.createPresentation()
       else -> null
     }
@@ -81,6 +86,7 @@ private fun LocalHistoryFacade.onChangeSetFinished(): Flow<Unit> {
 }
 
 private fun Revision.createPresentation(): ActivityPresentation {
-  val text = changeSetName ?: (StringUtil.shortenTextWithEllipsis(affectedFileNames.first.joinToString(), 80, 0))
+  val text = if (isLabel) label ?: ""
+  else changeSetName ?: (StringUtil.shortenTextWithEllipsis(affectedFileNames.first.joinToString(), 80, 0))
   return ActivityPresentation(text)
 }

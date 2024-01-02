@@ -3,22 +3,21 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.revisions.RecentChange
 import com.intellij.history.core.revisions.Revision
-import com.intellij.history.integration.ui.models.RevisionItem
 import com.intellij.util.containers.HashingStrategy
 
-internal class RevisionActivityItem(val revisionItem: RevisionItem) : ActivityItem {
+internal class RevisionActivityItem(val revision: Revision) : ActivityItem {
   override val timestamp: Long
-    get() = revisionItem.revision.timestamp
+    get() = revision.timestamp
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is RevisionActivityItem) return false
 
-    return RevisionHashingStrategy.equals(this.revisionItem.revision, other.revisionItem.revision)
+    return RevisionHashingStrategy.equals(revision, other.revision)
   }
 
   override fun hashCode(): Int {
-    return RevisionHashingStrategy.hashCode(this.revisionItem.revision)
+    return RevisionHashingStrategy.hashCode(revision)
   }
 }
 

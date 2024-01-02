@@ -25,7 +25,7 @@ fun ActivitySelection.toRevisionSelection(scope: ActivityScope): RevisionSelecti
   if (selectedItems.size == 1) {
     val selectedActivityItem = selectedItems.single()
     if (selectedActivityItem is RevisionActivityItem && scope is ActivityScope.File) {
-      val revision = selectedActivityItem.revisionItem.revision
+      val revision = selectedActivityItem.revision
       return RevisionSelection(revision, scope.createCurrentRevision(revision), revisions())
     }
     if (selectedActivityItem is RecentChangeActivityItem) {
@@ -38,7 +38,7 @@ fun ActivitySelection.toRevisionSelection(scope: ActivityScope): RevisionSelecti
   val firstItem = selectedItems.first()
   val lastItem = selectedItems.last()
   if (firstItem is RevisionActivityItem && lastItem is RevisionActivityItem) {
-    return RevisionSelection(lastItem.revisionItem.revision, firstItem.revisionItem.revision, revisions())
+    return RevisionSelection(lastItem.revision, firstItem.revision, revisions())
   }
   if (firstItem is RecentChangeActivityItem && lastItem is RecentChangeActivityItem) {
     return RevisionSelection(lastItem.recentChange.revisionBefore, firstItem.recentChange.revisionAfter, emptyList())
@@ -47,5 +47,5 @@ fun ActivitySelection.toRevisionSelection(scope: ActivityScope): RevisionSelecti
 }
 
 private fun ActivitySelection.revisions(): List<Revision> {
-  return allItems.filterIsInstance<RevisionActivityItem>().map { it.revisionItem.revision }
+  return allItems.filterIsInstance<RevisionActivityItem>().map { it.revision }
 }
