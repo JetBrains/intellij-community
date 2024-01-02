@@ -24,6 +24,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySou
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
@@ -105,7 +106,7 @@ class DelayedProjectSynchronizerTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
 
-    assertTrue("xxx" !in storage.entities(ModuleEntity::class.java).map { it.name })
+    assertTrue("xxx" !in storage.entities<ModuleEntity>().map { it.name })
 
     saveToCache(projectData)
 
@@ -167,11 +168,11 @@ class DelayedProjectSynchronizerTest {
                                               configLocation, projectFile)
     serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
-    assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
+    assertThat(projectData.storage.entities<ModuleEntity>().map {
       assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
     }.toList())
-      .containsAll(loadedProjectData.storage.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+      .containsAll(loadedProjectData.storage.entities<ModuleEntity>().map { it.entitySource }.toList())
     assertThat(projectData.storage.entities(LibraryEntity::class.java).map {
       assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
@@ -202,11 +203,11 @@ class DelayedProjectSynchronizerTest {
                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                 fileInDirectorySourceNames = fileInDirectorySourceNames)
 
-    assertThat(originalBuilder.entities(ModuleEntity::class.java).map {
+    assertThat(originalBuilder.entities<ModuleEntity>().map {
       assertTrue(it.entitySource is JpsImportedEntitySource)
       it.entitySource
     }.toList())
-      .containsAll(builderForAnotherProject.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+      .containsAll(builderForAnotherProject.entities<ModuleEntity>().map { it.entitySource }.toList())
     assertThat(originalBuilder.entities(LibraryEntity::class.java).map {
       assertTrue(it.entitySource is JpsImportedEntitySource)
       it.entitySource

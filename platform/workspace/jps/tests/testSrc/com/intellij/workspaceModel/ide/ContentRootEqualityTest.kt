@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
@@ -46,6 +47,6 @@ class ContentRootEqualityTest {
 
     builder1.replaceBySource({ it is MySource }, builder2)
 
-    assertEquals("Type", builder1.entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single().rootType)
+    assertEquals("Type", builder1.entities<ModuleEntity>().single().contentRoots.single().sourceRoots.single().rootType)
   }
 }

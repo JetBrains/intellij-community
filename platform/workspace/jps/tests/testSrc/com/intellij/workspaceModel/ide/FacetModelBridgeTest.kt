@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
@@ -198,7 +199,7 @@ class FacetModelBridgeTest {
     val module = projectModel.createModule()
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
-        val moduleEntity = builder.entities(ModuleEntity::class.java).first()
+        val moduleEntity = builder.entities<ModuleEntity>().first()
         builder addEntity FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
           this.module = moduleEntity
           underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {

@@ -9,6 +9,8 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -77,10 +79,10 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -123,10 +125,10 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -169,10 +171,10 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots
+      .entities<ModuleEntity>().single().contentRoots
     assertEquals(2, contentRoots.size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -191,7 +193,7 @@ class EntitiesOrphanageTest {
       }
 
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        val module = it.entities(ModuleEntity::class.java).single()
+        val module = it.entities<ModuleEntity>().single()
         it.removeEntity(module)
       }
     }
@@ -201,10 +203,10 @@ class EntitiesOrphanageTest {
     }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java)
+      .entities<ModuleEntity>()
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -245,10 +247,10 @@ class EntitiesOrphanageTest {
     }
 
     val roots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots
+      .entities<ModuleEntity>().single().contentRoots
     assertEquals(0, roots.toList().size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(1, orphanModules.size)
     assertEquals(1, orphanModules.single().contentRoots.size)
   }
@@ -290,10 +292,10 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -337,10 +339,10 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(1, orphanModules.size)
     val remainedOrphanUrl = orphanModules.single().contentRoots.single().url
     assertEquals(url2, remainedOrphanUrl)
@@ -387,10 +389,10 @@ class EntitiesOrphanageTest {
     }
 
     val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single().sourceRoots.single()
     assertEquals(sourceUrl, sourceRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -437,10 +439,10 @@ class EntitiesOrphanageTest {
     }
 
     val sourceRoot = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single().sourceRoots.single()
     assertEquals(sourceUrl, sourceRoot.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -488,10 +490,10 @@ class EntitiesOrphanageTest {
     }
 
     val sourceRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots
+      .entities<ModuleEntity>().single().contentRoots.single().sourceRoots
     assertEquals(2, sourceRoots.size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -516,7 +518,7 @@ class EntitiesOrphanageTest {
       }
 
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        val module = it.entities(ModuleEntity::class.java).single()
+        val module = it.entities<ModuleEntity>().single()
         it.removeEntity(module)
       }
     }
@@ -526,10 +528,10 @@ class EntitiesOrphanageTest {
     }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java)
+      .entities<ModuleEntity>()
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -574,10 +576,10 @@ class EntitiesOrphanageTest {
     }
 
     val excludeUrls = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
+      .entities<ModuleEntity>().single().contentRoots.single().excludedUrls.single()
     assertEquals(excludeUrl, excludeUrls.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -624,10 +626,10 @@ class EntitiesOrphanageTest {
     }
 
     val myExcludeUrl = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls.single()
+      .entities<ModuleEntity>().single().contentRoots.single().excludedUrls.single()
     assertEquals(excludeUrl, myExcludeUrl.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -675,10 +677,10 @@ class EntitiesOrphanageTest {
     }
 
     val excludedUrls = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single().excludedUrls
+      .entities<ModuleEntity>().single().contentRoots.single().excludedUrls
     assertEquals(2, excludedUrls.size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -703,7 +705,7 @@ class EntitiesOrphanageTest {
       }
 
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        val module = it.entities(ModuleEntity::class.java).single()
+        val module = it.entities<ModuleEntity>().single()
         it.removeEntity(module)
       }
     }
@@ -713,10 +715,10 @@ class EntitiesOrphanageTest {
     }
 
     val modules = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java)
+      .entities<ModuleEntity>()
     assertEquals(0, modules.toList().size)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 
@@ -763,11 +765,11 @@ class EntitiesOrphanageTest {
     }
 
     val contentRoots = WorkspaceModel.getInstance(projectModel.project).currentSnapshot
-      .entities(ModuleEntity::class.java).single().contentRoots.single()
+      .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(excludeUrl, contentRoots.excludedUrls.single().url)
     assertEquals(sourceUrl, contentRoots.sourceRoots.single().url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).toList()
+    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
     assertEquals(0, orphanModules.size)
   }
 }
