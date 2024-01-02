@@ -1382,6 +1382,11 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
     <postStartupActivity implementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.WelcomeScreenPerformanceCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
+
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
 

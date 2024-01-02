@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
@@ -185,6 +186,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
 
   override fun notifyProjectActivation() {
     getFrameHelper(this)?.notifyProjectActivation()
+  }
+
+  override fun setVisible(b: Boolean) {
+    super.setVisible(b)
+    if (b) {
+      FUSProjectHotStartUpMeasurer.frameBecameVisible()
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.openapi.project.impl
@@ -49,11 +49,13 @@ import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.alsoIfNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -163,6 +165,7 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun doRun(outOfLoadingScope: CoroutineScope,
                             task: FrameAllocatorTask,
                             deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
@@ -194,6 +197,7 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
       val toolWindowInitJob = scheduleInitFrame(rawProjectDeferred = rawProjectDeferred,
                                                 reopeningEditorJob = reopeningEditorJob,
                                                 deferredProjectFrameHelper = deferredProjectFrameHelper)
+      val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
 
       serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         val project = rawProjectDeferred.await()
@@ -205,10 +209,18 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
         }
 
         reopeningEditorJob.join()
-        postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
-                        fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
-                        toolWindowInitJob = toolWindowInitJob,
-                        project = project)
+        val postOpen: suspend CoroutineScope.() -> Unit = {
+          postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                          fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+                          toolWindowInitJob = toolWindowInitJob,
+                          project = project)
+        }
+        startUpContextElementToPass?.apply { withContext(this, postOpen) }.alsoIfNull { postOpen() }
+      }.invokeOnCompletion {
+        rawProjectDeferred.invokeOnCompletion { cause ->
+          if (cause == null) FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(rawProjectDeferred.getCompleted(),
+                                                                                       startUpContextElementToPass)
+        }
       }
 
       task(scheduleSaveTemplate(options), projectInitObserver)
@@ -407,14 +419,17 @@ private suspend fun postOpenEditors(deferredProjectFrameHelper: Deferred<Project
   }
 }
 
-private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
+private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
   val editor = (composite.selectedEditor as? TextEditor)?.editor
   if (editor == null) {
+    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.project, composite.file)
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
+    val elementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
     AsyncEditorLoader.performWhenLoaded(editor) {
+      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.project, composite.file, elementToPass)
       composite.preferredFocusedComponent?.requestFocusInWindow()
     }
   }
@@ -530,6 +545,7 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
+      FUSProjectHotStartUpMeasurer.openedReadme(project, readme)
     }
   }
 }

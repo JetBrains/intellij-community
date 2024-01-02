@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
@@ -165,6 +166,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
         registerKeyboardShortcuts(jFrame.rootPane)
         hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
+        FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
         installAppMenuIfNeeded(jFrame)
         instance = frame
         if (SystemInfoRt.isMac) {

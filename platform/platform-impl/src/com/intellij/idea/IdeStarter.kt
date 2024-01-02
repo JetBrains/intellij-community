@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.idea
@@ -17,6 +17,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -33,8 +34,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
+import com.intellij.util.alsoIfNull
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
 import java.nio.file.Path
@@ -69,7 +72,17 @@ open class IdeStarter : ModernApplicationStarter() {
     coroutineScope {
       val app = ApplicationManager.getApplication()
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-      openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
+
+      val openProjectBlock: suspend CoroutineScope.() -> Unit = {
+        openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
+      }
+
+      FUSProjectHotStartUpMeasurer.initializeAndGetStartUpContextElement(this@IdeStarter)?.also {
+        if ((app as ApplicationEx).isLightEditMode) {
+          FUSProjectHotStartUpMeasurer.lightEditProjectFound()
+        }
+        withContext(it, openProjectBlock)
+      }.alsoIfNull { openProjectBlock() }
 
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
@@ -119,6 +132,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }
 
       if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
+        FUSProjectHotStartUpMeasurer.reportUriOpening()
         processUriParameter(uri = uriToOpen ?: args.first(), lifecyclePublisher = lifecyclePublisher)
         return@span false
       }
@@ -134,8 +148,14 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     val project = when {
-      filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(filesToLoad, "IdeStarter")
-      args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
+      filesToLoad.isNotEmpty() -> {
+        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.FromFilesToLoad)
+        ProjectUtil.openOrImportFilesAsync(filesToLoad, "IdeStarter")
+      }
+      args.isNotEmpty() -> {
+        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.FromArgs)
+        loadProjectFromExternalCommandLine(args)
+      }
       else -> null
     }
 

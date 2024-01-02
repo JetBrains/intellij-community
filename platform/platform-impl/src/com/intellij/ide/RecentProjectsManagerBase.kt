@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "LiftReturnOrAssignment")
 
 package com.intellij.ide
@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.createParentDirectories
@@ -295,9 +296,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
     }
 
+    FUSProjectHotStartUpMeasurer.reportProjectPath(projectFile)
     if (isValidProjectPath(projectFile)) {
       val projectManager = ProjectManagerEx.getInstanceEx()
       projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
+        FUSProjectHotStartUpMeasurer.reportAlreadyOpenedProject()
         withContext(Dispatchers.EDT) {
           ProjectUtil.focusProjectWindow(project = project)
         }
@@ -463,6 +466,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     disableUpdatingRecentInfo.set(true)
     try {
       if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
+        if (openPaths.size > 1) {
+          //This check may result in false positive,
+          // but it's good enough to removing non-basic scenarios from reporting to FUS
+          FUSProjectHotStartUpMeasurer.openingMultipleProjects()
+        }
+        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.Reopened)
         return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
       }
 
@@ -475,9 +484,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       if (toOpen.size == 1) {
         val pair = toOpen.get(0)
         val pathsToOpen = listOf(AbstractMap.SimpleEntry(pair.first.toString(), pair.second))
+        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.Reopened)
         return openOneByOne(pathsToOpen, index = 0, someProjectWasOpened = false)
       }
       else {
+        FUSProjectHotStartUpMeasurer.openingMultipleProjects()
         return openMultiple(toOpen)
       }
     }
