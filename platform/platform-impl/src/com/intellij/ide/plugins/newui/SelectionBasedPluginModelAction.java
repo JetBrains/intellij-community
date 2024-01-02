@@ -138,6 +138,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     private final @NotNull JComponent myUiParent;
     private final @NotNull Runnable myOnFinishAction;
+    private final boolean myDynamicTitle;
 
     UninstallAction(@NotNull MyPluginModel pluginModel,
                     boolean showShortcut,
@@ -158,6 +159,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       myUiParent = uiParent;
       myOnFinishAction = onFinishAction;
+      myDynamicTitle = selection.size() == 1 && pluginDescriptor.apply(selection.iterator().next()) == null;
     }
 
     private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, IdeaPluginDescriptor> pluginDescriptor) {
@@ -172,6 +174,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     @Override
     public void update(@NotNull AnActionEvent e) {
       Collection<? extends IdeaPluginDescriptorImpl> descriptors = getAllDescriptors();
+
+      if (myDynamicTitle) {
+        e.getPresentation().setText(IdeBundle.message(
+          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(descriptors.iterator().next())
+          ? "plugins.configurable.uninstall.bundled.update"
+          : "plugins.configurable.uninstall"));
+      }
 
       boolean disabled = descriptors.isEmpty() ||
                          exists(descriptors, IdeaPluginDescriptor::isBundled) ||
@@ -288,6 +297,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     private final EnableDisableAction<C> myEnableAction;
     private final EnableDisableAction<C> myDisableAction;
+    private final UninstallAction<C> myUninstallAction;
+    private final AbstractAction myUninstallButton;
     private EnableDisableAction<C> myCurrentAction;
 
     OptionButtonController(@NotNull EnableDisableAction<C> enableAction,
@@ -295,6 +306,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                            @NotNull UninstallAction<C> uninstallAction) {
       myEnableAction = enableAction;
       myDisableAction = disableAction;
+      myUninstallAction = uninstallAction;
       button.setAction(new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -302,12 +314,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         }
       });
 
-      button.setOptions(new Action[]{new AbstractAction(uninstallAction.getTemplateText()) {
+      myUninstallButton = new AbstractAction(uninstallAction.getTemplateText()) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          uninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+          myUninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
         }
-      }});
+      };
+      button.setOptions(new Action[]{myUninstallButton});
 
       bundledButton.setOpaque(false);
       bundledButton.addActionListener(this);
@@ -323,6 +336,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       String text = myCurrentAction.getTemplateText();
       button.getAction().putValue(Action.NAME, text);
       bundledButton.setText(text);
+
+      presentation = new Presentation();
+      event = AnActionEvent.createFromDataContext("", presentation, DataContext.EMPTY_CONTEXT);
+      myUninstallAction.update(event);
+      myUninstallButton.putValue(Action.NAME, presentation.getText());
     }
 
     @Override
@@ -345,7 +363,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       setPopupHandler(popup -> {
         Dimension size = new Dimension(popup.getSize());
         Insets insets = getInsets();
-        size.width = getWidth() - insets.left - insets.right;
+        int oldWidth = size.width;
+        int newWidth = getWidth() - insets.left - insets.right;
+        if (oldWidth <= newWidth || newWidth / (double)oldWidth > 0.85) {
+          size.width = newWidth;
+        }
         popup.setSize(size);
         return null;
       });
