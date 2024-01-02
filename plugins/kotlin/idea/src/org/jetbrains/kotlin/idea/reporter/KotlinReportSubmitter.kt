@@ -22,24 +22,22 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.Component
 import javax.swing.Icon
 
+private const val KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY = "kotlin.fatal.error.notification"
+private const val IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification"
+private const val DISABLED_VALUE = "disabled"
+private const val ENABLED_VALUE = "enabled"
+
+private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
+
 /**
- * We need to wrap ITNReporter for force showing of errors from kotlin plugin even from released version of IDEA.
+ * We need to wrap ITNReporter for force showing of errors from Kotlin plugin even from a released version of IDEA.
  */
 class KotlinReportSubmitter : ITNReporterCompat() {
-    companion object {
-        private const val KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY = "kotlin.fatal.error.notification"
-        private const val IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification"
-        private const val DISABLED_VALUE = "disabled"
-        private const val ENABLED_VALUE = "enabled"
-
-        private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
-
-        private val isIdeaAndKotlinRelease by lazy {
-            // Disabled in released version of IDEA and Android Studio
-            // Enabled in EAPs, Canary and Beta
-            val isReleaseLikeIdea = DISABLED_VALUE == System.getProperty(IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
-            isReleaseLikeIdea && KotlinIdePlugin.isRelease
-        }
+    private val isIdeaAndKotlinRelease: Boolean by lazy {
+        // Disabled in a released version of IDEA and Android Studio
+        // Enabled in EAPs, Canary and Beta
+        val isReleaseLikeIdea = DISABLED_VALUE == System.getProperty(IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
+        isReleaseLikeIdea && KotlinIdePlugin.isRelease
     }
 
     override fun showErrorInRelease(event: IdeaLoggingEvent): Boolean {
