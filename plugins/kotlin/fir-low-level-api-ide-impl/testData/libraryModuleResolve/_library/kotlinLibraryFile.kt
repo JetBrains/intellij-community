@@ -22,3 +22,13 @@ enum class TopLevelEnum {
     ENTRY2,
     ENTRY3,
 }
+
+object TopLevelObject {
+    fun objectFunction() {}
+}
+
+class ClassWithImplicitConstructorAndCompanion {
+    companion object {
+
+    }
+}

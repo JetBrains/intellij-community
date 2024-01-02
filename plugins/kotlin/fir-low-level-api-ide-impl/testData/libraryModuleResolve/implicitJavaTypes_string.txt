@@ -1,1 +1,3 @@
 public final [ResolvedTo(BODY_RESOLVE)] var string: R|kotlin/String!|
+    public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/String!|
+    public [ResolvedTo(BODY_RESOLVE)] set([ResolvedTo(BODY_RESOLVE)] value: R|kotlin/String!|): R|kotlin/Unit|
