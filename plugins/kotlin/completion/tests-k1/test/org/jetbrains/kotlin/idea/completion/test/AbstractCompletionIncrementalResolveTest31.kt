@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.utils.withExtension
 import java.io.File
 
 abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsightFixtureTestCase() {
@@ -24,9 +25,12 @@ abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsig
 
     protected fun doTest(testPath: String) {
         CompletionBindingContextProvider.ENABLED = true
+
+        val testLog = StringBuilder()
+        CompletionBindingContextProvider.getInstance(project).TEST_LOG = testLog
+
         try {
-            val file = File(testPath)
-            val hasCaretMarker = FileUtil.loadFile(file, true).contains("<caret>")
+            val hasCaretMarker = dataFile().readText().contains("<caret>")
             myFixture.configureByFile(fileName())
 
             val document = myFixture.editor.document
@@ -59,9 +63,6 @@ abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsig
                 null
             editor.caretModel.moveToOffset(beforeMarker.startOffset)
 
-            val testLog = StringBuilder()
-            CompletionBindingContextProvider.getInstance(project).TEST_LOG = testLog
-
             myFixture.complete(CompletionType.BASIC)
 
             project.executeWriteCommand("") {
@@ -80,15 +81,15 @@ abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsig
             }
 
             testCompletion(
-                FileUtil.loadFile(file, true),
+                dataFile().readText(),
                 JvmPlatforms.unspecifiedJvmPlatform,
                 { completionType, count -> myFixture.complete(completionType, count) },
                 additionalValidDirectives = listOf(TYPE_DIRECTIVE_PREFIX, BACKSPACES_DIRECTIVE_PREFIX)
             )
-
-            KotlinTestUtils.assertEqualsToFile(File(file.parent, file.nameWithoutExtension + ".log"), testLog.toString())
         } finally {
             CompletionBindingContextProvider.ENABLED = false
         }
+
+        KotlinTestUtils.assertEqualsToFile(dataFile().withExtension(".log"), testLog.toString())
     }
 }
