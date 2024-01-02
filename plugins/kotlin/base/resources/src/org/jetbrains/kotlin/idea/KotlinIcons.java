@@ -23,7 +23,7 @@ public interface KotlinIcons {
     Icon EXTENSION_FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinBaseResourcesIcons.Field_value;
     /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinBaseResourcesIcons.Field_variable;
-    /** 16x16 */ @NotNull Icon FIR = KotlinBaseResourcesIcons.Fir_xmas;
+    /** 16x16 */ @NotNull Icon FIR = KotlinBaseResourcesIcons.Fir;
     Icon FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon INTERFACE = KotlinBaseResourcesIcons.InterfaceKotlin;
     /** 16x16 */ @NotNull Icon FILE = KotlinBaseResourcesIcons.Kotlin_file;
