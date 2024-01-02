@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -31,13 +32,13 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -178,8 +179,13 @@ object TimelineDiffComponentFactory {
         lineCursorWidth = 1
       }
     }
-    cs.awaitCancellationAndInvoke {
-      editorFactory.releaseEditor(editor)
+    cs.launchNow {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
     }
     return editor
   }

@@ -14,13 +14,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.cancelOnDispose
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -50,19 +46,23 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         }.collectLatest { reviewVm ->
           reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
             if (fileVm != null) {
+              editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
               try {
-                editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
                 val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
                 val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.incoming != true }.distinctUntilChanged()
                 combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest {
                   if (it) supervisorScope {
                     val model = GitLabMergeRequestEditorReviewUIModel(this, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
-                    showGutterMarkers(model, editor)
-                    showGutterControls(model, editor)
-                    showInlays(model, editor)
-                    awaitCancellationAndInvoke {
+                    try {
+                      showGutterMarkers(model, editor)
+                      showGutterControls(model, editor)
+                      showInlays(model, editor)
+                      awaitCancellation()
+                    }
+                    finally {
                       editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, null)
+                      Disposer.dispose(model)
                     }
                   }
                 }
@@ -81,13 +81,14 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     val renderer = GitLabMergeRequestReviewChangesGutterRenderer(model, editor, disposable)
 
     launchNow {
-      model.shiftedReviewRanges.collect {
-        renderer.scheduleUpdate()
+      try {
+        model.shiftedReviewRanges.collect {
+          renderer.scheduleUpdate()
+        }
       }
-    }
-
-    awaitCancellationAndInvoke {
-      Disposer.dispose(disposable)
+      finally {
+        Disposer.dispose(disposable)
+      }
     }
   }
 

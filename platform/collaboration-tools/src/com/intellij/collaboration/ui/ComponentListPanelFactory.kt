@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.containers.toArray
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.*
@@ -110,12 +109,15 @@ object ComponentListPanelFactory {
           panel.repaint()
         }
       }
-      model.addListDataListener(listener)
 
-      if (model.size > 0) {
-        listener.intervalAdded(ListDataEvent(model, ListDataEvent.INTERVAL_ADDED, 0, model.size - 1))
+      model.addListDataListener(listener)
+      try {
+        if (model.size > 0) {
+          listener.intervalAdded(ListDataEvent(model, ListDataEvent.INTERVAL_ADDED, 0, model.size - 1))
+        }
+        awaitCancellation()
       }
-      awaitCancellationAndInvoke {
+      finally {
         model.removeListDataListener(listener)
       }
     }

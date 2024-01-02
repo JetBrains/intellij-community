@@ -9,11 +9,12 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.awaitCancellationAndInvoke
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -179,7 +180,16 @@ private constructor(parentCs: CoroutineScope,
     connection.projectData.mergeRequests.findCachedDetails(mrIid)
 
   init {
-    cs.awaitCancellationAndInvoke { filesController.closeAllFiles() }
+    cs.launchNow {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable + ModalityState.any().asContextElement()) {
+          filesController.closeAllFiles()
+        }
+      }
+    }
   }
 
   companion object {

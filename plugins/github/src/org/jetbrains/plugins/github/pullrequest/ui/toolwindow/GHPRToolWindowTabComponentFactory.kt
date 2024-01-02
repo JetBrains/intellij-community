@@ -8,9 +8,10 @@ import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -58,14 +59,20 @@ internal class GHPRToolWindowTabComponentFactory(
       private val listeners = CopyOnWriteArrayList<ListDataListener>()
 
       init {
-        awaitCancellationAndInvoke {
-          listeners.forEach {
-            delegate.removeListDataListener(it)
+        launchNow {
+          try {
+            awaitCancellation()
+          }
+          finally {
+            listeners.forEach {
+              delegate.removeListDataListener(it)
+            }
           }
         }
       }
 
       override fun addListDataListener(l: ListDataListener) {
+        if (!isActive) return
         listeners.add(l)
         delegate.addListDataListener(l)
       }

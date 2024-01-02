@@ -21,9 +21,9 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.awaitCancellationAndInvoke
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.StateFlow
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -44,20 +44,22 @@ private constructor(cs: CoroutineScope,
   private val hoverHandler = HoverHandler(editor)
 
   init {
-    val areaDisposable = Disposer.newDisposable()
-    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
-    editor.addEditorMouseListener(hoverHandler)
-    editor.addEditorMouseMotionListener(hoverHandler)
-
     cs.launchNow {
-      nonCommentableRanges.collect {
-        hoverHandler.nonCommentableRanges = it
+      val areaDisposable = Disposer.newDisposable()
+      editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
+      editor.addEditorMouseListener(hoverHandler)
+      editor.addEditorMouseMotionListener(hoverHandler)
+
+      try {
+        nonCommentableRanges.collect {
+          hoverHandler.nonCommentableRanges = it
+        }
       }
-    }
-    cs.awaitCancellationAndInvoke {
-      editor.removeEditorMouseListener(hoverHandler)
-      editor.removeEditorMouseMotionListener(hoverHandler)
-      Disposer.dispose(areaDisposable)
+      finally {
+        editor.removeEditorMouseListener(hoverHandler)
+        editor.removeEditorMouseMotionListener(hoverHandler)
+        Disposer.dispose(areaDisposable)
+      }
     }
   }
 
@@ -307,8 +309,13 @@ private constructor(cs: CoroutineScope,
         setGreedyToRight(true)
         setLineMarkerRenderer(renderer)
       }
-      cs.awaitCancellationAndInvoke {
-        highlighter.dispose()
+      cs.launchNow {
+        try {
+          awaitCancellation()
+        }
+        finally {
+          highlighter.dispose()
+        }
       }
     }
   }
