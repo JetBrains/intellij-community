@@ -38,6 +38,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
+import java.awt.Frame
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
@@ -201,6 +202,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           true
         }
 
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
+            LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
+          }
+        }
+
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          ProjectManagerEx.getOpenProjects().map { it.name }.also {
+            LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
+          }
+        }
+
+        // causes problems if not scheduled on ui thread
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
             ProjectManagerEx.getOpenProjects().forEach {
@@ -233,6 +251,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
           makeScreenshot(fileName)
+        }
+
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
         session.showNotification.advise(lifetime) { actionTitle ->
