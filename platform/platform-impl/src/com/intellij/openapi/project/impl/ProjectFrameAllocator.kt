@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.openapi.project.impl
@@ -46,6 +46,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
@@ -61,6 +62,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -363,43 +365,60 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     }
   }
 
+  val elementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
   @Suppress("DEPRECATION")
   project.coroutineScope.launch {
-    val hasOpenFiles = fileEditorManager.hasOpenFiles()
-    if (!hasOpenFiles) {
-      EditorsSplitters.stopOpenFilesActivity(project)
-    }
+    withContext(elementToPass ?: EmptyCoroutineContext) {
+      val hasOpenFiles = fileEditorManager.hasOpenFiles()
+      try {
+        if (!hasOpenFiles) {
+          EditorsSplitters.stopOpenFilesActivity(project)
+        }
 
-    val frameHelper = deferredProjectFrameHelper.await()
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      // read the state of dockable editors
-      fileEditorManager.initDockableContentFactory()
+        val frameHelper = deferredProjectFrameHelper.await()
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          // read the state of dockable editors
+          fileEditorManager.initDockableContentFactory()
 
-      frameHelper.postInit()
-    }
+          frameHelper.postInit()
+        }
 
-    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      blockingContext {
-        LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+        project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+          blockingContext {
+            LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime),
+                                                                 frameHelper.isTabbedWindow)
+          }
+        }
+
+        if (!hasOpenFiles && !isNotificationSilentMode(project)) {
+          project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
+          withContext(elementToPass ?: EmptyCoroutineContext) {
+            findAndOpenReadmeIfNeeded(project)
+          }
+        }
       }
-    }
-
-    if (!hasOpenFiles && !isNotificationSilentMode(project)) {
-      project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-      findAndOpenReadmeIfNeeded(project)
+      finally {
+        if (!hasOpenFiles) {
+          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup()
+        }
+      }
     }
   }
 }
 
-private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
+private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
   val editor = (composite.selectedEditor as? TextEditor)?.editor
   if (editor == null) {
+    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file)
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
-    AsyncEditorLoader.performWhenLoaded(editor) {
-      composite.preferredFocusedComponent?.requestFocusInWindow()
+    blockingContext {
+      AsyncEditorLoader.performWhenLoaded(editor) {
+        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
     }
   }
 }
@@ -498,6 +517,7 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       FileEditorManagerEx.getInstanceEx(project).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
+      FUSProjectHotStartUpMeasurer.openedReadme(readme)
     }
   }
 }
