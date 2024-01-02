@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeyword
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
@@ -454,6 +455,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirWithMppStdlibCompletionTest> {
             model("basic/stdlibWithCommon", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        // Smart completion does not work in K2, see KTIJ-26166
+        testClass<AbstractK2CompletionIncrementalResolveTest> {
+            model("incrementalResolve", excludedDirectories = listOf("smart"))
         }
     }
 
