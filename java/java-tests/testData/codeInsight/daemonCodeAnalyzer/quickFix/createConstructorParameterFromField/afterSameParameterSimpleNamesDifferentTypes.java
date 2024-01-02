@@ -4,7 +4,7 @@ class A {
   private final LibraryManager libraryManager;
   private final DependencyManager dependencyManager;
 
-  A(LibraryManager manager, DependencyManager dependencyManager) {
+  A(final LibraryManager manager, final DependencyManager dependencyManager) {
       this.libraryManager = manager;
       this.dependencyManager = dependencyManager;
   }

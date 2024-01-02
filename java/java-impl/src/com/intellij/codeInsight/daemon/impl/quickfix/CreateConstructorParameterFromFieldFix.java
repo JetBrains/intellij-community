@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -51,8 +51,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiField field) {
     PsiClass psiClass = Objects.requireNonNull(field.getContainingClass());
-    PsiMethod[] constructors = getNonSyntheticConstructors(psiClass);
-    final List<PsiMethod> filtered = getFilteredConstructors(constructors, field);
+    final List<PsiMethod> filtered = getFilteredConstructors(psiClass.getConstructors(), field);
     if (filtered.size() <= 1) {
       return performForConstructors(context, field, filtered);
     }
@@ -80,10 +79,6 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
                                               constructors));
   }
 
-  private static PsiMethod[] getNonSyntheticConstructors(@NotNull PsiClass psiClass) {
-    return ContainerUtil.filter(psiClass.getConstructors(), c -> !(c instanceof SyntheticElement)).toArray(PsiMethod[]::new);
-  }
-
   @NotNull
   private static List<PsiMethod> getFilteredConstructors(PsiMethod[] constructors, PsiField field) {
     Arrays.sort(constructors, new Comparator<>() {
@@ -105,8 +100,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   @NotNull
-  private static List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField,
-                                               @NotNull List<PsiMethod> constructors) {
+  static List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField, @NotNull List<PsiMethod> constructors) {
     List<PsiField> fields = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
       if (field == startField ||
@@ -144,7 +138,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   private static boolean isFieldAssignedInConstructor(@NotNull PsiField field, @NotNull PsiMethod ctr) {
-    return VariableAccessUtils.variableIsAssigned(field, getTargetConstructor(ctr));
+    return ctr instanceof SyntheticElement || VariableAccessUtils.variableIsAssigned(field, getTargetConstructor(ctr));
   }
 
   @NotNull
@@ -195,9 +189,13 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
         CodeStyle.runWithLocalSettings(project, allSettings, () -> {
           final String uniqueParameterName = getUniqueParameterName(parameterList.getParameters(), param, usedFields);
           usedFields.put(field, uniqueParameterName);
-          PsiParameter parameter = factory
-            .createParameter(uniqueParameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType),
-                             parameterList);
+          PsiType type = AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType);
+          PsiParameter parameter = factory.createParameter(uniqueParameterName, type, parameterList);
+          if (settings.GENERATE_FINAL_PARAMETERS) {
+            PsiModifierList modifierList = parameter.getModifierList();
+            assert modifierList != null;
+            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+          }
           if (prev.isNull()) {
             prev.set(parameterList.isEmpty() ? parameterList.add(parameter) :
                      parameterList.addBefore(parameter, parameterList.getParameter(0)));
@@ -320,7 +318,6 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
 
     @Override
     public int compare(PsiVariable o1, PsiVariable o2) {
-
       if (o1 instanceof PsiParameter && ((PsiParameter)o1).isVarArgs()) return 1;
       if (o2 instanceof PsiParameter && ((PsiParameter)o2).isVarArgs()) return -1;
 
