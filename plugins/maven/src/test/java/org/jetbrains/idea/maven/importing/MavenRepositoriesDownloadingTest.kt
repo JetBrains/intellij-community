@@ -14,9 +14,13 @@ import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.stream.Collectors
+
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   
@@ -27,18 +31,30 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     super.setUp()
     httpServerFixture.setUp()
     myUrl = httpServerFixture.url()
-    ping(myUrl)
   }
 
-  private fun ping(urlString: String) {
-    MavenLog.LOG.warn("Pinging $urlString")
+  private fun sendGetRequest(urlString: String) {
+    MavenLog.LOG.warn("Get $urlString")
     val url = URL(urlString)
     val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
     connection.setRequestMethod("GET")
     connection.connect()
-    val responseCode = connection.getResponseCode()
+    val response = getResponse(connection)
+    MavenLog.LOG.warn("Response $response")
+    val responseCode = connection.responseCode
     connection.disconnect()
-    assertEquals(404, responseCode)
+
+    assertEquals(200, responseCode)
+  }
+
+  private fun getResponse(conn: HttpURLConnection): String {
+    val br = if (conn.responseCode in 100..399) {
+      BufferedReader(InputStreamReader(conn.inputStream))
+    }
+    else {
+      BufferedReader(InputStreamReader(conn.errorStream))
+    }
+    return br.lines().collect(Collectors.joining())
   }
 
   public override fun tearDown() {
@@ -321,6 +337,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
     File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
     File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+
+    sendGetRequest(myUrl)
+    sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.pom")
 
     importProjectAsync(pomContent)
     checks()
