@@ -8,7 +8,6 @@ import com.intellij.json.JsonLexer;
 import com.intellij.lang.Language;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,18 +28,6 @@ import java.util.Map;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
 
 public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
-
-  private static final String PERMISSIVE_ESCAPES;
-  static {
-    final StringBuilder escapesBuilder = new StringBuilder("/");
-    for (char c = '\1'; c < '\255'; c++) {
-      if (c != 'x' && c != 'u' && !Character.isDigit(c) && c != '\n' && c != '\r') {
-        escapesBuilder.append(c);
-      }
-    }
-    PERMISSIVE_ESCAPES = escapesBuilder.toString();
-  }
-
   public static final TextAttributesKey JSON_BRACKETS = TextAttributesKey.createTextAttributesKey("JSON.BRACKETS", BRACKETS);
   public static final TextAttributesKey JSON_BRACES = TextAttributesKey.createTextAttributesKey("JSON.BRACES", BRACES);
   public static final TextAttributesKey JSON_COMMA = TextAttributesKey.createTextAttributesKey("JSON.COMMA", COMMA);
@@ -104,31 +91,9 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     public @NotNull Lexer getHighlightingLexer() {
       LayeredLexer layeredLexer = new LayeredLexer(getLexer());
       boolean isPermissiveDialect = isPermissiveDialect();
-      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, isCanEscapeEol(),
-                                                                    isPermissiveDialect ? PERMISSIVE_ESCAPES : "/", false, isPermissiveDialect) {
-                                               @Override
-                                               protected @NotNull IElementType handleSingleSlashEscapeSequence() {
-                                                 return isPermissiveDialect ? myOriginalLiteralToken : super.handleSingleSlashEscapeSequence();
-                                               }
-
-                                               @Override
-                                               protected boolean shouldAllowSlashZero() {
-                                                 return isPermissiveDialect;
-                                               }
-                                             },
+      layeredLexer.registerSelfStoppingLayer(new JsonStringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, isCanEscapeEol(), isPermissiveDialect),
                                              new IElementType[]{JsonElementTypes.DOUBLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
-      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, isCanEscapeEol(),
-                                                                    isPermissiveDialect ? PERMISSIVE_ESCAPES : "/", false, isPermissiveDialect){
-                                               @Override
-                                               protected @NotNull IElementType handleSingleSlashEscapeSequence() {
-                                                 return isPermissiveDialect ? myOriginalLiteralToken : super.handleSingleSlashEscapeSequence();
-                                               }
-
-                                               @Override
-                                               protected boolean shouldAllowSlashZero() {
-                                                 return isPermissiveDialect;
-                                               }
-                                             },
+      layeredLexer.registerSelfStoppingLayer(new JsonStringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, isCanEscapeEol(), isPermissiveDialect),
                                              new IElementType[]{JsonElementTypes.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
       return layeredLexer;
     }
