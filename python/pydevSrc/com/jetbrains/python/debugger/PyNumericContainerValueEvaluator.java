@@ -5,6 +5,8 @@ import com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomi
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
 
   protected PyNumericContainerValueEvaluator(@Nls String linkText, PyFrameAccessor debugProcess, String expression) {
@@ -13,7 +15,12 @@ public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
 
   @Override
   protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {
-    PyNumericContainerPopupCustomizer.Companion.getInstance().showFullValuePopup(debugProcess, debugValue);
+    List<PyNumericContainerPopupCustomizer> providers = PyNumericContainerPopupCustomizer.EP_NAME.getExtensionList();
+    for (PyNumericContainerPopupCustomizer provider : providers) {
+      if (provider.showFullValuePopup(debugProcess, debugValue)) {
+        break;
+      }
+    }
   }
 
   @Override
