@@ -952,7 +952,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public @NotNull XValueChildrenList loadVariableDefaultView(final PyDebugValue variable) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     PyDebugValue debugValue = new PyDebugValue(variable, variable.getFullName());
-    return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
+    var result = myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
+    if (result == null) {
+      throw new PyDebuggerException("Failed to load a variable");
+    }
+    return result;
   }
 
   @Override
