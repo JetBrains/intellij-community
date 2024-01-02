@@ -21,34 +21,61 @@ import org.junit.runner.RunWith;
 public abstract class K1CompletionIncrementalResolveTestGenerated extends AbstractK1CompletionIncrementalResolveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/incrementalResolve/basic")
-    public static class Basic extends AbstractK1CompletionIncrementalResolveTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Basic extends AbstractK1CompletionIncrementalResolveTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/incrementalResolve/basic/localChange")
+        public static class LocalChange extends AbstractK1CompletionIncrementalResolveTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("addVariable_beforeCaret.kt")
+            public void testAddVariable_beforeCaret() throws Exception {
+                runTest("../testData/incrementalResolve/basic/localChange/addVariable_beforeCaret.kt");
+            }
+
+            @TestMetadata("changeVariable_beforeCaret.kt")
+            public void testChangeVariable_beforeCaret() throws Exception {
+                runTest("../testData/incrementalResolve/basic/localChange/changeVariable_beforeCaret.kt");
+            }
+
+            @TestMetadata("deleteVariable_beforeCaret.kt")
+            public void testDeleteVariable_beforeCaret() throws Exception {
+                runTest("../testData/incrementalResolve/basic/localChange/deleteVariable_beforeCaret.kt");
+            }
         }
 
-        @TestMetadata("functionWithExpressionBody.kt")
-        public void testFunctionWithExpressionBody() throws Exception {
-            runTest("../testData/incrementalResolve/basic/functionWithExpressionBody.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/incrementalResolve/basic")
+        public static class Uncategorized extends AbstractK1CompletionIncrementalResolveTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("functionWithExpressionBody_implicitType.kt")
-        public void testFunctionWithExpressionBody_implicitType() throws Exception {
-            runTest("../testData/incrementalResolve/basic/functionWithExpressionBody_implicitType.kt");
-        }
+            @TestMetadata("functionWithExpressionBody.kt")
+            public void testFunctionWithExpressionBody() throws Exception {
+                runTest("../testData/incrementalResolve/basic/functionWithExpressionBody.kt");
+            }
 
-        @TestMetadata("localAnonymousFunctionWithExpressionBody.kt")
-        public void testLocalAnonymousFunctionWithExpressionBody() throws Exception {
-            runTest("../testData/incrementalResolve/basic/localAnonymousFunctionWithExpressionBody.kt");
-        }
+            @TestMetadata("functionWithExpressionBody_implicitType.kt")
+            public void testFunctionWithExpressionBody_implicitType() throws Exception {
+                runTest("../testData/incrementalResolve/basic/functionWithExpressionBody_implicitType.kt");
+            }
 
-        @TestMetadata("noDataFlowFromOldStatement.kt")
-        public void testNoDataFlowFromOldStatement() throws Exception {
-            runTest("../testData/incrementalResolve/basic/noDataFlowFromOldStatement.kt");
-        }
+            @TestMetadata("localAnonymousFunctionWithExpressionBody.kt")
+            public void testLocalAnonymousFunctionWithExpressionBody() throws Exception {
+                runTest("../testData/incrementalResolve/basic/localAnonymousFunctionWithExpressionBody.kt");
+            }
 
-        @TestMetadata("propertyWithInitializer.kt")
-        public void testPropertyWithInitializer() throws Exception {
-            runTest("../testData/incrementalResolve/basic/propertyWithInitializer.kt");
+            @TestMetadata("noDataFlowFromOldStatement.kt")
+            public void testNoDataFlowFromOldStatement() throws Exception {
+                runTest("../testData/incrementalResolve/basic/noDataFlowFromOldStatement.kt");
+            }
+
+            @TestMetadata("propertyWithInitializer.kt")
+            public void testPropertyWithInitializer() throws Exception {
+                runTest("../testData/incrementalResolve/basic/propertyWithInitializer.kt");
+            }
         }
     }
 
