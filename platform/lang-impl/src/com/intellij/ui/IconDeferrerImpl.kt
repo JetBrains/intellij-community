@@ -39,9 +39,11 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
 
   // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
   // we are not using "caffeine".
-  // Furthermore, a size-bounded cache is unnecessary for us because our application has frequent cache clearances,
+  // Furthermore,  a size-bounded cache is unnecessary for us because our application has frequent cache clearances,
   // such as during PSI modifications.
   private val iconCache = ConcurrentHashMap<Any, Icon>()
+  @Volatile
+  private var mightBePopulated = false // used to avoid multiple calls PHM#clear() which might be expensive, no need to be atomic or something else
   private val lastClearTimestamp = LongAdder()
 
   init {
@@ -69,7 +71,10 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
 
   override fun clearCache() {
     lastClearTimestamp.increment()
-    iconCache.clear()
+    if (mightBePopulated) {
+      mightBePopulated = false
+      iconCache.clear()
+    }
   }
 
   override fun <T : Any> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon {
@@ -77,7 +82,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       return evaluator(param) ?: DeferredIconImpl.EMPTY_ICON
     }
 
-    return iconCache.computeIfAbsent(param) {
+    val result = iconCache.computeIfAbsent(param) {
       val started = lastClearTimestamp.sum()
       DeferredIconImpl(baseIcon = base,
                        param = param,
@@ -91,10 +96,12 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
                          }
                        })
     }
+    mightBePopulated = true
+    return result
   }
 
   override fun <T : Any> deferAsync(base: Icon?, param: T, evaluator: suspend (T) -> Icon?): Icon {
-    return iconCache.computeIfAbsent(param) {
+    val result = iconCache.computeIfAbsent(param) {
       DeferredIconImpl(baseIcon = base,
                        param = param,
                        asyncEvaluator = { evaluator(it) ?: DeferredIconImpl.EMPTY_ICON },
@@ -102,5 +109,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
                          iconCache.replace(source.param, source, icon)
                        })
     }
+    mightBePopulated = true
+    return result
   }
 }
