@@ -64,8 +64,11 @@ object DistributedTestModel : Ext(TestRoot) {
     call("closeProjectIfOpened", void, bool).async
     call("runNextAction", string, string.nullable).async
     call("requestFocus", string, bool).async
+    call("visibleFrameNames", void, immutableList(string)).async
+    call("projectsNames", void, immutableList(string)).async
     call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async
+    call("projectsAreInitialised", void, bool).async
   }
 
   init {
