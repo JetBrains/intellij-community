@@ -1211,7 +1211,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("basic/java8")
         }
 
-        testClass<AbstractCompletionIncrementalResolveTest31> {
+        testClass<AbstractK1CompletionIncrementalResolveTest> {
             model("incrementalResolve")
         }
 
