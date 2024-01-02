@@ -43,7 +43,7 @@ class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
                                project: Project,
                                module: ModuleEntity,
                                dependencyMavenProject: MavenProject) {
-    val libraryName = "Maven: ${dependencyMavenProject.mavenId.displayString}"
+    val libraryName = "Maven Shade: ${dependencyMavenProject.mavenId.displayString}"
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
     val mavenId = dependencyMavenProject.mavenId
