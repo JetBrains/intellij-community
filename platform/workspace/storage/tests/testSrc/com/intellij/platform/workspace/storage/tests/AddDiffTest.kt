@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
@@ -31,7 +31,7 @@ class AddDiffTest {
     val builder = createBuilderFrom(this)
     builder.upgradeAddDiffEngine = { it.shaker = shaker }
     builder.addDiff(anotherBuilder)
-    val storage = builder.toSnapshot() as EntityStorageSnapshotImpl
+    val storage = builder.toSnapshot() as ImmutableEntityStorageImpl
     storage.assertConsistency()
     return storage
   }
@@ -124,7 +124,7 @@ class AddDiffTest {
       this.childProperty = "new property"
     }
 
-    val res = target.applyDiff(source) as EntityStorageSnapshotImpl
+    val res = target.applyDiff(source) as ImmutableEntityStorageImpl
     res.assertConsistency()
 
     assertOneElement(res.entities(XParentEntity::class.java).toList())

@@ -4,13 +4,13 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.toSnapshot
 
 fun EntityStorage.checkConsistency() {
-  if (this is EntityStorageSnapshotImpl) {
+  if (this is ImmutableEntityStorageImpl) {
     this.assertConsistency()
     return
   }
@@ -22,11 +22,11 @@ fun EntityStorage.checkConsistency() {
 }
 
 internal fun createEmptyBuilder(): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl(EntityStorageSnapshotImpl.EMPTY)
+  return MutableEntityStorageImpl(ImmutableEntityStorageImpl.EMPTY)
 }
 
 internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl(storage.toSnapshot() as EntityStorageSnapshotImpl)
+  return MutableEntityStorageImpl(storage.toSnapshot() as ImmutableEntityStorageImpl)
 }
 
 internal inline fun makeBuilder(from: EntityStorage? = null, action: MutableEntityStorage.() -> Unit): MutableEntityStorageImpl {

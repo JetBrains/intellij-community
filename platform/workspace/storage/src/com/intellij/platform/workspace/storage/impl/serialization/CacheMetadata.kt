@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.impl.serialization
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata.SerializableTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
@@ -41,7 +41,7 @@ internal fun compareWithCurrentEntitiesMetadata(cacheMetadata: CacheMetadata,
 }
 
 
-internal fun getCacheMetadata(entityStorage: EntityStorageSnapshotImpl, typesResolver: EntityTypesResolver): CacheMetadata {
+internal fun getCacheMetadata(entityStorage: ImmutableEntityStorageImpl, typesResolver: EntityTypesResolver): CacheMetadata {
   val cacheMetadata = CacheMetadata.MutableCacheMetadata(typesResolver)
 
   //collecting entities with unique entity family

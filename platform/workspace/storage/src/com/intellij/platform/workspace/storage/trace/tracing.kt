@@ -21,17 +21,17 @@ import java.util.*
  * Implementation note: There could be two options for attaching the tracker. One is an inheritance, the second is delegation. Fleet uses
  *   delegation, we use inheritance.
  * The decision to use inheritance comes from how we create entities. For that, we internally call the method [initializeEntity].
- * As this is an internal call from [EntityStorageSnapshotImpl], the deligation won't override it and this will cause two problems:
- *   - The storage in entity will be [EntityStorageSnapshotImpl], but it should be [ReadTracker].
- *   - Since the [EntityStorageSnapshotImpl] caches entities, we'll leak entities with read tracker attached.
+ * As this is an internal call from [ImmutableEntityStorageImpl], the deligation won't override it and this will cause two problems:
+ *   - The storage in entity will be [ImmutableEntityStorageImpl], but it should be [ReadTracker].
+ *   - Since the [ImmutableEntityStorageImpl] caches entities, we'll leak entities with read tracker attached.
  *
- * The argument for deligation is clearer architecture ([EntityStorageSnapshotImpl] is not open).
+ * The argument for deligation is clearer architecture ([ImmutableEntityStorageImpl] is not open).
  */
 internal class ReadTracker private constructor(
   snapshot: EntityStorageSnapshot,
   internal val onRead: (ReadTrace) -> Unit,
-) : EntityStorageSnapshotImpl(
-  (snapshot as EntityStorageSnapshotImpl).entitiesByType,
+) : ImmutableEntityStorageImpl(
+  (snapshot as ImmutableEntityStorageImpl).entitiesByType,
   snapshot.refs,
   snapshot.indexes,
   snapshot.snapshotCache,
@@ -272,7 +272,7 @@ internal fun ChangeLog.toTraces(newSnapshot: EntityStorageSnapshotInstrumentatio
       }
       is ChangeEntry.ReplaceEntity -> {
         val ofClass = id.clazz.findWorkspaceEntity()
-        val entityData = (newSnapshot as EntityStorageSnapshotImpl).entityDataByIdOrDie(id)
+        val entityData = (newSnapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(id)
 
         patternSet.add(ReadTrace.SomeFieldAccess(id).hash)
 

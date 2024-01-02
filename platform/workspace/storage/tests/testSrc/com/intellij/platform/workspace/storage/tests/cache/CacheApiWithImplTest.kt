@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.tests.cache
 
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
@@ -71,7 +71,7 @@ class CacheApiWithImplTest {
     builder.toSnapshot() // First snapshot
     val snapshotTwo = builder.toSnapshot() // Second snapshot
 
-    val changelogSize = ((snapshotTwo as EntityStorageSnapshotImpl).snapshotCache as TracedSnapshotCacheImpl).getChangeQueue().entries.single().value
+    val changelogSize = ((snapshotTwo as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl).getChangeQueue().entries.single().value
     assertEquals(2, changelogSize.size)
   }
 
@@ -96,7 +96,7 @@ class CacheApiWithImplTest {
 
     snapshot.cached(query1)
     snapshot.cached(query2)
-    val tracedCache = ((snapshot as EntityStorageSnapshotImpl).snapshotCache as TracedSnapshotCacheImpl)
+    val tracedCache = ((snapshot as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(0, tracedCache.getChangeQueue().size)
     assertEquals(2, tracedCache.getQueryToCellChainId().size)
     assertEquals(2, tracedCache.getChainIdToChainIndex().size)
@@ -106,7 +106,7 @@ class CacheApiWithImplTest {
       it addEntity NamedEntity("Y", MySource)
     }
 
-    val tracedCache2 = ((snapshot2 as EntityStorageSnapshotImpl).snapshotCache as TracedSnapshotCacheImpl)
+    val tracedCache2 = ((snapshot2 as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(2, tracedCache2.getChangeQueue().size)
     assertEquals(2, tracedCache2.getQueryToCellChainId().size)
     assertEquals(2, tracedCache2.getChainIdToChainIndex().size)
@@ -132,7 +132,7 @@ class CacheApiWithImplTest {
       }
     }
 
-    val tracedCache3 = ((snapshot3 as EntityStorageSnapshotImpl).snapshotCache as TracedSnapshotCacheImpl)
+    val tracedCache3 = ((snapshot3 as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl)
     assertEquals(1, tracedCache3.getChangeQueue().size)
     assertEquals(1, tracedCache3.getQueryToCellChainId().size)
     assertEquals(1, tracedCache3.getChainIdToChainIndex().size)

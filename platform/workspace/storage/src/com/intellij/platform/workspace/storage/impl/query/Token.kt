@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.impl.query
 
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.impl.EntityId
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.query.Token.WithEntityId
@@ -41,7 +41,7 @@ public enum class Operation {
 @OptIn(EntityStorageInstrumentationApi::class)
 internal fun Token.getData(snapshot: EntityStorageSnapshot): Any? {
   return when (this) {
-    is WithEntityId -> (snapshot as EntityStorageSnapshotImpl).entityDataByIdOrDie(this.entityId).createEntity(snapshot)
+    is WithEntityId -> (snapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(this.entityId).createEntity(snapshot)
     is WithInfo -> this.info
   }
 }

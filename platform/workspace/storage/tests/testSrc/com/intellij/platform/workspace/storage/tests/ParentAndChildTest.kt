@@ -1,7 +1,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
@@ -73,7 +73,7 @@ class ParentAndChildTest {
     builder1.removeEntity(parentSnapshot.child!!)
 
     val newSnapshot = builder1.toSnapshot()
-    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    (newSnapshot as ImmutableEntityStorageImpl).assertConsistency()
     assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
   }
 
@@ -94,7 +94,7 @@ class ParentAndChildTest {
     builder1.removeEntity(parentSnapshot)
 
     val newSnapshot = builder1.toSnapshot()
-    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    (newSnapshot as ImmutableEntityStorageImpl).assertConsistency()
     assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
   }
 

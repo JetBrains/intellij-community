@@ -18,7 +18,7 @@ import kotlin.reflect.full.memberProperties
 abstract class BaseSerializationChecker {
 
   open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-    storage as EntityStorageSnapshotImpl
+    storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
@@ -28,7 +28,7 @@ abstract class BaseSerializationChecker {
       serializer.serializeCache(file, storage)
 
       val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
-        .toSnapshot() as EntityStorageSnapshotImpl
+        .toSnapshot() as ImmutableEntityStorageImpl
       deserialized.assertConsistency()
 
       assertStorageEquals(storage, deserialized)
@@ -41,7 +41,7 @@ abstract class BaseSerializationChecker {
     }
   }
 
-  internal fun assertStorageEquals(expected: EntityStorageSnapshotImpl, actual: EntityStorageSnapshotImpl) {
+  internal fun assertStorageEquals(expected: ImmutableEntityStorageImpl, actual: ImmutableEntityStorageImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
     for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {

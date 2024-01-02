@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage
 
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.ApiStatus
@@ -67,7 +67,7 @@ public interface EntityStorageSnapshot : EntityStorage {
   public fun <T> cached(query: StorageQuery<T>): T
 
   public companion object {
-    public fun empty(): EntityStorageSnapshot = EntityStorageSnapshotImpl.EMPTY
+    public fun empty(): EntityStorageSnapshot = ImmutableEntityStorageImpl.EMPTY
   }
 }
 

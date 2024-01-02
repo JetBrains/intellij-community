@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityTypesResolver
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -41,7 +41,7 @@ object MetadataSerializationRoundTripChecker: BaseSerializationChecker() {
 
   override fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
     deserialization = false
-    storage as EntityStorageSnapshotImpl
+    storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
     val serializer = EntityStorageSerializerImpl(MetadataDiffTestResolver, virtualFileManager)
@@ -52,7 +52,7 @@ object MetadataSerializationRoundTripChecker: BaseSerializationChecker() {
 
       deserialization = true
       val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
-        .toSnapshot() as EntityStorageSnapshotImpl
+        .toSnapshot() as ImmutableEntityStorageImpl
       deserialized.assertConsistency()
 
       assertStorageEquals(storage, deserialized)

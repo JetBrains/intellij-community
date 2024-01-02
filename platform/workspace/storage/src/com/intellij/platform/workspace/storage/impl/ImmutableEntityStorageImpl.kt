@@ -59,7 +59,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
 private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal open class EntityStorageSnapshotImpl(
+internal open class ImmutableEntityStorageImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes,
@@ -104,7 +104,7 @@ internal open class EntityStorageSnapshotImpl(
 
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
-    val EMPTY = EntityStorageSnapshotImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+    val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val instancesCountCounter = meter.counterBuilder("workspaceModel.entityStorageSnapshotImpl.instances.count").buildObserver()
@@ -126,7 +126,7 @@ internal open class EntityStorageSnapshotImpl(
 
 @OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
-  private val originalSnapshot: EntityStorageSnapshotImpl,
+  private val originalSnapshot: ImmutableEntityStorageImpl,
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
   override val entitiesByType: MutableEntitiesBarrel = MutableEntitiesBarrel.from(originalSnapshot.entitiesByType)
@@ -527,7 +527,7 @@ internal class MutableEntityStorageImpl(
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val cache = TracedSnapshotCacheImpl()
-    val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
+    val snapshot = ImmutableEntityStorageImpl(newEntities, newRefs, newIndexes, cache)
     val externalMappingChangelog = this.indexes.externalMappings.mapValues { it.value.indexLogBunches.changes.keys }
     cache.pullCache(snapshot, this.originalSnapshot.snapshotCache, this.changeLog, externalMappingChangelog)
     return@addMeasuredTimeMillis snapshot

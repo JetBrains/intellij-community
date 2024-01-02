@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.currentStackTrace
 import org.jetbrains.annotations.NonNls
@@ -206,7 +206,7 @@ public interface MutableEntityStorage : EntityStorage {
      */
     @JvmStatic
     public fun from(storage: EntityStorageSnapshot): MutableEntityStorage {
-      storage as EntityStorageSnapshotImpl
+      storage as ImmutableEntityStorageImpl
       val newBuilder = MutableEntityStorageImpl(originalSnapshot = storage)
       LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
       return newBuilder
