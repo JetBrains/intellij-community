@@ -1,0 +1,71 @@
+<idea-plugin package="com.intellij.python.reStructuredText">
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.python"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <fileType name="ReST" language="ReST" extensions="rst" implementationClass="com.intellij.python.reStructuredText.RestFileType" fieldName="INSTANCE"/>
+    <lang.syntaxHighlighterFactory language="ReST"
+                                   implementationClass="com.intellij.python.reStructuredText.RestHighlighterFactory"/>
+    <lang.parserDefinition language="ReST" implementationClass="com.intellij.python.reStructuredText.parsing.RestParserDefinition"/>
+    <colorSettingsPage implementation="com.intellij.python.reStructuredText.RestColorsPage"/>
+
+    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.DirectiveCompletionContributor"/>
+    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.OptionCompletionContributor"/>
+    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.ReferenceCompletionContributor"/>
+    <gotoDeclarationHandler implementation="com.intellij.python.reStructuredText.RestGotoProvider" order="FIRST"/>
+    <lang.psiStructureViewFactory language="ReST"
+                                  implementationClass="com.intellij.python.reStructuredText.structureView.RestStructureViewFactory"/>
+    <annotator language="ReST" implementationClass="com.intellij.python.reStructuredText.validation.RestAnnotatingVisitor"/>
+    <lang.formatter language="ReST" implementationClass="com.intellij.python.reStructuredText.formatter.RestFormattingModelBuilder"/>
+    <codeInsight.fillParagraph language="ReST" implementationClass="com.intellij.python.reStructuredText.actions.RestFillParagraphHandler"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/RestDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/RestDarcula.xml"/>
+
+    <lang.elementManipulator forClass="com.intellij.python.reStructuredText.psi.RestLine"
+                             implementationClass="com.intellij.python.reStructuredText.psi.RestLineManipulator"/>
+
+    <indexPatternBuilder implementation="com.intellij.python.reStructuredText.RestIndexPatternBuilder"/>
+    <todoIndexer filetype="ReST" implementationClass="com.intellij.python.reStructuredText.RestTodoIndexer"/>
+
+    <fileEditorProvider implementation="com.intellij.python.reStructuredText.editor.RestSplitEditorProvider" fileType="ReST"/>
+    <applicationConfigurable groupId="language" instance="com.intellij.python.reStructuredText.editor.RestConfigurable"
+                             id="restructured.text.topic" bundle="messages.RestBundle" key="configurable.RestConfigurable.display.name"/>
+    <applicationService serviceImplementation="com.intellij.python.reStructuredText.editor.RestSettings"/>
+
+
+    <lang.fileViewProviderFactory language="ReST"
+                                  implementationClass="com.intellij.python.reStructuredText.RestFileProviderFactory"/>
+    <editorHighlighterProvider filetype="ReST" implementationClass="com.intellij.python.reStructuredText.RestEditorHighlighterProvider"/>
+
+    <localInspection language="ReST" shortName="RestRoleInspection" bundle="messages.RestBundle" key="INSP.role.not.defined"
+                     groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.python.reStructuredText.inspections.RestRoleInspection"/>
+
+    <configurationType implementation="com.intellij.python.reStructuredText.run.RestRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.python.reStructuredText.run.docutils.DocutilsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.python.reStructuredText.run.sphinx.SphinxConfigurationProducer"/>
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.python.reStructuredText.RestLanguageSubstitutor"/>
+
+    <languageInjector implementation="com.intellij.python.reStructuredText.PyRestDocstringLanguageInjector"/>
+    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.SphinxDirectiveCompletionContributor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.RestBundle">
+    <action id="com.intellij.python.reStructuredText.sphinx.RunSphinxQuickStartAction"
+            class="com.intellij.python.reStructuredText.sphinx.RunSphinxQuickStartAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
+  </actions>
+
+
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="ReST" implementationClass="com.intellij.python.reStructuredText.spellchecker.RestSpellcheckerStrategy"/>
+  </extensions>
+
+
+</idea-plugin>

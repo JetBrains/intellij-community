@@ -238,7 +238,6 @@
     <module old-name="repository" new-name="android.sdktools.repository" />
     <module old-name="resources" new-name="intellij.java.resources" />
     <module old-name="resources-en" new-name="intellij.java.resources.en" />
-    <module old-name="rest" new-name="intellij.reStructuredText" />
     <module old-name="schema-reader-generator" new-name="intellij.javascript.schemaReaderGenerator" />
     <module old-name="script-debugger-backend" new-name="intellij.platform.scriptDebugger.backend" />
     <module old-name="script-debugger-ui" new-name="intellij.platform.scriptDebugger.ui" />
@@ -1141,7 +1140,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" filepath="$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-terminal/intellij.python.terminal.iml" filepath="$PROJECT_DIR$/python/python-terminal/intellij.python.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/tools/intellij.python.tools.iml" filepath="$PROJECT_DIR$/python/tools/intellij.python.tools.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/rest/intellij.reStructuredText.iml" filepath="$PROJECT_DIR$/python/rest/intellij.reStructuredText.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" filepath="$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.iml" filepath="$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.iml" />

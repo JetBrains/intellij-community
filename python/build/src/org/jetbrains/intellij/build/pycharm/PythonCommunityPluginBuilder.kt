@@ -32,7 +32,6 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
                                                       options = options)
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(
       "intellij.python.community.plugin",
-      "intellij.reStructuredText",
     ))
 
     val builtPlugins = mutableListOf<Path>()
