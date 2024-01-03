@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.history.ActivityPresentationProvider
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.collectChanges
@@ -8,12 +9,15 @@ import com.intellij.history.core.matches
 import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.diff.createDiffData
+import com.intellij.ui.JBColor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import java.awt.Color
 
 internal const val USE_OLD_CONTENT = true
 
@@ -78,9 +82,17 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
+    if (item !is ChangeSetActivityItem) return null
+
+    val activityId = item.activityId
+    val provider = activityId?.let { ACTIVITY_PRESENTATION_PROVIDER_EP.findFirstSafe { it.id == activityId.providerId } }
+    val icon = provider?.getIcon(activityId.kind)
     return when (item) {
-      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", showBackground = true, highlightColor = null)
-      is LabelActivityItem -> ActivityPresentation(item.name ?: "", showBackground = false, highlightColor = item.color)
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, showBackground = true, highlightColor = null)
+      is LabelActivityItem -> {
+        val color = provider?.getColor(activityId.kind) ?: intToColor(item.color)
+        ActivityPresentation(item.name ?: "", icon, showBackground = false, highlightColor = color)
+      }
       else -> null
     }
   }
@@ -109,3 +121,8 @@ private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: Id
     awaitClose { Disposer.dispose(listenerDisposable) }
   }
 }
+
+val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>("com.intellij.history.activityPresentationProvider")
+
+private val USER_LABEL_COLOR = JBColor(Color(230, 230, 250), Color(89, 96, 74))
+private fun intToColor(color: Int) = color.takeIf { it != -1 }?.let { Color(it) } ?: USER_LABEL_COLOR

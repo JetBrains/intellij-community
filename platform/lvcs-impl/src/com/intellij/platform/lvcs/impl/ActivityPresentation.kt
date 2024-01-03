@@ -3,6 +3,8 @@ package com.intellij.platform.lvcs.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
+import javax.swing.Icon
 
 @ApiStatus.Experimental
-data class ActivityPresentation(@Nls val text: String, val showBackground: Boolean, val highlightColor: Int?)
+data class ActivityPresentation(@Nls val text: String, val icon: Icon?, val showBackground: Boolean, val highlightColor: Color?)

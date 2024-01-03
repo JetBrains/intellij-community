@@ -52,6 +52,13 @@
       <reference id="Diff.ShowDiff"/>
     </group>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint name="history.activityPresentationProvider"
+                    interface="com.intellij.history.ActivityPresentationProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
     <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>

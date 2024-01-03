@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.history.ActivityId
 import com.intellij.history.core.Paths
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.integration.LocalHistoryBundle
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
   override val timestamp: Long = changeSet.timestamp
   val id = changeSet.id
+  val activityId: ActivityId? = changeSet.activityId
   abstract val name: @NlsSafe String?
 
   override fun equals(other: Any?): Boolean {

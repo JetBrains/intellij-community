@@ -17,6 +17,7 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
+import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
@@ -28,7 +29,6 @@ private const val ROW_TOP_BOTTOM_INSETS = 8
 private val HIGHLIGHTED_ARC = JBUI.value(4f)
 private val BACKGROUND_ARC = JBUI.value(8f)
 private val HIGHLIGHT_THICKNESS = JBUI.value(4f)
-private val USER_LABEL_COLOR = JBColor(Color(230, 230, 250), Color(89, 96, 74))
 
 internal class ActivityItemRenderer(private val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ListCellRenderer<ActivityItem> {
 
@@ -47,16 +47,14 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
     val cellBackgroundColor = if (isSelected) list.selectionBackground
     else if (activityPresentation.showBackground) JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
     else null
-    val cellHighlightColor = activityPresentation.highlightColor?.let { intToColor(it) }
+    val cellHighlightColor = activityPresentation.highlightColor
 
-    val rowComponent = createRowComponent(list, activityPresentation.text, value.timestamp, cellBackgroundColor, cellHighlightColor,
-                                          isSelected)
+    val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,
+                                          cellBackgroundColor, cellHighlightColor, isSelected)
     contentPanel.addToCenter(rowComponent)
 
     return contentPanel
   }
-
-  private fun intToColor(color: Int) = color.takeIf { it != -1 }?.let { Color(it) } ?: USER_LABEL_COLOR
 }
 
 private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColor: Color?) : JBPanel<RoundedPanel>() {
@@ -84,7 +82,7 @@ private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColo
   }
 }
 
-private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, timestamp: Long,
+private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, icon: Icon?, timestamp: Long,
                                backgroundColor: Color?, highlightColor: Color?, isSelected: Boolean): RoundedPanel {
   val content = RoundedPanel(backgroundColor, highlightColor)
   content.layout = BorderLayout()
@@ -93,7 +91,7 @@ private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, 
   content.background = null
   content.border = JBUI.Borders.empty(ROW_TOP_BOTTOM_INSETS, ROW_LEFT_RIGHT_INSETS)
 
-  val mainLabel = JBLabel(text, SwingConstants.LEFT)
+  val mainLabel = JBLabel(text, icon, SwingConstants.LEFT)
   mainLabel.foreground = if (isSelected) list.selectionForeground else list.foreground
   content.add(mainLabel, BorderLayout.CENTER)
 

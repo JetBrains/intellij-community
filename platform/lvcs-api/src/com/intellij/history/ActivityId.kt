@@ -5,10 +5,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
- * Allows to identify which IDE activity created changes or labels in the local history.
+ * Allows to identify which IDE activity created changes or labels in the local history
+ * and to customize changes presentation.
  *
- * @property providerId identifier of the provider, responsible for the activity
+ * @property providerId [ActivityPresentationProvider.id] of the provider responsible for the activity
  * @property kind additional information that can be used by the provider
+ *
+ * @see ActivityPresentationProvider
  */
 @ApiStatus.Experimental
 data class ActivityId(val providerId: @NonNls String, val kind: @NonNls String)
