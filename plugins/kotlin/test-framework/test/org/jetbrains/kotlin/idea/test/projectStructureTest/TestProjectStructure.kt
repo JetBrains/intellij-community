@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test.projectStructureTest
 
 import com.google.gson.JsonElement
@@ -25,10 +25,17 @@ fun interface TestProjectStructureParser<S : TestProjectStructure> {
 }
 
 /**
- * @param roots A list of labels for the library's roots. The test infrastructure generates a unique, temporary JAR file for each such
- *              label. This allows adding the same root to multiple libraries without having to wrangle JAR files in the test data.
- *              The property is optional in `structure.json`. If absent, the library receives a single, unique root which won't be shared
- *              with other libraries.
+ * A compiled project library called [name] with library roots labeled [roots].
+ *
+ * The library's [roots] are a list of labels which each refer to a unique JAR library. If there is a directory in the test case's test data
+ * with the same name as the root label, the library JAR will be compiled from the sources in that directory. Otherwise, a temporary, empty
+ * JAR file is generated instead.
+ *
+ * The JAR file with a root label `R` is unique across the whole test case. This allows adding the same root `R` to multiple libraries
+ * without having to wrangle JAR files in the test data.
+ *
+ * [roots] is optional in `structure.json`. If absent, the library receives a single, unique root which won't be shared with other
+ * libraries.
  */
 data class TestProjectLibrary(val name: String, val roots: List<String>)
 
