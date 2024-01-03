@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.platforms
 
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -18,12 +19,19 @@ import java.io.IOException
 import java.util.*
 
 @ApiStatus.Internal
+internal fun VirtualFile.isKLibRootCandidate(): Boolean {
+    return (FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE) || extension != KLIB_FILE_EXTENSION)
+            && isDirectory
+}
+
+@ApiStatus.Internal
 fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Boolean {
     // The virtual file for a library packed in a ZIP file will have path like "/some/path/to/the/file.klib!/",
     // and therefore will be recognized by VFS as a directory (isDirectory == true).
     // So, first, let's check the file type and file extension.
-    if ((fileType == ArchiveFileType.INSTANCE && extension != KLIB_FILE_EXTENSION) || !isDirectory)
+    if (!isKLibRootCandidate()) {
         return false
+    }
 
     // run check for library root too
     // this is necessary to recognize old style KLIBs that do not have components, and report tem to user appropriately

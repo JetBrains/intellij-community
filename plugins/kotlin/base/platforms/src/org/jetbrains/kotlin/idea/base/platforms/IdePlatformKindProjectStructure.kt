@@ -72,6 +72,9 @@ class IdePlatformKindProjectStructure(private val project: Project) {
 
         fun getLibraryPlatformKind(file: VirtualFile): IdePlatformKind? {
             PLATFORM_EXTENSIONS[file.extension]?.let { return it }
+
+            if (!file.isKLibRootCandidate()) return null
+
             return when {
                 file.isKlibLibraryRootForPlatform(CommonPlatforms.defaultCommonPlatform) -> CommonIdePlatformKind
                 file.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform) -> JsIdePlatformKind
