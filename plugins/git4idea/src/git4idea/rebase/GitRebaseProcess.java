@@ -8,7 +8,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,6 +56,7 @@ import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static git4idea.GitActionIdsHolder.Id.*;
 import static git4idea.GitNotificationIdsHolder.REBASE_NOT_STARTED;
 import static git4idea.GitNotificationIdsHolder.REBASE_SUCCESSFUL;
 import static git4idea.GitUtil.*;
@@ -69,15 +69,15 @@ public class GitRebaseProcess {
 
   private final NotificationAction ABORT_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.abort.text"),
-    action("git4idea.rebase.abort", this::abort)
+    ABORT.id, this::abort
   );
   private final NotificationAction CONTINUE_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.continue.text"),
-    action("git4idea.rebase.continue", () -> retry(GitBundle.message("rebase.progress.indicator.continue.title")))
+    CONTINUE.id, () -> retry(GitBundle.message("rebase.progress.indicator.continue.title"))
   );
   private final NotificationAction RETRY_ACTION = NotificationAction.createSimpleExpiring(
     GitBundle.message("rebase.notification.action.retry.text"),
-    action("git4idea.rebase.retry", () -> retry(GitBundle.message("rebase.progress.indicator.retry.title")))
+    RETRY.id, () -> retry(GitBundle.message("rebase.progress.indicator.retry.title"))
   );
   private final NotificationAction VIEW_STASH_ACTION;
 
@@ -582,14 +582,8 @@ public class GitRebaseProcess {
   }
 
   private @NotNull NotificationAction createResolveNotificationAction(@NotNull GitRepository currentRepository) {
-    return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"), new NotificationAction.ActionConsumer() {
-      @Override
-      public @NotNull String getId() {
-        return "git4idea.rebase.resolve";
-      }
-
-      @Override
-      public void accept(@NotNull AnActionEvent event, @NotNull Notification notification) {
+    return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"),
+                                     RESOLVE.id, (e, notification) -> {
         myProgressManager.run(
           new Task.Backgroundable(myProject, GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")) {
             @Override
@@ -597,8 +591,7 @@ public class GitRebaseProcess {
               resolveConflicts(currentRepository, notification);
             }
           });
-      }
-    });
+      });
   }
 
   private void resolveConflicts(@NotNull GitRepository currentRepository, @NotNull Notification notification) {
@@ -634,20 +627,6 @@ public class GitRebaseProcess {
         GitRebaseUtils.continueRebase(myProject);
       }
     });
-  }
-
-  private static @NotNull Runnable action(@NonNls @NotNull String fusId, @NotNull Runnable action) {
-    return new NotificationAction.ActionRunnable() {
-      @Override
-      public void run() {
-        action.run();
-      }
-
-      @Override
-      public @NotNull String getId() {
-        return fusId;
-      }
-    };
   }
 
   private static class GitRebaseProgressListener implements GitLineHandlerListener {
