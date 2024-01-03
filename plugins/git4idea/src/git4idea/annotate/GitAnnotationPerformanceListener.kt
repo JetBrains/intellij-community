@@ -22,5 +22,15 @@ interface GitAnnotationPerformanceListener {
                            revision: VcsRevisionNumber?,
                            annotation: GitFileAnnotation,
                            duration: Duration,
-                           provider: String)
+                           provider: String) {
+  }
+
+  suspend fun onAnnotationFinished(project: Project,
+                                   root: VirtualFile,
+                                   file: VirtualFile,
+                                   revision: VcsRevisionNumber?,
+                                   results: List<AnnotationResult>) {
+  }
+
+  data class AnnotationResult(val providerId: String, val annotation: GitFileAnnotation?, val duration: Duration)
 }

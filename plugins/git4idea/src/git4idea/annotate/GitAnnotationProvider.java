@@ -235,15 +235,9 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     h.endOptions();
     h.addRelativePaths(filePath);
 
-    long start = System.currentTimeMillis();
-
     String output = new String(h.run(), StandardCharsets.UTF_8);
 
-    GitFileAnnotation annotation = parseAnnotations(revision, file, root, output);
-
-    GitAnnotationProviderKt.reportAnnotationFinished(myProject, root, file, revision, annotation, start, "default");
-
-    return annotation;
+    return parseAnnotations(revision, file, root, output);
   }
 
   /**
