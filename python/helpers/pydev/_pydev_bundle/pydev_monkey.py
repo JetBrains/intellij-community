@@ -5,7 +5,7 @@ import traceback
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, \
     IS_JYTHON, IS_PY36_OR_LESSER, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, \
-    get_current_thread_id, IS_PY311_OR_GREATER
+    get_current_thread_id, IS_PY311_OR_GREATER, clear_cached_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -81,7 +81,9 @@ def _is_py3_and_has_bytes_args(args):
 
 def _on_forked_process():
     import pydevd
-    pydevd.threadingCurrentThread().__pydevd_main_thread = True
+    main_thread = pydevd.threadingCurrentThread()
+    main_thread.__pydevd_main_thread = True
+    clear_cached_thread_id(main_thread)
     pydevd.settrace_forked()
 
 
