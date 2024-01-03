@@ -45,7 +45,7 @@ public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
     assertNotNull(reference);
     PsiElement resolved = reference.resolve();
     assertNotNull(resolved);
-    assertTrue(resolved instanceof PsiMethod);
+    assertInstanceOf(PsiMethod.class, resolved);
     assertEquals("abc", ((PsiMethod)resolved).getName());
     String[] variants = Arrays.stream(reference.getVariants())
       .map(o -> o instanceof LookupElement ? ((LookupElement)o).getLookupString() : null).toArray(String[]::new);
@@ -144,17 +144,17 @@ public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
     assertVariants(reference, true);
   }
 
-  private void assertReference(PsiReference reference) {
+  private static void assertReference(PsiReference reference) {
     assertNotNull(reference);
     PsiElement resolved = reference.resolve();
     assertNotNull(resolved);
-    assertTrue(resolved instanceof PsiEnumConstant);
+    assertInstanceOf(PsiEnumConstant.class, resolved);
     assertEquals("AAA", ((PsiEnumConstant)resolved).getName());
     assertEquals("Foo", ((PsiEnumConstant)resolved).getContainingClass().getName());
     assertVariants(reference, true);
   }
 
-  private void assertVariants(PsiReference reference, boolean expectEnumValues) {
+  private static void assertVariants(PsiReference reference, boolean expectEnumValues) {
     final String[] variants = Arrays.stream(reference.getVariants())
       .filter(LookupElement.class::isInstance)
       .map(LookupElement.class::cast)

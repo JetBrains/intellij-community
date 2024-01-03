@@ -8,7 +8,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.NlsSafe;
@@ -17,7 +19,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.TestDataProvider;
@@ -72,16 +73,16 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       testApplication.setDataProvider(new TestDataProvider(myProject) {
         @Override
         public Object getData(@NotNull @NonNls String dataId) {
-          if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+          if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
             return elements;
           }
           return super.getData(dataId);
         }
       });
-      MapDataContext dataContext = new MapDataContext();
-
-      dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
-      dataContext.put(CommonDataKeys.PROJECT, myProject);
+      DataContext dataContext = SimpleDataContext.builder()
+        .add(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, elements)
+        .add(CommonDataKeys.PROJECT, myProject)
+        .build();
       ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
       assertNotNull(fromContext);
 

@@ -303,6 +303,7 @@ public class JUnit5EventsTest {
   }
 
   // This class is actually the test-data
+  @SuppressWarnings("JUnitMalformedDeclaration")
   private static class TestClass {
     @Test
     void test1() {
