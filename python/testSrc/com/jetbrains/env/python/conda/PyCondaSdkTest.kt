@@ -75,6 +75,7 @@ internal class PyCondaSdkTest {
     PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).getOrThrow().waitFor()
     return PyCondaEnv(PyCondaEnvIdentity.NamedEnv(name), condaRule.condaPathOnTarget)
   }
+
   /**
    * When we create fresh local SDK on Windows, it must be patched with env vars, see [fixCondaPathEnvIfNeeded]
    */
