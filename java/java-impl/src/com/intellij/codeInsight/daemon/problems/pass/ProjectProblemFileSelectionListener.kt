@@ -7,7 +7,11 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.remov
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPreviousState
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.jvm.JvmLanguage
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -16,9 +20,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -27,6 +31,13 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.testFramework.TestModeFlags
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Listener that reacts to user initiated changes and updates current problems state.
@@ -106,62 +117,133 @@ internal class ProjectProblemFileRefactoringEventListener(private val project: P
   }
 }
 
+@OptIn(FlowPreview::class)
+@Service(Service.Level.PROJECT)
+private class ProjectPsiChangesProcessor(private val scope: CoroutineScope) {
+  private val psiChanges = hashSetOf<PsiFile>()
+  private val psiChangesProcessor = MutableSharedFlow<Unit?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    scope.launch {
+      psiChangesProcessor.debounce(2.seconds).collect {
+        for (file in psiChanges) {
+          readAction {
+            if (file.isValid) {
+              updateFileState(file, file.project)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fun submitPsiChange(event: PsiTreeChangeEvent) {
+    val file = event.file ?: return
+    if (file.language is JvmLanguage) {
+      psiChanges.add(file)
+      assert(psiChangesProcessor.tryEmit(null))
+    }
+  }
+
+  private fun updateFileState(psiFile: PsiFile?, project: Project) {
+    val changedFile = PsiUtilCore.getVirtualFile(psiFile) ?: return
+    val editors = EditorFactory.getInstance().allEditors
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    for (editor in editors) {
+      val editorImpl = editor as? EditorImpl ?: continue
+      if (!editorImpl.contentComponent.isShowing && !ApplicationManager.getApplication().isUnitTestMode) {
+        continue
+      }
+
+      var editorFile = editorImpl.virtualFile
+      if (editorFile == null) {
+        val document = editorImpl.document
+        editorFile = FileDocumentManager.getInstance().getFile(document)
+      }
+
+      if (editorFile == null || changedFile == editorFile || !fileIndex.isInContent(editorFile)) {
+        continue
+      }
+      val psiJavaFile = getJavaFile(project, editorFile) ?: continue
+      setPreviousState(psiJavaFile)
+    }
+  }
+}
+
 internal class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
+  @OptIn(FlowPreview::class)
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
       return
     }
+    val parentDisposable = FileStateCache.getInstance(project)
 
-    val connection = project.messageBus.simpleConnect()
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun before(events: List<VFileEvent>) {
+    VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
+      override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
         val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-        for (e in events) {
-          if (e is VFileDeleteEvent) {
-            val changedFile = e.file
-            if (!fileIndex.isInContent(changedFile)) {
-              continue
+        val removedFiles = mutableListOf<PsiJavaFile>()
+        val contentChangedFiles = mutableListOf<PsiJavaFile>()
+        val selectedFile = getSelectedFile(project)
+
+        for (event in events) {
+          if (event is VFileDeleteEvent) {
+            val deletedFile = event.file
+            if (fileIndex.isInContent(deletedFile)) {
+              getJavaFile(project, deletedFile)?.let { removedFiles.add(it) }
             }
-            val removedJavaFile = getJavaFile(project, changedFile) ?: continue
-            removeState(removedJavaFile)
           }
 
-          if (e is VFileContentChangeEvent || e is VFileDeleteEvent) {
-            val selectedFile = getSelectedFile(project)
-            if (selectedFile == null || e.file == selectedFile) {
-              continue
+          if (event is VFileContentChangeEvent || event is VFileDeleteEvent) {
+            if (selectedFile != null && event.file != selectedFile) {
+              getJavaFile(project, selectedFile)?.let { contentChangedFiles.add(it) }
             }
-            val selectedJavaFile = getJavaFile(project, selectedFile) ?: continue
-            setPreviousState(selectedJavaFile)
+          }
+        }
+
+        return object : AsyncFileListener.ChangeApplier {
+          override fun beforeVfsChange() {
+            for (removedFile in removedFiles) {
+              removeState(removedFile)
+            }
+
+            for (javaFile in contentChangedFiles) {
+              setPreviousState(javaFile)
+            }
           }
         }
       }
-    })
+    }, parentDisposable)
+
+    val psiChangesProcessor = project.service<ProjectPsiChangesProcessor>()
     PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+      private fun addToQueue(event: PsiTreeChangeEvent) {
+        psiChangesProcessor.submitPsiChange(event)
+      }
+
       override fun beforeChildAddition(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
 
       override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
 
       override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
 
       override fun beforeChildMovement(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
 
       override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
 
       override fun beforePropertyChange(event: PsiTreeChangeEvent) {
-        updateFileState(event.file, project)
+        addToQueue(event)
       }
-    }, FileStateCache.getInstance(project))
+    }, parentDisposable)
   }
 }
 
@@ -170,30 +252,6 @@ private fun onHintsDisabled(project: Project) {
   for (selectedEditor in editorManager.selectedEditors) {
     val virtualFile = selectedEditor.file ?: continue
     val psiJavaFile = getJavaFile(project, virtualFile) ?: continue
-    setPreviousState(psiJavaFile)
-  }
-}
-
-private fun updateFileState(psiFile: PsiFile?, project: Project) {
-  val changedFile = PsiUtilCore.getVirtualFile(psiFile) ?: return
-  val editors = EditorFactory.getInstance().allEditors
-  val fileIndex = ProjectFileIndex.getInstance(project)
-  for (editor in editors) {
-    val editorImpl = editor as? EditorImpl ?: continue
-    if (!editorImpl.contentComponent.isShowing && !ApplicationManager.getApplication().isUnitTestMode) {
-      continue
-    }
-
-    var editorFile = editorImpl.virtualFile
-    if (editorFile == null) {
-      val document = editorImpl.document
-      editorFile = FileDocumentManager.getInstance().getFile(document)
-    }
-
-    if (editorFile == null || changedFile == editorFile || !fileIndex.isInContent(editorFile)) {
-      continue
-    }
-    val psiJavaFile = getJavaFile(project, editorFile) ?: continue
     setPreviousState(psiJavaFile)
   }
 }
