@@ -96,12 +96,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
       }
       row {
         browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
-/* Android Studio: send feedback to issuetracker.google.com
         link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() }
-*/
-        val url = "https://issuetracker.google.com/issues/new?component=1359421&template=1819244&foundIn=" +
-                  com.intellij.openapi.application.ApplicationInfo.getInstance().strictVersion
-        browserLink(IdeBundle.message("new.ui.submit.feedback"), url)
       }.bottomGap(BottomGap.SMALL)
       if (PlatformUtils.isIntelliJ()) {
         row {
