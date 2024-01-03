@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.execution.ui.FragmentedSettingsUtil
@@ -19,6 +19,8 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -211,6 +213,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), DataProvider {
 
     init {
+      minimumWidth = JBUIScale.scale(150)
       text = textFilterModel.text
       textEditor.emptyText.setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"))
       FragmentedSettingsUtil.setupPlaceholderVisibility(textEditor);
