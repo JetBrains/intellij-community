@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.ExternalEntityMapping
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
@@ -205,17 +206,18 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   companion object {
-    fun fromMap(other: Map<String, ExternalEntityMappingImpl<*>>): MutableMap<String, MutableExternalEntityMappingImpl<*>> {
-      val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
+    fun fromMap(other: Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>): MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>> {
+      val result = mutableMapOf<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         if (index is MutableExternalEntityMappingImpl) error("Cannot create mutable index from mutable index")
-        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(), IndexLog(LinkedHashMap()))
+        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(),
+                                                              IndexLog(LinkedHashMap()))
       }
       return result
     }
 
-    fun toImmutable(other: MutableMap<String, MutableExternalEntityMappingImpl<*>>): Map<String, ExternalEntityMappingImpl<*>> {
-      val result = mutableMapOf<String, ExternalEntityMappingImpl<*>>()
+    fun toImmutable(other: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>): Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>> {
+      val result = mutableMapOf<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         result[identifier] = index.toImmutable()
       }

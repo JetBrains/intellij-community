@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.cache
 
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
@@ -25,7 +26,7 @@ internal interface TracedSnapshotCache {
     newSnapshot: ImmutableEntityStorage,
     from: TracedSnapshotCache,
     changes: WorkspaceBuilderChangeLog,
-    externalMappingChanges: Map<String, MutableSet<EntityId>>
+    externalMappingChanges: Map<ExternalMappingKey<*>, MutableSet<EntityId>>
   )
 }
 

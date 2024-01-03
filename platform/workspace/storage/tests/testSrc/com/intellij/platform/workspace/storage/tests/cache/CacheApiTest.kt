@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.cache
 
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
@@ -18,6 +19,7 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class CacheApiTest {
+  private val externalMappingKey = ExternalMappingKey.create<Any>("Key")
   @Test
   fun `double access to cache`() {
     var recalculations = 0
@@ -315,7 +317,7 @@ class CacheApiTest {
     var mapRecalc = 0
     val snapshot = createNamedEntity {
       val parent = this.resolve(NameId("MyName"))!!
-      this.getMutableExternalMapping<String>("test").addMapping(parent, "externalInfo")
+      this.getMutableExternalMapping(externalMappingKey).addMapping(parent, "externalInfo")
       this addEntity NamedChildEntity("prop1", MySource) {
         this.parentEntity = parent
       }
@@ -647,10 +649,10 @@ class CacheApiTest {
   fun testMapToExternalMapping() {
     val snapshot = createNamedEntity {
       val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping<Int>("test").addMapping(entity, 1)
+      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
     }
     val query = entities<NamedEntity>().mapWithSnapshot { entity, mySnapshot ->
-      mySnapshot.getExternalMapping<Int>("test").getDataByEntity(entity)
+      mySnapshot.getExternalMapping(externalMappingKey).getDataByEntity(entity)
     }
 
     val res = snapshot.cached(query)
@@ -658,7 +660,7 @@ class CacheApiTest {
     assertEquals(setOf(null, 1), res.toSet())
 
     val newSnapshot = snapshot.toBuilder().also {
-      it.getMutableExternalMapping<Int>("test").addMapping(it.resolve(NameId("MyName"))!!, 2)
+      it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("MyName"))!!, 2)
     }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
@@ -670,7 +672,7 @@ class CacheApiTest {
   fun testMapToExternalMappingExtract() {
     val snapshot = createNamedEntity {
       val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping<Int>("test").addMapping(entity, 1)
+      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
     }
     val query = entitiesByExternalMapping("test", 1).map { (it as NamedEntity).myName }
 
@@ -679,8 +681,8 @@ class CacheApiTest {
     assertEquals("AnotherEntity", res.single())
 
     val newSnapshot = snapshot.toBuilder().also {
-      it.getMutableExternalMapping<Int>("test").removeMapping(it.resolve(NameId("AnotherEntity"))!!)
-      it.getMutableExternalMapping<Int>("test").addMapping(it.resolve(NameId("MyName"))!!, 1)
+      it.getMutableExternalMapping(externalMappingKey).removeMapping(it.resolve(NameId("AnotherEntity"))!!)
+      it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("MyName"))!!, 1)
     }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
@@ -692,7 +694,7 @@ class CacheApiTest {
   fun testReplaceMapping() {
     val snapshot = createNamedEntity {
       val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping<Int>("test").addMapping(entity, 1)
+      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
     }
     val query = entitiesByExternalMapping("test", 1).map { (it as NamedEntity).myName }
 
@@ -701,7 +703,7 @@ class CacheApiTest {
     assertEquals("AnotherEntity", res.single())
 
     val newSnapshot = snapshot.toBuilder().also {
-      it.getMutableExternalMapping<Int>("test").addMapping(it.resolve(NameId("AnotherEntity"))!!, 2)
+      it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("AnotherEntity"))!!, 2)
     }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
@@ -783,7 +785,7 @@ class CacheApiTest {
   fun addAndRemoveEntity() {
     val snapshot = createNamedEntity {
       val entity = this.entities(NamedEntity::class.java).single()
-      this.getMutableExternalMapping<String>("test").addMapping(entity, "data")
+      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data")
     }
     val query = entitiesByExternalMapping("test", "data").map {
       it.entitySource
@@ -845,7 +847,7 @@ class CacheApiTest {
     val parent = builder addEntity ParentEntity("data", MySource)
 
     val data = "ExternalInfo"
-    builder.getMutableExternalMapping<String>("Test").addMapping(parent, data)
+    builder.getMutableExternalMapping(externalMappingKey).addMapping(parent, data)
     builder addEntity ParentMultipleEntity("data", MySource) {
       this.children = List(10) {
         ChildMultipleEntity("data$it", MySource)
@@ -860,7 +862,7 @@ class CacheApiTest {
     snapshot.cached(modifiedEntitySource)
 
     val newBuilder = snapshot.toBuilder()
-    val mutableMapping = newBuilder.getMutableExternalMapping<String>("Test")
+    val mutableMapping = newBuilder.getMutableExternalMapping(externalMappingKey)
     mutableMapping.getEntities("ExternalInfo").forEach {
       mutableMapping.addMapping(it, "AnotherMapping")
     }

@@ -267,9 +267,9 @@ class GlobalWorkspaceModel : Disposable {
         version = sdkEntity.version
       }
       mutableEntityStorage.addEntity(sdkEntityCopy)
-      val sdkBridge = storage.getExternalMapping<Any>(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
+      val sdkBridge = storage.getExternalMapping(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
       if (sdkBridge != null) {
-        mutableEntityStorage.getMutableExternalMapping<Any>(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)
+        mutableEntityStorage.getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)
       }
     }
     return mutableEntityStorage
@@ -288,7 +288,7 @@ class GlobalWorkspaceModel : Disposable {
   companion object {
 
     //TODO:: Fix me don't have dependencies to SdkTableBridgeImpl
-    private const val SDK_BRIDGE_MAPPING_ID = "intellij.sdk.bridge"
+    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Any>("intellij.sdk.bridge")
 
 
 

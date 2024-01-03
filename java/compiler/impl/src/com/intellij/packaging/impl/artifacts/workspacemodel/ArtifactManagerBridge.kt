@@ -308,7 +308,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   companion object {
     private val lock = Any()
-    private const val ARTIFACT_BRIDGE_MAPPING_ID = "intellij.artifacts.bridge"
+    private val ARTIFACT_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ArtifactBridge>("intellij.artifacts.bridge")
 
     val EntityStorage.artifactsMap: ExternalEntityMapping<ArtifactBridge>
       get() = getExternalMapping(ARTIFACT_BRIDGE_MAPPING_ID)

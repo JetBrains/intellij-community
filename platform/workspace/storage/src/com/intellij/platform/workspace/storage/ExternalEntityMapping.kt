@@ -64,3 +64,29 @@ public interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {
    */
   public fun removeMapping(entity: WorkspaceEntity): T?
 }
+
+/**
+ * Unique key for the external mappings.
+ *
+ * Each instance of key refers to a separate instance of the external mapping. Each call for [create] creates a new instance of key
+ *   even if the existing name is used.
+ * In order to use the key from multiple places, it should be stored in a field.
+ */
+// MUST NOT be data class. Each instance is unique
+public class ExternalMappingKey<T>(private val name: String) {
+  override fun toString(): String {
+    return "ExternalMappingKey[name=$name]"
+  }
+
+  public companion object {
+    /**
+     * Always creates a new instance of a key, even if the name is already used.
+     *
+     * Suggested, but not obligated naming convention: identifier should be a dot-separated string prepended with the product name, e.g.
+     * * intellij.modules.bridge
+     * * intellij.facets.bridge
+     * * rider.backend.id
+     */
+    public fun <T> create(name: String): ExternalMappingKey<T> = ExternalMappingKey(name)
+  }
+}

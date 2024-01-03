@@ -90,7 +90,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   }
 
   protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
-    ExternalEntityMapping<Object> mapping = diff.getExternalMapping(PackagingExternalMapping.key);
+    ExternalEntityMapping<PackagingElement<?>> mapping = diff.getExternalMapping(PackagingExternalMapping.key);
     return mapping.getFirstEntity(this);
   }
 
@@ -155,7 +155,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   protected @NotNull PackagingElementEntity getThisEntity() {
     assert myStorage != null;
     EntityStorage base = myStorage.getBase();
-    ExternalEntityMapping<Object> externalMapping = base.getExternalMapping(PackagingExternalMapping.key);
+    ExternalEntityMapping<PackagingElement<?>> externalMapping = base.getExternalMapping(PackagingExternalMapping.key);
     PackagingElementEntity entity = (PackagingElementEntity)externalMapping.getFirstEntity(this);
     if (entity == null) {
       throw new RuntimeException("Cannot find an entity");

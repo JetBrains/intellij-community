@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
@@ -26,6 +27,8 @@ class ImlSerializationTest {
   val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
+  private val externalMappingKey = ExternalMappingKey.create<Any>("test.my.index")
 
   @Before
   fun setUp() {
@@ -62,7 +65,7 @@ class ImlSerializationTest {
     val builder = MutableEntityStorage.create()
     val entity = SampleEntity2("Test", true, Source)
     builder.addEntity(entity)
-    val index = builder.getMutableExternalMapping<String>("test.my.index")
+    val index = builder.getMutableExternalMapping(externalMappingKey)
     index.addMapping(entity, "Hello")
 
     serializationRoundTrip(builder)

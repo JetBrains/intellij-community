@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.cache
 
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
@@ -39,7 +40,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val chainIdToChainIndex: HashMap<CellChainId, CellChain> = HashMap()
   private val cellChainToCellIndex: HashMap<CellChainId, ReadTraceIndex<Pair<StorageQuery<*>, CellUpdateInfo>>> = HashMap()
 
-  private val changeQueue: MutableMap<CellChainId, MutableList<Pair<WorkspaceBuilderChangeLog, Map<String, Set<EntityId>>>>> = HashMap()
+  private val changeQueue: MutableMap<CellChainId, MutableList<Pair<WorkspaceBuilderChangeLog, Map<ExternalMappingKey<*>, Set<EntityId>>>>> = HashMap()
 
   /**
    * Flag indicating that this cache is now pulled from the other snapshot. During this pull, executing cache queries is not allowed
@@ -53,7 +54,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
     newSnapshot: ImmutableEntityStorage,
     from: TracedSnapshotCache,
     changes: WorkspaceBuilderChangeLog,
-    externalMappingChanges: Map<String, MutableSet<EntityId>>
+    externalMappingChanges: Map<ExternalMappingKey<*>, MutableSet<EntityId>>
   ) {
     try {
       pullingCache = true
@@ -102,7 +103,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
 
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun updateCellIndex(chainId: CellChainId,
-                              externalMappingChanges: HashMap<String, MutableSet<EntityId>>,
+                              externalMappingChanges: HashMap<ExternalMappingKey<*>, MutableSet<EntityId>>,
                               changes: WorkspaceBuilderChangeLog,
                               newSnapshot: ImmutableEntityStorageInstrumentation) {
     val cellIndex = cellChainToCellIndex.getValue(chainId)
@@ -151,7 +152,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
 
         if (changelog != null && changelog.size > 0) {
           val accChangeLog = WorkspaceBuilderChangeLog()
-          val accMappingLog = HashMap<String, MutableSet<EntityId>>()
+          val accMappingLog = HashMap<ExternalMappingKey<*>, MutableSet<EntityId>>()
           changelog.forEach { (changeLog, mappingChangeLog) ->
             accChangeLog.join(changeLog)
             mappingChangeLog.forEach { (key, log) ->

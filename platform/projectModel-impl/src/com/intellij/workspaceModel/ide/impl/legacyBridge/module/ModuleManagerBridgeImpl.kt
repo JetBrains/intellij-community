@@ -65,7 +65,7 @@ private val buildModuleGraphTimeMs: AtomicLong = AtomicLong()
 private val getModulesTimeMs: AtomicLong = AtomicLong()
 
 private val LOG = logger<ModuleManagerBridgeImpl>()
-private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
+private val MODULE_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ModuleBridge>("intellij.modules.bridge")
 
 class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true

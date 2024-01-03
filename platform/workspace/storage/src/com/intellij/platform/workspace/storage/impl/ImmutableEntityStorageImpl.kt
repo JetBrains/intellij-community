@@ -29,7 +29,6 @@ import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -686,17 +685,18 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalMapping(identifier: @NonNls String)
-    : MutableExternalEntityMapping<T> = getMutableExternalMappingTimeMs.addMeasuredTimeMillis {
-    try {
-      lockWrite()
-      val mapping = indexes.externalMappings.computeIfAbsent(
-        identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
-      mapping.setTypedEntityStorage(this)
-      mapping
-    }
-    finally {
-      unlockWrite()
+  override fun <T> getMutableExternalMapping(identifier: ExternalMappingKey<T>): MutableExternalEntityMapping<T> {
+    return getMutableExternalMappingTimeMs.addMeasuredTimeMillis {
+      try {
+        lockWrite()
+        val mapping = indexes.externalMappings
+          .computeIfAbsent(identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
+        mapping.setTypedEntityStorage(this)
+        mapping
+      }
+      finally {
+        unlockWrite()
+      }
     }
   }
 
@@ -961,7 +961,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T> {
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)

@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
@@ -25,7 +26,7 @@ class AddDiffTest {
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
-  private val externalMappingName = "test.checking.external.mapping"
+  private val externalMappingName = ExternalMappingKey.create<Any>("test.checking.external.mapping")
 
   private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
     val builder = createBuilderFrom(this)
@@ -326,13 +327,13 @@ class AddDiffTest {
     val source = createEmptyBuilder()
     val sourceSample = source addEntity SampleEntity(false, "Entity at index 1", ArrayList(), HashMap(),
                                                      virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
-    val mutableExternalMapping = source.getMutableExternalMapping<Any>(externalMappingName)
+    val mutableExternalMapping = source.getMutableExternalMapping(externalMappingName)
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
 
     target.addDiff(source)
 
-    val externalMapping = target.getExternalMapping<Any>(externalMappingName) as ExternalEntityMappingImpl<Any>
+    val externalMapping = target.getExternalMapping(externalMappingName) as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
   }
 
@@ -343,11 +344,11 @@ class AddDiffTest {
     val entity = target addEntity ParentEntity("Hey", MySource)
     val obj = Any()
     val obj2 = Any()
-    target.getMutableExternalMapping<Any>(externalMappingName).addMapping(entity, obj)
+    target.getMutableExternalMapping(externalMappingName).addMapping(entity, obj)
 
     val newBuilder = target.toSnapshot().toBuilder()
     val newEntity = newBuilder addEntity ParentEntity("Hey 2", MySource)
-    newBuilder.getMutableExternalMapping<Any>(externalMappingName).addMapping(newEntity, obj2)
+    newBuilder.getMutableExternalMapping(externalMappingName).addMapping(newEntity, obj2)
     newBuilder.removeEntity(entity.from(newBuilder))
 
     target.removeEntity(entity)
@@ -358,7 +359,7 @@ class AddDiffTest {
     assertEquals(1, freezed.entities(ParentEntity::class.java).toList().size)
     val requestedEntity = freezed.entities(ParentEntity::class.java).single()
     assertEquals("Hey 2", requestedEntity.parentData)
-    assertSame(obj2, freezed.getMutableExternalMapping<Any>(externalMappingName).getDataByEntity(requestedEntity))
+    assertSame(obj2, freezed.getMutableExternalMapping(externalMappingName).getDataByEntity(requestedEntity))
   }
 
   @RepeatedTest(10)

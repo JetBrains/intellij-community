@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
@@ -68,6 +69,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   private fun Path.newRandomDirectory(): Path = this.createDirectory("random_directory_name".asSequence().shuffled().toString())
 
+  private val externalMappingKey = ExternalMappingKey.create<Any>("test")
 
   @BeforeEach
   fun beforeTest() {
@@ -617,7 +619,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         val parent = builder addEntity ParentEntity("data$it", MySource)
 
         val data = if (it % 2 == 0) "ExternalInfo" else "InternalInfo"
-        builder.getMutableExternalMapping<String>("Test").addMapping(parent, data)
+        builder.getMutableExternalMapping(externalMappingKey).addMapping(parent, data)
       }
       repeat(1000) {
         builder addEntity ParentMultipleEntity("data$it", MySource) {
@@ -667,7 +669,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           this.myName = "newName$it"
         }
       }
-      val mutableMapping = builder.getMutableExternalMapping<String>("Test")
+      val mutableMapping = builder.getMutableExternalMapping(externalMappingKey)
       mutableMapping.getEntities("ExternalInfo").take(250).forEach {
         mutableMapping.addMapping(it, "AnotherMapping")
       }
@@ -705,7 +707,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           builder.removeEntity(value)
         }
 
-        val mutableMapping = builder.getMutableExternalMapping<String>("Test")
+        val mutableMapping = builder.getMutableExternalMapping(externalMappingKey)
         mutableMapping.getEntities("ExternalInfo").take(outerLoop).forEach {
           mutableMapping.addMapping(it, "AnotherMapping")
         }
@@ -779,20 +781,20 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     // Measure adding mappings
     measureOperation("addMapping", singleBuilderEntities, buildersToEntity) { index, (builder, entity) ->
-      builder.getMutableExternalMapping<String>("test").addMapping(entity, "data$index")
+      builder.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data$index")
     }
 
     measureOperation("getEntity", singleBuilderEntities, buildersToEntity) { index, (builder, _) ->
-      builder.getExternalMapping<String>("test").getEntities("data$index")
+      builder.getExternalMapping(externalMappingKey).getEntities("data$index")
     }
 
     measureOperation("getData", singleBuilderEntities, buildersToEntity) { _, (builder, entity) ->
-      builder.getExternalMapping<String>("test").getDataByEntity(entity)
+      builder.getExternalMapping(externalMappingKey).getDataByEntity(entity)
     }
 
     // Measure removal
     measureOperation("removeMapping", singleBuilderEntities, buildersToEntity) { _, (builder, entity) ->
-      builder.getMutableExternalMapping<String>("test").removeMapping(entity)
+      builder.getMutableExternalMapping(externalMappingKey).removeMapping(entity)
     }
   }
 
@@ -811,7 +813,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(size) {
         val myBuilder = mySnapshot.toBuilder()
         val entity = myBuilder.resolve(NameId("Name$it"))!!
-        myBuilder.getMutableExternalMapping<String>("test").addMapping(entity, "data$it")
+        myBuilder.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data$it")
         mySnapshot = myBuilder.toSnapshot()
       }
     }

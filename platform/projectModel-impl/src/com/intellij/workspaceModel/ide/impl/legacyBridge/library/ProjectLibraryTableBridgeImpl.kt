@@ -254,7 +254,7 @@ class ProjectLibraryTableBridgeImpl(
       override fun getLibraryTableEditorTitle() = ProjectModelBundle.message("library.configure.project.title")
     }
 
-    private const val LIBRARY_BRIDGE_MAPPING_ID = "intellij.libraries.bridge"
+    private val LIBRARY_BRIDGE_MAPPING_ID = ExternalMappingKey.create<LibraryBridge>("intellij.libraries.bridge")
 
     val EntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
       get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.ChangeLog
@@ -52,7 +53,7 @@ internal class CellChain(
   fun changeInput(newSnapshot: ImmutableEntityStorage,
                   changeRequest: CellUpdateInfo,
                   changes: ChangeLog,
-                  externalMappingChanges: Map<String, Set<EntityId>>,
+                  externalMappingChanges: Map<ExternalMappingKey<*>, Set<EntityId>>,
                   cellToActivate: CellId): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     var myTokens = when (changeRequest.updateType) {
@@ -86,7 +87,7 @@ internal class CellChain(
     return newChain to traces
   }
 
-  private fun makeTokensForDiff(changes: ChangeLog, externalMappingChanges: Map<String, Set<EntityId>>): TokenSet {
+  private fun makeTokensForDiff(changes: ChangeLog, externalMappingChanges: Map<ExternalMappingKey<*>, Set<EntityId>>): TokenSet {
     val tokenSet = TokenSet()
     val createdTokens = HashSet<Pair<Operation, EntityId>>()
 

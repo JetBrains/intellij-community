@@ -173,7 +173,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   companion object {
-    private const val SDK_BRIDGE_MAPPING_ID = "intellij.sdk.bridge"
+    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ProjectJdkImpl>("intellij.sdk.bridge")
 
     val EntityStorage.sdkMap: ExternalEntityMapping<ProjectJdkImpl>
       get() = getExternalMapping(SDK_BRIDGE_MAPPING_ID)

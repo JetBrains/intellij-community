@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 /**
  * A base interface for immutable [ImmutableEntityStorage] and [MutableEntityStorage].
@@ -38,7 +37,7 @@ public interface EntityStorage {
   /**
    * Returns a mapping with the given [identifier] which associates entities from this storage with values of type [T]. 
    */
-  public fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T>
+  public fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T>
 
   /**
    * Returns an index which allows to quickly find entities which refer to a particular [VirtualFileUrl][com.intellij.platform.workspace.storage.url.VirtualFileUrl]

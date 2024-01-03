@@ -268,7 +268,7 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
   }
 
   companion object {
-    private const val FACET_BRIDGE_MAPPING_ID = "intellij.facets.bridge"
+    private val FACET_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Facet<*>>("intellij.facets.bridge")
     private val LOG = logger<FacetModelBridge>()
 
     internal fun EntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {

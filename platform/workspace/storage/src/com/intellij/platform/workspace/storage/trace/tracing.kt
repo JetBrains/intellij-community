@@ -79,7 +79,7 @@ internal class ReadTracker private constructor(
     return super.contains(id)
   }
 
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T> {
     val trace = ReadTrace.ExternalMappingAccess(identifier)
     log.trace { "Read trace of `getExternalMapping` function: $trace" }
     onRead(trace)
@@ -204,7 +204,7 @@ internal sealed interface ReadTrace {
    * Any read from external mapping.
    * This is a very broad scope, it can be more precise later.
    */
-  data class ExternalMappingAccess(val identifier: String) : ReadTrace {
+  data class ExternalMappingAccess(val identifier: ExternalMappingKey<*>) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
         return Objects.hash(

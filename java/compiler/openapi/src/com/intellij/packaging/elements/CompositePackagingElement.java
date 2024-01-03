@@ -214,7 +214,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       return myGetChildren();
     }
     else {
-      ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping(PackagingExternalMapping.key);
+      ExternalEntityMapping<PackagingElement<?>> mapping = myStorage.getBase().getExternalMapping(PackagingExternalMapping.key);
       PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mapping.getFirstEntity(this);
       if (packagingElementEntity == null) {
         throw new RuntimeException(

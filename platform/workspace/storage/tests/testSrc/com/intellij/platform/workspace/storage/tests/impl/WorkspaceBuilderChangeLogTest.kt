@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.impl
 
+import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
@@ -22,6 +23,8 @@ import kotlin.test.*
 class WorkspaceBuilderChangeLogTest {
   internal lateinit var builder: MutableEntityStorageImpl
   internal lateinit var another: MutableEntityStorageImpl
+
+  private val externalMappingKey = ExternalMappingKey.create<Any>("test.my.mapping")
 
   @BeforeEach
   fun setUp() {
@@ -725,7 +728,7 @@ class WorkspaceBuilderChangeLogTest {
     builder.addEntity(moduleTestEntity)
     builder.changeLog.clear()
     val contentRoot = builder.entities(ModuleTestEntity::class.java).single().contentRoots.single()
-    builder.getMutableExternalMapping<Any>("data").addMapping(contentRoot, 1)
+    builder.getMutableExternalMapping(externalMappingKey).addMapping(contentRoot, 1)
     val original = builder.toSnapshot()
     builder.removeEntity(contentRoot)
     builder.addEntity(ContentRootTestEntity(MySource) {
@@ -750,7 +753,7 @@ class WorkspaceBuilderChangeLogTest {
       module = moduleTestEntity
     }
     builder.addEntity(newContentRoot)
-    builder.getMutableExternalMapping<Any>("data").addMapping(newContentRoot, 1)
+    builder.getMutableExternalMapping(externalMappingKey).addMapping(newContentRoot, 1)
     assertFalse(builder.hasSameEntities())
   }
 

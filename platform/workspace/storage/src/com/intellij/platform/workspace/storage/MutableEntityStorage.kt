@@ -181,12 +181,8 @@ public interface MutableEntityStorage : EntityStorage {
 
   /**
    * Returns an existing or create a new mapping with the given [identifier].
-   * By convention, identifier should be a dot-separated string prepended with the product name, e.g.
-   * * intellij.modules.bridge
-   * * intellij.facets.bridge
-   * * rider.backend.id
    */
-  public fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
+  public fun <T> getMutableExternalMapping(identifier: ExternalMappingKey<T>): MutableExternalEntityMapping<T>
 
   /**
    * Returns a snapshot of the current state. It won't be affected by future changes.
