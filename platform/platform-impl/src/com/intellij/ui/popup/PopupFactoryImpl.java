@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -857,9 +858,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
       }
+      if (StringUtil.isEmpty(text)) {
+        Utils.reportEmptyTextMenuItem(myAction, actionPlace);
+        text = "";
+      }
       myText = ActionPresentationDecorator.decorateTextIfNeeded(myAction, text);
-      LOG.assertTrue(text != null, "null text is returned by " + Utils.operationName(myAction, null, actionPlace));
-
       myDescription =  presentation.getDescription();
       //noinspection deprecation
       myTooltip = (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);

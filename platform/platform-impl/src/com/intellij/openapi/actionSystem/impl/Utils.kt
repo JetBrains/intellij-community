@@ -630,7 +630,8 @@ object Utils {
     LOG.error("Invisible menu item for $operationName")
   }
 
-  private fun reportEmptyTextMenuItem(action: AnAction, place: String) {
+  @JvmStatic
+  fun reportEmptyTextMenuItem(action: AnAction, place: String) {
     val operationName = operationName(action, null, place)
     var message = "Empty menu item text for $operationName"
     if (action.getTemplatePresentation().text.isNullOrEmpty()) {
@@ -1060,6 +1061,8 @@ private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadCon
   override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
     oldState.finish()
   }
+
+  override fun toString(): String = "PotemkinElement@" + potemkin.hashCode()
 }
 
 private fun updaterContext(place: String, fastTrackTime: Int, isContextMenu: Boolean, isToolbarAction: Boolean): CoroutineContext {
