@@ -5,6 +5,7 @@ import polars as pl
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
 pl_version_major, pl_version_minor, _ = pl.__version__.split(".")
+pl_version_major, pl_version_minor = int(pl_version_major), int(pl_version_minor)
 COUNT_COL_NAME = "counts" if pl_version_major == 0 and pl_version_minor < 20 else "count"
 
 
