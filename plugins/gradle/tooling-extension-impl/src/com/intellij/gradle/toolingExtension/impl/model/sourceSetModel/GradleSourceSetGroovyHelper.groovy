@@ -1,47 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
-import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
-import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.model.*
-import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
-import java.nio.file.Path
-
+import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.cleanupSharedSourceFolders
+import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.containsAllSourceSetOutput
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
-import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
-@ApiStatus.Internal
-class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
+class GradleSourceSetGroovyHelper {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
@@ -49,176 +36,9 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
-  @Override
-  boolean canBuild(String modelName) {
-    return GradleSourceSetModel.class.name == modelName
-  }
-
-  @Override
-  Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel()
-    sourceSetModel.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project))
-    sourceSetModel.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project))
-    sourceSetModel.setTaskArtifacts(collectProjectTaskArtifacts(project, context))
-    sourceSetModel.setConfigurationArtifacts(collectProjectConfigurationArtifacts(project, context))
-    sourceSetModel.setSourceSets(getSourceSets(project, context))
-    sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context))
-
-    GradleSourceSetCache.getInstance(context)
-      .setSourceSetModel(project, sourceSetModel)
-
-    return sourceSetModel
-  }
-
-  @Override
-  void reportErrorMessage(
-    @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
-  ) {
-    GradleSourceSetCache.getInstance(context)
-      .markSourceSetModelAsError(project)
-
-    context.getMessageReporter().createMessage()
-      .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
-      .withKind(Message.Kind.ERROR)
-      .withTitle("Source set model building failure")
-      .withException(exception)
-      .reportMessage(project)
-  }
-
-  @NotNull
-  private static List<File> collectProjectTaskArtifacts(
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context
-  ) {
-    List<File> taskArtifacts = new ArrayList<File>()
-    GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
-
-      @Override
-      void visit(Jar element) {
-        def archiveFile = getTaskArchiveFile(element)
-        if (archiveFile != null) {
-          taskArtifacts.add(archiveFile)
-        }
-      }
-
-      @Override
-      void onFailure(Jar element, @NotNull Exception exception) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact file for the project Jar task: " + element.path)
-          .withKind(Message.Kind.WARNING)
-          .withException(exception)
-          .reportMessage(project)
-      }
-
-      @Override
-      void visitAfterAccept(Jar element) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Artifact files collecting for project Jar task was finished. " +
-                    "Resolution for Jar task " + element.path + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
-          .reportMessage(project)
-      }
-    })
-    return new ArrayList<>(taskArtifacts)
-  }
-
-  @NotNull
-  private static List<File> collectNonSourceSetArtifacts(
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context
-  ) {
-    List<File> additionalArtifacts = new ArrayList<File>()
-    GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
-
-      @Override
-      void visit(Jar element) {
-        def archiveFile = getTaskArchiveFile(element)
-        if (archiveFile != null) {
-          if (isJarDescendant(element) || containsPotentialClasspathElements(element, project)) {
-            additionalArtifacts.add(archiveFile)
-          }
-        }
-      }
-
-      @Override
-      void onFailure(Jar element, @NotNull Exception exception) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact file for the project Jar task: " + element.path)
-          .withKind(Message.Kind.WARNING)
-          .withException(exception)
-          .reportMessage(project)
-      }
-
-      @Override
-      void visitAfterAccept(Jar element) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Artifact files collecting for project Jar task was finished. " +
-                    "Resolution for Jar task " + element.path + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
-          .reportMessage(project)
-      }
-    })
-    return additionalArtifacts
-  }
-
-  @NotNull
-  private static Map<String, Set<File>> collectProjectConfigurationArtifacts(
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context
-  ) {
-    Map<String, Set<File>> configurationArtifacts = new HashMap<String, Set<File>>()
-    GradleCollectionVisitor.accept(project.getConfigurations(), new GradleCollectionVisitor<Configuration>() {
-
-      @Override
-      void visit(Configuration element) {
-        def artifactSet = element.getArtifacts()
-        def fileCollection = artifactSet.getFiles()
-        Set<File> files = fileCollection.getFiles()
-        configurationArtifacts.put(element.name, new LinkedHashSet<>(files))
-      }
-
-      @Override
-      void onFailure(Configuration element, @NotNull Exception exception) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
-          .withTitle("Project configuration error")
-          .withText("Cannot resolve artifact files for project configuration" + element)
-          .withKind(Message.Kind.WARNING)
-          .withException(exception)
-          .reportMessage(project)
-      }
-
-      @Override
-      void visitAfterAccept(Configuration element) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
-          .withTitle("Project configuration error")
-          .withText("Artifact files collecting for project configuration was finished. " +
-                    "Resolution for configuration " + element + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
-          .reportMessage(project)
-      }
-    })
-    return configurationArtifacts
-  }
-
   @NotNull
   @CompileDynamic
-  private static Map<String, DefaultExternalSourceSet> getSourceSets(
+  static Map<String, DefaultExternalSourceSet> getSourceSets(
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
@@ -331,9 +151,9 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         externalSourceSet.targetCompatibility = projectTargetCompatibility
       }
 
-        project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-          if (containsAllSourceSetOutput(task, sourceSet)) {
-            externalSourceSet.artifacts.add(getTaskArchiveFile(task))
+      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
+        if (containsAllSourceSetOutput(task, sourceSet)) {
+          externalSourceSet.artifacts.add(getTaskArchiveFile(task))
         }
       }
 
@@ -590,171 +410,5 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     cleanupSharedSourceFolders(result)
 
     result
-  }
-
-  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
-    def mainSourceSet = map[SourceSet.MAIN_SOURCE_SET_NAME]
-    cleanupSharedSourceFolders(map, mainSourceSet, null)
-    cleanupSharedSourceFolders(map, map[SourceSet.TEST_SOURCE_SET_NAME], mainSourceSet)
-  }
-
-  private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> result,
-                                                 ExternalSourceSet sourceSet,
-                                                 ExternalSourceSet toIgnore) {
-    if (!sourceSet) return
-
-    for (sourceSetEntry in result.entrySet()) {
-      if (!sourceSetEntry.value.is(sourceSet) && !sourceSetEntry.value.is(toIgnore)) {
-        def customSourceSet = sourceSetEntry.value
-        for (sourceType in ExternalSystemSourceType.values()) {
-          def customSourceDirectorySet = customSourceSet.sources.get(sourceType) as ExternalSourceDirectorySet
-          if (customSourceDirectorySet) {
-            for (sourceDirEntry in sourceSet.sources.entrySet()) {
-              customSourceDirectorySet.srcDirs.removeAll(sourceDirEntry.value.srcDirs)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static boolean isJarDescendant(Jar task) {
-    return GradleNegotiationUtil.getTaskIdentityType(task) != Jar
-  }
-
-  /**
-   * Check the configured archive task inputs for specific files.
-   *
-   * We want to check, if IDEA is interested in keeping this archive task output in dependencies list
-   * <br>
-   * This may happen if <ul>
-   *    <li>there are some class files
-   *    <li>there are directories, not known to be outputs of source sets (modules)
-   * @param archiveTask task to check
-   * @param project project with source sets, potentially contributing to this task.
-   * @return true if this jar should be kept in IDEA modules' dependencies' lists.
-   */
-  private static boolean containsPotentialClasspathElements(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
-    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
-    if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
-      return true
-    }
-    def outputFiles = new HashSet<File>()
-    sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
-    for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
-      if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
-        def files = new HashSet<>(project.files(path).files)
-        files.removeAll(outputFiles)
-        if (files.any { it.isDirectory() || (it.isFile() && it.name.endsWith(".class"))}) {
-          return true
-        }
-      } else {
-        return true
-      }
-    }
-    return false
-  }
-
-  private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
-    def outputFiles = new HashSet<>(sourceSet.output.files)
-    def project = archiveTask.project
-
-    try {
-      Set<Object> sourcePaths = getArchiveTaskSourcePaths(archiveTask)
-      for (Object path : sourcePaths) {
-        if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
-          def files = project.files(path).files
-          outputFiles.removeAll(files)
-        }
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e)
-    }
-    return outputFiles.isEmpty()
-  }
-
-  private static Set<Object> getArchiveTaskSourcePaths(AbstractArchiveTask archiveTask) {
-    Set<Object> sourcePaths = null
-    final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec")
-    mainSpecGetter.setAccessible(true)
-    Object mainSpec = mainSpecGetter.invoke(archiveTask)
-    final List<MetaMethod> sourcePathGetters =
-      DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{})
-    if (!sourcePathGetters.isEmpty()) {
-      sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{})
-    }
-    if (sourcePaths != null) {
-      return sourcePaths
-    }
-    else {
-      return Collections.emptySet()
-    }
-  }
-
-
-  private static boolean isResolvableFileCollection(Object param, Project project) {
-    Object object = tryUnpackPresentProvider(param, project)
-    if (object instanceof FileCollection) {
-      try {
-        project.files(object).files
-        return true
-      } catch (Throwable ignored) {
-        return false
-      }
-    }
-    return false
-  }
-
-  /**
-   * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
-   *
-   * @param object
-   * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
-   * @see GradleSourceSetModelBuilder#tryUnpackPresentProvider
-   */
-  private static boolean isSafeToResolve(Object param, Project project) {
-    Object object = tryUnpackPresentProvider(param, project)
-    boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
-                                                              "org.gradle.api.file.Directory",
-                                                              "org.gradle.api.file.RegularFile")
-
-    return object instanceof CharSequence
-      || object instanceof File || object instanceof Path
-      || isDirectoryOrRegularFile
-      || object instanceof SourceSetOutput
-  }
-
-  /**
-   * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
-   * causing {@link org.gradle.api.InvalidUserCodeException} and {@link org.gradle.api.InvalidUserDataException}.
-   * Also some {@link org.gradle.api.provider.Provider} attempts to resolve dynamic
-   * configurations, witch results in resolving a configuration without write lock on the project.
-   *
-   * @return provided value or current if value isn't present or cannot be evaluated
-   */
-  private static Object tryUnpackPresentProvider(Object object, Project project) {
-    if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
-      return object
-    }
-    try {
-      def providerClass = object.getClass()
-      def isPresentMethod = providerClass.getMethod("isPresent")
-      def getterMethod = providerClass.getMethod("get")
-      if ((Boolean)isPresentMethod.invoke(object)) {
-        return getterMethod.invoke(object)
-      }
-      return object
-    }
-    catch (InvocationTargetException exception) {
-      Throwable targetException = exception.targetException
-      boolean isCodeException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserCodeException")
-      boolean isDataException = dynamicCheckInstanceOf(targetException, "org.gradle.api.InvalidUserDataException")
-      if (isCodeException || isDataException) {
-        return object
-      }
-      project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
-      return object
-    }
   }
 }
