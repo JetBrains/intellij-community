@@ -200,7 +200,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   companion object {
     private val logger = Logger.getInstance(SemanticActionSearchEverywhereContributor::class.java)
 
-    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.35, 0.25, 0.2)).toMap()
+    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.68, 0.5, 0.4)).toMap()
     private const val DESIRED_RESULTS_COUNT = 10
 
     private fun extractAction(item: Any): AnAction? {
