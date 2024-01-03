@@ -245,7 +245,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
-        if (builderContext != null) {
+        val isDownloadSources = System.getProperty("idea.gradle.download.sources").toBoolean()
+        if (!isDownloadSources && builderContext != null) {
             downloadKotlinStdlibSources(project, builderContext)
         }
 
