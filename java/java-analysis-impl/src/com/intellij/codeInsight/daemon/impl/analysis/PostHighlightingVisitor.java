@@ -379,7 +379,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
            (!isOverriddenOrOverrides(method) || myUnusedSymbolInspection.checkParameterExcludingHierarchy())) &&
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
-          !PsiClassImplUtil.isMainOrPremainMethod(method)) {
+          !isUsedMainOrPremainMethod(method)) {
         if (UnusedSymbolUtil.isInjected(project, method)) return;
         checkUnusedParameter(parameter, method);
         if (message != null) {
@@ -433,6 +433,20 @@ class PostHighlightingVisitor extends JavaElementVisitor {
         quickFixes.add(PriorityIntentionActionWrapper.lowPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(parameter, true)));
       }
     }
+  }
+
+  private static boolean isUsedMainOrPremainMethod(@NotNull PsiMethod method) {
+    if (!PsiClassImplUtil.isMainOrPremainMethod(method)) {
+      return false;
+    }
+    //premain
+    if (!"main".equals(method.getName())) {
+      return true;
+    }
+    if (!HighlightingFeature.IMPLICIT_CLASSES.isAvailable(method)) {
+      return true;
+    }
+    return false;
   }
 
   private void checkUnusedParameter(@NotNull PsiParameter parameter, @Nullable PsiMethod declarationMethod) {
