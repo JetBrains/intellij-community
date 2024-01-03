@@ -250,6 +250,17 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       putPaddingRecord(buffer, offsetInBuffer, remainsToPad);
     }
 
+    /** generates data record header given length of payload and commited status */
+    private static int dataRecordHeader(int payloadLength,
+                                        boolean commited) {
+      int totalRecordSize = payloadLength + RECORD_HEADER_SIZE;
+      if ((totalRecordSize & (~RECORD_LENGTH_MASK)) != 0) {
+        throw new IllegalArgumentException("totalRecordSize(=" + totalRecordSize + ") must have 2 highest bits 0");
+      }
+
+      return totalRecordSize | (commited ? COMMITED_STATUS_OK : COMMITED_STATUS_NOT_YET);
+    }
+
     private static void putPaddingRecord(@NotNull ByteBuffer buffer,
                                          int offsetInBuffer,
                                          int remainsToPad) {
@@ -258,26 +269,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
           "Can't create PaddingRecord for " + remainsToPad + "b leftover, must be >" + RECORD_HEADER_SIZE + " b left:" +
           "buffer.capacity(=" + buffer.capacity() + "), offsetInBuffer(=" + offsetInBuffer + ")");
       }
-      int header = paddingRecordHeader(remainsToPad, /*commited: */true);
+      int header = paddingRecordHeader(remainsToPad);
       INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, header);
     }
 
-
-    /** generates data record header given length of payload and commited status */
-    private static int dataRecordHeader(int payloadLength,
-                                        boolean commited) {
-      int totalRecordSize = payloadLength + RECORD_HEADER_SIZE;
-      if ((totalRecordSize & COMMITED_STATUS_MASK) != 0
-          || (totalRecordSize & RECORD_TYPE_MASK) != 0) {
-        throw new IllegalArgumentException("totalRecordSize(=" + totalRecordSize + ") must have 2 highest bits 0");
-      }
-
-      return totalRecordSize | (commited ? COMMITED_STATUS_OK : COMMITED_STATUS_NOT_YET);
-    }
-
     /** generates padding record header given total length of padding, and commited status */
-    private static int paddingRecordHeader(int lengthToPad,
-                                           boolean commited) {
+    private static int paddingRecordHeader(int lengthToPad) {
       if (lengthToPad == 0) {
         throw new IllegalArgumentException("lengthToPad(=" + lengthToPad + ") must be >0");
       }
@@ -286,7 +283,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
         throw new IllegalArgumentException("lengthToPad(=" + lengthToPad + ") must have 2 highest bits 0");
       }
 
-      return totalRecordSize | RECORD_TYPE_MASK | (commited ? 0 : COMMITED_STATUS_MASK);
+      //padding record has no content => immediately committed:
+      return totalRecordSize | RECORD_TYPE_MASK | COMMITED_STATUS_OK;
     }
 
     /** @return total record length (including header) */
@@ -901,6 +899,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
         }//else: record not yet commited, we can't _read_ it -- but maybe _next_ record(s) are committed?
       }
       else if (RecordLayout.isPaddingHeader(recordHeader)) {
+        //TODO RC: enable the check below after VFS version bump (currently it causes all the aologs to become
+        //         corrupted, since all them previously missed 'committed' bit in padding records
+        //if (!RecordLayout.isRecordCommitted(recordHeader)) {
+        //  throw new IOException("padding.header("+recordHeader+") is not committed -- bug?")
+        //}
+
         //just skip it
       }
       else {
@@ -946,7 +950,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
         }//else: record OK -> move to the next one
       }
       else if (RecordLayout.isPaddingHeader(recordHeader)) {
-        //padding is always committed -> move to the next one
+        //TODO RC: enable the check below after VFS version bump (currently it causes all the aologs to become
+        //         corrupted, since all them previously missed 'committed' bit in padding records
+        //if (!RecordLayout.isRecordCommitted(recordHeader)) {
+        //  throw new IOException("padding.header("+recordHeader+") is not committed -- bug?")
+        //}
+
+        //padding must be always committed -> move to the next one
       }
       else {
         //Unrecognizable garbage: we could just stop recovering here, and erase everything from
