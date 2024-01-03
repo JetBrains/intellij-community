@@ -143,9 +143,7 @@ internal object CompiledClasses {
       }
       PortableCompilationCache.IS_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
-        val jpsCache = context.portableCompilationCache
-        jpsCache.downloadCacheAndCompileProject()
-        jpsCache.upload()
+        context.portableCompilationCache.downloadCacheAndCompileProject()
       }
       else -> {
         compile(context, moduleNames, includingTestsInModules, isPortableCacheDownloaded = false)

@@ -35,7 +35,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
 
     val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
-    val shouldBeUploaded by lazy { bool(UPLOAD_PROPERTY) }
   }
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
@@ -126,9 +125,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun upload() {
-    if (remoteCache.shouldBeUploaded) {
-      uploader.upload(context.messages)
-    }
+    uploader.upload(context.messages)
   }
 
   /**
@@ -174,11 +171,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
   }
 }
-
-/**
- * If false then nothing will be uploaded
- */
-private const val UPLOAD_PROPERTY = "intellij.jps.remote.cache.upload"
 
 /**
  * URL for read/write operations
