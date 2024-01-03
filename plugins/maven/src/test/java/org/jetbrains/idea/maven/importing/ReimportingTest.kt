@@ -211,7 +211,8 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       <packaging>pom</packaging>
       """.trimIndent())
-    importProjectAsync()
+
+    updateAllProjects()
 
     if (supportsCreateAggregatorOption()) {
       assertModules("m1", "m2")
