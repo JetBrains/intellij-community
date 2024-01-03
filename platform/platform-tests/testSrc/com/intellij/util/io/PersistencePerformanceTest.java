@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -109,9 +110,17 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       Thread.sleep(100);
       IndexingRequestToken indexingRequest =
         getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
-      new IndexUpdateRunner(index, indexingRequest)
-        .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
-                    new EmptyProgressIndicator(), new ProjectDumbIndexingHistoryImpl(getProject()));
+      ProgressManager.getInstance().runProcess(() -> {
+        try {
+          new IndexUpdateRunner(index, indexingRequest)
+            .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
+                        new ProjectDumbIndexingHistoryImpl(getProject()));
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }, new EmptyProgressIndicator());
+
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

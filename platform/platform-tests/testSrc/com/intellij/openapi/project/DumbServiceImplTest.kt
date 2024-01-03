@@ -296,7 +296,6 @@ class DumbServiceImplTest {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             IndexUpdateRunner(index, project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken())
               .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
-                          indicator,
                           ProjectDumbIndexingHistoryImpl(project))
           }
         }

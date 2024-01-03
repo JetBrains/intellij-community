@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
@@ -84,27 +85,26 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     poweredIndicator.setFraction(0);
     poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
-    doIndexFiles(projectDumbIndexingHistory, poweredIndicator);
+    ProgressManager.getInstance().runProcess(() -> doIndexFiles(projectDumbIndexingHistory), poweredIndicator);
 
     LOG.info(
       snapshot.getLogResponsivenessSinceCreationMessage("Finished for " + myProject.getName() + ". Unindexed files update"));
   }
 
-  private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
-                            @NotNull ProgressIndicator progressIndicator) {
+  private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, indexingRequest);
 
     List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
     if (!fileSets.isEmpty()) {
-      doIndexFiles(projectDumbIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets);
     }
 
     // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g., new files)
     // We first index explicitly requested files, this will also mark indexed files as "up-to-date", then we index remaining dirty files
     fileSets = getRefreshedFiles(projectDumbIndexingHistory);
     if (!fileSets.isEmpty()) {
-      doIndexFiles(projectDumbIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
+      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets);
     }
   }
 
@@ -130,12 +130,11 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   }
 
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
-                            @NotNull ProgressIndicator progressIndicator,
                             IndexUpdateRunner indexUpdateRunner,
                             List<IndexUpdateRunner.FileSet> fileSets) {
     IndexUpdateRunner.IndexingInterruptedException exception = null;
     try {
-      indexUpdateRunner.indexFiles(myProject, fileSets, progressIndicator, projectDumbIndexingHistory);
+      indexUpdateRunner.indexFiles(myProject, fileSets, projectDumbIndexingHistory);
     }
     catch (IndexUpdateRunner.IndexingInterruptedException e) {
       exception = e;

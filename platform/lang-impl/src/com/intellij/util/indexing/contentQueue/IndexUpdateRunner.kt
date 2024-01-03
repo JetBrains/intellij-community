@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.WrappedProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
@@ -68,11 +69,10 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
   @Throws(IndexingInterruptedException::class)
   fun indexFiles(project: Project,
                  fileSets: List<FileSet>,
-                 indicator: ProgressIndicator,
                  projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
     val startTime = System.nanoTime()
     try {
-      doIndexFiles(project, fileSets, indicator)
+      doIndexFiles(project, fileSets)
     }
     catch (e: RuntimeException) {
       throw IndexingInterruptedException(e)
@@ -88,16 +88,19 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
   }
 
-  private fun doIndexFiles(project: Project, fileSets: List<FileSet>, indicator: ProgressIndicator) {
+  private fun doIndexFiles(project: Project, fileSets: List<FileSet>) {
     if (fileSets.all { b: FileSet -> b.files.isEmpty() }) {
       return
     }
+
+    val indicator = ProgressManager.getGlobalProgressIndicator()
     indicator.checkCanceled()
     indicator.isIndeterminate = false
 
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
     val originalIndicator = unwrapAll(indicator)
     val originalSuspender = ProgressSuspender.getSuspender(originalIndicator)
+    // we store indicator in the IndexingJob, because the job will be executed in myIndexingExecutor without global ProgressIndicator
     val indexingJob = IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender)
 
     ourIndexingJobs.add(indexingJob)
