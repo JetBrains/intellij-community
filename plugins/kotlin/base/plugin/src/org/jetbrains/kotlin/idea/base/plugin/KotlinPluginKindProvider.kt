@@ -14,11 +14,11 @@ interface KotlinPluginKindProvider {
 }
 
 enum class KotlinPluginKind {
-    FE10_PLUGIN {
-        override fun other(): KotlinPluginKind = FIR_PLUGIN
+    K1 {
+        override fun other(): KotlinPluginKind = K2
     },
-    FIR_PLUGIN {
-        override fun other(): KotlinPluginKind = FE10_PLUGIN
+    K2 {
+        override fun other(): KotlinPluginKind = K1
     };
 
     abstract fun other(): KotlinPluginKind
@@ -26,14 +26,14 @@ enum class KotlinPluginKind {
 
 fun KotlinPluginKind.getPluginKindDescription(): @Nls String {
     return when (this) {
-        KotlinPluginKind.FE10_PLUGIN -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k1")
-        KotlinPluginKind.FIR_PLUGIN -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k2")
+        KotlinPluginKind.K1 -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k1")
+        KotlinPluginKind.K2 -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k2")
     }
 }
 
 
 fun isK2Plugin(): Boolean {
-    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.FIR_PLUGIN
+    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.K2
 }
 
 /**
@@ -45,7 +45,7 @@ fun isK2Plugin(): Boolean {
 fun suppressAndroidPlugin(): Boolean = isK2Plugin()
 
 fun isFe10Plugin(): Boolean {
-    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.FE10_PLUGIN
+    return KotlinPluginKindProvider.currentPluginKind == KotlinPluginKind.K1
 }
 
 fun checkKotlinPluginKind(expectedPluginKind: KotlinPluginKind) {
@@ -56,6 +56,6 @@ fun checkKotlinPluginKind(expectedPluginKind: KotlinPluginKind) {
 }
 
 fun checkKotlinPluginKind(isK2Plugin: Boolean) {
-    val pluginKind = if (isK2Plugin) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+    val pluginKind = if (isK2Plugin) KotlinPluginKind.K2 else KotlinPluginKind.K1
     checkKotlinPluginKind(pluginKind)
 }

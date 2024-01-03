@@ -22,7 +22,7 @@ import kotlin.io.path.*
 
 abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT
 

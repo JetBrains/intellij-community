@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class OrphanOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     fun testDiff() {
         // Orphan outsider files are analyzed as out-of-content-root

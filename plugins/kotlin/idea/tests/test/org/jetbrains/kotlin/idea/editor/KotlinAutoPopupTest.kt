@@ -11,7 +11,7 @@ import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
 open class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
-    open val pluginKind: KotlinPluginKind = KotlinPluginKind.FE10_PLUGIN
+    open val pluginKind: KotlinPluginKind = KotlinPluginKind.K1
 
     override fun setUp() {
         super.setUp()

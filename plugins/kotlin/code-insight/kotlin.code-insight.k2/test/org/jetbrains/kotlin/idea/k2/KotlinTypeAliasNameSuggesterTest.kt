@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 
 class KotlinTypeAliasNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     fun testSimple() = test("String", "StringAlias")
     fun testNullable() = test("String?", "NullableString")

@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class HighlightingAfterTypingTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
   override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT
   override fun getTestDataPath() = KotlinRoot.PATH.toString()

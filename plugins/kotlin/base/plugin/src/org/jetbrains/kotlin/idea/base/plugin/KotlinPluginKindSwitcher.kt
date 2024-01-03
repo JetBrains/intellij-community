@@ -12,12 +12,12 @@ object KotlinPluginKindSwitcher {
     @JvmStatic
     fun getPluginKindByVmOptions(): KotlinPluginKind {
         val isK2Enabled = VMOptions.readOption(USE_K2_VM_OPTION_PREFIX, /*effective=*/ false).toBoolean()
-        return if (isK2Enabled) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+        return if (isK2Enabled) KotlinPluginKind.K2 else KotlinPluginKind.K1
     }
 
     @JvmStatic
     fun setPluginKindByVmOptions(newPluginKind: KotlinPluginKind) {
-        val isK2Enabled = newPluginKind == KotlinPluginKind.FIR_PLUGIN
+        val isK2Enabled = newPluginKind == KotlinPluginKind.K2
         VMOptions.setOption(USE_K2_VM_OPTION_PREFIX, isK2Enabled.toString())
     }
 

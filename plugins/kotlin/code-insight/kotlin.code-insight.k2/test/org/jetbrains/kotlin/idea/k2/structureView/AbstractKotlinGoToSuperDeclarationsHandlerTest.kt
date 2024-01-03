@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

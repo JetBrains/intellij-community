@@ -5,5 +5,5 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 
 abstract class AbstractK1PostfixTemplateTest : AbstractKotlinPostfixTemplateTestBase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FE10_PLUGIN
+        get() = KotlinPluginKind.K1
 }

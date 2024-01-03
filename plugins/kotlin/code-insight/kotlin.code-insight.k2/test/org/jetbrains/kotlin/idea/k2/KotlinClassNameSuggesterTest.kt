@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 
 class KotlinClassNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     fun testTopLevelClass() = test("x/y/Foo", "foo")
     fun testJavaLangString() = test("java/lang/String", "string")

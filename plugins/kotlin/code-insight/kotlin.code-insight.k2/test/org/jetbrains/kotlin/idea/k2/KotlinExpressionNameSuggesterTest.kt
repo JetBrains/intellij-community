@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 
 class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     fun testNumericLiteral() = test("5", "i", "n", "message")
     fun testStringLiteral() = test("\"foo\"", "string", "str", "s", "text", "message")

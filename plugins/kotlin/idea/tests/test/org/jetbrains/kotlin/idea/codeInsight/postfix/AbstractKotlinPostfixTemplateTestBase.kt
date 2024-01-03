@@ -28,8 +28,8 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
 
     protected fun performTest() {
         val disableDirective = when (pluginKind) {
-            KotlinPluginKind.FE10_PLUGIN -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginKind.FIR_PLUGIN -> IgnoreTests.DIRECTIVES.IGNORE_K2
+            KotlinPluginKind.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+            KotlinPluginKind.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }
         IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
             myFixture.configureByDefaultFile()

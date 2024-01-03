@@ -6,5 +6,5 @@ import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractKotlinPostfixTempla
 
 abstract class AbstractK2PostfixTemplateTest : AbstractKotlinPostfixTemplateTestBase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 }

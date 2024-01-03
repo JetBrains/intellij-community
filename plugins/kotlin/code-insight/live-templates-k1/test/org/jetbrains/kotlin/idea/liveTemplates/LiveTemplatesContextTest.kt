@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesContextTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FE10_PLUGIN
+        get() = KotlinPluginKind.K1
 
     @TestMetadata("InDocComment.kt")
     fun testInDocComment() {

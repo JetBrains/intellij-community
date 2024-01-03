@@ -82,7 +82,7 @@ internal class KotlinPluginKindSwitcherController {
                 checkBox(KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin")).also {
                     checkBox = it.component
                 }.onChanged {
-                    chosenKind = if (it.isSelected) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+                    chosenKind = if (it.isSelected) KotlinPluginKind.K2 else KotlinPluginKind.K1
                 }.gap(RightGap.SMALL)
                 icon(AllIcons.General.Alpha).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
@@ -118,7 +118,7 @@ internal class KotlinPluginKindSwitcherController {
     }
 
     private fun updateCheckBoxToChosenKind() {
-        checkBox.isSelected = chosenKind == KotlinPluginKind.FIR_PLUGIN
+        checkBox.isSelected = chosenKind == KotlinPluginKind.K2
     }
 
     private fun suggestRestart() {

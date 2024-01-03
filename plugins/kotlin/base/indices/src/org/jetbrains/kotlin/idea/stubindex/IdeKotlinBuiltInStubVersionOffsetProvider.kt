@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
 internal class IdeKotlinBuiltInStubVersionOffsetProvider : KotlinBuiltInStubVersionOffsetProvider {
     override fun getVersionOffset(): Int {
         return when (KotlinPluginKindProvider.currentPluginKind) {
-            KotlinPluginKind.FE10_PLUGIN -> 0
-            KotlinPluginKind.FIR_PLUGIN -> K2_BUILTINS_STUB_VERSION_OFFSET
+            KotlinPluginKind.K1 -> 0
+            KotlinPluginKind.K2 -> K2_BUILTINS_STUB_VERSION_OFFSET
         }
     }
 }

@@ -88,8 +88,8 @@ fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
 
 fun checkPluginIsCorrect(isFirPlugin: Boolean){
     if (isFirPlugin) {
-        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
+        checkKotlinPluginKind(KotlinPluginKind.K2)
     } else {
-        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
+        checkKotlinPluginKind(KotlinPluginKind.K1)
     }
 }

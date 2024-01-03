@@ -67,7 +67,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     override fun setUp() {
-        val isK2Plugin = pluginKind == KotlinPluginKind.FIR_PLUGIN
+        val isK2Plugin = pluginKind == KotlinPluginKind.K2
         System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
         super.setUp()
         checkKotlinPluginKind(pluginKind)

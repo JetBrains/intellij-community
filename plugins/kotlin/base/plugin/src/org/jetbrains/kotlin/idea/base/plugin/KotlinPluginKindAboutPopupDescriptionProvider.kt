@@ -8,10 +8,10 @@ internal class KotlinPluginKindAboutPopupDescriptionProvider : AboutPopupDescrip
     override fun getDescription(): @DetailedDescription String? {
         val pluginKind = KotlinPluginKindProvider.currentPluginKind
         return when (pluginKind) {
-            KotlinPluginKind.FIR_PLUGIN -> {
+            KotlinPluginKind.K2 -> {
                 KotlinBasePluginBundle.message("kotlin.plugin.kind.text", pluginKind.getPluginKindDescription())
             }
-            KotlinPluginKind.FE10_PLUGIN -> {
+            KotlinPluginKind.K1 -> {
                 null
             }
         }

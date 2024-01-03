@@ -2,6 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.plugin.Fe10KotlinPluginKindProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.plugin.K1KotlinPluginKindProvider"/>
   </extensions>
 </idea-plugin>

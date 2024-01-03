@@ -27,7 +27,7 @@ import java.util.*
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FE10_PLUGIN
+        get() = KotlinPluginKind.K1
 
     override fun setUp() {
         super.setUp()

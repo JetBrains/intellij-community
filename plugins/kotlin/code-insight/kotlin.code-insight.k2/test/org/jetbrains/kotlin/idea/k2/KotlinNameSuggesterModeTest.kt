@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 
 class KotlinNameSuggesterModeTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.FIR_PLUGIN
+        get() = KotlinPluginKind.K2
 
     fun testCamel() = test("Foo.Bar.Baz", Case.CAMEL, "baz", "barBaz", "fooBarBaz")
     fun testPascal() = test("Foo.Bar.Baz", Case.PASCAL, "Baz", "BarBaz", "FooBarBaz")
