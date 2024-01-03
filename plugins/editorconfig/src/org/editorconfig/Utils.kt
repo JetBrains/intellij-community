@@ -69,8 +69,7 @@ object Utils {
   fun isEnabled(project: Project): Boolean = isEnabled(CodeStyle.getSettings(project))
 
   fun isFullIntellijSettingsSupport(): Boolean =
-    ourIsFullSettingsSupportEnabledInTest ||
-    Registry.`is`(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportDotNet()
+    ourIsFullSettingsSupportEnabledInTest || Registry.`is`(FULL_SETTINGS_SUPPORT_REG_KEY)
 
   @JvmStatic
   @TestOnly
