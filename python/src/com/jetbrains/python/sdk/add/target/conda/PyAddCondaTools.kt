@@ -5,21 +5,24 @@ import com.intellij.execution.Platform
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.*
-import com.jetbrains.python.sdk.getPythonBinaryPath
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -45,7 +48,8 @@ val condaSupportedLanguages: List<LanguageLevel>
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaEnvIdentity,
                                                          existingSdks: List<Sdk>,
                                                          project: Project): Sdk {
-  val flavorAndData = PyFlavorAndData(PyCondaFlavorData(PyCondaEnv(condaIdentity, fullCondaPathOnTarget)), CondaEnvSdkFlavor.getInstance())
+  val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
+  val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor.getInstance())
 
   val additionalData = when (targetConfig) {
     null -> PythonSdkAdditionalData(flavorAndData)
@@ -58,12 +62,46 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
   sdkModificator.sdkAdditionalData = additionalData
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
-  sdkModificator.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
+  sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).getOrThrow()
   writeAction {
     sdkModificator.commitChanges()
   }
   saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   return sdk
+}
+
+private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executable)"
+
+/**
+ * @return path to Conda interpreter binary on target
+ */
+private suspend fun getCondaPythonBinaryPath(project: Project,
+                                             condaEnv: PyCondaEnv,
+                                             targetConfig: TargetEnvironmentConfiguration?): Result<FullPathOnTarget> =
+  getCondaInterpreterOutput(project, condaEnv, EmptyProgressIndicator(), PRINT_SYS_EXECUTABLE_SCRIPT, targetConfig).map { it.trim() }
+
+/**
+ * Runs python [command] and returns stdout or error
+ */
+private suspend fun getCondaInterpreterOutput(project: Project,
+                                              condaEnv: PyCondaEnv,
+                                              indicator: ProgressIndicator,
+                                              command: String,
+                                              targetConfig: TargetEnvironmentConfiguration?): Result<String> {
+  ThreadingAssertions.assertBackgroundThread()
+
+  val targetEnvRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
+
+  val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
+  addCondaPythonToTargetCommandLine(cmdBuilder, condaEnv, sdk = null)
+  cmdBuilder.addParameter("-c")
+  cmdBuilder.addParameter(command)
+  val cmd = cmdBuilder.build()
+
+  val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
+  return withContext(Dispatchers.IO) {
+    environment.createProcessWithResult(cmd).mapFlat { it.getResultStdoutStr() }
+  }
 }
 
 /**
