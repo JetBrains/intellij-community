@@ -38,6 +38,10 @@ abstract class SimpleChangesGroupingPolicy<T : Any>(val model: DefaultTreeModel)
    */
   protected abstract fun getGroupRootValueFor(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): T?
 
+  /**
+   * The node may implement [ChangesBrowserNode.NodeWithFilePath] if the grouping root has a well-defined path,
+   * and its children are typically located under it.
+   */
   protected abstract fun createGroupRootNode(value: T): ChangesBrowserNode<*>?
 
   companion object {
