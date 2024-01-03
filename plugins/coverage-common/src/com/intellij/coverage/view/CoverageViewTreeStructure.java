@@ -10,11 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
+  private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
   final CoverageViewManager.StateBean myStateBean;
-  private Object myRootNode;
 
   public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myProject = project;
@@ -25,14 +27,18 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
 
   @NotNull
   @Override
-  synchronized public Object getRootElement() {
-    if (myRootNode == null) {
-      if (myData.getCoverageEngine().getCoverageAnnotator(myProject) instanceof BaseCoverageAnnotator annotator) {
-        annotator.setVcsFilteredChildren(false);
+  public Object getRootElement() {
+    while (true) {
+      Object root = myRootNode.get();
+      if (root != null) return root;
+      Object newRoot = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
+      if (myRootNode.compareAndSet(null, newRoot)) {
+        if (myData.getCoverageEngine().getCoverageAnnotator(myProject) instanceof BaseCoverageAnnotator annotator) {
+          annotator.setVcsFilteredChildren(false);
+        }
+        return newRoot;
       }
-      myRootNode = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
     }
-    return myRootNode;
   }
 
   @Override
@@ -71,7 +77,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
   public synchronized void reset() {
-    myRootNode = null;
+    myRootNode.set(null);
   }
 }
 

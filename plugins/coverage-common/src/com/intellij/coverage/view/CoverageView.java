@@ -140,7 +140,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
-    AppExecutorUtil.getAppExecutorService().execute(() -> setWidth());
     addToCenter(myTable);
 
     attachFileStatusListener();
@@ -228,6 +227,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
             var nodeRoot = myModel.getCoverageNode(root);
             if (nodeRoot != null) {
               called = true;
+              setWidth(nodeRoot);
               resetIfAllFiltered(nodeRoot, actionToolbar);
             }
           }
@@ -319,7 +319,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
   }
 
-  private void setWidth() {
+  private void setWidth(AbstractTreeNode<?> root) {
     final int columns = myTable.getTable().getColumnCount();
     final TableColumnModel columnModel = myTable.getTable().getColumnModel();
     int tableWidth = 0;
@@ -334,7 +334,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     else {
       for (int column = 0; column < columns; column++) {
-        final int width = Math.max(getStringWidth(myModel.getColumnName(column)), getColumnWidth(column));
+        final int width = Math.max(getStringWidth(myModel.getColumnName(column)), getColumnWidth(column, root));
         columnModel.getColumn(column).setPreferredWidth(width);
         tableWidth += width;
       }
@@ -343,8 +343,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.setColumnProportion(((float)tableWidth) / (nameWidth + tableWidth) / columns);
   }
 
-  private int getColumnWidth(int column) {
-    final String preferredString = myViewExtension.getPercentage(column, (AbstractTreeNode<?>)myTreeStructure.getRootElement());
+  private int getColumnWidth(int column, AbstractTreeNode<?> root) {
+    final String preferredString = myViewExtension.getPercentage(column, root);
     if (preferredString == null) return JBUIScale.scale(60);
     return getStringWidth(preferredString);
   }
