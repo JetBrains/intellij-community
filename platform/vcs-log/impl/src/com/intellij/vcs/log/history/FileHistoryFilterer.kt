@@ -135,7 +135,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
           val visiblePack = filterWithVcs(dataPack, sortType, filters, commitCount)
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "history provider")
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                    " for computing history for $filePath with history provider")
+                    " for computing history for $filePath with history handler ${fileHistoryHandler.javaClass.name}")
           checkNotEmpty(dataPack, visiblePack, false)
           return@filter Pair(visiblePack, commitCount)
         }
