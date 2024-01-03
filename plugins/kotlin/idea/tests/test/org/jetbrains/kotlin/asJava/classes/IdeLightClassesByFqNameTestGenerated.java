@@ -235,6 +235,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         public void testSingleJvmClassName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/SingleJvmClassName.kt"));
         }
+
+        @TestMetadata("ValueClassInParametersWithJvmName.kt")
+        public void testValueClassInParametersWithJvmName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/ValueClassInParametersWithJvmName.kt"));
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -685,6 +690,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("TypePararametersInClass.kt")
         public void testTypePararametersInClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/TypePararametersInClass.kt"));
+        }
+
+        @TestMetadata("ValueClassInParametersWithJvmName.kt")
+        public void testValueClassInParametersWithJvmName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ValueClassInParametersWithJvmName.kt"));
         }
 
         @TestMetadata("VarArgs.kt")
