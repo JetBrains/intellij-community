@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
@@ -21,8 +22,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.psi.util.PsiUtilBase
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.*
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
@@ -240,13 +242,13 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
             configExtra(fileText)
 
-            val hint = ActionHint.parse(myFixture.file, contents.replace("\${file}", fileName, ignoreCase = true))
+            val hint = myFixture.file.actionHint(contents.replace("\${file}", fileName, ignoreCase = true))
             actionHint = hint
             val intention = runInEdtAndGet { findActionWithText(hint.expectedText) }
             if (hint.shouldPresent()) {
                 if (intention == null) {
                     fail(
-                        "Action with text '" + hint.expectedText + "' not found\nAvailable actions:\n" +
+                        "Action with text '" + hint.expectedText + "' not found\n${myFixture.availableIntentions.size} available actions:\n" +
                                 myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
                     return
                 }
@@ -290,13 +292,18 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(myFixture.module, fileText)
             }
         }
+    }
 
+    private fun PsiFile.actionHint(contents: String): ActionHint {
+      return ActionHint.parse(this, contents,
+                              actionPrefix?.let { ".*//(?: $it)?" } ?: "//",
+                              true)
     }
 
     private fun applyAction(contents: String, hint: ActionHint, intention: IntentionAction, fileName: String) {
         val unwrappedIntention = unwrapIntention(intention)
         if (shouldCheckIntentionActionType) {
-            if (intention.asModCommandAction() == null) {
+            if (intention.asModCommandAction() == null && unwrappedIntention !is LocalQuickFixOnPsiElement) {
                 assertInstanceOf(unwrappedIntention, QuickFixActionBase::class.java)
             }
         }
@@ -365,7 +372,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
-        val actionHint = ActionHint.parse(myFixture.file, text)
+        val actionHint = myFixture.file.actionHint(text)
         if (actionHint.shouldPresent() && !InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
             return
         }
@@ -438,4 +445,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     override val additionalToolDirectives: Array<String>
         get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)
+
+    protected open val actionPrefix: String? = null
 }

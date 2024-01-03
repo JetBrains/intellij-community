@@ -4695,7 +4695,153 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/quickfix/removeUnused")
+    public static class RemoveUnused extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("companionViaImport3.kt")
+        public void testCompanionViaImport3() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/companionViaImport3.kt");
+        }
+
+        @TestMetadata("deledage.kt")
+        public void testDeledage() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/deledage.kt");
+        }
+
+        @TestMetadata("importEnumValues.kt")
+        public void testImportEnumValues() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/importEnumValues.kt");
+        }
+
+        @TestMetadata("importObjectFun.kt")
+        public void testImportObjectFun() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/importObjectFun.kt");
+        }
+
+        @TestMetadata("notTriangle.kt")
+        public void testNotTriangle() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/notTriangle.kt");
+        }
+
+        @TestMetadata("secondaryLocalClassConstructor.kt")
+        public void testSecondaryLocalClassConstructor() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/secondaryLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("simpleUnusedEnumEntry.kt")
+        public void testSimpleUnusedEnumEntry() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/simpleUnusedEnumEntry.kt");
+        }
+
+        @TestMetadata("triangle.kt")
+        public void testTriangle() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/triangle.kt");
+        }
+
+        @TestMetadata("triangle2.kt")
+        public void testTriangle2() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/triangle2.kt");
+        }
+
+        @TestMetadata("typeAlias2.kt")
+        public void testTypeAlias2() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/typeAlias2.kt");
+        }
+
+        @TestMetadata("unusedClass.kt")
+        public void testUnusedClass() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedClass.kt");
+        }
+
+        @TestMetadata("unusedConstructor.kt")
+        public void testUnusedConstructor() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedConstructor.kt");
+        }
+
+        @TestMetadata("unusedDelegatedConstructor.kt")
+        public void testUnusedDelegatedConstructor() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedDelegatedConstructor.kt");
+        }
+
+        @TestMetadata("unusedDelegatedConstructorSuper.kt")
+        public void testUnusedDelegatedConstructorSuper() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedDelegatedConstructorSuper.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry.kt")
+        public void testUnusedEnumEntry() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedEnumEntry.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry2.kt")
+        public void testUnusedEnumEntry2() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedEnumEntry2.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry3.kt")
+        public void testUnusedEnumEntry3() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedEnumEntry3.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry4.kt")
+        public void testUnusedEnumEntry4() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedEnumEntry4.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry5.kt")
+        public void testUnusedEnumEntry5() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedEnumEntry5.kt");
+        }
+
+        @TestMetadata("unusedFunction.kt")
+        public void testUnusedFunction() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedFunction.kt");
+        }
+
+        @TestMetadata("unusedProperty.kt")
+        public void testUnusedProperty() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedProperty.kt");
+        }
+
+        @TestMetadata("unusedPropertyAsConstructorParameter.kt")
+        public void testUnusedPropertyAsConstructorParameter() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedPropertyAsConstructorParameter.kt");
+        }
+
+        @TestMetadata("unusedPropertyAsConstructorParameter2.kt")
+        public void testUnusedPropertyAsConstructorParameter2() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedPropertyAsConstructorParameter2.kt");
+        }
+
+        @TestMetadata("unusedTypeParameter.kt")
+        public void testUnusedTypeParameter() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/unusedTypeParameter.kt");
+        }
+
+        @TestMetadata("usedClassAsAlias.kt")
+        public void testUsedClassAsAlias() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/usedClassAsAlias.kt");
+        }
+
+        @TestMetadata("usedFunAsAlias.kt")
+        public void testUsedFunAsAlias() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/usedFunAsAlias.kt");
+        }
+
+        @TestMetadata("usedObjectAsAlias.kt")
+        public void testUsedObjectAsAlias() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/usedObjectAsAlias.kt");
+        }
+
+        @TestMetadata("usedVarAsAlias.kt")
+        public void testUsedVarAsAlias() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/removeUnused/usedVarAsAlias.kt");
+        }
+    }
 
 
 

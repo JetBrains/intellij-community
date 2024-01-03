@@ -311,7 +311,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/removeSuspend", pattern = pattern, isIgnored = true)
             model("quickfix/removeToStringInStringTemplate", pattern = pattern, isIgnored = true)
             model("quickfix/removeTypeVariance", pattern = pattern, isIgnored = true)
-            model("quickfix/removeUnused", pattern = pattern, isIgnored = true)
+            model("quickfix/removeUnused", pattern = pattern)
             model("quickfix/removeUnusedParameter", pattern = pattern, isIgnored = true)
             model("quickfix/removeUnusedReceiver", pattern = pattern, isIgnored = true)
             model("quickfix/removeUseSiteTarget", pattern = pattern, isIgnored = true)

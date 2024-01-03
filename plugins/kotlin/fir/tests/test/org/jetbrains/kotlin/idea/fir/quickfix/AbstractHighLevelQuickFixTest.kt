@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
@@ -19,6 +18,7 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
     }
 
     override fun isFirPlugin(): Boolean = true
+
     override fun tearDown() {
         runAll(
             { runInEdtAndWait { project.invalidateCaches() } },
@@ -59,8 +59,11 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
 
     // TODO: Enable these as more actions/inspections are enabled, and/or add more FIR-specific directives
     override fun checkForUnexpectedErrors() {}
+
+    override val inspectionFileName: String
+        get() = ".k2Inspection"
+
+    override val actionPrefix: String? = "K2_ACTION:"
+
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {}
-    override fun parseInspectionsToEnable(beforeFileName: String, beforeFileText: String): List<InspectionProfileEntry> {
-        return emptyList()
-    }
 }

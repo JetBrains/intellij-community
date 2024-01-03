@@ -199,7 +199,15 @@ class KotlinRefsHolder {
 class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
     @Nls
     private val name: String =
-      KotlinBaseHighlightingBundle.message("safe.delete.text", declaration.name ?: declaration.text)
+        KotlinBaseHighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
+
+    private fun KtNamedDeclaration.toNameKey(): String =
+        when (this) {
+            is KtPrimaryConstructor -> "safe.delete.primary.ctor.text.0"
+            is KtSecondaryConstructor -> "safe.delete.secondary.ctor.text.0"
+            is KtParameter -> "safe.delete.parameter.text.0"
+            else -> "safe.delete.text.0"
+        }
 
     override fun getText(): @IntentionName String {
        return name
