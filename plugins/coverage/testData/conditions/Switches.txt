@@ -1,0 +1,159 @@
+Line 1 coverage: FULL
+Hits: 1
+
+Line 4 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 1
+        case 2: 0
+
+Line 6 coverage: FULL
+Hits: 1
+
+Line 7 coverage: FULL
+Hits: 1
+
+Line 17 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 0
+        case 2: 1
+
+Line 23 coverage: FULL
+Hits: 1
+
+Line 30 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 0
+        case 2: 0
+        default: 1
+
+Line 40 coverage: FULL
+Hits: 1
+
+Line 47 coverage: PARTIAL
+Hits: 2
+    x
+        case 1: 1
+        case 2: 1
+
+Line 49 coverage: FULL
+Hits: 1
+
+Line 50 coverage: FULL
+Hits: 1
+
+Line 53 coverage: FULL
+Hits: 1
+
+Line 60 coverage: FULL
+Hits: 3
+    x
+        case 1: 1
+        case 2: 1
+        default: 1
+
+Line 62 coverage: FULL
+Hits: 1
+
+Line 63 coverage: FULL
+Hits: 1
+
+Line 66 coverage: FULL
+Hits: 1
+
+Line 67 coverage: FULL
+Hits: 1
+
+Line 70 coverage: FULL
+Hits: 1
+
+Line 77 coverage: PARTIAL
+Hits: 2
+    x
+        case 1: 1
+        case 2: 1
+        default: 0
+
+Line 79 coverage: FULL
+Hits: 1
+
+Line 80 coverage: FULL
+Hits: 1
+
+Line 83 coverage: FULL
+Hits: 1
+
+Line 84 coverage: FULL
+Hits: 1
+
+Line 94 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 1
+        case 2: 0
+
+Line 96 coverage: FULL
+Hits: 1
+
+Line 99 coverage: FULL
+Hits: 1
+
+Line 106 coverage: FULL
+Hits: 3
+    x
+        case 1: 1
+        case 2: 1
+Unknown outcome: 1
+Line 108 coverage: FULL
+Hits: 1
+
+Line 109 coverage: FULL
+Hits: 1
+
+Line 112 coverage: FULL
+Hits: 1
+
+Line 119 coverage: PARTIAL
+Hits: 1
+Line 121 coverage: FULL
+Hits: 1
+
+Line 122 coverage: FULL
+Hits: 1
+
+Line 152 coverage: PARTIAL
+Hits: 3
+Line 154 coverage: FULL
+Hits: 1
+
+Line 155 coverage: FULL
+Hits: 1
+
+Line 158 coverage: FULL
+Hits: 1
+
+Line 159 coverage: FULL
+Hits: 1
+
+Line 162 coverage: FULL
+Hits: 1
+
+Line 169 coverage: PARTIAL
+Hits: 3
+Line 171 coverage: FULL
+Hits: 1
+
+Line 172 coverage: FULL
+Hits: 1
+
+Line 175 coverage: FULL
+Hits: 1
+
+Line 176 coverage: FULL
+Hits: 1
+
+Line 179 coverage: FULL
+Hits: 1
+

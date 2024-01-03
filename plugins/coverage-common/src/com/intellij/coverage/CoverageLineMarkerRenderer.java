@@ -16,7 +16,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -154,8 +157,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     final LineData lineData = getLineData(lineNumber);
     final EditorImpl uEditor;
     final String report;
-    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && !mySubCoverageActive &&
-        (report = getReport(editor, lineNumber)) != null) {
+    if (!mySubCoverageActive &&
+        (report = getReport(lineData, lineNumber, editor, myCoverageSuite.getCoverageEngine())) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
@@ -181,9 +184,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   @Nullable
-  private String getReport(final Editor editor, final int lineNumber) {
-    final LineData lineData = getLineData(lineNumber);
-
+  private static String getReport(Editor editor, int lineNumber, LineData lineData, CoverageEngine engine) {
     final Document document = editor.getDocument();
     final Project project = editor.getProject();
     assert project != null;
@@ -194,7 +195,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
-    return myCoverageSuite.getCoverageEngine().generateBriefReport(editor, psiFile, lineNumber, lineStartOffset, lineEndOffset, lineData);
+    return engine.generateBriefReport(editor, psiFile, lineNumber, lineStartOffset, lineEndOffset, lineData);
   }
 
   protected JComponent createActionsToolbar(final Editor editor, final int lineNumber, Disposable parent) {
@@ -259,6 +260,13 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   @Override
   public Position getPosition() {
     return Position.LEFT;
+  }
+
+  public static @Nullable String getReport(@Nullable LineData lineData, int lineNumber, Editor editor, CoverageEngine engine) {
+    if (lineData != null && lineData.getStatus() != LineCoverage.NONE) {
+      return getReport(editor, lineNumber, lineData, engine);
+    }
+    return null;
   }
 
   private class GotoPreviousCoveredLineAction extends BaseGotoCoveredLineAction {

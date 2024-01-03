@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
@@ -126,9 +127,9 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun openFiles() {
-    openClass("foo.bar.BarClass")
-    openClass("foo.bar.UncoveredClass")
-    openClass("foo.FooClass")
+    openClass(myProject, "foo.bar.BarClass")
+    openClass(myProject, "foo.bar.UncoveredClass")
+    openClass(myProject, "foo.FooClass")
   }
 
   private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
@@ -140,7 +141,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   private suspend fun getHighlighters(className: String): List<RangeHighlighter>? = withTimeout(1000) {
     CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
     withContext(Dispatchers.EDT) {
-      findEditor(className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
+      findEditor(myProject, className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
     }
   }
 
@@ -152,25 +153,26 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   }
 
 
-  private suspend fun findEditor(className: String): EditorImpl {
-    val psiClass = getPsiClass(className)
-    return readAction { findEditor(psiClass) }
-  }
+}
 
-  private fun findEditor(psiClass: PsiClass): EditorImpl {
-    val psiFile = psiClass.containingFile
-    return FileEditorManager.getInstance(myProject).allEditors.asSequence()
-      .filterIsInstance<TextEditor>()
-      .map { it.editor }.filterIsInstance<EditorImpl>()
-      .filter { it.virtualFile.getPsiFile(myProject) == psiFile }.first()
-  }
+internal suspend fun findEditor(project: Project, className: String): EditorImpl {
+  val psiClass = getPsiClass(project, className)
+  return readAction { findEditor(psiClass) }
+}
 
-  private suspend fun openClass(className: String) {
-    val psiClass = getPsiClass(className)
-    writeAction { psiClass.navigate(true) }
-  }
+private fun findEditor(psiClass: PsiClass): EditorImpl {
+  val psiFile = psiClass.containingFile
+  return FileEditorManager.getInstance(psiClass.project).allEditors.asSequence()
+    .filterIsInstance<TextEditor>()
+    .map { it.editor }.filterIsInstance<EditorImpl>()
+    .filter { it.virtualFile.getPsiFile(psiClass.project) == psiFile }.first()
+}
 
-  private suspend fun getPsiClass(className: String) = readAction {
-    JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.projectScope(myProject))!!
-  }
+internal suspend fun openClass(project: Project, className: String) {
+  val psiClass = getPsiClass(project, className)
+  writeAction { psiClass.navigate(true) }
+}
+
+private suspend fun getPsiClass(project: Project, className: String) = readAction {
+  JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))!!
 }
