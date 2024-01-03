@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -344,6 +345,11 @@ object ChangeSignatureFixFactory {
     private fun createRemoveParameterFix(symbol: KtSymbol, psi: PsiElement): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         if (symbol !is KtParameterSymbol) return emptyList()
         val containingSymbol = symbol.getContainingSymbol() as? KtFunctionLikeSymbol ?: return emptyList()
+        if (containingSymbol is KtFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
+            containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
+            containingSymbol.origin == KtSymbolOrigin.LIBRARY
+        ) return emptyList()
+
         val isConstructor = containingSymbol is KtConstructorSymbol
         val name = (symbol as? KtNamedSymbol)?.name?.asString() ?: return emptyList()
         psi.parentOfType<KtCallElement>(true) ?: return emptyList()

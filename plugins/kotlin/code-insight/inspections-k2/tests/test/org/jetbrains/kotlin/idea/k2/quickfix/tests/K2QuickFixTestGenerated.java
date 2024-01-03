@@ -413,6 +413,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionSecondParameter2.kt");
         }
 
+        @TestMetadata("removeLibraryClassParameter.kt")
+        public void testRemoveLibraryClassParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeLibraryClassParameter.kt");
+        }
+
         @TestMetadata("removeNamedParameter.kt")
         public void testRemoveNamedParameter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/removeNamedParameter.kt");

@@ -3210,6 +3210,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/removeFunctionSecondParameter2.kt");
         }
 
+        @TestMetadata("removeLibraryClassParameter.kt")
+        public void testRemoveLibraryClassParameter() throws Exception {
+            runTest("testData/quickfix/changeSignature/removeLibraryClassParameter.kt");
+        }
+
         @TestMetadata("removeNamedParameter.kt")
         public void testRemoveNamedParameter() throws Exception {
             runTest("testData/quickfix/changeSignature/removeNamedParameter.kt");
