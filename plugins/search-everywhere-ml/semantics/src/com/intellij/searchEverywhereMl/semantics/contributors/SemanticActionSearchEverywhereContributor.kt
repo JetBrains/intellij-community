@@ -98,6 +98,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                                          progressIndicator: ProgressIndicator,
                                          consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     runBlockingCancellable {
+      model.buildGroupMappings()
       runUpdateSessionForActionSearch(model.updateSession) { presentationProvider ->
         val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
         val mutex = Mutex()
