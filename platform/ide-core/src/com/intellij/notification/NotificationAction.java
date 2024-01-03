@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -63,7 +64,7 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @ApiStatus.Internal
-  public static final class Simple extends NotificationAction implements ActionWithDelegate<Object>, FusReportableAction {
+  public static final class Simple extends NotificationAction implements ActionWithDelegate<Object>, ActionIdProvider {
     private final BiConsumer<? super AnActionEvent, ? super Notification> myAction;
     private final boolean myExpire;
     private final Object myActionInstance;  // for FUS
@@ -103,8 +104,11 @@ public abstract class NotificationAction extends DumbAwareAction {
 
     @Override
     public @NotNull String getId() {
-      if (myActionInstance instanceof FusReportableAction reportableAction) {
-        return reportableAction.getId();
+      if (myActionInstance instanceof ActionIdProvider actionIdProvider) {
+        String providerId = actionIdProvider.getId();
+        if (providerId != null) {
+          return providerId;
+        }
       }
       return getDelegate().getClass().getName();
     }
@@ -114,13 +118,13 @@ public abstract class NotificationAction extends DumbAwareAction {
    * Implement for {@link Simple} actions which should report custom action ID to FUS
    */
   @ApiStatus.Internal
-  public interface ActionRunnable extends Runnable, FusReportableAction {
+  public interface ActionRunnable extends Runnable, ActionIdProvider {
   }
 
   /**
    * @see ActionRunnable
    */
   @ApiStatus.Internal
-  public interface ActionConsumer extends BiConsumer<@NotNull AnActionEvent, @NotNull Notification>, FusReportableAction {
+  public interface ActionConsumer extends BiConsumer<@NotNull AnActionEvent, @NotNull Notification>, ActionIdProvider {
   }
 }

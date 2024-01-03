@@ -15,7 +15,7 @@ public interface ActionWithDelegate<T> {
 
   /**
    *
-   * @deprecated not used, for FUS use ActionIdProvider#getId or FusReportableAction#getId
+   * @deprecated not used, for FUS use ActionIdProvider#getId
    */
   @Deprecated
   default String getPresentableName() {
