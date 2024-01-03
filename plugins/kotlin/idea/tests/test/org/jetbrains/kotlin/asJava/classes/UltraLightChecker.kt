@@ -34,7 +34,11 @@ object UltraLightChecker {
 
     fun checkByJavaFile(testDataPath: String, lightClasses: List<PsiClass>) {
         val expectedTextFile = getJavaFileForTest(testDataPath)
-        val renderedResult = renderLightClasses(testDataPath, lightClasses)
+        val renderedResult = renderLightClasses(
+            testDataPath,
+            lightClasses.sortedBy { it.qualifiedName ?: it.name.toString() },
+        )
+
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
     }
 
