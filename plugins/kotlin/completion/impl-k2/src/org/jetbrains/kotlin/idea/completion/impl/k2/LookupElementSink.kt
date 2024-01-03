@@ -25,6 +25,9 @@ internal class LookupElementSink(
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
 ) {
+    private val wrappers: List<LookupElementWrapper> by lazy {
+        WrappersProvider.getWrappersForLookupElement(parameters)
+    }
 
     fun withPriority(priority: Int): LookupElementSink =
         LookupElementSink(resultSet, parameters, priority)
@@ -46,7 +49,6 @@ internal class LookupElementSink(
     }
 
     private fun applyWrappersToLookupElement(lookupElement: LookupElement): LookupElement {
-        val wrappers = WrappersProvider.getWrappersForLookupElement(parameters)
         return wrappers.wrap(lookupElement)
     }
 }
@@ -61,11 +63,13 @@ private object WrappersProvider {
 
             else -> LookupElementWrapper(::WrapSingleStringTemplateEntryWithBraces)
         }
+        val isPositionAtFunctionLiteralStart = isAtFunctionLiteralStart(parameters.ijParameters.position)
 
-        return listOf(
-            stringTemplateWrapper,
-            LookupElementWrapper { HandleCompletionCharLookupElementDecorator(it, parameters.ijParameters) }
-        )
+        return buildList {
+            add(stringTemplateWrapper)
+            add(LookupElementWrapper { HandleCompletionCharLookupElementDecorator(it, parameters.ijParameters) })
+            if (isPositionAtFunctionLiteralStart) add(SuppressItemSelectionByCharsOnTypingWrapper)
+        }
     }
 }
 
@@ -112,4 +116,9 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
         val identifier = element.parent as? KtNameReferenceExpression ?: return null
         return identifier.parent as? KtStringTemplateEntryWithExpression
     }
+}
+
+private object SuppressItemSelectionByCharsOnTypingWrapper : LookupElementWrapper {
+    override fun wrap(element: LookupElement): LookupElement =
+        element.apply { putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit) }
 }

@@ -164,7 +164,7 @@ class BasicCompletionSession(
                 lookupElement
             }
 
-            if (isInFunctionLiteralStart(position)) {
+            if (isAtFunctionLiteralStart(position)) {
                 collector.addLookupElementPostProcessor { lookupElement ->
                     lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
                     lookupElement
@@ -178,16 +178,6 @@ class BasicCompletionSession(
         }
 
         completionKind.generateCategories()
-    }
-
-    private fun isInFunctionLiteralStart(position: PsiElement): Boolean {
-        var prev = position.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment }
-        if (prev?.node?.elementType == KtTokens.LPAR) {
-            prev = prev?.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment }
-        }
-        if (prev?.node?.elementType != KtTokens.LBRACE) return false
-        val functionLiteral = prev!!.parent as? KtFunctionLiteral ?: return false
-        return functionLiteral.lBrace == prev
     }
 
     override fun createSorter(): CompletionSorter {

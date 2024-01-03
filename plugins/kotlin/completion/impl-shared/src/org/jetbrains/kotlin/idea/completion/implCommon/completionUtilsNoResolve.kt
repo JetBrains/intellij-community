@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
@@ -222,3 +223,12 @@ fun KtElement.reference() = when (this) {
 }
 
 val KDocLink.qualifier: List<String> get() = getLinkText().split('.').dropLast(1)
+
+fun isAtFunctionLiteralStart(position: PsiElement): Boolean {
+    val lBrace = PsiTreeUtil.prevCodeLeaf(position)
+        ?.let { if (it.node.elementType == KtTokens.LPAR) PsiTreeUtil.prevCodeLeaf(it) else it }
+        ?.takeIf { it.node.elementType == KtTokens.LBRACE }
+
+    val functionLiteral = lBrace?.parent as? KtFunctionLiteral ?: return false
+    return functionLiteral.lBrace == lBrace
+}
