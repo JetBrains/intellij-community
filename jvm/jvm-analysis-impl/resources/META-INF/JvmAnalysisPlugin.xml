@@ -152,6 +152,11 @@
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
 
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
+
+    <!--console filter-->
+    <consoleFilterProvider implementation="com.intellij.analysis.customization.console.ClassLoggingConsoleFilterProvider"/>
+    <advancedSetting id="process.console.output.to.find.class.names" default="false" groupKey="group.advanced.settings.jvm" bundle="messages.JvmAnalysisBundle"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.customization.console.LogConsoleLogHandlerCollectors"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

@@ -23,6 +23,8 @@ internal class LoggingUtil {
 
     internal const val AKKA_LOGGING = "akka.event.LoggingAdapter"
 
+    internal const val IDEA_LOGGER = "com.intellij.openapi.diagnostic.Logger"
+
     private val LOGGER_CLASSES = setOf(SLF4J_LOGGER, LOG4J_LOGGER)
     private val LEGACY_LOGGER_CLASSES = setOf(LEGACY_LOG4J_LOGGER, LEGACY_CATEGORY_LOGGER,
                                               LEGACY_APACHE_COMMON_LOGGER, LEGACY_JAVA_LOGGER)
@@ -48,6 +50,9 @@ internal class LoggingUtil {
       CallMatcher.instanceCall(LEGACY_CATEGORY_LOGGER, "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
       CallMatcher.instanceCall(LEGACY_APACHE_COMMON_LOGGER, "trace", "debug", "info", "warn", "error", "fatal"),
       CallMatcher.instanceCall(LEGACY_JAVA_LOGGER, "fine", "log", "finer", "finest", "logp", "logrb", "info", "severe", "warning", "config")
+    )
+    internal val IDEA_LOG_MATCHER: CallMatcher = CallMatcher.anyOf(
+      CallMatcher.instanceCall(IDEA_LOGGER, "trace", "debug", "info", "warn", "error"),
     )
 
     private val LEGACY_METHODS_WITH_LEVEL = setOf("log", "l7dlog", "logp", "logrb")
