@@ -2,7 +2,6 @@
 package com.intellij.execution.junit.references
 
 import com.intellij.psi.*
-import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.*
 
 internal class DisabledIfEnabledIfReference(element: PsiLanguageInjectionHost) : BaseJunitAnnotationReference(element) {
@@ -12,13 +11,5 @@ internal class DisabledIfEnabledIfReference(element: PsiLanguageInjectionHost) :
     val atClassLevel = literalMethod == null
     val isStatic = method.hasModifierProperty(PsiModifier.STATIC)
     return !((inExternalClazz || atClassLevel) && !isStatic) && method.parameterList.isEmpty
-  }
-
-  object Provider : UastInjectionHostReferenceProvider() {
-    override fun getReferencesForInjectionHost(
-      uExpression: UExpression,
-      host: PsiLanguageInjectionHost,
-      context: ProcessingContext
-    ): Array<PsiReference> = arrayOf(DisabledIfEnabledIfReference(host))
   }
 }

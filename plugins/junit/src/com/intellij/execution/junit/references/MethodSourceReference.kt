@@ -2,10 +2,8 @@
 package com.intellij.execution.junit.references
 
 import com.intellij.psi.*
-import com.intellij.util.ProcessingContext
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
 
 class MethodSourceReference(element: PsiLanguageInjectionHost) : BaseJunitAnnotationReference(element) {
@@ -13,13 +11,5 @@ class MethodSourceReference(element: PsiLanguageInjectionHost) : BaseJunitAnnota
     val isStatic = method.hasModifierProperty(PsiModifier.STATIC)
     val psiClass = method.containingClass ?: return false
     return method.parameterList.isEmpty && TestUtils.testInstancePerClass(psiClass) != isStatic
-  }
-
-  object Provider : UastInjectionHostReferenceProvider() {
-    override fun getReferencesForInjectionHost(
-      uExpression: UExpression,
-      host: PsiLanguageInjectionHost,
-      context: ProcessingContext
-    ): Array<PsiReference> = arrayOf(MethodSourceReference(host))
   }
 }

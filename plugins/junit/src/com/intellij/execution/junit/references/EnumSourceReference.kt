@@ -6,8 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.util.ProcessingContext
-import org.jetbrains.uast.UExpression
 
 class EnumSourceReference(element: PsiLanguageInjectionHost) : PsiReferenceBase<PsiLanguageInjectionHost>(element, false) {
   override fun bindToElement(element: PsiElement): PsiElement {
@@ -42,13 +40,5 @@ class EnumSourceReference(element: PsiLanguageInjectionHost) : PsiReferenceBase<
     val annotation = PsiTreeUtil.getParentOfType(literal, PsiAnnotation::class.java, false) ?: return null
     val memberValue = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
     return PsiUtil.resolveClassInClassTypeOnly((memberValue as? PsiClassObjectAccessExpression)?.operand?.type)
-  }
-
-  object Provider : UastInjectionHostReferenceProvider() {
-    override fun getReferencesForInjectionHost(
-      uExpression: UExpression,
-      host: PsiLanguageInjectionHost,
-      context: ProcessingContext
-    ): Array<PsiReference> = arrayOf(EnumSourceReference(host))
   }
 }

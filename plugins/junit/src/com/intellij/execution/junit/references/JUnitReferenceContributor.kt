@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.references
 
+import com.intellij.patterns.StandardPatterns.string
 import com.intellij.patterns.uast.capture
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.*
@@ -16,21 +17,26 @@ class JUnitReferenceContributor : PsiReferenceContributor() {
         ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE,
         PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
       ),
-      MethodSourceReference.Provider
+      object : UastInjectionHostReferenceProvider() {
+        override fun getReferencesForInjectionHost(
+          uExpression: UExpression,
+          host: PsiLanguageInjectionHost,
+          context: ProcessingContext
+        ): Array<PsiReference> = arrayOf(MethodSourceReference(host))
+      }
     )
     registrar.registerUastReferenceProvider(
-      injectionHostUExpression().annotationParam(
-        ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF,
-        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+      injectionHostUExpression().annotationParams(
+        listOf(ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF, ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF),
+        string().equalTo(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
       ),
-      DisabledIfEnabledIfReference.Provider
-    )
-    registrar.registerUastReferenceProvider(
-      injectionHostUExpression().annotationParam(
-        ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF,
-        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
-      ),
-      DisabledIfEnabledIfReference.Provider
+      object : UastInjectionHostReferenceProvider() {
+        override fun getReferencesForInjectionHost(
+          uExpression: UExpression,
+          host: PsiLanguageInjectionHost,
+          context: ProcessingContext
+        ): Array<PsiReference> = arrayOf(DisabledIfEnabledIfReference(host))
+      }
     )
     registrar.registerUastReferenceProvider(
       injectionHostUExpression()
@@ -39,7 +45,13 @@ class JUnitReferenceContributor : PsiReferenceContributor() {
           val name = ((mode as? UReferenceExpression)?.referenceNameElement as USimpleNameReferenceExpression?)?.identifier
           name == "INCLUDE" || name == "EXCLUDE"
         }),
-      EnumSourceReference.Provider
+      object : UastInjectionHostReferenceProvider() {
+        override fun getReferencesForInjectionHost(
+          uExpression: UExpression,
+          host: PsiLanguageInjectionHost,
+          context: ProcessingContext
+        ): Array<PsiReference> = arrayOf(EnumSourceReference(host))
+      }
     )
     registrar.registerUastReferenceProvider(
       injectionHostUExpression().annotationParam(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, "resources"),
