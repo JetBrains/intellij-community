@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.plugin
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 
-class K2KotlinPluginModeProvider : KotlinPluginModeProvider {
+internal class K2KotlinPluginModeProvider : KotlinPluginModeProvider {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 }
