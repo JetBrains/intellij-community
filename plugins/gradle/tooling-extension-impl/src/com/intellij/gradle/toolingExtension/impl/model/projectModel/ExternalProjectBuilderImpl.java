@@ -85,7 +85,7 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
     boolean skipTasks;
     try {
-      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.findProperty("idea.gradle.do.not.build.tasks")).trim());
     }
     catch (Throwable ignored) {
       skipTasks = false;
