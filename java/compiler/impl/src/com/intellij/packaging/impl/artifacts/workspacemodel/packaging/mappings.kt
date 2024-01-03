@@ -2,13 +2,13 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel.packaging
 
 import com.intellij.packaging.elements.PackagingElement
+import com.intellij.packaging.elements.PackagingExternalMapping
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 
-const val PACKAGING_ELEMENTS = "intellij.artifacts.packaging.elements"
 internal val MutableEntityStorage.mutableElements: MutableExternalEntityMapping<PackagingElement<*>>
-  get() = this.getMutableExternalMapping(PACKAGING_ELEMENTS)
+  get() = this.getMutableExternalMapping(PackagingExternalMapping.key)
 val EntityStorage.elements: ExternalEntityMapping<PackagingElement<*>>
-  get() = this.getExternalMapping(PACKAGING_ELEMENTS)
+  get() = this.getExternalMapping(PackagingExternalMapping.key)

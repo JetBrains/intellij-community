@@ -85,12 +85,12 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
         return Unit.INSTANCE;
       }));
 
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;
   }
 
   protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
-    ExternalEntityMapping<Object> mapping = diff.getExternalMapping("intellij.artifacts.packaging.elements");
+    ExternalEntityMapping<Object> mapping = diff.getExternalMapping(PackagingExternalMapping.key);
     return mapping.getFirstEntity(this);
   }
 
@@ -142,7 +142,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       else {
         noStorageChange.get();
         MutableEntityStorage builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         PackagingElementEntity entity = (PackagingElementEntity)mapping.getFirstEntity(this);
         if (entity == null) {
           throw new RuntimeException("Cannot find an entity");
@@ -155,7 +155,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   protected @NotNull PackagingElementEntity getThisEntity() {
     assert myStorage != null;
     EntityStorage base = myStorage.getBase();
-    ExternalEntityMapping<Object> externalMapping = base.getExternalMapping("intellij.artifacts.packaging.elements");
+    ExternalEntityMapping<Object> externalMapping = base.getExternalMapping(PackagingExternalMapping.key);
     PackagingElementEntity entity = (PackagingElementEntity)externalMapping.getFirstEntity(this);
     if (entity == null) {
       throw new RuntimeException("Cannot find an entity");

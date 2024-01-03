@@ -9,6 +9,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
@@ -92,7 +93,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       entityBuilder.setChildren(children);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
     return entity;
   }
 }

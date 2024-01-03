@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.openapi.project.Project;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -43,7 +44,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     Objects.requireNonNull(myFilePath, "filePath is not specified");
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(myFilePath);
     DirectoryCopyPackagingElementEntity addedEntity = diff.addEntity(DirectoryCopyPackagingElementEntity.create(fileUrl, source));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;
   }
 

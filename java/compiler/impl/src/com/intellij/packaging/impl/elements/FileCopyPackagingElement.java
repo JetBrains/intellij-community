@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -156,7 +157,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     else {
       addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source));
     }
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;
   }
 

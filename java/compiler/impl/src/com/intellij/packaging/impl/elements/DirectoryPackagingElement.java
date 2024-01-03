@@ -6,6 +6,7 @@ import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -106,7 +107,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
       entityBuilder.setChildren(children);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
     return entity;
   }
 

@@ -125,7 +125,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
       entityBuilder.setArtifact(id);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
     return entity;
   }
 

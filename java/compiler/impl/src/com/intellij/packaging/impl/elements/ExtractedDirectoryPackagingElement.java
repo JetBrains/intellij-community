@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -111,7 +112,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(this.myFilePath);
 
     ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(ExtractedDirectoryPackagingElementEntity.create(fileUrl, this.myPathInJar, source));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;
   }
 
