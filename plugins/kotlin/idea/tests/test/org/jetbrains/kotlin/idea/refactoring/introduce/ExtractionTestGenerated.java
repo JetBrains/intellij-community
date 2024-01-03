@@ -553,6 +553,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/ManyOccurrences.kt");
             }
 
+            @TestMetadata("ManyOccurrencesInSingleContainer.kt")
+            public void testManyOccurrencesInSingleContainer() throws Exception {
+                runTest("testData/refactoring/introduceVariable/ManyOccurrencesInSingleContainer.kt");
+            }
+
             @TestMetadata("multilineBinaryExpression.kt")
             public void testMultilineBinaryExpression() throws Exception {
                 runTest("testData/refactoring/introduceVariable/multilineBinaryExpression.kt");

@@ -88,7 +88,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         project: Project,
         private val nameSuggestions: List<Collection<String>>,
         private val allReplaces: List<KtExpression>,
-        private val replaceOccurrence: Boolean,
+        private val replaceFirstOccurrence: Boolean,
         private val noTypeInference: Boolean,
         private val expressionType: KotlinType?,
         private val isDestructuringDeclaration: Boolean,
@@ -177,8 +177,12 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 val firstChild = emptyBody.firstChild
                 emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
 
-                if (replaceOccurrence) {
-                    for (replace in allReplaces) {
+
+                val haveOccurrencesToReplace = replaceFirstOccurrence || allReplaces.size > 1
+                if (haveOccurrencesToReplace) {
+                    for ((index, replace) in allReplaces.withIndex()) {
+                        if (index == 0 && !replaceFirstOccurrence) continue
+
                         val exprAfterReplace = replaceExpression(expression, replace, false)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == replace) {
@@ -263,18 +267,16 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
             }
             if (!needBraces) {
-                for (i in allReplaces.indices) {
-                    val replace = allReplaces[i]
-
-                    if (if (i != 0) replaceOccurrence else replace.shouldReplaceOccurrence(bindingContext, commonContainer)) {
-                        replaceExpression(expression, replace, true)
-                    } else {
+                for ((index, replace) in allReplaces.withIndex()) {
+                    if (index == 0 && !replaceFirstOccurrence) {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(replace, PsiWhiteSpace::class.java)
                         if (sibling == property) {
                             replace.parent.deleteChildRange(property.nextSibling, replace)
                         } else {
                             replace.delete()
                         }
+                    } else {
+                        replaceExpression(expression, replace, true)
                     }
                 }
             }
@@ -462,9 +464,6 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
                 else -> listOf(expression)
             }
-            val replaceOccurrence = substringInfo != null
-                    || expression.shouldReplaceOccurrence(bindingContext, containers.targetContainer)
-                    || allReplaces.size > 1
 
             val commonParent = if (allReplaces.isNotEmpty()) {
                 PsiTreeUtil.findCommonParent(allReplaces.map { it.substringContextOrThis }) as KtElement
@@ -475,6 +474,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             if (commonContainer != containers.targetContainer && containers.targetContainer.isAncestor(commonContainer, true)) {
                 commonContainer = containers.targetContainer
             }
+            val replaceFirstOccurrence = allReplaces.firstOrNull()?.shouldReplaceOccurrence(bindingContext, commonContainer) == true
 
             fun postProcess(declaration: KtDeclaration) {
                 if (typeArgumentList != null) {
@@ -486,12 +486,15 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     runWriteAction { addTypeArgumentsIfNeeded(initializer, typeArgumentList) }
                 }
 
-                if (editor != null && !replaceOccurrence) {
+                if (editor != null && !replaceFirstOccurrence) {
                     editor.caretModel.moveToOffset(declaration.endOffset)
                 }
             }
 
-            physicalExpression.chooseApplicableComponentFunctionsForVariableDeclaration(replaceOccurrence, editor) { componentFunctions ->
+            physicalExpression.chooseApplicableComponentFunctionsForVariableDeclaration(
+                haveOccurrencesToReplace = replaceFirstOccurrence || allReplaces.size > 1,
+                editor,
+            ) { componentFunctions ->
                 val validator = Fe10KotlinNewDeclarationNameValidator(
                     commonContainer,
                     calculateAnchor(commonParent, commonContainer, allReplaces),
@@ -514,7 +517,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                 val introduceVariableContext = IntroduceVariableContext(
                     project, suggestedNames, allReplaces,
-                    replaceOccurrence, noTypeInference, expressionType, isDestructuringDeclaration, bindingContext, resolutionFacade
+                    replaceFirstOccurrence, noTypeInference, expressionType, isDestructuringDeclaration, bindingContext, resolutionFacade
                 )
 
                 if (!containers.targetContainer.isPhysical) {

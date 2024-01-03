@@ -1,0 +1,5 @@
+// IGNORE_K2
+fun test() {
+    val i = 1<caret>
+    i
+}

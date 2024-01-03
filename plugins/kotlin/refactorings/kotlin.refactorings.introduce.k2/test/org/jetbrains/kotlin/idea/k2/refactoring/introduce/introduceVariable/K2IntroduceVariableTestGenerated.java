@@ -551,6 +551,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/ManyOccurrences.kt");
         }
 
+        @TestMetadata("ManyOccurrencesInSingleContainer.kt")
+        public void testManyOccurrencesInSingleContainer() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/ManyOccurrencesInSingleContainer.kt");
+        }
+
         @TestMetadata("multilineBinaryExpression.kt")
         public void testMultilineBinaryExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/multilineBinaryExpression.kt");

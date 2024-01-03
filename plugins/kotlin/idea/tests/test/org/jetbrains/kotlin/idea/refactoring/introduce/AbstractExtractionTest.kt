@@ -10,6 +10,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -27,6 +28,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.JavaNameSuggestionUtil
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -420,12 +422,20 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             }
 
             try {
+                val extractTestFiles = ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin)
                 checkExtract(
-                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin),
+                    extractTestFiles,
                     checkAdditionalAfterdata,
                     generateMissingFiles,
                     action,
                 )
+
+                extractTestFiles.afterFile.takeIf { it.exists() }?.let { afterFile ->
+                    val caretAndSelectionState = EditorTestUtil.extractCaretAndSelectionMarkers(DocumentImpl(afterFile.readText()))
+                    if (caretAndSelectionState.hasExplicitCaret()) {
+                        EditorTestUtil.verifyCaretAndSelectionState(editor, caretAndSelectionState)
+                    }
+                }
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
 
@@ -479,7 +489,7 @@ fun checkExtract(
         action(files.mainFile)
 
         assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
-        KotlinTestUtils.assertEqualsToFile(afterFile, files.mainFile.text!!)
+        KotlinTestUtils.assertEqualsToFile(afterFile, files.mainFile.text!!) { it.removeCaret() }
 
         if (checkAdditionalAfterdata) {
             for ((extraPsiFile, extraFile) in files.extraFilesToPsi) {
@@ -496,6 +506,8 @@ fun checkExtract(
         assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     }
 }
+
+private fun String.removeCaret(): String = replace("<caret>", "")
 
 private fun assertEqualsToFile(expectedFile: File, actualText: String, generateMissingFiles: Boolean) {
     if (!generateMissingFiles && !expectedFile.exists()) {
