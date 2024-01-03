@@ -20,6 +20,7 @@ internal  const val indentStyleKey = "indent_style"
 
 internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
   override fun getIndentOptions(project: Project, settings: CodeStyleSettings, file: VirtualFile): CommonCodeStyleSettings.IndentOptions? {
+    if (Utils.isFullIntellijSettingsSupport()) return null
     if (project.isDisposed || !Utils.isEnabled(settings)) return null
     // Get editorconfig settings
     val properties = EditorConfigPropertiesService.getInstance(project).getProperties(file)
