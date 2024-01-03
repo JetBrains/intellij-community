@@ -477,6 +477,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           g.setFont(JBUI.Fonts.smallFont().lessOn(2f));
           int y = SwingUtilities.convertPoint(myEditor.getComponent(), p, myEditor.getScrollPane()).y;
           g.drawString(String.valueOf(area.width()), x, y + g.getClipBounds().y - 10);
+
+          showToolTip(area.toString(), p, Balloon.Position.below); //NON-NLS
           break;
         }
       }
