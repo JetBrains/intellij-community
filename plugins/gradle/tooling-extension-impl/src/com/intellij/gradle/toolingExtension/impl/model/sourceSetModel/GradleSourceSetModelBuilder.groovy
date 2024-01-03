@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
@@ -311,9 +311,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
               def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
               boolean isFallbackToolchain =
                 is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain()
-              boolean isJavaHomeCompiler =
-                configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home")
-              if (!isJavaHomeCompiler && !isFallbackToolchain) {
+              if (!isFallbackToolchain) {
                 externalSourceSet.jdkInstallationPath = configuredInstallationPath
               }
             } catch (Throwable e) {
