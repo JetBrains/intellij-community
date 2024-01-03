@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 
 internal class K2MetricsFUSCollector : ApplicationUsagesCollector() {
 
@@ -16,6 +16,6 @@ internal class K2MetricsFUSCollector : ApplicationUsagesCollector() {
     override fun getGroup(): EventLogGroup = eventLogGroup
 
     override fun getMetrics(): Set<MetricEvent> {
-        return setOf(isK2EnabledEvent.metric(isK2Plugin()))
+        return setOf(isK2EnabledEvent.metric(KotlinPluginModeProvider.isK2Mode()))
     }
 }

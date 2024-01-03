@@ -10,6 +10,14 @@ interface KotlinPluginModeProvider {
     companion object {
         val currentPluginMode: KotlinPluginMode
             get() = ApplicationManager.getApplication().getService(KotlinPluginModeProvider::class.java).pluginMode
+
+        fun isK2Mode(): Boolean {
+            return currentPluginMode == KotlinPluginMode.K2
+        }
+
+        fun isK1Mode(): Boolean {
+            return currentPluginMode == KotlinPluginMode.K1
+        }
     }
 }
 
@@ -32,21 +40,22 @@ fun KotlinPluginMode.getPluginModeDescription(): @Nls String {
 }
 
 
+@Deprecated(
+    "Use `KotlinPluginModeProvider.isK2Mode()` instead",
+    replaceWith = ReplaceWith("KotlinPluginModeProvider.isK2Mode()", "org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider")
+)
 fun isK2Plugin(): Boolean {
     return KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K2
 }
+
 
 /**
  * A switch to mitigate exceptions from Android plugin
  * because it tries to use K1 frontend in K2 plugin.
  *
- * This is a separate method from [isK2Plugin] to better track and update its usages.
+ * This is a separate method from [KotlinPluginModeProvider.isK2Mode] to better track and update its usages.
  */
-fun suppressAndroidPlugin(): Boolean = isK2Plugin()
-
-fun isFe10Plugin(): Boolean {
-    return KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K1
-}
+fun suppressAndroidPlugin(): Boolean = KotlinPluginModeProvider.isK2Mode()
 
 fun checkKotlinPluginMode(expectedPluginKind: KotlinPluginMode) {
     val pluginKind = KotlinPluginModeProvider.currentPluginMode

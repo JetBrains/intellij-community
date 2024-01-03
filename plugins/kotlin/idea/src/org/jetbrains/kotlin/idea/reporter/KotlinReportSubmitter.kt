@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -70,7 +70,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
         val effectiveEvents = when {
-            isK2Plugin() -> events.map2Array(::markEventForK2)
+            KotlinPluginModeProvider.isK2Mode() -> events.map2Array(::markEventForK2)
             else -> events
         }
 
