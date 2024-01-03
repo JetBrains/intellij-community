@@ -32,7 +32,8 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                                "CommandsContributor", "third.party",
                                                                                                "Vcs.Git", "UrlSearchEverywhereContributor",
                                                                                                "GitSearchEverywhereContributor",
-                                                                                               "TextSearchContributor"));
+                                                                                               "TextSearchContributor",
+                                                                                               "RiderOnboardingSearchEverywhereContributor"));
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
                                                             "SearchEverywhereContributor.All",
