@@ -164,6 +164,11 @@ class BuildOptions(
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY = "intellij.build.incremental.compilation.fallback.rebuild"
 
     /**
+     * If `true` then [org.jetbrains.intellij.build.impl.compilation.CompiledClasses] will be rebuilt from scratch
+     */
+    const val FORCE_REBUILD_PROPERTY = "intellij.jps.cache.rebuild.force"
+
+    /**
      * Enables module structure validation, `false` by default.
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
@@ -259,6 +264,7 @@ class BuildOptions(
    */
   var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
   var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
+  var forceRebuild = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false)
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.

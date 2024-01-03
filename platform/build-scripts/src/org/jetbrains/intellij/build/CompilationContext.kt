@@ -5,6 +5,7 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.JpsCompilationData
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -19,6 +20,7 @@ interface CompilationContext {
   val dependenciesProperties: DependenciesProperties
   val bundledRuntime: BundledRuntime
   val compilationData: JpsCompilationData
+  val portableCompilationCache: PortableCompilationCache
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 

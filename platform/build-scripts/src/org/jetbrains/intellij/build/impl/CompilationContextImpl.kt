@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
@@ -105,6 +106,9 @@ class CompilationContextImpl private constructor(
   override val dependenciesProperties: DependenciesProperties
   override val bundledRuntime: BundledRuntime
   override lateinit var compilationData: JpsCompilationData
+  override val portableCompilationCache: PortableCompilationCache by lazy {
+    PortableCompilationCache(this)
+  }
 
   @Volatile
   private var cachedJdkHome: Path? = null
