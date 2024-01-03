@@ -1604,7 +1604,12 @@ public class MavenUtil {
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new InvalidJavaHomeException(javaHome);
       }
-      return JavaSdk.getInstance().createJdk("", javaHome);
+      try {
+        return JavaSdk.getInstance().createJdk("", javaHome);
+      }
+      catch (IllegalArgumentException e) {
+        throw new InvalidJavaHomeException(javaHome);
+      }
     }
 
     Sdk projectJdk = getSdkByExactName(name);
