@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
@@ -29,16 +29,17 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     result.parentProjectPath = project.parent?.path
 
-    for (it in project.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, extractStringList(it, "getDeclarationAlternatives")))
+    for (it in project.configurations.names) {
+      Configuration conf = project.configurations.getByName(it)
+      result.configurations.add(new DefaultGradleConfiguration(it, conf.description, conf.visible, extractStringList(it, "getDeclarationAlternatives")))
     }
-    for (it in project.buildscript.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true, extractStringList(it, "getDeclarationAlternatives")))
+    for (it in project.buildscript.configurations.names) {
+      Configuration conf = project.buildscript.configurations.getByName(it)
+      result.configurations.add(new DefaultGradleConfiguration(it, conf.description, conf.visible, true, extractStringList(it, "getDeclarationAlternatives")))
     }
 
     if (GradleVersion.current().baseVersion < GradleVersion.version("8.2")){
