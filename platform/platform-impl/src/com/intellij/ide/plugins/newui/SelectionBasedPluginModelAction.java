@@ -210,18 +210,24 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         if (dependents.isEmpty()) {
           toDeleteWithAsk.add(descriptor);
         }
-        else if (askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {
-          toDelete.add(descriptor);
+        else {
+          boolean bundledUpdate = MyPluginModel.isBundledUpdate(descriptor);
+          if (askToUninstall(getUninstallDependentsMessage(descriptor, dependents, bundledUpdate), entry.getKey(), bundledUpdate)) {
+            toDelete.add(descriptor);
+          }
         }
       }
 
       boolean runFinishAction = false;
 
-      if (!toDeleteWithAsk.isEmpty() && askToUninstall(getUninstallAllMessage(toDeleteWithAsk), myUiParent)) {
-        for (IdeaPluginDescriptorImpl descriptor : toDeleteWithAsk) {
-          myPluginModel.uninstallAndUpdateUi(descriptor);
+      if (!toDeleteWithAsk.isEmpty()) {
+        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(toDeleteWithAsk.get(0));
+        if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
+          for (IdeaPluginDescriptorImpl descriptor : toDeleteWithAsk) {
+            myPluginModel.uninstallAndUpdateUi(descriptor);
+          }
+          runFinishAction = true;
         }
-        runFinishAction = true;
       }
 
       for (IdeaPluginDescriptorImpl descriptor : toDelete) {
@@ -233,16 +239,18 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       }
     }
 
-    private static @NotNull @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors) {
+    private static @NotNull
+    @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors, boolean bundledUpdate) {
       if (descriptors.size() == 1) {
         IdeaPluginDescriptorImpl descriptor = descriptors.iterator().next();
-        return IdeBundle.message("prompt.uninstall.plugin", descriptor.getName(), MyPluginModel.isBundledUpdate(descriptor) ? 1 : 0);
+        return IdeBundle.message("prompt.uninstall.plugin", descriptor.getName(), bundledUpdate ? 1 : 0);
       }
       return IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
     }
 
     private static @NotNull @Nls String getUninstallDependentsMessage(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                      @NotNull List<? extends IdeaPluginDescriptor> dependents) {
+                                                                      @NotNull List<? extends IdeaPluginDescriptor> dependents,
+                                                                      boolean bundledUpdate) {
       String listOfDeps = join(dependents,
                                plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName(),
                                "<br>");
@@ -250,12 +258,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                                          dependents.size(),
                                          descriptor.getName(),
                                          listOfDeps,
-                                         MyPluginModel.isBundledUpdate(descriptor) ? 1 : 0);
+                                         bundledUpdate ? 1 : 0);
       return XmlStringUtil.wrapInHtml(message);
     }
 
-    private static boolean askToUninstall(@NotNull @Nls String message, @NotNull JComponent parentComponent) {
-      return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall"), message).ask(parentComponent);
+    private static boolean askToUninstall(@NotNull @Nls String message, @NotNull JComponent parentComponent, boolean bundledUpdate) {
+      return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall", bundledUpdate ? 1 : 0), message).ask(parentComponent);
     }
   }
 
