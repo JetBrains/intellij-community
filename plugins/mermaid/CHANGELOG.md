@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.0.19
+- [MERMAID-161](https://youtrack.jetbrains.com/issue/MERMAID-161) Added an option for configuring additional code fence info string patterns
+
 ## 0.0.18
 - Updated Mermaid.js version to `10.6.1`
 - [MERMAID-146](https://youtrack.jetbrains.com/issue/MERMAID-146) Added support for XYChart
