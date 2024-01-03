@@ -6,8 +6,8 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import org.junit.Assert
 
@@ -20,8 +20,8 @@ internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentReques
 }
 
 internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
-                              flavor: PythonSdkFlavor<*>,
-                              request: TargetEnvironmentRequest): String? {
+                                      flavor: PythonSdkFlavor<*>,
+                                      request: TargetEnvironmentRequest): String? {
   commandLineBuilder.addParameter(flavor.versionOption)
   val commandLine = commandLineBuilder.build()
   val result = request
