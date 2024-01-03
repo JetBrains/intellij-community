@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
@@ -22,7 +22,7 @@ import java.nio.file.Paths
 import kotlin.io.path.*
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
-    protected abstract val pluginKind: KotlinPluginKind
+    protected abstract val pluginKind: KotlinPluginMode
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
@@ -67,10 +67,10 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     override fun setUp() {
-        val isK2Plugin = pluginKind == KotlinPluginKind.K2
+        val isK2Plugin = pluginKind == KotlinPluginMode.K2
         System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
         super.setUp()
-        checkKotlinPluginKind(pluginKind)
+        checkKotlinPluginMode(pluginKind)
     }
 
     override fun tearDown() {

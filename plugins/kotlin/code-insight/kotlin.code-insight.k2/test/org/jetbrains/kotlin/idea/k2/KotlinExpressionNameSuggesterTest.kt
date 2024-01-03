@@ -5,7 +5,7 @@ import com.intellij.psi.util.findParentOfType
 import junit.framework.TestCase
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.K2
+    override val pluginKind: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun testNumericLiteral() = test("5", "i", "n", "message")
     fun testStringLiteral() = test("\"foo\"", "string", "str", "s", "text", "message")

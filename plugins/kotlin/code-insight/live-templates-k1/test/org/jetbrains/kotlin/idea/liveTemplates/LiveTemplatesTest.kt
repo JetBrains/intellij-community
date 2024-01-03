@@ -13,7 +13,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -26,8 +26,8 @@ import java.util.*
 @TestMetadata("testData/simple")
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.K1
+    override val pluginKind: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         super.setUp()

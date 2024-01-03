@@ -3,19 +3,19 @@ package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
 open class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
-    open val pluginKind: KotlinPluginKind = KotlinPluginKind.K1
+    open val pluginKind: KotlinPluginMode = KotlinPluginMode.K1
 
     override fun setUp() {
         super.setUp()
-        checkKotlinPluginKind(pluginKind)
+        checkKotlinPluginMode(pluginKind)
     }
 
     fun testAfterLT() {

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
@@ -28,8 +28,8 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
 
     protected fun performTest() {
         val disableDirective = when (pluginKind) {
-            KotlinPluginKind.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginKind.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
+            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }
         IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
             myFixture.configureByDefaultFile()

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.liveTemplates
 
 import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
@@ -16,8 +16,8 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/context")
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesContextTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.K1
+    override val pluginKind: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     @TestMetadata("InDocComment.kt")
     fun testInDocComment() {

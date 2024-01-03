@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.ClassId
@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
 class KotlinNameSuggesterModeTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginKind
-        get() = KotlinPluginKind.K2
+    override val pluginKind: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun testCamel() = test("Foo.Bar.Baz", Case.CAMEL, "baz", "barBaz", "fooBarBaz")
     fun testPascal() = test("Foo.Bar.Baz", Case.PASCAL, "Baz", "BarBaz", "FooBarBaz")

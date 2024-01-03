@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.stubindex
 
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInStubVersionOffsetProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 
 /**
  * Applies no changes to the K1 IDE stub version and adds a big constant offset to the K2 IDE stub version for .kotlin_builtins files.
@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
  */
 internal class IdeKotlinBuiltInStubVersionOffsetProvider : KotlinBuiltInStubVersionOffsetProvider {
     override fun getVersionOffset(): Int {
-        return when (KotlinPluginKindProvider.currentPluginKind) {
-            KotlinPluginKind.K1 -> 0
-            KotlinPluginKind.K2 -> K2_BUILTINS_STUB_VERSION_OFFSET
+        return when (KotlinPluginModeProvider.currentPluginMode) {
+            KotlinPluginMode.K1 -> 0
+            KotlinPluginMode.K2 -> K2_BUILTINS_STUB_VERSION_OFFSET
         }
     }
 }

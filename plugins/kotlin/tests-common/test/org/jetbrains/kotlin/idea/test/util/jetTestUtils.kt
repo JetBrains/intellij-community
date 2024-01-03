@@ -6,8 +6,8 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.SmartFMap
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPackageDirective
@@ -88,8 +88,8 @@ fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
 
 fun checkPluginIsCorrect(isFirPlugin: Boolean){
     if (isFirPlugin) {
-        checkKotlinPluginKind(KotlinPluginKind.K2)
+        checkKotlinPluginMode(KotlinPluginMode.K2)
     } else {
-        checkKotlinPluginKind(KotlinPluginKind.K1)
+        checkKotlinPluginMode(KotlinPluginMode.K1)
     }
 }
