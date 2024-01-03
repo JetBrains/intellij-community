@@ -6,12 +6,18 @@
     <!--suppress PluginXmlValidity -->
     <fenceGeneratingProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidCodeGeneratingProviderExtension"
                              order="first"/>
-
+    <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.jcef.AdditionalMermaidInfoStringValuesContributor" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="Markdown"
                             implementationClass="com.intellij.mermaid.editor.MarkdownCodeFenceCompletionContributor"/>
 
     <typedHandler implementation="com.intellij.mermaid.editor.MarkdownCodeFenceTypedHandlerDelegate"/>
+    <!--suppress PluginXmlValidity -->
+    <advancedSetting default=""
+                     bundle="messages.MermaidBundle"
+                     titleKey="mermaid.additional.code.fence.pattern.regex"
+                     groupKey="mermaid.advanced.settings.group"
+                     id="mermaid.additional.code.fence.pattern.regex"/>
   </extensions>
 </idea-plugin>

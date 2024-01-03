@@ -16,7 +16,7 @@ import java.util.*
 @Suppress("UnstableApiUsage")
 internal class MermaidCodeGeneratingProviderExtension : CodeFenceGeneratingProvider {
   override fun isApplicable(language: String): Boolean {
-    return language == "mermaid"
+    return language == "mermaid" || isCustomMermaidInfoString(language)
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
