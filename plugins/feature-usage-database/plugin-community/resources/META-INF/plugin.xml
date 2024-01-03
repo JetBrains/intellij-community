@@ -1,0 +1,18 @@
+<idea-plugin>
+  <id>com.jetbrains.ae.database</id>
+  <name>My Productivity</name>
+  <description>This plugin stores information about how IDE is used. No data is sent outside of the machine</description>
+  <vendor>JetBrains</vendor>
+
+  <incompatible-with>com.intellij.cwm.guest</incompatible-with>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <incompatible-with>com.intellij.gateway</incompatible-with>
+  <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
+
+  <content>
+    <module name="intellij.ae.database.core"/>
+    <module name="intellij.ae.database.counters.community"/>
+  </content>
+
+  <depends>com.intellij.modules.platform</depends>
+</idea-plugin>
