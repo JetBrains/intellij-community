@@ -803,7 +803,15 @@ public final class ListPluginComponent extends JPanel {
         myLayout.removeButtonComponent(myRestartButton);
         myRestartButton = null;
       }
+      if (myAlignButton != null) {
+        myLayout.removeButtonComponent(myAlignButton);
+        myAlignButton = null;
+      }
       createButtons();
+      if (myUpdateDescriptor != null) {
+        setUpdateDescriptor(myUpdateDescriptor);
+      }
+      updateErrors();
     }
   }
 
