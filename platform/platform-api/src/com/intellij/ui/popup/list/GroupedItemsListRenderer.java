@@ -40,7 +40,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
                                                  caption, -1);
     myCurrentIndex = index;
     myRendererComponent.setBackground(list.getBackground());
-    customizeComponent(list, value, isSelected);
+    customizeComponent(list, value, index, isSelected, cellHasFocus);
 
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
       selectablePanel.setSelectionColor(isSelected ? JBUI.CurrentTheme.List.background(true, true) : null);
@@ -93,5 +93,9 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
   }
 
   protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+  }
+
+  protected void customizeComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
+    customizeComponent(list, value, isSelected);
   }
 }
