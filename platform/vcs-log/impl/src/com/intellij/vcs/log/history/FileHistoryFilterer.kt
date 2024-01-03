@@ -369,19 +369,24 @@ private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHa
 
   @Throws(VcsException::class)
   override fun collectRevisions(consumer: (CommitMetadataWithPath) -> Unit) {
-    try {
-      handler.collectHistory(root, filePath, hash) { revision ->
-        consumer(createCommitMetadataWithPath(revision))
+    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRevisionsFromHandler.getName()).useWithScopeBlocking { span ->
+      span.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(handler.supportedVcs))
+      span.setAttribute("handlerClass", handler.javaClass.name)
+
+      try {
+        handler.collectHistory(root, filePath, hash) { revision ->
+          consumer(createCommitMetadataWithPath(revision))
+        }
       }
-    }
-    catch (_: UnsupportedOperationException) {
-      val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.alsoIfNull {
-        @Suppress("HardCodedStringLiteral")
-        throw VcsException("Could not find vcs for $root")
-      }
-      VcsCachingHistory.collect(vcs!!, filePath, revisionNumber) { revision ->
-        consumer(createCommitMetadataWithPath(revision))
+      catch (_: UnsupportedOperationException) {
+        val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
+        val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.alsoIfNull {
+          @Suppress("HardCodedStringLiteral")
+          throw VcsException("Could not find vcs for $root")
+        }
+        VcsCachingHistory.collect(vcs!!, filePath, revisionNumber) { revision ->
+          consumer(createCommitMetadataWithPath(revision))
+        }
       }
     }
   }

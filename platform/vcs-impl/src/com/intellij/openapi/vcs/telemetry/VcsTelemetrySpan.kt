@@ -9,12 +9,27 @@ interface VcsTelemetrySpan {
   fun getName(): String
 
   enum class LogHistory : VcsTelemetrySpan {
+    /**
+     * Computing new [com.intellij.vcs.log.visible.VisiblePack] with file history using either indexes or [com.intellij.vcs.log.VcsLogFileHistoryHandler].
+     * If the latter is used, a portion of commits that was already produced by the handler is used for the computation,
+     * while the handler is working in another thread.
+     */
     Computing {
       override fun getName() = "file-history-computing"
     },
 
+    /**
+     * Collecting renames for file history built from the index.
+     */
     CollectingRenames {
       override fun getName() = "file-history-collecting-renames"
+    },
+
+    /**
+     * Collecting revisions from the [com.intellij.vcs.log.VcsLogFileHistoryHandler].
+     */
+    CollectingRevisionsFromHandler {
+      override fun getName(): String = "file-history-collecting-revisions-from-handler"
     }
   }
 

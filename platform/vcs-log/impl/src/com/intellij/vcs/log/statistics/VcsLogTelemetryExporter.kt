@@ -52,6 +52,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
                 }
               }
               LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(vcsName, span.valueInMillis)
+              else -> {}
             }
           }
       }
