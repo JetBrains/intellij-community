@@ -1,0 +1,28 @@
+f:com.intellij.platform.util.coroutines.CoroutineScopeKt
+*f:com.intellij.platform.util.coroutines.channel.ChannelInputStream
+- java.io.InputStream
+- <init>(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.channels.ReceiveChannel):V
+- available():I
+- close():V
+- read():I
+- read(B[],I,I):I
+*f:com.intellij.platform.util.coroutines.channel.ChannelOutputStream
+- java.io.OutputStream
+- <init>(kotlinx.coroutines.channels.SendChannel):V
+- close():V
+- write(I):V
+- write(B[],I,I):V
+f:com.intellij.platform.util.coroutines.channel.ChannelUtilKt
+f:com.intellij.platform.util.coroutines.flow.FlowKt
+- sf:collectLatestUndispatched(kotlinx.coroutines.flow.SharedFlow,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:debounceBatch-HG0u8IE(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
+- *sf:mapStateIn(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
+- *bs:mapStateIn$default(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.flow.StateFlow
+- sf:throttle(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
+- sf:zipWithNext(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
+- sf:zipWithNext(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+*:com.intellij.platform.util.coroutines.sync.OverflowSemaphore
+- a:withPermit(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.util.coroutines.sync.OverflowSemaphoreKt
+- *sf:OverflowSemaphore(I,kotlinx.coroutines.channels.BufferOverflow):com.intellij.platform.util.coroutines.sync.OverflowSemaphore
+- *bs:OverflowSemaphore$default(I,kotlinx.coroutines.channels.BufferOverflow,I,java.lang.Object):com.intellij.platform.util.coroutines.sync.OverflowSemaphore
