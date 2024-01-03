@@ -3,10 +3,8 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectWizard.projectTypeStep.*;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.*;
@@ -30,7 +28,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,17 +35,12 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,18 +54,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
  */
 public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
-  private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectWizard.ProjectTypeStep");
   private static final ExtensionPointName<ProjectCategory> CATEGORY_EP =
     new ExtensionPointName<>("com.intellij.projectWizard.projectCategory");
 
@@ -82,8 +74,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private static final String EMPTY_CARD = "empty card";
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
-
-  private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
 
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
@@ -95,7 +85,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<>();
   private JPanel myPanel;
   private JPanel myOptionsPanel;
-  private JBList<TemplateGroupItem> myProjectTypeList;
   private ProjectTemplateList myTemplatesList;
   private JPanel myFrameworksPanelPlaceholder;
   private JPanel myHeaderPanel;
@@ -105,7 +94,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   @Nullable
   private ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
-  private TemplatesGroup myLastSelectedGroup;
+
+  private final ProjectTypeList myProjectTypeList;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -114,7 +104,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
-          setSelectedTemplateGroup(groupToSelect);
+          myProjectTypeList.setSelectedTemplateGroup(groupToSelect);
           try {
             configure.accept(getCustomStep());
           }
@@ -128,13 +118,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myWizard = wizard;
 
     myTemplatesMap = MultiMap.createLinked();
-    var groups = fillTemplatesMap(context);
-    LOG.debug("groups=" + groups);
 
-    myProjectTypeList = new JBList<>();
-    myProjectTypeList.setModel(new CollectionListModel<>(groups));
-    myProjectTypeList.setSelectionModel(new SingleSelectionModel());
-    myProjectTypeList.setCellRenderer(new ProjectTypeListRenderer(context, groups));
+    myProjectTypeList = new ProjectTypeList(context);
+    myProjectTypeList.installFilteringListModel(getNamer(), getEmptyStatusPresenter());
+    // These "fill" methods are stateful. The "fillGroupTemplateMap" method reads and modifies the "myTemplatesMap".
+    myProjectTypeList.setTemplateGroupItems(fillGroupTemplateMap(context));
+    myProjectTypeList.setLanguageGeneratorItems(fillLanguageGeneratorTemplateMap(context));
+    myProjectTypeList.setUserTemplateGroupItems(fillUserTemplateMap(context));
 
     GridLayoutManager layout = (GridLayoutManager)myPanel.getLayout();
     layout.setHGap(0);
@@ -154,16 +144,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
                                               GridConstraints.SIZEPOLICY_WANT_GROW,
                                               null, null, null));
 
-    var projectTypeListWithSearch = new ProjectTypeListWithSearch<>(myContext, myProjectTypeList, getNamer(), getEmptyStatusPresenter());
-    myProjectTypePanel.add(projectTypeListWithSearch);
+    myProjectTypePanel.add(myProjectTypeList.getComponent());
 
     JBPanelWithEmptyText panelWithEmptyText = new JBPanelWithEmptyText()
       .withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure"));
     myOptionsPanel.add(panelWithEmptyText, EMPTY_CARD);
 
-    Border border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
-    projectTypeListWithSearch.setBorder(border);
-    mySettingsPanel.setBorder(border);
+    mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
 
     myModulesProvider = modulesProvider;
     Project project = context.getProject();
@@ -197,10 +184,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     };
 
-    myProjectTypeList.addListSelectionListener(event -> {
-      if (!event.getValueIsAdjusting()) {
-        projectTypeChanged();
-      }
+    myProjectTypeList.whenProjectTemplateGroupSelected(group -> {
+      projectTypeChanged(group);
     });
 
     myTemplatesList.addListSelectionListener(event -> {
@@ -219,25 +204,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     }
 
-    restoreSelection(groups);
+    myProjectTypeList.restoreSelection();
     myTemplatesList.restoreSelection();
-  }
-
-  private void restoreSelection(@NotNull List<? extends TemplateGroupItem> groups) {
-    final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
-    LOG.debug("saved groupId=" + groupId);
-    if (groupId != null) {
-      for (TemplateGroupItem groupItem : groups) {
-        TemplatesGroup group = groupItem.getGroup();
-        if (groupId.equals(group.getId())) {
-          myProjectTypeList.setSelectedValue(group, true);
-          break;
-        }
-      }
-    }
-    if (myProjectTypeList.getSelectedValue() == null) {
-      myProjectTypeList.setSelectedIndex(0);
-    }
   }
 
   private @NotNull Function<TemplateGroupItem, String> getNamer() {
@@ -304,19 +272,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return FRAMEWORKS_CARD.equals(myCurrentCard) && Objects.equals(getSelectedBuilder(), myContext.getProjectBuilder());
   }
 
-  private @NotNull List<? extends TemplateGroupItem> fillTemplatesMap(@NotNull WizardContext context) {
-    // These "fill" methods are stateful. The "fillGroupTemplateMap" method has reads and modifies the "myTemplatesMap".
-    List<? extends TemplateGroupItem> groupTemplateItems = fillGroupTemplateMap(context);
-    List<? extends TemplateGroupItem> languageGeneratorItems = fillLanguageGeneratorTemplateMap(context);
-    List<? extends TemplateGroupItem> userTemplateItems = fillUserTemplateMap(context);
-
-    var projectTypeItems = new ArrayList<TemplateGroupItem>(languageGeneratorItems);
-    projectTypeItems.addAll(groupTemplateItems);
-    projectTypeItems.addAll(userTemplateItems);
-    return projectTypeItems;
-  }
-
-  private @NotNull List<? extends TemplateGroupItem> fillGroupTemplateMap(@NotNull WizardContext context) {
+  private @NotNull List<TemplateGroupItem> fillGroupTemplateMap(@NotNull WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
@@ -407,7 +363,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return ContainerUtil.map(groups, it -> new TemplateGroupItem(it));
   }
 
-  private @NotNull List<? extends TemplateGroupItem> fillLanguageGeneratorTemplateMap(@NotNull WizardContext context) {
+  private @NotNull List<LanguageGeneratorItem> fillLanguageGeneratorTemplateMap(@NotNull WizardContext context) {
     var generators = new ArrayList<GeneratorNewProjectWizard>();
     //noinspection deprecation
     LanguageNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
@@ -428,7 +384,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return generatorItems;
   }
 
-  private @NotNull List<? extends TemplateGroupItem> fillUserTemplateMap(@NotNull WizardContext context) {
+  private @NotNull List<UserTemplateGroupItem> fillUserTemplateMap(@NotNull WizardContext context) {
     if (!context.isCreatingNewProject()) {
       return Collections.emptyList();
     }
@@ -446,17 +402,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   // new TemplatesGroup selected
-  private void projectTypeChanged() {
-    TemplatesGroup group = getSelectedTemplateGroup();
-    if (group == null) {
-      return;
-    }
-
-    myLastSelectedGroup = group;
-    PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("projectTypeChanged: " + group.getId() + " " + DebugUtil.currentStackTrace());
-    }
+  private void projectTypeChanged(@NotNull TemplatesGroup group) {
     ModuleBuilder groupModuleBuilder = group.getModuleBuilder();
 
     mySettingsStep = null;
@@ -591,28 +537,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return myCustomSteps.get(myCurrentCard);
   }
 
-  private @Nullable TemplatesGroup getSelectedTemplateGroup() {
-    TemplateGroupItem groupItem = myProjectTypeList.getSelectedValue();
-    if (groupItem == null) {
-      return null;
-    }
-    return groupItem.getGroup();
-  }
-
-  private void setSelectedTemplateGroup(@NotNull TemplatesGroup group) {
-    setSelectedTemplateGroup(group.getName());
-  }
-
-  private void setSelectedTemplateGroup(@NotNull String groupName) {
-    var model = myProjectTypeList.getModel();
-    for (var i = 0; i < model.getSize(); i++) {
-      var groupItem = model.getElementAt(i);
-      var group = groupItem.getGroup();
-      if (groupName.equals(group.getName())) {
-        myProjectTypeList.setSelectedIndex(i);
-      }
-    }
-  }
 
   @Nullable
   private ProjectTemplate getSelectedTemplate() {
@@ -625,7 +549,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (template != null) {
       return myBuilders.get(template);
     }
-    TemplatesGroup group = getSelectedTemplateGroup();
+    TemplatesGroup group = myProjectTypeList.getSelectedTemplateGroup();
     if (group == null) return null;
 
     return group.getModuleBuilder();
@@ -681,12 +605,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   public JComponent getPreferredFocusedComponent() {
     var step = getCustomStep();
     var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
-    return ObjectUtils.chooseNotNull(component, myProjectTypeList);
+    return ObjectUtils.chooseNotNull(component, myProjectTypeList.getComponent());
   }
 
   @Override
   public void dispose() {
-    myLastSelectedGroup = null;
     mySettingsStep = null;
     myTemplatesMap.clear();
     myBuilders.clear();
@@ -733,7 +656,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     ModuleBuilder builder = getSelectedBuilder();
-    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedTemplateGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + myProjectTypeList.getSelectedTemplateGroup());
 
     myContext.setProjectBuilder(builder);
     if (builder != null) {
@@ -749,18 +672,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public String availableTemplateGroupsToString() {
-    var model = myProjectTypeList.getModel();
-    var builder = new StringJoiner(", ");
-    for (var i = 0; i < model.getSize(); i++) {
-      builder.add(model.getElementAt(i).getGroup().getName());
-    }
-    return builder.toString();
+    return myProjectTypeList.getAvailableTemplateGroups();
   }
 
   @TestOnly
   public boolean setSelectedTemplate(@NotNull String groupName, @Nullable String name) {
-    setSelectedTemplateGroup(groupName);
-    var selectedGroup = getSelectedTemplateGroup();
+    myProjectTypeList.setSelectedTemplateGroup(groupName);
+    var selectedGroup = myProjectTypeList.getSelectedTemplateGroup();
     if (selectedGroup == null || !groupName.equals(selectedGroup.getName())) {
       return false;
     }
@@ -773,7 +691,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public static void resetGroupForTests() {
-    PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null);
+    ProjectTypeList.resetStoredSelectionForTests();
   }
 
   @Override
@@ -814,7 +732,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private void reportStatistics(String eventId) {
-    TemplatesGroup group = getSelectedTemplateGroup();
+    TemplatesGroup group = myProjectTypeList.getSelectedTemplateGroup();
     if (group == null) return;
 
     FeatureUsageData data = new FeatureUsageData("FUS");
@@ -829,108 +747,5 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
-  }
-
-  private static class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplateGroupItem> {
-
-    ProjectTypeListRenderer(@NotNull WizardContext context, @NotNull java.util.List<? extends TemplateGroupItem> groups) {
-      super(new ProjectTypeListItemDescriptor(context, groups));
-    }
-
-    @Override
-    protected void customizeComponent(
-      JList<? extends TemplateGroupItem> list,
-      TemplateGroupItem value,
-      int index,
-      boolean isSelected,
-      boolean cellHasFocus
-    ) {
-      var leftInset = 8;
-      var rightInset = 0;
-      var bottomInset = 5;
-      var topInset = index == 0 ? bottomInset : 20;
-      mySeparatorComponent.setBorder(JBUI.Borders.empty(topInset, leftInset, bottomInset, rightInset));
-      mySeparatorComponent.setCaptionCentered(false);
-      mySeparatorComponent.setFont(JBUI.Fonts.smallFont());
-
-      if (value.getGroup().isPromo()) {
-        myNextStepLabel.setIcon(AllIcons.Ultimate.Lock);
-      }
-
-      myTextLabel.setBorder(JBUI.Borders.empty(5, 0));
-    }
-
-    @Override
-    protected SeparatorWithText createSeparator() {
-      return new SeparatorWithText() {
-        @Override
-        protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) { }
-      };
-    }
-
-    @Override
-    protected void setComponentIcon(Icon icon, Icon disabledIcon) {
-      super.setComponentIcon(icon, disabledIcon);
-      if (icon == null) {
-        myTextLabel.setIconTextGap(0);
-      }
-    }
-  }
-
-  private static class ProjectTypeListItemDescriptor extends ListItemDescriptorAdapter<TemplateGroupItem> {
-
-    private final @NotNull WizardContext myContext;
-    private final @NotNull List<? extends TemplateGroupItem> myGroups;
-
-    ProjectTypeListItemDescriptor(@NotNull WizardContext context, @NotNull List<? extends TemplateGroupItem> groups) {
-      myContext = context;
-      myGroups = groups;
-    }
-
-    @Nullable
-    @Override
-    public String getTextFor(TemplateGroupItem value) {
-      return value.getGroup().getName();
-    }
-
-    @Nullable
-    @Override
-    public String getTooltipFor(TemplateGroupItem value) {
-      return value.getGroup().getDescription();
-    }
-
-    @Nullable
-    @Override
-    public Icon getIconFor(TemplateGroupItem value) {
-      return value.getGroup().getIcon();
-    }
-
-    @Override
-    public String getCaptionAboveOf(TemplateGroupItem value) {
-      if (value instanceof LanguageGeneratorItem) {
-        return UIBundle.message("list.caption.group.newProject", myContext.isCreatingNewProjectInt());
-      }
-      else if (value instanceof UserTemplateGroupItem) {
-        return UIBundle.message("list.caption.group.templates");
-      }
-      else {
-        return UIBundle.message("list.caption.group.generators");
-      }
-    }
-
-    @Override
-    public boolean hasSeparatorAboveOf(TemplateGroupItem value) {
-      var index = myGroups.indexOf(value);
-      if (index < 0) return false;
-      if (index == 0) return true;
-      var upperItem = myGroups.get(index - 1);
-      if (!(value instanceof LanguageGeneratorItem) && upperItem instanceof LanguageGeneratorItem) {
-        return true;
-      }
-      if (value instanceof UserTemplateGroupItem && !(upperItem instanceof UserTemplateGroupItem)) {
-        return true;
-      }
-      return false;
-    }
   }
 }
