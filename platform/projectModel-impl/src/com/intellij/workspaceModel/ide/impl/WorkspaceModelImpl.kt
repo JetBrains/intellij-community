@@ -249,6 +249,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
   }
 
+  /**
+   * Things that must be considered if you'd love to change this logic: IDEA-342103
+   */
   private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTimeMillis {
     val stackStraceIterator = RuntimeException().stackTrace.iterator()
     // Skip two methods of the current update

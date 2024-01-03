@@ -59,7 +59,8 @@ class GlobalWorkspaceModel : Disposable {
   var loadedFromCache = false
     private set
 
-  private val modelVersionUpdate = AtomicLong(-1)
+  private val updateModelMethodName = GlobalWorkspaceModel::updateModel.name
+  private val onChangedMethodName = GlobalWorkspaceModel::onChanged.name
 
   init {
     LOG.debug { "Loading global workspace model" }
@@ -96,10 +97,7 @@ class GlobalWorkspaceModel : Disposable {
   @OptIn(EntityStorageInstrumentationApi::class)
   fun updateModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ThreadingAssertions.assertWriteAccess()
-    if (modelVersionUpdate.get() == entityStorage.pointer.version) {
-      LOG.error("Trying to update global model twice from the same version. Maybe recursive call of 'updateModel'? Action:$description")
-    }
-    modelVersionUpdate.set(entityStorage.pointer.version)
+    checkRecursiveUpdate(description)
 
     val updateTimeMillis: Long
     val collectChangesTimeMillis: Long
@@ -211,6 +209,25 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
+  }
+
+  /**
+   * Things that must be considered if you'd love to change this logic: IDEA-342103
+   */
+  private fun checkRecursiveUpdate(description: @NonNls String) {
+    val stackStraceIterator = RuntimeException().stackTrace.iterator()
+    // Skip two methods of the current update
+    repeat(2) { stackStraceIterator.next() }
+    while (stackStraceIterator.hasNext()) {
+      val frame = stackStraceIterator.next()
+      if (frame.methodName == updateModelMethodName && frame.className == GlobalWorkspaceModel::class.qualifiedName) {
+        LOG.error("Trying to update global model twice from the same version. Maybe recursive call of 'updateModel'? Action: $description")
+      }
+      else if (frame.methodName == onChangedMethodName && frame.className == GlobalWorkspaceModel::class.qualifiedName) {
+        // It's fine to update the project method in "after update" listeners
+        return
+      }
+    }
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
