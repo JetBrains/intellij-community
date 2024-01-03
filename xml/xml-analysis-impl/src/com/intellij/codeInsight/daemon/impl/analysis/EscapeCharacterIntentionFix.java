@@ -50,7 +50,7 @@ public class EscapeCharacterIntentionFix extends LocalQuickFixAndIntentionAction
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
     Document document = topLevelFile.getViewProvider().getDocument();
     assert document != null;
-    var startOffset = startElement.getTextRange().getStartOffset();
+    var startOffset = InjectedLanguageManager.getInstance(project).injectedToHost(startElement, startElement.getTextRange()).getStartOffset();
     document.replaceString(startOffset + range.getStartOffset(), startOffset + range.getEndOffset(), replacement);
   }
 }
