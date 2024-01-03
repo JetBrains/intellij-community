@@ -20,8 +20,7 @@ import java.util.*
 
 @ApiStatus.Internal
 internal fun VirtualFile.isKLibRootCandidate(): Boolean {
-    return (FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE) || extension != KLIB_FILE_EXTENSION)
-            && isDirectory
+    return (!FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE) || extension == KLIB_FILE_EXTENSION) && isDirectory
 }
 
 @ApiStatus.Internal
