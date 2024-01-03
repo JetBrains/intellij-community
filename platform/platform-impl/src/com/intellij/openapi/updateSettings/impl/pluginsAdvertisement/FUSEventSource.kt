@@ -17,7 +17,7 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(FUS_GROUP_ID, 9)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 10)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
@@ -61,6 +61,13 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
   SOURCE_FIELD,
   PLUGIN_FIELD
 )
+
+private val TRY_ULTIMATE_EVENT = GROUP.registerEvent("try.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val DOWNLOAD_STARTED_ULTIMATE_EVENT = GROUP.registerEvent("download.started.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val INSTALLATION_STARTED_ULTIMATE_EVENT = GROUP.registerEvent("installation.started.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val INSTALLED_IDE_OPENED_ULTIMATE_EVENT = GROUP.registerEvent("installed.ide.opened.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val FALLBACK_USED_ULTIMATE_EVENT = GROUP.registerEvent("fallback.used.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val CANCELLATION_ULTIMATE_EVENT = GROUP.registerEvent("cancelled.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
 
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
   "learn.more",
@@ -120,6 +127,37 @@ enum class FUSEventSource {
   fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
     OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logTryUltimate(project: Project? = null, pluginId: PluginId? = null) {
+    TRY_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logUltimateDownloadStarted(project: Project? = null, pluginId: PluginId? = null) {
+    DOWNLOAD_STARTED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logUltimateInstallationStarted(project: Project? = null, pluginId: PluginId? = null) {
+    INSTALLATION_STARTED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logInstalledUltimateOpened(project: Project? = null, pluginId: PluginId? = null) {
+    INSTALLED_IDE_OPENED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logUpgradeToUltimateCancelled(project: Project? = null, pluginId: PluginId? = null) {
+    CANCELLATION_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  }
+  
+  @JvmOverloads
+  fun logUltimateFallbackUsed(project: Project? = null, url: String, pluginId: PluginId? = null) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+    FALLBACK_USED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
   }
 
   @JvmOverloads

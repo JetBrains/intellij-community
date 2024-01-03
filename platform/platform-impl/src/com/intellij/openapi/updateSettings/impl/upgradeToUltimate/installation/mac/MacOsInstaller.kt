@@ -9,36 +9,47 @@ import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.r
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties.getUserHome
 import com.intellij.util.system.CpuArch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 import kotlin.io.path.*
 
-internal class MacOsInstaller : UltimateInstaller() {
+internal class MacOsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.dmg" else ".dmg"
   private val mountDirectory = updateTempDirectory.resolve("mount")
 
   @OptIn(ExperimentalPathApi::class)
   override fun install(downloadResult: DownloadResult): InstallationResult? {
-    val dmg = downloadResult.downloadPath
-
     val mountDir = mountDirectory.resolve(downloadResult.buildVersion)
-    mountDir.createDirectories()
+    return try {
+      mountDir.createDirectories()
+      val command = GeneralCommandLine(
+        "hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse", "-mountpoint",
+        mountDir.pathString,
+        downloadResult.downloadPath.pathString
+      )
 
-    val command = GeneralCommandLine(
-      "hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse", "-mountpoint",
-      mountDir.pathString,
-      dmg.pathString
-    )
+      if (!runCommand(command)) return null
 
-    if (!runCommand(command)) return null
+      val app = mountDir.listDirectoryEntries().firstOrNull { entry -> entry.pathString.endsWith(".app") } ?: return null
+      copyApp(app)
+    } finally {
+      runDetach(mountDir.pathString)
+      scope.launch { mountDir.deleteRecursively() }
+    }
+  }
 
-    val app = mountDir.listDirectoryEntries().firstOrNull { entry -> entry.pathString.endsWith(".app") } ?: return null
-
-    val newAppPath = getUltimateInstallationDirectory()?.resolve(app.fileName) ?: return null
-    app.copyToRecursively(newAppPath, followLinks = true, overwrite = true)
-
-    runDetach(mountDir.pathString)
-
-    return InstallationResult(newAppPath)
+  @OptIn(ExperimentalPathApi::class)
+  private fun copyApp(appPath: Path): InstallationResult? {
+    return try {
+      val newAppPath = getUltimateInstallationDirectory()?.resolve(appPath.fileName) ?: return null
+      appPath.copyToRecursively(newAppPath, followLinks = true, overwrite = true)
+      InstallationResult(newAppPath)
+    }
+    catch (e: Exception) {
+      scope.launch { appPath.deleteRecursively() }
+      throw e
+    }
   }
 
   private fun runDetach(mounterDirectory: String): Boolean {

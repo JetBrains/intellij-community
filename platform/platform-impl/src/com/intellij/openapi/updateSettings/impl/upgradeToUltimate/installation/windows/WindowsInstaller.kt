@@ -11,12 +11,16 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.Decompressor
 import com.sun.jna.platform.win32.KnownFolders
 import com.sun.jna.platform.win32.Shell32Util
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
-internal class WindowsInstaller : UltimateInstaller() {
+internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
   private val installationType = getInstallationType()
 
   override val postfix = when (installationType) {
@@ -54,12 +58,18 @@ internal class WindowsInstaller : UltimateInstaller() {
     return "$path${File.separator}$name".toNioPathOrNull()
   }
 
+  @OptIn(ExperimentalPathApi::class)
   private fun installFromZip(downloadResult: DownloadResult): InstallationResult? {
     val path = downloadResult.downloadPath
 
     val installationPath = provideInstallationPath(downloadResult.buildVersion) ?: return null
-    Decompressor.Zip(path).extract(installationPath)
-
+    try {
+      Decompressor.Zip(path).extract(installationPath)
+    } catch (e: Exception) {
+      scope.launch { installationPath.deleteRecursively() }
+      throw e
+    }
+    
     return InstallationResult(installationPath)
   }
 
@@ -74,7 +84,8 @@ internal class WindowsInstaller : UltimateInstaller() {
   override fun getUltimateInstallationDirectory(): Path? {
     return try {
       Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_UserProgramFiles)?.toNioPathOrNull()
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       val localAppData = Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_LocalAppData).toNioPathOrNull()
                          ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
       localAppData?.resolve("Programs")

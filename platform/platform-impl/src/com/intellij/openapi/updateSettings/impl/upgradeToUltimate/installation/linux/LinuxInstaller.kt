@@ -10,17 +10,34 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.pathString
 
-internal class LinuxInstaller : UltimateInstaller() {
+internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.tar.gz" else ".tar.gz"
   
+  @OptIn(ExperimentalPathApi::class)
   override fun install(downloadResult: DownloadResult): InstallationResult? {
     val installationPath = getUltimateInstallationDirectory() ?: return null
-    Decompressor.Tar(downloadResult.downloadPath).extract(installationPath)
+    val entries = mutableListOf<Path>()
     
-    return InstallationResult(installationPath)
+    try {
+      val decompressor = Decompressor.Tar(downloadResult.downloadPath)
+      decompressor
+        .postProcessor(entries::add)
+        .extract(installationPath.resolve("Jetbrains"))
+    } catch (e: Exception) {
+      scope.launch { installationPath.deleteRecursively() }
+      throw e
+    }
+    
+    val installFolder = installationPath.resolve(entries.first().fileName)
+    
+    return InstallationResult(installFolder)
   }
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
@@ -34,7 +51,7 @@ internal class LinuxInstaller : UltimateInstaller() {
   }
 
   override fun getUltimateInstallationDirectory(): Path? {
-     return System.getenv("XDG_DATA_HOME").toNioPathOrNull() 
+     return System.getenv("XDG_DATA_HOME").toNioPathOrNull()
             ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve(".local/share")
   }
 }
