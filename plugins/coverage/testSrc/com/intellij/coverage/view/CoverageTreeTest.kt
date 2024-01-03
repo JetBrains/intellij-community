@@ -3,49 +3,85 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.util.concurrency.Invoker
+import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
-private const val TIMEOUT_MS = 20_000L
+import javax.swing.JTree
 
 @RunWith(JUnit4::class)
 class CoverageTreeTest : CoverageIntegrationBaseTest() {
 
-  @Test(timeout = TIMEOUT_MS)
-  fun `test ij coverage tree contains elements`() = testCoverageSuiteTree(loadIJSuite())
+  @Test
+  fun `test ij coverage tree contains elements`() = testCoverageSuiteTree(loadFullSuite(), false, """
+      -all
+       -foo
+        FooClass
+        -bar
+         UncoveredClass
+         BarClass
+       TopLevelClass
+      """.trimIndent())
 
-  @Test(timeout = TIMEOUT_MS)
-  fun `test xml coverage tree contains elements`() = testCoverageSuiteTree(loadXMLSuite())
+  @Test
+  fun `test ij coverage flatten tree contains elements`() = testCoverageSuiteTree(loadFullSuite(), true, """
+      -all
+       -foo
+        FooClass
+       -
+        TopLevelClass
+       -foo.bar
+        UncoveredClass
+        BarClass
+      """.trimIndent())
 
-  private fun testCoverageSuiteTree(suite: CoverageSuitesBundle): Unit = runBlocking {
+  @Test
+  fun `test xml coverage tree contains elements`() = testCoverageSuiteTree(loadXMLSuite(), """
+        -all
+         -foo
+          FooClass
+          -bar
+           UncoveredClass
+           BarClass
+      """.trimIndent())
+
+  private fun loadFullSuite() = loadIJSuite(emptyArray(), SIMPLE_FULL_IJ_REPORT_PATH)
+
+  private fun testCoverageSuiteTree(suite: CoverageSuitesBundle, flattenPackages: Boolean, expected: String) {
+    val stateBean = CoverageViewManager.getInstance(myProject).stateBean
+    val original = stateBean.isFlattenPackages
+    try {
+      stateBean.isFlattenPackages = flattenPackages
+      testCoverageSuiteTree(suite, expected)
+    }
+    finally {
+      stateBean.isFlattenPackages = original
+    }
+  }
+
+  private fun testCoverageSuiteTree(suite: CoverageSuitesBundle, expected: String): Unit = runBlocking {
     openSuiteAndWait(suite)
 
+
     val stateBean = CoverageViewManager.getInstance(myProject).stateBean
-    val root = suite.coverageEngine.createCoverageViewExtension(myProject, suite, stateBean).createRootNode() as CoverageListNode
-    Assert.assertNull(root.name)
+    val treeStructure = CoverageViewTreeStructure(project, suite, stateBean)
+    val disposable = Disposer.newDisposable()
+    val model = StructureTreeModel(treeStructure, null, Invoker.forEventDispatchThread(disposable), disposable)
 
-    val fooNode = root.children.single() as CoverageListNode
-    Assert.assertEquals("foo", fooNode.name)
-    Assert.assertEquals(2, fooNode.children.size)
-
-    val fooClassNode = fooNode.children[0] as CoverageListNode
-    Assert.assertEquals("FooClass", fooClassNode.name)
-    Assert.assertTrue(fooClassNode.children.isEmpty())
-
-    val barNode = fooNode.children[1] as CoverageListNode
-    Assert.assertEquals("bar", barNode.name)
-    Assert.assertEquals(2, barNode.children.size)
-
-    val uncoveredClassNode = barNode.children[0] as CoverageListNode
-    Assert.assertEquals("UncoveredClass", uncoveredClassNode.name)
-    Assert.assertTrue(uncoveredClassNode.children.isEmpty())
-
-    val barClassNode = barNode.children[1] as CoverageListNode
-    Assert.assertEquals("BarClass", barClassNode.name)
-    Assert.assertTrue(barClassNode.children.isEmpty())
+    withContext(Dispatchers.EDT) {
+      val tree = JTree(model)
+      TreeUtil.expandAll(tree)
+      PlatformTestUtil.assertTreeEqual(tree, expected)
+      Disposer.dispose(disposable)
+    }
 
     closeSuite(suite)
   }

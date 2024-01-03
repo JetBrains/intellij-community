@@ -83,7 +83,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
       }
     }
 
-    val root = CoverageTreeNode(CoverageNodeInfo("", "", getPsiPackage("")!!))
+    val root = CoverageTreeNode(CoverageNodeInfo(ROOT_ID, "", getPsiPackage("")!!))
     loop@ for (clazz in classes) {
       val packageName = StringUtil.getPackageName(clazz.id)
       if (flattenPackages) {
@@ -98,7 +98,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
         if (packageName.isNotEmpty()) {
           for (part in packageName.split('.')) {
             node.userObject.counter.append(clazz.counter)
-            val newId = if (node.userObject.id.isEmpty()) part else "${node.userObject.id}.$part"
+            val newId = if (node.userObject.id == ROOT_ID) part else "${node.userObject.id}.$part"
             val psiPackage = getPsiPackage(newId)
             if (psiPackage == null) {
               LOG.warn("Failed to locate package $newId, skip it in coverage results")
@@ -117,7 +117,10 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
     nodeMap.clear()
     TreeUtil.treeNodeTraverser(root).forEach {
       val node = it as CoverageTreeNode
-      nodeMap[node.userObject.id] = node
+      val previous = nodeMap.put(node.userObject.id, node)
+      if (previous != null) {
+        LOG.error("Coverage element '${node.userObject.id}' is overwritten in the coverage classes structure")
+      }
     }
   }
 
@@ -169,6 +172,10 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
   }
 
   override fun dispose() {
+  }
+
+  companion object {
+    const val ROOT_ID = "<root>"
   }
 }
 

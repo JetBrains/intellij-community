@@ -61,7 +61,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @NotNull
   private static String getNodeId(AbstractTreeNode<?> node) {
-    return node instanceof CoverageListRootNode ? "" : ((JavaCoverageNode)node).getQualifiedName();
+    return node instanceof CoverageListRootNode ? CoverageClassStructure.ROOT_ID : ((JavaCoverageNode)node).getQualifiedName();
   }
 
   @Override

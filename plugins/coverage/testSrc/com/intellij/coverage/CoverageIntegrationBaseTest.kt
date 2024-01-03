@@ -101,6 +101,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     protected fun getTestDataPath() = PluginPathManager.getPluginHomePath("coverage") + "/testData/simple"
 
     val SIMPLE_IJ_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.ic").path
+    val SIMPLE_FULL_IJ_REPORT_PATH: String = File(getTestDataPath(), "simple\$All_in_simple.ic").path
     val SIMPLE_XML_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.xml").path
     val SIMPLE_JACOCO_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.exec").path
     val DEFAULT_FILTER = arrayOf("foo.*")
