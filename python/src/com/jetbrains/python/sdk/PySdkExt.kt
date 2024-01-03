@@ -23,7 +23,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -478,20 +477,3 @@ val Sdk.sdkSeemsValid: Boolean
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
-
-private val SDK_PYTHON_PATH = Key<FullPathOnTarget>("SDK_PYTHON_PATH")
-
-/**
- * @return path to python binary on target
- */
-suspend fun Sdk.getPythonBinaryPath(project: Project): Result<FullPathOnTarget> {
-  val cachedPath = getUserData(SDK_PYTHON_PATH)
-  if (cachedPath != null) return Result.success(cachedPath)
-  val executionResult = PyTargetsIntrospectionFacade(this, project)
-    .getCommandOutput(EmptyProgressIndicator(), "import sys; print(sys.executable)").map { it.trim() }
-  val path = executionResult.getOrNull()
-  if (path != null) {
-    putUserData(SDK_PYTHON_PATH, path)
-  }
-  return executionResult
-}

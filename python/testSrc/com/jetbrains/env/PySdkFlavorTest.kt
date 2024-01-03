@@ -3,7 +3,7 @@ package com.jetbrains.env
 
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.env.python.PySDKRule
-import com.jetbrains.python.sdk.getPythonBinaryPath
+import com.jetbrains.getPythonBinaryPath
 import com.jetbrains.python.sdk.sdkSeemsValid
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
