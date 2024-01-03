@@ -1,19 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.util.Key
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
+internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(WorkspaceModuleImporter.EXTERNAL_SOURCE_ID)
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
@@ -23,6 +34,8 @@ class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     }.toList()
 
     if (shadeProjectsWithModules.isEmpty()) return
+
+    context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadeProjectsWithModules.map { it.mavenProject }.toList())
 
     val shadeModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
     for (shadeProjectWithModules in shadeProjectsWithModules) {
@@ -83,5 +96,36 @@ class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     val librarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
 
     builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), librarySource)
+  }
+}
+
+private val SHADED_MAVEN_PROJECTS = Key.create<List<MavenProject>>("SHADED_MAVEN_PROJECTS")
+
+internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurator {
+  override fun afterImport(context: MavenAfterImportConfigurator.Context) {
+    val shadedMavenProjects = context.getUserData(SHADED_MAVEN_PROJECTS)
+    if (shadedMavenProjects.isNullOrEmpty()) return
+
+    val project = context.project
+    val firstProject = shadedMavenProjects.first()
+    val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
+
+    val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
+    val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
+
+    val requests = shadedMavenProjects
+      .asSequence()
+      .map { it.path }.toSet()
+      .map { File(it) }
+      .map { MavenGoalExecutionRequest(it, MavenExplicitProfiles.NONE) }
+      .toList()
+
+    runBlockingMaybeCancellable {
+      withRawProgressReporter {
+        embedder.executeGoal(requests, "package", rawProgressReporter!!, MavenLogEventHandler)
+      }
+    }
+
+    // TODO: refresh VFS
   }
 }

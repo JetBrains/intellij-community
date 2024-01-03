@@ -178,7 +178,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
+  suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
                           goal: String,
                           progressReporter: RawProgressReporter,
                           eventHandler: MavenEventHandler): List<MavenGoalExecutionResult> {
