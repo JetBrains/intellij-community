@@ -15,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String, String?>,
+internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, private val shortcutSupplier: Function<in String, String?>,
                                  toolbar: JComponent) {
 
   lateinit var tabbedPane: JBTabbedPane
@@ -51,5 +51,10 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
       @NlsSafe val shortcut = shortcutSupplier.apply(tab.id)
       tabbedPane.addTab(tab.name, null, JPanel(), shortcut)
     }
+  }
+
+  fun addTab(tab: SearchEverywhereHeader.SETab) {
+    @NlsSafe val shortcut = shortcutSupplier.apply(tab.id)
+    tabbedPane.addTab(tab.name, null, JPanel(), shortcut)
   }
 }

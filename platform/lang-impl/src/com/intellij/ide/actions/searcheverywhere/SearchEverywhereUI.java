@@ -162,8 +162,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
+                                    @NotNull Function<? super String, String> shortcutSupplier,
+                                    @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
+    this(project, contributors, shortcutSupplier, spellingCorrector, null);
+  }
+
+  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
                             @NotNull Function<? super String, String> shortcutSupplier,
-                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
+                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
+                            @Nullable SlowFactoryContributors slowContributors) {
     super(project);
 
     mySpellingCorrector = spellingCorrector;
@@ -180,7 +187,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     AnAction showInFindToolWindowAction = project == null ? null : new ShowInFindToolWindowAction();
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
                                           shortcutSupplier, showInFindToolWindowAction,
-                                          this);
+                                          this,
+                                          slowContributors);
 
     myMlService = SearchEverywhereMlService.getInstance();
 

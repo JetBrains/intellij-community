@@ -55,11 +55,12 @@ public final class SearchEverywhereHeader {
                                 @NotNull Runnable scopeChangedCallback,
                                 Function<? super String, String> shortcutSupplier,
                                 @Nullable AnAction showInFindToolWindowAction,
-                                SearchEverywhereUI ui) {
+                                SearchEverywhereUI ui,
+                                @Nullable SlowFactoryContributors slowContributors) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
-    myTabs = createTabs(contributors);
+    myTabs = createTabs(contributors, slowContributors);
     mySelectedTab = myTabs.get(0);
     myToolbar = createToolbar(showInFindToolWindowAction);
     header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
@@ -117,22 +118,7 @@ public final class SearchEverywhereHeader {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
     for (SETab tab : myTabs) {
-      SETabLabel tabLabel = new SETabLabel(tab);
-      @NlsSafe String shortcut = myShortcutSupplier.apply(tab.getID());
-      if (shortcut != null) {
-        tabLabel.setToolTipText(shortcut);
-      }
-
-      tabLabel.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          switchToTab(tab);
-          SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
-                                                                 SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
-                                                                   tab.getReportableID()),
-                                                                 EventFields.InputEventByMouseEvent.with(e));
-        }
-      });
+      var tabLabel = createTabLabel(tab);
       contributorsPanel.add(tabLabel);
     }
     myToolbar.setTargetComponent(contributorsPanel);
@@ -142,6 +128,27 @@ public final class SearchEverywhereHeader {
     result.add(myToolbar.getComponent(), BorderLayout.EAST);
 
     return result;
+  }
+
+  @NotNull
+  private SETabLabel createTabLabel(SETab tab) {
+    SETabLabel tabLabel = new SETabLabel(tab);
+    @NlsSafe String shortcut = myShortcutSupplier.apply(tab.getID());
+    if (shortcut != null) {
+      tabLabel.setToolTipText(shortcut);
+    }
+
+    tabLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        switchToTab(tab);
+        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
+                                                               SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
+                                                                 tab.getReportableID()),
+                                                               EventFields.InputEventByMouseEvent.with(e));
+      }
+    });
+    return tabLabel;
   }
 
   @NotNull
@@ -164,7 +171,8 @@ public final class SearchEverywhereHeader {
     return newUIHeaderView.panel;
   }
 
-  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
+  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors,
+                                 @Nullable SlowFactoryContributors slowContributors) {
     List<SETab> res = new ArrayList<>();
 
     contributors = contributors.stream()
@@ -188,7 +196,29 @@ public final class SearchEverywhereHeader {
         res.add(tab);
       });
 
+    if (slowContributors != null) {
+      slowContributors.onContributorReady(contributor -> {
+        if (contributor.isShownInSeparateTab()) {
+          SETab tab = createTab(contributor, onChanged);
+          addTab(tab);
+        }
+      });
+    }
+
     return res;
+  }
+
+  private void addTab(SETab tab) {
+    myTabs.add(tab);
+
+    if (ExperimentalUI.isNewUI() && newUIHeaderView != null) {
+      newUIHeaderView.addTab(tab);
+    }
+    else {
+      SETabLabel tabLabel = createTabLabel(tab);
+      Container tabs = (Container)((BorderLayout)header.getLayout()).getLayoutComponent(header, BorderLayout.WEST);
+      tabs.add(tabLabel);
+    }
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
