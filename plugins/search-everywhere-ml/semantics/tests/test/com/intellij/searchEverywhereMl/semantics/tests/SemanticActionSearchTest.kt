@@ -2,13 +2,15 @@ package com.intellij.searchEverywhereMl.semantics.tests
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.test.runTest
+import kotlin.time.Duration.Companion.minutes
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -43,6 +45,66 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     val items = elements.filterIsInstance<GotoActionModel.MatchedValue>().map { it.value as GotoActionModel.ActionWrapper }.map { it.actionText }
 
     assertContainsElements(items, "Remove All Breakpoints", "Remove All Breakpoints In The Current File")
+  }
+
+  fun `test empty query`() = runTest {
+    val semanticActionContributor = SemanticActionSearchEverywhereContributor(
+      ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
+
+    val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+
+    val results = PlatformTestUtil.waitForFuture(semanticSearchEverywhereUI.findElementsForPattern(""))
+
+    assertEquals("expected no results from semantic contributor for empty query",
+                 0, results.filterIsInstance<GotoActionModel.MatchedValue>().mapNotNull { it.value as? GotoActionModel.MatchedValue }.size)
+  }
+
+  fun `test semantic and standard contributor results match`() = runTest(timeout = 2.minutes) {
+    setupTest("java/IndexProjectAction.java")
+
+    // Contributors do not share the same GotoActionModel:
+    val standardActionContributor = ActionSearchEverywhereContributor.Factory()
+      .createContributor(createEvent()) as ActionSearchEverywhereContributor
+    val semanticActionContributor = SemanticActionSearchEverywhereContributor(
+      ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
+
+    val standardSearchEverywhereUI = SearchEverywhereUI(project, listOf(standardActionContributor))
+    val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+
+    val prefixes = ('a'..'z').map { it.toString() }.toMutableList()
+    var lastAdded = prefixes.toList()
+    repeat(2) {
+      lastAdded = lastAdded.flatMap { prefix -> ('a'..'z').map { prefix + it } }
+      prefixes.addAll(lastAdded)
+    }
+
+    fun findResultsFromUI(ui: SearchEverywhereUI, query: String): List<String> {
+      return PlatformTestUtil.waitForFuture(ui.findElementsForPattern(query))
+        .filterIsInstance<GotoActionModel.MatchedValue>()
+        .mapNotNull { it.value as? GotoActionModel.ActionWrapper }
+        // 'Include disabled actions' checkbox is automatically set in standard search when no results found.
+        // Since there are fewer cases when lookup is empty, disabled actions might not appear in semantic search results, and that's fine:
+        .filter { it.isAvailable }
+        .map { it.actionText }
+    }
+
+    val iterations = 1200
+    for (query in prefixes.take(iterations)) {
+      val semanticResults = findResultsFromUI(semanticSearchEverywhereUI, query)
+      val standardResults = findResultsFromUI(standardSearchEverywhereUI, query)
+
+      assert(standardResults.toSet().minus(semanticResults.toSet()).isEmpty() ||
+             (standardResults.size == semanticResults.size && semanticResults.size == SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT)) {
+        """
+          Not all elements from standard contributor are present in semantic contributor results
+          query: $query
+          standard results (len = ${standardResults.size}): $standardResults
+          semantic results (len = ${semanticResults.size}): $semanticResults
+          removed results: ${standardResults.toSet().minus(semanticResults.toSet())}
+          added results: ${semanticResults.toSet().minus(standardResults.toSet())}
+        """.trimIndent()
+      }
+    }
   }
 
   private suspend fun setupTest(vararg filePaths: String) {
