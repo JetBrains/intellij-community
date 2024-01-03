@@ -92,7 +92,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * and if incremental compilation is enabled, JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
-  fun downloadCacheAndCompileProject() {
+  internal fun downloadCacheAndCompileProject() {
     synchronized(PortableCompilationCache) {
       if (isAlreadyUpdated) {
         context.messages.info("PortableCompilationCache is already updated")
