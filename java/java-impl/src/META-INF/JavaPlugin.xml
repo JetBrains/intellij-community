@@ -1528,6 +1528,12 @@
                      implementationClass="com.intellij.codeInspection.StringTemplateMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.string.template.migration.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.implicit.to.explicit.class.backward.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="INFORMATION"
