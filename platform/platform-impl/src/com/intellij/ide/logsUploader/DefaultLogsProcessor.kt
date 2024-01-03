@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 
 class DefaultLogsProcessor: LogProvider {
-  override fun getAdditionalLogFiles(project: Project?): List<LogProvider.LogsEntry> {
+  override fun getStructuredLogFiles(project: Project?): List<LogProvider.LogsEntry> {
     return listOf(LogProvider.LogsEntry("", listOf(PathManager.getLogDir())))
   }
 }
