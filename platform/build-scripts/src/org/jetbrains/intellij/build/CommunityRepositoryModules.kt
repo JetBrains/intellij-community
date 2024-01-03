@@ -831,6 +831,7 @@ object CommunityRepositoryModules {
         "intellij.ae.database.core",
         "intellij.ae.database.counters.community"
       ))
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
       if (extraModules.isNotEmpty()) {
         spec.withModules(extraModules)
       }
