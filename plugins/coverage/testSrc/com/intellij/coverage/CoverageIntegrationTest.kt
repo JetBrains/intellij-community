@@ -15,18 +15,30 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
+@RunWith(JUnit4::class)
 @ExcludeFromTestDiscovery
 class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test ij statistics`(): Unit = runBlocking { actualAnnotatorTest(loadIJSuite()) }
+
+  @Test
   fun `test jacoco statistics`(): Unit = runBlocking { actualAnnotatorTest(loadJaCoCoSuite()) }
+
+  @Test
   fun `test xml statistics`(): Unit = runBlocking { actualAnnotatorTest(loadXMLSuite()) }
+
+  @Test
   fun testIJSuite() = assertHits(loadIJSuite())
 
+  @Test
   fun testXMLSuite() {
     val bundle = loadXMLSuite()
     val consumer = PackageAnnotationConsumer()
@@ -35,6 +47,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
+  @Test
   fun testSingleClassFilter() {
     val filters = arrayOf("foo.bar.BarClass")
     val bundle = loadIJSuite(filters)
@@ -54,6 +67,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertHits(consumer.myPackageCoverage[""], hits)
   }
 
+  @Test
   fun testJaCoCoProjectData() {
     val bundle = loadJaCoCoSuite()
     val classData = bundle.coverageData!!.getClassData("foo.FooClass")
@@ -61,8 +75,10 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertEquals(LineCoverage.PARTIAL.toInt(), classData.getStatus("method1()I"))
   }
 
+  @Test
   fun testJaCoCo() = assertHits(loadJaCoCoSuite())
 
+  @Test
   fun testJaCoCoWithoutUnloaded() {
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
@@ -71,6 +87,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
+  @Test
   fun testMergeIjWithJaCoCo() {
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
@@ -82,6 +99,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertHits(bundle, ignoreBranches = true)
   }
 
+  @Test
   fun testHTMLReport() {
     val bundle = loadIJSuite()
     val htmlDir = Files.createTempDirectory("html").toFile()
@@ -96,6 +114,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
+  @Test
   fun `test sub coverage`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
 
@@ -140,6 +159,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     closeSuite(suite)
   }
 
+  @Test
   fun `test restoreCoverageData method causes reload`() {
     val bundle = loadIJSuite()
     val suite = bundle.suites[0] as BaseCoverageSuite
@@ -151,6 +171,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertNotNull(suite.coverageData)
   }
 
+  @Test
   fun `test xml and ij suites are independent`(): Unit = runBlocking {
     val xmlSuite = loadXMLSuite()
     val ijSuite = loadIJSuite()

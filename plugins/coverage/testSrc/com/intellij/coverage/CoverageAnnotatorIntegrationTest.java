@@ -20,12 +20,16 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.JavaModuleTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RunWith(JUnit4.class)
 public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   private CompilerTester myCompilerTester;
 
@@ -61,6 +65,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
                                            });
   }
 
+  @Test
   public void testExcludeEverythingFromCoverage() {
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
@@ -88,6 +93,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     }).visitSuite();
   }
 
+  @Test
   public void testMultipleSourceRoots() {
     CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(new JavaCoverageEngine())) {
       @NotNull

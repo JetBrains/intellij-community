@@ -7,9 +7,14 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 
+@RunWith(JUnit4::class)
 class CoverageSuitesTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test external suite adding`() {
     assertNoSuites()
     val path = SIMPLE_IJ_REPORT_PATH
@@ -25,6 +30,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
   fun `test coverage is closed when a suite is deleted`(): Unit = runBlocking {
     assertNoSuites()
 
@@ -46,7 +52,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
-
+  @Test
   fun `test coverage reopen if one of the suites is deleted`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
@@ -84,6 +90,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
   fun `test suite removal with deletion asks for approval from user`() {
     assertNoSuites()
     val suite = loadIJSuiteCopy().suites[0]
@@ -103,6 +110,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
   fun `test suite is not opened if the report file does not exist`() {
     assertNoSuites()
     val suite = loadIJSuiteCopy()
@@ -114,6 +122,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
   fun `test opening several suites`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuite()
@@ -141,6 +150,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
   fun `test hide coverage action closes all suites`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuite()

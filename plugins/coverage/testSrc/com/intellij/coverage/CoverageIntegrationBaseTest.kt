@@ -66,7 +66,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     Disposer.dispose(disposable)
   }
 
-  protected fun createCoverageFileProvider(coverageDataPath: String) =
+  private fun createCoverageFileProvider(coverageDataPath: String) =
     DefaultCoverageFileProvider(File(coverageDataPath))
 
   private fun loadCoverageSuite(coverageEngineClass: Class<out CoverageEngine>, coverageRunnerClass: Class<out CoverageRunner>,
@@ -100,9 +100,9 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   companion object {
     protected fun getTestDataPath() = PluginPathManager.getPluginHomePath("coverage") + "/testData/simple"
 
-    val SIMPLE_IJ_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.ic").path
-    val SIMPLE_XML_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.xml").path
-    val SIMPLE_JACOCO_REPORT_PATH = File(getTestDataPath(), "simple\$foo_in_simple.exec").path
+    val SIMPLE_IJ_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.ic").path
+    val SIMPLE_XML_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.xml").path
+    val SIMPLE_JACOCO_REPORT_PATH: String = File(getTestDataPath(), "simple\$foo_in_simple.exec").path
     val DEFAULT_FILTER = arrayOf("foo.*")
   }
 }

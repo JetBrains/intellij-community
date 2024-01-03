@@ -6,18 +6,36 @@ import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.rt.coverage.util.CoverageReport
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.util.regex.Pattern
 
+@RunWith(JUnit4::class)
 class PatternsTest : HeavyPlatformTestCase() {
+  @Test
   fun `test class patterns should persist in a report file and suite`() = test(listOf("c.C", "a.*"), listOf(), false)
+
+  @Test
   fun `test patterns should persist in a report file and suite`() = test(listOf("a.*"), listOf("b.*"), false)
+
+  @Test
   fun `test empty patterns should persist in a report file and suite`() = test(listOf(), listOf(), false)
+
+  @Test
   fun `test null patterns should persist in a report file and suite`() = test(null, null, false)
+
+  @Test
   fun `test patterns from report file should not overwrite suite`() = test(listOf("a.*"), listOf("b.*"), true)
+
+  @Test
   fun `test suite bundle should merge include patterns`() = testBundle(listOf("a1.*"), listOf("b1.*"), listOf("a2.*"), listOf("b2.*"))
+
+  @Test
   fun `test suite bundle should not merge include patterns when empty`() = testBundle(listOf("a1.*"), listOf("b1.*"),
                                                                                       listOf(), listOf("b2.*"))
 
+  @Test
   fun `test suite bundle should not merge include patterns when null`() = testBundle(listOf("a1.*"), listOf("b1.*"),
                                                                                      null, listOf("b2.*"))
 

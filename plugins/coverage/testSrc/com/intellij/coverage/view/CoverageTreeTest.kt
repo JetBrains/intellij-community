@@ -5,10 +5,19 @@ import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuitesBundle
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+private const val TIMEOUT_MS = 20_000L
+
+@RunWith(JUnit4::class)
 class CoverageTreeTest : CoverageIntegrationBaseTest() {
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test ij coverage tree contains elements`() = testCoverageSuiteTree(loadIJSuite())
+
+  @Test(timeout = TIMEOUT_MS)
   fun `test xml coverage tree contains elements`() = testCoverageSuiteTree(loadXMLSuite())
 
   private fun testCoverageSuiteTree(suite: CoverageSuitesBundle): Unit = runBlocking {

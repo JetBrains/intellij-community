@@ -6,9 +6,16 @@ import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+private const val TIMEOUT_MS = 20_000L
+
+@RunWith(JUnit4::class)
 class CoverageViewTest : CoverageIntegrationBaseTest() {
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test coverage toolwindow exists`() = runBlocking {
     val bundle = loadIJSuite()
 
@@ -21,6 +28,7 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     Assert.assertNull(findCoverageView(bundle))
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test several suites`() = runBlocking {
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()

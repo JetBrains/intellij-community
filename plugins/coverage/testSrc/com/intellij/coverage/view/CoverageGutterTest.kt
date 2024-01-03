@@ -25,9 +25,16 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+private const val TIMEOUT_MS = 20_000L
+
+@RunWith(JUnit4::class)
 class CoverageGutterTest : CoverageIntegrationBaseTest() {
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test gutter annotations for opened files`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
     openFiles()
@@ -40,6 +47,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     assertNoCoverage()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test gutter annotations for opening files`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
 
@@ -53,6 +61,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     assertNoCoverage()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test gutter annotations for xml suite`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
     openFiles()
@@ -70,6 +79,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     assertNoCoverage()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test gutter sub coverage`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
     openFiles()

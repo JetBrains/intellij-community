@@ -6,8 +6,13 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test coverage run config creation`() {
     val runManager = RunManager.getInstance(project)
     val runConfig = runManager.findConfigurationByName("foo in simple")?.configuration as RunConfigurationBase<*>

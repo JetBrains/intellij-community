@@ -12,9 +12,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+private const val TIMEOUT_MS = 20_000L
+
+@RunWith(JUnit4::class)
 class SuiteChooserTest : CoverageIntegrationBaseTest() {
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog includes registered suites`(): Unit = runBlocking {
     assertNoSuites()
 
@@ -43,6 +50,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog includes opened suites selected`(): Unit = runBlocking {
     assertNoSuites()
     val ijBundle = loadIJSuite()
@@ -70,6 +78,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test suite chooser opens checked suite`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
@@ -93,6 +102,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test suite chooser opens all checked suites`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuite().suites[0]
@@ -129,6 +139,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test chooser dialog closes suites if not selected`(): Unit = runBlocking {
     assertNoSuites()
     val ijBundle = loadIJSuite()
@@ -152,6 +163,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test(timeout = TIMEOUT_MS)
   fun `test no coverage action closes all opened suites`(): Unit = runBlocking {
     assertNoSuites()
     val ijBundle = loadIJSuite()

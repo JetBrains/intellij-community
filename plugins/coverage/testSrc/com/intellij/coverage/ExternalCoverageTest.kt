@@ -7,9 +7,14 @@ import com.intellij.rt.coverage.util.CoverageReport
 import com.intellij.rt.coverage.util.ProjectDataLoader
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 
+@RunWith(JUnit4::class)
 class ExternalCoverageTest : CoverageIntegrationBaseTest() {
+  @Test
   fun `test watching externally added coverage`(): Unit = runBlocking {
     assertNoSuites()
     val ijSuite = loadIJSuiteCopy()

@@ -8,12 +8,17 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.ProjectData
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class TestTrackingTest : CoverageIntegrationBaseTest() {
 
   /**
    * @see com.intellij.coverage.listeners.java.CoverageListener.getData
    */
+  @Test
   fun `test ProjectData API compatibility`() {
     val projectData = ProjectData.getProjectData()
     @Suppress("USELESS_IS_CHECK")
@@ -21,6 +26,7 @@ class TestTrackingTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(projectData == null || projectData is ProjectData)
   }
 
+  @Test
   fun `test test-tracking names`(): Unit = runBlocking {
     val suite = loadIJSuite()
 
@@ -38,6 +44,7 @@ class TestTrackingTest : CoverageIntegrationBaseTest() {
     """.trimIndent(), collectActualTests("foo.FooClass", suite))
   }
 
+  @Test
   fun `test methods list extraction`() {
     val suite = loadIJSuite()
 
