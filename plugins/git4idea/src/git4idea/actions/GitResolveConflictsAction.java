@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.ui.toolbar.GitMergeRebaseWidgetKt;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     if (changes.size() > 1000) {
       return true;
     }
-    return changes.stream().anyMatch(it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
+    return ContainerUtil.exists(changes, it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Override
