@@ -44,7 +44,7 @@ object FUSProjectHotStartUpMeasurer {
    * Might happen before [getStartUpContextElementIntoIdeStarter]
    */
   fun splashBecameVisible() {
-    FUSStartupReopenProjectMarkerElement.splashBecameVisible()
+    FUSStartupReopenProjectElement.splashBecameVisible()
   }
 
   fun getStartUpContextElementIntoIdeStarter(ideStarter: IdeStarter): CoroutineContext.Element? {
@@ -54,93 +54,95 @@ object FUSProjectHotStartUpMeasurer {
     if (ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
       return null
     }
-    FUSStartupReopenProjectMarkerElement.ideStarterStarted()
-    return FUSStartupReopenProjectMarkerElement
+    FUSStartupReopenProjectElement.ideStarterStarted()
+    return FUSStartupReopenProjectElement
   }
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-    return coroutineContext[FUSStartupReopenProjectMarkerElement]?.getStartUpContextElementToPass()
+    return coroutineContext[MyMarker]?.getStartUpContextElementToPass()
   }
 
   fun reportWelcomeScreenShown() {
-    FUSStartupReopenProjectMarkerElement.reportWelcomeScreenShown()
+    FUSStartupReopenProjectElement.reportWelcomeScreenShown()
   }
 
   suspend fun reportProjectType(projectsType: ProjectsType) {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportProjectType(projectsType)
+    coroutineContext[MyMarker]?.reportProjectType(projectsType)
   }
 
   /**
    * Reports the existence of project settings to filter cases of importing which may need more resources.
    */
   suspend fun reportProjectPath(projectFile: Path) {
-    val marker = coroutineContext[FUSStartupReopenProjectMarkerElement] ?: return
+    val element = coroutineContext[MyMarker] ?: return
     val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
-    marker.reportProjectSettings(hasSettings)
+    element.reportProjectSettings(hasSettings)
   }
 
   suspend fun resetProjectPath() {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.resetProjectSettings()
+    coroutineContext[MyMarker]?.resetProjectSettings()
   }
 
   suspend fun openingMultipleProjects() {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportViolation(Violation.MultipleProjects)
+    coroutineContext[MyMarker]?.reportViolation(Violation.MultipleProjects)
   }
 
   suspend fun reportAlreadyOpenedProject() {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportViolation(Violation.HasOpenedProject)
+    coroutineContext[MyMarker]?.reportViolation(Violation.HasOpenedProject)
   }
 
   fun noProjectFound() {
-    FUSStartupReopenProjectMarkerElement.reportViolation(Violation.NoProjectFound)
+    FUSStartupReopenProjectElement.reportViolation(Violation.NoProjectFound)
   }
 
   fun lightEditProjectFound() {
-    FUSStartupReopenProjectMarkerElement.reportViolation(Violation.MightBeLightEditProject)
+    FUSStartupReopenProjectElement.reportViolation(Violation.MightBeLightEditProject)
   }
 
   suspend fun reportUriOpening() {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportViolation(Violation.OpeningURI)
+    coroutineContext[MyMarker]?.reportViolation(Violation.OpeningURI)
   }
 
   fun reportStarterUsed() {
-    FUSStartupReopenProjectMarkerElement.reportViolation(Violation.ApplicationStarter)
+    FUSStartupReopenProjectElement.reportViolation(Violation.ApplicationStarter)
   }
 
   fun frameBecameVisible() {
-    FUSStartupReopenProjectMarkerElement.reportFrameBecameVisible()
+    FUSStartupReopenProjectElement.reportFrameBecameVisible()
   }
 
   fun reportFrameBecameInteractive() {
-    FUSStartupReopenProjectMarkerElement.reportFrameBecameInteractive()
+    FUSStartupReopenProjectElement.reportFrameBecameInteractive()
   }
 
   fun markupRestored(file: VirtualFileWithId) {
-    FUSStartupReopenProjectMarkerElement.reportMarkupRestored(file)
+    FUSStartupReopenProjectElement.reportMarkupRestored(file)
   }
 
   fun firstOpenedEditor(project: Project, file: VirtualFile, elementToPass: CoroutineContext.Element?) {
-    if (elementToPass != FUSStartupReopenProjectMarkerElement) return
+    if (elementToPass != FUSStartupReopenProjectElement) return
     service<MeasurerCoroutineService>().coroutineScope.launch {
-      FUSStartupReopenProjectMarkerElement.reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
+      FUSStartupReopenProjectElement.reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
     }
   }
 
   suspend fun firstOpenedUnknownEditor(project: Project, file: VirtualFile) {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
+    coroutineContext[MyMarker]?.reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
   }
 
   suspend fun openedReadme(project: Project, readmeFile: VirtualFile) {
-    coroutineContext[FUSStartupReopenProjectMarkerElement]?.reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
+    coroutineContext[MyMarker]?.reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
   }
 
   fun reportNoMoreEditorsOnStartup(project: Project, startUpContextElementToPass: CoroutineContext.Element?) {
-    if (startUpContextElementToPass == FUSStartupReopenProjectMarkerElement) {
-      FUSStartupReopenProjectMarkerElement.reportNoMoreEditorsOnStartup(project)
+    if (startUpContextElementToPass == FUSStartupReopenProjectElement) {
+      FUSStartupReopenProjectElement.reportNoMoreEditorsOnStartup(project)
     }
   }
 
-  private object FUSStartupReopenProjectMarkerElement : CoroutineContext.Element, CoroutineContext.Key<FUSStartupReopenProjectMarkerElement> {
+  private object MyMarker : CoroutineContext.Key<FUSStartupReopenProjectElement>
+
+  private object FUSStartupReopenProjectElement : CoroutineContext.Element {
     private sealed interface Stage {
       data object Initial : Stage
       data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
@@ -209,7 +211,7 @@ object FUSProjectHotStartUpMeasurer {
     private val markupResurrectedFileIds = IntOpenHashSet()
 
     override val key: CoroutineContext.Key<*>
-      get() = this
+      get() = MyMarker
 
     private fun <T> computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> T): T {
       synchronized(stageLock) {
@@ -411,7 +413,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-      return computeLocked { return@computeLocked if (this == Stage.Stopped) null else this@FUSStartupReopenProjectMarkerElement }
+      return computeLocked { return@computeLocked if (this == Stage.Stopped) null else this@FUSStartupReopenProjectElement }
     }
 
     fun reportNoMoreEditorsOnStartup(project: Project) {
