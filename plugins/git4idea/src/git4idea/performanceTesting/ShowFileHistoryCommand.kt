@@ -2,64 +2,69 @@
 package git4idea.performanceTesting
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vcs.actions.VcsContextUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFileHistoryProvider
-import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.VcsLogListener
+import com.intellij.vcs.log.ui.VcsLogUiHolder
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
-import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.toPromise
+import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 
-class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, line, true) {
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
-    val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
-    val focusedComponent = IdeFocusManager.findInstance().focusOwner
-    val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
-    val selectedFiles = VcsContextUtil.selectedFilePaths(dataContext)
-    val historyProvider: VcsLogFileHistoryProvider = context.project.getService(VcsLogFileHistoryProvider::class.java)
-    if (!historyProvider.canShowFileHistory(selectedFiles, null)) {
-      actionCallback.reject("Can't show file history for $selectedFiles")
-    }
+class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+  override suspend fun doExecute(context: PlaybackContext) {
+    withContext(Dispatchers.EDT) {
+      val focusedComponent = IdeFocusManager.findInstance().focusOwner
+      val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
+      val selectedFiles = VcsContextUtil.selectedFilePaths(dataContext)
+      val historyProvider: VcsLogFileHistoryProvider = context.project.getService(VcsLogFileHistoryProvider::class.java)
+      if (!historyProvider.canShowFileHistory(selectedFiles, null)) {
+        throw RuntimeException("Can't show file history for $selectedFiles")
+      }
 
-    val mainSpan = PerformanceTestSpan.TRACER.spanBuilder(MAIN_SPAN_NAME).startSpan()
-    val scope = mainSpan.makeCurrent()
-    val firstPackSpan = PerformanceTestSpan.TRACER.spanBuilder(FIRST_PACK_SPAN_NAME).startSpan()
-    historyProvider.showFileHistory(selectedFiles, null)
+      val mainSpan = PerformanceTestSpan.TRACER.spanBuilder(MAIN_SPAN_NAME).startSpan()
+      val scope = mainSpan.makeCurrent()
+      val firstPackSpan = PerformanceTestSpan.TRACER.spanBuilder(FIRST_PACK_SPAN_NAME).startSpan()
+      historyProvider.showFileHistory(selectedFiles, null)
 
-    val contentManager = ToolWindowManager.getInstance(context.project).getToolWindow(
-      ChangesViewContentManager.TOOLWINDOW_ID)?.contentManager
-    val ui = VcsLogUiHolder.getLogUis(contentManager?.selectedContent?.component!!).single()
-    ui.addLogListener { dataPack, _ ->
-      run {
-        if (!(dataPack as VisiblePack).canRequestMore()) {
-          mainSpan.end()
-          scope.close()
-          actionCallback.setDone()
-        }
-        else if (firstPackSpan.isRecording) {
-            firstPackSpan.end()
+      val contentManager = ToolWindowManager.getInstance(context.project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.contentManager
+      val ui = VcsLogUiHolder.getLogUis(contentManager?.selectedContent?.component!!).single()
+      suspendCancellableCoroutine { continuation ->
+        val listener = object : VcsLogListener {
+          override fun onChange(dataPack: VcsLogDataPack, refreshHappened: Boolean) {
+            if (!(dataPack as VisiblePack).canRequestMore()) {
+              mainSpan.end()
+              scope.close()
+              ui.removeLogListener(this)
+              continuation.resume(Result.success(Unit))
+            }
+            else if (firstPackSpan.isRecording) {
+              firstPackSpan.end()
+            }
           }
+        }
+        ui.addLogListener(listener)
+        continuation.invokeOnCancellation { ui.removeLogListener(listener) }
       }
     }
-
-    return actionCallback.toPromise()
   }
+
+  override fun getName(): String = COMMAND_NAME
 
   companion object {
     const val MAIN_SPAN_NAME = "showFileHistory"
     const val FIRST_PACK_SPAN_NAME = "showFirstPack"
-    const val PREFIX = "${CMD_PREFIX}showFileHistory"
+    const val COMMAND_NAME = "showFileHistory"
+    const val PREFIX = "${CMD_PREFIX}$COMMAND_NAME"
   }
-
 }
