@@ -2,9 +2,10 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -19,7 +20,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * QuickFix to add self to unresolved reference
  */
-public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPriorityAction {
+public class UnresolvedReferenceAddSelfQuickFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
   private final String myQualifier;
   private final String myAttributeName;
 
@@ -41,12 +42,12 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPr
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyReferenceExpression element = as(descriptor.getPsiElement(), PyReferenceExpression.class);
-    if (element == null) return;
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyReferenceExpression reference = as(element, PyReferenceExpression.class);
+    if (reference == null) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element),
-                                                                        myQualifier + "." + element.getText());
-    element.replace(expression);
+    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(reference),
+                                                                        myQualifier + "." + reference.getText());
+    reference.replace(expression);
   }
 }
