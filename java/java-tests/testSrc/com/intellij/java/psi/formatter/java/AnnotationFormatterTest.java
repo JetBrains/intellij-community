@@ -567,4 +567,39 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  """);
   }
 
+  public void testTypeAnnotationsForMethodReturnTypeAreOnTheSameLineWhenAnyModifierIsPresent() {
+    doTextTest("""
+                 public class Foo {
+                 public static synchronized @Nullable @Nls String bar() {
+                     return "";
+                 }
+                 }
+                 """,
+               """
+                 public class Foo {
+                     public static synchronized @Nullable @Nls String bar() {
+                         return "";
+                     }
+                 }
+                 """);
+  }
+
+  public void testTypeAnnotationsForMethodReturnTypeAreOnTheDifferentLinesWhenNoModifiersArePresent() {
+    doTextTest("""
+                 public class Foo {
+                 @Nullable @Nls String bar() {
+                     return "";
+                 }
+                 }
+                 """,
+               """
+                 public class Foo {
+                     @Nullable
+                     @Nls
+                     String bar() {
+                         return "";
+                     }
+                 }
+                 """);
+  }
 }

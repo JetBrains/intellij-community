@@ -308,6 +308,9 @@ public final class JavaFormatterUtil {
         if (prev instanceof PsiKeyword) {
           return null;
         }
+        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent)) {
+          return Wrap.createWrap(WrapType.NONE, false);
+        }
 
         return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings, javaSettings)), true);
       }
@@ -503,6 +506,17 @@ public final class JavaFormatterUtil {
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;
   }
+
+  private static boolean isAnnoInsideModifierListWithAtLeastOneKeyword(@NotNull ASTNode current, @NotNull ASTNode parent) {
+    if (current.getElementType() != JavaElementType.ANNOTATION || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
+    while (true) {
+      current = FormatterUtil.getPreviousNonWhitespaceSibling(current);
+      if (current instanceof PsiKeyword) return true;
+      else if (current == null || current.getElementType() != JavaElementType.ANNOTATION) break;
+    }
+    return false;
+  }
+
 
   /**
    * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list
