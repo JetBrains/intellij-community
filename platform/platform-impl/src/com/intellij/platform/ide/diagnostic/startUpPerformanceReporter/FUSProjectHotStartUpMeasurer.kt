@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
@@ -30,6 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+@Internal
 object FUSProjectHotStartUpMeasurer {
 
   enum class ProjectsType {
@@ -258,13 +260,13 @@ object FUSProjectHotStartUpMeasurer {
     fun reportViolation(violation: Violation) {
       computeLocked {
         if (this is Stage.IdeStarterStarted) {
-          reportViolation(getDuration(), violation, splashBecameVisibleTime)
+          reportViolation(getDurationFromStart(), violation, splashBecameVisibleTime)
         }
       }
     }
 
     fun reportWelcomeScreenShown() {
-      val welcomeScreenDuration = getDuration()
+      val welcomeScreenDuration = getDurationFromStart()
       computeLocked {
         if (this !is Stage.IdeStarterStarted) return@computeLocked
         if (splashBecameVisibleTime == null) {
@@ -272,7 +274,7 @@ object FUSProjectHotStartUpMeasurer {
         }
         else {
           WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(true),
-                                   SPLASH_SCREEN_VISIBLE_DURATION.with(getDuration(splashBecameVisibleTime).getValueForFUS()))
+                                   SPLASH_SCREEN_VISIBLE_DURATION.with(getDurationFromStart(splashBecameVisibleTime).getValueForFUS()))
         }
         reportViolation(Violation.WelcomeScreenShown)
       }
@@ -307,7 +309,7 @@ object FUSProjectHotStartUpMeasurer {
         if (this !is Stage.IdeStarterStarted) {
           return@computeLocked
         }
-        val duration = getDuration()
+        val duration = getDurationFromStart()
 
         reportFirstUiShownEvent(splashBecameVisibleTime, duration)
 
@@ -347,7 +349,7 @@ object FUSProjectHotStartUpMeasurer {
 
     private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Duration) {
       splashBecameVisibleTime?.also {
-        FIRST_UI_SHOWN_EVENT.log(getDuration(splashBecameVisibleTime).getValueForFUS(), UIResponseType.Splash)
+        FIRST_UI_SHOWN_EVENT.log(getDurationFromStart(splashBecameVisibleTime).getValueForFUS(), UIResponseType.Splash)
       }.alsoIfNull { FIRST_UI_SHOWN_EVENT.log(duration.getValueForFUS(), UIResponseType.Frame) }
     }
 
@@ -357,7 +359,7 @@ object FUSProjectHotStartUpMeasurer {
           stage = this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
         }
         else if (this is Stage.FrameVisible) {
-          val duration = getDuration()
+          val duration = getDurationFromStart()
           PrematureFrameInteractiveData.log(duration)
           if (prematureEditorData != null) {
             Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
@@ -397,7 +399,7 @@ object FUSProjectHotStartUpMeasurer {
             }
             is Stage.FrameInteractive -> {
               stopReporting()
-              Stage.EditorStage(editorStageData, settingsExist).log(getDuration(durationMillis))
+              Stage.EditorStage(editorStageData, settingsExist).log(getDurationFromStart(durationMillis))
             }
             else -> {} //ignore
           }
@@ -431,7 +433,7 @@ object FUSProjectHotStartUpMeasurer {
             stage = this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameInteractive -> {
-            Stage.EditorStage(noEditorStageData, settingsExist).log(getDuration(durationMillis))
+            Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
             stopReporting()
           }
           else -> {} //ignore
@@ -450,7 +452,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 }
 
-private fun getDuration(finishTimestampNano: Long = System.nanoTime()): Duration {
+private fun getDurationFromStart(finishTimestampNano: Long = System.nanoTime()): Duration {
   return (finishTimestampNano - StartUpMeasurer.getStartTime()).toDuration(DurationUnit.NANOSECONDS)
 }
 
