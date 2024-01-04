@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.dev.AlignmentUtils;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.IOUtil;
@@ -296,7 +297,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     /** @return total record length (including header) */
     private static int extractRecordLength(int header) {
-      return roundUpToInt32(header & RECORD_LENGTH_MASK);
+      return AlignmentUtils.roundUpToInt32(header & RECORD_LENGTH_MASK);
     }
 
     /** @return record payload length (excluding header) */
@@ -322,7 +323,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     }
 
     public static int calculateRecordLength(int payloadSize) {
-      return roundUpToInt32(payloadSize + RECORD_HEADER_SIZE);
+      return AlignmentUtils.roundUpToInt32(payloadSize + RECORD_HEADER_SIZE);
     }
 
     /**
@@ -350,7 +351,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     boolean fileIsEmpty = (storage.actualFileSize() == 0);
 
     int pageSize = storage.pageSize();
-    if (!is32bAligned(pageSize)) {
+    if (!AlignmentUtils.is32bAligned(pageSize)) {
       throw new IllegalArgumentException("storage.pageSize(=" + pageSize + ") must be 32b-aligned");
     }
 
@@ -491,7 +492,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     int totalRecordLength = RecordLayout.calculateRecordLength(payloadSize);
     long recordOffsetInFile = allocateSpaceForRecord(totalRecordLength);
-    assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
+    AlignmentUtils.assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
 
     Page page = storage.pageByOffset(recordOffsetInFile);
     int offsetInPage = storage.toOffsetInPage(recordOffsetInFile);
@@ -592,7 +593,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       return false;
     }
     long recordOffset = recordIdToOffsetUnchecked(recordId);
-    if (!is32bAligned(recordOffset)) {
+    if (!AlignmentUtils.is32bAligned(recordOffset)) {
       return false;
     }
     return recordOffset < firstUnAllocatedOffset();
@@ -799,8 +800,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    */
   private long nextRecordOffset(long recordOffsetInFile,
                                 int totalRecordLength) {
-    assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
-    long nextRecordOffset = roundUpToInt32(recordOffsetInFile + totalRecordLength);
+    AlignmentUtils.assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
+    long nextRecordOffset = AlignmentUtils.roundUpToInt32(recordOffsetInFile + totalRecordLength);
 
     int pageSize = storage.pageSize();
     int offsetInPage = storage.toOffsetInPage(nextRecordOffset);
@@ -1021,7 +1022,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @VisibleForTesting
   static long recordOffsetToId(long recordOffset) {
-    assert32bAligned(recordOffset, "recordOffsetInFile");
+    AlignmentUtils.assert32bAligned(recordOffset, "recordOffsetInFile");
     //0 is considered invalid id (NULL_ID) everywhere in our code, so '+1' for first id to be 1
     return recordOffset - HeaderLayout.HEADER_SIZE + 1;
   }
@@ -1029,7 +1030,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   @VisibleForTesting
   static long recordIdToOffset(long recordId) {
     long offset = recordIdToOffsetUnchecked(recordId);
-    if (!is32bAligned(offset)) {
+    if (!AlignmentUtils.is32bAligned(offset)) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
     }
     return offset;
@@ -1065,40 +1066,4 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   //================== alignment: ========================================================================
   // Record headers must be 32b-aligned so they could be accessed with volatile semantics -- because not
   // all CPU arch support unaligned access with memory sync semantics
-
-  private static int roundUpToInt32(int value) {
-    if (is32bAligned(value)) {
-      return value;
-    }
-    return ((value >> 2) + 1) << 2;
-  }
-
-  private static long roundUpToInt32(long value) {
-    if (is32bAligned(value)) {
-      return value;
-    }
-    return ((value >> 2) + 1) << 2;
-  }
-
-  private static boolean is32bAligned(int value) {
-    return (value & 0b11) == 0;
-  }
-
-  private static boolean is32bAligned(long value) {
-    return (value & 0b11L) == 0;
-  }
-
-  private static void assert32bAligned(long value,
-                                       @NotNull String name) {
-    if (!is32bAligned(value)) {
-      throw new AssertionError("Bug: " + name + "(=" + value + ") is not 32b-aligned");
-    }
-  }
-
-  private static void assert32bAligned(int value,
-                                       @NotNull String name) {
-    if (!is32bAligned(value)) {
-      throw new AssertionError("Bug: " + name + "(=" + value + ") is not 32b-aligned");
-    }
-  }
 }
