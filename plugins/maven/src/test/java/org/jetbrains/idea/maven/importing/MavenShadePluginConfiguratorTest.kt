@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -56,6 +57,9 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
     val uberJarPath = m2.parent.path + "/target/m2-1.jar"
     assertModuleLibDep("m1", "Maven Shade: test:m2:1",
                        "jar://$uberJarPath!/")
+
+    Registry.get("maven.shade.plugin.generate.uber.jar").setValue("true", testRootDisposable)
+    updateAllProjects()
     assertTrue(Files.exists(Path.of(uberJarPath)));
   }
 }

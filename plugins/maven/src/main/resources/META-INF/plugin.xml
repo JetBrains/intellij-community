@@ -382,7 +382,7 @@
     <registryKey key="maven.shade.plugin.create.uber.jar.dependency" defaultValue="true"
                  description="Create IDEA module dependencies to uber jars for Maven projects that use Maven Shade plugin"/>
 
-    <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="true"
+    <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="false"
                  description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
 
     <intentionAction>
