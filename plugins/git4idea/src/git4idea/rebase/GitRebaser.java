@@ -171,18 +171,7 @@ public class GitRebaser {
                                               @NotNull GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
-        @Override
-        protected boolean proceedIfNothingToMerge() {
-          notifyUnresolvedRemain();
-          return false;
-        }
-
-        @Override
-        protected boolean proceedAfterAllMerged() {
-          return continueRebase(root);
-        }
-      }.merge();
+      return new GitRebaser.ResumeConflictResolver(myProject, root, this).merge();
     }
     else if (rebaseConflictDetector.isNoChangeError()) {
       LOG.info("handleRebaseFailure no changes error detected");
@@ -280,7 +269,7 @@ public class GitRebaser {
                                                       @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new GitRebaser.ConflictResolver(myProject, myGit, root, this).merge();
+      final boolean allMerged = new RebaserConflictResolver(myProject, root, this).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
     else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
@@ -310,11 +299,11 @@ public class GitRebaser {
     }
   }
 
-  public static class ConflictResolver extends GitConflictResolver {
+  private static class RebaserConflictResolver extends GitConflictResolver {
     private final @NotNull GitRebaser myRebaser;
     private final @NotNull VirtualFile myRoot;
 
-    public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
+    private RebaserConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
       super(project, Collections.singleton(root), makeParams(project));
       myRebaser = rebaser;
       myRoot = root;
@@ -323,6 +312,28 @@ public class GitRebaser {
     @Override
     protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
+    }
+
+    @Override
+    protected boolean proceedAfterAllMerged() {
+      return myRebaser.continueRebase(myRoot);
+    }
+  }
+
+  private static class ResumeConflictResolver extends GitConflictResolver {
+    private final @NotNull GitRebaser myRebaser;
+    private final @NotNull VirtualFile myRoot;
+
+    private ResumeConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
+      super(project, Collections.singleton(root), makeParams(project));
+      myRebaser = rebaser;
+      myRoot = root;
+    }
+
+    @Override
+    protected boolean proceedIfNothingToMerge() {
+      notifyUnresolvedRemain();
+      return false;
     }
 
     @Override
