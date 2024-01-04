@@ -422,30 +422,17 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
           final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
           if (assignmentStatement != null && !PsiTreeUtil.isAncestor(assignmentStatement.getAssignedValue(), element, false)) {
-            ProblemsHolder holder = getHolder();
-            if (holder != null) {
-              if (assignmentStatement.getLeftHandSideExpression() == element) {
-                // Single assignment target (unused = value)
-                holder.problem(element, warningMsg)
-                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-                  .fix(new PyRemoveAssignmentStatementTargetQuickFix(element))
-                  .fix(new PyRemoveStatementQuickFix())
-                  .register();
-              }
-              else if (ArrayUtil.contains(element, assignmentStatement.getRawTargets())) {
-                // Chained assignment target (used = unused = value)
-                holder.problem(element, warningMsg)
-                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-                  .fix(new PyRemoveAssignmentStatementTargetQuickFix(element))
-                  .register();
-              }
-              else {
-                // Unpacking (used, unused = value)
-                holder.problem(element, warningMsg)
-                  .highlight(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-                  .fix(new ReplaceWithWildCard())
-                  .register();
-              }
+            if (assignmentStatement.getLeftHandSideExpression() == element) {
+              // Single assignment target (unused = value)
+              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
+            }
+            else if (ArrayUtil.contains(element, assignmentStatement.getRawTargets())) {
+              // Chained assignment target (used = unused = value)
+              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix());
+            }
+            else {
+              // Unpacking (used, unused = value)
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
             }
             continue;
           }
