@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushParamsImpl;
+import git4idea.repo.GitRefUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
@@ -125,7 +126,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         res = GitCommandResult.error(GitBundle.message("delete.remote.branch.operation.couldn.t.find.remote.by.name", remoteName));
       }
       else {
-        res = pushDeletion(repository, remote, branch);
+        String fullBranchName = GitRefUtil.addRefsHeadsPrefixIfNeeded(branch);
+        res = pushDeletion(repository, remote, fullBranchName);
         if (!res.success() && isAlreadyDeletedError(res.getErrorOutputAsJoinedString())) {
           res = myGit.remotePrune(repository, remote);
         }

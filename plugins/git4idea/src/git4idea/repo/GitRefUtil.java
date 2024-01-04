@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public final class GitRefUtil {
   private static final Logger LOG = Logger.getInstance(GitRefUtil.class);
   private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
 
+  @Contract("null -> null;!null -> !null")
   public static @Nullable String addRefsHeadsPrefixIfNeeded(@Nullable String branchName) {
     if (branchName != null && !branchName.startsWith(REFS_HEADS_PREFIX)) {
       return REFS_HEADS_PREFIX + branchName;

@@ -829,6 +829,19 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myRepositories.forEach { assertBranchExists(it, "feature") }
   }
 
+  fun `test delete remote branch with the same name as remote tag`() {
+    prepareLocalAndRemoteBranch("feature", track = false)
+
+    git("tag feature")
+    git("push origin refs/tags/feature")
+
+    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE)
+
+    assertSuccessfulNotification("Deleted remote branch origin/feature")
+    myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
+    myRepositories.forEach { assertBranchExists(it, "feature") }
+  }
+
   fun `test delete remote branch should optionally delete the tracking branch as well`() {
     prepareLocalAndRemoteBranch("feature", track = true)
 
