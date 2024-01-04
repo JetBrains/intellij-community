@@ -48,13 +48,8 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Stage) {
+  private fun computeLocked(block: Stage.() -> Stage) {
     synchronized(stageLock) {
-      stage.apply {
-        if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
-          stage = Stage.Stopped
-        }
-      }
       if (stage !== Stage.Stopped) {
         stage = stage.block()
       }
@@ -71,7 +66,7 @@ object FUSProjectHotStartUpMeasurer {
     val nanoTime = System.nanoTime()
     // This may happen before we know about particulars in com.intellij.idea.IdeStarter.startIDE,
     // where initialization of FUSStartupReopenProjectMarkerElement happens.
-    computeLocked(false) {
+    computeLocked {
       return@computeLocked when {
         this is Stage.Initial -> Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
         this is Stage.IdeStarterStarted && splashBecameVisibleTime == null -> this.copy(splashBecameVisibleTime = nanoTime)
@@ -86,16 +81,14 @@ object FUSProjectHotStartUpMeasurer {
       computeLocked { Stage.Stopped }
       return null
     }
-    else {
-      computeLocked(false) {
-        return@computeLocked when (this) {
-          is Stage.Initial -> Stage.IdeStarterStarted()
-          is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
-          else -> Stage.Stopped
-        }
+    computeLocked {
+      return@computeLocked when (this) {
+        is Stage.Initial -> Stage.IdeStarterStarted()
+        is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
+        else -> Stage.Stopped
       }
-      return MyMarker
     }
+    return MyMarker
   }
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
