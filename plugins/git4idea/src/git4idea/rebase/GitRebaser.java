@@ -31,7 +31,7 @@ import java.util.List;
 import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
-public class GitRebaser {
+public final class GitRebaser {
 
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
 

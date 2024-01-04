@@ -490,7 +490,6 @@ public final class GitUpdateProcess {
    */
   private boolean checkRebaseInProgress() {
     LOG.info("checkRebaseInProgress: checking if there is an unfinished rebase process...");
-    final GitRebaser rebaser = new GitRebaser(myProject, myGit, myProgressIndicator);
     Collection<VirtualFile> rebasingRoots = ContainerUtil.map(GitRebaseUtils.getRebasingRepositories(myProject), repo -> repo.getRoot());
     if (rebasingRoots.isEmpty()) {
       return false;
@@ -505,12 +504,12 @@ public final class GitUpdateProcess {
     return !new GitConflictResolver(myProject, rebasingRoots, params) {
       @Override
       protected boolean proceedIfNothingToMerge() {
-        return rebaser.continueRebase(rebasingRoots);
+        return new GitRebaser(myProject, myGit, myProgressIndicator).continueRebase(rebasingRoots);
       }
 
       @Override
       protected boolean proceedAfterAllMerged() {
-        return rebaser.continueRebase(rebasingRoots);
+        return new GitRebaser(myProject, myGit, myProgressIndicator).continueRebase(rebasingRoots);
       }
     }.merge();
   }

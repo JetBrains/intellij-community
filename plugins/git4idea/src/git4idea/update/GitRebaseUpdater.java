@@ -29,7 +29,6 @@ import java.util.List;
  */
 public final class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
-  private final GitRebaser myRebaser;
   private final @NotNull GitBranchPair myBranchPair;
 
   public GitRebaseUpdater(@NotNull Project project,
@@ -39,7 +38,6 @@ public final class GitRebaseUpdater extends GitUpdater {
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
     super(project, git, repository, progressIndicator, updatedFiles);
-    myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myBranchPair = branchPair;
   }
 
@@ -61,9 +59,9 @@ public final class GitRebaseUpdater extends GitUpdater {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
-    GitUpdateResult result = myRebaser.rebase(myRoot, params);
+    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params);
     if (result == GitUpdateResult.CANCEL) {
-      myRebaser.abortRebase(myRoot);
+      new GitRebaser(myProject, myGit, myProgressIndicator).abortRebase(myRoot);
     }
     return result;
   }

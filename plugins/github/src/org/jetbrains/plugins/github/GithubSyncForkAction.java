@@ -314,7 +314,6 @@ public class GithubSyncForkAction extends DumbAwareAction {
 
     private void doRebaseCurrentBranch(@NotNull ProgressIndicator indicator, @NotNull String onto) {
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
-      GitRebaser rebaser = new GitRebaser(myProject, myGit, indicator);
       VirtualFile root = myRepository.getRoot();
 
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.REBASE);
@@ -344,8 +343,9 @@ public class GithubSyncForkAction extends DumbAwareAction {
                                      "");
       }
       else {
-        GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseResult, rebaseConflictDetector,
-                                                             untrackedFilesDetector, localChangesDetector);
+        GitUpdateResult result = new GitRebaser(myProject, myGit, indicator)
+          .handleRebaseFailure(handler, root, rebaseResult, rebaseConflictDetector,
+                               untrackedFilesDetector, localChangesDetector);
         if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
             result == GitUpdateResult.SUCCESS ||
             result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
