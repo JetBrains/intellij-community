@@ -39,14 +39,11 @@ public class GitRebaser {
   private final @NotNull GitVcs myVcs;
   private final @NotNull ProgressIndicator myProgressIndicator;
 
-  private final @NotNull List<GitRebaseUtils.CommitInfo> mySkippedCommits;
-
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
     myVcs = GitVcs.getInstance(project);
-    mySkippedCommits = new ArrayList<>();
   }
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
@@ -200,9 +197,7 @@ public class GitRebaser {
           return continueRebase(root);
         }
         else {
-          GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(myProject, root);
-          LOG.info("no changes confirmed. Skipping commit " + commit);
-          mySkippedCommits.add(commit);
+          LOG.info("no changes confirmed. Skipping commit " + GitRebaseUtils.getCurrentRebaseCommit(myProject, root));
           return skipCommitAndContinue(root);
         }
       }
