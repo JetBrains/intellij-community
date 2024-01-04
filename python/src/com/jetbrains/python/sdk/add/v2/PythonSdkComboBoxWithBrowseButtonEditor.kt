@@ -44,6 +44,7 @@ class PythonSdkComboBoxWithBrowseButtonEditor(val comboBox: ComboBox<Sdk?>,
       row {
         cell(component)
           .customize(UnscaledGaps(0))
+          .resizableColumn()
           .applyToComponent { border = BorderFactory.createEmptyBorder() }
 
         iconLabel = cell(JLabel(AllIcons.General.OpenDisk))
