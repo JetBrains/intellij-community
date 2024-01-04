@@ -113,6 +113,21 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/LocalInAnnotation.kt"));
         }
 
+        @TestMetadata("MultiplatformCommonFacade.kt")
+        public void testMultiplatformCommonFacade() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformCommonFacade.kt"));
+        }
+
+        @TestMetadata("MultiplatformIntermediateFacade.kt")
+        public void testMultiplatformIntermediateFacade() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformIntermediateFacade.kt"));
+        }
+
+        @TestMetadata("MultiplatformJvmFacade.kt")
+        public void testMultiplatformJvmFacade() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformJvmFacade.kt"));
+        }
+
         @TestMetadata("PrivateInTrait.kt")
         public void testPrivateInTrait() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/PrivateInTrait.kt"));
