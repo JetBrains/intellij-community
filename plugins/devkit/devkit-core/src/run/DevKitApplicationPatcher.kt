@@ -63,8 +63,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       "-XX:SoftRefLRUPolicyMSPerMB=50",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
-      "-XX:CICompilerCount=2",
-      "-XX:PrintIdealGraphLevel=3"
+      "-XX:CICompilerCount=2"
     )
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
