@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
@@ -29,6 +30,8 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(WorkspaceModuleImporter.EXTERNAL_SOURCE_ID)
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    if (!Registry.`is`("maven.shade.plugin.create.uber.jar.dependency")) return
+
     // find all poms with maven-shade-plugin
     val shadeProjectsWithModules = context.mavenProjectsWithModules.filter {
       it.mavenProject.findPlugin("org.apache.maven.plugins", "maven-shade-plugin") != null
@@ -103,6 +106,8 @@ private val SHADED_MAVEN_PROJECTS = Key.create<List<MavenProject>>("SHADED_MAVEN
 
 internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurator {
   override fun afterImport(context: MavenAfterImportConfigurator.Context) {
+    if (!Registry.`is`("maven.shade.plugin.generate.uber.jar")) return
+
     val shadedMavenProjects = context.getUserData(SHADED_MAVEN_PROJECTS)
     if (shadedMavenProjects.isNullOrEmpty()) return
 

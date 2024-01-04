@@ -379,6 +379,12 @@
     <registryKey key="maven.max.parallel.tasks" defaultValue="-1"
                  description="Maximal parallel tasks to read and resolve. If equal or less than zero, no limitations applied"/>
 
+    <registryKey key="maven.shade.plugin.create.uber.jar.dependency" defaultValue="true"
+                 description="Create IDEA module dependencies to uber jars for Maven projects that use Maven Shade plugin"/>
+
+    <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="true"
+                 description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
