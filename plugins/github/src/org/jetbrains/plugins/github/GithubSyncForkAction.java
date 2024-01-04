@@ -18,12 +18,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
-import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.remote.hosting.GitHostingUrlUtil;
 import git4idea.remote.hosting.HostedGitRepositoriesManagerKt;
@@ -52,7 +50,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
 public class GithubSyncForkAction extends DumbAwareAction {
@@ -313,47 +310,19 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     private void doRebaseCurrentBranch(@NotNull ProgressIndicator indicator, @NotNull String onto) {
-      GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
       VirtualFile root = myRepository.getRoot();
 
-      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.REBASE);
-      handler.setStdoutSuppressed(false);
-      handler.addParameters(onto);
-
-      final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-      handler.addLineListener(rebaseConflictDetector);
-
-      final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
-        new GitUntrackedFilesOverwrittenByOperationDetector(root);
-      final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, CHECKOUT);
-      handler.addLineListener(untrackedFilesDetector);
-      handler.addLineListener(localChangesDetector);
-      handler.addLineListener(GitStandardProgressAnalyzer.createListener(indicator));
-
-      String oldText = indicator.getText();
-      indicator.setText(GithubBundle.message("rebase.process.rebasing.onto", onto));
-      GitCommandResult rebaseResult = myGit.runCommand(handler);
-      indicator.setText(oldText);
+      GitUpdateResult result = new GitRebaser(myProject, myGit, indicator).rebase(root, Collections.singletonList(onto));
       myRepository.update();
-      if (rebaseResult.success()) {
+
+      if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
+          result == GitUpdateResult.SUCCESS ||
+          result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
         root.refresh(false, true);
         GithubNotifications.showInfo(myProject,
                                      GithubNotificationIdsHolder.REBASE_SUCCESS,
                                      GithubBundle.message("rebase.process.success"),
                                      "");
-      }
-      else {
-        GitUpdateResult result = new GitRebaser(myProject, myGit, indicator)
-          .handleRebaseFailure(handler, root, rebaseResult, rebaseConflictDetector,
-                               untrackedFilesDetector, localChangesDetector);
-        if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
-            result == GitUpdateResult.SUCCESS ||
-            result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-          GithubNotifications.showInfo(myProject,
-                                       GithubNotificationIdsHolder.REBASE_SUCCESS,
-                                       GithubBundle.message("rebase.process.success"),
-                                       "");
-        }
       }
     }
   }
