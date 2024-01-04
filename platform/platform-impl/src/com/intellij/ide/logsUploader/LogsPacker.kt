@@ -69,7 +69,7 @@ object LogsPacker {
     val archive = Files.createTempFile("$productName-logs-$date", ".zip")
 
     try {
-      val additionalFiles = LogProvider.EP.extensionList.firstOrNull()?.getStructuredLogFiles(project)
+      val additionalFiles = LogProvider.EP.extensionList.flatMap { it.getAdditionalLogFiles(project) }
       ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
         ProgressManager.checkCanceled()
         val logs = PathManager.getLogDir()
@@ -82,7 +82,7 @@ object LogsPacker {
           lf.flushHandlers()
         }
 
-        additionalFiles?.let { addAdditionalFilesToZip(it, zip) }
+        addAdditionalFilesToZip(additionalFiles, zip)
 
         ProgressManager.checkCanceled()
         if (project != null) {

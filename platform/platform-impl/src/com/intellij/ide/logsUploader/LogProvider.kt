@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
- * Extension point that allows packer to know how to structure the logs files when the Collect logs action is called
+ * Extension point that allows packer to know which additional files it should pack at which path when the Collect logs action is called
  */
 @ApiStatus.Internal
 interface LogProvider {
@@ -16,7 +16,7 @@ interface LogProvider {
     val EP: ExtensionPointName<LogProvider> = create("com.intellij.logsPreprocessor")
   }
 
-  fun getStructuredLogFiles(project: Project?): List<LogsEntry>
+  fun getAdditionalLogFiles(project: Project?): List<LogsEntry>
 
   /**
    * Class defines the folder name and the files added to it
