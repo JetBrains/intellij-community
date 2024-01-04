@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.platform.workspace.jps.entities.*
@@ -92,7 +93,6 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     libraryRootsProvider: () -> List<LibraryRoot>) {
     if (libraryId in builder) return
 
-    // TODO: fileInDirectoryNames?
     val librarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
 
     builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), librarySource)
@@ -108,6 +108,7 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
 
     val project = context.project
     val firstProject = shadedMavenProjects.first()
+    // TODO: groupByBasedir
     val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
 
     val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
@@ -126,6 +127,7 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
       }
     }
 
-    // TODO: refresh VFS
+    val filesToRefresh = shadedMavenProjects.map { Path.of(it.buildDirectory) }
+    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
   }
 }
