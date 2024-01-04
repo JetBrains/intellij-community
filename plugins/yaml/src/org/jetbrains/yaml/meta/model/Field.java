@@ -12,10 +12,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -271,6 +268,12 @@ public class Field {
   @Nullable
   public PsiReference getReferenceFromKey(@NotNull YAMLKeyValue keyValue) {
     return null;
+  }
+
+  public PsiReference[] getReferencesFromKey(@NotNull YAMLKeyValue keyValue) {
+    return Optional.ofNullable(getReferenceFromKey(keyValue))
+      .map(ref -> new PsiReference[]{ref})
+      .orElse(PsiReference.EMPTY_ARRAY);
   }
 
   public boolean hasRelationSpecificType(@NotNull Relation relation) {
