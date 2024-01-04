@@ -206,7 +206,10 @@ class TypeResolveHandler(object):
             return None
 
         if provider is not None:
-            return provider.get_str(o, do_trim)
+            try:
+                return provider.get_str(o, do_trim)
+            except TypeError:
+                return provider.get_str(o)
 
         if not self._initialized:
             self._initialize()
@@ -214,7 +217,10 @@ class TypeResolveHandler(object):
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
-                return provider.get_str(o, do_trim)
+                try:
+                    return provider.get_str(o, do_trim)
+                except TypeError:
+                    return provider.get_str(o)
 
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
