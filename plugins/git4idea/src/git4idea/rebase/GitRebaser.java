@@ -9,13 +9,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
@@ -25,7 +23,10 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
@@ -36,14 +37,12 @@ public class GitRebaser {
 
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
-  private final @NotNull GitVcs myVcs;
   private final @NotNull ProgressIndicator myProgressIndicator;
 
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
-    myVcs = GitVcs.getInstance(project);
   }
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
@@ -148,19 +147,6 @@ public class GitRebaser {
     catch (ProcessCanceledException pce) {
       return false;
     }
-  }
-
-  /**
-   * @return Roots which have unfinished rebase process. May be empty.
-   */
-  public @NotNull Collection<VirtualFile> getRebasingRoots() {
-    final Collection<VirtualFile> rebasingRoots = new HashSet<>();
-    for (VirtualFile root : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)) {
-      if (GitRebaseUtils.isRebaseInTheProgress(myProject, root)) {
-        rebasingRoots.add(root);
-      }
-    }
-    return rebasingRoots;
   }
 
   /**

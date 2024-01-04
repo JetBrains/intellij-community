@@ -171,14 +171,6 @@ public final class GitRebaseUtils {
     return true;
   }
 
-  /**
-   * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
-   */
-  @Deprecated
-  public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
-    return getRebaseDir(project, root) != null;
-  }
-
   public static @Nullable File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
     if (repository == null) return null;
