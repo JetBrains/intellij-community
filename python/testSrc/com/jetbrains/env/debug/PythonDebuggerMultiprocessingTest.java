@@ -248,12 +248,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   @Test
   public void testCallExecWithPythonArg() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_call_exec_with_python_arg.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_call_exec_with_python_arg.py") {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath("test4.py"), 1);
