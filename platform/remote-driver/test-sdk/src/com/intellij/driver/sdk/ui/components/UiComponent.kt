@@ -28,7 +28,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-            errorMessage = "Can't find component with '${data.xpath}' in ${searchContext.context}") {
+            errorMessage = "Can't find component with '${data.xpath}' in ${data.parentSearchContext}") {
       data.parentSearchContext.findAll(data.xpath).size == 1
     }
     return data.parentSearchContext.findAll(data.xpath).first()

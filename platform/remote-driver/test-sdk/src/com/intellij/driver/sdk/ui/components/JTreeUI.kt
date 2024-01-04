@@ -4,6 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import org.intellij.lang.annotations.Language
@@ -14,6 +15,7 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@c
 
 class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy {  driver.new(JTreeFixtureRef::class, robotService.robot, component) }
+  private val remoteKeyboard by lazy { RemoteKeyboard(robotService.robot) }
 
   private fun clickRow(row: Int) = fixture.clickRow(row)
   private fun rightClickRow(row: Int) = fixture.rightClickRow(row)
@@ -23,6 +25,12 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
+  }
+  
+  fun enterOnSelectedRow(vararg path: String, fullMatch: Boolean = true) {
+    findExpandedPath(*path, fullMatch = fullMatch)?.let { 
+      fixture.selectRow(it.row)?.let { remoteKeyboard.enter() }
+    }
   }
 
   fun rightClickPath(vararg path: String, fullMatch: Boolean = true) {
@@ -94,4 +102,5 @@ interface JTreeFixtureRef: Component {
   fun valueAt(row: Int): String
   fun valueAt(path: String): String
   fun collectExpandedPaths(): TreePathToRowList
+  fun selectRow(row: Int): JTreeFixtureRef?
 }
