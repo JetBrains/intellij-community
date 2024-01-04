@@ -216,8 +216,7 @@ object FUSProjectHotStartUpMeasurer {
     fun initialize() {
       computeLocked(false) {
         if (this is Stage.VeryBeginning && !initialized) {
-          stage = Stage.VeryBeginning(true, splashBecameVisibleTime, projectType, settingsExist,
-                                      prematureFrameInteractive, prematureEditorData)
+          stage = this.copy(initialized = true)
         }
         else {
           stopReporting()
@@ -231,7 +230,7 @@ object FUSProjectHotStartUpMeasurer {
       // where initialization of FUSStartupReopenProjectMarkerElement happens.
       computeLocked(false) {
         if (this is Stage.VeryBeginning && splashBecameVisibleTime == null) {
-          stage = Stage.VeryBeginning(initialized, nanoTime, projectType, settingsExist, prematureFrameInteractive, prematureEditorData)
+          stage = this.copy(splashBecameVisibleTime = nanoTime)
         }
       }
     }
@@ -262,8 +261,7 @@ object FUSProjectHotStartUpMeasurer {
     fun reportProjectType(projectsType: ProjectsType) {
       computeLocked {
         if (this is Stage.VeryBeginning && projectType == ProjectsType.Unknown) {
-          stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectsType, settingsExist, prematureFrameInteractive,
-                                      prematureEditorData)
+          stage = this.copy(projectType = projectsType)
         }
       }
     }
@@ -271,8 +269,7 @@ object FUSProjectHotStartUpMeasurer {
     fun reportProjectSettings(exist: Boolean) {
       computeLocked {
         if (this is Stage.VeryBeginning && settingsExist == null) {
-          stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectType, exist, prematureFrameInteractive,
-                                      prematureEditorData)
+          stage = this.copy(settingsExist = exist)
         }
       }
     }
@@ -280,8 +277,7 @@ object FUSProjectHotStartUpMeasurer {
     fun resetProjectSettings() {
       computeLocked {
         if (this is Stage.VeryBeginning && settingsExist != null) {
-          stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectType, null, prematureFrameInteractive,
-                                      prematureEditorData)
+          stage = this.copy(settingsExist = null)
         }
       }
     }
@@ -335,8 +331,7 @@ object FUSProjectHotStartUpMeasurer {
     fun reportFrameBecameInteractive() {
       computeLocked {
         if (this is Stage.VeryBeginning && prematureFrameInteractive == null) {
-          stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectType, settingsExist, PrematureFrameInteractiveData,
-                                      prematureEditorData)
+          stage = this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
         }
         else if (this is Stage.FrameVisible) {
           val duration = getDuration()
@@ -372,11 +367,10 @@ object FUSProjectHotStartUpMeasurer {
 
           when (this) {
             is Stage.VeryBeginning -> {
-              stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectType, settingsExist, prematureFrameInteractive,
-                                          editorStageData)
+              stage = this.copy(prematureEditorData = editorStageData)
             }
             is Stage.FrameVisible -> {
-              stage = Stage.FrameVisible(editorStageData, settingsExist)
+              stage = this.copy(prematureEditorData = editorStageData)
             }
             is Stage.FrameInteractive -> {
               stopReporting()
@@ -407,12 +401,11 @@ object FUSProjectHotStartUpMeasurer {
           is Stage.Stopped -> return@computeLocked
           is Stage.VeryBeginning -> {
             if (prematureEditorData != null) return@computeLocked
-            stage = Stage.VeryBeginning(initialized, splashBecameVisibleTime, projectType, settingsExist, prematureFrameInteractive,
-                                        noEditorStageData)
+            stage = this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameVisible -> {
             if (prematureEditorData != null) return@computeLocked
-            stage = Stage.FrameVisible(noEditorStageData, settingsExist)
+            stage = this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameInteractive -> {
             Stage.EditorStage(noEditorStageData, settingsExist).log(durationMillis)
