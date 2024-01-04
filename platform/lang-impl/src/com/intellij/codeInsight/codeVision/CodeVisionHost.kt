@@ -487,7 +487,7 @@ open class CodeVisionHost(val project: Project) {
         AppExecutorUtil.getAppExecutorService()
       )
 
-      lifetime.onTermination {
+      lifetime.onTerminationIfAlive {
         if (indicator.isRunning) indicator.cancel()
       }
     }
