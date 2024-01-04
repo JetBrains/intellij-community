@@ -21,16 +21,16 @@ public class MavenRepositoryInfo implements Serializable {
   private final String myId;
   private final String myName;
   private final String myUrl;
-  private final IndexKind myKind;
+  private final RepositoryKind myKind;
 
-  public MavenRepositoryInfo(String id, String name, String url, IndexKind kind) {
+  public MavenRepositoryInfo(String id, String name, String url, RepositoryKind kind) {
     myId = id;
     myName = name;
     myUrl = url;
     myKind = kind;
   }
 
-  public MavenRepositoryInfo(String id, String url, IndexKind kind) {
+  public MavenRepositoryInfo(String id, String url, RepositoryKind kind) {
     this(id, id, url, kind);
   }
 
@@ -46,7 +46,7 @@ public class MavenRepositoryInfo implements Serializable {
     return myUrl;
   }
 
-  public IndexKind getKind() {
+  public RepositoryKind getKind() {
     return myKind;
   }
 

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.maven.testFramework.MavenTestCase
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.model.IndexKind
+import org.jetbrains.idea.maven.model.RepositoryKind
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 
 class MavenGavIndicesTest : MavenTestCase() {
@@ -11,7 +11,7 @@ class MavenGavIndicesTest : MavenTestCase() {
   fun testUpdateGavIndex() {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     val path = helper.getTestDataPath("local1")
-    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path, IndexKind.LOCAL))
+    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path, RepositoryKind.LOCAL))
     gavIndex.updateOrRepair(true, mavenProgressIndicator!!, false)
     assertSameElements(gavIndex.groupIds, "asm", "commons-io", "junit", "org.deptest", "org.example", "org.intellijgroup", "org.ow2.asm")
     assertSameElements(gavIndex.getArtifactIds("asm"), "asm", "asm-attrs")

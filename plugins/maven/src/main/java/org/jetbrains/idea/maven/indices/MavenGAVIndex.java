@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.indices;
 
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import java.util.Collection;
@@ -22,7 +22,7 @@ public interface MavenGAVIndex {
 
   boolean hasVersion(String groupId, String artifactId, String version);
 
-  IndexKind getKind();
+  RepositoryKind getKind();
 
   @Nullable MavenRepositoryInfo getRepository();
 }

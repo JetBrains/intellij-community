@@ -51,7 +51,7 @@ public final class MavenIndexImpl implements MavenIndex {
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
-  private final IndexKind myKind;
+  private final RepositoryKind myKind;
   private final AtomicBoolean myDataClosed = new AtomicBoolean(false);
   private final Lock indexUpdateLock = new ReentrantLock();
   private volatile Long myUpdateTimestamp;
@@ -103,9 +103,9 @@ public final class MavenIndexImpl implements MavenIndex {
     finally {
       boolean isCentral = isForCentral();
       MavenIndexUsageCollector.INDEX_OPENED.log(
-        myKind == IndexKind.LOCAL,
+        myKind == RepositoryKind.LOCAL,
         isCentral,
-        myKind == IndexKind.REMOTE && !isCentral);
+        myKind == RepositoryKind.REMOTE && !isCentral);
       save();
     }
   }
@@ -182,12 +182,12 @@ public final class MavenIndexImpl implements MavenIndex {
 
   @Override
   public File getRepositoryFile() {
-    return myKind == IndexKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
+    return myKind == RepositoryKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
   @Override
   public String getRepositoryUrl() {
-    return myKind == IndexKind.REMOTE ? myRepositoryPathOrUrl : null;
+    return myKind == RepositoryKind.REMOTE ? myRepositoryPathOrUrl : null;
   }
 
   @Override
@@ -196,13 +196,13 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   @Override
-  public IndexKind getKind() {
+  public RepositoryKind getKind() {
     return myKind;
   }
 
   @Override
   public MavenRepositoryInfo getRepository() {
-    if (myKind == IndexKind.ONLINE) return null;
+    if (myKind == RepositoryKind.ONLINE) return null;
     return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
@@ -230,10 +230,10 @@ public final class MavenIndexImpl implements MavenIndex {
       final File currentDataContextDir = getCurrentDataContextDir();
 
       boolean reuseExistingContext = fullUpdate ?
-                                     myKind != IndexKind.LOCAL && hasValidContext(currentDataContextDir) :
+                                     myKind != RepositoryKind.LOCAL && hasValidContext(currentDataContextDir) :
                                      hasValidContext(currentDataContextDir);
 
-      fullUpdate = fullUpdate || !reuseExistingContext && myKind == IndexKind.LOCAL;
+      fullUpdate = fullUpdate || !reuseExistingContext && myKind == RepositoryKind.LOCAL;
 
       if (reuseExistingContext) {
         try {
@@ -273,9 +273,9 @@ public final class MavenIndexImpl implements MavenIndex {
       boolean finalIsSuccess = isSuccess;
       activity.finished(() ->
                           Arrays.asList(
-                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == IndexKind.LOCAL),
-                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == IndexKind.REMOTE && isCentral),
-                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == IndexKind.REMOTE && !isCentral),
+                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == RepositoryKind.LOCAL),
+                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == RepositoryKind.REMOTE && isCentral),
+                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == RepositoryKind.REMOTE && !isCentral),
                             MavenIndexUsageCollector.IS_SUCCESS.with(finalIsSuccess),
                             MavenIndexUsageCollector.MANUAL.with(multithreaded)
                           )

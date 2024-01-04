@@ -252,7 +252,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     }
     RepositoryNode repositoryNode = repositoryNodes.get(0);
     return new MavenRepositoryInfo(repositoryNode.getId(), repositoryNode.getUrl(),
-                                   repositoryNode.isLocal() ? IndexKind.LOCAL : IndexKind.REMOTE);
+                                   repositoryNode.isLocal() ? RepositoryKind.LOCAL : RepositoryKind.REMOTE);
   }
 
   private static Map<String, MavenProfileKind> extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {

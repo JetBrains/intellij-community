@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -53,7 +53,7 @@ public final class MavenIndexUtils {
       throw new MavenIndexException("Incompatible index version, needs to be updated: " + dir);
     }
 
-    IndexKind kind = IndexKind.valueOf(props.getProperty(KIND_KEY));
+    RepositoryKind kind = RepositoryKind.valueOf(props.getProperty(KIND_KEY));
 
     Set<String> repositoryIds = Collections.emptySet();
     String myRepositoryIdsStr = props.getProperty(ID_KEY);
@@ -61,7 +61,7 @@ public final class MavenIndexUtils {
       repositoryIds = Set.copyOf(split(myRepositoryIdsStr, ","));
     }
     String repositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
-    if (kind != IndexKind.LOCAL) {
+    if (kind != RepositoryKind.LOCAL) {
       repositoryPathOrUrl = repositoryPathOrUrl.toLowerCase(Locale.ROOT);
     }
     long updateTimestamp = -1L;
@@ -108,7 +108,7 @@ public final class MavenIndexUtils {
     File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
     return repository == null
            ? null
-           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), IndexKind.LOCAL);
+           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), RepositoryKind.LOCAL);
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
@@ -128,7 +128,7 @@ public final class MavenIndexUtils {
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {
     return remoteRepositories.stream()
-      .map(r -> new MavenRepositoryInfo(r.getId(), normalizePathOrUrl(r.getUrl().toLowerCase(Locale.ROOT)), IndexKind.REMOTE))
+      .map(r -> new MavenRepositoryInfo(r.getId(), normalizePathOrUrl(r.getUrl().toLowerCase(Locale.ROOT)), RepositoryKind.REMOTE))
       .collect(groupingBy(r -> r.getUrl(), mapping(r -> r.getId(), Collectors.toSet())));
   }
 
@@ -144,7 +144,7 @@ public final class MavenIndexUtils {
 
   static class IndexPropertyHolder {
     final File dir;
-    final IndexKind kind;
+    final RepositoryKind kind;
     final Set<String> repositoryIds;
     final String repositoryPathOrUrl;
     final long updateTimestamp;
@@ -152,7 +152,7 @@ public final class MavenIndexUtils {
     final String failureMessage;
 
     IndexPropertyHolder(File dir,
-                        IndexKind kind,
+                        RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url,
                         long timestamp,
@@ -168,7 +168,7 @@ public final class MavenIndexUtils {
     }
 
     IndexPropertyHolder(File dir,
-                        IndexKind kind,
+                        RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url) {
       this(dir, kind, repositoryIds, url, -1, null, null);

@@ -18,12 +18,9 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.util.Set;
@@ -45,7 +42,7 @@ public interface MavenSearchIndex {
   @NlsSafe
   String getRepositoryPathOrUrl();
 
-  IndexKind getKind();
+  RepositoryKind getKind();
 
   long getUpdateTimestamp();
 

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -206,7 +206,7 @@ public class MavenIndices implements Disposable {
       return new RepositoryDiff<>(currentLocalIndex, null);
     }
 
-    MavenIndex index = createMavenIndex(LOCAL_REPOSITORY_ID, localRepo.getUrl(), IndexKind.LOCAL);
+    MavenIndex index = createMavenIndex(LOCAL_REPOSITORY_ID, localRepo.getUrl(), RepositoryKind.LOCAL);
     return new RepositoryDiff<>(index, currentLocalIndex);
   }
 
@@ -230,7 +230,7 @@ public class MavenIndices implements Disposable {
       MavenIndex oldIndex = currentRemoteIndicesByUrls.get(e.getKey());
       if (oldIndex != null) return oldIndex;
       String id = e.getValue().iterator().next();
-      return createMavenIndex(id, e.getKey(), IndexKind.REMOTE);
+      return createMavenIndex(id, e.getKey(), RepositoryKind.REMOTE);
     });
 
     return new RepositoryDiff<>(newMavenIndices, oldIndices);
@@ -247,9 +247,9 @@ public class MavenIndices implements Disposable {
 
 
   @NotNull
-  private static MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, IndexKind indexKind) {
+  private static MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, RepositoryKind repositoryKind) {
     return MavenSystemIndicesManager.getInstance()
-      .getIndexForRepoSync(new MavenRepositoryInfo(id, id, repositoryPathOrUrl, indexKind));
+      .getIndexForRepoSync(new MavenRepositoryInfo(id, id, repositoryPathOrUrl, repositoryKind));
   }
 
   static class RepositoryDiff<T> {

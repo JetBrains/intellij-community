@@ -5,7 +5,7 @@ import com.intellij.util.ExceptionUtilRt;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.server.*;
@@ -75,8 +75,8 @@ public class MavenIdeaAsyncIndexerImpl extends MavenIdeaIndexerImpl implements A
 
   private void runIndexing(MavenRepositoryInfo repositoryInfo, File tempDirectory, MavenServerProgressIndicator indicator)
     throws IOException, MavenServerProcessCanceledException, MavenServerIndexerException {
-    String path = repositoryInfo.getKind() == IndexKind.LOCAL ? repositoryInfo.getUrl() : null;
-    String url = repositoryInfo.getKind() == IndexKind.REMOTE ? repositoryInfo.getUrl() : null;
+    String path = repositoryInfo.getKind() == RepositoryKind.LOCAL ? repositoryInfo.getUrl() : null;
+    String url = repositoryInfo.getKind() == RepositoryKind.REMOTE ? repositoryInfo.getUrl() : null;
     MavenIndexId id =
       new MavenIndexId(repositoryInfo.getId(), repositoryInfo.getId(), path, url, tempDirectory.getAbsolutePath());
     doUpdateIndex(id, true, indicator);

@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.idea.maven.model.IndexKind
+import org.jetbrains.idea.maven.model.RepositoryKind
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -37,7 +37,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
 
   private fun id2string(groupId: String, artifactId: String): String = "$groupId:$artifactId"
 
-  override fun getKind() = IndexKind.LOCAL
+  override fun getKind() = RepositoryKind.LOCAL
 
   override fun getRepository() = repo
   override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, multithreaded: Boolean) {
