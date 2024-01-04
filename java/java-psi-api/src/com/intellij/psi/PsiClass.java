@@ -90,7 +90,7 @@ public interface PsiClass
   /**
    * Returns the array of class types for the classes that this class or interface extends.
    *
-   * @return the array of extended class types, or an empty list for anonymous classes and unnamed classes.
+   * @return the array of extended class types, or an empty list for anonymous classes and implicitly declared classes.
    */
   PsiClassType @NotNull [] getExtendsListTypes();
 
@@ -98,7 +98,7 @@ public interface PsiClass
    * Returns the array of class types for the interfaces that this class implements.
    *
    * @return the array of extended class types, or an empty list for anonymous classes,
-   * enums, annotation types and unnamed classes
+   * enums, annotation types and implicitly declared classes
    */
   PsiClassType @NotNull [] getImplementsListTypes();
 
