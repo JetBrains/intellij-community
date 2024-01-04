@@ -103,7 +103,7 @@ public class Switches {
   }
 
   void fullyCoveredSwitchWithImplicitDefault(int x) {
-    switch (x) { // TODO unknown outcome is actually the default hits
+    switch (x) {
       case 1: {
         System.out.println("Case 1");
         break;

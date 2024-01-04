@@ -105,7 +105,8 @@ Hits: 3
     x
         case 1: 1
         case 2: 1
-Unknown outcome: 1
+        default: 1
+
 Line 108 coverage: FULL
 Hits: 1
 

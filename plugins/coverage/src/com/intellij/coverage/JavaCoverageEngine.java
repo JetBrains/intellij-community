@@ -75,12 +75,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author Roman.Chernyatchik
  */
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
+  private static final String indent = "    ";
 
   public static JavaCoverageEngine getInstance() {
     return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
@@ -523,14 +525,12 @@ public class JavaCoverageEngine extends CoverageEngine {
                                     int endOffset,
                                     @Nullable LineData lineData) {
 
-    final StringBuilder buf = new StringBuilder();
-    buf.append(CoverageBundle.message("hits.title", ""));
     if (lineData == null) {
-      buf.append(0);
-      return buf.toString();
+      return CoverageBundle.message("hits.title", 0);
     }
-    buf.append(lineData.getHits()).append("\n");
-
+    final StringBuilder buf = new StringBuilder();
+    String defaultResult = CoverageBundle.message("hits.title", lineData.getHits());
+    buf.append(defaultResult).append("\n");
 
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
@@ -540,89 +540,33 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
 
-    final List<PsiExpression> expressions = new ArrayList<>();
-
-    final Project project = editor.getProject();
-    for(int offset = startOffset; offset < endOffset; offset++) {
-      PsiElement parent = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiStatement.class);
-      PsiElement condition = null;
-      if (parent instanceof PsiIfStatement) {
-        condition = ((PsiIfStatement)parent).getCondition();
-      }
-      else if (parent instanceof PsiSwitchStatement) {
-        condition = ((PsiSwitchStatement)parent).getExpression();
-      }
-      else if (parent instanceof PsiConditionalLoopStatement) {
-        condition = ((PsiConditionalLoopStatement)parent).getCondition();
-      }
-      else if (parent instanceof PsiForeachStatement) {
-        condition = ((PsiForeachStatement)parent).getIteratedValue();
-      }
-      else if (parent instanceof PsiAssertStatement) {
-        condition = ((PsiAssertStatement)parent).getAssertCondition();
-      }
-      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(psiFile.findElementAt(offset)), false)) {
-        try {
-          final ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(project)).getControlFlow(
-            parent, AllVariablesControlFlowPolicy.getInstance());
-          for (Instruction instruction : controlFlow.getInstructions()) {
-            if (instruction instanceof ConditionalBranchingInstruction) {
-              final PsiExpression expression = ((ConditionalBranchingInstruction)instruction).expression;
-              if (!expressions.contains(expression)) {
-                expressions.add(expression);
-              }
-            }
-          }
-        }
-        catch (AnalysisCanceledException e) {
-          return buf.toString();
-        }
-      }
-    }
+    List<PsiExpression> expressions = collectExpressions(editor, psiFile, startOffset, endOffset);
 
     try {
       int idx = 0;
       int hits = 0;
-      final String indent = "    ";
+
       if (lineData.getJumps() != null) {
         for (JumpData jumpData : lineData.getJumps()) {
-          if (jumpData.getTrueHits() + jumpData.getFalseHits() > 0) {
-            final PsiExpression expression = expressions.get(idx++);
-            final PsiElement parentExpression = expression.getParent();
-            boolean reverse = parentExpression instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parentExpression).getOperationTokenType() == JavaTokenType.OROR
-                              || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
-            buf.append(indent).append(expression.getText()).append("\n");
-            buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getFalseHits() : jumpData
-              .getTrueHits())).append("\n");
-            buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData
-              .getTrueHits() : jumpData.getFalseHits())).append("\n");
-            hits += jumpData.getTrueHits() + jumpData.getFalseHits();
+          if (idx >= expressions.size()) {
+            LOG.info("Cannot map coverage report data with PSI: there are more branches in report then in PSI");
+            return defaultResult;
           }
+          PsiExpression expression = expressions.get(idx++);
+          addJumpDataInfo(buf, jumpData, expression);
+          hits += jumpData.getTrueHits() + jumpData.getFalseHits();
         }
       }
 
       if (lineData.getSwitches() != null) {
         for (SwitchData switchData : lineData.getSwitches()) {
-          final PsiExpression conditionExpression = expressions.get(idx++);
-          buf.append(indent).append(conditionExpression.getText()).append("\n");
-          int i = 0;
-          for (int key : switchData.getKeys()) {
-            final int switchHits = switchData.getHits()[i++];
-            buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchHits).append("\n");
-            hits += switchHits;
+          if (idx >= expressions.size()) {
+            LOG.info("Cannot map coverage report data with PSI: there are more switches in report then in PSI");
+            return defaultResult;
           }
-          int defaultHits = switchData.getDefaultHits();
-          final boolean hasDefaultLabel = hasDefaultLabel(conditionExpression);
-          if (hasDefaultLabel || defaultHits > 0) {
-            if (!hasDefaultLabel) {
-              defaultHits -= hits;
-            }
-
-            if (hasDefaultLabel || defaultHits > 0) {
-              buf.append(indent).append(indent).append("default: ").append(defaultHits).append("\n");
-              hits += defaultHits;
-            }
-          }
+          PsiExpression expression = expressions.get(idx++);
+          addSwitchDataInfo(buf, switchData, expression);
+          hits += IntStream.of(switchData.getHits()).sum() + switchData.getDefaultHits();
         }
       }
       if (lineData.getHits() > hits && hits > 0) {
@@ -631,9 +575,82 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     catch (Exception e) {
       LOG.info(e);
-      return CoverageBundle.message("hits.title", lineData.getHits());
+      return defaultResult;
     }
     return buf.toString();
+  }
+
+  private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, PsiExpression expression) {
+    if (jumpData.getTrueHits() + jumpData.getFalseHits() <= 0) return;
+    PsiElement parentExpression = expression.getParent();
+    buf.append(indent).append(expression.getText()).append("\n");
+
+    boolean reverse = parentExpression instanceof PsiPolyadicExpression polyadicExpression && polyadicExpression.getOperationTokenType() == JavaTokenType.OROR
+                      || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
+    int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
+    buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits)).append("\n");
+
+    int falseHits = reverse ? jumpData.getTrueHits() : jumpData.getFalseHits();
+    buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits)).append("\n");
+  }
+
+  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, PsiExpression expression) {
+    buf.append(indent).append(expression.getText()).append("\n");
+    for (int i = 0; i < switchData.getKeys().length; i++) {
+      int key = switchData.getKeys()[i];
+      int switchHits = switchData.getHits()[i];
+      buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");
+    }
+    int defaultHits = switchData.getDefaultHits();
+    boolean hasDefaultLabel = hasDefaultLabel(expression);
+    if (hasDefaultLabel || defaultHits > 0) {
+      buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
+    }
+  }
+
+  @NotNull
+  private static List<PsiExpression> collectExpressions(@NotNull Editor editor, @NotNull PsiFile psiFile, int startOffset, int endOffset) {
+    List<PsiExpression> expressions = new ArrayList<>();
+
+    for(int offset = startOffset; offset < endOffset; offset++) {
+      PsiElement elementAt = psiFile.findElementAt(offset);
+      PsiElement statement = PsiTreeUtil.getParentOfType(elementAt, PsiStatement.class);
+      if (statement == null) continue;
+      PsiElement condition = null;
+      if (statement instanceof PsiIfStatement ifStatement) {
+        condition = ifStatement.getCondition();
+      }
+      else if (statement instanceof PsiSwitchStatement switchStatement) {
+        condition = switchStatement.getExpression();
+      }
+      else if (statement instanceof PsiConditionalLoopStatement loopStatement) {
+        condition = loopStatement.getCondition();
+      }
+      else if (statement instanceof PsiForeachStatement foreachStatement) {
+        condition = foreachStatement.getIteratedValue();
+      }
+      else if (statement instanceof PsiAssertStatement assertStatement) {
+        condition = assertStatement.getAssertCondition();
+      }
+      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(elementAt), false)) {
+        try {
+          ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(editor.getProject()))
+            .getControlFlow(statement, AllVariablesControlFlowPolicy.getInstance());
+          for (Instruction instruction : controlFlow.getInstructions()) {
+            if (instruction instanceof ConditionalBranchingInstruction branchingInstruction) {
+              PsiExpression expression = branchingInstruction.expression;
+              if (!expressions.contains(expression)) {
+                expressions.add(expression);
+              }
+            }
+          }
+        }
+        catch (AnalysisCanceledException e) {
+          return Collections.emptyList();
+        }
+      }
+    }
+    return expressions;
   }
 
   @Override
