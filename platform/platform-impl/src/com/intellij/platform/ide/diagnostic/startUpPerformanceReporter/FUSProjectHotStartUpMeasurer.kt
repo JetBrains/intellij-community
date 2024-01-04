@@ -225,7 +225,7 @@ object FUSProjectHotStartUpMeasurer {
 
     private val markupResurrectedFileIds = IntOpenHashSet()
 
-    private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Unit) {
+    private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Stage) {
       synchronized(stageLock) {
         stage.apply {
           if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
@@ -233,22 +233,21 @@ object FUSProjectHotStartUpMeasurer {
             synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
           }
         }
-        stage.block()
+        if (stage !== Stage.Stopped) {
+          stage = stage.block()
+        }
+        if (stage === Stage.Stopped) {
+          synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
+        }
       }
     }
 
     fun ideStarterStarted() {
       computeLocked(false) {
-        when (this) {
-          is Stage.Initial -> {
-            stage = Stage.IdeStarterStarted()
-          }
-          is Stage.SplashScreenShownBeforeIdeStarter -> {
-            stage = Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
-          }
-          else -> {
-            stopReporting()
-          }
+        return@computeLocked when (this) {
+          is Stage.Initial -> Stage.IdeStarterStarted()
+          is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
+          else -> Stage.Stopped
         }
       }
     }
@@ -258,103 +257,105 @@ object FUSProjectHotStartUpMeasurer {
       // This may happen before we know about particulars in com.intellij.idea.IdeStarter.startIDE,
       // where initialization of FUSStartupReopenProjectMarkerElement happens.
       computeLocked(false) {
-        if (this is Stage.Initial) {
-          stage = Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
-        }
-        else if (this is Stage.IdeStarterStarted && splashBecameVisibleTime == null) {
-          stage = this.copy(splashBecameVisibleTime = nanoTime)
+        return@computeLocked when {
+          this is Stage.Initial -> Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
+          this is Stage.IdeStarterStarted && splashBecameVisibleTime == null -> this.copy(splashBecameVisibleTime = nanoTime)
+          else -> Stage.Stopped
         }
       }
     }
 
     fun reportViolation(violation: Violation) {
+      val duration = getDurationFromStart()
       computeLocked {
         if (this is Stage.IdeStarterStarted) {
-          reportViolation(getDurationFromStart(), violation, splashBecameVisibleTime)
+          reportFirstUiShownEvent(splashBecameVisibleTime, duration)
+          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
         }
+        return@computeLocked Stage.Stopped
       }
     }
 
     fun reportWelcomeScreenShown() {
       val welcomeScreenDuration = getDurationFromStart()
       computeLocked {
-        if (this !is Stage.IdeStarterStarted) return@computeLocked
-        if (splashBecameVisibleTime == null) {
-          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(false))
+        if (this is Stage.IdeStarterStarted) {
+          if (splashBecameVisibleTime == null) {
+            WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(false))
+          }
+          else {
+            WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(true),
+                                     SPLASH_SCREEN_VISIBLE_DURATION.with(getDurationFromStart(splashBecameVisibleTime).getValueForFUS()))
+          }
+          reportViolation(Violation.WelcomeScreenShown)
         }
-        else {
-          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(true),
-                                   SPLASH_SCREEN_VISIBLE_DURATION.with(getDurationFromStart(splashBecameVisibleTime).getValueForFUS()))
-        }
-        reportViolation(Violation.WelcomeScreenShown)
+        return@computeLocked Stage.Stopped
       }
     }
 
     fun reportProjectType(projectsType: ProjectsType) {
       computeLocked {
-        if (this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
-          stage = this.copy(projectType = projectsType)
+        return@computeLocked if (this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
+          this.copy(projectType = projectsType)
+        }
+        else {
+          Stage.Stopped
         }
       }
     }
 
     fun reportProjectSettings(exist: Boolean) {
       computeLocked {
-        if (this is Stage.IdeStarterStarted && settingsExist == null) {
-          stage = this.copy(settingsExist = exist)
+        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist == null) {
+          this.copy(settingsExist = exist)
+        }
+        else {
+          Stage.Stopped
         }
       }
     }
 
     fun resetProjectSettings() {
       computeLocked {
-        if (this is Stage.IdeStarterStarted && settingsExist != null) {
-          stage = this.copy(settingsExist = null)
+        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist != null) {
+          this.copy(settingsExist = null)
+        }
+        else {
+          Stage.Stopped
         }
       }
     }
 
     fun reportFrameBecameVisible() {
+      val duration = getDurationFromStart()
       computeLocked {
-        if (this !is Stage.IdeStarterStarted) {
-          return@computeLocked
-        }
-        val duration = getDurationFromStart()
+        if (this is Stage.IdeStarterStarted) {
+          reportFirstUiShownEvent(splashBecameVisibleTime, duration)
 
-        reportFirstUiShownEvent(splashBecameVisibleTime, duration)
-
-        if (settingsExist == null) {
-          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType))
-        }
-        else {
-          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType),
-                                         HAS_SETTINGS.with(settingsExist))
-        }
-
-        if (prematureFrameInteractive != null) {
-          prematureFrameInteractive.log(duration)
-          if (prematureEditorData != null) {
-            Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
-            stopReporting()
+          if (settingsExist == null) {
+            FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType))
           }
           else {
-            stage = Stage.FrameInteractive(settingsExist)
+            FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType),
+                                           HAS_SETTINGS.with(settingsExist))
+          }
+
+          if (prematureFrameInteractive != null) {
+            prematureFrameInteractive.log(duration)
+            if (prematureEditorData != null) {
+              Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
+              return@computeLocked Stage.Stopped
+            }
+            else {
+              return@computeLocked Stage.FrameInteractive(settingsExist)
+            }
+          }
+          else {
+            return@computeLocked Stage.FrameVisible(prematureEditorData, settingsExist)
           }
         }
-        else {
-          stage = Stage.FrameVisible(prematureEditorData, settingsExist)
-        }
+        return@computeLocked Stage.Stopped
       }
-    }
-
-    private fun reportViolation(
-      duration: Duration,
-      violation: Violation,
-      splashBecameVisibleTime: Long?
-    ) {
-      reportFirstUiShownEvent(splashBecameVisibleTime, duration)
-      FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
-      stopReporting()
     }
 
     private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Duration) {
@@ -364,20 +365,23 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     fun reportFrameBecameInteractive() {
+      val duration = getDurationFromStart()
       computeLocked {
         if (this is Stage.IdeStarterStarted && prematureFrameInteractive == null) {
-          stage = this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
+          return@computeLocked this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
         }
         else if (this is Stage.FrameVisible) {
-          val duration = getDurationFromStart()
           PrematureFrameInteractiveData.log(duration)
           if (prematureEditorData != null) {
             Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
-            stopReporting()
+            return@computeLocked Stage.Stopped
           }
           else {
-            stage = Stage.FrameInteractive(settingsExist)
+            return@computeLocked Stage.FrameInteractive(settingsExist)
           }
+        }
+        else {
+          return@computeLocked Stage.Stopped
         }
       }
     }
@@ -392,35 +396,27 @@ object FUSProjectHotStartUpMeasurer {
 
       withContext(Dispatchers.Default) {
         computeLocked {
-          if (this is Stage.Stopped) return@computeLocked
-          if (this is Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked
-          if (this is Stage.FrameVisible && prematureEditorData != null) return@computeLocked
+          if (this is Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked Stage.Stopped
+          if (this is Stage.FrameVisible && prematureEditorData != null) return@computeLocked Stage.Stopped
 
           val isMarkupLoaded = isMarkupLoaded(file)
           val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
           val editorStageData = PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
 
-          when (this) {
+          return@computeLocked when (this) {
             is Stage.IdeStarterStarted -> {
-              stage = this.copy(prematureEditorData = editorStageData)
+              this.copy(prematureEditorData = editorStageData)
             }
             is Stage.FrameVisible -> {
-              stage = this.copy(prematureEditorData = editorStageData)
+              this.copy(prematureEditorData = editorStageData)
             }
             is Stage.FrameInteractive -> {
-              stopReporting()
               Stage.EditorStage(editorStageData, settingsExist).log(getDurationFromStart(durationMillis))
+              Stage.Stopped
             }
-            else -> {} //ignore
+            else -> Stage.Stopped
           }
         }
-      }
-    }
-
-    private fun stopReporting() {
-      computeLocked {
-        stage = Stage.Stopped
-        synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
       }
     }
 
@@ -428,31 +424,27 @@ object FUSProjectHotStartUpMeasurer {
       val durationMillis = System.nanoTime()
       val noEditorStageData = PrematureEditorStageData.NoEditors(project)
       computeLocked {
-        when (this) {
-          is Stage.Stopped -> return@computeLocked
+        return@computeLocked when (this) {
+          is Stage.Stopped -> Stage.Stopped
           is Stage.IdeStarterStarted -> {
-            if (prematureEditorData != null) return@computeLocked
-            stage = this.copy(prematureEditorData = noEditorStageData)
+            if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameVisible -> {
-            if (prematureEditorData != null) return@computeLocked
-            stage = this.copy(prematureEditorData = noEditorStageData)
+            if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameInteractive -> {
             Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
-            stopReporting()
+            Stage.Stopped
           }
-          else -> {} //ignore
+          else -> Stage.Stopped
         }
       }
     }
 
     fun reportMarkupRestored(file: VirtualFileWithId) {
       computeLocked {
-        if (this == Stage.Stopped) {
-          return@computeLocked
-        }
         synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
+        return@computeLocked this
       }
     }
   }
