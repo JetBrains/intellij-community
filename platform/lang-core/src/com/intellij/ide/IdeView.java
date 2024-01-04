@@ -42,7 +42,7 @@ public interface IdeView {
    *
    * @return the array of directories, or an empty array if nothing is selected.
    */
-  PsiDirectory @NotNull [] getDirectories();
+  @NotNull PsiDirectory @NotNull [] getDirectories();
 
   /**
    * Returns the directory for the element currently selected in the view. If multiple directories
@@ -50,6 +50,5 @@ public interface IdeView {
    *
    * @return the selected directory, or null if there is no selection or the popup was cancelled.
    */
-  @Nullable
-  PsiDirectory getOrChooseDirectory();
+  @Nullable PsiDirectory getOrChooseDirectory();
 }
