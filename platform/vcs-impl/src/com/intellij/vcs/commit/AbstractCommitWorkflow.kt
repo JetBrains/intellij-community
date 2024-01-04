@@ -178,11 +178,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   @RequiresEdt
   internal fun startExecution(block: suspend () -> Boolean) {
-    check(!isExecuting) { "Commit session is already started" }
-    isExecuting = true
+    project.coroutineScope.launch(
+      CoroutineName("commit execution") + Dispatchers.EDT,
+      start = CoroutineStart.UNDISPATCHED // let 'executionStarted()' disable button and prevent double commit
+    ) {
+      check(!isExecuting) { "Commit session is already started" }
+      isExecuting = true
 
-    project.coroutineScope.launch(CoroutineName("commit execution") + Dispatchers.EDT) {
-      check(isExecuting) { "Commit session has already finished" }
       try {
         eventDispatcher.multicaster.executionStarted()
 
