@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirSealedClassInheritorsTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
@@ -105,6 +106,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir-low-level-api-ide-impl") {
         testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
             model("libraryModuleResolve", isRecursive = false)
+        }
+
+        testClass<AbstractFirSealedClassInheritorsTest> {
+            model("sealedClassInheritors", pattern = DIRECTORY, isRecursive = false)
         }
     }
 

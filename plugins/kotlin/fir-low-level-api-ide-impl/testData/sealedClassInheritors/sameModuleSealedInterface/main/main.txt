@@ -1,0 +1,2 @@
+/SealedInterfaceInheritor1
+/SealedInterfaceInheritor2
