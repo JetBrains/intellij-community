@@ -746,6 +746,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/SealedClass.kt"));
             }
 
+            @TestMetadata("SealedInterface.kt")
+            public void testSealedInterface() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/SealedInterface.kt"));
+            }
+
             @TestMetadata("SingleAbstractMethod.kt")
             public void testSingleAbstractMethod() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/class/SingleAbstractMethod.kt"));
