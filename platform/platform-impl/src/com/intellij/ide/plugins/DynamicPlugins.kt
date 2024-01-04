@@ -644,6 +644,8 @@ object DynamicPlugins {
           classLoaders.add(classLoader)
           classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
         }
+
+        classLoader.removeParent(dependencyPlugin)
       }
       true
     }
@@ -867,6 +869,7 @@ object DynamicPlugins {
           listenerCallbacks = listenerCallbacks,
         )
 
+        updateOptionalPluginClassLoaderDependencies(pluginDescriptor, pluginSet)
         clearPluginClassLoaderParentListCache(pluginSet)
         clearCachedValues()
 
@@ -1366,6 +1369,13 @@ private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, stat
   (pluginDescriptor.pluginClassLoader as? PluginClassLoader)?.state = state
   for (dependency in pluginDescriptor.pluginDependencies) {
     dependency.subDescriptor?.let { setClassLoaderState(it, state) }
+  }
+}
+
+private fun updateOptionalPluginClassLoaderDependencies(loadedPlugin: IdeaPluginDescriptorImpl, pluginSet: PluginSet) {
+  processOptionalDependenciesOnPlugin(loadedPlugin, pluginSet, true) { mainDescriptor, subDescriptor ->
+    (subDescriptor.pluginClassLoader as? PluginClassLoader)?.addParent(loadedPlugin)
+    true
   }
 }
 

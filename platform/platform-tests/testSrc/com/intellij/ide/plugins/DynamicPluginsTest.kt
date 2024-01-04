@@ -861,6 +861,31 @@ class DynamicPluginsTest {
       }
     }
   }
+
+  @Test
+  @TestFor(issues = ["IDEA-287090"])
+  fun `update classloader after loading optional, old-style dependency`() {
+    runAndCheckThatNoNewPlugins {
+      val optionalDependency = PluginBuilder().randomId("dependency").packagePrefix("org.dependency")
+      val dependent = PluginBuilder()
+        .randomId("dependent")
+        .packagePrefix("org.dependent")
+        .depends(optionalDependency.id, optionalDependency)
+
+      loadPluginWithText(dependent).use {
+        val dependentDescriptor = PluginManagerCore.getPlugin(PluginId.getId(dependent.id))!!
+        val dependentClassloader = dependentDescriptor.pluginClassLoader as PluginClassLoader
+
+        runAndCheckThatNoNewPlugins {
+          loadPluginWithText(optionalDependency).use {
+            assertThat(dependentClassloader._getParents()).filteredOn { it.pluginId.idString == optionalDependency.id }.hasSize(1)
+          }
+        }
+
+        assertThat(dependentClassloader._getParents()).noneMatch { it.pluginId.idString == optionalDependency.id }
+      }
+    }
+  }
 }
 
 @InternalIgnoreDependencyViolation

@@ -62,7 +62,8 @@ private val parentListCacheIdCounter = AtomicInteger()
 
 @ApiStatus.Internal
 class PluginClassLoader(classPath: ClassPath,
-                        private val parents: Array<IdeaPluginDescriptorImpl>,
+                        @Volatile
+                        private var parents: Array<IdeaPluginDescriptorImpl>,
                         private val pluginDescriptor: PluginDescriptor,
                         private val coreLoader: ClassLoader,
                         resolveScopeManager: ResolveScopeManager?,
@@ -479,6 +480,20 @@ ${if (exception == null) "" else exception.message}""")
            "packagePrefix=$packagePrefix, " +
            "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}" +
            ")"
+  }
+
+  fun addParent(pluginDescriptor: IdeaPluginDescriptorImpl) {
+    val parents = this.parents
+    if (pluginDescriptor !in parents) {
+      this.parents = parents + pluginDescriptor
+    }
+  }
+
+  fun removeParent(pluginDescriptor: IdeaPluginDescriptorImpl) {
+    val parents = this.parents
+    if (pluginDescriptor in parents) {
+      this.parents = parents.filter { it != pluginDescriptor }.toTypedArray()
+    }
   }
 
   @Suppress("FunctionName")
