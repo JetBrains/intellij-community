@@ -1,89 +1,71 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.history.integration.ui.models;
+package com.intellij.history.integration.ui.models
 
-import com.intellij.diff.Block;
-import com.intellij.history.core.Content;
-import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.IdeaGateway;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.Block
+import com.intellij.history.core.revisions.Revision
+import com.intellij.history.integration.IdeaGateway
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
-import java.util.List;
+class SelectionCalculator(private val gateway: IdeaGateway,
+                          private val revisions: List<Revision>,
+                          private val fromLine: Int,
+                          private val toLine: Int) {
+  private val cache: Int2ObjectMap<Block> = Int2ObjectOpenHashMap()
 
-public final class SelectionCalculator {
-  private static final Block EMPTY_BLOCK = new Block("", 0, 0);
-
-  private final IdeaGateway myGateway;
-  private final List<? extends Revision> myRevisions;
-  private final int myFromLine;
-  private final int myToLine;
-  private final Int2ObjectMap<Block> myCache = new Int2ObjectOpenHashMap<>();
-
-  public SelectionCalculator(IdeaGateway gw, List<? extends Revision> rr, int fromLine, int toLine) {
-    myGateway = gw;
-    myRevisions = rr;
-    myFromLine = fromLine;
-    myToLine = toLine;
-  }
-
-  public boolean canCalculateFor(Revision r, Progress p) {
+  fun canCalculateFor(revision: Revision, progress: Progress): Boolean {
     try {
-      doGetSelectionFor(r, p);
+      doGetSelectionFor(revision, progress)
     }
-    catch (ContentIsUnavailableException e) {
-      return false;
+    catch (e: ContentIsUnavailableException) {
+      return false
     }
-    return true;
+    return true
   }
 
-  public Block getSelectionFor(Revision r, Progress p) {
-    return doGetSelectionFor(r, p);
+  fun getSelectionFor(revision: Revision, progress: Progress): Block {
+    return doGetSelectionFor(revision, progress)
   }
 
-  private Block doGetSelectionFor(Revision r, Progress p) {
-    int target = myRevisions.indexOf(r);
-    return getSelectionFor(target, target + 1, p);
+  private fun doGetSelectionFor(revision: Revision, progress: Progress): Block {
+    val target = revisions.indexOf(revision)
+    return getSelectionFor(target, target + 1, progress)
   }
 
-  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) {
-    Block cached = myCache.get(revisionIndex);
-    if (cached != null) return cached;
+  private fun getSelectionFor(revisionIndex: Int, totalRevisions: Int, progress: Progress): Block {
+    val cached = cache[revisionIndex]
+    if (cached != null) return cached
 
-    String content = getRevisionContent(myRevisions.get(revisionIndex));
-    p.processed(((totalRevisions - revisionIndex) * 100) / totalRevisions);
+    val content = getRevisionContent(revisions[revisionIndex])
+    progress.processed(((totalRevisions - revisionIndex) * 100) / totalRevisions)
 
-    Block result;
-    if (content == null) {
-      result = EMPTY_BLOCK;
-    } else  if (revisionIndex == 0) {
-      result = new Block(content, myFromLine, myToLine + 1);
-    }
+    val result = if (content == null) EMPTY_BLOCK
+    else if (revisionIndex == 0) Block(content, fromLine, toLine + 1)
     else {
-      Block prev = EMPTY_BLOCK;
-      int i = revisionIndex;
-      while(prev == EMPTY_BLOCK && i > 0) {
-        i--;
-        prev = getSelectionFor(i, totalRevisions, p);
+      var nextBlock = EMPTY_BLOCK
+      var i = revisionIndex
+      while (nextBlock === EMPTY_BLOCK && i > 0) {
+        i--
+        nextBlock = getSelectionFor(i, totalRevisions, progress)
       }
-      result = prev.createPreviousBlock(content);
+      nextBlock.createPreviousBlock(content)
     }
 
-    myCache.put(revisionIndex, result);
+    cache.put(revisionIndex, result)
 
-    return result;
+    return result
   }
 
-  private @Nullable String getRevisionContent(@NotNull Revision r) {
-    Entry e = r.findEntry();
-    if (e == null) return null;
-    Content c = e.getContent();
-    if (!c.isAvailable()) throw new ContentIsUnavailableException();
-    return c.getString(e, myGateway);
+  private fun getRevisionContent(revision: Revision): String? {
+    val entry = revision.findEntry() ?: return null
+    val content = entry.content
+    if (!content.isAvailable) throw ContentIsUnavailableException()
+    return content.getString(entry, gateway)
   }
 
-  private static final class ContentIsUnavailableException extends RuntimeException {
+  private class ContentIsUnavailableException : RuntimeException()
+
+  companion object {
+    private val EMPTY_BLOCK = Block("", 0, 0)
   }
 }
