@@ -110,7 +110,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
                 }
               }
               List<LocalQuickFix> fixes = new ArrayList<>();
-              fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
+              ExtractMethodFix extractFix = new ExtractMethodFix(from, count, output, inputVariables);
+              fixes.add(extractFix);
               if (inputVariables.size() > 1) {
                 fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
                   ExtractMethodRecommenderInspection.this, "maxParameters",
@@ -128,9 +129,10 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
               if (firstLineBreak > -1) {
                 textRange = TextRange.from(textRange.getStartOffset(), firstLineBreak);
                 TextRange firstStatementRange = statements[from].getTextRangeInParent();
-                if (firstStatementRange.getStartOffset() == textRange.getStartOffset() && 
+                if (firstStatementRange.getStartOffset() == textRange.getStartOffset() &&
                     firstStatementRange.getEndOffset() >= textRange.getEndOffset()) {
                   anchor = statements[from];
+                  extractFix.shouldUseParent();
                   textRange = textRange.shiftLeft(textRange.getStartOffset());
                 }
               }
@@ -440,6 +442,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
     private final String myOutputName;
     private final String myInputNames;
 
+    private boolean shouldUseParent = false;
+
     private ExtractMethodFix(int from, int length, PsiVariable variable, List<PsiVariable> inputVariables) {
       myFrom = from;
       myLength = length;
@@ -454,7 +458,11 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiCodeBlock block = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCodeBlock.class);
+      PsiElement element = descriptor.getStartElement();
+      if (shouldUseParent) {
+        element = element.getParent();
+      }
+      PsiCodeBlock block = ObjectUtils.tryCast(element, PsiCodeBlock.class);
       TextRange range = getRange(block);
       if (range == null) return;
       new MethodExtractor().doExtract(block.getContainingFile(), range.shiftRight(block.getTextRange().getStartOffset()));
@@ -487,6 +495,10 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
       String input = myInputNames.isEmpty() ? JavaAnalysisBundle.message("inspection.extract.method.nothing") : "<b>(" + myInputNames + ")</b>";
       return new IntentionPreviewInfo.Html(
         JavaAnalysisBundle.message("inspection.extract.method.preview.html", myLength,input,myOutputName));
+    }
+
+    private void shouldUseParent() {
+      shouldUseParent = true;
     }
   }
 }
