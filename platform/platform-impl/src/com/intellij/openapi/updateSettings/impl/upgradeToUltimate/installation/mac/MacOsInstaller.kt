@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties.getUserHome
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -18,8 +17,7 @@ internal class MacOsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
   override val postfix = if (CpuArch.isArm64()) "-aarch64.dmg" else ".dmg"
   private val mountDirectory = updateTempDirectory.resolve("mount")
 
-  @OptIn(ExperimentalPathApi::class)
-  override fun install(downloadResult: DownloadResult): InstallationResult? {
+  override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
     val mountDir = mountDirectory.resolve(downloadResult.buildVersion)
     return try {
       mountDir.createDirectories()
@@ -35,7 +33,7 @@ internal class MacOsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
       copyApp(app)
     } finally {
       runDetach(mountDir.pathString)
-      scope.launch { mountDir.deleteRecursively() }
+      deleteInBackground(mountDir)
     }
   }
 
@@ -45,9 +43,8 @@ internal class MacOsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
       val newAppPath = getUltimateInstallationDirectory()?.resolve(appPath.fileName) ?: return null
       appPath.copyToRecursively(newAppPath, followLinks = true, overwrite = true)
       InstallationResult(newAppPath)
-    }
-    catch (e: Exception) {
-      scope.launch { appPath.deleteRecursively() }
+    } catch (e: Exception) {
+      deleteInBackground(appPath)
       throw e
     }
   }

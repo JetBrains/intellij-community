@@ -24,7 +24,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.withRawProgressReporter
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -46,7 +45,7 @@ private const val TOOLBOX_INSTALL_BASE_URL = "http://localhost:52829/install/IDE
 private const val TOOLBOX_ORIGIN = "https://toolbox.app"
 internal const val BASE_ULTIMATE_DOWNLOAD_URL = "https://download.jetbrains.com/idea/ideaIU"
 
-internal val ultimateInstallationLogger = logger<UltimateInstallationService>()
+private val ultimateInstallationLogger = logger<UltimateInstallationService>()
 
 @Service(Service.Level.PROJECT)
 class UltimateInstallationService(
@@ -107,22 +106,18 @@ class UltimateInstallationService(
 
   private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null): Boolean {
     if (installer == null) return false
-    
+
     FUSEventSource.EDITOR.logUltimateDownloadStarted(project, pluginId)
     val result = downloadStep(buildInfo)
       ?.let { downloadResult ->
         FUSEventSource.EDITOR.logUltimateInstallationStarted(project, pluginId)
-        installStep(downloadResult)
+        indeterminateStep(IdeBundle.message("plugins.advertiser.ultimate.install")) { installer?.install(downloadResult) }
       }
       ?.let { installResult ->
         FUSEventSource.EDITOR.logInstalledUltimateOpened(project, pluginId)
         installer!!.startUltimate(installResult)
       }
-    
-    AppExecutorUtil.getAppExecutorService().submit(Runnable { 
-      // cleanup
-    })
-    
+
     return result != null && result
   }
 
@@ -136,31 +131,16 @@ class UltimateInstallationService(
     }
   }
 
-  @OptIn(ExperimentalPathApi::class)
-  private suspend fun installStep(downloadResult: DownloadResult): InstallationResult? {
-    return indeterminateStep(IdeBundle.message("plugins.advertiser.ultimate.install")) {
-      try {
-        installer?.install(downloadResult)
-      }
-      finally {
-        downloadResult.downloadPath.deleteRecursively()
-      }
-    }
-  }
-
   private fun useFallback(pluginId: PluginId? = null) {
     FUSEventSource.EDITOR.logUltimateFallbackUsed(project, ideaUltimate.defaultDownloadUrl, pluginId)
   }
 }
 
-internal abstract class UltimateInstaller(
-  val scope: CoroutineScope
-) {
+internal abstract class UltimateInstaller(val scope: CoroutineScope) {
   abstract val postfix: String
 
   protected val updateTempDirectory: Path = Path.of(PathManager.getTempPath(), "ultimate-upgrade")
-  
-  @OptIn(ExperimentalPathApi::class)
+
   fun download(buildInfo: BuildInfo, indicator: ProgressIndicator): DownloadResult {
     val link = generateDownloadLink(buildInfo, postfix)
     val downloadPath = updateTempDirectory.resolve("${buildInfo.version}$postfix")
@@ -169,19 +149,35 @@ internal abstract class UltimateInstaller(
       try {
         HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
       } catch (e: Exception) {
-        scope.launch { downloadPath.deleteRecursively() }
+        deleteInBackground(downloadPath)
         throw e
       }
     }
-    
+
     return DownloadResult(downloadPath, buildInfo.version)
   }
+  
+  fun install(downloadResult: DownloadResult): InstallationResult? {
+    return try {
+      installUltimate(downloadResult)
+    } finally {
+      deleteInBackground(downloadResult.downloadPath)
+    }
+  }
 
-  abstract fun install(downloadResult: DownloadResult): InstallationResult?
+  abstract fun installUltimate(downloadResult: DownloadResult): InstallationResult?
 
   abstract fun startUltimate(installationResult: InstallationResult): Boolean
 
   abstract fun getUltimateInstallationDirectory(): Path?
+
+  @OptIn(ExperimentalPathApi::class)
+  protected fun deleteInBackground(directory: Path) {
+    val result = scope.runCatching { directory.deleteRecursively() }
+    if (result.isFailure) {
+      ultimateInstallationLogger.warn("Could not clear directories: ${result.exceptionOrNull()?.suppressedExceptions}")
+    }
+  }
 }
 
 internal fun runCommand(command: GeneralCommandLine): Boolean {
@@ -191,8 +187,7 @@ internal fun runCommand(command: GeneralCommandLine): Boolean {
 
     ultimateInstallationLogger.warn(output.stderr)
     false
-  }
-  catch (e: Exception) {
+  } catch (e: Exception) {
     ultimateInstallationLogger.warn(e)
     false
   }

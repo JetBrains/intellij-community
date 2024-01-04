@@ -11,50 +11,42 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.pathString
 
 internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.tar.gz" else ".tar.gz"
-  
-  @OptIn(ExperimentalPathApi::class)
-  override fun install(downloadResult: DownloadResult): InstallationResult? {
+
+  override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
     val installationPath = getUltimateInstallationDirectory() ?: return null
     val entries = mutableListOf<Path>()
-    
+
     try {
       val decompressor = Decompressor.Tar(downloadResult.downloadPath)
-      decompressor
-        .postProcessor(entries::add)
-        .extract(installationPath)
+      decompressor.postProcessor(entries::add).extract(installationPath)
     } catch (e: Exception) {
-      scope.launch { installationPath.deleteRecursively() }
+      deleteInBackground(installationPath)
       throw e
     }
-    
-    val installFolder = installationPath.resolve(entries.first().fileName)
-    // todo add desktop entry
-    
+
+    val installFolder = installationPath.resolve(entries.first().fileName) // todo add desktop entry
+
     return InstallationResult(installFolder)
   }
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val installed = installationResult.appPath
     val shellPath = installed.resolve("bin").resolve("idea.sh")
-    
-    val command = GeneralCommandLine("/usr/bin/setsid")
-      .withParameters(shellPath.pathString)
+
+    val command = GeneralCommandLine("/usr/bin/setsid").withParameters(shellPath.pathString)
     
     return runCommand(command)
   }
 
   override fun getUltimateInstallationDirectory(): Path? {
-     val localAppPath =  System.getenv("XDG_DATA_HOME")?.toNioPathOrNull() 
-                         ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve(".local/share")
-    
+    val localAppPath = System.getenv("XDG_DATA_HOME")?.toNioPathOrNull() 
+                       ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve(".local/share")
+
     return localAppPath?.resolve("JetBrains")
   }
 }

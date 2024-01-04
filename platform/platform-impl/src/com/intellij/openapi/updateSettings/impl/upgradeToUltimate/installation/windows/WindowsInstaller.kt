@@ -3,7 +3,10 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.*
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.DownloadResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.InstallationResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstaller
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.runCommand
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstallationType.INSTALLER
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstallationType.ZIP
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -12,11 +15,8 @@ import com.intellij.util.io.Decompressor
 import com.sun.jna.platform.win32.KnownFolders
 import com.sun.jna.platform.win32.Shell32Util
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
@@ -28,7 +28,7 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
     INSTALLER -> ".exe"
   }
 
-  override fun install(downloadResult: DownloadResult): InstallationResult? {
+  override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
     return when (installationType) {
       ZIP -> installFromZip(downloadResult)
       INSTALLER -> installFromExe(downloadResult)
@@ -43,10 +43,7 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
       .withParameters("$path /S /D=$installationPath")
 
     val result = runCommand(command)
-    if (!result) {
-      ultimateInstallationLogger.warn("Could not execute command: $command")
-      return null
-    }
+    if (!result) return null
 
     return InstallationResult(installationPath)
   }
@@ -58,7 +55,6 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
     return "$path${File.separator}$name".toNioPathOrNull()
   }
 
-  @OptIn(ExperimentalPathApi::class)
   private fun installFromZip(downloadResult: DownloadResult): InstallationResult? {
     val path = downloadResult.downloadPath
 
@@ -66,7 +62,7 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
     try {
       Decompressor.Zip(path).extract(installationPath)
     } catch (e: Exception) {
-      scope.launch { installationPath.deleteRecursively() }
+      deleteInBackground(installationPath)
       throw e
     }
     
@@ -84,8 +80,7 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
   override fun getUltimateInstallationDirectory(): Path? {
     return try {
       Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_UserProgramFiles)?.toNioPathOrNull()
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
       val localAppData = Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_LocalAppData).toNioPathOrNull()
                          ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
       localAppData?.resolve("Programs")
