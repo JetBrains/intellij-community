@@ -1,12 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.HelpTopicsAction
-import com.intellij.ide.actions.JetBrainsTvAction
-import com.intellij.ide.actions.OnlineDocAction
-import com.intellij.ide.actions.WhatsNewAction
+import com.intellij.ide.actions.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.createTitlePanel
@@ -63,6 +60,9 @@ class HelpAndResourcesPanel : JPanel() {
     val helpActions = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
     val anActionEvent = emptyWelcomeScreenEventFromAction(helpActions)
     helpActions.getChildren(anActionEvent).forEach {
+      if (it is HelpActionBase && !it.isAvailable) {
+        return@forEach
+      }
       if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
                         JetBrainsTvAction::class.java.simpleName).any { simpleName -> simpleName == it.javaClass.simpleName }) {
         add(linkLabelByAction(it).wrapWithUrlPanel())

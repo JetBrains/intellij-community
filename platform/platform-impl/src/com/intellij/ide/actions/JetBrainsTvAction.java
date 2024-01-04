@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -13,14 +13,14 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
-public final class JetBrainsTvAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class JetBrainsTvAction extends HelpActionBase implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public JetBrainsTvAction() {
     getTemplatePresentation().setText(() -> ActionsBundle.message("action.Help.JetBrainsTV.templateText", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(ExternalProductResourceUrls.getInstance().getYouTubeChannelUrl() != null);
+  public boolean isAvailable() {
+    return ExternalProductResourceUrls.getInstance().getYouTubeChannelUrl() != null;
   }
 
   @Override

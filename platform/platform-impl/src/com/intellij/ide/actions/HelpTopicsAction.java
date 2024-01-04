@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -11,17 +11,15 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class HelpTopicsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+public final class HelpTopicsAction extends HelpActionBase implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     HelpManager.getInstance().invokeHelp("top");
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-
-    boolean enabled = ApplicationInfo.helpAvailable();
-    e.getPresentation().setEnabledAndVisible(enabled);
+  public boolean isAvailable() {
+    return ApplicationInfo.helpAvailable();
   }
 
   @Override
