@@ -151,6 +151,10 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
     throttler.submitPeriodic(activity, id, activity.canBeStale, extra)
   }
 
+  override suspend fun cancel(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String) {
+
+  }
+
   override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
     SqliteLazyInitializedDatabase.getInstance().executeBeforeConnectionClosed(action)
   }
@@ -178,6 +182,7 @@ interface ITimeSpanUserActivityDatabase : IReadOnlyTimeSpanUserActivityDatabase 
                            extra: Map<String, String>? = null,
                            moment: Instant?)
   suspend fun submitPeriodicEvent(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String, extra: Map<String, String>? = null)
+  suspend fun cancel(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String)
 }
 
 internal interface IInternalTimeSpanUserActivityDatabase {

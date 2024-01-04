@@ -83,6 +83,18 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
     }
   }
 
+  suspend fun cancel(activity: DatabaseBackedTimeSpanUserActivity, id: String) {
+    /**
+     * TODO: this method should check if data is already written to DB and delete record from there
+     */
+    eventsLock.withLock {
+      val activityId = activity.toKey(id)
+      if (events.remove(activityId) == null) {
+        logger.info("Tried to cancel activity ${activity.toKey(id)} that wasn't started")
+      }
+    }
+  }
+
   suspend fun submitPeriodic(
     activity: DatabaseBackedTimeSpanUserActivity,
     id: String,
