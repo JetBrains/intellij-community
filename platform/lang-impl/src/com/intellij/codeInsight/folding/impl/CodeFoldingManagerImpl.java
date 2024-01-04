@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageInjector;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
@@ -140,8 +141,17 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return null;
     }
 
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    FoldingState fileFoldingState = myFoldingGrave.getFoldingState(vFile);
+    VirtualFile vFile;
+    FoldingState fileFoldingState;
+    if (isIgnoredByFoldingPass(file)) {
+      // disable folding cache if there is no following folding pass IDEA-341064
+      vFile = null;
+      fileFoldingState = null;
+    }
+    else {
+      vFile = FileDocumentManager.getInstance().getFile(document);
+      fileFoldingState = myFoldingGrave.getFoldingState(vFile);
+    }
     List<RegionInfo> regionInfos = fileFoldingState == null
                                    ? FoldingUpdate.getFoldingsFor(file, true)
                                    : Collections.emptyList();
@@ -307,5 +317,13 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   private static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {
     return Boolean.TRUE.equals(editor.getUserData(FOLDING_STATE_KEY));
+  }
+
+  /**
+   * Returns true if the file is ignored by the folding pass.
+   * See {@link com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt.IGNORE_FOR_COMPILED}
+   */
+  private static boolean isIgnoredByFoldingPass(PsiFile file) {
+    return file instanceof PsiCompiledFile;
   }
 }
