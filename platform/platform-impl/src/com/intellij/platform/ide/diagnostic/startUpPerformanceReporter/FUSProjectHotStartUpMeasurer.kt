@@ -23,10 +23,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object FUSProjectHotStartUpMeasurer {
 
@@ -153,8 +155,8 @@ object FUSProjectHotStartUpMeasurer {
       data class FrameInteractive(val settingsExist: Boolean?) : Stage
 
       data class EditorStage(val data: PrematureEditorStageData, val settingsExist: Boolean?) : Stage {
-        fun log(durationMillis: Long) {
-          val eventData = data.getEventData().add(DURATION.with(durationMillis)).let { pairs ->
+        fun log(duration: Duration) {
+          val eventData = data.getEventData().add(DURATION.with(duration.getValueForFUS())).let { pairs ->
             settingsExist?.let { pairs.add(HAS_SETTINGS.with(settingsExist)) } ?: pairs
           }
           CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data.project, eventData)
@@ -165,8 +167,8 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     private data object PrematureFrameInteractiveData {
-      fun log(duration: Long) {
-        FRAME_BECAME_INTERACTIVE_EVENT.log(duration)
+      fun log(duration: Duration) {
+        FRAME_BECAME_INTERACTIVE_EVENT.log(duration.getValueForFUS())
       }
     }
 
@@ -258,11 +260,11 @@ object FUSProjectHotStartUpMeasurer {
       computeLocked {
         if (this !is Stage.IdeStarterStarted) return@computeLocked
         if (splashBecameVisibleTime == null) {
-          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration), SPLASH_SCREEN_WAS_SHOWN.with(false))
+          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(false))
         }
         else {
-          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration), SPLASH_SCREEN_WAS_SHOWN.with(true),
-                                   SPLASH_SCREEN_VISIBLE_DURATION.with(getDuration(splashBecameVisibleTime)))
+          WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(true),
+                                   SPLASH_SCREEN_VISIBLE_DURATION.with(getDuration(splashBecameVisibleTime).getValueForFUS()))
         }
         reportViolation(Violation.WelcomeScreenShown)
       }
@@ -302,10 +304,11 @@ object FUSProjectHotStartUpMeasurer {
         reportFirstUiShownEvent(splashBecameVisibleTime, duration)
 
         if (settingsExist == null) {
-          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), PROJECTS_TYPE.with(projectType))
+          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType))
         }
         else {
-          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), PROJECTS_TYPE.with(projectType), HAS_SETTINGS.with(settingsExist))
+          FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), PROJECTS_TYPE.with(projectType),
+                                         HAS_SETTINGS.with(settingsExist))
         }
 
         if (prematureFrameInteractive != null) {
@@ -324,18 +327,18 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    private fun reportViolation(duration: Long,
+    private fun reportViolation(duration: Duration,
                                 violation: Violation,
                                 splashBecameVisibleTime: Long?) {
       reportFirstUiShownEvent(splashBecameVisibleTime, duration)
-      FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), VIOLATION.with(violation))
+      FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
       stopReporting()
     }
 
-    private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Long) {
+    private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Duration) {
       splashBecameVisibleTime?.also {
-        FIRST_UI_SHOWN_EVENT.log(getDuration(splashBecameVisibleTime), UIResponseType.Splash)
-      }.alsoIfNull { FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame) }
+        FIRST_UI_SHOWN_EVENT.log(getDuration(splashBecameVisibleTime).getValueForFUS(), UIResponseType.Splash)
+      }.alsoIfNull { FIRST_UI_SHOWN_EVENT.log(duration.getValueForFUS(), UIResponseType.Frame) }
     }
 
     fun reportFrameBecameInteractive() {
@@ -384,7 +387,7 @@ object FUSProjectHotStartUpMeasurer {
             }
             is Stage.FrameInteractive -> {
               stopReporting()
-              Stage.EditorStage(editorStageData, settingsExist).log(durationMillis)
+              Stage.EditorStage(editorStageData, settingsExist).log(getDuration(durationMillis))
             }
             else -> {} //ignore
           }
@@ -418,7 +421,7 @@ object FUSProjectHotStartUpMeasurer {
             stage = this.copy(prematureEditorData = noEditorStageData)
           }
           is Stage.FrameInteractive -> {
-            Stage.EditorStage(noEditorStageData, settingsExist).log(durationMillis)
+            Stage.EditorStage(noEditorStageData, settingsExist).log(getDuration(durationMillis))
             stopReporting()
           }
           else -> {} //ignore
@@ -437,8 +440,12 @@ object FUSProjectHotStartUpMeasurer {
   }
 }
 
-fun getDuration(finishTimestampNano: Long = System.nanoTime()): Long {
-  return TimeUnit.NANOSECONDS.toMillis(finishTimestampNano - StartUpMeasurer.getStartTime())
+private fun getDuration(finishTimestampNano: Long = System.nanoTime()): Duration {
+  return (finishTimestampNano - StartUpMeasurer.getStartTime()).toDuration(DurationUnit.NANOSECONDS)
+}
+
+private fun Duration.getValueForFUS(): Long {
+  return inWholeMilliseconds
 }
 
 private val WELCOME_SCREEN_GROUP = EventLogGroup("welcome.screen.startup.performance", 1)
