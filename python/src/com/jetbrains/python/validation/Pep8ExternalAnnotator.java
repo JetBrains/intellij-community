@@ -192,7 +192,9 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     }
 
     return new State(homePath,
-                     LanguageLevel.forElement(file),
+                     // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK, 
+                     // so LanguageLevel.forElement(file) might lead to launching the script incompatible with the "runner" interpreter.
+                     PySdkUtil.getLanguageLevelForSdk(sdk),
                      file.getText(),
                      profile.getErrorLevel(key, file),
                      ignoredErrors,
