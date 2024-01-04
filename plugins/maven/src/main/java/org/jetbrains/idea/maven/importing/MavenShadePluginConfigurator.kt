@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.platform.workspace.jps.entities.*
@@ -19,6 +21,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -119,14 +122,17 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
     val embeddersManager = projectsManager.embeddersManager
 
     for (baseDir in baseDirsToMavenProjects.keySet()) {
-      packageJarsForBaseDir(embeddersManager, baseDirsToMavenProjects[baseDir], baseDir)
+      packageJarsForBaseDir(project, embeddersManager, baseDirsToMavenProjects[baseDir], baseDir)
     }
 
     val filesToRefresh = shadedMavenProjects.map { Path.of(it.buildDirectory) }
     LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
   }
 
-  private fun packageJarsForBaseDir(embeddersManager: MavenEmbeddersManager, mavenProjects: Collection<MavenProject>, baseDir: String) {
+  private fun packageJarsForBaseDir(project: Project,
+                                    embeddersManager: MavenEmbeddersManager,
+                                    mavenProjects: Collection<MavenProject>,
+                                    baseDir: String) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
 
     val requests = mavenProjects
@@ -136,9 +142,14 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
       .map { MavenGoalExecutionRequest(it, MavenExplicitProfiles.NONE) }
       .toList()
 
+    val names = mavenProjects.map { it.displayName }
+    val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
+
     runBlockingMaybeCancellable {
-      withRawProgressReporter {
-        embedder.executeGoal(requests, "package", rawProgressReporter!!, MavenLogEventHandler)
+      withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
+        withRawProgressReporter {
+          embedder.executeGoal(requests, "package", rawProgressReporter!!, MavenLogEventHandler)
+        }
       }
     }
   }
