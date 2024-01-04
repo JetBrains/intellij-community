@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.sync
 
 import com.intellij.ide.startup.importSettings.data.*
@@ -38,6 +38,8 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   companion object {
     fun getInstance(): SyncServiceImpl = service()
   }
+
+  override fun hasDataToImport() = syncState.value == SyncService.SYNC_STATE.LOGGED
 
   override val syncState = Property(SyncService.SYNC_STATE.UNLOGGED)
 

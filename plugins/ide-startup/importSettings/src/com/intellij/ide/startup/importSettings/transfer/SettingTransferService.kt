@@ -1,19 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.TransferSettingsDataProvider
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
-import com.intellij.ide.startup.importSettings.data.BaseSetting
-import com.intellij.ide.startup.importSettings.data.DataForSave
-import com.intellij.ide.startup.importSettings.data.DialogImportData
-import com.intellij.ide.startup.importSettings.data.ExternalService
-import com.intellij.ide.startup.importSettings.data.IconProductSize
-import com.intellij.ide.startup.importSettings.data.ImportProgress
-import com.intellij.ide.startup.importSettings.data.NotificationData
-import com.intellij.ide.startup.importSettings.data.Product
-import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
@@ -33,14 +25,7 @@ import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
@@ -125,6 +110,11 @@ class SettingTransferService : ExternalService {
       }
     }
   }
+
+  override suspend fun hasDataToImport() =
+    coroutineScope {
+      loadIdeVersionsAsync().await().values.any()
+    }
 
   override fun products(): List<Product> {
     return logger.runAndLogException {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.StartupImportIcons
@@ -33,6 +33,8 @@ interface SettingsService {
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
+  suspend fun shouldShowImport(): Boolean
+
   val importCancelled: Signal<Unit>
 
   val error: ISignal<NotificationData>
@@ -61,6 +63,11 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
   override fun getExternalService(): ExternalService =
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
+
+  override suspend fun shouldShowImport(): Boolean {
+    return getJbService().hasDataToImport()
+           || getExternalService().hasDataToImport()
+  }
 
   override val importCancelled = Signal<Unit>().apply {
     advise(createLifetime()) {
@@ -118,10 +125,12 @@ interface SyncService : JbService {
 }
 
 interface ExternalService : BaseService {
+  suspend fun hasDataToImport(): Boolean
   suspend fun warmUp()
 }
 
 interface JbService : BaseService {
+  fun hasDataToImport(): Boolean
   fun getOldProducts(): List<Product>
 }
 
@@ -237,4 +246,3 @@ data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
     }
   }
 }
-
