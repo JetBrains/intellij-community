@@ -317,7 +317,7 @@ public final class PsiClassImplUtil {
       return true;
     }
     String name = method.getName();
-    if ("premain".equals(name) || "agentmain".equals(name)) return false;
+    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
