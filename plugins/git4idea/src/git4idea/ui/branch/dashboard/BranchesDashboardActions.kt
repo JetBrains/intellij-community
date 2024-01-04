@@ -23,6 +23,8 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
+import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
 import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.GitBranchType
@@ -44,7 +46,6 @@ import git4idea.ui.branch.*
 import git4idea.ui.branch.dashboard.BranchesTreeComponent.Companion.getSelectedBranches
 import git4idea.ui.branch.dashboard.BranchesTreeComponent.Companion.getSelectedRepositories
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.tree.TreePath
@@ -71,9 +72,9 @@ internal object BranchesDashboardActions {
 
   class CurrentBranchActions(project: Project,
                              repositories: List<GitRepository>,
-                             branchName: String,
+                             branch: GitLocalBranch,
                              selectedRepository: GitRepository)
-    : GitBranchPopupActions.CurrentBranchActions(project, repositories, branchName, selectedRepository) {
+    : GitBranchPopupActions.CurrentBranchActions(project, repositories, branch, selectedRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val children = arrayListOf<AnAction>(*super.getChildren(e))
@@ -86,9 +87,9 @@ internal object BranchesDashboardActions {
 
   class LocalBranchActions(project: Project,
                            repositories: List<GitRepository>,
-                           branchName: String,
+                           branch: GitLocalBranch,
                            selectedRepository: GitRepository)
-    : GitBranchPopupActions.LocalBranchActions(project, repositories, branchName, selectedRepository) {
+    : GitBranchPopupActions.LocalBranchActions(project, repositories, branch, selectedRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
@@ -96,9 +97,9 @@ internal object BranchesDashboardActions {
 
   class RemoteBranchActions(project: Project,
                             repositories: List<GitRepository>,
-                            @NonNls branchName: String,
+                            branch: GitRemoteBranch,
                             selectedRepository: GitRepository)
-    : GitBranchPopupActions.RemoteBranchActions(project, repositories, branchName, selectedRepository) {
+    : GitBranchPopupActions.RemoteBranchActions(project, repositories, branch, selectedRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
@@ -142,10 +143,11 @@ internal object BranchesDashboardActions {
         val selectedRepositories = getSelectedRepositories(branchInfo, selectionPaths).toList().ifEmpty(branchInfo::repositories)
         val selectedRepository = selectedRepositories.singleOrNull() ?: guessRepo
 
+        val branch = branchInfo.branch
         return when {
-          branchInfo.isCurrent -> CurrentBranchActions(project, selectedRepositories, branchInfo.branchName, selectedRepository)
-          branchInfo.isLocal -> LocalBranchActions(project, selectedRepositories, branchInfo.branchName, selectedRepository)
-          else -> RemoteBranchActions(project, selectedRepositories, branchInfo.branchName, selectedRepository)
+          branchInfo.isCurrent -> CurrentBranchActions(project, selectedRepositories, branch as GitLocalBranch, selectedRepository)
+          branchInfo.isLocal -> LocalBranchActions(project, selectedRepositories, branch as GitLocalBranch, selectedRepository)
+          else -> RemoteBranchActions(project, selectedRepositories, branch as GitRemoteBranch, selectedRepository)
         }
       }
 
@@ -162,9 +164,9 @@ internal object BranchesDashboardActions {
         return RemoteGlobalActions()
       }
 
-      val currentBranchName = guessRepo.currentBranchName
-      if (currentBranchName != null && headSelected) {
-        return CurrentBranchActions(project, listOf(guessRepo), currentBranchName, guessRepo)
+      val currentBranch = guessRepo.currentBranch
+      if (currentBranch != null && headSelected) {
+        return CurrentBranchActions(project, listOf(guessRepo), currentBranch, guessRepo)
       }
 
       return null

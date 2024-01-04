@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.application.Application;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitReference;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -186,7 +187,21 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories) {
+  public void merge(@NotNull GitReference reference,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends @NotNull GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).merge(reference, deleteOnMerge, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
+  public void merge(@NotNull String branchName,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", branchName), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
