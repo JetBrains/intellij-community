@@ -5,7 +5,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
-import com.intellij.ide.wizard.LanguageNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -27,7 +26,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 25)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 26)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -54,7 +53,6 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val typedCharField = IntEventField("typed_chars")
   private val hitField = IntEventField("hits")
   private val generatorTypeField = GeneratorEventField("generator")
-  private val languageField = EventFields.String("language", LANGUAGES)
   private val gitField = EventFields.Boolean("git")
   private val isSucceededField = EventFields.Boolean("project_created")
   private val inputMaskField = EventFields.Long("input_mask")
@@ -69,8 +67,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val pluginField = EventFields.String("plugin_selected", LANGUAGES)
 
   private val baseFields = arrayOf(sessionIdField, screenNumField)
-  private val languageFields = arrayOf(*baseFields, languageField)
-  val buildSystemFields: Array<PrimitiveEventField<out Any?>> = arrayOf(*languageFields, buildSystemField)
+  val buildSystemFields: Array<PrimitiveEventField<out Any?>> = arrayOf(*baseFields, buildSystemField)
 
   // @formatter:off
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", *baseFields)
@@ -83,20 +80,19 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     private val generatorFinished = GROUP.registerVarargEvent("generator.finished", *baseFields, generatorTypeField)
     private val templateSelected = GROUP.registerVarargEvent("select.custom.template", *baseFields)
     private val helpNavigation = GROUP.registerVarargEvent("navigate.help", *baseFields)
+    private val morePluginLinkClicked = GROUP.registerVarargEvent("more.plugin.link.clicked", *baseFields)
+    private val managePluginLinkClicked = GROUP.registerVarargEvent("manage.plugin.link.clicked", *baseFields)
+    private val installPluginItemSelected = GROUP.registerVarargEvent("more.plugin.item.selected", *baseFields, pluginField)
 
     private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, generatorTypeField)
     private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, generatorTypeField)
-    private val languageSelected = GROUP.registerVarargEvent("select.language", *baseFields, languageField)
-    private val languageFinished = GROUP.registerVarargEvent("language.finished", *baseFields, languageField)
-    private val languageAddAction = GROUP.registerVarargEvent("add.plugin.clicked", *baseFields)
-    private val languageLoadAction = GROUP.registerVarargEvent("plugin.selected", *baseFields, pluginField)
     private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields)
     private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
     private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
     private val addSampleOnboardingTipsChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
 
-    private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *languageFields, buildSystemField)
-    private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *languageFields, buildSystemField)
+    private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *baseFields, buildSystemField)
+    private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *baseFields, buildSystemField)
     private val sdkChangedEvent = GROUP.registerVarargEvent("build.system.sdk.changed", *buildSystemFields, buildSystemSdkField)
     private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", *buildSystemFields, buildSystemSdkField)
     private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", *buildSystemFields, buildSystemParentField)
@@ -157,17 +153,29 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   fun logHelpNavigation(context: WizardContext): Unit =
     helpNavigation.logBaseEvent(context)
 
-  private fun VarargEventId.logBaseEvent(context: WizardContext, vararg arguments: EventPair<*>) =
-    logBaseEvent(context.project, context, *arguments)
+  @JvmStatic
+  fun logInstallPluginPopupShowed(context: WizardContext): Unit =
+    morePluginLinkClicked.logBaseEvent(context)
+
+  @JvmStatic
+  fun logInstallPluginDialogShowed(context: WizardContext): Unit =
+    managePluginLinkClicked.logBaseEvent(context)
+
+  @JvmStatic
+  fun logInstallPluginDialogShowed(context: WizardContext, plugin: String): Unit =
+    installPluginItemSelected.logBaseEvent(context, pluginField with plugin)
 
   private fun VarargEventId.logBaseEvent(project: Project?, context: WizardContext, vararg arguments: EventPair<*>) =
     log(project, sessionIdField with context.sessionId.id, screenNumField with context.screen, *arguments)
 
-  private fun VarargEventId.logLanguageEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
-    logBaseEvent(step.context, languageField with step.language, *arguments)
+  private fun VarargEventId.logBaseEvent(context: WizardContext, vararg arguments: EventPair<*>) =
+    logBaseEvent(context.project, context, *arguments)
+
+  private fun VarargEventId.logBaseEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
+    logBaseEvent(step.context, *arguments)
 
   fun VarargEventId.logBuildSystemEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>): Unit =
-    logLanguageEvent(step, buildSystemField with step.buildSystem, *arguments)
+    logBaseEvent(step, buildSystemField with step.buildSystem, *arguments)
 
   private val Sdk?.featureVersion: Int
     get() {
@@ -183,11 +191,6 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val NewProjectWizardStep.generator: ModuleBuilder?
     get() = context.generator
 
-  private val NewProjectWizardStep.language: String
-    get() = (this as? LanguageNewProjectWizardData)?.language
-            ?: data.getUserData(LanguageNewProjectWizardData.KEY)?.language
-            ?: NewProjectWizardConstants.OTHER
-
   private val NewProjectWizardStep.buildSystem: String
     get() = (this as? BuildSystemNewProjectWizardData)?.buildSystem
             ?: NewProjectWizardConstants.OTHER
@@ -199,18 +202,6 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
     fun NewProjectWizardStep.logLocationChanged(): Unit =
       locationChanged.logBaseEvent(context, generatorTypeField with generator)
-
-    fun NewProjectWizardStep.logLanguageChanged(): Unit =
-      languageSelected.logBaseEvent(context, languageField with language)
-
-    fun NewProjectWizardStep.logLanguageFinished(): Unit =
-      languageFinished.logBaseEvent(context, languageField with language)
-
-    fun NewProjectWizardStep.logLanguageAddAction(): Unit =
-      languageAddAction.logBaseEvent(context)
-
-    fun NewProjectWizardStep.logLanguageLoadAction(plugin: String): Unit =
-      languageLoadAction.logBaseEvent(context, pluginField with plugin)
 
     fun NewProjectWizardStep.logGitChanged(): Unit =
       gitChanged.logBaseEvent(context)
@@ -228,10 +219,10 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   object BuildSystem {
 
     fun NewProjectWizardStep.logBuildSystemChanged(): Unit =
-      buildSystemChangedEvent.logLanguageEvent(this, buildSystemField with buildSystem)
+      buildSystemChangedEvent.logBaseEvent(this, buildSystemField with buildSystem)
 
     fun NewProjectWizardStep.logBuildSystemFinished(): Unit =
-      buildSystemFinishedEvent.logLanguageEvent(this, buildSystemField with buildSystem)
+      buildSystemFinishedEvent.logBaseEvent(this, buildSystemField with buildSystem)
 
     fun NewProjectWizardStep.logSdkChanged(sdk: Sdk?): Unit =
       sdkChangedEvent.logBuildSystemEvent(this, buildSystemSdkField with sdk.featureVersion)

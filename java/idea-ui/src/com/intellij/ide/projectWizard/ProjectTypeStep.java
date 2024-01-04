@@ -18,7 +18,9 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleTypeBase;
@@ -125,6 +127,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myProjectTypeList.setTemplateGroupItems(fillGroupTemplateMap(context));
     myProjectTypeList.setLanguageGeneratorItems(fillLanguageGeneratorTemplateMap(context));
     myProjectTypeList.setUserTemplateGroupItems(fillUserTemplateMap(context));
+    installLanguageGeneratorWatcher(context);
 
     GridLayoutManager layout = (GridLayoutManager)myPanel.getLayout();
     layout.setHGap(0);
@@ -382,6 +385,36 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       myTemplatesMap.put(generatorItem.getGroup(), new ArrayList<>());
     }
     return generatorItems;
+  }
+
+  private void installLanguageGeneratorWatcher(@NotNull WizardContext context) {
+    //noinspection deprecation
+    LanguageNewProjectWizard.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(LanguageNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
+        var generator = new LegacyLanguageGeneratorNewProjectWizard(context, extension);
+        var generatorItem = new LanguageGeneratorItem(generator);
+        myProjectTypeList.addLanguageGeneratorItem(generatorItem);
+      }
+
+      @Override
+      public void extensionRemoved(LanguageNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myProjectTypeList.removeLanguageGeneratorItem(extension.getName());
+      }
+    }, context.getDisposable());
+    LanguageGeneratorNewProjectWizard.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(LanguageGeneratorNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
+        var generator = new BaseLanguageGeneratorNewProjectWizard(context, extension);
+        var generatorItem = new LanguageGeneratorItem(generator);
+        myProjectTypeList.addLanguageGeneratorItem(generatorItem);
+      }
+
+      @Override
+      public void extensionRemoved(LanguageGeneratorNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myProjectTypeList.removeLanguageGeneratorItem(extension.getName());
+      }
+    }, context.getDisposable());
   }
 
   private @NotNull List<UserTemplateGroupItem> fillUserTemplateMap(@NotNull WizardContext context) {

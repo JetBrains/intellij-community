@@ -4,7 +4,10 @@ package com.intellij.ide.projectWizard.projectTypeStep
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginDialogShowed
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginPopupShowed
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logSearchChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -12,16 +15,24 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.SingleSelectionModel
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -32,11 +43,14 @@ import java.util.function.Function
 import javax.swing.*
 
 @ApiStatus.Internal
-internal class ProjectTypeList(context: WizardContext) {
+internal class ProjectTypeList(
+  private val context: WizardContext
+) {
 
   private val searchTextField: SearchTextField
   private val list: JBList<TemplateGroupItem>
   private val model: ProjectTypeListModel
+  private val languagePluginFooterLink: JComponent
 
   val component: JComponent
 
@@ -61,6 +75,18 @@ internal class ProjectTypeList(context: WizardContext) {
   fun setLanguageGeneratorItems(items: List<LanguageGeneratorItem>) {
     LOG.debug("Language generator items: $items")
     model.setLanguageGeneratorItems(items)
+  }
+
+  fun addLanguageGeneratorItem(item: LanguageGeneratorItem) {
+    LOG.debug("Language generator item: $item")
+    val index = model.addLanguageGeneratorItem(item)
+    list.selectedIndex = index
+  }
+
+  fun removeLanguageGeneratorItem(languageName: String) {
+    LOG.debug("Language generator removed: $languageName")
+    model.removeLanguageGeneratorItem(languageName)
+    list.selectedIndex = 0
   }
 
   fun setTemplateGroupItems(items: List<TemplateGroupItem>) {
@@ -122,6 +148,85 @@ internal class ProjectTypeList(context: WizardContext) {
     }
   }
 
+  private fun showInstallPluginDialog(languagePlugin: LanguagePlugin) {
+    logInstallPluginDialogShowed(context, languagePlugin.name)
+    showInstallPluginDialog {
+      openMarketplaceTab(LANGUAGE_TAG + " " + languagePlugin.name)
+    }
+  }
+
+  private fun showInstallPluginDialog() {
+    logInstallPluginDialogShowed(context)
+    showInstallPluginDialog {
+      openMarketplaceTab(searchTextField.text)
+    }
+  }
+
+  private fun showInstallPluginPopup() {
+    logInstallPluginPopupShowed(context)
+    val installedLanguagePlugins = model.getLanguageGeneratorItems().map { it.wizard.name }.toSet()
+    val additionalLanguagePlugins = additionalLanguagePlugins.filter { it.name !in installedLanguagePlugins }
+    if (additionalLanguagePlugins.isEmpty()) {
+      showInstallPluginDialog()
+    }
+    else {
+      showInstallPluginPopup(additionalLanguagePlugins)
+    }
+  }
+
+  private fun showInstallPluginDialog(configure: PluginManagerConfigurable.() -> Unit) {
+    val configurable = PluginManagerConfigurable()
+    configurable.configure()
+    val dialogBuilder = DialogBuilder(component)
+    dialogBuilder.title(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
+    dialogBuilder.centerPanel(
+      JBUI.Panels.simplePanel(configurable.createComponent()!!.apply {
+        border = JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1)
+      }).addToTop(configurable.topComponent.apply {
+        preferredSize = JBDimension(preferredSize.width, 40)
+      })
+    )
+    dialogBuilder.addOkAction()
+    dialogBuilder.addCancelAction()
+    if (dialogBuilder.showAndGet()) {
+      configurable.apply()
+    }
+  }
+
+  private fun showInstallPluginPopup(additionalLanguagePlugins: List<LanguagePlugin>) {
+    return JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(additionalLanguagePlugins)
+      .setRenderer(LanguagePluginRenderer())
+      .setTitle(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
+      .setAutoselectOnMouseMove(true)
+      .setNamerForFiltering { it.name }
+      .setMovable(true)
+      .setAdvertiser(createAdComponent(
+        text = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser"),
+        onHyperLinkActivated = ::showInstallPluginDialog
+      ))
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setMinSize(JBUI.size(220, 220))
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setItemChosenCallback(::showInstallPluginDialog)
+      .createPopup()
+      .show(RelativePoint.getSouthWestOf(languagePluginFooterLink))
+  }
+
+  private fun createAdComponent(
+    text: @NlsContexts.Label String,
+    tooltip: @NlsContexts.Tooltip String? = null,
+    onHyperLinkActivated: () -> Unit
+  ): JComponent {
+    val link = ActionLink(text) { onHyperLinkActivated() }
+    link.toolTipText = tooltip
+    val panel = JPanel(BorderLayout())
+    panel.add(link, BorderLayout.WEST)
+    panel.border = JBUI.CurrentTheme.Advertiser.border()
+    return panel
+  }
+
   init {
     model = ProjectTypeListModel()
 
@@ -143,12 +248,19 @@ internal class ProjectTypeList(context: WizardContext) {
     }
 
     val scrollPane = JBScrollPane(list)
-    scrollPane.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
+    scrollPane.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
+
+    languagePluginFooterLink = createAdComponent(
+      text = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.name"),
+      tooltip = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.description"),
+      onHyperLinkActivated = this::showInstallPluginPopup
+    )
 
     component = JPanel(BorderLayout())
     component.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
     component.add(searchTextField, BorderLayout.NORTH)
     component.add(scrollPane, BorderLayout.CENTER)
+    component.add(languagePluginFooterLink, BorderLayout.SOUTH)
   }
 
   private class ProjectTypeListModel : AbstractListModel<TemplateGroupItem>() {
@@ -168,10 +280,30 @@ internal class ProjectTypeList(context: WizardContext) {
       return items[index]
     }
 
+    fun getLanguageGeneratorItems(): List<LanguageGeneratorItem> {
+      return languageGeneratorItems
+    }
+
     fun setLanguageGeneratorItems(items: List<LanguageGeneratorItem>) {
       languageGeneratorItems.clear()
       languageGeneratorItems.addAll(items)
       fireContentsChanged(this, 0, languageGeneratorItems.size - 1)
+    }
+
+    fun addLanguageGeneratorItem(item: LanguageGeneratorItem): Int {
+      var index = languageGeneratorItems.indexOfFirst { item.wizard.ordinal <= it.wizard.ordinal }
+      if (index < 0) index = 0
+      languageGeneratorItems.add(index, item)
+      fireIntervalAdded(this, index, index)
+      return index
+    }
+
+    fun removeLanguageGeneratorItem(languageName: String) {
+      val index = languageGeneratorItems.indexOfFirst { languageName == it.wizard.name }
+      if (index > 0) {
+        languageGeneratorItems.removeAt(index)
+        fireIntervalRemoved(this, index, index)
+      }
     }
 
     fun setTemplateGroupItems(items: List<TemplateGroupItem>) {
@@ -268,10 +400,42 @@ internal class ProjectTypeList(context: WizardContext) {
     }
   }
 
+  private class LanguagePluginRenderer : SimpleListCellRenderer<LanguagePlugin>() {
+
+    override fun customize(list: JList<out LanguagePlugin>, value: LanguagePlugin, index: Int, selected: Boolean, hasFocus: Boolean) {
+      icon = value.icon
+      text = value.name
+      iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
+      border = JBUI.Borders.empty(JBUI.CurrentTheme.ActionsList.cellPadding())
+    }
+  }
+
+  private class LanguagePlugin(
+    val name: @NlsSafe String,
+    val icon: Icon
+  )
+
   companion object {
 
     private const val PROJECT_WIZARD_GROUP = "project.wizard.group"
     private val LOG = Logger.getInstance("com.intellij.ide.projectWizard.ProjectTypeStep")
+
+    private const val LANGUAGE_TAG = "/tag: \"Programming Language\""
+
+    private val additionalLanguagePlugins: List<LanguagePlugin> = buildList {
+      if (PlatformUtils.isIdeaCommunity()) {
+        add(LanguagePlugin(Language.PYTHON, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.SCALA, AllIcons.Toolbar.Unknown))
+      }
+      else {
+        add(LanguagePlugin(Language.GO, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.PHP, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.PYTHON, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.RUBY, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.RUST, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.SCALA, AllIcons.Toolbar.Unknown))
+      }
+    }
 
     @TestOnly
     @JvmStatic
