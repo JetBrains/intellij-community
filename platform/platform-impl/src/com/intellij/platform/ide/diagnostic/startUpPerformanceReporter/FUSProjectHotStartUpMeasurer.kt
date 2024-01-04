@@ -43,8 +43,12 @@ object FUSProjectHotStartUpMeasurer {
     MightBeLightEditProject, MultipleProjects, NoProjectFound, WelcomeScreenShown, OpeningURI, ApplicationStarter, HasOpenedProject
   }
 
-  private suspend fun onProperContext(block: suspend () -> Unit) {
-    if (currentCoroutineContext()[MyMarker] != null) {
+  private suspend fun isProperContext(): Boolean {
+    return currentCoroutineContext()[MyMarker] != null
+  }
+
+  private suspend fun onProperContext(block: () -> Unit) {
+    if (isProperContext()) {
       block()
     }
   }
@@ -57,6 +61,12 @@ object FUSProjectHotStartUpMeasurer {
       if (stage === Stage.Stopped) {
         synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
       }
+    }
+  }
+
+  private suspend fun onProperContextLocked(block: Stage.() -> Stage) {
+    if (isProperContext()) {
+      computeLocked(block)
     }
   }
 
@@ -93,11 +103,10 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-    return if (currentCoroutineContext()[MyMarker] == null) null else MyMarker
+    return if (isProperContext()) MyMarker else null
   }
 
-  private fun reportViolation(violation: Violation) {
-    val duration = getDurationFromStart()
+  private fun reportViolation(violation: Violation, duration: Duration) {
     computeLocked {
       if (this is Stage.IdeStarterStarted) {
         reportFirstUiShownEvent(splashBecameVisibleTime, duration)
@@ -124,19 +133,17 @@ object FUSProjectHotStartUpMeasurer {
           WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(true),
                                    SPLASH_SCREEN_VISIBLE_DURATION.with(getDurationFromStart(splashBecameVisibleTime).getValueForFUS()))
         }
-        reportViolation(Violation.WelcomeScreenShown)
+        reportViolation(Violation.WelcomeScreenShown, welcomeScreenDuration)
       }
       return@computeLocked Stage.Stopped
     }
   }
 
   suspend fun reportProjectType(projectsType: ProjectsType) {
-    onProperContext {
-      computeLocked {
-        return@computeLocked when {
-          this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown -> this.copy(projectType = projectsType)
-          else -> Stage.Stopped
-        }
+    onProperContextLocked {
+      return@onProperContextLocked when {
+        this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown -> this.copy(projectType = projectsType)
+        else -> Stage.Stopped
       }
     }
   }
@@ -145,50 +152,53 @@ object FUSProjectHotStartUpMeasurer {
    * Reports the existence of project settings to filter cases of importing which may need more resources.
    */
   suspend fun reportProjectPath(projectFile: Path) {
-    onProperContext {
-      val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
-      computeLocked {
-        return@computeLocked when {
-          this is Stage.IdeStarterStarted && settingsExist == null -> this.copy(settingsExist = hasSettings)
-          else -> Stage.Stopped
-        }
+    if (!isProperContext()) return
+    val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
+    computeLocked {
+      return@computeLocked when {
+        this is Stage.IdeStarterStarted && settingsExist == null -> this.copy(settingsExist = hasSettings)
+        else -> Stage.Stopped
       }
     }
   }
 
   suspend fun resetProjectPath() {
-    onProperContext {
-      computeLocked {
-        return@computeLocked when {
-          this is Stage.IdeStarterStarted && settingsExist != null -> this.copy(settingsExist = null)
-          else -> Stage.Stopped
-        }
+    onProperContextLocked {
+      return@onProperContextLocked when {
+        this is Stage.IdeStarterStarted && settingsExist != null -> this.copy(settingsExist = null)
+        else -> Stage.Stopped
       }
     }
   }
 
   suspend fun openingMultipleProjects() {
-    onProperContext { reportViolation(Violation.MultipleProjects) }
+    val duration = getDurationFromStart()
+    onProperContext { reportViolation(Violation.MultipleProjects, duration) }
   }
 
   suspend fun reportAlreadyOpenedProject() {
-    onProperContext { reportViolation(Violation.HasOpenedProject) }
+    val duration = getDurationFromStart()
+    onProperContext { reportViolation(Violation.HasOpenedProject, duration) }
   }
 
   fun noProjectFound() {
-    reportViolation(Violation.NoProjectFound)
+    val duration = getDurationFromStart()
+    reportViolation(Violation.NoProjectFound, duration)
   }
 
   fun lightEditProjectFound() {
-    reportViolation(Violation.MightBeLightEditProject)
+    val duration = getDurationFromStart()
+    reportViolation(Violation.MightBeLightEditProject, duration)
   }
 
   suspend fun reportUriOpening() {
-    onProperContext { reportViolation(Violation.OpeningURI) }
+    val duration = getDurationFromStart()
+    onProperContext { reportViolation(Violation.OpeningURI, duration) }
   }
 
   fun reportStarterUsed() {
-    reportViolation(Violation.ApplicationStarter)
+    val duration = getDurationFromStart()
+    reportViolation(Violation.ApplicationStarter, duration)
   }
 
   fun frameBecameVisible() {
@@ -261,30 +271,28 @@ object FUSProjectHotStartUpMeasurer {
 
   private suspend fun reportFirstEditor(project: Project, file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
     val durationMillis = System.nanoTime()
-    onProperContext {
-      withContext(Dispatchers.Default) {
-        computeLocked {
-          fun getEditorStorageData(): PrematureEditorStageData {
-            val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
-              markupResurrectedFileIds.contains(file.id)
-            }
-            val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
-            return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
+    withContext(Dispatchers.Default) {
+      onProperContextLocked {
+        fun getEditorStorageData(): PrematureEditorStageData {
+          val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
+            markupResurrectedFileIds.contains(file.id)
           }
+          val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
+          return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
+        }
 
-          return@computeLocked when {
-            this is Stage.IdeStarterStarted && prematureEditorData == null -> {
-              this.copy(prematureEditorData = getEditorStorageData())
-            }
-            this is Stage.FrameVisible && prematureEditorData == null -> {
-              this.copy(prematureEditorData = getEditorStorageData())
-            }
-            this is Stage.FrameInteractive -> {
-              Stage.EditorStage(getEditorStorageData(), settingsExist).log(getDurationFromStart(durationMillis))
-              Stage.Stopped
-            }
-            else -> Stage.Stopped
+        return@onProperContextLocked when {
+          this is Stage.IdeStarterStarted && prematureEditorData == null -> {
+            this.copy(prematureEditorData = getEditorStorageData())
           }
+          this is Stage.FrameVisible && prematureEditorData == null -> {
+            this.copy(prematureEditorData = getEditorStorageData())
+          }
+          this is Stage.FrameInteractive -> {
+            Stage.EditorStage(getEditorStorageData(), settingsExist).log(getDurationFromStart(durationMillis))
+            Stage.Stopped
+          }
+          else -> Stage.Stopped
         }
       }
     }
