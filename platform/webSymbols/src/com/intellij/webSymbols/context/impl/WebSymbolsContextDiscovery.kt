@@ -34,15 +34,12 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.WEB_SYMBOLS_CONTEXT_EP
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
-import com.intellij.webSymbols.context.WebSymbolsContextProvider
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
-import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
 import com.intellij.webSymbols.utils.findOriginalFile
@@ -53,9 +50,6 @@ import kotlin.collections.component2
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(WebSymbolsContext::class.java)
-
-internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<WebSymbolsContextProvider>(
-  "com.intellij.javascript.web.context")
 
 internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? {
   ProgressManager.checkCanceled()
@@ -292,32 +286,20 @@ private fun isForbiddenFromProviders(kind: ContextKind,
                                      project: Project,
                                      disableWhen: List<WebSymbolsContextKindRules.DisablementRules>?): Boolean =
   WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
-  || (kind == KIND_FRAMEWORK && WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.allFor(name).any { it.isForbidden(file, project) })
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 
 private fun isAnyForbidden(kind: ContextKind, context: VirtualFile, project: Project): Boolean =
   WEB_SYMBOLS_CONTEXT_EP.forAny(kind).any { it.isForbidden(context, project) }
-  || (kind == KIND_FRAMEWORK && WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.forAny().any { it.isForbidden(context, project) })
 
 private fun findEnabledFromProviders(kind: ContextKind, psiFile: PsiFile): ContextName? =
-  (WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
-     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(psiFile) } }
-     ?.key
-   ?: if (kind == KIND_FRAMEWORK)
-     WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.entries
-       .firstOrNull { (_, providers) -> providers.any { it.isEnabled(psiFile) } }
-       ?.key?.id
-   else null)
+  WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
+    .firstOrNull { (_, providers) -> providers.any { it.isEnabled(psiFile) } }
+    ?.key
 
 private fun findEnabledFromProviders(kind: ContextKind, file: VirtualFile, project: Project): ContextName? =
-  (WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
-     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
-     ?.key
-   ?: if (kind == KIND_FRAMEWORK)
-     WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.entries
-       .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
-       ?.key?.id
-   else null)
+  WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
+    .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
+    ?.key
 
 private fun webContextProximityFromProviders(kind: ContextKind,
                                              name: ContextName,
@@ -325,9 +307,7 @@ private fun webContextProximityFromProviders(kind: ContextKind,
                                              directory: VirtualFile): CachedValueProvider.Result<Int?> {
   val dependencies = mutableSetOf<Any>()
   var proximity: Int? = null
-  for (provider in WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name)
-    .plus(if (kind == KIND_FRAMEWORK) WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.allFor(name) else emptyList())
-  ) {
+  for (provider in WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name)) {
     val result = provider.isEnabled(project, directory)
     result.value?.let {
       if (proximity == null) {
