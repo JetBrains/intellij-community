@@ -39,20 +39,20 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   /**
-   * Might happen before [initializeAndGetStartUpContextElement]
+   * Might happen before [getStartUpContextElementIntoIdeStarter]
    */
   fun splashBecameVisible() {
     FUSStartupReopenProjectMarkerElement.splashBecameVisible()
   }
 
-  fun initializeAndGetStartUpContextElement(ideStarter: IdeStarter): CoroutineContext.Element? {
+  fun getStartUpContextElementIntoIdeStarter(ideStarter: IdeStarter): CoroutineContext.Element? {
     if (ideStarter.isHeadless) {
       return null
     }
     if (ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
       return null
     }
-    FUSStartupReopenProjectMarkerElement.initialize()
+    FUSStartupReopenProjectMarkerElement.ideStarterStarted()
     return FUSStartupReopenProjectMarkerElement
   }
 
@@ -140,8 +140,10 @@ object FUSProjectHotStartUpMeasurer {
 
   private object FUSStartupReopenProjectMarkerElement : CoroutineContext.Element, CoroutineContext.Key<FUSStartupReopenProjectMarkerElement> {
     private sealed interface Stage {
-      data class IdeStarterStarted(val initialized: Boolean = false,
-                                   val splashBecameVisibleTime: Long? = null,
+      data object Initial : Stage
+      data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
+
+      data class IdeStarterStarted(val splashBecameVisibleTime: Long? = null,
                                    val projectType: ProjectsType = ProjectsType.Unknown,
                                    val settingsExist: Boolean? = null,
                                    val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
@@ -194,7 +196,7 @@ object FUSProjectHotStartUpMeasurer {
     private val stageLock = Object()
 
     @Volatile
-    private var stage: Stage = Stage.IdeStarterStarted()
+    private var stage: Stage = Stage.Initial
 
     private val markupResurrectedFileIds = IntOpenHashSet()
 
@@ -204,7 +206,7 @@ object FUSProjectHotStartUpMeasurer {
     private fun <T> computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> T): T {
       synchronized(stageLock) {
         stage.apply {
-          if (checkIsInitialized && this is Stage.IdeStarterStarted && !initialized) {
+          if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
             stage = Stage.Stopped
             synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
           }
@@ -213,13 +215,18 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    fun initialize() {
+    fun ideStarterStarted() {
       computeLocked(false) {
-        if (this is Stage.IdeStarterStarted && !initialized) {
-          stage = this.copy(initialized = true)
-        }
-        else {
-          stopReporting()
+        when (this) {
+          is Stage.Initial -> {
+            stage = Stage.IdeStarterStarted()
+          }
+          is Stage.SplashScreenShownBeforeIdeStarter -> {
+            stage = Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
+          }
+          else -> {
+            stopReporting()
+          }
         }
       }
     }
@@ -229,7 +236,10 @@ object FUSProjectHotStartUpMeasurer {
       // This may happen before we know about particulars in com.intellij.idea.IdeStarter.startIDE,
       // where initialization of FUSStartupReopenProjectMarkerElement happens.
       computeLocked(false) {
-        if (this is Stage.IdeStarterStarted && splashBecameVisibleTime == null) {
+        if (this is Stage.Initial) {
+          stage = Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
+        }
+        else if (this is Stage.IdeStarterStarted && splashBecameVisibleTime == null) {
           stage = this.copy(splashBecameVisibleTime = nanoTime)
         }
       }

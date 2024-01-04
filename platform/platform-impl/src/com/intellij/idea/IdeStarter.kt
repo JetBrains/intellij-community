@@ -77,7 +77,7 @@ open class IdeStarter : ModernApplicationStarter() {
         openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
       }
 
-      FUSProjectHotStartUpMeasurer.initializeAndGetStartUpContextElement(this@IdeStarter)?.also {
+      FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)?.also {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
