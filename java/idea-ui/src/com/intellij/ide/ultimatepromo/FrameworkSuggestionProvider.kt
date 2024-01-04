@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.library.JavaLibraryUtil.hasLibraryJar
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.Module
@@ -13,7 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -54,7 +57,12 @@ private class FrameworkPluginSuggestion(val project: Project, val framework: Fra
     panel.text = IdeBundle.message("plugins.advertiser.framework.supported.in.ultimate", framework.name, ideaUltimate.name)
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
-      FUSEventSource.EDITOR.openDownloadPageAndLog(project, ideaUltimate.downloadUrl, PluginId.getId(framework.pluginId))
+      val pluginId = PluginId.getId(framework.pluginId)
+      if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
+        project.service<UltimateInstallationService>().install(pluginId)
+      } else {
+        FUSEventSource.EDITOR.openDownloadPageAndLog(project, ideaUltimate.downloadUrl, pluginId)
+      }
     }
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {

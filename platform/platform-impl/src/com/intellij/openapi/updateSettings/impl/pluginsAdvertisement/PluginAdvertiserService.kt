@@ -22,8 +22,10 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.system.CpuArch
@@ -410,7 +412,11 @@ open class PluginAdvertiserServiceImpl(
       ) to listOf(
         NotificationAction.createSimpleExpiring(
           IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
-          FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
+          if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
+            project.service<UltimateInstallationService>().install()
+          } else {
+            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
+          }
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
           FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)

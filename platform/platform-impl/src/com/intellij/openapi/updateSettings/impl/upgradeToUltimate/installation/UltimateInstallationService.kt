@@ -160,12 +160,18 @@ internal abstract class UltimateInstaller(
 
   protected val updateTempDirectory: Path = Path.of(PathManager.getTempPath(), "ultimate-upgrade")
   
+  @OptIn(ExperimentalPathApi::class)
   fun download(buildInfo: BuildInfo, indicator: ProgressIndicator): DownloadResult {
     val link = generateDownloadLink(buildInfo, postfix)
     val downloadPath = updateTempDirectory.resolve("${buildInfo.version}$postfix")
 
     if (!downloadPath.exists()) {
-      HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
+      try {
+        HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
+      } catch (e: Exception) {
+        scope.launch { downloadPath.deleteRecursively() }
+        throw e
+      }
     }
     
     return DownloadResult(downloadPath, buildInfo.version)

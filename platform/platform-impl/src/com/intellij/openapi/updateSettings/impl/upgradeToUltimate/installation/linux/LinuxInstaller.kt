@@ -29,13 +29,14 @@ internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
       val decompressor = Decompressor.Tar(downloadResult.downloadPath)
       decompressor
         .postProcessor(entries::add)
-        .extract(installationPath.resolve("Jetbrains"))
+        .extract(installationPath)
     } catch (e: Exception) {
       scope.launch { installationPath.deleteRecursively() }
       throw e
     }
     
     val installFolder = installationPath.resolve(entries.first().fileName)
+    // todo add desktop entry
     
     return InstallationResult(installFolder)
   }
@@ -51,7 +52,9 @@ internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
   }
 
   override fun getUltimateInstallationDirectory(): Path? {
-     return System.getenv("XDG_DATA_HOME").toNioPathOrNull()
-            ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve(".local/share")
+     val localAppPath =  System.getenv("XDG_DATA_HOME")?.toNioPathOrNull() 
+                         ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve(".local/share")
+    
+    return localAppPath?.resolve("JetBrains")
   }
 }
