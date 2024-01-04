@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.java.workspace.entities.asJavaResourceRoot
 import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,6 +48,9 @@ internal class ModifiableContentEntryBridge(
                                                type: JpsModuleSourceRootType<P>,
                                                properties: P,
                                                folderEntitySource: EntitySource): SourceFolder {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Add source folder for url: $sourceFolderUrl" }
+
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
@@ -95,6 +99,9 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun removeSourceFolder(sourceFolder: SourceFolder) {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Removing source folder with url: ${sourceFolder.url}" }
+
     val legacyBridgeSourceFolder = sourceFolder as SourceFolderBridge
     val sourceRootEntity = currentContentEntry.value.sourceRootEntities.firstOrNull { it == legacyBridgeSourceFolder.sourceRootEntity }
     if (sourceRootEntity == null) {
@@ -106,10 +113,16 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun clearSourceFolders() {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Clear source folders" }
+
     currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
   private fun addExcludeFolder(excludeUrl: VirtualFileUrl, isAutomaticallyImported: Boolean): ExcludeFolder {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Add exclude folder for url: ${excludeUrl.url}" }
+
     if (!contentEntryUrl.isEqualOrParentOf(excludeUrl)) {
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
@@ -134,6 +147,9 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Remove exclude folder for folder: ${excludeFolder.url}." }
+
     val virtualFileUrl = (excludeFolder as ExcludeFolderBridge).excludeFolderUrl
 
     val excludeUrlEntities = currentContentEntry.value.entity.excludedUrls.filter { it.url == virtualFileUrl }
@@ -150,6 +166,9 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun removeExcludeFolder(url: String): Boolean {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Remove exclude folder for url: $url." }
+
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     val excludedUrls = currentContentEntry.value.entity.excludedUrls.map { it.url }
@@ -166,24 +185,36 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun clearExcludeFolders() {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Clear exclude folders." }
+
     updateContentEntry {
       excludedUrls = mutableListOf()
     }
   }
 
   override fun addExcludePattern(pattern: String) {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Add exclude pattern: $pattern" }
+
     updateContentEntry {
       if (!excludedPatterns.contains(pattern)) excludedPatterns.add(pattern)
     }
   }
 
   override fun removeExcludePattern(pattern: String) {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Remove exclude pattern: $pattern" }
+
     updateContentEntry {
       excludedPatterns.remove(pattern)
     }
   }
 
   override fun setExcludePatterns(patterns: MutableList<String>) {
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Set exclude patterns" }
+
     updateContentEntry {
       excludedPatterns = patterns.toMutableList()
     }
