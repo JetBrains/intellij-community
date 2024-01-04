@@ -359,22 +359,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       dispatchAllInvocationEventsInIdeEventQueue()
       FileDocumentManager.getInstance().saveAllDocuments()
-      doCheckHighlighting(f)
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
-  }
 
-  private fun doCheckHighlighting(f: VirtualFile) {
-    MavenLog.LOG.warn("checkHighlighting started")
+      MavenLog.LOG.warn("checkHighlighting started")
 
-    VirtualFileManager.getInstance().syncRefresh()
-    MavenLog.LOG.warn("checkHighlighting: VFS refreshed")
+      VirtualFileManager.getInstance().syncRefresh()
+      MavenLog.LOG.warn("checkHighlighting: VFS refreshed")
 
-    val psiFile = findPsiFile(f)
-    if (null == psiFile) {
-      MavenLog.LOG.warn("checkHighlighting: psi file is null")
-    }
-    else {
+      val psiFile = findPsiFile(f)
+
       val document = myFixture!!.getDocument(psiFile)
       if (null == document) {
         MavenLog.LOG.warn("checkHighlighting: document is null")
@@ -383,28 +375,30 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
         FileDocumentManager.getInstance().reloadFromDisk(document)
         MavenLog.LOG.warn("checkHighlighting: document reloaded from disk")
       }
-    }
 
-    configTest(f)
-    MavenLog.LOG.warn("checkHighlighting: test configured")
+      configTest(f)
+      MavenLog.LOG.warn("checkHighlighting: test configured")
 
-    try {
-      myFixture!!.testHighlighting(true, false, true, f)
-    }
-    catch (throwable: Throwable) {
-      MavenLog.LOG.error("Exception during highlighting", throwable)
-      val cause1 = throwable.cause
-      if (null != cause1) {
-        MavenLog.LOG.error("Cause 1", cause1)
-        val cause2 = cause1.cause
-        if (null != cause2) {
-          MavenLog.LOG.error("Cause 2", cause2)
-        }
+      try {
+        myFixture!!.testHighlighting(true, false, true, f)
       }
-      throw RuntimeException(throwable)
-    }
-    finally {
-      MavenLog.LOG.warn("checkHighlighting finished")
+      catch (throwable: Throwable) {
+        MavenLog.LOG.error("Exception during highlighting", throwable)
+        val cause1 = throwable.cause
+        if (null != cause1) {
+          MavenLog.LOG.error("Cause 1", cause1)
+          val cause2 = cause1.cause
+          if (null != cause2) {
+            MavenLog.LOG.error("Cause 2", cause2)
+          }
+        }
+        throw RuntimeException(throwable)
+      }
+      finally {
+        MavenLog.LOG.warn("checkHighlighting finished")
+      }
+
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 
