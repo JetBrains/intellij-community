@@ -31,6 +31,7 @@ import kotlin.time.toDuration
 object FUSProjectHotStartUpMeasurer {
   private val markupResurrectedFileIds = IntOpenHashSet()
   private val stageLock = Object()
+
   @Volatile
   private var stage: Stage = Stage.Initial
 
@@ -260,29 +261,30 @@ object FUSProjectHotStartUpMeasurer {
 
   private suspend fun reportFirstEditor(project: Project, file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
     val durationMillis = System.nanoTime()
+    onProperContext {
+      withContext(Dispatchers.Default) {
+        computeLocked {
+          fun getEditorStorageData(): PrematureEditorStageData {
+            val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
+              markupResurrectedFileIds.contains(file.id)
+            }
+            val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
+            return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
+          }
 
-    withContext(Dispatchers.Default) {
-      computeLocked {
-        fun getEditorStorageData(): PrematureEditorStageData {
-          val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
-            markupResurrectedFileIds.contains(file.id)
+          return@computeLocked when {
+            this is Stage.IdeStarterStarted && prematureEditorData == null -> {
+              this.copy(prematureEditorData = getEditorStorageData())
+            }
+            this is Stage.FrameVisible && prematureEditorData == null -> {
+              this.copy(prematureEditorData = getEditorStorageData())
+            }
+            this is Stage.FrameInteractive -> {
+              Stage.EditorStage(getEditorStorageData(), settingsExist).log(getDurationFromStart(durationMillis))
+              Stage.Stopped
+            }
+            else -> Stage.Stopped
           }
-          val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
-          return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
-        }
-
-        return@computeLocked when {
-          this is Stage.IdeStarterStarted && prematureEditorData == null -> {
-            this.copy(prematureEditorData = getEditorStorageData())
-          }
-          this is Stage.FrameVisible && prematureEditorData == null -> {
-            this.copy(prematureEditorData = getEditorStorageData())
-          }
-          this is Stage.FrameInteractive -> {
-            Stage.EditorStage(getEditorStorageData(), settingsExist).log(getDurationFromStart(durationMillis))
-            Stage.Stopped
-          }
-          else -> Stage.Stopped
         }
       }
     }
@@ -291,18 +293,16 @@ object FUSProjectHotStartUpMeasurer {
   fun firstOpenedEditor(project: Project, file: VirtualFile, elementToPass: CoroutineContext.Element?) {
     if (elementToPass != MyMarker) return
     service<MeasurerCoroutineService>().coroutineScope.launch(context = MyMarker) {
-      onProperContext {
-        reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
-      }
+      reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
     }
   }
 
   suspend fun firstOpenedUnknownEditor(project: Project, file: VirtualFile) {
-    onProperContext { reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor) }
+    reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
   }
 
   suspend fun openedReadme(project: Project, readmeFile: VirtualFile) {
-    onProperContext { reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile) }
+    reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
   }
 
   fun reportNoMoreEditorsOnStartup(project: Project, startUpContextElementToPass: CoroutineContext.Element?) {
