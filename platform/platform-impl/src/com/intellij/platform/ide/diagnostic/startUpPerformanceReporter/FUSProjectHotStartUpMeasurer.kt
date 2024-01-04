@@ -261,6 +261,7 @@ object FUSProjectHotStartUpMeasurer {
       return@computeLocked when (this) {
         is Stage.Initial -> Stage.Stopped
         is Stage.SplashScreenShownBeforeIdeStarter -> Stage.Stopped
+        is Stage.Stopped -> Stage.Stopped
         else -> {
           synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
           this
