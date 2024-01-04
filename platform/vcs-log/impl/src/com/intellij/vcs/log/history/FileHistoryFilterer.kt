@@ -124,8 +124,11 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
+
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "index")
+          scope.setAttribute("commitCount", visiblePack.visibleGraph.visibleCommitCount.toString())
+
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
           }
@@ -133,9 +136,12 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
         try {
           val visiblePack = filterWithVcs(dataPack, sortType, filters, commitCount)
+
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "history provider")
+          scope.setAttribute("commitCount", visiblePack.visibleGraph.visibleCommitCount.toString())
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                     " for computing history for $filePath with history handler ${fileHistoryHandler.javaClass.name}")
+
           checkNotEmpty(dataPack, visiblePack, false)
           return@filter Pair(visiblePack, commitCount)
         }
@@ -388,6 +394,8 @@ private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHa
           consumer(createCommitMetadataWithPath(revision))
         }
       }
+
+      span.setAttribute("commitCount", revisionsCount.toString())
     }
   }
 

@@ -31,6 +31,8 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
 
   val isCancelled get() = indicator.isCanceled
 
+  protected val revisionsCount get() = _revisions.size
+
   init {
     future = AppExecutorUtil.getAppExecutorService().submit {
       ProgressManager.getInstance().runProcess(Runnable {
