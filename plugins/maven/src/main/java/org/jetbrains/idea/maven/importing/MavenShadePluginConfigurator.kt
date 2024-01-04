@@ -107,14 +107,24 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
     if (shadedMavenProjects.isNullOrEmpty()) return
 
     val project = context.project
-    val firstProject = shadedMavenProjects.first()
-    // TODO: groupByBasedir
-    val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
+    val projectsManager = MavenProjectsManager.getInstance(project)
 
-    val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
+    val baseDirsToMavenProjects = MavenUtil.groupByBasedir(shadedMavenProjects, projectsManager.projectsTree)
+
+    val embeddersManager = projectsManager.embeddersManager
+
+    for (baseDir in baseDirsToMavenProjects.keySet()) {
+      packageJarsForBaseDir(embeddersManager, baseDirsToMavenProjects[baseDir], baseDir)
+    }
+
+    val filesToRefresh = shadedMavenProjects.map { Path.of(it.buildDirectory) }
+    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+  }
+
+  private fun packageJarsForBaseDir(embeddersManager: MavenEmbeddersManager, mavenProjects: Collection<MavenProject>, baseDir: String) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
 
-    val requests = shadedMavenProjects
+    val requests = mavenProjects
       .asSequence()
       .map { it.path }.toSet()
       .map { File(it) }
@@ -126,8 +136,5 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
         embedder.executeGoal(requests, "package", rawProgressReporter!!, MavenLogEventHandler)
       }
     }
-
-    val filesToRefresh = shadedMavenProjects.map { Path.of(it.buildDirectory) }
-    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
   }
 }
