@@ -24,13 +24,6 @@ kotlin {
   jvmToolchain(17)
 }
 
-tasks.withType(Jar::class) {
-  manifest {
-    attributes["Specification-Version"] = codegenApiVersion
-    attributes["Implementation-Version"] = codegenImplMajorVersion
-  }
-}
-
 publishing {
   repositories {
     maven {
@@ -50,5 +43,19 @@ publishing {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.6")
+  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.7")
+}
+
+
+tasks.withType(Jar::class) {
+  manifest {
+    attributes["Specification-Version"] = codegenApiVersion
+    attributes["Implementation-Version"] = codegenImplMajorVersion
+
+    val workspaceModelCodegenVersion = project.configurations["implementation"].allDependencies.matching {
+      it.name == "workspace-model-codegen"
+    }.first().version
+
+    attributes["Codegen-Api-Version"] = workspaceModelCodegenVersion
+  }
 }
