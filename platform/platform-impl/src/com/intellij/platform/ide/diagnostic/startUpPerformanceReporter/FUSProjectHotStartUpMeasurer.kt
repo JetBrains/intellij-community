@@ -16,6 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.alsoIfNull
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -150,10 +152,8 @@ object FUSProjectHotStartUpMeasurer {
 
       data class EditorStage(val data: PrematureEditorStageData, val settingsExist: Boolean?) : Stage {
         fun log(durationMillis: Long) {
-          val eventData = data.getEventData()
-          eventData.add(DURATION.with(durationMillis))
-          if (settingsExist != null) {
-            eventData.add(HAS_SETTINGS.with(settingsExist))
+          val eventData = data.getEventData().add(DURATION.with(durationMillis)).let { pairs ->
+            settingsExist?.let { pairs.add(HAS_SETTINGS.with(settingsExist)) } ?: pairs
           }
           CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data.project, eventData)
         }
@@ -170,23 +170,23 @@ object FUSProjectHotStartUpMeasurer {
 
     private sealed interface PrematureEditorStageData {
       val project: Project
-      fun getEventData(): MutableList<EventPair<*>>
+      fun getEventData(): PersistentList<EventPair<*>>
 
       data class FirstEditor(override val project: Project,
                              val sourceOfSelectedEditor: SourceOfSelectedEditor,
                              val fileType: FileType,
                              val isMarkupLoaded: Boolean) : PrematureEditorStageData {
-        override fun getEventData(): MutableList<EventPair<*>> {
-          return mutableListOf(SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
-                               NO_EDITORS_TO_OPEN_FIELD.with(false),
-                               EventFields.FileType.with(fileType),
-                               LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded))
+        override fun getEventData(): PersistentList<EventPair<*>> {
+          return persistentListOf(SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
+                                  NO_EDITORS_TO_OPEN_FIELD.with(false),
+                                  EventFields.FileType.with(fileType),
+                                  LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded))
         }
       }
 
       data class NoEditors(override val project: Project) : PrematureEditorStageData {
-        override fun getEventData(): MutableList<EventPair<*>> {
-          return mutableListOf(NO_EDITORS_TO_OPEN_FIELD.with(true))
+        override fun getEventData(): PersistentList<EventPair<*>> {
+          return persistentListOf(NO_EDITORS_TO_OPEN_FIELD.with(true))
         }
       }
     }
