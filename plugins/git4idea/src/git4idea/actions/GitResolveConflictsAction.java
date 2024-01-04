@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
+import git4idea.ui.toolbar.GitMergeRebaseWidgetKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,6 +72,9 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     }
 
     presentation.setEnabledAndVisible(isEnabled(project));
+    if (presentation.isVisible() && e.getPlace().equals(GitMergeRebaseWidgetKt.GIT_MERGE_REBASE_WIDGET_PLACE)) {
+      presentation.setIcon(ExpUiIcons.Vcs.ResolveContinue);
+    }
   }
 
   @Override

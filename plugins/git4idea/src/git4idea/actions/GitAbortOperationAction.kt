@@ -4,6 +4,7 @@ package git4idea.actions
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
@@ -26,6 +27,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFreezingProcess
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 internal abstract class GitAbortOperationAction(repositoryState: Repository.State,
                                                 final override val operationName: @Nls String,
@@ -51,6 +53,8 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
     override val notificationSuccessDisplayId = REVERT_ABORT_SUCCESS
     override val notificationErrorDisplayId = REVERT_ABORT_FAILED
   }
+
+  final override fun getMainToolbarIcon(): Icon = ExpUiIcons.Vcs.Abort
 
   override fun performInBackground(repository: GitRepository): Boolean {
     if (!confirmAbort(repository)) return false
