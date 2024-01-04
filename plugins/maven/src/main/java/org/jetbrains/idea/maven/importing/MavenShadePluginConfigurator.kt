@@ -42,7 +42,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
     if (shadeProjectsWithModules.isEmpty()) return
 
-    context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadeProjectsWithModules.map { it.mavenProject }.toList())
+    val shadedMavenProjectsToBuildUberJar = mutableSetOf<MavenProject>()
 
     val shadeModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
     for (shadeProjectWithModules in shadeProjectsWithModules) {
@@ -57,10 +57,14 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
       for (dependency in module.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()) {
         val dependencyModuleId = dependency.module
         if (shadeModuleIds.contains(dependencyModuleId)) {
-          addJarDependency(context.storage, context.project, module, shadeModuleIdToMavenProject[dependencyModuleId]!!)
+          val mavenProject = shadeModuleIdToMavenProject[dependencyModuleId]!!
+          addJarDependency(context.storage, context.project, module, mavenProject)
+          shadedMavenProjectsToBuildUberJar.add(mavenProject)
         }
       }
     }
+
+    context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar.toList())
   }
 
   private fun addJarDependency(builder: MutableEntityStorage,
