@@ -59,7 +59,6 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       val newPath = suggestedLocation.resolve(suggestedVenvName)
       location.set(newPath.toString())
-      locationValidationFailed.set(false)
     }
     val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
       val sdkPath = Paths.get(location.get()).resolve(pythonInVenvPath).toString()
