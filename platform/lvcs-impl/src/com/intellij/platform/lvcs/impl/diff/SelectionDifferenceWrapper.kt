@@ -5,14 +5,14 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress
-import com.intellij.history.integration.ui.models.SelectionCalculator
+import com.intellij.history.integration.ui.models.RevisionSelectionCalculator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.RevisionSelection
 
 internal class SelectionDifferenceWrapper(gateway: IdeaGateway, override val scope: ActivityScope.Selection, selection: RevisionSelection,
-                                          difference: Difference, private val selectionCalculator: SelectionCalculator) :
+                                          difference: Difference, private val selectionCalculator: RevisionSelectionCalculator) :
   DifferenceWrapper(gateway, scope, selection, difference) {
   override fun getFileStatus(): FileStatus {
     val isLeftContentAvailable = difference.left != null && selectionCalculator.canCalculateFor(selection.leftRevision,

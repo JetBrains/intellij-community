@@ -8,7 +8,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.Progress;
-import com.intellij.history.integration.ui.models.SelectionCalculator;
+import com.intellij.history.integration.ui.models.RevisionSelectionCalculator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class SelectionReverter extends Reverter {
-  private final SelectionCalculator myCalculator;
+  private final RevisionSelectionCalculator myCalculator;
   private final Revision myLeftRevision;
   private final Entry myRightEntry;
   private final int myFromLine;
@@ -27,7 +27,7 @@ public final class SelectionReverter extends Reverter {
   public SelectionReverter(Project p,
                            LocalHistoryFacade vcs,
                            IdeaGateway gw,
-                           SelectionCalculator c,
+                           RevisionSelectionCalculator c,
                            Revision leftRevision,
                            Entry rightEntry,
                            int fromLine,

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class SelectionDifferenceModel extends FileDifferenceModel {
-  private final SelectionCalculator myCalculator;
+  private final RevisionSelectionCalculator myCalculator;
   private final Revision myLeftRevision;
   private final Revision myRightRevision;
   private final int myFrom;
@@ -34,7 +34,7 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
 
   public SelectionDifferenceModel(Project p,
                                   @NotNull IdeaGateway gw,
-                                  @NotNull SelectionCalculator c,
+                                  @NotNull RevisionSelectionCalculator c,
                                   @NotNull Revision left,
                                   @NotNull Revision right,
                                   int from,
@@ -89,7 +89,8 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   private @Nullable DiffContent getDiffContent(@NotNull Revision r, RevisionProcessingProgress p) {
     Entry e = r.findEntry();
     if (e == null) return null;
-
-    return EntryDiffContentKt.createDiffContent(myGateway, e, r, myCalculator, p);
+    Long changeSetId = r.getChangeSetId();
+    if (changeSetId == null) return EntryDiffContentKt.createCurrentDiffContent(myProject, myGateway, e.getPath(), myFrom, myTo);
+    return EntryDiffContentKt.createDiffContent(myGateway, e, changeSetId, myCalculator, p);
   }
 }

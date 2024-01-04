@@ -36,7 +36,7 @@ internal class SelectionDiffRequestProducer(project: Project?,
 
   private fun createContent(entry: Entry?, revision: Revision, isCurrent: Boolean, indicator: ProgressIndicator): DiffContent {
     if (entry == null) return DiffContentFactory.getInstance().createEmpty()
-    if (isCurrent) return createCurrentDiffContent(project, gateway, entry.path, scope.from, scope.to)
-    return createDiffContent(gateway, entry, revision, selectionCalculator, RevisionProcessingProgressAdapter(indicator))
+    if (isCurrent || revision.changeSetId == null) return createCurrentDiffContent(project, gateway, entry.path, scope.from, scope.to)
+    return createDiffContent(gateway, entry, revision.changeSetId!!, selectionCalculator, RevisionProcessingProgressAdapter(indicator))
   }
 }

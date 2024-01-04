@@ -4,7 +4,6 @@ package com.intellij.platform.lvcs.impl.diff
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffContentFactoryEx
 import com.intellij.diff.contents.DiffContent
-import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
@@ -13,6 +12,7 @@ import com.intellij.history.integration.ui.models.SelectionCalculator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.lvcs.impl.RevisionId
 
 fun createDiffContent(project: Project?, gateway: IdeaGateway, e: Entry): DiffContent {
   val content = e.content.getBytes()
@@ -32,10 +32,10 @@ fun createCurrentDiffContent(project: Project?, gateway: IdeaGateway, path: Stri
 
 fun createDiffContent(gateway: IdeaGateway,
                       entry: Entry,
-                      revision: Revision,
+                      changeSetId: Long,
                       calculator: SelectionCalculator,
                       progress: RevisionProcessingProgress): DiffContent {
-  val content = calculator.getSelectionFor(revision, progress).blockContent
+  val content = calculator.getSelectionFor(RevisionId.ChangeSet(changeSetId), progress).blockContent
   val virtualFile = gateway.findVirtualFile(entry.path)
   if (virtualFile != null) {
     return DiffContentFactory.getInstance().create(content, virtualFile)

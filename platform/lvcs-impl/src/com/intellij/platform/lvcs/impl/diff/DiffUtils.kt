@@ -5,7 +5,7 @@ import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.revisions.Revision.getDifferencesBetween
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.ui.models.DirectoryChangeModel
-import com.intellij.history.integration.ui.models.SelectionCalculator
+import com.intellij.history.integration.ui.models.RevisionSelectionCalculator
 import com.intellij.history.integration.ui.views.DirectoryChange
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.lvcs.impl.ActivityScope
@@ -33,6 +33,6 @@ internal fun RevisionSelection.getChanges(gateway: IdeaGateway, scope: ActivityS
   return JBIterable.from(diff).map { d -> d.getChange(gateway, scope) }
 }
 
-internal fun ActivityScope.Selection.createSelectionCalculator(gateway: IdeaGateway, selection: RevisionSelection): SelectionCalculator {
-  return SelectionCalculator(gateway, listOf(createCurrentRevision(selection)) + selection.allRevisions, from, to)
+internal fun ActivityScope.Selection.createSelectionCalculator(gateway: IdeaGateway, selection: RevisionSelection): RevisionSelectionCalculator {
+  return RevisionSelectionCalculator(gateway, listOf(createCurrentRevision(selection)) + selection.allRevisions, from, to)
 }

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
-  private SelectionCalculator myCalculatorCache;
+  private RevisionSelectionCalculator myCalculatorCache;
   private final int myFrom;
   private final int myTo;
 
@@ -55,9 +55,9 @@ public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
                                         isCurrentRevisionSelected());
   }
 
-  private SelectionCalculator getCalculator() {
+  private RevisionSelectionCalculator getCalculator() {
     if (myCalculatorCache == null) {
-      myCalculatorCache = new SelectionCalculator(myGateway, RevisionDataKt.getAllRevisions(getRevisionData()), myFrom, myTo);
+      myCalculatorCache = new RevisionSelectionCalculator(myGateway, RevisionDataKt.getAllRevisions(getRevisionData()), myFrom, myTo);
     }
     return myCalculatorCache;
   }

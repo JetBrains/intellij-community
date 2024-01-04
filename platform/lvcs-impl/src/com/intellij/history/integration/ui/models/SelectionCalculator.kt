@@ -2,18 +2,19 @@
 package com.intellij.history.integration.ui.models
 
 import com.intellij.diff.Block
-import com.intellij.history.core.revisions.Revision
+import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.platform.lvcs.impl.RevisionId
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
-class SelectionCalculator(private val gateway: IdeaGateway,
-                          private val revisions: List<Revision>,
-                          private val fromLine: Int,
-                          private val toLine: Int) {
+abstract class SelectionCalculator(private val gateway: IdeaGateway,
+                                   private val revisions: List<RevisionId>,
+                                   private val fromLine: Int,
+                                   private val toLine: Int) {
   private val cache: Int2ObjectMap<Block> = Int2ObjectOpenHashMap()
 
-  fun canCalculateFor(revision: Revision, progress: Progress): Boolean {
+  fun canCalculateFor(revision: RevisionId, progress: Progress): Boolean {
     try {
       doGetSelectionFor(revision, progress)
     }
@@ -23,11 +24,11 @@ class SelectionCalculator(private val gateway: IdeaGateway,
     return true
   }
 
-  fun getSelectionFor(revision: Revision, progress: Progress): Block {
+  fun getSelectionFor(revision: RevisionId, progress: Progress): Block {
     return doGetSelectionFor(revision, progress)
   }
 
-  private fun doGetSelectionFor(revision: Revision, progress: Progress): Block {
+  private fun doGetSelectionFor(revision: RevisionId, progress: Progress): Block {
     val target = revisions.indexOf(revision)
     return getSelectionFor(target, target + 1, progress)
   }
@@ -56,12 +57,14 @@ class SelectionCalculator(private val gateway: IdeaGateway,
     return result
   }
 
-  private fun getRevisionContent(revision: Revision): String? {
-    val entry = revision.findEntry() ?: return null
+  private fun getRevisionContent(revision: RevisionId): String? {
+    val entry = getEntry(revision) ?: return null
     val content = entry.content
     if (!content.isAvailable) throw ContentIsUnavailableException()
     return content.getString(entry, gateway)
   }
+
+  protected abstract fun getEntry(revision: RevisionId): Entry?
 
   private class ContentIsUnavailableException : RuntimeException()
 
