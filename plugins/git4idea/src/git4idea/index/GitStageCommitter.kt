@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcsUtil.VcsFileUtil
-import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
 import git4idea.index.ui.stagingAreaActionInvoked
@@ -69,7 +68,7 @@ internal class GitStageCommitter(
 
   private fun refreshChanges() {
     for (repository in successfulRepositories) {
-      GitUtil.getRepositoryManager(project).updateRepository(repository.root)
+      repository.update()
       if (repository.isSubmodule()) {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root.parent)
       }

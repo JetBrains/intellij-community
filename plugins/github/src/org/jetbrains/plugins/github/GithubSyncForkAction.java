@@ -335,7 +335,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       indicator.setText(GithubBundle.message("rebase.process.rebasing.onto", onto));
       GitCommandResult rebaseResult = myGit.runCommand(handler);
       indicator.setText(oldText);
-      repositoryManager.updateRepository(root);
+      myRepository.update();
       if (rebaseResult.success()) {
         root.refresh(false, true);
         GithubNotifications.showInfo(myProject,

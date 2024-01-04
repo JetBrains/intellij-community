@@ -256,7 +256,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
       applyPartialChanges(partialCommitHelpers);
 
-      getRepositoryManager(myProject).updateRepository(root);
+      repository.update();
       if (isSubmodule(repository)) {
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
       }
