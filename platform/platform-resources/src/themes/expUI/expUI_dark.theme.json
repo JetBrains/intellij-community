@@ -167,6 +167,7 @@
     "Breakpoint.iconHoverAlpha": 0.35,
 
     "Button": {
+      "arc": 8,
       "startBackground": "Grey2",
       "endBackground": "Grey2",
       "startBorderColor": "Grey5",

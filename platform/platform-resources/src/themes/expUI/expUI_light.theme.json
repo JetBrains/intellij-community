@@ -163,6 +163,7 @@
     "Breakpoint.iconHoverAlpha": 0.3,
 
     "Button": {
+      "arc": 8,
       "startBorderColor": "Grey9",
       "endBorderColor": "Grey9",
       "focusedBorderColor": "Grey14",
