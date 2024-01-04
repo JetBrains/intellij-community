@@ -39,7 +39,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
 
     val contentManager = ToolWindowManager.getInstance(context.project).getToolWindow(
       ChangesViewContentManager.TOOLWINDOW_ID)?.contentManager
-    val ui = ((contentManager?.selectedContent?.component as VcsLogPanel).getData(VcsLogDataKeys.VCS_LOG_UI.name) as VcsLogUiEx)
+    val ui = VcsLogUiHolder.getLogUis(contentManager?.selectedContent?.component!!).single()
     ui.addLogListener { dataPack, _ ->
       run {
         if (!(dataPack as VisiblePack).canRequestMore()) {
