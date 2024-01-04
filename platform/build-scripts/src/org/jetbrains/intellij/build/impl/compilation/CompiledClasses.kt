@@ -57,10 +57,6 @@ internal object CompiledClasses {
     }
   }
 
-  /**
-   * @return true even if [PortableCompilationCache.IS_ENABLED] because incremental compilation
-   * may still be triggered due to [PortableCompilationCache.isCompilationRequired]
-   */
   fun isCompilationRequired(options: BuildOptions): Boolean {
     return !options.useCompiledClassesFromProjectOutput &&
            options.pathToCompiledClassesArchive == null &&
@@ -217,7 +213,7 @@ internal object CompiledClasses {
         context.options.incrementalCompilation = false
       }
       PortableCompilationCache.IS_ENABLED -> {
-        successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(e, successMessage)
+        successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(successMessage)
       }
       else -> {
         context.messages.warning("Incremental compilation failed. Re-trying with clean build.")

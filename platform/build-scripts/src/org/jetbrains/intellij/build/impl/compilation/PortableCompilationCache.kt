@@ -44,7 +44,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
       }
     }
 
-    val isStale: Boolean get() = !downloader.availableForHeadCommit
     val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
     val shouldBeUploaded by lazy { bool(UPLOAD_PROPERTY) }
     val shouldBeSyncedToS3 by lazy { !bool("jps.caches.aws.sync.skip") }
@@ -97,18 +96,16 @@ class PortableCompilationCache(private val context: CompilationContext) {
         downloadCache()
       }
       CompilationTasks.create(context).resolveProjectDependencies()
-      if (isCompilationRequired()) {
-        context.options.incrementalCompilation = !forceRebuild
-        CompiledClasses.compileLocally(
-          context, isPortableCacheDownloaded = remoteCache.shouldBeDownloaded && downloader.availableCommitDepth >= 0
-        )
-      }
+      context.options.incrementalCompilation = !forceRebuild
+      // compilation is executed unconditionally here even if exact commit cache is downloaded
+      // to have an additional validation step and not to ignore a local changes, for example in TeamCity Remote Run
+      CompiledClasses.compileLocally(
+        context, isPortableCacheDownloaded = remoteCache.shouldBeDownloaded && downloader.availableCommitDepth >= 0
+      )
       isAlreadyUpdated = true
       context.options.incrementalCompilation = true
     }
   }
-
-  private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || remoteCache.isStale
 
   private fun isLocalCacheUsed() = !forceRebuild && !forceDownload &&
                                    CompiledClasses.isIncrementalCompilationDataAvailable(context)
@@ -116,7 +113,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * @return updated [successMessage]
    */
-  internal fun handleCompilationFailureBeforeRetry(e: Exception, successMessage: String): String {
+  internal fun handleCompilationFailureBeforeRetry(successMessage: String): String {
     check(IS_ENABLED) {
       "JPS Caches are expected to be enabled"
     }
