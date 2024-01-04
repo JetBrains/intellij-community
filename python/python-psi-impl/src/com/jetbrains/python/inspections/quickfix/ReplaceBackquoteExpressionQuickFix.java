@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyReprExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceBackquoteExpressionQuickFix implements LocalQuickFix {
+public class ReplaceBackquoteExpressionQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,13 +33,12 @@ public class ReplaceBackquoteExpressionQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement problemElement = descriptor.getPsiElement();
-    if (problemElement instanceof PyReprExpression) {
-      if (((PyReprExpression)problemElement).getExpression() != null) {
-        final LanguageLevel level = LanguageLevel.forElement(problemElement);
-        final String text = "repr(" + ((PyReprExpression)problemElement).getExpression().getText() + ")";
-        problemElement.replace(PyElementGenerator.getInstance(project).createExpressionFromText(level, text));
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyReprExpression) {
+      if (((PyReprExpression)element).getExpression() != null) {
+        final LanguageLevel level = LanguageLevel.forElement(element);
+        final String text = "repr(" + ((PyReprExpression)element).getExpression().getText() + ")";
+        element.replace(PyElementGenerator.getInstance(project).createExpressionFromText(level, text));
       }
     }
   }
