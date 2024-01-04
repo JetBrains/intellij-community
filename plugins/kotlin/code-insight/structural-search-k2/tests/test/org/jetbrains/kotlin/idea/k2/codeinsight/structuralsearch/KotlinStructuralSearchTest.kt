@@ -22,8 +22,6 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
-private val disabled = true
-
 abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
 
@@ -43,7 +41,6 @@ abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCas
     }
 
     protected fun doTest(pattern: String, highlighting: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
-        if (disabled) return // Test is flaky see KTIJ-27542
         myFixture.configureByText("aaa.kt", highlighting)
         withCustomCompilerOptions(myFixture.file.text, project, module) {
             testHighlighting(pattern, context)

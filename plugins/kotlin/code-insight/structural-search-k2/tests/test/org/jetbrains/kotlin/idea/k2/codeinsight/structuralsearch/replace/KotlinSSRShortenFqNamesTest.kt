@@ -45,12 +45,11 @@ class KotlinSSRShortenFqNamesTest : KotlinStructuralReplaceTest() {
             """.trimIndent(),
             result ="""
                 import java.util.*
-                import java.util.Collections.singletonList
                 
                 fun tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(x: List<String>) {
                     TODO()
                     tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt(
-                        singletonList(
+                        Collections.singletonList(
                             Bar("B")
                         )
                     )
