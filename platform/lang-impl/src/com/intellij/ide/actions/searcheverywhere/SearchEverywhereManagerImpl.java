@@ -80,15 +80,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     Project project = initEvent.getProject();
 
-    var contributors = createContributors(initEvent, project);
-    List<SearchEverywhereContributor<?>> createdContributors = contributors.created();
-    SearchEverywhereContributorValidationRule.updateContributorsMap(createdContributors);
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
-    SlowFactoryContributors slowFactoryContributors = SlowFactoryContributors.createInBackground(initEvent, contributors.slow());
-    mySearchEverywhereUI = createView(myProject, createdContributors, spellingCorrector, slowFactoryContributors);
-    createdContributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
+    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector);
+    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
-    slowFactoryContributors.setParentDisposable(mySearchEverywhereUI);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
@@ -171,30 +168,23 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private static Contributors createContributors(@NotNull AnActionEvent initEvent, Project project) {
+  private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
     SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
-      return new Contributors(Collections.singletonList(factory.createContributor(initEvent)), List.of());
+      return Collections.singletonList(factory.createContributor(initEvent));
     }
 
     List<SearchEverywhereContributor<?>> res = new ArrayList<>();
-    List<SearchEverywhereContributorFactory<?>> slowFactories = new ArrayList<>();
-
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      if (!(factory instanceof SearchEverywhereContributorSlowFactory) && factory.isAvailable(project)) {
+      if (factory.isAvailable(project)) {
         SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
         res.add(contributor);
       }
-      else if (factory instanceof SearchEverywhereContributorSlowFactory) {
-        slowFactories.add(factory);
-      }
     }
 
-    return new Contributors(res, slowFactories);
+    return res;
   }
-
-  private record Contributors(List<SearchEverywhereContributor<?>> created, List<SearchEverywhereContributorFactory<?>> slow) {}
 
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
                                    Project project,
@@ -280,12 +270,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
-                                        @NotNull SlowFactoryContributors slowFactoryContributors) {
+                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector, slowFactoryContributors);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {

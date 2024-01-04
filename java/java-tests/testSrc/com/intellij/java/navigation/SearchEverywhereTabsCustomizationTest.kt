@@ -33,7 +33,7 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
   fun testFixedTabsListStrategy() {
     val strategy = object : FixedTabsListCustomizationStrategy(listOf("c1", "c3", "c5")) {}
     ApplicationManager.getApplication().replaceService(TabsCustomizationStrategy::class.java, strategy, testRootDisposable)
-    val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui, null)
+    val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui)
     val tabIDs = header.tabs.map { it.id }
     val expected = listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c3")
     Assert.assertEquals(expected, tabIDs)
@@ -42,7 +42,7 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
   fun testContributorDefinedStrategy() {
     val strategy = ContributorDefinedTabsCustomizationStrategy()
     ApplicationManager.getApplication().replaceService(TabsCustomizationStrategy::class.java, strategy, testRootDisposable)
-    val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui, null)
+    val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui)
     val tabIDs = header.tabs.map { it.id }
     val expected = listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c2", "c3")
     Assert.assertEquals(expected, tabIDs)
