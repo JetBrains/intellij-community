@@ -225,7 +225,7 @@ object FUSProjectHotStartUpMeasurer {
 
     private val markupResurrectedFileIds = IntOpenHashSet()
 
-    private fun <T> computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> T): T {
+    private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Unit) {
       synchronized(stageLock) {
         stage.apply {
           if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
@@ -233,7 +233,7 @@ object FUSProjectHotStartUpMeasurer {
             synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
           }
         }
-        return stage.block()
+        stage.block()
       }
     }
 
