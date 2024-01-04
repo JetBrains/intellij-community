@@ -1410,7 +1410,7 @@
                      implementationClass="com.siyeh.ig.logging.PublicMethodWithoutLoggingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationArgumentToLogCall" bundle="messages.InspectionGadgetsBundle"
                      key="string.concatenation.argument.to.log.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection" cleanupTool="true"/>
 
     <!--group.names.code.maturity.issues-->
