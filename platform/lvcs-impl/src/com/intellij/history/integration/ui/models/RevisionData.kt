@@ -14,12 +14,15 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.util.PairProcessor
 import java.util.*
 
 data class RevisionData(val currentRevision: Revision, val revisions: List<RevisionItem>)
 
 val RevisionData.allRevisions get() = listOf(currentRevision) + revisions.map { it.revision }
+
+internal fun Revision.toRevisionId() = if (changeSetId == null) RevisionId.Current else RevisionId.ChangeSet(changeSetId!!)
 
 internal fun collectRevisionData(project: Project,
                                  gateway: IdeaGateway,

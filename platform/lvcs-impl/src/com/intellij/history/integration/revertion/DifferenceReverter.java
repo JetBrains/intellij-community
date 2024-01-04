@@ -9,26 +9,29 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class DifferenceReverter extends Reverter {
   private final List<Difference> myDiffs;
-  private final Revision myLeftRevision;
 
-  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
-    super(p, vcs, gw);
+  public DifferenceReverter(Project p,
+                            LocalHistoryFacade vcs,
+                            IdeaGateway gw,
+                            List<Difference> diffs,
+                            @NotNull Supplier<@NlsContexts.Command String> commandName) {
+    super(p, vcs, gw, commandName);
     myDiffs = diffs;
-    myLeftRevision = leftRevision;
   }
 
-  @Override
-  protected Revision getTargetRevision() {
-    return myLeftRevision;
+  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
+    this(p, vcs, gw, diffs, () -> getRevertCommandName(leftRevision));
   }
 
   @Override

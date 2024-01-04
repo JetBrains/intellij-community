@@ -24,5 +24,3 @@ class RevisionSelectionCalculator(gateway: IdeaGateway, revisions: List<Revision
     return idToRevision[revision]?.findEntry()
   }
 }
-
-private fun Revision.toRevisionId() = if (changeSetId == null) RevisionId.Current else RevisionId.ChangeSet(changeSetId!!)

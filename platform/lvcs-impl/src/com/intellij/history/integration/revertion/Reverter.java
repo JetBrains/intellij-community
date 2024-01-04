@@ -25,21 +25,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class Reverter {
   private final Project myProject;
   protected LocalHistoryFacade myVcs;
   protected final IdeaGateway myGateway;
+  private final Supplier<@NlsContexts.Command String> myCommandName;
 
-  protected Reverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw) {
+  protected Reverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, @NotNull Supplier<@NlsContexts.Command String> commandName) {
     myProject = p;
     myVcs = vcs;
     myGateway = gw;
+    myCommandName = commandName;
   }
 
   /**
@@ -79,20 +83,20 @@ public abstract class Reverter {
   }
 
   public @NlsContexts.Command String getCommandName() {
-    Revision to = getTargetRevision();
+    return myCommandName.get();
+  }
+
+  protected abstract @NotNull List<VirtualFile> getFilesToClearROStatus();
+
+  protected abstract void doRevert() throws IOException;
+
+  @NotNull
+  public static @Nls String getRevertCommandName(@NotNull Revision to) {
     String name = to.getChangeSetName();
     String date = DateFormatUtil.formatDateTime(to.getTimestamp());
     if (name != null) {
       return LocalHistoryBundle.message("system.label.revert.to.change.date", name, date);
     }
-    else {
-      return LocalHistoryBundle.message("system.label.revert.to.date", date);
-    }
+    return LocalHistoryBundle.message("system.label.revert.to.date", date);
   }
-
-  protected abstract Revision getTargetRevision();
-
-  protected abstract @NotNull List<VirtualFile> getFilesToClearROStatus();
-
-  protected abstract void doRevert() throws IOException;
 }

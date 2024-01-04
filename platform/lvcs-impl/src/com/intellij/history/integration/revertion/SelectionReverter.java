@@ -8,54 +8,66 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.Progress;
-import com.intellij.history.integration.ui.models.RevisionSelectionCalculator;
+import com.intellij.history.integration.ui.models.RevisionDataKt;
+import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.RevisionId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public final class SelectionReverter extends Reverter {
-  private final RevisionSelectionCalculator myCalculator;
-  private final Revision myLeftRevision;
-  private final Entry myRightEntry;
+  private final SelectionCalculator myCalculator;
+  private final @NotNull RevisionId myTargetRevisionId;
+  private final @NlsSafe String myTargetPath;
   private final int myFromLine;
   private final int myToLine;
 
   public SelectionReverter(Project p,
                            LocalHistoryFacade vcs,
                            IdeaGateway gw,
-                           RevisionSelectionCalculator c,
-                           Revision leftRevision,
+                           SelectionCalculator c,
+                           Revision targetRevision,
                            Entry rightEntry,
                            int fromLine,
                            int toLine) {
-    super(p, vcs, gw);
-    myCalculator = c;
-    myLeftRevision = leftRevision;
-    myRightEntry = rightEntry;
+    this(p, vcs, gw, c, RevisionDataKt.toRevisionId(targetRevision), rightEntry.getPath(), fromLine, toLine,
+         () -> Reverter.getRevertCommandName(targetRevision));
+  }
+
+  public SelectionReverter(Project project,
+                           LocalHistoryFacade facade,
+                           IdeaGateway gateway,
+                           SelectionCalculator calculator,
+                           @NotNull RevisionId targetRevisionId,
+                           String targetPath,
+                           int fromLine,
+                           int toLine,
+                           @NotNull Supplier<@NlsContexts.Command String> commandName) {
+    super(project, facade, gateway, commandName);
+    myCalculator = calculator;
+    myTargetRevisionId = targetRevisionId;
+    myTargetPath = targetPath;
     myFromLine = fromLine;
     myToLine = toLine;
   }
 
   @Override
-  protected Revision getTargetRevision() {
-    return myLeftRevision;
-  }
-
-  @Override
   protected @NotNull List<VirtualFile> getFilesToClearROStatus() {
-    VirtualFile file = myGateway.findVirtualFile(myRightEntry.getPath());
-    return Collections.singletonList(file);
+    return Collections.singletonList(myGateway.findVirtualFile(myTargetPath));
   }
 
   @Override
   protected void doRevert() {
-    Block b = myCalculator.getSelectionFor(myLeftRevision, Progress.EMPTY);
+    Block b = myCalculator.getSelectionFor(myTargetRevisionId, Progress.EMPTY);
 
-    Document d = myGateway.getDocument(myRightEntry.getPath());
+    Document d = myGateway.getDocument(myTargetPath);
 
     int from = d.getLineStartOffset(myFromLine);
     int to = d.getLineEndOffset(myToLine);
