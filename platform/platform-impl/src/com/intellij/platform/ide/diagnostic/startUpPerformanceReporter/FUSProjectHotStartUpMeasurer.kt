@@ -34,6 +34,7 @@ object FUSProjectHotStartUpMeasurer {
 
   @Volatile
   private var stage: StageHandler.Stage = StageHandler.Stage.Initial
+  private val markupResurrectedFileIds = IntOpenHashSet()
 
   enum class ProjectsType {
     Reopened, FromFilesToLoad, FromArgs, Unknown
@@ -64,7 +65,7 @@ object FUSProjectHotStartUpMeasurer {
         stage = stage.block()
       }
       if (stage === StageHandler.Stage.Stopped) {
-        synchronized(stageHandler.markupResurrectedFileIds) { stageHandler.markupResurrectedFileIds.clear() }
+        synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
       }
     }
   }
@@ -86,7 +87,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun getStartUpContextElementIntoIdeStarter(ideStarter: IdeStarter): CoroutineContext.Element? {
-    if (ideStarter.isHeadless) {//todo[lene] rewrite to clean stage
+    if (ideStarter.isHeadless) { //todo[lene] rewrite to clean stage
       return null
     }
     if (ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
@@ -263,7 +264,10 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun markupRestored(file: VirtualFileWithId) {
-    onElement { reportMarkupRestored(file) }
+    computeLocked {
+      synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
+      return@computeLocked this
+    }
   }
 
   private suspend fun reportFirstEditor(project: Project, file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
@@ -274,7 +278,9 @@ object FUSProjectHotStartUpMeasurer {
         if (this is StageHandler.Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked StageHandler.Stage.Stopped
         if (this is StageHandler.Stage.FrameVisible && prematureEditorData != null) return@computeLocked StageHandler.Stage.Stopped
 
-        val isMarkupLoaded = stageHandler.isMarkupLoaded(file)
+        val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
+          markupResurrectedFileIds.contains(file.id)
+        }
         val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
         val editorStageData = StageHandler.PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
 
@@ -402,19 +408,6 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    val markupResurrectedFileIds = IntOpenHashSet()
-
-    fun isMarkupLoaded(file: VirtualFile): Boolean {
-      if (file !is VirtualFileWithId) return false
-      return synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.contains(file.id) }
-    }
-
-    fun reportMarkupRestored(file: VirtualFileWithId) {
-      computeLocked {
-        synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
-        return@computeLocked this
-      }
-    }
   }
 }
 
