@@ -29,10 +29,10 @@ import kotlin.time.toDuration
 
 @Internal
 object FUSProjectHotStartUpMeasurer {
+  private val markupResurrectedFileIds = IntOpenHashSet()
   private val stageLock = Object()
   @Volatile
   private var stage: Stage = Stage.Initial
-  private val markupResurrectedFileIds = IntOpenHashSet()
 
   enum class ProjectsType {
     Reopened, FromFilesToLoad, FromArgs, Unknown
@@ -81,20 +81,21 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun getStartUpContextElementIntoIdeStarter(ideStarter: IdeStarter): CoroutineContext.Element? {
-    if (ideStarter.isHeadless) { //todo[lene] rewrite to clean stage
+    if (ideStarter.isHeadless ||
+        ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
+      computeLocked { Stage.Stopped }
       return null
     }
-    if (ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
-      return null
-    }
-    computeLocked(false) {
-      return@computeLocked when (this) {
-        is Stage.Initial -> Stage.IdeStarterStarted()
-        is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
-        else -> Stage.Stopped
+    else {
+      computeLocked(false) {
+        return@computeLocked when (this) {
+          is Stage.Initial -> Stage.IdeStarterStarted()
+          is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
+          else -> Stage.Stopped
+        }
       }
+      return MyMarker
     }
-    return MyMarker
   }
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
@@ -138,11 +139,9 @@ object FUSProjectHotStartUpMeasurer {
   suspend fun reportProjectType(projectsType: ProjectsType) {
     onProperContext {
       computeLocked {
-        return@computeLocked if (this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
-          this.copy(projectType = projectsType)
-        }
-        else {
-          Stage.Stopped
+        return@computeLocked when {
+          this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown -> this.copy(projectType = projectsType)
+          else -> Stage.Stopped
         }
       }
     }
@@ -155,11 +154,9 @@ object FUSProjectHotStartUpMeasurer {
     onProperContext {
       val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
       computeLocked {
-        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist == null) {
-          this.copy(settingsExist = hasSettings)
-        }
-        else {
-          Stage.Stopped
+        return@computeLocked when {
+          this is Stage.IdeStarterStarted && settingsExist == null -> this.copy(settingsExist = hasSettings)
+          else -> Stage.Stopped
         }
       }
     }
@@ -168,11 +165,9 @@ object FUSProjectHotStartUpMeasurer {
   suspend fun resetProjectPath() {
     onProperContext {
       computeLocked {
-        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist != null) {
-          this.copy(settingsExist = null)
-        }
-        else {
-          Stage.Stopped
+        return@computeLocked when {
+          this is Stage.IdeStarterStarted && settingsExist != null -> this.copy(settingsExist = null)
+          else -> Stage.Stopped
         }
       }
     }
@@ -237,29 +232,36 @@ object FUSProjectHotStartUpMeasurer {
   fun reportFrameBecameInteractive() {
     val duration = getDurationFromStart()
     computeLocked {
-      if (this is Stage.IdeStarterStarted && prematureFrameInteractive == null) {
-        return@computeLocked this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
-      }
-      else if (this is Stage.FrameVisible) {
-        PrematureFrameInteractiveData.log(duration)
-        if (prematureEditorData != null) {
+      when {
+        this is Stage.IdeStarterStarted && prematureFrameInteractive == null -> {
+          return@computeLocked this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
+        }
+        this is Stage.FrameVisible && prematureEditorData == null -> {
+          PrematureFrameInteractiveData.log(duration)
+          return@computeLocked Stage.FrameInteractive(settingsExist)
+        }
+        this is Stage.FrameVisible && prematureEditorData != null -> {
+          PrematureFrameInteractiveData.log(duration)
           Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
           return@computeLocked Stage.Stopped
         }
-        else {
-          return@computeLocked Stage.FrameInteractive(settingsExist)
+        else -> {
+          return@computeLocked Stage.Stopped
         }
-      }
-      else {
-        return@computeLocked Stage.Stopped
       }
     }
   }
 
   fun markupRestored(file: VirtualFileWithId) {
     computeLocked {
-      synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
-      return@computeLocked this
+      return@computeLocked when (this) {
+        is Stage.Initial -> Stage.Stopped
+        is Stage.SplashScreenShownBeforeIdeStarter -> Stage.Stopped
+        else -> {
+          synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.add(file.id) }
+          this
+        }
+      }
     }
   }
 
@@ -268,24 +270,23 @@ object FUSProjectHotStartUpMeasurer {
 
     withContext(Dispatchers.Default) {
       computeLocked {
-        if (this is Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked Stage.Stopped
-        if (this is Stage.FrameVisible && prematureEditorData != null) return@computeLocked Stage.Stopped
-
-        val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
-          markupResurrectedFileIds.contains(file.id)
+        fun getEditorStorageData(): PrematureEditorStageData {
+          val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
+            markupResurrectedFileIds.contains(file.id)
+          }
+          val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
+          return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
         }
-        val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
-        val editorStageData = PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
 
-        return@computeLocked when (this) {
-          is Stage.IdeStarterStarted -> {
-            this.copy(prematureEditorData = editorStageData)
+        return@computeLocked when {
+          this is Stage.IdeStarterStarted && prematureEditorData == null -> {
+            this.copy(prematureEditorData = getEditorStorageData())
           }
-          is Stage.FrameVisible -> {
-            this.copy(prematureEditorData = editorStageData)
+          this is Stage.FrameVisible && prematureEditorData == null -> {
+            this.copy(prematureEditorData = getEditorStorageData())
           }
-          is Stage.FrameInteractive -> {
-            Stage.EditorStage(editorStageData, settingsExist).log(getDurationFromStart(durationMillis))
+          this is Stage.FrameInteractive -> {
+            Stage.EditorStage(getEditorStorageData(), settingsExist).log(getDurationFromStart(durationMillis))
             Stage.Stopped
           }
           else -> Stage.Stopped
@@ -318,15 +319,14 @@ object FUSProjectHotStartUpMeasurer {
     val durationMillis = System.nanoTime()
     val noEditorStageData = PrematureEditorStageData.NoEditors(project)
     computeLocked {
-      return@computeLocked when (this) {
-        is Stage.Stopped -> Stage.Stopped
-        is Stage.IdeStarterStarted -> {
-          if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
+      return@computeLocked when {
+        this is Stage.IdeStarterStarted && prematureEditorData == null -> {
+          this.copy(prematureEditorData = noEditorStageData)
         }
-        is Stage.FrameVisible -> {
-          if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
+        this is Stage.FrameVisible && prematureEditorData == null -> {
+          this.copy(prematureEditorData = noEditorStageData)
         }
-        is Stage.FrameInteractive -> {
+        this is Stage.FrameInteractive -> {
           Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
           Stage.Stopped
         }
