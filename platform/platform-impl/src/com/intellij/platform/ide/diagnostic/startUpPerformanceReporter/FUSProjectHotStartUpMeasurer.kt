@@ -18,15 +18,11 @@ import com.intellij.util.alsoIfNull
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -61,7 +57,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-    return coroutineContext[MyMarker]?.getStartUpContextElementToPass()
+    return currentCoroutineContext()[MyMarker]?.getStartUpContextElementToPass()
   }
 
   fun reportWelcomeScreenShown() {
@@ -69,28 +65,28 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun reportProjectType(projectsType: ProjectsType) {
-    coroutineContext[MyMarker]?.reportProjectType(projectsType)
+    currentCoroutineContext()[MyMarker]?.reportProjectType(projectsType)
   }
 
   /**
    * Reports the existence of project settings to filter cases of importing which may need more resources.
    */
   suspend fun reportProjectPath(projectFile: Path) {
-    val element = coroutineContext[MyMarker] ?: return
+    val element = currentCoroutineContext()[MyMarker] ?: return
     val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
     element.reportProjectSettings(hasSettings)
   }
 
   suspend fun resetProjectPath() {
-    coroutineContext[MyMarker]?.resetProjectSettings()
+    currentCoroutineContext()[MyMarker]?.resetProjectSettings()
   }
 
   suspend fun openingMultipleProjects() {
-    coroutineContext[MyMarker]?.reportViolation(Violation.MultipleProjects)
+    currentCoroutineContext()[MyMarker]?.reportViolation(Violation.MultipleProjects)
   }
 
   suspend fun reportAlreadyOpenedProject() {
-    coroutineContext[MyMarker]?.reportViolation(Violation.HasOpenedProject)
+    currentCoroutineContext()[MyMarker]?.reportViolation(Violation.HasOpenedProject)
   }
 
   fun noProjectFound() {
@@ -102,7 +98,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun reportUriOpening() {
-    coroutineContext[MyMarker]?.reportViolation(Violation.OpeningURI)
+    currentCoroutineContext()[MyMarker]?.reportViolation(Violation.OpeningURI)
   }
 
   fun reportStarterUsed() {
@@ -129,11 +125,11 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun firstOpenedUnknownEditor(project: Project, file: VirtualFile) {
-    coroutineContext[MyMarker]?.reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
+    currentCoroutineContext()[MyMarker]?.reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
   }
 
   suspend fun openedReadme(project: Project, readmeFile: VirtualFile) {
-    coroutineContext[MyMarker]?.reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
+    currentCoroutineContext()[MyMarker]?.reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
   }
 
   fun reportNoMoreEditorsOnStartup(project: Project, startUpContextElementToPass: CoroutineContext.Element?) {
