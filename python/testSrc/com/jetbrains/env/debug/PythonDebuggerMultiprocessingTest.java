@@ -10,11 +10,9 @@ import com.jetbrains.env.PyEnvTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
@@ -293,7 +291,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
   @TestFor(issues = "PY-37366")
   public void testMultiprocessManagerFork() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_manager_fork.py") {
-      @Before
+      @Override
       public void before() {
         toggleBreakpoint(getScriptName(), 5);
       }
