@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
@@ -42,7 +41,6 @@ class GitMergeOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitMergeOperation.class);
 
-  private final @NotNull ChangeListManager myChangeListManager;
   private final @NotNull @NlsSafe String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
 
@@ -56,7 +54,6 @@ class GitMergeOperation extends GitBranchOperation {
     super(project, git, uiHandler, repositories);
     myBranchToMerge = branchToMerge;
     myDeleteOnMerge = deleteOnMerge;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
   @Override
