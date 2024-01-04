@@ -278,7 +278,13 @@ public final class DarculaUIUtil {
   /**
    * @deprecated Use correspondent {@link JBUI.CurrentTheme.ComboBox#minimumSize()}, {@link JBUI.CurrentTheme.TextField#minimumSize()} etc
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
+  public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
+
+  /**
+   * @deprecated Use correspondent {@link JBUI.CurrentTheme.ComboBox#minimumSize()}, {@link JBUI.CurrentTheme.TextField#minimumSize()} etc
+   */
+  @Deprecated(forRemoval = true)
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
