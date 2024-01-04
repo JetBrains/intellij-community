@@ -64,7 +64,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
       }
     }
 
-    context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar.toList())
+    context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar)
   }
 
   private fun addJarDependency(builder: MutableEntityStorage,
@@ -109,7 +109,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   }
 }
 
-private val SHADED_MAVEN_PROJECTS = Key.create<List<MavenProject>>("SHADED_MAVEN_PROJECTS")
+private val SHADED_MAVEN_PROJECTS = Key.create<Set<MavenProject>>("SHADED_MAVEN_PROJECTS")
 
 internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurator {
   override fun afterImport(context: MavenAfterImportConfigurator.Context) {
@@ -141,12 +141,7 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
                                     baseDir: String) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
 
-    val requests = mavenProjects
-      .asSequence()
-      .map { it.path }.toSet()
-      .map { File(it) }
-      .map { MavenGoalExecutionRequest(it, MavenExplicitProfiles.NONE) }
-      .toList()
+    val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
 
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
