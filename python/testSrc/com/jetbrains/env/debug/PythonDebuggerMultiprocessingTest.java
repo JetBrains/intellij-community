@@ -155,7 +155,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
   public void testSubprocess() {
     runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 8);
       }
 
