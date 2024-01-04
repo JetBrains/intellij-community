@@ -6,6 +6,8 @@ import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.devkit.workspaceModel.metaModel.impl.WorkspaceMetaModelProviderImpl
 import com.intellij.lang.ASTNode
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
@@ -32,9 +34,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
+import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import java.util.jar.Manifest
 
 private val LOG = logger<CodeWriter>()
 
@@ -56,16 +60,21 @@ object CodeWriter {
       return@processFilesRecursively true
     }
     if (ktClasses.isEmpty()) return
+
     val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
+
+    val codeGenerator = serviceLoader.get()
+    if (!codegenApiVersionsAreCompatible(project, codeGenerator)) {
+      return
+    }
 
     CommandProcessor.getInstance().executeCommand(project, Runnable {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
         val objModules = loadObjModules(ktClasses, module, processAbstractTypes)
-        val codeGenerator = serviceLoader.get()
 
         val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
         val generatedCode = results.flatMap { it.generatedCode }
@@ -135,6 +144,46 @@ object CodeWriter {
         }
       }
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
+  }
+
+  private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
+    val apiVersionInDevkit = getApiVersionFromManifest(CodeGenerator::class.java)
+    val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
+
+    if (apiVersionInDevkit == apiVersionFromDownloadedJar) {
+      return true
+    }
+
+    val message = if (apiVersionFromDownloadedJar == UNKNOWN_CODEGEN_API_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
+      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.newer", apiVersionInDevkit, apiVersionFromDownloadedJar)
+    } else {
+      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.older", apiVersionInDevkit, apiVersionFromDownloadedJar)
+    }
+
+    val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions")
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup(groupId)
+      .createNotification(title = groupId, message, NotificationType.ERROR)
+      .notify(project)
+
+    return false
+  }
+
+  private fun getApiVersionFromManifest(clazz: Class<*>): String {
+    val classPath = "${clazz.name.replace(".", "/")}.class"
+    val classAbsolutePath = clazz.getResource("${clazz.simpleName}.class")?.toString() // Absolute path is jar path + class path
+                            ?: error("Absolute path for the class $clazz was not found")
+
+    val manifestPath = classAbsolutePath.replace(classPath, "META-INF/MANIFEST.MF")
+
+    val apiVersion: String?
+    URL(manifestPath).openStream().use {
+      val manifest = Manifest(it)
+      val attributes = manifest.mainAttributes
+      apiVersion = attributes.getValue(CODEGEN_API_VERSION_MANIFEST_ATTRIBUTE)
+    }
+
+    return apiVersion ?: UNKNOWN_CODEGEN_API_VERSION
   }
 
   private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean): List<CompiledObjModule> {
@@ -336,6 +385,10 @@ object CodeWriter {
     return VfsUtil.createDirectoryIfMissing(genFolder, relativePath)
   }
 
+
+  private const val CODEGEN_API_VERSION_MANIFEST_ATTRIBUTE = "Codegen-Api-Version"
+
+  private const val UNKNOWN_CODEGEN_API_VERSION = "unknown version"
 
   private const val GENERATED_REGION_START = "//region generated code"
 

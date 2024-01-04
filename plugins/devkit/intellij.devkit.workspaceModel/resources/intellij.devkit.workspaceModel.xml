@@ -35,5 +35,8 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceEntityMutableFieldInspection"
                      key="inspection.workspace.mutable.field.display.name"/>
+    <notificationGroup id="Incompatible codegen api versions"
+                       displayType="BALLOON"
+                       key="notification.workspace.incompatible.codegen.api.versions"/>
   </extensions>
 </idea-plugin>
