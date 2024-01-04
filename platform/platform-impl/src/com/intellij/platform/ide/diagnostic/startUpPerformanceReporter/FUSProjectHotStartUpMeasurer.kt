@@ -29,11 +29,9 @@ import kotlin.time.toDuration
 
 @Internal
 object FUSProjectHotStartUpMeasurer {
-  private val stageHandler: StageHandler = StageHandler()
   private val stageLock = Object()
-
   @Volatile
-  private var stage: StageHandler.Stage = StageHandler.Stage.Initial
+  private var stage: Stage = Stage.Initial
   private val markupResurrectedFileIds = IntOpenHashSet()
 
   enum class ProjectsType {
@@ -44,27 +42,23 @@ object FUSProjectHotStartUpMeasurer {
     MightBeLightEditProject, MultipleProjects, NoProjectFound, WelcomeScreenShown, OpeningURI, ApplicationStarter, HasOpenedProject
   }
 
-  private fun onElement(block: StageHandler.() -> Unit) {
-    stageHandler.block()
-  }
-
-  private suspend fun onElementSuspended(block: suspend StageHandler.() -> Unit) {
+  private suspend fun onProperContext(block: suspend () -> Unit) {
     if (currentCoroutineContext()[MyMarker] != null) {
-      stageHandler.block()
+      block()
     }
   }
 
-  private fun computeLocked(checkIsInitialized: Boolean = true, block: StageHandler.Stage.() -> StageHandler.Stage) {
+  private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Stage) {
     synchronized(stageLock) {
       stage.apply {
-        if (checkIsInitialized && (this is StageHandler.Stage.Initial || this is StageHandler.Stage.SplashScreenShownBeforeIdeStarter)) {
-          stage = StageHandler.Stage.Stopped
+        if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
+          stage = Stage.Stopped
         }
       }
-      if (stage !== StageHandler.Stage.Stopped) {
+      if (stage !== Stage.Stopped) {
         stage = stage.block()
       }
-      if (stage === StageHandler.Stage.Stopped) {
+      if (stage === Stage.Stopped) {
         synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
       }
     }
@@ -79,9 +73,9 @@ object FUSProjectHotStartUpMeasurer {
     // where initialization of FUSStartupReopenProjectMarkerElement happens.
     computeLocked(false) {
       return@computeLocked when {
-        this is StageHandler.Stage.Initial -> StageHandler.Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
-        this is StageHandler.Stage.IdeStarterStarted && splashBecameVisibleTime == null -> this.copy(splashBecameVisibleTime = nanoTime)
-        else -> StageHandler.Stage.Stopped
+        this is Stage.Initial -> Stage.SplashScreenShownBeforeIdeStarter(nanoTime)
+        this is Stage.IdeStarterStarted && splashBecameVisibleTime == null -> this.copy(splashBecameVisibleTime = nanoTime)
+        else -> Stage.Stopped
       }
     }
   }
@@ -95,10 +89,9 @@ object FUSProjectHotStartUpMeasurer {
     }
     computeLocked(false) {
       return@computeLocked when (this) {
-        is StageHandler.Stage.Initial -> StageHandler.Stage.IdeStarterStarted()
-        is StageHandler.Stage.SplashScreenShownBeforeIdeStarter -> StageHandler.Stage.IdeStarterStarted(
-          splashBecameVisibleTime = this.splashBecameVisibleTime)
-        else -> StageHandler.Stage.Stopped
+        is Stage.Initial -> Stage.IdeStarterStarted()
+        is Stage.SplashScreenShownBeforeIdeStarter -> Stage.IdeStarterStarted(splashBecameVisibleTime = this.splashBecameVisibleTime)
+        else -> Stage.Stopped
       }
     }
     return MyMarker
@@ -111,11 +104,11 @@ object FUSProjectHotStartUpMeasurer {
   private fun reportViolation(violation: Violation) {
     val duration = getDurationFromStart()
     computeLocked {
-      if (this is StageHandler.Stage.IdeStarterStarted) {
+      if (this is Stage.IdeStarterStarted) {
         reportFirstUiShownEvent(splashBecameVisibleTime, duration)
         FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
       }
-      return@computeLocked StageHandler.Stage.Stopped
+      return@computeLocked Stage.Stopped
     }
   }
 
@@ -128,7 +121,7 @@ object FUSProjectHotStartUpMeasurer {
   fun reportWelcomeScreenShown() {
     val welcomeScreenDuration = getDurationFromStart()
     computeLocked {
-      if (this is StageHandler.Stage.IdeStarterStarted) {
+      if (this is Stage.IdeStarterStarted) {
         if (splashBecameVisibleTime == null) {
           WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration.getValueForFUS()), SPLASH_SCREEN_WAS_SHOWN.with(false))
         }
@@ -138,18 +131,18 @@ object FUSProjectHotStartUpMeasurer {
         }
         reportViolation(Violation.WelcomeScreenShown)
       }
-      return@computeLocked StageHandler.Stage.Stopped
+      return@computeLocked Stage.Stopped
     }
   }
 
   suspend fun reportProjectType(projectsType: ProjectsType) {
-    onElementSuspended {
+    onProperContext {
       computeLocked {
-        return@computeLocked if (this is StageHandler.Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
+        return@computeLocked if (this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
           this.copy(projectType = projectsType)
         }
         else {
-          StageHandler.Stage.Stopped
+          Stage.Stopped
         }
       }
     }
@@ -159,60 +152,60 @@ object FUSProjectHotStartUpMeasurer {
    * Reports the existence of project settings to filter cases of importing which may need more resources.
    */
   suspend fun reportProjectPath(projectFile: Path) {
-    onElementSuspended {
+    onProperContext {
       val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
       computeLocked {
-        return@computeLocked if (this is StageHandler.Stage.IdeStarterStarted && settingsExist == null) {
+        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist == null) {
           this.copy(settingsExist = hasSettings)
         }
         else {
-          StageHandler.Stage.Stopped
+          Stage.Stopped
         }
       }
     }
   }
 
   suspend fun resetProjectPath() {
-    onElementSuspended {
+    onProperContext {
       computeLocked {
-        return@computeLocked if (this is StageHandler.Stage.IdeStarterStarted && settingsExist != null) {
+        return@computeLocked if (this is Stage.IdeStarterStarted && settingsExist != null) {
           this.copy(settingsExist = null)
         }
         else {
-          StageHandler.Stage.Stopped
+          Stage.Stopped
         }
       }
     }
   }
 
   suspend fun openingMultipleProjects() {
-    onElementSuspended { reportViolation(Violation.MultipleProjects) }
+    onProperContext { reportViolation(Violation.MultipleProjects) }
   }
 
   suspend fun reportAlreadyOpenedProject() {
-    onElementSuspended { reportViolation(Violation.HasOpenedProject) }
+    onProperContext { reportViolation(Violation.HasOpenedProject) }
   }
 
   fun noProjectFound() {
-    onElement { reportViolation(Violation.NoProjectFound) }
+    reportViolation(Violation.NoProjectFound)
   }
 
   fun lightEditProjectFound() {
-    onElement { reportViolation(Violation.MightBeLightEditProject) }
+    reportViolation(Violation.MightBeLightEditProject)
   }
 
   suspend fun reportUriOpening() {
-    onElementSuspended { reportViolation(Violation.OpeningURI) }
+    onProperContext { reportViolation(Violation.OpeningURI) }
   }
 
   fun reportStarterUsed() {
-    onElement { reportViolation(Violation.ApplicationStarter) }
+    reportViolation(Violation.ApplicationStarter)
   }
 
   fun frameBecameVisible() {
     val duration = getDurationFromStart()
     computeLocked {
-      if (this is StageHandler.Stage.IdeStarterStarted) {
+      if (this is Stage.IdeStarterStarted) {
         reportFirstUiShownEvent(splashBecameVisibleTime, duration)
 
         if (settingsExist == null) {
@@ -226,39 +219,39 @@ object FUSProjectHotStartUpMeasurer {
         if (prematureFrameInteractive != null) {
           prematureFrameInteractive.log(duration)
           if (prematureEditorData != null) {
-            StageHandler.Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
-            return@computeLocked StageHandler.Stage.Stopped
+            Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
+            return@computeLocked Stage.Stopped
           }
           else {
-            return@computeLocked StageHandler.Stage.FrameInteractive(settingsExist)
+            return@computeLocked Stage.FrameInteractive(settingsExist)
           }
         }
         else {
-          return@computeLocked StageHandler.Stage.FrameVisible(prematureEditorData, settingsExist)
+          return@computeLocked Stage.FrameVisible(prematureEditorData, settingsExist)
         }
       }
-      return@computeLocked StageHandler.Stage.Stopped
+      return@computeLocked Stage.Stopped
     }
   }
 
   fun reportFrameBecameInteractive() {
     val duration = getDurationFromStart()
     computeLocked {
-      if (this is StageHandler.Stage.IdeStarterStarted && prematureFrameInteractive == null) {
-        return@computeLocked this.copy(prematureFrameInteractive = StageHandler.PrematureFrameInteractiveData)
+      if (this is Stage.IdeStarterStarted && prematureFrameInteractive == null) {
+        return@computeLocked this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
       }
-      else if (this is StageHandler.Stage.FrameVisible) {
-        StageHandler.PrematureFrameInteractiveData.log(duration)
+      else if (this is Stage.FrameVisible) {
+        PrematureFrameInteractiveData.log(duration)
         if (prematureEditorData != null) {
-          StageHandler.Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
-          return@computeLocked StageHandler.Stage.Stopped
+          Stage.EditorStage(prematureEditorData, settingsExist).log(duration)
+          return@computeLocked Stage.Stopped
         }
         else {
-          return@computeLocked StageHandler.Stage.FrameInteractive(settingsExist)
+          return@computeLocked Stage.FrameInteractive(settingsExist)
         }
       }
       else {
-        return@computeLocked StageHandler.Stage.Stopped
+        return@computeLocked Stage.Stopped
       }
     }
   }
@@ -275,27 +268,27 @@ object FUSProjectHotStartUpMeasurer {
 
     withContext(Dispatchers.Default) {
       computeLocked {
-        if (this is StageHandler.Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked StageHandler.Stage.Stopped
-        if (this is StageHandler.Stage.FrameVisible && prematureEditorData != null) return@computeLocked StageHandler.Stage.Stopped
+        if (this is Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked Stage.Stopped
+        if (this is Stage.FrameVisible && prematureEditorData != null) return@computeLocked Stage.Stopped
 
         val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
           markupResurrectedFileIds.contains(file.id)
         }
         val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
-        val editorStageData = StageHandler.PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
+        val editorStageData = PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
 
         return@computeLocked when (this) {
-          is StageHandler.Stage.IdeStarterStarted -> {
+          is Stage.IdeStarterStarted -> {
             this.copy(prematureEditorData = editorStageData)
           }
-          is StageHandler.Stage.FrameVisible -> {
+          is Stage.FrameVisible -> {
             this.copy(prematureEditorData = editorStageData)
           }
-          is StageHandler.Stage.FrameInteractive -> {
-            StageHandler.Stage.EditorStage(editorStageData, settingsExist).log(getDurationFromStart(durationMillis))
-            StageHandler.Stage.Stopped
+          is Stage.FrameInteractive -> {
+            Stage.EditorStage(editorStageData, settingsExist).log(getDurationFromStart(durationMillis))
+            Stage.Stopped
           }
-          else -> StageHandler.Stage.Stopped
+          else -> Stage.Stopped
         }
       }
     }
@@ -304,18 +297,18 @@ object FUSProjectHotStartUpMeasurer {
   fun firstOpenedEditor(project: Project, file: VirtualFile, elementToPass: CoroutineContext.Element?) {
     if (elementToPass != MyMarker) return
     service<MeasurerCoroutineService>().coroutineScope.launch(context = MyMarker) {
-      onElementSuspended {
+      onProperContext {
         reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
       }
     }
   }
 
   suspend fun firstOpenedUnknownEditor(project: Project, file: VirtualFile) {
-    onElementSuspended { reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor) }
+    onProperContext { reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor) }
   }
 
   suspend fun openedReadme(project: Project, readmeFile: VirtualFile) {
-    onElementSuspended { reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile) }
+    onProperContext { reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile) }
   }
 
   fun reportNoMoreEditorsOnStartup(project: Project, startUpContextElementToPass: CoroutineContext.Element?) {
@@ -323,21 +316,21 @@ object FUSProjectHotStartUpMeasurer {
       return
     }
     val durationMillis = System.nanoTime()
-    val noEditorStageData = StageHandler.PrematureEditorStageData.NoEditors(project)
+    val noEditorStageData = PrematureEditorStageData.NoEditors(project)
     computeLocked {
       return@computeLocked when (this) {
-        is StageHandler.Stage.Stopped -> StageHandler.Stage.Stopped
-        is StageHandler.Stage.IdeStarterStarted -> {
-          if (prematureEditorData != null) StageHandler.Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
+        is Stage.Stopped -> Stage.Stopped
+        is Stage.IdeStarterStarted -> {
+          if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
         }
-        is StageHandler.Stage.FrameVisible -> {
-          if (prematureEditorData != null) StageHandler.Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
+        is Stage.FrameVisible -> {
+          if (prematureEditorData != null) Stage.Stopped else this.copy(prematureEditorData = noEditorStageData)
         }
-        is StageHandler.Stage.FrameInteractive -> {
-          StageHandler.Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
-          StageHandler.Stage.Stopped
+        is Stage.FrameInteractive -> {
+          Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
+          Stage.Stopped
         }
-        else -> StageHandler.Stage.Stopped
+        else -> Stage.Stopped
       }
     }
   }
@@ -347,67 +340,64 @@ object FUSProjectHotStartUpMeasurer {
       get() = this
   }
 
-  private class StageHandler {
-    sealed interface Stage {
-      data object Initial : Stage
-      data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
+  private sealed interface Stage {
+    data object Initial : Stage
+    data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
 
-      data class IdeStarterStarted(
-        val splashBecameVisibleTime: Long? = null,
-        val projectType: ProjectsType = ProjectsType.Unknown,
-        val settingsExist: Boolean? = null,
-        val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
-        val prematureEditorData: PrematureEditorStageData? = null
-      ) : Stage
+    data class IdeStarterStarted(
+      val splashBecameVisibleTime: Long? = null,
+      val projectType: ProjectsType = ProjectsType.Unknown,
+      val settingsExist: Boolean? = null,
+      val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
+      val prematureEditorData: PrematureEditorStageData? = null
+    ) : Stage
 
-      data class FrameVisible(val prematureEditorData: PrematureEditorStageData? = null, val settingsExist: Boolean?) : Stage
-      data class FrameInteractive(val settingsExist: Boolean?) : Stage
+    data class FrameVisible(val prematureEditorData: PrematureEditorStageData? = null, val settingsExist: Boolean?) : Stage
+    data class FrameInteractive(val settingsExist: Boolean?) : Stage
 
-      data class EditorStage(val data: PrematureEditorStageData, val settingsExist: Boolean?) : Stage {
-        fun log(duration: Duration) {
-          val eventData = data.getEventData().add(DURATION.with(duration.getValueForFUS())).let { pairs ->
-            settingsExist?.let { pairs.add(HAS_SETTINGS.with(settingsExist)) } ?: pairs
-          }
-          CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data.project, eventData)
-        }
-      }
-
-      data object Stopped : Stage
-    }
-
-    data object PrematureFrameInteractiveData {
+    data class EditorStage(val data: PrematureEditorStageData, val settingsExist: Boolean?) : Stage {
       fun log(duration: Duration) {
-        FRAME_BECAME_INTERACTIVE_EVENT.log(duration.getValueForFUS())
+        val eventData = data.getEventData().add(DURATION.with(duration.getValueForFUS())).let { pairs ->
+          settingsExist?.let { pairs.add(HAS_SETTINGS.with(settingsExist)) } ?: pairs
+        }
+        CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data.project, eventData)
       }
     }
 
-    sealed interface PrematureEditorStageData {
-      val project: Project
-      fun getEventData(): PersistentList<EventPair<*>>
+    data object Stopped : Stage
+  }
 
-      data class FirstEditor(
-        override val project: Project,
-        val sourceOfSelectedEditor: SourceOfSelectedEditor,
-        val fileType: FileType,
-        val isMarkupLoaded: Boolean
-      ) : PrematureEditorStageData {
-        override fun getEventData(): PersistentList<EventPair<*>> {
-          return persistentListOf(
-            SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
-            NO_EDITORS_TO_OPEN_FIELD.with(false),
-            EventFields.FileType.with(fileType),
-            LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded)
-          )
-        }
-      }
+  private data object PrematureFrameInteractiveData {
+    fun log(duration: Duration) {
+      FRAME_BECAME_INTERACTIVE_EVENT.log(duration.getValueForFUS())
+    }
+  }
 
-      data class NoEditors(override val project: Project) : PrematureEditorStageData {
-        override fun getEventData(): PersistentList<EventPair<*>> {
-          return persistentListOf(NO_EDITORS_TO_OPEN_FIELD.with(true))
-        }
+  private sealed interface PrematureEditorStageData {
+    val project: Project
+    fun getEventData(): PersistentList<EventPair<*>>
+
+    data class FirstEditor(
+      override val project: Project,
+      val sourceOfSelectedEditor: SourceOfSelectedEditor,
+      val fileType: FileType,
+      val isMarkupLoaded: Boolean
+    ) : PrematureEditorStageData {
+      override fun getEventData(): PersistentList<EventPair<*>> {
+        return persistentListOf(
+          SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
+          NO_EDITORS_TO_OPEN_FIELD.with(false),
+          EventFields.FileType.with(fileType),
+          LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded)
+        )
       }
     }
 
+    data class NoEditors(override val project: Project) : PrematureEditorStageData {
+      override fun getEventData(): PersistentList<EventPair<*>> {
+        return persistentListOf(NO_EDITORS_TO_OPEN_FIELD.with(true))
+      }
+    }
   }
 }
 
