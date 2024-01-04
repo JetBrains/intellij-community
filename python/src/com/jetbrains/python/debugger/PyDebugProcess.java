@@ -274,6 +274,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected void detachDebuggedProcess() {
+    // We can get here because the debugger reader socket is closed, which means the debugger is exiting.
+    // Now we have to wait for the main debuggee process to finish. Otherwise, `XDebugSession` will terminate it,
+    // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
+    // This issue happens frequently with multiprocess debugging.
+    getProcessHandler().waitFor();
     handleStop(); //in case of normal debug we stop the session
   }
 
