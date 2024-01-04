@@ -88,7 +88,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
         val provider = ScriptDefinitionContributor.find<ScriptTemplatesFromDependenciesProvider>(project)
             ?: error("Cannot find ScriptTemplatesFromDependenciesProvider")
 
-        val (templates, classpath) = provider.getTemplateClassPath(roots.toList(), EmptyProgressIndicator())
+        val (templates, classpath) = provider.getTemplateClassPath(roots.toList())
 
         checkTemplateNames(fileText, templates)
         checkTemplateClasspath(fileText, classpath)
