@@ -66,21 +66,21 @@ class SettingTransferService : ExternalService {
   private fun CoroutineScope.loadIdeVersionsAsync(): Deferred<Map<String, ThirdPartyProductInfo>> {
     ideVersions?.let { return it }
     logger.info("Refreshing the transfer settings data provider.")
-    var versions = async {
+    val versions = async {
       config.dataProvider.run {
         refresh()
         orderedIdeVersions
           .filterIsInstance<IdeVersion>()
-          .map { version -> ThirdPartyProductInfo(version, async { loadIdeVersionSettingsAsync(version) }) }
-          .map { info -> info.product.id to info }
-          .toMap()
+          .map { version ->
+            ThirdPartyProductInfo(version, async { loadIdeVersionSettingsAsync(version) })
+          }.associateBy { info -> info.product.id }
       }
     }
     ideVersions = versions
     return versions
   }
 
-  private suspend fun CoroutineScope.loadIdeVersionSettingsAsync(version: IdeVersion): Settings =
+  private suspend fun loadIdeVersionSettingsAsync(version: IdeVersion): Settings =
     withSyncIOBackgroundContext {
       version.settingsCache
     }
@@ -143,7 +143,7 @@ class SettingTransferService : ExternalService {
 
   override fun getProductIcon(itemId: String,
                               size: IconProductSize): Icon? {
-    return logger.runAndLogException {
+    return logger.runAndLogException<Icon?> {
       val info = loadProductInfos()[itemId] ?: return null
       return info.product.transferableId.icon(size)
     }
