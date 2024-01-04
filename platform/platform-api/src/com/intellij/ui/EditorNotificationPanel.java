@@ -236,6 +236,33 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.EAST, myLastPanel);
   }
 
+  public static void wrapPanels(@NotNull List<EditorNotificationPanel> panels, @NotNull JPanel panel, @NotNull Status status) {
+    if (panels.isEmpty()) {
+      return;
+    }
+
+    Border border = ClientProperty.get(panels.get(0), FileEditorManager.SEPARATOR_BORDER);
+    if (border == null) {
+      for (EditorNotificationPanel editorPanel : panels) {
+        panel.add(editorPanel);
+      }
+    }
+    else {
+      panel.putClientProperty(FileEditorManager.SEPARATOR_BORDER, border);
+      for (int i = 0, size = panels.size(); i < size; i++) {
+        EditorNotificationPanel editorPanel = panels.get(i);
+        if (i == size - 1) {
+          panel.add(editorPanel);
+        }
+        else {
+          NonOpaquePanel wrapper = new NonOpaquePanel(editorPanel);
+          wrapper.setBorder(new SideBorder(status.border, SideBorder.BOTTOM));
+          panel.add(wrapper);
+        }
+      }
+    }
+  }
+
   private static @NotNull NamedBorder borderWithoutStatus() {
     return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()), BORDER_WITHOUT_STATUS);
   }
