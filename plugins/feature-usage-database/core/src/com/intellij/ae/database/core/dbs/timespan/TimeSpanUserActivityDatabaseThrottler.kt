@@ -35,9 +35,11 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
       }
     }
 
-    database.executeBeforeConnectionClosed {
-      commitChanges(true)
-      commitStaleEvents()
+    database.executeBeforeConnectionClosed { isFinal ->
+      if (isFinal) {
+        commitChanges(true)
+        commitStaleEvents()
+      }
     }
   }
 

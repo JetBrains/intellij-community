@@ -23,7 +23,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
 
     val lock = Mutex()
 
-    val onDatabaseDeath = mutableListOf<suspend () -> Unit>()
+    val onDatabaseDeath = mutableListOf<suspend (Boolean) -> Unit>()
     val fakeDatabase = object : IInternalCounterUserActivityDatabase {
       override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity,
                                         diff: Int,
@@ -33,7 +33,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         asserts(diff, instant, lock)
       }
 
-      override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+      override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
         onDatabaseDeath.add(action)
       }
     }
@@ -57,7 +57,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       lock.lock()
       println("Took ${Duration.between(submissionTime, Instant.now()).seconds} seconds to submit event")
       for (task in onDatabaseDeath) {
-        task()
+        task(true)
       }
       throttlerCoroutine.cancel()
     }
@@ -146,7 +146,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       override val id: String get() = "testActivity2"
     }
 
-    val onDatabaseDeath = mutableListOf<suspend () -> Unit>()
+    val onDatabaseDeath = mutableListOf<suspend (Boolean) -> Unit>()
 
     val expected = mapOf(
       myActivity1.id to 13,
@@ -164,7 +164,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           endedEvents[activity.id] = diff
         }
 
-        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+        override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
           onDatabaseDeath.add(action)
         }
       }
@@ -182,7 +182,7 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       submissionLock.lock()
 
       for (task in onDatabaseDeath) {
-        task()
+        task(true)
       }
 
       throttlerCoroutine.cancel()

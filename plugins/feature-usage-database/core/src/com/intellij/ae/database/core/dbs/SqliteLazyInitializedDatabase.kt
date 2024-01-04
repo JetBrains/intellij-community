@@ -52,7 +52,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   private val connectionAttempts = AtomicInteger(0)
   // private val lastAccessTime = MutableStateFlow<Long>(0)
   private val myConnection = AtomicReference<State>(State.NotInitialized)
-  private val actionsBeforeDatabaseDisposal = mutableListOf<suspend () -> Unit>()
+  private val actionsBeforeDatabaseDisposal = mutableListOf<suspend (isFinal: Boolean) -> Unit>()
 
   init {
     if (System.getProperty("ae.database.fullLock")?.toBoolean() == true) {
@@ -62,7 +62,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     cs.launch {
       while (true) {
         delay(6.minutes)
-        mainClosingLogic(15.seconds, "every 6 min")
+        mainClosingLogic(15.seconds, "every 6 min", false)
       }
     }
 
@@ -72,17 +72,18 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       }
       finally {
         withContext(NonCancellable) {
-          mainClosingLogic(6.seconds, "scope cancellation")
+          mainClosingLogic(6.seconds, "scope cancellation", true)
         }
       }
     }
   }
 
-  private suspend fun CoroutineScope.mainClosingLogic(timeout: Duration, reason: String) {
+  // TODO: isFinal - possible race on app close: "every 6 min" closer may start at the same time as "scope cancellation" closer
+  private suspend fun CoroutineScope.mainClosingLogic(timeout: Duration, reason: String, isFinal: Boolean) {
     logger.info("Starting saving database (reason: $reason)")
     try {
       withTimeout(timeout) {
-        closeDatabaseImpl()?.join()
+        closeDatabaseImpl(isFinal)?.join()
         logger.info("Saving completed (reason: $reason)")
       }
     }
@@ -92,25 +93,25 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
-  fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+  fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
     actionsBeforeDatabaseDisposal.add(action)
   }
 
   @VisibleForTesting
   suspend fun closeDatabase() {
     coroutineScope {
-      mainClosingLogic(16.seconds, "in test")
+      mainClosingLogic(16.seconds, "in test", true)
     }
   }
 
-  private fun closeDatabaseImpl(): Job? {
+  private fun closeDatabaseImpl(isFinal: Boolean): Job? {
     while (true) {
       when (val state = myConnection.get()) {
         is State.NotInitialized -> {
           return null
         }
         is State.Active -> {
-          val job = close(state)
+          val job = close(state, isFinal)
           val newState = State.Cancelling(state.def, job)
           if (myConnection.compareAndSet(state, newState)) {
             job.invokeOnCompletion {
@@ -132,9 +133,9 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
-  private suspend fun doExecuteBeforeConnectionClosed() {
+  private suspend fun doExecuteBeforeConnectionClosed(isFinal: Boolean) {
     for (action in actionsBeforeDatabaseDisposal) {
-      action()
+      action(isFinal)
     }
   }
 
@@ -204,13 +205,14 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private fun close(state: State.Active): Job {
+  private fun close(state: State.Active, isFinal: Boolean): Job {
     // service scope is dead at this point, need to use GlobalScope
+    // todo: not true on temp close
     return GlobalScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
       val kek = state.def.await()
       logger.info("close start")
       kek.connection.use {
-        doExecuteBeforeConnectionClosed()
+        doExecuteBeforeConnectionClosed(isFinal)
       }
       check(kek.connection.isClosed)
       logger.info("close end")

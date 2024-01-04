@@ -43,8 +43,10 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
       }
     }
 
-    database.executeBeforeConnectionClosed {
-      commitChanges()
+    database.executeBeforeConnectionClosed { isFinal ->
+      if (isFinal) {
+        commitChanges()
+      }
     }
   }
 

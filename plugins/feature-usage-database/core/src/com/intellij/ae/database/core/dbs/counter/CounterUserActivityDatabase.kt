@@ -77,7 +77,7 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
     }
   }
 
-  override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+  override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
     SqliteLazyInitializedDatabase.getInstance().executeBeforeConnectionClosed(action)
   }
 

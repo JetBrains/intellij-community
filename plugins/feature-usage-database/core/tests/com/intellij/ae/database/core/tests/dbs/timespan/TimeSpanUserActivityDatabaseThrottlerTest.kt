@@ -51,7 +51,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         return 0
       }
 
-      override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+      override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
         error("Called executeBeforeConnectionClosed which doesnt work in current test")
       }
     }
@@ -160,7 +160,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       override val id: String get() = "testActivity2"
     }
 
-    val onDatabaseDeath = mutableListOf<suspend () -> Unit>()
+    val onDatabaseDeath = mutableListOf<suspend (Boolean) -> Unit>()
 
     timeoutRunBlocking {
       val endedEvents = mutableListOf<String>()
@@ -176,7 +176,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           return 0
         }
 
-        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+        override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
           onDatabaseDeath.add(action)
         }
       }
@@ -194,7 +194,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       submissionLock.lock()
 
       for (task in onDatabaseDeath) {
-        task()
+        task(true)
       }
 
       throttlerCoroutine.cancel()
@@ -215,7 +215,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
     val eventTtl = Duration.ofMillis(30)
     val updateInterval = 10.milliseconds
 
-    val onDatabaseDeath = mutableListOf<suspend () -> Unit>()
+    val onDatabaseDeath = mutableListOf<suspend (Boolean) -> Unit>()
 
     timeoutRunBlocking {
       val endedEvents = mutableListOf<String>()
@@ -244,7 +244,7 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           return itemId
         }
 
-        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+        override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
           onDatabaseDeath.add(action)
         }
       }
