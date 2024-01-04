@@ -68,7 +68,7 @@ public final class ToolWindowCollector {
   static {
     for (String id : List.of(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, ANALYZE_DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES,
                              EXTRACT_METHOD,
-                             DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS",
+                             DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BEANS, BuildContentManager.TOOL_WINDOW_ID, "CVS",
                              BUILD_DEPENDENCIES)) {
       toolwindowAllowList.put(id, getPlatformPlugin());
     }

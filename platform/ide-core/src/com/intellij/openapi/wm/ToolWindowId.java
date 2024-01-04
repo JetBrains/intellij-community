@@ -43,5 +43,6 @@ public interface ToolWindowId {
   String PREVIEW = "Preview";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
+  String BEANS = "Beans";
   String MEET_NEW_UI = "Meet New UI";
 }
