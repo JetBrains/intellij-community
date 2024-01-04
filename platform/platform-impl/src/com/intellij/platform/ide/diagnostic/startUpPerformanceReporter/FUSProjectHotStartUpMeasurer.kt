@@ -30,6 +30,9 @@ import kotlin.time.toDuration
 @Internal
 object FUSProjectHotStartUpMeasurer {
   private val stageHandler: StageHandler = StageHandler()
+  private val stageLock = Object()
+  @Volatile
+  private var stage: StageHandler.Stage = StageHandler.Stage.Initial
 
   enum class ProjectsType {
     Reopened, FromFilesToLoad, FromArgs, Unknown
@@ -46,6 +49,22 @@ object FUSProjectHotStartUpMeasurer {
   private suspend fun onElementSuspended(block: suspend StageHandler.() -> Unit) {
     if (currentCoroutineContext()[MyMarker] != null) {
       stageHandler.block()
+    }
+  }
+
+  private fun computeLocked(checkIsInitialized: Boolean = true, block: StageHandler.Stage.() -> StageHandler.Stage) {
+    synchronized(stageLock) {
+      stage.apply {
+        if (checkIsInitialized && (this is StageHandler.Stage.Initial || this is StageHandler.Stage.SplashScreenShownBeforeIdeStarter)) {
+          stage = StageHandler.Stage.Stopped
+        }
+      }
+      if (stage !== StageHandler.Stage.Stopped) {
+        stage = stage.block()
+      }
+      if (stage === StageHandler.Stage.Stopped) {
+        synchronized(stageHandler.markupResurrectedFileIds) { stageHandler.markupResurrectedFileIds.clear() }
+      }
     }
   }
 
@@ -158,7 +177,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private class StageHandler {
-    private sealed interface Stage {
+    sealed interface Stage {
       data object Initial : Stage
       data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
 
@@ -218,29 +237,7 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    private val stageLock = Object()
-
-    @Volatile
-    private var stage: Stage = Stage.Initial
-
-    private val markupResurrectedFileIds = IntOpenHashSet()
-
-    private fun computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> Stage) {
-      synchronized(stageLock) {
-        stage.apply {
-          if (checkIsInitialized && (this is Stage.Initial || this is Stage.SplashScreenShownBeforeIdeStarter)) {
-            stage = Stage.Stopped
-            synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
-          }
-        }
-        if (stage !== Stage.Stopped) {
-          stage = stage.block()
-        }
-        if (stage === Stage.Stopped) {
-          synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
-        }
-      }
-    }
+    val markupResurrectedFileIds = IntOpenHashSet()
 
     fun ideStarterStarted() {
       computeLocked(false) {
