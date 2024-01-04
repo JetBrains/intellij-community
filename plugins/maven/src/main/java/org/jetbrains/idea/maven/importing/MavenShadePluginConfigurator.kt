@@ -16,7 +16,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
@@ -120,9 +120,10 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
     val baseDirsToMavenProjects = MavenUtil.groupByBasedir(shadedMavenProjects, projectsManager.projectsTree)
 
     val embeddersManager = projectsManager.embeddersManager
+    val syncConsole = projectsManager.syncConsole
 
     for (baseDir in baseDirsToMavenProjects.keySet()) {
-      packageJarsForBaseDir(project, embeddersManager, baseDirsToMavenProjects[baseDir], baseDir)
+      packageJarsForBaseDir(project, embeddersManager, syncConsole, baseDirsToMavenProjects[baseDir], baseDir)
     }
 
     val filesToRefresh = shadedMavenProjects.map { Path.of(it.buildDirectory) }
@@ -131,6 +132,7 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
 
   private fun packageJarsForBaseDir(project: Project,
                                     embeddersManager: MavenEmbeddersManager,
+                                    mavenEventHandler: MavenEventHandler,
                                     mavenProjects: Collection<MavenProject>,
                                     baseDir: String) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
@@ -148,7 +150,7 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
     runBlockingMaybeCancellable {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
         withRawProgressReporter {
-          embedder.executeGoal(requests, "package", rawProgressReporter!!, MavenLogEventHandler)
+          embedder.executeGoal(requests, "package", rawProgressReporter!!, mavenEventHandler)
         }
       }
     }
