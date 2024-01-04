@@ -1,20 +1,20 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Requirements.txt"
-              implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
+              implementationClass="com.intellij.python.community.impl.requirements.RequirementsFileType"
               fieldName="INSTANCE"
               language="Requirements"
               fileNamesCaseInsensitive="requirements.txt"/>
-    <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
+    <fileTypeOverrider implementation="com.intellij.python.community.impl.requirements.RequirementsFileTypeOverrider"/>
     <lang.parserDefinition
       language="Requirements"
-      implementationClass="com.jetbrains.python.requirements.RequirementsParserDefinition"/>
+      implementationClass="com.intellij.python.community.impl.requirements.RequirementsParserDefinition"/>
     <lang.syntaxHighlighterFactory
       language="Requirements"
-      implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
+      implementationClass="com.intellij.python.community.impl.requirements.RequirementsSyntaxHighlighterFactory"/>
     <completion.contributor language="Requirements"
-                            implementationClass="com.jetbrains.python.requirements.RequirementsPackageNameCompletionContributor"/>
+                            implementationClass="com.intellij.python.community.impl.requirements.RequirementsPackageNameCompletionContributor"/>
     <completion.contributor language="Requirements"
-                            implementationClass="com.jetbrains.python.requirements.RequirementsVersionCompletionContributor"/>
+                            implementationClass="com.intellij.python.community.impl.requirements.RequirementsVersionCompletionContributor"/>
   </extensions>
 </idea-plugin>
