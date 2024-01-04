@@ -64,7 +64,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           || oldExtensions.isOutdated
           || includeIgnored) {
         @Suppress("DEPRECATION")
-        extensionService.dependencies.set(PluginFeatureMap(
+        extensionService.extensions.set(PluginFeatureMap(
           featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
           lastUpdateTime = if (oldExtensions != null) System.currentTimeMillis() else 0L,
         ))
