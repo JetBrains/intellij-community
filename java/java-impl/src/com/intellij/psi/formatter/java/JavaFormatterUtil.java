@@ -511,7 +511,10 @@ public final class JavaFormatterUtil {
     if (current.getElementType() != JavaElementType.ANNOTATION || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
     while (true) {
       current = FormatterUtil.getPreviousNonWhitespaceSibling(current);
-      if (current instanceof PsiKeyword) return true;
+      if (current instanceof PsiKeyword) {
+        ASTNode grandParent = parent.getTreeParent();
+        return grandParent != null && grandParent.getElementType() == JavaElementType.METHOD;
+      }
       else if (current == null || current.getElementType() != JavaElementType.ANNOTATION) break;
     }
     return false;

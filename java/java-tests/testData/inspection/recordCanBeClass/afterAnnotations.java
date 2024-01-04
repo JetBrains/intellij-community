@@ -54,8 +54,7 @@ final class R implements F3 {
         return f1;
     }
 
-    public @TypeUse(2)
-    @TypeUse2(2) int f2() {
+    public @TypeUse(2) @TypeUse2(2) int f2() {
         return f2;
     }
 
