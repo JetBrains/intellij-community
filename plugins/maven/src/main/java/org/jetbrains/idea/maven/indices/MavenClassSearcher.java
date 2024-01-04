@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
@@ -23,16 +22,13 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
     String patternForQuery = preparePattern(pattern);
 
-    MavenIndicesManager m = MavenIndicesManager.getInstance(project);
-    Set<MavenArtifactInfo> infos = m.getIndex()
-      .getIndices().stream()
-      .flatMap(i -> i.search(patternForQuery, 50).stream())
-      .collect(Collectors.toSet());
+    Set<MavenArtifactInfo> infos = MavenIndicesManager.getInstance(project).searchForClass(patternForQuery);
 
     ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternForQuery, maxResult));
     results.sort(Comparator.comparing(MavenClassSearchResult::getClassName));
     return results;
   }
+
 
   private static String preparePattern(String pattern) {
     pattern = pattern.toLowerCase();
@@ -112,7 +108,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
         }
         else {
           List<String> versions = ContainerUtil.append(ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion()),
-          each.getVersion());
+                                                       each.getVersion());
           MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             versions);

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
@@ -41,6 +42,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -245,6 +247,15 @@ public final class MavenIndicesManager implements Disposable {
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
     myIndexUpdateManager.scheduleUpdateIndicesList(myProject, consumer);
   }
+
+  @NotNull
+  public Set<MavenArtifactInfo> searchForClass(String patternForQuery) {
+    return this.getIndex()
+      .getIndices().stream()
+      .flatMap(i -> i.search(patternForQuery, 50).stream())
+      .collect(Collectors.toSet());
+  }
+
 
   @NotNull
   private static Path getUserArchetypesFile() {
