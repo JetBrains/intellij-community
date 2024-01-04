@@ -39,7 +39,6 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import kotlin.time.TimeSource.Monotonic.markNow
 
 internal class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project
@@ -170,7 +169,6 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                               filters: VcsLogFilterCollection,
                               commitCount: CommitCountStage): VisiblePack {
       val isFastStart = commitCount == CommitCountStage.INITIAL && fileHistoryHandler.isFastStartSupported
-      val start = markNow()
 
       val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
@@ -181,11 +179,6 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       else {
         createFileHistoryTask(fileHistoryHandler, root, filePath, hash, commitCount == CommitCountStage.FIRST_STEP)
           .waitForRevisions(100)
-      }
-
-      val finish = start.elapsedNow()
-      FileHistoryPerformanceListener.EP_NAME.extensionList.forEach {
-        it.onFileHistoryFinished(project, root, filePath, finish)
       }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
