@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.jetbrains.intellij.platform"
-version = "0.0.6"
+version = "0.0.7"
 
 repositories {
   mavenCentral()
@@ -16,6 +16,12 @@ repositories {
 
 kotlin {
   jvmToolchain(17)
+}
+
+tasks.withType(Jar::class) {
+  manifest {
+    attributes["Codegen-Api-Version"] = version
+  }
 }
 
 publishing {
