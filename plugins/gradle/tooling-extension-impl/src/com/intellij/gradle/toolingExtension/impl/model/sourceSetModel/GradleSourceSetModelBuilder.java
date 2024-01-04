@@ -226,7 +226,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   /**
    * Check the configured archive task inputs for specific files.
    * <p>
-   * We want to check, if IDEA is interested in keeping this archive task output in dependencies list
+   * We want to check if IDEA is interested in keeping this archive task output in the dependency list
    * <br>
    * This may happen if <ul>
    * <li>there are some class files
@@ -234,7 +234,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
    *
    * @param archiveTask task to check
    * @param project     project with source sets, potentially contributing to this task.
-   * @return true if this jar should be kept in IDEA modules' dependencies' lists.
+   * @return true if this jar should be kept in IDEA modules dependency lists.
    */
   private static boolean containsPotentialClasspathElements(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
     SourceSetContainer sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project);
@@ -277,14 +277,15 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return outputFiles.isEmpty();
   }
 
-  private static Set<Object> getArchiveTaskSourcePaths(AbstractArchiveTask archiveTask) throws RuntimeException {
+  private static Set<Object> getArchiveTaskSourcePaths(AbstractArchiveTask archiveTask) {
     try {
       final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
       mainSpecGetter.setAccessible(true);
       Object mainSpec = mainSpecGetter.invoke(archiveTask);
       Method getSourcePaths = mainSpec.getClass().getMethod("getSourcePaths");
 
-      @SuppressWarnings("unchecked") Set<Object> sourcePaths = (Set<Object>)getSourcePaths.invoke(mainSpec);
+      @SuppressWarnings("unchecked")
+      Set<Object> sourcePaths = (Set<Object>)getSourcePaths.invoke(mainSpec);
       if (sourcePaths != null) {
         return sourcePaths;
       }
@@ -292,7 +293,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         return Collections.emptySet();
       }
     }
-    catch (Throwable t) {
+    catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException ignored) {
       return Collections.emptySet();
     }
   }
@@ -315,7 +316,6 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   /**
    * Checks that object can be safely resolved using {@link Project#files(Object...)} API.
    *
-   * @param object
    * @return true if object is safe to resolve using {@link Project#files(Object...)}
    * @see GradleSourceSetModelBuilder#tryUnpackPresentProvider
    */
@@ -331,9 +331,9 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   }
 
   /**
-   * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
+   * Some Gradle {@link org.gradle.api.provider.Provider} implementations cannot be resolved during sync,
    * causing {@link org.gradle.api.InvalidUserCodeException} and {@link org.gradle.api.InvalidUserDataException}.
-   * Also some {@link org.gradle.api.provider.Provider} attempts to resolve dynamic
+   * Also, some {@link org.gradle.api.provider.Provider} attempts to resolve dynamic
    * configurations, witch results in resolving a configuration without write lock on the project.
    *
    * @return provided value or current if value isn't present or cannot be evaluated
@@ -351,7 +351,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
       return object;
     }
-    catch (InvocationTargetException|NoSuchMethodException | IllegalAccessException exception) {
+    catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException exception) {
       Throwable cause = exception.getCause();
       boolean isCodeException = dynamicCheckInstanceOf(cause, "org.gradle.api.InvalidUserCodeException");
       boolean isDataException = dynamicCheckInstanceOf(cause, "org.gradle.api.InvalidUserDataException");
