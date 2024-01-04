@@ -405,7 +405,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolutionParentPathOutsideTheProject() = runBlocking {
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/org/example/1.0/example-1.0.pom")
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/org/example/example/1.0/example-1.0.pom")
 
     val relativePathUnixSeparator =
       FileUtil.getRelativePath(File(projectRoot.getPath()), File(filePath))!!.replace("\\\\".toRegex(), "/")
