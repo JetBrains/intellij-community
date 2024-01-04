@@ -4,7 +4,6 @@
 package com.intellij.webSymbols.context.impl
 
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
@@ -410,7 +409,7 @@ private val Project.contextInfo
   get() = service<WebSymbolsContextDiscoveryInfo>()
 
 @Service(Service.Level.PROJECT)
-private class WebSymbolsContextDiscoveryInfo(private val project: Project): Disposable {
+private class WebSymbolsContextDiscoveryInfo(private val project: Project) {
 
   private val previousContext = ConcurrentHashMap<ContextKind, MutableMap<VirtualFile, String>>()
   private val proximityCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, MutableMap<Pair<ContextKind, ContextName>, CachedValue<Int?>>>()
@@ -442,6 +441,4 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project): Disp
         CachedValueProvider.Result.create(result, result.dependencies)
       }
     }.value
-
-  override fun dispose() {}
 }
