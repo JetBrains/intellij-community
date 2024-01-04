@@ -293,7 +293,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
             container.bodyExpression.sure { "Original body is not found: $container" }
 
-            expression.putCopyableUserData(EXPRESSION_KEY, true)
+            expression.substringContextOrThis.putCopyableUserData(EXPRESSION_KEY, true)
 
             val convertToBlockBodyContext = analyzeInModalWindow(container, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                 ConvertToBlockBodyUtils.createContext(
@@ -315,12 +315,19 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             )
 
             val newExpression = newContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
+                ?.getSubstringExpressionOrThis(expression)
 
             runRefactoring(
                 isVar,
                 newExpression ?: return,
                 newContainer,
             )
+        }
+
+        private fun KtExpression.getSubstringExpressionOrThis(oldExpression: KtExpression): KtExpression {
+            val oldSubstringInfo = oldExpression.extractableSubstringInfo ?: return this
+            val newSubstringInfo = oldSubstringInfo.copy(this as KtStringTemplateExpression)
+            return newSubstringInfo.createExpression()
         }
     }
 

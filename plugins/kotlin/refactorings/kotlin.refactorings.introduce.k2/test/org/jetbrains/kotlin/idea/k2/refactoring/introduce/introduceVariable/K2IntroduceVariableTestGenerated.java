@@ -526,6 +526,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_int.kt");
         }
 
+        @TestMetadata("kt38449_substring.kt")
+        public void testKt38449_substring() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_substring.kt");
+        }
+
+        @TestMetadata("kt38449_substrings.kt")
+        public void testKt38449_substrings() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_substrings.kt");
+        }
+
         @TestMetadata("kt38449_unit.kt")
         public void testKt38449_unit() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_unit.kt");

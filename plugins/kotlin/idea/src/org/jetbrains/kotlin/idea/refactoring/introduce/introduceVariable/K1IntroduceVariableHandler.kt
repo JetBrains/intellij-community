@@ -297,7 +297,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
             commonContainer.bodyExpression.sure { "Original body is not found: $commonContainer" }
 
-            expression.putCopyableUserData(EXPRESSION_KEY, true)
+            expression.substringContextOrThis.putCopyableUserData(EXPRESSION_KEY, true)
             for (replace in allReplaces) {
                 replace.substringContextOrThis.putCopyableUserData(REPLACE_KEY, true)
             }
@@ -308,12 +308,11 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val newCommonContainer = newDeclaration.bodyBlockExpression.sure { "New body is not found: $newDeclaration" }
 
             val newExpression = newCommonContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
+                ?.getSubstringExpressionOrThis(expression)
             val newCommonParent = newCommonContainer.findElementByCopyableDataAndClearIt(COMMON_PARENT_KEY)
             val newAllReplaces = (allReplaces zip newCommonContainer.findExpressionsByCopyableDataAndClearIt(REPLACE_KEY)).map {
                 val (originalReplace, newReplace) = it
-                originalReplace.extractableSubstringInfo?.let {
-                    originalReplace.apply { extractableSubstringInfo = it.copy(newReplace as KtStringTemplateExpression) }
-                } ?: newReplace
+                newReplace.getSubstringExpressionOrThis(originalReplace)
             }
 
             runRefactoring(
@@ -323,6 +322,12 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 newCommonParent ?: return,
                 newAllReplaces
             )
+        }
+
+        private fun KtExpression.getSubstringExpressionOrThis(oldExpression: KtExpression): KtExpression {
+            val oldSubstringInfo = oldExpression.extractableSubstringInfo ?: return this
+            val newSubstringInfo = oldSubstringInfo.copy(this as KtStringTemplateExpression)
+            return newSubstringInfo.createExpression()
         }
     }
 
