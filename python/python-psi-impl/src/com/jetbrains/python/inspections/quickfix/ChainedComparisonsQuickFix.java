@@ -54,7 +54,7 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     final PyBinaryExpression expression = as(element, PyBinaryExpression.class);
-    if (isLogicalAndExpression(expression) && expression.isWritable()) {
+    if (isLogicalAndExpression(expression)) {
       final PyBinaryExpression rightExpression = as(expression.getRightExpression(), PyBinaryExpression.class);
       PyBinaryExpression leftExpression = as(expression.getLeftExpression(), PyBinaryExpression.class);
       if (isLogicalAndExpression(leftExpression)) {
