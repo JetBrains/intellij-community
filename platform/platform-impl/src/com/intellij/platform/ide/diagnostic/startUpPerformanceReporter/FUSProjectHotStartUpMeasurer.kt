@@ -140,12 +140,12 @@ object FUSProjectHotStartUpMeasurer {
 
   private object FUSStartupReopenProjectMarkerElement : CoroutineContext.Element, CoroutineContext.Key<FUSStartupReopenProjectMarkerElement> {
     private sealed interface Stage {
-      data class VeryBeginning(val initialized: Boolean = false,
-                               val splashBecameVisibleTime: Long? = null,
-                               val projectType: ProjectsType = ProjectsType.Unknown,
-                               val settingsExist: Boolean? = null,
-                               val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
-                               val prematureEditorData: PrematureEditorStageData? = null) : Stage
+      data class IdeStarterStarted(val initialized: Boolean = false,
+                                   val splashBecameVisibleTime: Long? = null,
+                                   val projectType: ProjectsType = ProjectsType.Unknown,
+                                   val settingsExist: Boolean? = null,
+                                   val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
+                                   val prematureEditorData: PrematureEditorStageData? = null) : Stage
 
       data class FrameVisible(val prematureEditorData: PrematureEditorStageData? = null, val settingsExist: Boolean?) : Stage
       data class FrameInteractive(val settingsExist: Boolean?) : Stage
@@ -194,7 +194,7 @@ object FUSProjectHotStartUpMeasurer {
     private val stageLock = Object()
 
     @Volatile
-    private var stage: Stage = Stage.VeryBeginning()
+    private var stage: Stage = Stage.IdeStarterStarted()
 
     private val markupResurrectedFileIds = IntOpenHashSet()
 
@@ -204,7 +204,7 @@ object FUSProjectHotStartUpMeasurer {
     private fun <T> computeLocked(checkIsInitialized: Boolean = true, block: Stage.() -> T): T {
       synchronized(stageLock) {
         stage.apply {
-          if (checkIsInitialized && this is Stage.VeryBeginning && !initialized) {
+          if (checkIsInitialized && this is Stage.IdeStarterStarted && !initialized) {
             stage = Stage.Stopped
             synchronized(markupResurrectedFileIds) { markupResurrectedFileIds.clear() }
           }
@@ -215,7 +215,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun initialize() {
       computeLocked(false) {
-        if (this is Stage.VeryBeginning && !initialized) {
+        if (this is Stage.IdeStarterStarted && !initialized) {
           stage = this.copy(initialized = true)
         }
         else {
@@ -229,7 +229,7 @@ object FUSProjectHotStartUpMeasurer {
       // This may happen before we know about particulars in com.intellij.idea.IdeStarter.startIDE,
       // where initialization of FUSStartupReopenProjectMarkerElement happens.
       computeLocked(false) {
-        if (this is Stage.VeryBeginning && splashBecameVisibleTime == null) {
+        if (this is Stage.IdeStarterStarted && splashBecameVisibleTime == null) {
           stage = this.copy(splashBecameVisibleTime = nanoTime)
         }
       }
@@ -237,7 +237,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun reportViolation(violation: Violation) {
       computeLocked {
-        if (this is Stage.VeryBeginning) {
+        if (this is Stage.IdeStarterStarted) {
           reportViolation(getDuration(), violation, splashBecameVisibleTime)
         }
       }
@@ -246,7 +246,7 @@ object FUSProjectHotStartUpMeasurer {
     fun reportWelcomeScreenShown() {
       val welcomeScreenDuration = getDuration()
       computeLocked {
-        if (this !is Stage.VeryBeginning) return@computeLocked
+        if (this !is Stage.IdeStarterStarted) return@computeLocked
         if (splashBecameVisibleTime == null) {
           WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreenDuration), SPLASH_SCREEN_WAS_SHOWN.with(false))
         }
@@ -260,7 +260,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun reportProjectType(projectsType: ProjectsType) {
       computeLocked {
-        if (this is Stage.VeryBeginning && projectType == ProjectsType.Unknown) {
+        if (this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown) {
           stage = this.copy(projectType = projectsType)
         }
       }
@@ -268,7 +268,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun reportProjectSettings(exist: Boolean) {
       computeLocked {
-        if (this is Stage.VeryBeginning && settingsExist == null) {
+        if (this is Stage.IdeStarterStarted && settingsExist == null) {
           stage = this.copy(settingsExist = exist)
         }
       }
@@ -276,7 +276,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun resetProjectSettings() {
       computeLocked {
-        if (this is Stage.VeryBeginning && settingsExist != null) {
+        if (this is Stage.IdeStarterStarted && settingsExist != null) {
           stage = this.copy(settingsExist = null)
         }
       }
@@ -284,7 +284,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun reportFrameBecameVisible() {
       computeLocked {
-        if (this !is Stage.VeryBeginning) {
+        if (this !is Stage.IdeStarterStarted) {
           return@computeLocked
         }
         val duration = getDuration()
@@ -330,7 +330,7 @@ object FUSProjectHotStartUpMeasurer {
 
     fun reportFrameBecameInteractive() {
       computeLocked {
-        if (this is Stage.VeryBeginning && prematureFrameInteractive == null) {
+        if (this is Stage.IdeStarterStarted && prematureFrameInteractive == null) {
           stage = this.copy(prematureFrameInteractive = PrematureFrameInteractiveData)
         }
         else if (this is Stage.FrameVisible) {
@@ -358,7 +358,7 @@ object FUSProjectHotStartUpMeasurer {
       withContext(Dispatchers.Default) {
         computeLocked {
           if (this is Stage.Stopped) return@computeLocked
-          if (this is Stage.VeryBeginning && prematureEditorData != null) return@computeLocked
+          if (this is Stage.IdeStarterStarted && prematureEditorData != null) return@computeLocked
           if (this is Stage.FrameVisible && prematureEditorData != null) return@computeLocked
 
           val isMarkupLoaded = isMarkupLoaded(file)
@@ -366,7 +366,7 @@ object FUSProjectHotStartUpMeasurer {
           val editorStageData = PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
 
           when (this) {
-            is Stage.VeryBeginning -> {
+            is Stage.IdeStarterStarted -> {
               stage = this.copy(prematureEditorData = editorStageData)
             }
             is Stage.FrameVisible -> {
@@ -399,7 +399,7 @@ object FUSProjectHotStartUpMeasurer {
       computeLocked {
         when (this) {
           is Stage.Stopped -> return@computeLocked
-          is Stage.VeryBeginning -> {
+          is Stage.IdeStarterStarted -> {
             if (prematureEditorData != null) return@computeLocked
             stage = this.copy(prematureEditorData = noEditorStageData)
           }
