@@ -12,14 +12,14 @@
   <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Enable command-line language -->
-  <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/command-line-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Requirements.txt support -->
   <xi:include href="/META-INF/python-requirements-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <content>
-    <module name="intellij.python.community.impl/poetry"/>
-  </content>
+  <!-- Poetry -->
+  <depends optional="true" config-file="python-poetry-plugin.xml">org.toml.lang</depends>
+
 
   <projectListeners>
     <listener
