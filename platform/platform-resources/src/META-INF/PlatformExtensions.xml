@@ -1812,8 +1812,6 @@
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
-    <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTemplateListener"
