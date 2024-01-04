@@ -137,6 +137,11 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |  public void test_assert_not_null() {
         |    Assertions.assertNotNull(null);
         |  }
+        |  
+        |  @Test
+        |  public void test_assert_fail_with_massage() {
+        |    Assertions.fail("assertion message");
+        |  }
         |}
       """.trimMargin())
 
@@ -269,6 +274,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               |
               |org.opentest4j.AssertionFailedError: expected: not <null>
             """.trimMargin())
+          }
+          assertNode("test assert fail with massage") {
+            assertTestConsoleContains("""
+              |assertion message
+              |org.opentest4j.AssertionFailedError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              Assertions.assertEquals("assertion message", testProxy.errorMessage)
+            }
           }
         }
       }
@@ -738,6 +752,11 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |      throw new AssertionError("additional message", error);
         |    }
         |  }
+        |  
+        |  @Test
+        |  public void test_assert_fail_with_message() {
+        |    Assert.fail("assertion message");
+        |  }
         |}
       """.trimMargin())
 
@@ -818,6 +837,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             assertTestConsoleContains("""
               |org.junit.ComparisonFailure: assertion message expected:<[expected] text> but was:<[actual] text>
             """.trimMargin())
+          }
+          assertNode("test_assert_fail_with_message") {
+            assertTestConsoleContains("""
+              |assertion message
+              |java.lang.AssertionError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              Assertions.assertEquals("assertion message", testProxy.errorMessage)
+            }
           }
         }
       }

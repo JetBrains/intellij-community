@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
 import com.intellij.openapi.externalSystem.model.task.event.TestFailure
-import com.intellij.openapi.util.text.StringUtil
 import java.nio.file.Path
 import kotlin.io.path.readText
 
@@ -37,9 +36,6 @@ object GradleAssertionTestEventConverter {
         expected.text, actual.text,
         expected.path, actual.path
       )
-    }
-    else if (message != null && stackTrace != null && StringUtil.contains(stackTrace, message)) {
-      return TestFailure(exceptionName, null, stackTrace, description, causes, isTestError)
     }
     else {
       return TestFailure(exceptionName, message, stackTrace, description, causes, isTestError)
