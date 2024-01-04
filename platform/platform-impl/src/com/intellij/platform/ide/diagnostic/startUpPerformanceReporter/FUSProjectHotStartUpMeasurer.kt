@@ -145,11 +145,13 @@ object FUSProjectHotStartUpMeasurer {
       data object Initial : Stage
       data class SplashScreenShownBeforeIdeStarter(val splashBecameVisibleTime: Long) : Stage
 
-      data class IdeStarterStarted(val splashBecameVisibleTime: Long? = null,
-                                   val projectType: ProjectsType = ProjectsType.Unknown,
-                                   val settingsExist: Boolean? = null,
-                                   val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
-                                   val prematureEditorData: PrematureEditorStageData? = null) : Stage
+      data class IdeStarterStarted(
+        val splashBecameVisibleTime: Long? = null,
+        val projectType: ProjectsType = ProjectsType.Unknown,
+        val settingsExist: Boolean? = null,
+        val prematureFrameInteractive: PrematureFrameInteractiveData? = null,
+        val prematureEditorData: PrematureEditorStageData? = null
+      ) : Stage
 
       data class FrameVisible(val prematureEditorData: PrematureEditorStageData? = null, val settingsExist: Boolean?) : Stage
       data class FrameInteractive(val settingsExist: Boolean?) : Stage
@@ -176,15 +178,19 @@ object FUSProjectHotStartUpMeasurer {
       val project: Project
       fun getEventData(): PersistentList<EventPair<*>>
 
-      data class FirstEditor(override val project: Project,
-                             val sourceOfSelectedEditor: SourceOfSelectedEditor,
-                             val fileType: FileType,
-                             val isMarkupLoaded: Boolean) : PrematureEditorStageData {
+      data class FirstEditor(
+        override val project: Project,
+        val sourceOfSelectedEditor: SourceOfSelectedEditor,
+        val fileType: FileType,
+        val isMarkupLoaded: Boolean
+      ) : PrematureEditorStageData {
         override fun getEventData(): PersistentList<EventPair<*>> {
-          return persistentListOf(SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
-                                  NO_EDITORS_TO_OPEN_FIELD.with(false),
-                                  EventFields.FileType.with(fileType),
-                                  LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded))
+          return persistentListOf(
+            SOURCE_OF_SELECTED_EDITOR_FIELD.with(sourceOfSelectedEditor),
+            NO_EDITORS_TO_OPEN_FIELD.with(false),
+            EventFields.FileType.with(fileType),
+            LOADED_CACHED_MARKUP_FIELD.with(isMarkupLoaded)
+          )
         }
       }
 
@@ -327,9 +333,11 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    private fun reportViolation(duration: Duration,
-                                violation: Violation,
-                                splashBecameVisibleTime: Long?) {
+    private fun reportViolation(
+      duration: Duration,
+      violation: Violation,
+      splashBecameVisibleTime: Long?
+    ) {
       reportFirstUiShownEvent(splashBecameVisibleTime, duration)
       FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
       stopReporting()
@@ -488,7 +496,8 @@ private val LOADED_CACHED_MARKUP_FIELD = EventFields.Boolean("loaded_cached_mark
 private val SOURCE_OF_SELECTED_EDITOR_FIELD: EnumEventField<SourceOfSelectedEditor> =
   EventFields.Enum("source_of_selected_editor", SourceOfSelectedEditor::class.java)
 private val NO_EDITORS_TO_OPEN_FIELD = EventFields.Boolean("no_editors_to_open")
-private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor", DURATION,
+private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor",
+                                                                                DURATION,
                                                                                 EventFields.FileType,
                                                                                 HAS_SETTINGS,
                                                                                 LOADED_CACHED_MARKUP_FIELD,
