@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -62,7 +63,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
       runnable.run();
     }
     else {
-      getOrCreateCachedValueProvider(virtualFile).scheduleWhenComputed(runnable);
+      getOrCreateCachedValueProvider(virtualFile).scheduleWhenComputed(ClientId.decorateRunnable(runnable));
     }
   }
 
