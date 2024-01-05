@@ -139,25 +139,6 @@ public class GitConflictResolver {
   }
 
   /**
-   * This is executed from {@link #merge()} if the initial check tells that there is nothing to merge.
-   * In the basic implementation no action is performed, {@code true} is returned.
-   * @return Return value is returned from {@link #merge()}
-   */
-  protected boolean proceedIfNothingToMerge() throws VcsException {
-    return true;
-  }
-
-  /**
-   * This is executed from {@link #merge()} after all conflicts are resolved.
-   * In the basic implementation no action is performed, {@code true} is returned.
-   * @return Return value is returned from {@link #merge()}
-   */
-  @RequiresBackgroundThread
-  protected boolean proceedAfterAllMerged() throws VcsException {
-    return true;
-  }
-
-  /**
    * Invoke the merge dialog, but execute nothing after merge is completed.
    */
   @RequiresBackgroundThread
@@ -173,34 +154,6 @@ public class GitConflictResolver {
         mergeNoProceed();
       }
     }.queue();
-  }
-
-  /**
-   * Shows notification that not all conflicts were resolved.
-   */
-  protected void notifyUnresolvedRemain() {
-    notifyWarning(myParams.myErrorNotificationTitle,
-                  GitBundle.message("merge.unresolved.conflicts.remaining.notification.body") +
-                  myParams.myErrorNotificationAdditionalDescription);
-  }
-
-  /**
-   * Shows notification that some conflicts were still not resolved - after user invoked the conflict resolver by pressing the link on the
-   * notification.
-   */
-  private void notifyUnresolvedRemainAfterNotification() {
-    notifyWarning(GitBundle.message("merge.unresolved.conflicts.remaining.notification.title"),
-                  myParams.myErrorNotificationAdditionalDescription);
-  }
-
-  protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING);
-    notification.setDisplayId(CANNOT_RESOLVE_CONFLICT);
-    notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
-      notification.expire();
-      mergeNoProceedInBackground();
-    }));
-    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
@@ -241,6 +194,55 @@ public class GitConflictResolver {
       AbstractVcsHelper.getInstance(myProject)
         .showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
     });
+  }
+
+  /**
+   * This is executed from {@link #merge()} if the initial check tells that there is nothing to merge.
+   * In the basic implementation no action is performed, {@code true} is returned.
+   *
+   * @return Return value is returned from {@link #merge()}
+   */
+  protected boolean proceedIfNothingToMerge() throws VcsException {
+    return true;
+  }
+
+  /**
+   * This is executed from {@link #merge()} after all conflicts are resolved.
+   * In the basic implementation no action is performed, {@code true} is returned.
+   *
+   * @return Return value is returned from {@link #merge()}
+   */
+  @RequiresBackgroundThread
+  protected boolean proceedAfterAllMerged() throws VcsException {
+    return true;
+  }
+
+  /**
+   * Shows notification that not all conflicts were resolved.
+   */
+  protected void notifyUnresolvedRemain() {
+    notifyWarning(myParams.myErrorNotificationTitle,
+                  GitBundle.message("merge.unresolved.conflicts.remaining.notification.body") +
+                  myParams.myErrorNotificationAdditionalDescription);
+  }
+
+  /**
+   * Shows notification that some conflicts were still not resolved - after user invoked the conflict resolver by pressing the link on the
+   * notification.
+   */
+  private void notifyUnresolvedRemainAfterNotification() {
+    notifyWarning(GitBundle.message("merge.unresolved.conflicts.remaining.notification.title"),
+                  myParams.myErrorNotificationAdditionalDescription);
+  }
+
+  protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING);
+    notification.setDisplayId(CANNOT_RESOLVE_CONFLICT);
+    notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
+      notification.expire();
+      mergeNoProceedInBackground();
+    }));
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   private void notifyException(@NotNull VcsException e) {
