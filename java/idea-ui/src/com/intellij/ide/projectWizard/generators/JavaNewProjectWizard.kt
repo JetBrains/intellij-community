@@ -17,7 +17,7 @@ class JavaNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = JAVA
 
-  override val icon = AllIcons.Nodes.PpJdk
+  override val icon = AllIcons.FileTypes.Java
 
   override val ordinal = 0
 
