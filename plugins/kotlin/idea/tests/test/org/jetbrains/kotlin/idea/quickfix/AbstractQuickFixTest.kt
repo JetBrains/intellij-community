@@ -106,28 +106,30 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val beforeFile = File(beforeFileName)
         val beforeFileText = FileUtil.loadFile(beforeFile)
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
-        withCustomCompilerOptions(beforeFileText, project, module) {
-            loadScriptConfiguration()
+        configureRegistryAndRun(beforeFileText) {
+            withCustomCompilerOptions(beforeFileText, project, module) {
+                loadScriptConfiguration()
 
-            IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
-                val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
+                IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
+                    val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
 
-                try {
-                    myFixture.enableInspections(*inspections)
+                    try {
+                        myFixture.enableInspections(*inspections)
 
-                    doKotlinQuickFixTest(beforeFileName)
-                    runInEdtAndWait { checkForUnexpectedErrors() }
-                } finally {
-                    myFixture.disableInspections(*inspections)
+                        doKotlinQuickFixTest(beforeFileName)
+                        runInEdtAndWait { checkForUnexpectedErrors() }
+                    } finally {
+                        myFixture.disableInspections(*inspections)
+                    }
                 }
-            }
 
-            // if `disableTestDirective` is present in the file and `runTestIfNotDisabledByFileDirective` doesn't throw an exception
-            // (meaning that the test indeed doesn't pass), don't run other checks
-            if (beforeFileText.lines().none { it.startsWith(disableTestDirective) }) {
-                runInEdtAndWait {
-                    checkFusEvents(beforeFile, beforeFileText)
-                    PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+                // if `disableTestDirective` is present in the file and `runTestIfNotDisabledByFileDirective` doesn't throw an exception
+                // (meaning that the test indeed doesn't pass), don't run other checks
+                if (beforeFileText.lines().none { it.startsWith(disableTestDirective) }) {
+                    runInEdtAndWait {
+                        checkFusEvents(beforeFile, beforeFileText)
+                        PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+                    }
                 }
             }
         }

@@ -13,6 +13,7 @@ import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
@@ -27,8 +28,10 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
         if (!Registry.`is`("kotlin.k2.smart.move")) return false
         if (elements.any { it !is KtElement }) return false
-        if (targetContainer != null && !targetContainer.isValidTarget()) return false
-        return true
+
+        (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
+
+        return targetContainer?.isValidTarget() != false
     }
 
     private fun PsiElement.isValidTarget(): Boolean {

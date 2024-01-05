@@ -72,6 +72,10 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
     </extensionPoint>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.supportAvailability"
+            interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.checkWithAttachment
 
@@ -50,6 +51,8 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
         checkWithAttachment(element is KtElement, { "This handler must be invoked for Kotlin elements only: ${element::class.java}" }) {
             it.withAttachment("element", element)
         }
+
+        (element.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return }
 
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
         val context = dataContext?.let { CommonDataKeys.PSI_FILE.getData(it) } ?: element

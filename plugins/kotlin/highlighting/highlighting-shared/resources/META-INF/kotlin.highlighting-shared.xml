@@ -7,6 +7,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+<!--    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighter.KMPSupportNotificationProvider"/>-->
+<!--    <defaultHighlightingSettingProvider implementation="org.jetbrains.kotlin.idea.highlighter.KMPHighlightingSettingsProvider"/>-->
+
     <defaultHighlightingSettingProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinDefaultHighlightingSettingsProvider"/>
 
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>

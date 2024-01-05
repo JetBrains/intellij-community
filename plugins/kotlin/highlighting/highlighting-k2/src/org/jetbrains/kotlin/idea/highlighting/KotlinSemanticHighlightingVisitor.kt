@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.highlighting.highlighters.*
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -23,20 +23,24 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
         return file is KtFile && !file.isCompiled
     }
 
-    override fun analyze(ktFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-        analyze(ktFile as KtElement) {
+    override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
+        val ktFile = file as? KtFile ?: return true
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
+        if (!highlightingLevelManager.shouldHighlight(ktFile)) return true
+
+        analyze(ktFile) {
             check(analyzers == null)
             analyzers = createSemanticAnalyzers(holder)
             try {
                 action.run()
             } finally {
                 /*
-                `analyzers` store a reference to `KtAnalysisSession`.
-                This hack is needed to avoid `KtAnalysisSession` leak into the project via `HighlightVisitor` EP.
-                 */
+            `analyzers` store a reference to `KtAnalysisSession`.
+            This hack is needed to avoid `KtAnalysisSession` leak into the project via `HighlightVisitor` EP.
+             */
                 analyzers = null
             }
-            KotlinUnusedHighlightingVisitor(ktFile as KtFile).collectHighlights(holder)
+            KotlinUnusedHighlightingVisitor(file).collectHighlights(holder)
         }
         return true
     }

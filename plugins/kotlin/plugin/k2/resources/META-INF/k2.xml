@@ -48,6 +48,8 @@
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirNativeIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirCommonIdePlatformKindTooling"/>
 
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.MultiplatformSupportAvailability"/>
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.highlighter.ScriptingSupportAvailability"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
@@ -91,6 +93,11 @@
 
     <registryKey key="kotlin.k2.scripting.enabled"
                  description="Enable scripting support in the Kotlin K2 plugin"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.kmp.enabled"
+                 description="Enable KMP support in the Kotlin K2 plugin for all platforms"
                  defaultValue="false"
                  restartRequired="true"/>
 

@@ -45,5 +45,6 @@
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
   </component>
 </module>

@@ -4,19 +4,20 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 var VirtualFile.isKotlinDecompiledFile: Boolean by NotNullableUserDataProperty(Key.create("IS_KOTLIN_DECOMPILED_FILE"), false)
 
-class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProvider() {
+class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProvider(), DumbAware {
     override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
         if (!file.isValid) {
             return null
@@ -27,9 +28,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
             psiFile is KtFile ->
                 when {
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
-                    psiFile.isScript() -> FileHighlightingSetting.SKIP_HIGHLIGHTING.takeIf {
-                        Registry.`is`("kotlin.k2.scripting.enabled", true) == false
-                    }
+                    !KotlinSupportAvailability.isSupported(psiFile) -> FileHighlightingSetting.SKIP_HIGHLIGHTING
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
                     else -> null
                 }
