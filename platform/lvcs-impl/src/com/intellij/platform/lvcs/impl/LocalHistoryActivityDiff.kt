@@ -197,10 +197,8 @@ private class SelectionDifferenceWrapper(gateway: IdeaGateway, override val scop
                                          difference: Difference, private val selectionCalculator: SelectionCalculator) :
   DifferenceWrapper(gateway, scope, selection, difference) {
   override fun getFileStatus(): FileStatus {
-    val isLeftContentAvailable = difference.left != null && selectionCalculator.canCalculateFor(selection.leftRevision,
-                                                                                                RevisionProcessingProgress.Empty())
-    val isRightContentAvailable = difference.right != null && selectionCalculator.canCalculateFor(selection.rightRevision,
-                                                                                                  RevisionProcessingProgress.Empty())
+    val isLeftContentAvailable = difference.left != null && selectionCalculator.canCalculateFor(selection.leftRevision, RevisionProcessingProgress.EMPTY)
+    val isRightContentAvailable = difference.right != null && selectionCalculator.canCalculateFor(selection.rightRevision, RevisionProcessingProgress.EMPTY)
     return fileStatus(isLeftContentAvailable, isRightContentAvailable)
   }
 

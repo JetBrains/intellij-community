@@ -17,6 +17,8 @@
 package com.intellij.history.integration.ui.models;
 
 public interface RevisionProcessingProgress extends Progress {
+  RevisionProcessingProgress EMPTY = new Empty();
+
   void processingLeftRevision();
   void processingRightRevision();
 
