@@ -22,7 +22,6 @@ import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,7 +46,7 @@ public final class GitRebaser {
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
                                 @NotNull List<String> parameters) {
-    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE, GitImpl.REBASE_CONFIG_PARAMS);
     rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
 
@@ -60,13 +59,16 @@ public final class GitRebaser {
     rebaseHandler.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
-      String oldText = myProgressIndicator.getText();
-      myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
-      GitCommandResult result = myGit.runCommand(rebaseHandler);
-      myProgressIndicator.setText(oldText);
-      return result.success() ?
-             GitUpdateResult.SUCCESS :
-             handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+      GitRebaseEditorHandler editor = GitRebaseUtils.createRebaseEditor(myProject, root, false);
+      try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rebaseHandler, editor)) {
+        String oldText = myProgressIndicator.getText();
+        myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
+        GitCommandResult result = myGit.runCommand(rebaseHandler);
+        myProgressIndicator.setText(oldText);
+        return result.success() ?
+               GitUpdateResult.SUCCESS :
+               handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+      }
     }
     catch (ProcessCanceledException pce) {
       return GitUpdateResult.CANCEL;
@@ -125,7 +127,7 @@ public final class GitRebaser {
   // start operation may be "--continue" or "--skip" depending on the situation.
   private boolean continueRebase(final @NotNull VirtualFile root, boolean skip) {
     LOG.info(String.format("continueRebase in %s, skip: %s", root, skip));
-    final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE, GitImpl.REBASE_CONFIG_PARAMS);
     rh.setStdoutSuppressed(false);
     rh.addParameters(skip ? "--skip" : "--continue");
 
@@ -133,8 +135,7 @@ public final class GitRebaser {
     rh.addLineListener(rebaseConflictDetector);
     rh.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
-    // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
-    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
+    GitRebaseEditorHandler editor = GitRebaseUtils.createRebaseEditor(myProject, root, false);
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
       String oldText = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
@@ -228,23 +229,6 @@ public final class GitRebaser {
       .setErrorNotificationTitle(GitBundle.message("rebase.update.project.conflict.error.notification.title"))
       .setMergeDescription(GitBundle.message("rebase.update.project.conflict.merge.description.label"))
       .setErrorNotificationAdditionalDescription(GitBundle.message("rebase.update.project.conflict.error.notification.description"));
-  }
-
-  public static class TrivialEditor implements GitRebaseEditorHandler {
-    @Override
-    public int editCommits(@NotNull File file) {
-      return 0;
-    }
-
-    @Override
-    public boolean wasCommitListEditorCancelled() {
-      return false;
-    }
-
-    @Override
-    public boolean wasUnstructuredEditorCancelled() {
-      return false;
-    }
   }
 
   public @NotNull GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
