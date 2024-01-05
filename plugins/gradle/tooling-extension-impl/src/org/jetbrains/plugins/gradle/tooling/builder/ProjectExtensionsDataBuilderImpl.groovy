@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
@@ -33,14 +34,8 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     result.parentProjectPath = project.parent?.path
 
-    for (it in project.configurations.names) {
-      Configuration conf = project.configurations.getByName(it)
-      result.configurations.add(new DefaultGradleConfiguration(it, conf.description, conf.visible, extractStringList(it, "getDeclarationAlternatives")))
-    }
-    for (it in project.buildscript.configurations.names) {
-      Configuration conf = project.buildscript.configurations.getByName(it)
-      result.configurations.add(new DefaultGradleConfiguration(it, conf.description, conf.visible, true, extractStringList(it, "getDeclarationAlternatives")))
-    }
+    result.configurations.addAll(collectConfigurations(project.configurations, false))
+    result.configurations.addAll(collectConfigurations(project.buildscript.configurations, true))
 
     if (GradleVersion.current().baseVersion < GradleVersion.version("8.2")){
       def convention = project.convention
@@ -118,10 +113,25 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       .reportMessage(project)
   }
 
-  @NotNull private static List<String> extractStringList(Object instance, String methodName) {
+  private static @NotNull List<DefaultGradleConfiguration> collectConfigurations(
+    @NotNull ConfigurationContainer configurations,
+    boolean scriptClasspathConfiguration
+  ) {
+    def result = new ArrayList<DefaultGradleConfiguration>()
+    for (configurationName in configurations.names) {
+      def configuration = configurations.getByName(configurationName)
+      def description = configuration.description
+      def visible = configuration.visible
+      def declarationAlternatives = getDeclarationAlternatives(configuration)
+      result.add(new DefaultGradleConfiguration(configurationName, description, visible, scriptClasspathConfiguration, declarationAlternatives))
+    }
+    return result
+  }
+
+  private static @NotNull List<String> getDeclarationAlternatives(Configuration configuration) {
     try {
-      Method method = instance.class.getMethod(methodName)
-      List<String> result = method.invoke(instance) as List<String>
+      Method method = configuration.class.getMethod("getDeclarationAlternatives")
+      List<String> result = method.invoke(configuration) as List<String>
       return result != null ? result : Collections.<String>emptyList()
     } catch (NoSuchMethodException | SecurityException | ClassCastException ignored) {
       return Collections.emptyList()
