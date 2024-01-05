@@ -1,18 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.compose.showcase
 
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.ui.UIBundle
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.io.File
+import javax.swing.KeyStroke
 
 @Composable
 internal fun ComposeShowcase() {
@@ -34,7 +43,8 @@ internal fun ComposeShowcase() {
         SelectableText()
         Tabs()
         LinkLabels()
-        TextField()
+        TextFieldSimple()
+        TextFieldWithButton()
       }
 
       val adapter = rememberScrollbarAdapter(scrollState)
@@ -119,7 +129,8 @@ private fun SelectableText() {
 @Composable
 private fun Buttons() {
   Row(
-    horizontalArrangement = Arrangement.spacedBy(20.dp)
+    horizontalArrangement = Arrangement.spacedBy(20.dp),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
     var state1 by remember { mutableStateOf(0) }
     OutlinedButton(onClick = {
@@ -133,6 +144,14 @@ private fun Buttons() {
       state2++
     }) {
       Text("Click me #$state2")
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      var state3 by remember { mutableStateOf(0) }
+      IconButton(onClick = { state3++ } /* Modifier.size(18.dp) */) {
+        Icon(painter = painterResource("expui/image/fitContent.svg"), null)
+      }
+      Text("← Click me #$state3")
     }
   }
 }
@@ -170,7 +189,7 @@ private fun LinkLabels() {
 }
 
 @Composable
-private fun TextField() {
+private fun TextFieldSimple() {
   var textFieldState by remember { mutableStateOf("") }
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -183,6 +202,43 @@ private fun TextField() {
         textFieldState = it
       },
       modifier = Modifier.padding(5.dp)
+    )
+  }
+}
+
+@Composable
+private fun TextFieldWithButton() {
+
+  var textFieldState by remember { mutableStateOf("") }
+  val buttonTooltip = UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (${
+    KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK))
+  })"
+  val descriptor = FileChooserDescriptor(true, true, false, false, false, false).apply { title = UIBundle.message("file.chooser.default.title") }
+  val onClick = { FileChooser.chooseFile(descriptor, null, null) { textFieldState = it.path } }
+
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(5.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text("Choose file or folder:")
+    TextField(
+      value = textFieldState,
+      onValueChange = { textFieldState = it },
+      modifier = Modifier.padding(5.dp).height(28.dp).onKeyEvent {
+        if (it.isShiftPressed && it.key == Key.Enter) {
+          onClick.invoke()
+          true
+        }
+        else {
+          false
+        }
+      },
+      outline = if ( textFieldState.isEmpty() || File(textFieldState).exists()) Outline.None else Outline.Error,
+      trailingIcon = {
+        IconButton(onClick, Modifier.size(18.dp)) {
+          Icon(painter = painterResource("expui/inline/browse.svg"), contentDescription = buttonTooltip)
+        }
+      },
     )
   }
 }
