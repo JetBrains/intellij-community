@@ -5,11 +5,15 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.util.Consumer
+import kotlinx.coroutines.DEBUG_PROPERTY_NAME
+import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
 import org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtension() {
-    val log = Logger.getInstance(this::class.java)
+    companion object {
+        val log = Logger.getInstance(this::class.java)
+    }
 
     override fun enhanceTaskProcessing(taskNames: MutableList<String>, initScriptConsumer: Consumer<String>, parameters: Map<String, String>) {
         try {
@@ -29,6 +33,12 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
                 taskGraph.allTasks.each { Task task ->
                     if (!(task instanceof Test || task instanceof JavaExec)) return
+                    for (arg in task.getAllJvmArgs() + task.getJvmArgs()) {
+                        if (arg == "-D$DEBUG_PROPERTY_NAME=$DEBUG_PROPERTY_VALUE_OFF") {
+                            return
+                        }
+                    }
+
                     FileCollection taskClasspath = task.classpath
                     task.jvmArgumentProviders.add(new CommandLineArgumentProvider() {
                         private static def VERSION_PATTERN = java.util.regex.Pattern.compile(/(\d+)\.(\d+)(\.(\d+))?.*/)
