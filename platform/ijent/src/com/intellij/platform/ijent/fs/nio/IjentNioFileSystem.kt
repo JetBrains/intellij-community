@@ -3,22 +3,25 @@ package com.intellij.platform.ijent.fs.nio
 
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.IjentPathImpl
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.PathMatcher
+import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
-import java.nio.file.spi.FileSystemProvider
 
-internal class IjentNioFileSystem(
+class IjentNioFileSystem(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val ijentFsApi: IjentFileSystemApi,
 ) : FileSystem() {
+  internal val isWindows = ijentFsApi.isWindows
+
   override fun close() {
-    // TODO("Not yet implemented")
+    // Seems that there should be nothing.
   }
 
-  override fun provider(): FileSystemProvider = fsProvider
+  override fun provider(): IjentNioFileSystemProvider = fsProvider
 
   override fun isOpen(): Boolean =
     ijentFsApi.coroutineScope.isActive
@@ -28,26 +31,31 @@ internal class IjentNioFileSystem(
   override fun getSeparator(): String =
     if (ijentFsApi.isWindows) "\\" else "/"
 
-  override fun getRootDirectories(): Iterable<Path> = fsBlocking {
+  override fun getRootDirectories(): Iterable<IjentNioPath> = fsBlocking {
     ijentFsApi.getRootDirectories().map { it.toNioPath() }
   }
 
   override fun getFileStores(): Iterable<FileStore> =
     listOf(IjentNioFileStore(ijentFsApi))
 
-  override fun supportedFileAttributeViews(): Set<String> {
-    TODO("Not yet implemented")
-  }
+  override fun supportedFileAttributeViews(): Set<String> =
+    if (isWindows)
+      setOf("basic", "dos", "acl", "owner", "user")
+    else setOf(
+      "basic", "posix", "unix", "owner",
+      "user",  // TODO Works only on BSD/macOS.
+    )
 
-  override fun getPath(first: String, vararg more: String): Path =
+  override fun getPath(first: String, vararg more: String): IjentNioPath =
     more
       .fold(
-        IjentPathImpl.parse(ijentFsApi.id, ijentFsApi.isWindows, first),
-        IjentPath::resolve,
-      )
+        IjentPath.parse(first, isWindows).getOrThrow()
+      ) { absPath, childName ->
+        absPath.getChild(childName).getOrThrow()
+      }
       .toNioPath()
 
-  override fun getPathMatcher(syntaxAndPattern: String?): PathMatcher {
+  override fun getPathMatcher(syntaxAndPattern: String): PathMatcher {
     TODO("Not yet implemented")
   }
 

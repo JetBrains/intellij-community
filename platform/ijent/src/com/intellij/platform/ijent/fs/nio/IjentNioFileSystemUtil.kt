@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentNioFileSystemUtil")
+
 package com.intellij.platform.ijent.fs.nio
 
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.*
-import com.intellij.platform.ijent.fs.IjentFsResult
-import com.intellij.platform.ijent.fs.IjentFsResultError
-import com.intellij.platform.ijent.fs.IjentFsResultError.*
+import com.intellij.util.text.nullize
 import java.net.URI
-import java.nio.file.FileSystem
-import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.FileSystemNotFoundException
-import java.nio.file.spi.FileSystemProvider
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.nio.file.*
 
 /**
  * Returns an adapter from [IjentFileSystemApi] to [java.nio.file.FileSystem]. The adapter is automatically registered in advance,
@@ -20,9 +18,7 @@ import java.nio.file.spi.FileSystemProvider
  * The function is idempotent and thread-safe.
  */
 fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
-  val nioFsProvider = FileSystemProvider.installedProviders()
-    .filterIsInstance<IjentNioFileSystemProvider>()
-    .single()
+  val nioFsProvider = IjentNioFileSystemProvider.getInstance()
   val uri = URI(nioFsProvider.scheme, id.id, null, null)
   return try {
     nioFsProvider.getFileSystem(uri)
@@ -37,27 +33,35 @@ fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
   }
 }
 
-@Throws(java.nio.file.FileSystemException::class)
-internal fun <T, E : IjentFsResultError> IjentFsResult<T, E>.getOrThrow(file: String, otherFile: String? = null): T =
+@Throws(InvalidPathException::class)
+internal fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
   when (this) {
-    is IjentFsResult.Ok<T, E> -> result
-    is IjentFsResult.Err<T, E> -> throw error.toFileSystemException(file, otherFile, message)
+    is IjentPathResult.Ok -> path
+    is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
   }
 
-// TODO Make a test with the reflection which would check all implementations of IjentFsResultError.
-internal fun IjentFsResultError.toFileSystemException(file: String?, otherFile: String?, message: String): java.nio.file.FileSystemException =
-  when (this) {
-    is Generic -> when (this) {
-      Generic.DoesNotExist -> java.nio.file.NoSuchFileException(file, otherFile, message)
-      is Generic.PermissionDenied -> java.nio.file.AccessDeniedException(file, otherFile, message)
-    }
+@Throws(FileSystemException::class)
+internal fun IjentFsResult.Error.throwFileSystemException(): Nothing {
+  throw when (this) {
+    is IjentFsResult.DoesNotExist, is IjentFsResult.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsResult.NotDirectory -> NotDirectoryException(where.toString())
+    is IjentFsResult.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
+    is IjentOpenedFile.Seek.InvalidValue -> TODO()
+  }
+}
 
-    is ListDirectoryError -> when (this) {
-      is ListDirectoryError.Generic -> generic.toFileSystemException(file, otherFile, message)
-      ListDirectoryError.NotDirectory -> java.nio.file.NotDirectoryException(file)
-    }
+internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
+  when {
+    this is IjentNioPath -> ijentPath
 
-    is SameFileError -> error.toFileSystemException(path.toString(), null, message)
+    startsWith("ijent:") && nameCount >= 3 ->
+      IjentNioFileSystemProvider.getInstance()
+        .getPath(URI(asSequence().drop(1).joinToString("/", prefix = "ijent://") {
+          URLEncoder.encode(it.toString(), StandardCharsets.UTF_8)
+        }))
+        .ijentPath
 
-    else -> throw NotImplementedError(toString())
+    isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
+
+    else -> IjentPath.Relative.parse(toString()).getOrThrow()
   }

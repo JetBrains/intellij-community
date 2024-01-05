@@ -34,4 +34,17 @@ fun getIjentGrpcArgv(
   )
 }
 
+fun ByteArray.toDebugString(offset: Int = 0, length: Int = size - offset): String = (offset until length).joinToString("") {
+  var code = this[it].toInt()
+  if (code < 0) {
+    code += 0x100
+  }
+  if (code in 0x20..0x7e) {
+    code.toChar().toString()
+  }
+  else {
+    "\\x${code.toString(16).padStart(2, '0')}"
+  }
+}
+
 private val LOG = Logger.getInstance("com.intellij.platform.ijent.IjentProcessUtil")
