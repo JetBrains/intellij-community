@@ -16,7 +16,7 @@ import javax.swing.Icon
 
 internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getBuilderId(): String = "javafx"
-  override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
+  override fun getNodeIcon(): Icon = AllIcons.FileTypes.UiForm
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX
   override fun getDescription(): String = JavaFXBundle.message("javafx.module.builder.description")
   override fun getWeight(): Int = super.getWeight() + 1
