@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -47,12 +46,9 @@ public class GitConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
+  protected final @NotNull Project myProject;
   private final @NotNull Collection<? extends VirtualFile> myRoots;
   private final @NotNull Params myParams;
-
-  protected final @NotNull Project myProject;
-  private final @NotNull GitRepositoryManager myRepositoryManager;
-  private final @NotNull AbstractVcsHelper myVcsHelper;
 
   /**
    * Customizing parameters - mostly String notification texts, etc.
@@ -118,8 +114,6 @@ public class GitConflictResolver {
     myProject = project;
     myRoots = roots;
     myParams = params;
-    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myVcsHelper = AbstractVcsHelper.getInstance(project);
   }
 
   /**
@@ -243,7 +237,8 @@ public class GitConflictResolver {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
-      myVcsHelper.showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
+      AbstractVcsHelper.getInstance(myProject)
+        .showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
     });
   }
 
@@ -276,7 +271,7 @@ public class GitConflictResolver {
    * @see #getUnmergedFiles(Collection)
    */
   private @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptyList();
