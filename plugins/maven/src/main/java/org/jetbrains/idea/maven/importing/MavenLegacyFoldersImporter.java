@@ -227,6 +227,9 @@ class MavenLegacyFoldersImporter {
       myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
                               myMavenProject.getTestOutputDirectory());
     }
+    else {
+      myModel.useModuleOutput(null, null);
+    }
 
     String buildDirPath = myModel.toPath(myMavenProject.getBuildDirectory()).getPath();
     String outputDirPath = myModel.toPath(myMavenProject.getOutputDirectory()).getPath();
