@@ -6,8 +6,6 @@ object NewProjectWizardConstants {
     const val JAVA: String = "Java"
     const val KOTLIN: String = "Kotlin"
     const val GROOVY: String = "Groovy"
-    const val JAVASCRIPT: String = "JavaScript"
-    const val HTML: String = "HTML"
     const val PYTHON: String = "Python"
     const val PHP: String = "PHP"
     const val RUBY: String = "Ruby"

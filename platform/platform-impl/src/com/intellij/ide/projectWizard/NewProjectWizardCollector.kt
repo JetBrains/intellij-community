@@ -26,12 +26,11 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 26)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 27)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
-    NewProjectWizardConstants.Language.GROOVY, NewProjectWizardConstants.Language.JAVASCRIPT,
-    NewProjectWizardConstants.Language.HTML, NewProjectWizardConstants.Language.PYTHON,
+    NewProjectWizardConstants.Language.GROOVY, NewProjectWizardConstants.Language.PYTHON,
     NewProjectWizardConstants.Language.PHP, NewProjectWizardConstants.Language.RUBY,
     NewProjectWizardConstants.Language.GO, NewProjectWizardConstants.Language.SCALA,
     NewProjectWizardConstants.Language.RUST, NewProjectWizardConstants.OTHER
@@ -70,48 +69,48 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   val buildSystemFields: Array<PrimitiveEventField<out Any?>> = arrayOf(*baseFields, buildSystemField)
 
   // @formatter:off
-    private val open = GROUP.registerVarargEvent("wizard.dialog.open", *baseFields)
-    private val finish = GROUP.registerVarargEvent("wizard.dialog.finish",*baseFields, isSucceededField, EventFields.DurationMs)
-    private val next = GROUP.registerVarargEvent("navigate.next", *baseFields, inputMaskField)
-    private val prev = GROUP.registerVarargEvent("navigate.prev", *baseFields, inputMaskField)
-    private val projectCreated = GROUP.registerVarargEvent("project.created", *baseFields)
-    private val search = GROUP.registerVarargEvent("search", *baseFields, typedCharField, hitField)
-    private val generatorSelected = GROUP.registerVarargEvent("generator.selected", *baseFields, generatorTypeField)
-    private val generatorFinished = GROUP.registerVarargEvent("generator.finished", *baseFields, generatorTypeField)
-    private val templateSelected = GROUP.registerVarargEvent("select.custom.template", *baseFields)
-    private val helpNavigation = GROUP.registerVarargEvent("navigate.help", *baseFields)
-    private val morePluginLinkClicked = GROUP.registerVarargEvent("more.plugin.link.clicked", *baseFields)
-    private val managePluginLinkClicked = GROUP.registerVarargEvent("manage.plugin.link.clicked", *baseFields)
-    private val installPluginItemSelected = GROUP.registerVarargEvent("more.plugin.item.selected", *baseFields, pluginField)
+  private val open = GROUP.registerVarargEvent("wizard.dialog.open", *baseFields)
+  private val finish = GROUP.registerVarargEvent("wizard.dialog.finish",*baseFields, isSucceededField, EventFields.DurationMs)
+  private val next = GROUP.registerVarargEvent("navigate.next", *baseFields, inputMaskField)
+  private val prev = GROUP.registerVarargEvent("navigate.prev", *baseFields, inputMaskField)
+  private val projectCreated = GROUP.registerVarargEvent("project.created", *baseFields)
+  private val search = GROUP.registerVarargEvent("search", *baseFields, typedCharField, hitField)
+  private val generatorSelected = GROUP.registerVarargEvent("generator.selected", *baseFields, generatorTypeField)
+  private val generatorFinished = GROUP.registerVarargEvent("generator.finished", *baseFields, generatorTypeField)
+  private val templateSelected = GROUP.registerVarargEvent("select.custom.template", *baseFields)
+  private val helpNavigation = GROUP.registerVarargEvent("navigate.help", *baseFields)
+  private val morePluginLinkClicked = GROUP.registerVarargEvent("more.plugin.link.clicked", *baseFields)
+  private val managePluginLinkClicked = GROUP.registerVarargEvent("manage.plugin.link.clicked", *baseFields)
+  private val installPluginItemSelected = GROUP.registerVarargEvent("more.plugin.item.selected", *baseFields, pluginField)
 
-    private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, generatorTypeField)
-    private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, generatorTypeField)
-    private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields)
-    private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
-    private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
-    private val addSampleOnboardingTipsChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
+  private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, generatorTypeField)
+  private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, generatorTypeField)
+  private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields)
+  private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
+  private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
+  private val addSampleOnboardingTipsChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
 
-    private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *baseFields, buildSystemField)
-    private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *baseFields, buildSystemField)
-    private val sdkChangedEvent = GROUP.registerVarargEvent("build.system.sdk.changed", *buildSystemFields, buildSystemSdkField)
-    private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", *buildSystemFields, buildSystemSdkField)
-    private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", *buildSystemFields, buildSystemParentField)
-    private val parentFinishedEvent = GROUP.registerVarargEvent("build.system.parent.finished", *buildSystemFields, buildSystemParentField)
+  private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *baseFields, buildSystemField)
+  private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *baseFields, buildSystemField)
+  private val sdkChangedEvent = GROUP.registerVarargEvent("build.system.sdk.changed", *buildSystemFields, buildSystemSdkField)
+  private val sdkFinishedEvent = GROUP.registerVarargEvent("build.system.sdk.finished", *buildSystemFields, buildSystemSdkField)
+  private val parentChangedEvent = GROUP.registerVarargEvent("build.system.parent.changed", *buildSystemFields, buildSystemParentField)
+  private val parentFinishedEvent = GROUP.registerVarargEvent("build.system.parent.finished", *buildSystemFields, buildSystemParentField)
 
-    private val moduleNameChangedEvent = GROUP.registerVarargEvent("build.system.module.name.changed", *buildSystemFields)
-    private val contentRootChangedEvent = GROUP.registerVarargEvent("build.system.content.root.changed", *buildSystemFields)
-    private val moduleFileLocationChangedEvent = GROUP.registerVarargEvent("build.system.module.file.location.changed", *buildSystemFields)
+  private val moduleNameChangedEvent = GROUP.registerVarargEvent("build.system.module.name.changed", *buildSystemFields)
+  private val contentRootChangedEvent = GROUP.registerVarargEvent("build.system.content.root.changed", *buildSystemFields)
+  private val moduleFileLocationChangedEvent = GROUP.registerVarargEvent("build.system.module.file.location.changed", *buildSystemFields)
 
-    private val groupIdChangedEvent = GROUP.registerVarargEvent("build.system.group.id.changed", *buildSystemFields)
-    private val artifactIdChangedEvent = GROUP.registerVarargEvent("build.system.artifact.id.changed", *buildSystemFields)
-    private val versionChangedEvent = GROUP.registerVarargEvent("build.system.version.changed", *buildSystemFields)
+  private val groupIdChangedEvent = GROUP.registerVarargEvent("build.system.group.id.changed", *buildSystemFields)
+  private val artifactIdChangedEvent = GROUP.registerVarargEvent("build.system.artifact.id.changed", *buildSystemFields)
+  private val versionChangedEvent = GROUP.registerVarargEvent("build.system.version.changed", *buildSystemFields)
 
-    private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
-    private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
+  private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
+  private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
 
-    private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
-    private val kotlinClickKmpWizardLinkEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.link.clicked", *buildSystemFields)
-    // @formatter:on
+  private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
+  private val kotlinClickKmpWizardLinkEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.link.clicked", *buildSystemFields)
+  // @formatter:on
 
   @JvmStatic
   fun logOpen(context: WizardContext): Unit =

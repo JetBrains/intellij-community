@@ -39,6 +39,5 @@
     <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
     <html.compatibleLanguage language="HTML"/>
     <completion.htmlInTextCompletionEnabler implementation="com.intellij.codeInsight.completion.HtmlNoBracketCompletionEnablerImpl"/>
-    <newProjectWizard.languageGenerator id="html" order="last" implementation="com.intellij.ide.wizard.HTMLNewProjectWizard"/>
   </extensions>
 </idea-plugin>
