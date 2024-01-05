@@ -205,32 +205,33 @@ public class GitConflictResolver {
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
     try {
-      final Collection<VirtualFile> initiallyUnmergedFiles = getUnmergedFiles(myRoots);
+      Collection<VirtualFile> initiallyUnmergedFiles = getUnmergedFiles(myProject, myRoots);
       if (initiallyUnmergedFiles.isEmpty()) {
         LOG.info("merge: no unmerged files");
         return mergeDialogInvokedFromNotification || proceedIfNothingToMerge();
       }
-      else {
-        showMergeDialog(initiallyUnmergedFiles);
 
-        final Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myRoots);
-        if (unmergedFilesAfterResolve.isEmpty()) {
-          LOG.info("merge no more unmerged files");
-          return mergeDialogInvokedFromNotification || proceedAfterAllMerged();
-        } else {
-          LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
-          if (mergeDialogInvokedFromNotification) {
-            notifyUnresolvedRemainAfterNotification();
-          } else {
-            notifyUnresolvedRemain();
-          }
-        }
+      showMergeDialog(initiallyUnmergedFiles);
+
+      Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myProject, myRoots);
+      if (unmergedFilesAfterResolve.isEmpty()) {
+        LOG.info("merge no more unmerged files");
+        return mergeDialogInvokedFromNotification || proceedAfterAllMerged();
       }
-    } catch (VcsException e) {
-      notifyException(e);
-    }
-    return false;
 
+      LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
+      if (mergeDialogInvokedFromNotification) {
+        notifyUnresolvedRemainAfterNotification();
+      }
+      else {
+        notifyUnresolvedRemain();
+      }
+      return false;
+    }
+    catch (VcsException e) {
+      notifyException(e);
+      return false;
+    }
   }
 
   private void showMergeDialog(@NotNull Collection<? extends VirtualFile> initiallyUnmergedFiles) {
@@ -254,24 +255,18 @@ public class GitConflictResolver {
     );
   }
 
-  /**
-   * @return unmerged files in the given Git roots, all in a single collection.
-   * @see #getUnmergedFiles(VirtualFile)
-   */
-  private @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
-    final Collection<VirtualFile> unmergedFiles = new HashSet<>();
+  private static @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull Project project,
+                                                                   @NotNull Collection<? extends VirtualFile> roots) throws VcsException {
+    Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
-      unmergedFiles.addAll(getUnmergedFiles(root));
+      unmergedFiles.addAll(getUnmergedFiles(project, root));
     }
     return unmergedFiles;
   }
 
-  /**
-   * @return unmerged files in the given Git root.
-   * @see #getUnmergedFiles(Collection)
-   */
-  private @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
-    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+  private static @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull Project project,
+                                                                   @NotNull VirtualFile root) throws VcsException {
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptyList();
