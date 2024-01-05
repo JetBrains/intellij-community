@@ -10,6 +10,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.*
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -34,6 +35,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import kotlinx.coroutines.Dispatchers
@@ -84,9 +86,14 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
           return@chooseFiles
         }
       }
+
+      // FIXME: hack for GTW-6938, prevent opening project from cancellation if IdeFrame closes on frontend
+      //  See more info in the issue/commit message
+      val cancellation = if (AppMode.isRemoteDevHost()) TaskCancellation.nonCancellable() else TaskCancellation.cancellable()
       @Suppress("DialogTitleCapitalization")
       runWithModalProgressBlocking(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                                   title = IdeBundle.message("title.open.project")) {
+                                   title = IdeBundle.message("title.open.project"),
+                                   cancellation = cancellation) {
         for (file in files) {
           doOpenFile(project, file)
         }
