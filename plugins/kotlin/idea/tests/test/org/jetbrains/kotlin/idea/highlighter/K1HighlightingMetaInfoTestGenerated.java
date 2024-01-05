@@ -250,6 +250,16 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
         }
 
+        @TestMetadata("RepeatableAnnotation.kt")
+        public void testRepeatableAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/RepeatableAnnotation.kt");
+        }
+
+        @TestMetadata("RepeatableAsAliasAnnotation.kt")
+        public void testRepeatableAsAliasAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/RepeatableAsAliasAnnotation.kt");
+        }
+
         @TestMetadata("script.kts")
         public void testScript() throws Exception {
             runTest("testData/highlighterMetaInfo/script.kts");
