@@ -10,9 +10,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -31,6 +29,7 @@ typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 class DependencySearchService(private val project: Project) : Disposable {
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
   private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
+  private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Deferred<Collection<RepositoryArtifactData>>>()
   private fun remoteProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { !it.isLocal }
   private fun localProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { it.isLocal }
 
@@ -125,10 +124,10 @@ class DependencySearchService(private val project: Project) : Disposable {
                                          parameters: SearchParameters,
                                          consumer: ResultConsumer,
                                          searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit) {
-    val thisNewFuture = CompletableFuture<Collection<RepositoryArtifactData>>()
-    val existingFuture = cache.putIfAbsent(cacheKey, thisNewFuture)
-    if (existingFuture != null && parameters.useCache()) {
-      fillResultsFromCache(existingFuture, consumer)
+    val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
+    val existingDeferred = deferredCache.putIfAbsent(cacheKey, thisNewDeferred)
+    if (existingDeferred != null && parameters.useCache()) {
+      fillResultsFromDeferredCache(existingDeferred, consumer)
       return
     }
 
@@ -155,8 +154,21 @@ class DependencySearchService(private val project: Project) : Disposable {
       }.awaitAll()
     }
 
-    if (!resultSet.isEmpty() && existingFuture == null) {
-      thisNewFuture.complete(resultSet.getAll())
+    if (!resultSet.isEmpty() && existingDeferred == null) {
+      thisNewDeferred.complete(resultSet.getAll())
+    }
+  }
+
+  private fun fillResultsFromDeferredCache(deferred: Deferred<Collection<RepositoryArtifactData>>, consumer: ResultConsumer) {
+    deferred.invokeOnCompletion {
+      BiConsumer { r: Collection<RepositoryArtifactData>, e: Throwable? ->
+        if (e != null) {
+          logWarn("Exception getting data from cache", e)
+        }
+        else {
+          r.forEach(consumer)
+        }
+      }
     }
   }
 
