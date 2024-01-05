@@ -345,7 +345,7 @@ open class JBTabsImpl(private var project: Project?,
     addMouseMotionAwtListener(parentDisposable)
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
-      override fun getDefaultComponent(aContainer: Container): Component? = toFocus
+      override fun getDefaultComponent(aContainer: Container): Component? = getToFocus()
     }
 
     lazyUiDisposable(parent = parentDisposable, ui = this, child = this) { child, project ->
@@ -1118,37 +1118,36 @@ open class JBTabsImpl(private var project: Project?,
     return popup
   }
 
-  private val toFocus: JComponent?
-    get() {
-      val info = selectedInfo
-      LOG.debug { "selected info: $info" }
-      if (info == null) return null
+  private fun getToFocus(): JComponent? {
+    val info = selectedInfo
+    LOG.debug { "selected info: $info" }
+    if (info == null) return null
 
-      if (isRequestFocusOnLastFocusedComponent) {
-        val lastFocusOwner = info.lastFocusOwner
-        if (lastFocusOwner != null && !isMyChildIsFocusedNow) {
-          LOG.debug { "last focus owner: $lastFocusOwner" }
-          return lastFocusOwner
-        }
+    if (isRequestFocusOnLastFocusedComponent) {
+      val lastFocusOwner = info.lastFocusOwner
+      if (lastFocusOwner != null && !isMyChildIsFocusedNow) {
+        LOG.debug { "last focus owner: $lastFocusOwner" }
+        return lastFocusOwner
       }
-
-      val toFocus: JComponent? = info.preferredFocusableComponent
-      LOG.debug { "preferred focusable component: $toFocus" }
-      if (toFocus == null || !toFocus.isShowing) {
-        return null
-      }
-
-      val policyToFocus = focusManager.getFocusTargetFor(toFocus)
-      LOG.debug { "focus target: $policyToFocus" }
-      if (policyToFocus != null) {
-        return policyToFocus
-      }
-
-      return toFocus
     }
 
+    val toFocus: JComponent? = info.preferredFocusableComponent
+    LOG.debug { "preferred focusable component: $toFocus" }
+    if (toFocus == null || !toFocus.isShowing) {
+      return null
+    }
+
+    val policyToFocus = focusManager.getFocusTargetFor(toFocus)
+    LOG.debug { "focus target: $policyToFocus" }
+    if (policyToFocus != null) {
+      return policyToFocus
+    }
+
+    return toFocus
+  }
+
   override fun requestFocus() {
-    val toFocus = toFocus
+    val toFocus = getToFocus()
     if (toFocus == null) {
       focusManager.doWhenFocusSettlesDown { super.requestFocus() }
     }
@@ -1158,7 +1157,7 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   override fun requestFocusInWindow(): Boolean {
-    return toFocus?.requestFocusInWindow() ?: super.requestFocusInWindow()
+    return getToFocus()?.requestFocusInWindow() ?: super.requestFocusInWindow()
   }
 
   override fun addTab(info: TabInfo, index: Int): TabInfo {
@@ -1296,10 +1295,10 @@ open class JBTabsImpl(private var project: Project?,
         // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
         // requested to another component. E.g., this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
         // re-add it at once in a different layout, and want that editor component to preserve focus afterward.
-        return requestFocus(owner, requestFocusInWindow)
+        return requestFocusLater(owner, requestFocusInWindow)
       }
       else {
-        return requestFocus(toFocus, requestFocusInWindow)
+        return requestFocusLater(getToFocus(), requestFocusInWindow)
       }
     }
     if (isRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow) {
@@ -1326,10 +1325,10 @@ open class JBTabsImpl(private var project: Project?,
       return removeDeferred()
     }
 
-    val toFocus = toFocus
+    val toFocus = getToFocus()
     if (project != null && toFocus != null) {
       val result = ActionCallback()
-      requestFocus(toFocus, requestFocusInWindow).doWhenProcessed {
+      requestFocusLater(toFocus, requestFocusInWindow).doWhenProcessed {
         if (project!!.isDisposed) {
           result.setRejected()
         }
@@ -1393,7 +1392,7 @@ open class JBTabsImpl(private var project: Project?,
     }
   }
 
-  private fun requestFocus(toFocus: Component?, inWindow: Boolean): ActionCallback {
+  private fun requestFocusLater(toFocus: Component?, inWindow: Boolean): ActionCallback {
     if (toFocus == null) {
       return ActionCallback.DONE
     }
