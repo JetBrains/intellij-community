@@ -36,22 +36,17 @@ internal class FoldingModelGrave(private val project: Project, private val scope
   }
 
   fun getFoldingState(file: VirtualFile?): FoldingState? {
-    if (!Registry.`is`("cache.folding.model.on.disk")) {
-      return null
-    }
-    if (file !is VirtualFileWithId) {
+    if (!isEnabled() || file !is VirtualFileWithId) {
       return null
     }
     return cache[file.id]
   }
 
   fun setFoldingModel(file: VirtualFile?, foldingModel: FoldingModelEx) {
-    if (!Registry.`is`("cache.folding.model.on.disk")) {
+    if (!isEnabled() || file !is VirtualFileWithId) {
       return
     }
-    if (file is VirtualFileWithId) {
-      fileToModel[file.id] = foldingModel
-    }
+    fileToModel[file.id] = foldingModel
   }
 
   fun subscribeFileClosed() {
@@ -64,7 +59,7 @@ internal class FoldingModelGrave(private val project: Project, private val scope
   }
 
   private fun persistFoldingState(editorManager: FileEditorManager, file: VirtualFile) {
-    if (file !is VirtualFileWithId) {
+    if (!isEnabled() || file !is VirtualFileWithId) {
       return
     }
     val fileEditor = editorManager.getSelectedEditor(file)
@@ -91,5 +86,9 @@ internal class FoldingModelGrave(private val project: Project, private val scope
       cache[file.id] = foldingState
       logger.debug { "stored folding state ${foldingState} for $file" }
     }
+  }
+
+  private fun isEnabled(): Boolean {
+    return Registry.`is`("cache.folding.model.on.disk")
   }
 }
