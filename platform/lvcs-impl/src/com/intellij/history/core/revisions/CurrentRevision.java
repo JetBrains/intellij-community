@@ -48,11 +48,6 @@ public final class CurrentRevision extends Revision {
   }
 
   @Override
-  public boolean isOldContentUsed() {
-    return false;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof CurrentRevision that)) return false;

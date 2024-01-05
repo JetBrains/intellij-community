@@ -1,45 +1,59 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.diff
 
+import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
+import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.platform.lvcs.impl.ActivityDiffData
-import com.intellij.platform.lvcs.impl.ActivityScope
-import com.intellij.platform.lvcs.impl.RevisionSelection
-import com.intellij.platform.lvcs.impl.isCurrent
+import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
-private data class ActivityDiffDataWithDifferences(val gateway: IdeaGateway,
+private data class ActivityDiffDataWithDifferences(val facade: LocalHistoryFacade,
+                                                   val gateway: IdeaGateway,
                                                    val scope: ActivityScope,
-                                                   val selection: RevisionSelection,
-                                                   val differences: List<Difference>) : ActivityDiffData {
+                                                   val selection: ChangeSetSelection,
+                                                   val rootEntry: RootEntry,
+                                                   val differences: List<Difference>,
+                                                   val isOldContentUsed: Boolean) : ActivityDiffData {
   override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
     val fileDifferences = JBIterable.from(differences).filter { it.isFile }
     return when (scope) {
       is ActivityScope.Selection -> {
-        val calculator = scope.createSelectionCalculator(gateway, selection)
-        fileDifferences.map { SelectionDifferenceWrapper(gateway, scope, selection, it, calculator) }
+        val calculator = facade.createSelectionCalculator(gateway, scope, rootEntry, selection, isOldContentUsed)
+        fileDifferences.map {
+          SelectionDifferenceWrapper(gateway, scope, selection, it, calculator, isOldContentUsed)
+        }
       }
       is ActivityScope.File -> {
-        fileDifferences.map { DifferenceWrapper(gateway, scope, selection, it) }
+        fileDifferences.map { DifferenceWrapper(gateway, scope, selection, it, isOldContentUsed) }
       }
       ActivityScope.Recent -> {
         fileDifferences.map { difference ->
-          difference.filePath?.let { DifferenceWrapper(gateway, scope, selection, difference, it) }
+          difference.filePath?.let {
+            DifferenceWrapper(gateway, scope, selection, difference, it, isOldContentUsed)
+          }
         }.filterNotNull()
       }
     }
   }
 }
 
-internal fun createDiffData(gateway: IdeaGateway, scope: ActivityScope, revisionSelection: RevisionSelection): ActivityDiffData {
+internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
+                                               scope: ActivityScope,
+                                               selection: ChangeSetSelection,
+                                               isOldContentUsed: Boolean): ActivityDiffData {
+  val rootEntry = runReadAction { gateway.createTransientRootEntry() }
+  val entryPath = getEntryPath(gateway, scope)
   val differences = if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) {
-    listOf(Difference(revisionSelection.leftEntry, revisionSelection.rightEntry, revisionSelection.rightRevision.isCurrent))
+    val leftEntry = findEntry(rootEntry, selection.leftRevision, entryPath, isOldContentUsed)
+    val rightEntry = findEntry(rootEntry, selection.rightRevision, entryPath, isOldContentUsed)
+    listOf(Difference(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current))
   }
   else {
-    revisionSelection.diff
+    getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   }
-  return ActivityDiffDataWithDifferences(gateway, scope, revisionSelection, differences)
+  return ActivityDiffDataWithDifferences(this, gateway, scope, selection, rootEntry, differences, isOldContentUsed)
 }

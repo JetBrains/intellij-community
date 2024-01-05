@@ -9,18 +9,23 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.platform.lvcs.impl.ActivityScope
-import com.intellij.platform.lvcs.impl.RevisionSelection
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.filePath
 import java.util.*
 
 internal open class DifferenceWrapper(protected val gateway: IdeaGateway,
                                       protected open val scope: ActivityScope,
-                                      protected val selection: RevisionSelection,
+                                      protected val selection: ChangeSetSelection,
                                       protected val difference: Difference,
-                                      private val targetFilePath: FilePath) : ChangeViewDiffRequestProcessor.Wrapper() {
+                                      private val targetFilePath: FilePath,
+                                      protected val isOldContentUsed: Boolean) : ChangeViewDiffRequestProcessor.Wrapper() {
 
-  constructor(gateway: IdeaGateway, scope: ActivityScope.File, selection: RevisionSelection, difference: Difference) :
-    this(gateway, scope, selection, difference, difference.filePath ?: scope.filePath)
+  constructor(gateway: IdeaGateway,
+              scope: ActivityScope.File,
+              selection: ChangeSetSelection,
+              difference: Difference,
+              isOldContentUsed: Boolean) :
+    this(gateway, scope, selection, difference, difference.filePath ?: scope.filePath, isOldContentUsed)
 
   override fun getFilePath() = targetFilePath
   override fun getFileStatus(): FileStatus {
@@ -30,7 +35,7 @@ internal open class DifferenceWrapper(protected val gateway: IdeaGateway,
   override fun getUserObject(): Any = difference
   override fun getPresentableName(): String = targetFilePath.name
   override fun createProducer(project: Project?): DiffRequestProducer {
-    return DifferenceDiffRequestProducer(project, gateway, scope, selection, difference)
+    return DifferenceDiffRequestProducer(project, gateway, scope, selection, difference, isOldContentUsed)
   }
 
   override fun equals(other: Any?): Boolean {

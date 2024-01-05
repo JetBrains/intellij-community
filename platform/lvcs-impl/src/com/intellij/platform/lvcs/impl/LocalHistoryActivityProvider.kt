@@ -2,21 +2,20 @@
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.LocalHistoryFacade
-import com.intellij.history.core.RevisionsCollector
-import com.intellij.history.core.revisions.Revision
+import com.intellij.history.core.collectChanges
+import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.history.integration.ui.models.filterContents
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-private const val USE_OLD_CONTENT = true
+internal const val USE_OLD_CONTENT = true
+private const val MAX_RECENT_ITEMS = 20
 
 internal class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
   private val facade = LocalHistoryImpl.getInstanceImpl().facade!!
@@ -25,31 +24,44 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     get() = facade.onChangeSetFinished()
 
   override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
+    val result = mutableListOf<ActivityItem>()
+    val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      return runReadAction {
-        gateway.registerUnsavedDocuments(facade)
-        return@runReadAction RevisionsCollector.collect(facade, gateway.createTransientRootEntry(),
-                                                        gateway.getPathOrUrl(scope.file),
-                                                        project.getLocationHash(), scopeFilter, USE_OLD_CONTENT)
-      }.map {
-        RevisionActivityItem(it)
+      val path = gateway.getPathOrUrl(scope.file)
+      gateway.registerUnsavedDocuments(facade)
+      facade.collectChanges(projectId, path, scopeFilter) { changeSet -> result.add(changeSet.toActivityItem()) }
+    }
+    else {
+      for (changeSet in facade.changes) {
+        if (changeSet.name.isNullOrBlank()) continue
+        if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
+        result.add(changeSet.toActivityItem())
+        if (result.size >= MAX_RECENT_ITEMS) break
       }
     }
-    return facade.getRecentChanges(runReadAction { gateway.createTransientRootEntry() }).map { RecentChangeActivityItem(it) }
+    return result
   }
 
   override fun filterActivityList(scope: ActivityScope, items: List<ActivityItem>, activityFilter: String?): Set<ActivityItem>? {
-    val revisions = items.mapNotNull { (it as? RevisionActivityItem)?.revision }
-    if (activityFilter.isNullOrEmpty() || revisions.isEmpty()) return null
+    val changeSets = items.filterIsInstance<ChangeSetActivityItem>().mapTo(mutableSetOf()) { it.id }
+    if (activityFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
-    val revisionIds = facade.filterContents(gateway, fileScope.file, revisions, activityFilter, before = USE_OLD_CONTENT)
-    return items.filterTo(mutableSetOf()) { (it is RevisionActivityItem) && revisionIds.contains(it.revision.changeSetId) }
+    val path = gateway.getPathOrUrl(fileScope.file)
+    val rootEntry = runReadAction { gateway.createTransientRootEntry() }.copy()
+    val filteredIds = mutableSetOf<Long>()
+    facade.processContents(gateway, rootEntry, path, changeSets, before = true) { changeSetId, content ->
+      if (content?.contains(activityFilter, true) == true) {
+        filteredIds.add(changeSetId)
+      }
+      true
+    }
+    return items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
-    val revisionSelection = selection.toRevisionSelection(scope) ?: return null
-    return createDiffData(gateway, scope, revisionSelection)
+    val changeSetSelection = selection.toChangeSetSelection() ?: return null
+    return facade.createDiffData(gateway, scope, changeSetSelection, USE_OLD_CONTENT)
   }
 
   override fun isScopeFilterSupported(scope: ActivityScope): Boolean {
@@ -62,8 +74,8 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
     return when (item) {
-      is RevisionActivityItem -> item.revision.createPresentation()
-      is RecentChangeActivityItem -> item.recentChange.revisionAfter.createPresentation()
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", showBackground = true, highlightColor = null)
+      is LabelActivityItem -> ActivityPresentation(item.name ?: "", showBackground = false, highlightColor = item.color)
       else -> null
     }
   }
@@ -80,12 +92,4 @@ private fun LocalHistoryFacade.onChangeSetFinished(): Flow<Unit> {
     trySend(Unit)
     awaitClose { Disposer.dispose(listenerDisposable) }
   }
-}
-
-private fun Revision.createPresentation(): ActivityPresentation {
-  if (isLabel) {
-    return ActivityPresentation(label ?: "", showBackground = false, labelColor)
-  }
-  val text = changeSetName ?: (StringUtil.shortenTextWithEllipsis(affectedFileNames.first.joinToString(), 80, 0))
-  return ActivityPresentation(text, showBackground = true, null)
 }

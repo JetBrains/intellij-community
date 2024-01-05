@@ -5,3 +5,5 @@ sealed class RevisionId {
   data object Current : RevisionId()
   data class ChangeSet(val id: Long) : RevisionId()
 }
+
+val ChangeSetActivityItem.revisionId: RevisionId get() = RevisionId.ChangeSet(id)

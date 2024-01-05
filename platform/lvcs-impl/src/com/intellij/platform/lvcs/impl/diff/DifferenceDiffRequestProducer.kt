@@ -7,7 +7,6 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.history.core.revisions.Difference
-import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
@@ -24,8 +23,9 @@ import java.util.*
 internal open class DifferenceDiffRequestProducer(protected val project: Project?,
                                                   protected val gateway: IdeaGateway,
                                                   protected open val scope: ActivityScope,
-                                                  protected val selection: RevisionSelection,
-                                                  protected val difference: Difference) : DiffRequestProducer {
+                                                  protected val selection: ChangeSetSelection,
+                                                  protected val difference: Difference,
+                                                  private val isOldContentUsed: Boolean) : DiffRequestProducer {
   override fun getName(): String {
     val entry = difference.left ?: difference.right
     if (entry == null) return scope.presentableName
@@ -33,11 +33,11 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
   }
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    val leftContent = createContent(difference.left, selection.leftRevision.isCurrent)
-    val rightContent = createContent(difference.right, selection.rightRevision.isCurrent)
+    val leftContent = createContent(difference.left, selection.leftRevision is RevisionId.Current)
+    val rightContent = createContent(difference.right, selection.rightRevision is RevisionId.Current)
 
-    val leftContentTitle = getTitle(selection.leftRevision)
-    val rightContentTitle = getTitle(selection.rightRevision)
+    val leftContentTitle = getTitle(selection.leftItem)
+    val rightContentTitle = getTitle(selection.rightItem)
 
     return SimpleDiffRequest(name, leftContent, rightContent, leftContentTitle, rightContentTitle)
   }
@@ -48,11 +48,11 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
     return createDiffContent(project, gateway, entry)
   }
 
-  protected fun getTitle(revision: Revision): @Nls String {
-    if (revision.isCurrent) return LocalHistoryBundle.message("current.revision")
+  protected fun getTitle(item: ChangeSetActivityItem?): @Nls String {
+    if (item == null) return LocalHistoryBundle.message("current.revision")
 
-    val formattedTimestamp = DateFormatUtil.formatDateTime(revision.timestamp)
-    if (revision.isOldContentUsed && !revision.isLabel) {
+    val formattedTimestamp = DateFormatUtil.formatDateTime(item.timestamp)
+    if (isOldContentUsed) {
       return LocalHistoryBundle.message("activity.diff.content.title", formattedTimestamp)
     }
     return formattedTimestamp

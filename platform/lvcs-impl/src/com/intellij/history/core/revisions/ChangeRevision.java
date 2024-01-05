@@ -112,11 +112,6 @@ public final class ChangeRevision extends Revision {
     return myAffectedFiles;
   }
 
-  @Override
-  public boolean isOldContentUsed() {
-    return myBefore;
-  }
-
   public String toString() {
     return getClass().getSimpleName() + ": " + myChangeToRevert;
   }
