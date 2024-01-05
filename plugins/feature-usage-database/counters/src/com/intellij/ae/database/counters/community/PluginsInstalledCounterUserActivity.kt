@@ -3,16 +3,17 @@ package com.intellij.ae.database.counters.community
 
 import com.intellij.ae.database.core.activities.WritableDatabaseBackedCounterUserActivity
 import com.intellij.ae.database.core.baseEvents.fus.FusEventCatcher
+import com.intellij.ae.database.core.dbs.counter.CounterUserActivityDatabase
+import com.intellij.ae.database.core.runUpdateEvent
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Instant
-import kotlin.time.Duration.Companion.minutes
 
 // todo record plugins during shutdown that were not recorded
 
@@ -20,7 +21,7 @@ import kotlin.time.Duration.Companion.minutes
  * Plugin is considered to be installed if it wasn't uninstalled in 2 minutes after installation.
  * Plugin updates are ignored
  */
-object PluginsInstalledUserActivity : WritableDatabaseBackedCounterUserActivity() {
+object PluginsInstalledCounterUserActivity : WritableDatabaseBackedCounterUserActivity() {
   override val id: String
     get() = "plugin.installed"
 
@@ -39,9 +40,7 @@ internal class PluginInstalledFusListener : FusEventCatcher(), FusEventCatcher.F
 
   override suspend fun onEvent(fields: Map<String, Any>, eventTime: Instant) {
     val pluginId = fields["plugin"] as? String ?: return
-    PluginInstalledUserActivityService.getInstanceAsync().pluginInstalledDoIfNotUninstalled(pluginId) {
-      PluginsInstalledUserActivity.writeInstallation(it, eventTime)
-    }
+    PluginInstalledUserActivityService.getInstanceAsync().pluginInstalled(pluginId, eventTime)
   }
 }
 
@@ -65,32 +64,43 @@ internal class PluginInstalledUserActivityService(private val cs: CoroutineScope
     suspend fun getInstanceAsync() = serviceAsync<PluginInstalledUserActivityService>()
   }
 
+  private val mutex = Mutex()
   private val installedPluginsIds = mutableSetOf<String>()
+  private val pluginsToReport = mutableMapOf<String, Instant>()
+
+  init {
+    CounterUserActivityDatabase.getInstance().executeBeforeConnectionClosed {
+      cs.runUpdateEvent(PluginsInstalledCounterUserActivity) {
+        mutex.withLock {
+          for ((pluginId, installedAt) in pluginsToReport) {
+            it.writeInstallation(pluginId, installedAt)
+          }
+          pluginsToReport.clear()
+        }
+      }
+    }
+  }
 
   fun addAllPlugins() {
     installedPluginsIds.addAll(PluginManager.getPlugins().asSequence()
                                  .map { it.pluginId.idString }.toMutableSet())
   }
 
-  /**
-   * Performs action if plugin was installed and wasn't uninstalled in two minutes
-   */
-  fun pluginInstalledDoIfNotUninstalled(id: String, action: suspend CoroutineScope.(String) -> Unit) {
-    if (!installedPluginsIds.add(id)) {
-      return
-    }
-
-    cs.launch {
-      delay(2.minutes)
-      if (!installedPluginsIds.contains(id)) {
-        return@launch
+  suspend fun pluginInstalled(id: String, installedAt: Instant) {
+    // if a plugin is already installed and is installed again, it means it's an update, and we need to skip it
+    mutex.withLock {
+      if (!pluginsToReport.containsKey(id) && !installedPluginsIds.contains(id)) {
+        pluginsToReport[id] = installedAt
+        installedPluginsIds.add(id)
       }
-      action(id)
     }
   }
 
-  fun pluginUninstalled(id: String) {
-    installedPluginsIds.remove(id)
+  suspend fun pluginUninstalled(id: String) {
+    mutex.withLock {
+      installedPluginsIds.remove(id)
+    }
+    pluginsToReport.remove(id)
   }
 }
 

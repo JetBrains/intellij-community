@@ -9,6 +9,7 @@ import com.intellij.ae.database.core.dbs.*
 import com.intellij.ae.database.core.utils.InstantUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,8 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
                                                         IInternalCounterUserActivityDatabase,
                                                         ISqliteExecutor, ISqliteBackedDatabaseLayer {
   companion object {
-    internal suspend fun getInstanceAsync() = serviceAsync<CounterUserActivityDatabase>()
+    suspend fun getInstanceAsync() = serviceAsync<CounterUserActivityDatabase>()
+    fun getInstance() = ApplicationManager.getApplication().service<CounterUserActivityDatabase>()
   }
 
   private val throttler = CounterUserActivityDatabaseThrottler(cs, this, runBackgroundUpdater = !ApplicationManager.getApplication().isUnitTestMode)
