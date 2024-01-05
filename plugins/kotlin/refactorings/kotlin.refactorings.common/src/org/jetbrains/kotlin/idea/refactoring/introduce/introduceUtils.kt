@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import kotlin.math.min
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
@@ -73,4 +75,24 @@ fun findStringTemplateOrStringTemplateEntryExpression(file: KtFile, startOffset:
     if (stringTemplate.getContentRange().equalsToRange(startOffset - templateOffset, endOffset - templateOffset)) return stringTemplate
 
     return null
+}
+
+fun KtExpression.getContainingLambdaOutsideParentheses(): KtLambdaArgument? {
+    val parent = parent
+    return when (parent) {
+        is KtLambdaArgument -> parent
+        is KtLabeledExpression -> parent.getContainingLambdaOutsideParentheses()
+        else -> null
+    }
+}
+
+fun calculateAnchorForExpressions(commonParent: PsiElement, commonContainer: PsiElement, expressions: List<KtExpression>): KtElement? {
+    if (commonParent != commonContainer) {
+        return commonParent.parents(withSelf = true).firstOrNull { it.parent == commonContainer } as? KtElement
+    }
+    val startOffset = expressions.fold(commonContainer.endOffset) { offset, expression ->
+        min(offset, expression.substringContextOrThis.startOffset)
+    }
+
+    return commonContainer.allChildren.lastOrNull { it.textRange.contains(startOffset) } as? KtElement
 }

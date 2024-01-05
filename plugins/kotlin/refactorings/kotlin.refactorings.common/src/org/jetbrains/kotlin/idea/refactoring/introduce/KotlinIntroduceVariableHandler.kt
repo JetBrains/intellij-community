@@ -230,9 +230,6 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
     protected companion object {
         val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
 
-        fun findElementByOffsetAndText(offset: Int, text: String, newContainer: PsiElement): PsiElement? =
-            newContainer.findElementAt(offset)?.parentsWithSelf?.firstOrNull { (it as? KtExpression)?.text == text }
-
         fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
             KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
         }

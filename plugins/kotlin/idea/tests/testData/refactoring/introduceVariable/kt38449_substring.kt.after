@@ -1,4 +1,4 @@
-// IGNORE_K2
+// INPLACE_VARIABLE_NAME: s
 fun b(body: () -> String) = body()
 
 class A {
