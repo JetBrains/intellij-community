@@ -441,6 +441,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       @Override
       public void beforeClose(String reason) {
       }
+
+      @Override
+      public boolean navigateToSingleUsageImmediately() {
+        return true;
+      }
     };
   }
 
@@ -658,7 +663,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
             }
             // else all usages filtered out
           }
-          else if (visibleUsages.size() == 1) {
+          else if (visibleUsages.size() == 1 && actionHandler.navigateToSingleUsageImmediately()) {
             if (usages.size() == 1) {
               //the only usage
               Usage usage = visibleUsages.iterator().next();

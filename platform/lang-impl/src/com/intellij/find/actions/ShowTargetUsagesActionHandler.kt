@@ -76,8 +76,9 @@ internal data class ShowTargetUsagesActionHandler(
     return mutableListOf()
   }
 
-  override fun beforeClose(reason: String?) {
-  }
+  override fun beforeClose(reason: String?) = Unit
+
+  override fun navigateToSingleUsageImmediately() = true
 
   override fun buildFinishEventData(selectedUsageInfo: UsageInfo?): MutableList<EventPair<*>> {
     return mutableListOf()
