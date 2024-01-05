@@ -26,14 +26,6 @@ import java.util.List;
 
 public final class LocalChangesWouldBeOverwrittenHelper {
 
-  public static @Nls @NotNull String getErrorNotificationDescription() {
-    return getErrorDescription(true);
-  }
-
-  private static @Nls @NotNull String getErrorDialogDescription() {
-    return getErrorDescription(false);
-  }
-
   private static @Nls @NotNull String getErrorDescription(boolean forNotification) {
     String message = GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge");
     if (forNotification) {
@@ -58,7 +50,7 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     VcsNotifier.getInstance(project)
       .notifyError(displayId,
                    notificationTitle,
-                   getErrorNotificationDescription(),
+                   getErrorDescription(true),
                    new NotificationListener.Adapter() {
                      @Override
                      protected void hyperlinkActivated(@NotNull Notification notification,
@@ -72,7 +64,7 @@ public final class LocalChangesWouldBeOverwrittenHelper {
   private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
                                       @NotNull Collection<String> absolutePaths) {
     String title = GitBundle.message("dialog.title.local.changes.prevent.from.operation", StringUtil.capitalize(operationName));
-    String description = getErrorDialogDescription();
+    String description = getErrorDescription(false);
     if (changes.isEmpty()) {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
     }

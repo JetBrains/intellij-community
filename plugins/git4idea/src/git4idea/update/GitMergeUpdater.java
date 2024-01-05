@@ -29,7 +29,6 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -101,7 +100,7 @@ public class GitMergeUpdater extends GitUpdater {
       UIUtil.invokeAndWaitIfNeeded(() -> {
         LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
         panel.setChanges(changes, null);
-        panel.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
+        panel.setDescription(GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge"));
 
         ChangeListViewerDialog.showDialog(myProject, null, panel);
       });
