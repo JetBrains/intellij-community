@@ -16,7 +16,6 @@ import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.sqlite.SqliteConnection
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -269,8 +268,6 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       return null
     }
 
-    performMigrationIfNeeded(folder, fileName, mask)
-
     folder.createDirectories()
 
     return desiredDatabasePath
@@ -278,44 +275,9 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   private fun createDatabasePathStoreInConfigFolder(fileName: String, mask: String): Path {
     val configFolder = PathManager.getConfigDir()
-    performMigrationIfNeeded(configFolder, fileName, mask)
 
-    return configFolder.resolve(fileName)
-  }
+    val databasePath = configFolder.resolve(fileName)
 
-  // should be executed before dir creation
-  private fun performMigrationIfNeeded(parentDir: Path, currentFileName: String, mask: String) {
-    if (!parentDir.exists() || parentDir.resolve(currentFileName).exists()) {
-      return
-    }
-
-    // todo check version
-
-    val fileToMigrate = Files.newDirectoryStream(parentDir, mask).use { paths ->
-      paths.maxByOrNull { p1 ->
-        getBuildNumber(mask, p1.fileName.toString())
-      }
-    }
-
-    // todo delete old file?? idk?
-
-    if (fileToMigrate == null) {
-      return
-    }
-
-    logger.info("Found file to migrate: $fileToMigrate")
-  }
-
-  private fun getBuildNumber(mask: String, fileName: String): Int {
-    return try {
-      val prefix = mask.substringBefore('*')
-      val suffix = mask.substringAfter('*')
-
-      fileName.removePrefix(prefix).removeSuffix(suffix).toInt()
-    }
-    catch (t: Throwable) {
-      logger.error("Failed to parse file version")
-      -1
-    }
+    return databasePath
   }
 }
