@@ -272,6 +272,14 @@ private class ContainingBranchesPanel : JPanel() {
       }
     }
 
+    override fun setBounds(x: Int, y: Int, w: Int, h: Int) {
+      val oldWidth = width
+      super.setBounds(x, y, w, h)
+      if (w != oldWidth) {
+        update()
+      }
+    }
+
     override fun getBody(): String {
       val insets = insets
       val availableWidth = width - insets.left - insets.right
