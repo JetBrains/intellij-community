@@ -230,7 +230,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertDetachedState(second, "feature")
 
     assertSuccessfulNotification("Checked out ${bcode("feature")} in community and contrib<br/>" +
-                                 "Revision not found in ${project.stateStore.projectBasePath.fileName}<br><a href=\"rollback\">Rollback</a>")
+                                 "Revision not found in ${project.stateStore.projectBasePath.fileName}", actions = listOf("Rollback"))
   }
 
   fun `test checkout with untracked files overwritten by checkout in first repo should show notification`() {
@@ -333,7 +333,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test agree to smart checkout should smart checkout`() {
-    val localChanges = `agree to smart operation`("checkout", "Checked out <b><code>feature</code></b>")
+    val localChanges = `agree to smart operation`("checkout")
+    assertSuccessfulNotification("Checked out <b><code>feature</code></b>")
 
     assertCurrentBranch("feature")
     cd(last)
@@ -345,8 +346,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun `test agree to smart merge should smart merge`() {
-    val localChanges = `agree to smart operation`("merge",
-                                                  "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href=\"delete\">Delete feature</a>")
+    val localChanges = `agree to smart operation`("merge")
+    assertSuccessfulNotification("Merged <b><code>feature</code></b> to <b><code>master</code></b>", actions = listOf("Delete feature"))
 
     cd(last)
     val actual = cat(localChanges.first())
@@ -356,10 +357,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertContentIgnoreLineSeparators(expectedContent, actual)
   }
 
-  private fun `agree to smart operation`(operation: String, expectedSuccessMessage: String): List<String> {
+  private fun `agree to smart operation`(operation: String): List<String> {
     val localChanges = prepareLocalChangesOverwrittenBy(last)
     checkoutOrMerge(operation, "feature", TestUiHandler(project))
-    assertSuccessfulNotification(expectedSuccessMessage)
     return localChanges
   }
 
@@ -655,8 +655,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler(project))
 
-    assertSuccessfulNotification("Merged ${bcode("master2")} to ${bcode("master")}<br/>" +
-                                 "<a href=\"delete\">Delete master2</a>")
+    assertSuccessfulNotification("Merged ${bcode("master2")} to ${bcode("master")}", actions = listOf("Delete master2"))
+
     assertFile(last, "branch_file.txt", "branch content")
     assertFile(first, "branch_file.txt", "branch content")
     assertFile(second, "branch_file.txt", "branch content")
@@ -711,9 +711,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler(project))
 
-    assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect", "Already up to date<br/><a href=\"delete\">Delete master2</a>",
-                 vcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Already up to date", actions = listOf("Delete master2"))
   }
 
   fun `test merge one simple and other up to date`() {
@@ -724,9 +722,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     mergeBranch("master2", TestUiHandler(project))
 
     assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect",
-                 "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href=\"delete\">Delete master2</a>",
-                 vcsNotifier.lastNotification.content)
+
+    assertSuccessfulNotification("Merged " + bcode("master2") + " to " + bcode("master"), actions = listOf("Delete master2"))
     assertFile(first, "branch_file.txt", "branch content")
   }
 

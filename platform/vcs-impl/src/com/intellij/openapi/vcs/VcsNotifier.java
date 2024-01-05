@@ -27,7 +27,7 @@ public class VcsNotifier {
   public static final NotificationGroup SILENT_NOTIFICATION =
     NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
 
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
 
   public static VcsNotifier getInstance(@NotNull Project project) {
     return project.getService(VcsNotifier.class);

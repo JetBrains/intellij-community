@@ -5,6 +5,7 @@ package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -19,10 +20,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
@@ -70,7 +68,6 @@ import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.awt.Component
 import java.nio.charset.Charset
-import javax.swing.event.HyperlinkEvent
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 
@@ -321,18 +318,17 @@ private class UnstashConflictResolver(project: Project, private val stashInfo: S
   GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS,
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
-    ) { _, event ->
-      if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.description == "resolve") {
+    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
+                          GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message"),
+                          NotificationType.WARNING)
+      .setDisplayId(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS)
+      .addAction(
+        NotificationAction.createSimple(GitBundle.messagePointer("unstash.dialog.unresolved.conflict.warning.resolve.conflicts.action"))
+        {
           UnstashConflictResolver(myProject, stashInfo).mergeNoProceedInBackground()
-        }
-      }
-    }
+        })
+      .notify(myProject)
   }
 
   companion object {

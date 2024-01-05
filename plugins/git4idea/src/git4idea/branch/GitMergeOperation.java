@@ -2,8 +2,8 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,6 @@ import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,7 +41,6 @@ import static git4idea.util.GitUIUtil.code;
 class GitMergeOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitMergeOperation.class);
-  private static final @NotNull String DELETE_HREF_ATTRIBUTE = "delete";
 
   private final @NotNull ChangeListManager myChangeListManager;
   private final @NotNull @NlsSafe String myBranchToMerge;
@@ -157,12 +155,14 @@ class GitMergeOperation extends GitBranchOperation {
         new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
       case PROPOSE -> {
-        String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
-        VcsNotifier.getInstance(myProject).notifySuccess(DELETE_BRANCH_ON_MERGE,
-                                                         "",
-                                                         description,
-                                                         new DeleteMergedLocalBranchNotificationListener());
+        VcsNotifier.NOTIFICATION_GROUP_ID
+          .createNotification("", new HtmlBuilder().appendRaw(message).toString(), NotificationType.INFORMATION)
+          .setDisplayId(DELETE_BRANCH_ON_MERGE)
+          .addAction(NotificationAction.createSimpleExpiring(
+            GitBundle.message("merge.operation.delete.branch.action", myBranchToMerge), () -> {
+              GitBrancher.getInstance(myProject).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
+            }))
+          .notify(myProject);
       }
       case NOTHING -> super.notifySuccess(message);
     }
@@ -351,16 +351,6 @@ class GitMergeOperation extends GitBranchOperation {
     @Override
     protected void notifyUnresolvedRemain() {
       notifyWarning(GitBundle.message("merge.operation.branch.merged.with.conflicts", myBranchToMerge), "");
-    }
-  }
-
-  private class DeleteMergedLocalBranchNotificationListener extends NotificationListener.Adapter {
-    @Override
-    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getDescription().equalsIgnoreCase(DELETE_HREF_ATTRIBUTE)) {
-        notification.expire();
-        GitBrancher.getInstance(myProject).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
-      }
     }
   }
 }
