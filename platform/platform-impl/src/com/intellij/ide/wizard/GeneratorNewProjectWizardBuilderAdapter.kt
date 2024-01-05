@@ -11,7 +11,7 @@ import javax.swing.Icon
  */
 abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewProjectWizard) : AbstractNewProjectWizardBuilder() {
 
-  override fun getWeight(): Int = wizard.ordinal
+  override fun getWeight(): Int = Int.MAX_VALUE - wizard.ordinal
   override fun getBuilderId(): String = NPW_PREFIX + wizard.id
   override fun getPresentableName(): String = wizard.name
   override fun getDescription(): String = wizard.description ?: ""
