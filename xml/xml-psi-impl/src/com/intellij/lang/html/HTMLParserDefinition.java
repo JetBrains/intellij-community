@@ -17,7 +17,7 @@ import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.UnsupportedNodeElementTypeException;
 import com.intellij.psi.xml.HtmlFileElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -68,7 +68,7 @@ public class HTMLParserDefinition implements ParserDefinition {
     if (node.getElementType() == XmlElementType.HTML_EMBEDDED_CONTENT) {
       return new HtmlEmbeddedContentImpl(node);
     }
-    return PsiUtilCore.NULL_PSI_ELEMENT;
+    throw new UnsupportedNodeElementTypeException(node);
   }
 
   @Override

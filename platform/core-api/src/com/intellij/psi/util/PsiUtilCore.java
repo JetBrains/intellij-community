@@ -386,7 +386,7 @@ public class PsiUtilCore {
     if (textRange2 == null) return 1;
     return Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(textRange1, textRange2);
   }
-  
+
   private static int compareStubPositions(StubElement<?> stub1, StubElement<?> stub2) {
     int depth1 = getStubDepth(stub1);
     int depth2 = getStubDepth(stub2);

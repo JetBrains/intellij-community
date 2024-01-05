@@ -15,9 +15,9 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.UnsupportedNodeElementTypeException;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class XMLParserDefinition implements ParserDefinition {
@@ -57,7 +57,7 @@ public class XMLParserDefinition implements ParserDefinition {
       //noinspection rawtypes
       return ((XmlStubBasedElementType)node.getElementType()).createPsi(node);
     }
-    throw new IncorrectOperationException("I dont know how to create XML PSI for this node: "+node+" ("+node.getClass()+")");
+    throw new UnsupportedNodeElementTypeException(node);
   }
 
   @Override
