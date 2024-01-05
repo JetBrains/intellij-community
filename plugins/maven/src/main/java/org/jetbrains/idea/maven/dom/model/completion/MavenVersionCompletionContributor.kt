@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.MavenAbstractPluginExtensionCompletionContributor.Companion.findPluginByArtifactId
@@ -43,7 +42,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
 
     val artifactDataConsumer = RepositoryArtifactDataConsumer(artifactId, groupId, consumer)
-    if (isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
+    if (isPluginOrExtension(coordinates) && groupId.isEmpty()) {
       return findPluginByArtifactId(service, artifactId, searchParameters, artifactDataConsumer)
     }
 
@@ -79,8 +78,8 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
                                                private val myConsumer: Consumer<RepositoryArtifactData>) : Consumer<RepositoryArtifactData> {
     override fun accept(rad: RepositoryArtifactData) {
       if (rad is MavenRepositoryArtifactInfo) {
-        if (StringUtil.equals(rad.artifactId, myArtifactId) &&
-            (StringUtil.isEmpty(myGroupId) || StringUtil.equals(rad.groupId, myGroupId))) {
+        if (rad.artifactId == myArtifactId &&
+            (myGroupId.isEmpty() || rad.groupId == myGroupId)) {
           myConsumer.accept(rad)
         }
       }
