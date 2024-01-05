@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.gradle.jvmcompat;
 
@@ -14,8 +14,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"
   ),
   supportedGradleVersions = listOf(
-    "3.0", "3.1", "3.2", "3.3", "3.4", "3.5",
-    "4.0", "4.1", "4.2", "4.3", "4.4", "4.5", "4.5.1", "4.6", "4.7", "4.8", "4.9", "4.10", "4.10.3",
+    "4.5", "4.5.1", "4.6", "4.7", "4.8", "4.9", "4.10", "4.10.3",
     "5.0", "5.1", "5.2", "5.3", "5.3.1", "5.4", "5.4.1", "5.5", "5.5.1", "5.6", "5.6.2",
     "6.0", "6.0.1", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7", "6.8", "6.8.3", "6.9",
     "7.0", "7.1", "7.2", "7.3", "7.4", "7.5", "7.5.1", "7.6",
