@@ -14,8 +14,26 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <!-- Requirements.txt support -->
-  <xi:include href="/META-INF/python-requirements-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <!-- Requirements.txt support. Can't extract module due to circular dependency between it and community.impl (RequirementsFile inspection)-->
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Requirements.txt"
+              implementationClass="com.intellij.python.community.impl.requirements.RequirementsFileType"
+              fieldName="INSTANCE"
+              language="Requirements"
+              fileNamesCaseInsensitive="requirements.txt"/>
+    <fileTypeOverrider implementation="com.intellij.python.community.impl.requirements.RequirementsFileTypeOverrider"/>
+    <lang.parserDefinition
+      language="Requirements"
+      implementationClass="com.intellij.python.community.impl.requirements.RequirementsParserDefinition"/>
+    <lang.syntaxHighlighterFactory
+      language="Requirements"
+      implementationClass="com.intellij.python.community.impl.requirements.RequirementsSyntaxHighlighterFactory"/>
+    <completion.contributor language="Requirements"
+                            implementationClass="com.intellij.python.community.impl.requirements.RequirementsPackageNameCompletionContributor"/>
+    <completion.contributor language="Requirements"
+                            implementationClass="com.intellij.python.community.impl.requirements.RequirementsVersionCompletionContributor"/>
+  </extensions>
+
 
   <content>
     <module name="intellij.python.community.impl/poetry"/>
