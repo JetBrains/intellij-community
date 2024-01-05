@@ -84,7 +84,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     checkoutNewBranch("feature", TestUiHandler(project))
 
-    assertErrorNotification("Couldn't create new branch feature", "unknown error")
+    assertErrorNotification("Could not create new branch feature", "unknown error")
   }
 
   fun `test if create new branch fails with error in second repo, then we should propose to rollback`() {
@@ -216,7 +216,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertErrorNotification("Couldn't checkout unknown_ref",
+    assertErrorNotification("Could not checkout unknown_ref",
                             "Revision not found in community, contrib and ${project.stateStore.projectBasePath.fileName}")
   }
 
