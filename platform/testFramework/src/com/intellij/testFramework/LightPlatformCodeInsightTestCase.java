@@ -676,6 +676,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorKillRingSave");
   }
 
+  protected void indent() {
+    executeAction("EditorIndentLineOrSelection");
+  }
+
   protected void unindent() {
     executeAction("EditorUnindentSelection");
   }
