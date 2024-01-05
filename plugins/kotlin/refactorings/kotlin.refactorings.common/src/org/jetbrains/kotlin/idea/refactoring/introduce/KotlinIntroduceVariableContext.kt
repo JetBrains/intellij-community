@@ -182,26 +182,18 @@ abstract class KotlinIntroduceVariableContext(
                 if (body != null) {
                     oldElement = body
                 }
-                //ugly logic to make sure we are working with right actual expression
-                var actualExpression = reference?.element ?: return
-                var diff = actualExpression.textRange.startOffset - oldElement.textRange.startOffset
-                var actualExpressionText = actualExpression.text
-                val newElement = emptyBody.addAfter(oldElement, firstChild)
-                var elem: PsiElement? = findElementByOffsetAndText(diff, actualExpressionText, newElement)
-                if (elem != null) {
-                    reference = SmartPointerManager.createPointer(elem as KtExpression)
-                }
+
+                modifyPsiAndUpdateReference(anchorForOffsetCalculation = oldElement) {
+                    emptyBody.addAfter(oldElement, firstChild)
+                } ?: return
+
                 emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
                 property = emptyBody.addAfter(property, firstChild) as KtDeclaration
                 emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
-                actualExpression = reference?.element ?: return
-                diff = actualExpression.textRange.startOffset - emptyBody.textRange.startOffset
-                actualExpressionText = actualExpression.text
-                emptyBody = anchor.replace(emptyBody) as KtBlockExpression
-                elem = findElementByOffsetAndText(diff, actualExpressionText, emptyBody)
-                if (elem != null) {
-                    reference = SmartPointerManager.createPointer(elem as KtExpression)
-                }
+
+                emptyBody = modifyPsiAndUpdateReference(anchorForOffsetCalculation = emptyBody) {
+                    anchor.replace(emptyBody) as KtBlockExpression
+                } ?: return
 
                 emptyBody.accept(object : KtTreeVisitorVoid() {
                     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -260,6 +252,24 @@ abstract class KotlinIntroduceVariableContext(
         introducedVariablePointer = property.createSmartPointer()
 
         analyzeDeclarationAndSpecifyTypeIfNeeded(property)
+    }
+
+    /**
+     * @param modifyAnchor should return modified anchor
+     * @return anchor after modification
+     */
+    private fun <T: PsiElement> modifyPsiAndUpdateReference(anchorForOffsetCalculation: T, modifyAnchor: () -> T): T? {
+        val selectedExpression = reference?.element ?: return null
+        val offsetRelativeToAnchor = selectedExpression.textRange.startOffset - anchorForOffsetCalculation.textRange.startOffset
+        val selectedExpressionText = selectedExpression.text
+
+        val anchorAfterModification = modifyAnchor()
+
+        findElementByOffsetAndText(offsetRelativeToAnchor, selectedExpressionText, anchorAfterModification)?.let {
+            reference = SmartPointerManager.createPointer(it as KtExpression)
+        }
+
+        return anchorAfterModification
     }
 
     private fun KtExpression.getSubstringExpressionOrThis(oldExpression: KtExpression): KtExpression {
