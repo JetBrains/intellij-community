@@ -116,7 +116,7 @@ public class Switches {
   }
 
   void stringSwitch(String s) {
-    switch (s) { // TODO cases here
+    switch (s) {
       case "A": {
         System.out.println("Case A");
         break;
@@ -149,7 +149,7 @@ public class Switches {
   }
 
   void fullStringSwitch(String s) {
-    switch (s) { // TODO cases here
+    switch (s) {
       case "A": {
         System.out.println("Case A");
         break;
@@ -166,7 +166,7 @@ public class Switches {
   }
 
   void stringSwitchSameHashCode(String s) {
-    switch (s) { // TODO cases here
+    switch (s) {
       case "Aa": {
         System.out.println("Case A");
         break;

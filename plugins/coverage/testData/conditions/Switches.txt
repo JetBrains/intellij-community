@@ -10,9 +10,6 @@ Hits: 1
 Line 6 coverage: FULL
 Hits: 1
 
-Line 7 coverage: FULL
-Hits: 1
-
 Line 17 coverage: PARTIAL
 Hits: 1
     x
@@ -41,9 +38,6 @@ Hits: 2
 Line 49 coverage: FULL
 Hits: 1
 
-Line 50 coverage: FULL
-Hits: 1
-
 Line 53 coverage: FULL
 Hits: 1
 
@@ -57,13 +51,7 @@ Hits: 3
 Line 62 coverage: FULL
 Hits: 1
 
-Line 63 coverage: FULL
-Hits: 1
-
 Line 66 coverage: FULL
-Hits: 1
-
-Line 67 coverage: FULL
 Hits: 1
 
 Line 70 coverage: FULL
@@ -79,13 +67,7 @@ Hits: 2
 Line 79 coverage: FULL
 Hits: 1
 
-Line 80 coverage: FULL
-Hits: 1
-
 Line 83 coverage: FULL
-Hits: 1
-
-Line 84 coverage: FULL
 Hits: 1
 
 Line 94 coverage: PARTIAL
@@ -110,49 +92,50 @@ Hits: 3
 Line 108 coverage: FULL
 Hits: 1
 
-Line 109 coverage: FULL
-Hits: 1
-
 Line 112 coverage: FULL
 Hits: 1
 
 Line 119 coverage: PARTIAL
 Hits: 1
+    s
+        case 0: 1
+        case 1: 0
+        case 2: 0
+        case 3: 0
+        case 4: 0
+        case 5: 0
+        case 6: 0
+
 Line 121 coverage: FULL
 Hits: 1
 
-Line 122 coverage: FULL
-Hits: 1
-
-Line 152 coverage: PARTIAL
+Line 152 coverage: FULL
 Hits: 3
-Line 154 coverage: FULL
-Hits: 1
+    s
+        case 0: 1
+        case 1: 1
+        default: 1
 
-Line 155 coverage: FULL
+Line 154 coverage: FULL
 Hits: 1
 
 Line 158 coverage: FULL
 Hits: 1
 
-Line 159 coverage: FULL
-Hits: 1
-
 Line 162 coverage: FULL
 Hits: 1
 
-Line 169 coverage: PARTIAL
+Line 169 coverage: FULL
 Hits: 3
+    s
+        case 0: 1
+        case 1: 1
+        default: 1
+
 Line 171 coverage: FULL
 Hits: 1
 
-Line 172 coverage: FULL
-Hits: 1
-
 Line 175 coverage: FULL
-Hits: 1
-
-Line 176 coverage: FULL
 Hits: 1
 
 Line 179 coverage: FULL
