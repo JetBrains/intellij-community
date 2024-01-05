@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_RESTARTED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_FINISHED
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -38,7 +40,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
     val result = performTest(searchEverywhereUIProvider, testProcedure)
     extensionPointMaskManager.dispose()
 
-    return result
+    return result.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
   }
 
   private fun performTest(searchEverywhereUIProvider: (Project) -> SearchEverywhereUI,

@@ -66,6 +66,7 @@
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.searchEverywhereMl.ranking.id.MissingKeyProviderCollector"/>
   </extensions>
 
   <extensionPoints>
