@@ -22,7 +22,6 @@ import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeCommittingConflictResolver;
-import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import git4idea.util.GitPreservingProcess;
@@ -344,7 +343,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     MyMergeConflictResolver() {
-      super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
+      super(GitMergeOperation.this.myProject,
             GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()),
             new Params(GitMergeOperation.this.myProject), true);
     }

@@ -468,7 +468,7 @@ public final class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
     params.setMergeDescription(GitBundle.message("update.process.error.message.unfinished.merge"));
-    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, mergingRoots, params, false).merge();
   }
 
   /**
@@ -480,7 +480,7 @@ public final class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
     params.setMergeDescription(GitBundle.message("update.process.error.message.unmerged.files"));
-    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, getRootsFromRepositories(myRepositories),
+    return !new GitMergeCommittingConflictResolver(myProject, getRootsFromRepositories(myRepositories),
                                                    params, false).merge();
   }
 

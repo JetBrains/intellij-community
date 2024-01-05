@@ -20,7 +20,7 @@ import java.util.Collection;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static git4idea.GitUtil.getRootsFromRepositories;
 
-public class GitMerger {
+public final class GitMerger {
 
   private final Project myProject;
 

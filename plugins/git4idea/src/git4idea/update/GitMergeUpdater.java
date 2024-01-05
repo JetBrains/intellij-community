@@ -62,7 +62,6 @@ public class GitMergeUpdater extends GitUpdater {
   @Override
   protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    final GitMerger merger = new GitMerger(myProject);
 
     MergeLineListener mergeLineListener = new MergeLineListener();
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
@@ -76,7 +75,7 @@ public class GitMergeUpdater extends GitUpdater {
       myProgressIndicator.setText(originalText);
       return result.success()
              ? GitUpdateResult.SUCCESS
-             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result);
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, result);
     }
     catch (ProcessCanceledException pce) {
       cancel();
@@ -86,14 +85,13 @@ public class GitMergeUpdater extends GitUpdater {
 
   private @NotNull GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                                       GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
-                                                      final GitMerger merger,
                                                       GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
       LOG.info("Conflict detected");
       final boolean allMerged =
-        new MyConflictResolver(myProject, myGit, merger, myRoot).merge();
+        new MyConflictResolver(myProject, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -249,12 +247,10 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private static class MyConflictResolver extends GitConflictResolver {
-    private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+    MyConflictResolver(Project project, VirtualFile root) {
       super(project, Collections.singleton(root), makeParams(project));
-      myMerger = merger;
       myRoot = root;
     }
     
@@ -266,12 +262,12 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-      myMerger.mergeCommit(myRoot);
+      new GitMerger(myProject).mergeCommit(myRoot);
       return true;
     }
 
     @Override protected boolean proceedAfterAllMerged() throws VcsException {
-      myMerger.mergeCommit(myRoot);
+      new GitMerger(myProject).mergeCommit(myRoot);
       return true;
     }
   }

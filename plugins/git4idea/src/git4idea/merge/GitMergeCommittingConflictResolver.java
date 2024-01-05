@@ -29,7 +29,6 @@ import java.util.Collection;
 public class GitMergeCommittingConflictResolver extends GitConflictResolver {
   private final Collection<? extends VirtualFile> myMergingRoots;
   private final boolean myRefreshAfterCommit;
-  private final GitMerger myMerger;
 
   public GitMergeCommittingConflictResolver(@NotNull Project project,
                                             @NotNull Git git,
@@ -37,15 +36,21 @@ public class GitMergeCommittingConflictResolver extends GitConflictResolver {
                                             @NotNull Collection<? extends VirtualFile> mergingRoots,
                                             @NotNull Params params,
                                             boolean refreshAfterCommit) {
+    this(project, mergingRoots, params, refreshAfterCommit);
+  }
+
+  public GitMergeCommittingConflictResolver(@NotNull Project project,
+                                            @NotNull Collection<? extends VirtualFile> mergingRoots,
+                                            @NotNull Params params,
+                                            boolean refreshAfterCommit) {
     super(project, mergingRoots, params);
-    myMerger = merger;
     myMergingRoots = mergingRoots;
     myRefreshAfterCommit = refreshAfterCommit;
   }
 
   @Override
   protected boolean proceedAfterAllMerged() throws VcsException {
-    myMerger.mergeCommit(myMergingRoots);
+    new GitMerger(myProject).mergeCommit(myMergingRoots);
     if (myRefreshAfterCommit) {
       for (VirtualFile root : myMergingRoots) {
         root.refresh(true, true);

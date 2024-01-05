@@ -177,12 +177,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
     VirtualFile root = repository.getRoot();
 
     if (mergeConflictDetector.hasHappened()) {
-      GitMerger merger = new GitMerger(project);
       new GitConflictResolver(project, singletonList(root), new GitConflictResolver.Params(project)) {
         @Override
         protected boolean proceedAfterAllMerged() throws VcsException {
           if (commitAfterMerge) {
-            merger.mergeCommit(root);
+            new GitMerger(project).mergeCommit(root);
           }
           return true;
         }
