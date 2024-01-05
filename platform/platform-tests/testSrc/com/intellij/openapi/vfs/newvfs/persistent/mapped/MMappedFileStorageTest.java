@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -161,55 +160,6 @@ public class MMappedFileStorageTest {
       IllegalStateException.class,
       () -> new MMappedFileStorage(storage.storagePath(), PAGE_SIZE)
     );
-  }
-
-  @Test
-  public void afterTruncate_fileBecomesEmptyAndZeroed_andNoTracesOfPreviousContentIsLeft() throws IOException {
-    assumeFalse(
-      SystemInfoRt.isWindows,
-      "On Windows mmapped file region can't be truncated"
-    );
-    int pagesToAllocate = 16;
-
-    byte[] ones = new byte[1024];
-    Arrays.fill(ones, (byte)1);
-
-    for (int pageNo = 0; pageNo < pagesToAllocate; pageNo++) {
-      Page page = storage.pageByIndex(pageNo);
-      ByteBuffer buffer = page.rawPageBuffer();
-      buffer.put(0, ones);
-    }
-    assertEquals(
-      pagesToAllocate * (long)storage.pageSize(),
-      storage.actualFileSize(),
-      "File must be " + pagesToAllocate + " pages long"
-    );
-
-    storage.close();
-    storage = open();
-
-    assertEquals(
-      pagesToAllocate * (long)storage.pageSize(),
-      storage.actualFileSize(),
-      "File still must be " + pagesToAllocate + " pages long after reopen"
-    );
-
-    storage.truncate();
-    assertEquals(
-      0L,
-      storage.actualFileSize(),
-      "After .truncate() file size must be 0 "
-    );
-    for (int pageNo = 0; pageNo < pagesToAllocate; pageNo++) {
-      Page page = storage.pageByIndex(pageNo);
-      ByteBuffer buffer = page.rawPageBuffer();
-      byte firstByte = buffer.get(0);
-      assertEquals(
-        0,
-        firstByte,
-        "All pages should be zeroed -- it should be no traces of 1s written before .truncate() call"
-      );
-    }
   }
 
   @Test

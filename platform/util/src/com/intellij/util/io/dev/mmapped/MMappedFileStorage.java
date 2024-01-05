@@ -226,29 +226,6 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     return page;
   }
 
-  /**
-   * Truncates the file so that it has size=0, and all previous content is lost.
-   * This method is unsafe and should be used with caution: it should be no chance storage is used by other
-   * threads concurrently, nobody should keep any {@link Page} reference. This is because writing to a buffer
-   * mapped over a non-existing file region (e.g. after truncation) is 'undefined behavior', and could lead
-   * to all sorts of weird behaviors -- immediate/delayed JVM crash (#SIGBUS), immediate/delayed data loss, etc.
-   * <p/>
-   * Basically, the main safe use-case for this method is to call it immediately after the storage instance
-   * is opened -- and no reference to it is ever leaked. E.g., one opens the file, reads the header, and
-   * finds out file content is corrupted -- so .truncate() the storage, and use as-if it was a new file
-   * just created.
-   *
-   * @deprecated to be removed: it doesn't work on Windows, but Windows was the main reason to introduce
-   * the method in the first place, so better get rid of it before it got more usages.
-   */
-  @ApiStatus.Obsolete
-  public void truncate() throws IOException {
-    synchronized (pagesLock) {
-      channel.truncate(0L);
-      pages = new Page[0];
-    }
-  }
-
   public int pageIndexByOffset(long offsetInFile) {
     if (offsetInFile < 0) {
       throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
