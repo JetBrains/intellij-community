@@ -25,7 +25,7 @@ public final class NavBarIdeView implements IdeView {
   }
 
   @Override
-  public void selectElement(PsiElement element) {
+  public void selectElement(@NotNull PsiElement element) {
     myPanel.getModel().updateModel(element, null);
 
     if (element instanceof Navigatable navigatable) {

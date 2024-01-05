@@ -33,7 +33,7 @@ public interface IdeView {
    *
    * @param element the element to select.
    */
-  default void selectElement(PsiElement element) {
+  default void selectElement(@NotNull PsiElement element) {
   }
 
   /**

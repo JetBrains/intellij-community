@@ -481,7 +481,7 @@ public class CommanderPanel extends JPanel {
 
   private final class MyIdeView implements IdeView {
     @Override
-    public void selectElement(final PsiElement element) {
+    public void selectElement(@NotNull PsiElement element) {
       final boolean isDirectory = element instanceof PsiDirectory;
       if (!isDirectory) {
         EditorHelper.openInEditor(element);

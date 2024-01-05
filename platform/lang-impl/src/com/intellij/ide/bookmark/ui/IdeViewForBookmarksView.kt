@@ -25,7 +25,7 @@ internal class IdeViewForBookmarksView(private val view: BookmarksView,
     return if (directories.isEmpty()) PsiDirectory.EMPTY_ARRAY else directories.toTypedArray()
   }
 
-  override fun selectElement(element: PsiElement?) {
+  override fun selectElement(element: PsiElement) {
     PsiUtilCore.getVirtualFile(element)?.let { view.select(it) }
   }
 }
