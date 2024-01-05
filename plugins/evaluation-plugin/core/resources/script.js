@@ -175,7 +175,7 @@ function addDiagnosticsBlock(description, field, popup, lookup) {
     textDiv.setAttribute("class", "suggestion")
     let p = document.createElement("code")
     p.setAttribute("class", "suggestion-p")
-    p.innerHTML = diagnostics[i]["first"] + " (" + diagnostics[i]["second"] + ")"
+    p.innerHTML = diagnostics[i]["first"].replace(/</g, '&lt;').replace(/>/g, '&gt;') + " (" + diagnostics[i]["second"] + ")"
     textDiv.appendChild(p)
     popup.appendChild(textDiv)
   }
