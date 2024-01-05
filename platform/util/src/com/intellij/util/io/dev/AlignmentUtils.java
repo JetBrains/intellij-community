@@ -43,7 +43,7 @@ public final class AlignmentUtils {
   }
 
   public static void assert32bAligned(int value,
-                                       @NotNull String name) {
+                                      @NotNull String name) {
     if (!is32bAligned(value)) {
       throw new AssertionError("Bug: " + name + "(=" + value + ") is not 32b-aligned");
     }
@@ -56,6 +56,10 @@ public final class AlignmentUtils {
       return value;
     }
     return ((value >> 3) + 1) << 3;
+  }
+
+  public static int roundDownToInt64(int value) {
+    return (value & (~0b111));
   }
 
   public static long roundUpToInt64(long value) {
@@ -81,10 +85,9 @@ public final class AlignmentUtils {
   }
 
   public static void assert64bAligned(int value,
-                                       @NotNull String name) {
+                                      @NotNull String name) {
     if (!is64bAligned(value)) {
       throw new AssertionError("Bug: " + name + "(=" + value + ") is not 64b-aligned");
     }
   }
-
 }
