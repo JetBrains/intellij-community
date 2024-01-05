@@ -12,6 +12,7 @@ import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
+import com.intellij.diff.tools.combined.CombinedDiffViewer;
 import com.intellij.diff.tools.external.ExternalDiffSettings;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup;
@@ -78,6 +79,15 @@ import java.util.Map;
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
+/**
+ * Panel implementing a Diff-as-a-JComponent, showing one {@link DiffRequest} at a time.
+ * See {@link CombinedDiffViewer} for the all-files-in-one-big-scroll-pane implementation.
+ *
+ * @see DiffManager#createRequestPanel(Project, Disposable, Window)
+ * @see CacheDiffRequestProcessor
+ * @see CacheDiffRequestProcessor.Simple
+ * @see com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+ */
 public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
