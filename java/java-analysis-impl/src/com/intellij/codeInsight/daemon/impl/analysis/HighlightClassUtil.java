@@ -1021,7 +1021,7 @@ public final class HighlightClassUtil {
     if (targetClass == null) return null;
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null) {
-      if (PsiUtil.isInnerClass(targetClass)) {
+      if (isRealInnerClass(targetClass)) {
         PsiClass outerClass = targetClass.getContainingClass();
         if (outerClass != null) {
           PsiClassType outerType = JavaPsiFacade.getElementFactory(project).createType(outerClass);
@@ -1033,6 +1033,15 @@ public final class HighlightClassUtil {
       }
     }
     return null;
+  }
+
+  /** JLS 8.1.3. Inner Classes and Enclosing Instances */
+  private static boolean isRealInnerClass(PsiClass aClass) {
+    if (PsiUtil.isInnerClass(aClass)) return true;
+    if (!PsiUtil.isLocalOrAnonymousClass(aClass)) return false;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false; // check for implicit staticness
+    PsiMember member = PsiTreeUtil.getParentOfType(aClass, PsiMember.class, true);
+    return member != null && !member.hasModifierProperty(PsiModifier.STATIC);
   }
 
   static HighlightInfo.Builder checkIllegalEnclosingUsage(@NotNull PsiElement place,
