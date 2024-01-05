@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
@@ -28,6 +28,7 @@ import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,
@@ -59,17 +60,21 @@ internal class PortableCompilationCacheUploader(
     }
 
     val start = System.nanoTime()
+    val totalUploadedBytes = AtomicLong()
     val tasks = mutableListOf<ForkJoinTask<*>>()
     if (!uploadCompilationOutputsOnly) {
       // Jps Caches upload is started first because of significant size
-      tasks.add(ForkJoinTask.adapt(::uploadJpsCaches))
+      tasks.add(forkJoinTask(spanBuilder("upload jps cache")) { uploadJpsCaches() })
     }
 
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
     uploadCompilationOutputs(currentSourcesState, uploader, tasks)
-    ForkJoinTask.invokeAll(tasks)
+    val failed = ForkJoinTask.invokeAll(tasks).mapNotNull { it.exception }
 
-    messages.reportStatisticValue("Compilation upload time, ms", (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString()))
+    messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
+    messages.reportStatisticValue("jps-cache:uploaded:count", "${tasks.size - failed.size}")
+    messages.reportStatisticValue("jps-cache:uploaded:bytes", "$totalUploadedBytes")
+
     val totalOutputs = (sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
     messages.reportStatisticValue("Total outputs", totalOutputs)
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
@@ -103,10 +108,12 @@ internal class PortableCompilationCacheUploader(
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
-    val sourceStateFile = sourcesStateProcessor.sourceStateFile
-    uploader.upload(metadataPath, sourceStateFile)
-    if (remoteCache.shouldBeSyncedToS3) {
-      moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    spanBuilder("upload metadata").setAttribute("path", metadataPath).useWithScopeBlocking {
+      val sourceStateFile = sourcesStateProcessor.sourceStateFile
+      uploader.upload(metadataPath, sourceStateFile)
+      if (remoteCache.shouldBeSyncedToS3) {
+        moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+      }
     }
   }
 
@@ -114,12 +121,14 @@ internal class PortableCompilationCacheUploader(
                                        uploader: Uploader,
                                        tasks: MutableList<ForkJoinTask<*>>): List<ForkJoinTask<*>> {
     return sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).mapTo(tasks) { compilationOutput ->
-      ForkJoinTask.adapt {
+      forkJoinTask(spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath)) { span ->
         val sourcePath = compilationOutput.remotePath
         val outputFolder = Path.of(compilationOutput.path)
         if (!Files.exists(outputFolder)) {
-          Span.current().addEvent("$outputFolder doesn't exist, was a respective module removed?")
-          return@adapt
+          span.addEvent("$outputFolder doesn't exist, was a respective module removed?", Attributes.of(
+            AttributeKey.stringKey("path"), "$outputFolder"
+          ))
+          return@forkJoinTask
         }
 
         val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)

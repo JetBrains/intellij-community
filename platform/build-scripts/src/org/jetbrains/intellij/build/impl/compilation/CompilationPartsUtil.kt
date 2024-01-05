@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
 
 package org.jetbrains.intellij.build.impl.compilation
@@ -542,7 +542,7 @@ internal val THREAD_ID: AttributeKey<Long> = AttributeKey.longKey("thread.id")
  *
  * See [Span](https://opentelemetry.io/docs/reference/specification).
  */
-inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: (Span) -> T): ForkJoinTask<T> {
   val context = Context.current()
   return ForkJoinTask.adapt(Callable {
     val thread = Thread.currentThread()
@@ -550,8 +550,8 @@ inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () 
       .setParent(context)
       .setAttribute(THREAD_NAME, thread.name)
       .setAttribute(THREAD_ID, thread.id)
-      .useWithScopeBlocking {
-        operation()
+      .useWithScopeBlocking { span ->
+        operation(span)
       }
   })
 }

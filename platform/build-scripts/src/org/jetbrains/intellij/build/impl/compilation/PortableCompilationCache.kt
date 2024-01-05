@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.NioFiles
@@ -192,9 +192,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   internal fun usageStatus(): String {
     return when (downloader.availableCommitDepth) {
-      0 -> "All classes reused from Jps remote cache"
-      1 -> "1 commit compiled using Jps remote cache"
-      else -> "${downloader.availableCommitDepth} commits compiled using Jps remote cache"
+      0 -> "All classes reused from JPS remote cache"
+      1 -> "1 commit compiled using JPS remote cache"
+      else -> "${downloader.availableCommitDepth} commits compiled using JPS remote cache"
     }
   }
 }
