@@ -125,13 +125,6 @@ class DependencySearchService(private val project: Project) : Disposable {
                                          parameters: SearchParameters,
                                          consumer: ResultConsumer,
                                          searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit) {
-    if (parameters.useCache()) {
-      val cachedValue = foundInCache(cacheKey, consumer)
-      if (cachedValue != null) {
-        return
-      }
-    }
-
     val thisNewFuture = CompletableFuture<Collection<RepositoryArtifactData>>()
     val existingFuture = cache.putIfAbsent(cacheKey, thisNewFuture)
     if (existingFuture != null && parameters.useCache()) {
