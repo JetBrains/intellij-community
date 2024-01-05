@@ -139,20 +139,15 @@ class DependencySearchService(private val project: Project) : Disposable {
       return
     }
 
-    val localResultSet = RepositoryArtifactDataStorage()
-    localProviders().forEach { lp -> searchMethod(lp) { localResultSet.add(it) } }
-    localResultSet.getAll().forEach(consumer)
-
-    val remoteProviders = remoteProviders()
-
-    if (parameters.isLocalOnly || remoteProviders.isEmpty()) {
-      thisNewFuture.complete(localResultSet.getAll())
-      return
+    val providers = mutableSetOf<DependencySearchProvider>()
+    providers.addAll(localProviders())
+    if (!parameters.isLocalOnly) {
+      providers.addAll(remoteProviders())
     }
 
     val resultSet = RepositoryArtifactDataStorage()
     coroutineScope {
-      remoteProviders.map {
+      providers.map {
         async {
           try {
             searchMethod(it) {
