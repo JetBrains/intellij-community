@@ -23,41 +23,6 @@ public interface ExternalEventLogSettings {
   ExtensionPointName<ExternalEventLogSettings> EP_NAME = new ExtensionPointName<>("com.intellij.statistic.eventLog.externalEventLogSettings");
 
   /**
-   * Provides a custom endpoint for fetching configuration
-   *
-   * @return Remote endpoint URL or null if platform default should be used
-   * @deprecated functionality is disabled
-   */
-  @Deprecated(since = "2023.1", forRemoval = true)
-  default @Nullable String getTemplateUrl() {
-    return null;
-  }
-
-  /**
-   * Override global setting that enables log uploading see {@link StatisticsUploadAssistant#isSendAllowed()}
-   *
-   * @return true if log uploading must be force-enabled
-   * @deprecated overriding setting to enable uploading is no longer possible -
-   * only force disable is supported, see {@link ExternalEventLogSettings#forceDisableCollectionConsent()}
-   */
-  @Deprecated(since = "2023.1", forRemoval = true)
-  default boolean isSendAllowedOverride() {
-    return false;
-  }
-
-  /**
-   * Override global setting that enables collection of statistics by any logger {@link StatisticsUploadAssistant#isCollectAllowed()}
-   *
-   * @return true if statistics collection must be force-enabled
-   * @deprecated overriding setting to enable collection and recording is no longer possible -
-   * only force collection not connected with recording to file is supported, see {@link ExternalEventLogSettings#forceLoggingAlwaysEnabled()}
-   */
-  @Deprecated(since = "2023.1", forRemoval = true)
-  default boolean isCollectAllowedOverride() {
-    return false;
-  }
-
-  /**
    * Override global setting that enables collection of statistics by any logger, see {@link StatisticsUploadAssistant#isCollectAllowed()}
    * <br/>
    * Does not affect {@link ExternalEventLogSettings#forceLoggingAlwaysEnabled()}
