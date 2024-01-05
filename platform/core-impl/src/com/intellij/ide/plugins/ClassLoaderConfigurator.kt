@@ -176,6 +176,14 @@ class ClassLoaderConfigurator(
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
     for (dependency in module.pluginDependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
+      if (!isKotlinPlugin(module.pluginId) &&
+          isKotlinPlugin(dependency.pluginId) &&
+          isKotlinPluginK2Mode() &&
+          !pluginCanWorkInK2Mode(module)
+        ) {
+        // disable dependencies which optionally deepend on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
+        continue
+      }
       if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
         continue
       }

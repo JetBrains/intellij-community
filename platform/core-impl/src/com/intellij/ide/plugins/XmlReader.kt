@@ -170,6 +170,10 @@ private val KNOWN_KOTLIN_PLUGIN_IDS = persistentHashSetOf(
   "org.jetbrains.kotlin.native.appcode"
 )
 
+fun isKotlinPlugin(pluginId: PluginId): Boolean {
+  return pluginId.idString in KNOWN_KOTLIN_PLUGIN_IDS
+}
+
 private val K2_ALLOWED_PLUGIN_IDS = KNOWN_KOTLIN_PLUGIN_IDS.addAll(persistentHashSetOf(
   "fleet.backend.mercury",
   "fleet.backend.mercury.macos",

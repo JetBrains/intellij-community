@@ -317,10 +317,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   private fun checkCompatibility(context: DescriptorListLoadingContext) {
-    if (isBundled) {
-      return
-    }
-
     fun markAsIncompatible(error: PluginLoadingError) {
       if (isIncomplete != null) {
         return
@@ -328,6 +324,22 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
       isIncomplete = error
       isEnabled = false
+    }
+
+
+    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(this)) {
+      // disable plugins which are incompatible with the Kotlin Plugin K2 Mode KTIJ-24797
+      markAsIncompatible(PluginLoadingError(
+        plugin = this,
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.k2.incompatible", getName()) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.k2.incompatible") },
+        isNotifyUser = true,
+      ))
+      return
+    }
+
+    if (isBundled) {
+      return
     }
 
     if (AppMode.isDisableNonBundledPlugins()) {
