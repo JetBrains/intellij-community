@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // WITH_STDLIB
-// ALLOW_ERRORS
 // MIN_JAVA_VERSION: 11
 // FILE: JaAnnedClass.java
 

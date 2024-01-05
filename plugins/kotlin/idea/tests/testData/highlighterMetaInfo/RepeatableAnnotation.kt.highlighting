@@ -1,6 +1,6 @@
+// FIR_IDENTICAL
 // WITH_STDLIB
 // MIN_JAVA_VERSION: 11
-// ALLOW_ERRORS
 // FILE: JaAnnedClass.java
 
 @KtAnnRepeatable
