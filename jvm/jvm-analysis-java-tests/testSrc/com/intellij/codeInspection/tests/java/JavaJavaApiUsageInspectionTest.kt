@@ -237,4 +237,21 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test override with different since version`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.io.FilterOutputStream;
+      import java.io.IOException;
+      import java.nio.charset.StandardCharsets;
+      
+      class Main {
+        public static void main(String[] args) throws IOException {
+          byte[] buff = "hello\n".getBytes(StandardCharsets.UTF_8);
+          System.out.write(buff); // call to PrintStream in JDK 14
+          ((FilterOutputStream) System.out).write(buff); // call to FilterOutputStream in JDK below 14
+        }
+      }
+    """.trimIndent())
+  }
 }
