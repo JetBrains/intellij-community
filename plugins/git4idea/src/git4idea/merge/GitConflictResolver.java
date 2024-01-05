@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -50,14 +51,11 @@ public class GitConflictResolver {
   private final @NotNull Collection<? extends VirtualFile> myRoots;
   private final @NotNull Params myParams;
 
-  /**
-   * Customizing parameters - mostly String notification texts, etc.
-   */
   public static class Params {
     private boolean reverse;
     private @NotificationTitle String myErrorNotificationTitle = "";
     private @NotificationContent String myErrorNotificationAdditionalDescription = "";
-    private String myMergeDescription = "";
+    private @NlsContexts.Label String myMergeDescription = "";
     private MergeDialogCustomizer myMergeDialogCustomizer;
 
     public Params() {
@@ -72,7 +70,7 @@ public class GitConflictResolver {
     public Params(Project project) {
       myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
         @Override
-        public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
           }
@@ -83,6 +81,7 @@ public class GitConflictResolver {
 
     /**
      * @param reverseMerge specify {@code true} if reverse merge provider has to be used for merging - it is the case of rebase or stash.
+     * @see GitMergeUtil#isReverseRoot(GitRepository)
      */
     public Params setReverse(boolean reverseMerge) {
       reverse = reverseMerge;
@@ -99,6 +98,9 @@ public class GitConflictResolver {
       return this;
     }
 
+    /**
+     * Description shown on top of the {@link com.intellij.openapi.vcs.merge.MultipleFileMergeDialog}.
+     */
     public Params setMergeDescription(@Nls String mergeDescription) {
       myMergeDescription = mergeDescription;
       return this;
@@ -118,12 +120,13 @@ public class GitConflictResolver {
 
   /**
    * <p>
-   *   Goes throw the procedure of merging conflicts via MergeTool for different types of operations.
+   *   Goes through the procedure of merging conflicts via MergeTool for different types of operations.
    *   <ul>
    *     <li>Checks if there are unmerged files. If not, executes {@link #proceedIfNothingToMerge()}</li>
    *     <li>Otherwise shows a {@link com.intellij.openapi.vcs.merge.MultipleFileMergeDialog} where user is able to merge files.</li>
    *     <li>After the dialog is closed, checks if unmerged files remain.
-   *         If everything is merged, executes {@link #proceedAfterAllMerged()}. Otherwise shows a notification.</li>
+   *         If everything is merged, executes {@link #proceedAfterAllMerged()}.
+   *         If there are unresolved conflicts, shows a notification.</li>
    *   </ul>
    * </p>
    * <p>
@@ -139,7 +142,7 @@ public class GitConflictResolver {
   }
 
   /**
-   * Invoke the merge dialog, but execute nothing after merge is completed.
+   * Invoke the merge dialog, but execute nothing after merge is completed. Typically called from notification actions.
    */
   @RequiresBackgroundThread
   public final void mergeNoProceed() {
@@ -198,9 +201,8 @@ public class GitConflictResolver {
 
   /**
    * This is executed from {@link #merge()} if the initial check tells that there is nothing to merge.
-   * In the basic implementation no action is performed, {@code true} is returned.
    *
-   * @return Return value is returned from {@link #merge()}
+   * @return whether the operation succeeded, value returned from {@link #merge()}
    */
   protected boolean proceedIfNothingToMerge() throws VcsException {
     return true;
@@ -208,9 +210,8 @@ public class GitConflictResolver {
 
   /**
    * This is executed from {@link #merge()} after all conflicts are resolved.
-   * In the basic implementation no action is performed, {@code true} is returned.
    *
-   * @return Return value is returned from {@link #merge()}
+   * @return whether the operation succeeded, value returned from {@link #merge()}
    */
   @RequiresBackgroundThread
   protected boolean proceedAfterAllMerged() throws VcsException {
@@ -235,7 +236,7 @@ public class GitConflictResolver {
                   myParams.myErrorNotificationAdditionalDescription);
   }
 
-  protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
+  protected final void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING);
     notification.setDisplayId(CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
