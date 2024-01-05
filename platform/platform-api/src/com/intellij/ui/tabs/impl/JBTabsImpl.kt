@@ -1295,10 +1295,10 @@ open class JBTabsImpl(private var project: Project?,
         // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
         // requested to another component. E.g., this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
         // re-add it at once in a different layout, and want that editor component to preserve focus afterward.
-        return requestFocusLater(owner, requestFocusInWindow)
+        return requestFocusLaterOn(owner, requestFocusInWindow)
       }
       else {
-        return requestFocusLater(getToFocus(), requestFocusInWindow)
+        return requestFocusLater(requestFocusInWindow)
       }
     }
     if (isRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow) {
@@ -1325,10 +1325,9 @@ open class JBTabsImpl(private var project: Project?,
       return removeDeferred()
     }
 
-    val toFocus = getToFocus()
-    if (project != null && toFocus != null) {
+    if (project != null && getToFocus() != null) {
       val result = ActionCallback()
-      requestFocusLater(toFocus, requestFocusInWindow).doWhenProcessed {
+      requestFocusLater(requestFocusInWindow).doWhenProcessed {
         if (project!!.isDisposed) {
           result.setRejected()
         }
@@ -1339,14 +1338,7 @@ open class JBTabsImpl(private var project: Project?,
       return result
     }
     else {
-      ApplicationManager.getApplication().invokeLater({
-                                                        if (requestFocusInWindow) {
-                                                          requestFocusInWindow()
-                                                        }
-                                                        else {
-                                                          focusManager.requestFocusInProject(this, project)
-                                                        }
-                                                      }, ModalityState.nonModal())
+      requestFocusLaterOn(this, requestFocusInWindow)
       return removeDeferred()
     }
   }
@@ -1392,24 +1384,44 @@ open class JBTabsImpl(private var project: Project?,
     }
   }
 
-  private fun requestFocusLater(toFocus: Component?, inWindow: Boolean): ActionCallback {
-    if (toFocus == null) {
-      return ActionCallback.DONE
-    }
-    if (isShowing) {
-      val result = ActionCallback()
-      ApplicationManager.getApplication().invokeLater {
-        if (inWindow) {
-          toFocus.requestFocusInWindow()
-          result.setDone()
-        }
-        else {
-          focusManager.requestFocusInProject(toFocus, project).notifyWhenDone(result)
-        }
+  /**
+   * Do not pass [getToFocus] inside, use [requestFocusLater], as its value might change.
+   */
+  private fun requestFocusLaterOn(toFocus: Component?, inWindow: Boolean): ActionCallback {
+    if (toFocus == null) return ActionCallback.DONE
+    if (!isShowing) return ActionCallback.REJECTED
+
+    val result = ActionCallback()
+    ApplicationManager.getApplication().invokeLater {
+      if (inWindow) {
+        toFocus.requestFocusInWindow()
+        result.setDone()
       }
-      return result
+      else {
+        focusManager.requestFocusInProject(toFocus, project).notifyWhenDone(result)
+      }
     }
-    return ActionCallback.REJECTED
+    return result
+  }
+
+  private fun requestFocusLater(inWindow: Boolean): ActionCallback {
+    if (!isShowing) return ActionCallback.REJECTED
+
+    val result = ActionCallback()
+    ApplicationManager.getApplication().invokeLater {
+      val toFocus = getToFocus()
+      if (toFocus == null) {
+        result.setDone()
+      }
+      else if (inWindow) {
+        toFocus.requestFocusInWindow()
+        result.setDone()
+      }
+      else {
+        focusManager.requestFocusInProject(toFocus, project).notifyWhenDone(result)
+      }
+    }
+    return result
   }
 
   private fun removeDeferred(): ActionCallback {
