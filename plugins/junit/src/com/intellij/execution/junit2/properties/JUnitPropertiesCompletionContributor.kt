@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.properties
 
-import com.intellij.codeInsight.CharTailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
-import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -28,7 +27,7 @@ internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
           val variants = getJUnitPlatformProperties(file).values
 
           val delimiterChar = PropertiesCodeStyleSettings.getInstance(parameters.editor.project).delimiter
-          val defaultDelimiterType = CharTailType(delimiterChar)
+          val defaultDelimiterType = TailTypes.charType(delimiterChar)
 
           result.addAllElements(variants.map {
             val builder = LookupElementBuilder.create(it.key)

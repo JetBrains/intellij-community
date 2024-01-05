@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
@@ -115,7 +114,7 @@ public final class VmOptionsCompletionContributor extends CompletionContributor 
       }
       else {
         Character suffix = option.getVariant().suffix();
-        TailType tailType = suffix == null ? null : new CharTailType(suffix);
+        TailType tailType = suffix == null ? null : TailTypes.charType(suffix);
         result.addElement(TailTypeDecorator.withTail(builder, tailType));
       }
     });

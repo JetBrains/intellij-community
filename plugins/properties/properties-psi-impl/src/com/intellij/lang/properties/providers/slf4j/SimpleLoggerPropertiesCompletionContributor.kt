@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.providers.slf4j
 
-import com.intellij.codeInsight.CharTailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
@@ -23,7 +23,7 @@ internal class SimpleLoggerPropertiesCompletionContributor : CompletionContribut
       object : CompletionProvider<CompletionParameters>() {
         override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
           val delimiterChar = PropertiesCodeStyleSettings.getInstance(parameters.editor.project).delimiter
-          val defaultDelimiterType = CharTailType(delimiterChar)
+          val defaultDelimiterType = TailTypes.charType(delimiterChar)
 
           result.addAllElements(SIMPLE_LOGGER_PROPERTIES.map {
             val builder = LookupElementBuilder.create(it.key)
