@@ -5717,6 +5717,7 @@ f:com.intellij.openapi.vcs.configurable.VcsGeneralSettingsConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - createConfigurables():java.util.List
 - createPanel():com.intellij.openapi.ui.DialogPanel
+- disposeUIResources():V
 - getDependencies():java.util.List
 - f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.vcs.configurable.VcsManagerConfigurable

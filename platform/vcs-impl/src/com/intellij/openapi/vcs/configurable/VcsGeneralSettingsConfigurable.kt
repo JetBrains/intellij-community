@@ -13,6 +13,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -65,14 +66,14 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"
 ), Configurable.WithEpDependencies {
-  private val extensions: MultiMap<Location, UnnamedConfigurable> by lazy {
+  private val extensions: ClearableLazyValue<MultiMap<Location, UnnamedConfigurable>> = ClearableLazyValue.create {
     GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensionList(project)
       .mapNotNull { ext -> ext.createConfigurable()?.let { ext.getLocationEnum() to it } }
       .toMultiMap()
   }
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    extensions.values().toList()
+    extensions.value.values().toList()
 
   override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
@@ -151,7 +152,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
           }
         }
 
-        extensions.get(Location.Confirmations).forEach { configurable ->
+        extensions.value.get(Location.Confirmations).forEach { configurable ->
           appendDslConfigurable(configurable)
         }
       }
@@ -212,10 +213,15 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         label(message("settings.checkbox.rows"))
       }
 
-      extensions.get(Location.Other).forEach { configurable ->
+      extensions.value.get(Location.Other).forEach { configurable ->
         appendDslConfigurable(configurable)
       }
     }
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    extensions.drop()
   }
 
   private fun <T : JComponent> Cell<T>.withApplicableVcsesTooltip(setting: PersistentVcsSetting,

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
@@ -20,7 +21,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
 
   abstract fun createConfigurables(): List<T>
 
-  private val lazyConfigurables: Lazy<List<T>> = lazy { createConfigurables() }
+  private val lazyConfigurables: ClearableLazyValue<List<T>> = ClearableLazyValue.create { createConfigurables() }
 
   val configurables: List<T> get() = lazyConfigurables.value
   private val plainConfigurables get() = lazyConfigurables.value.filter { it !is UiDslUnnamedConfigurable }
@@ -45,10 +46,11 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
 
   override fun disposeUIResources() {
     super.disposeUIResources()
-    if (lazyConfigurables.isInitialized()) {
+    if (lazyConfigurables.isCached) {
       for (configurable in configurables) {
         configurable.disposeUIResources()
       }
+      lazyConfigurables.drop()
     }
   }
 
