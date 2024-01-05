@@ -6,6 +6,8 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -23,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Quickfix to introduce variable if statement seems to have no effect
  */
-public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
+public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -31,29 +33,22 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
-    PyPsiUtils.assertValid(expression);
-    if (expression != null && expression.isValid()) {
+  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyPsiUtils.assertValid(element);
+    if (element.isValid()) {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                         "var = " + expression.getText());
+      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(element), PyAssignmentStatement.class,
+                                                         "var = " + element.getText());
 
-      expression = expression.replace(assignment);
-      if (expression == null) return;
-      expression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
-      if (expression == null) return;
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(expression);
-      final PyExpression leftHandSideExpression = ((PyAssignmentStatement)expression).getLeftHandSideExpression();
+      element = element.replace(assignment);
+      if (element == null) return;
+      element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
+      if (element == null) return;
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
+      final PyExpression leftHandSideExpression = ((PyAssignmentStatement)element).getLeftHandSideExpression();
       assert leftHandSideExpression != null;
+      updater.templateBuilder().field(leftHandSideExpression, "var");
       builder.replaceElement(leftHandSideExpression, "var");
-
-      final Editor editor = PythonUiService.getInstance().openTextEditor(project, expression);
-      if (editor != null) {
-        builder.run(editor, false);
-      } else {
-        builder.runNonInteractively(false);
-      }
     }
   }
 }
