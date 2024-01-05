@@ -16,7 +16,6 @@ import com.intellij.openapi.updateSettings.impl.BuildInfo
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux.LinuxInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.mac.MacOsInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstaller
@@ -76,7 +75,10 @@ class UltimateInstallationService(
                         ?: return@withBackgroundProgress
 
             //val result = tryToInstallViaToolbox(build)
-            //if (result) return@withBackgroundProgress
+            //if (result) {
+            //  FUSEventSource.EDITOR.logTryUltimateToolboxUsed(project, pluginId)
+            //  return@withBackgroundProgress 
+            //}
 
             if (!tryToInstall(build, pluginId)) {
               useFallback(pluginId)
@@ -86,10 +88,13 @@ class UltimateInstallationService(
       } catch (e: Exception) {
         when {
           e is CancellationException -> {
-            FUSEventSource.EDITOR.logUpgradeToUltimateCancelled(project, pluginId)
+            FUSEventSource.EDITOR.logTryUltimateCancelled(project, pluginId)
             throw e
           }
-          else -> useFallback(pluginId)
+          else -> {
+            ultimateInstallationLogger.warn("Installation process is failed", e)
+            useFallback(pluginId)
+          }
         }
       }
     }
@@ -107,32 +112,31 @@ class UltimateInstallationService(
   private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null): Boolean {
     if (installer == null) return false
 
-    FUSEventSource.EDITOR.logUltimateDownloadStarted(project, pluginId)
-    val result = downloadStep(buildInfo)
-      ?.let { downloadResult ->
-        FUSEventSource.EDITOR.logUltimateInstallationStarted(project, pluginId)
-        indeterminateStep(IdeBundle.message("plugins.advertiser.ultimate.install")) { installer?.install(downloadResult) }
-      }
-      ?.let { installResult ->
-        FUSEventSource.EDITOR.logInstalledUltimateOpened(project, pluginId)
-        installer!!.startUltimate(installResult)
-      }
-
-    return result != null && result
-  }
-
-  private suspend fun downloadStep(buildInfo: BuildInfo): DownloadResult? {
-    return progressStep(1.0, text = IdeBundle.message("plugins.advertiser.ultimate.download")) {
+    val downloadActivity = FUSEventSource.EDITOR.logTryUltimateDownloadStarted(project, pluginId)
+    val downloadResult = progressStep(1.0, text = IdeBundle.message("plugins.advertiser.ultimate.download")) {
       withRawProgressReporter {
-        coroutineToIndicator {
-          installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator)
+        coroutineToIndicator { 
+          installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator) 
         }
       }
-    }
+    } ?: return false
+    downloadActivity.finished()
+
+    val installActivity = FUSEventSource.EDITOR.logTryUltimateInstallationStarted(project, pluginId)
+    val installResult = indeterminateStep(IdeBundle.message("plugins.advertiser.ultimate.install")) {
+      installer?.install(downloadResult)
+    } ?: return false
+    installActivity.finished()
+
+    val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
+    val startResult = installer!!.startUltimate(installResult)
+    openActivity.finished()
+    
+    return startResult
   }
 
   private fun useFallback(pluginId: PluginId? = null) {
-    FUSEventSource.EDITOR.logUltimateFallbackUsed(project, ideaUltimate.defaultDownloadUrl, pluginId)
+    //FUSEventSource.EDITOR.logTryUltimateFallback(project, ideaUltimate.defaultDownloadUrl, pluginId)
   }
 }
 
@@ -156,7 +160,7 @@ internal abstract class UltimateInstaller(val scope: CoroutineScope) {
 
     return DownloadResult(downloadPath, buildInfo.version)
   }
-  
+
   fun install(downloadResult: DownloadResult): InstallationResult? {
     return try {
       installUltimate(downloadResult)

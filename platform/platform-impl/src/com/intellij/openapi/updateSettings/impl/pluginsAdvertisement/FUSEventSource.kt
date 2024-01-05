@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -17,7 +18,7 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(FUS_GROUP_ID, 10)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 11)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
@@ -62,12 +63,13 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
   PLUGIN_FIELD
 )
 
-private val TRY_ULTIMATE_EVENT = GROUP.registerEvent("try.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
-private val DOWNLOAD_STARTED_ULTIMATE_EVENT = GROUP.registerEvent("download.started.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
-private val INSTALLATION_STARTED_ULTIMATE_EVENT = GROUP.registerEvent("installation.started.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
-private val INSTALLED_IDE_OPENED_ULTIMATE_EVENT = GROUP.registerEvent("installed.ide.opened.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
-private val FALLBACK_USED_ULTIMATE_EVENT = GROUP.registerEvent("fallback.used.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
-private val CANCELLATION_ULTIMATE_EVENT = GROUP.registerEvent("cancelled.ultimate", SOURCE_FIELD, PLUGIN_FIELD)
+private val TRY_ULTIMATE_EVENT = GROUP.registerEvent("try.ultimate.initiated", SOURCE_FIELD, PLUGIN_FIELD)
+private val TRY_ULTIMATE_TOOLBOX_EVENT = GROUP.registerEvent("try.ultimate.toolbox.used", SOURCE_FIELD, PLUGIN_FIELD)
+private val TRY_ULTIMATE_DOWNLOAD_ACTIVITY = GROUP.registerIdeActivity("try.ultimate.download", arrayOf(SOURCE_FIELD, PLUGIN_FIELD))
+private val TRY_ULTIMATE_INSTALLATION_ACTIVITY = GROUP.registerIdeActivity("try.ultimate.installation", arrayOf(SOURCE_FIELD, PLUGIN_FIELD))
+private val TRY_ULTIMATE_OPEN_ACTIVITY = GROUP.registerIdeActivity("try.ultimate.open", arrayOf(SOURCE_FIELD, PLUGIN_FIELD))
+private val TRY_ULTIMATE_FALLBACK_EVENT = GROUP.registerEvent("try.ultimate.fallback.used", SOURCE_FIELD, PLUGIN_FIELD)
+private val TRY_ULTIMATE_CANCELLED_EVENT = GROUP.registerEvent("try.ultimate.cancelled", SOURCE_FIELD, PLUGIN_FIELD)
 
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
   "learn.more",
@@ -99,7 +101,7 @@ enum class FUSEventSource {
   ACTIONS,
   SETTINGS,
   NEW_PROJECT_WIZARD,
-
+  
   @Deprecated("Use PLUGINS_SEARCH instead")
   SEARCH;
 
@@ -128,36 +130,41 @@ enum class FUSEventSource {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
     OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, pluginId?.idString)
   }
-  
+
   @JvmOverloads
   fun logTryUltimate(project: Project? = null, pluginId: PluginId? = null) {
     TRY_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
   }
   
   @JvmOverloads
-  fun logUltimateDownloadStarted(project: Project? = null, pluginId: PluginId? = null) {
-    DOWNLOAD_STARTED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  fun logTryUltimateToolboxUsed(project: Project? = null, pluginId: PluginId? = null) {
+    TRY_ULTIMATE_TOOLBOX_EVENT.log(project, this, pluginId?.idString)
   }
-  
+
   @JvmOverloads
-  fun logUltimateInstallationStarted(project: Project? = null, pluginId: PluginId? = null) {
-    INSTALLATION_STARTED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  fun logTryUltimateDownloadStarted(project: Project? = null, pluginId: PluginId? = null) : StructuredIdeActivity {
+    return TRY_ULTIMATE_DOWNLOAD_ACTIVITY.started(project) { listOf(SOURCE_FIELD.with(this), PLUGIN_FIELD.with (pluginId?.idString)) }
   }
-  
+
   @JvmOverloads
-  fun logInstalledUltimateOpened(project: Project? = null, pluginId: PluginId? = null) {
-    INSTALLED_IDE_OPENED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  fun logTryUltimateInstallationStarted(project: Project? = null, pluginId: PluginId? = null) : StructuredIdeActivity {
+    return TRY_ULTIMATE_INSTALLATION_ACTIVITY.started(project) { listOf(SOURCE_FIELD.with(this), PLUGIN_FIELD.with(pluginId?.idString)) }
   }
-  
+
   @JvmOverloads
-  fun logUpgradeToUltimateCancelled(project: Project? = null, pluginId: PluginId? = null) {
-    CANCELLATION_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+  fun logTryUltimateIdeOpened(project: Project? = null, pluginId: PluginId? = null) : StructuredIdeActivity {
+    return TRY_ULTIMATE_OPEN_ACTIVITY.started(project) { listOf(SOURCE_FIELD.with(this), PLUGIN_FIELD.with(pluginId?.idString)) }
   }
-  
+
   @JvmOverloads
-  fun logUltimateFallbackUsed(project: Project? = null, url: String, pluginId: PluginId? = null) {
+  fun logTryUltimateCancelled(project: Project? = null, pluginId: PluginId? = null) {
+    TRY_ULTIMATE_CANCELLED_EVENT.log(project, this, pluginId?.idString)
+  }
+
+  @JvmOverloads
+  fun logTryUltimateFallback(project: Project? = null, url: String, pluginId: PluginId? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
-    FALLBACK_USED_ULTIMATE_EVENT.log(project, this, pluginId?.idString)
+    TRY_ULTIMATE_FALLBACK_EVENT.log(project, this, pluginId?.idString)
   }
 
   @JvmOverloads
