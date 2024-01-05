@@ -28,17 +28,10 @@ internal class PortableCompilationCacheDownloader(
   private val git: Git,
   private val remoteCache: PortableCompilationCache.RemoteCache,
   private val gitUrl: String,
-  private val availableForHeadCommitForced: Boolean,
-  private val downloadCompilationOutputsOnly: Boolean,
 ) {
   private val remoteCacheUrl = remoteCache.url.trimEnd('/')
 
   private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
-
-  /**
-   * If true, then the latest commit in the current repository will be used to download caches.
-   */
-  val availableForHeadCommit by lazy { availableCommitDepth == 0 }
 
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
@@ -69,7 +62,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   val availableCommitDepth by lazy {
-    if (availableForHeadCommitForced) 0 else lastCommits.indexOfFirst {
+    lastCommits.indexOfFirst {
       availableCachesKeys.contains(it)
     }
   }
@@ -102,11 +95,9 @@ internal class PortableCompilationCacheDownloader(
       val start = System.nanoTime()
       val tasks = mutableListOf<ForkJoinTask<*>>()
       val totalDownloadedBytes = AtomicLong()
-      if (!downloadCompilationOutputsOnly) {
-        tasks.add(forkJoinTask(TraceManager.spanBuilder("get and unpack jps cache").setAttribute("commit", lastCachedCommit)) {
-          saveJpsCache(lastCachedCommit, totalDownloadedBytes)
-        })
-      }
+      tasks.add(forkJoinTask(TraceManager.spanBuilder("get and unpack jps cache").setAttribute("commit", lastCachedCommit)) {
+        saveJpsCache(lastCachedCommit, totalDownloadedBytes)
+      })
 
       val sourcesState = getSourcesState(lastCachedCommit)
       val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)

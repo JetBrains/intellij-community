@@ -36,7 +36,6 @@ internal class PortableCompilationCacheUploader(
   private val remoteGitUrl: String,
   private val commitHash: String,
   s3Folder: String,
-  private val uploadCompilationOutputsOnly: Boolean,
   private val forcedUpload: Boolean,
 ) {
   private val uploadedOutputCount = AtomicInteger()
@@ -62,10 +61,8 @@ internal class PortableCompilationCacheUploader(
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
     val tasks = mutableListOf<ForkJoinTask<*>>()
-    if (!uploadCompilationOutputsOnly) {
-      // Jps Caches upload is started first because of significant size
-      tasks.add(forkJoinTask(spanBuilder("upload jps cache")) { uploadJpsCaches() })
-    }
+    // Jps Caches upload is started first because of significant size
+    tasks.add(forkJoinTask(spanBuilder("upload jps cache")) { uploadJpsCaches() })
 
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
     uploadCompilationOutputs(currentSourcesState, uploader, tasks)
