@@ -37,8 +37,6 @@ class MacDistributionBuilder(override val context: BuildContext,
     const val NO_RUNTIME_SUFFIX = "-no-jdk"
   }
 
-  private val targetIcnsFileName: String = "${context.productProperties.baseFileName}.icns"
-
   override val targetOs: OsFamily
     get() = OsFamily.MACOS
 
@@ -52,7 +50,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${targetIcnsFileName}</string>
+        <string>${context.productProperties.targetIcnsFileName}</string>
         <key>CFBundleTypeName</key>
         <string>${context.applicationInfo.fullProductName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -69,7 +67,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           <string>${fileAssociation.extension}</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${if (iconPath.isEmpty()) targetIcnsFileName else File(iconPath).name}</string>        
+        <string>${if (iconPath.isEmpty()) context.productProperties.targetIcnsFileName else File(iconPath).name}</string>        
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>"""
@@ -229,7 +227,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     //noinspection SpellCheckingInspection
     val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
     val resourcesDistDir = macDistDir.resolve("Resources")
-    copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
+    copyFile(icnsPath, resourcesDistDir.resolve(context.productProperties.targetIcnsFileName))
 
     val alternativeIcon = (if (context.applicationInfo.isEAP) customizer.icnsPathForAlternativeIconForEAP else null)
                           ?: customizer.icnsPathForAlternativeIcon
@@ -246,19 +244,9 @@ class MacDistributionBuilder(override val context: BuildContext,
       }
     }
 
-    val fullName = context.applicationInfo.fullProductName
-
-    //todo improve
-    val minor = context.applicationInfo.minorVersion
-    val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
-    val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
-    val isEap = if (isNotRelease) "-EAP" else ""
-
     Files.writeString(macBinDir.resolve(PROPERTIES_FILE_NAME),
                       (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n"))
 
-    val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
-    val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
     writeVmOptions(macBinDir)
     val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
@@ -266,68 +254,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       writeMacOsVmOptions(macBinDir, jetBrainsClientContext)
     }
 
-    val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
-    val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
-    val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS, arch).toMutableList()
-    if (!bootClassPath.isEmpty()) {
-      //noinspection SpellCheckingInspection
-      additionalJvmArgs.add("-Xbootclasspath/a:${bootClassPath}")
-    }
-    val (launcherProperties, launcherVmOptions) = additionalJvmArgs.partition { it.startsWith("-D") }
-
-    val urlSchemes = macCustomizer.urlSchemes
-    val urlSchemesString = if (urlSchemes.isEmpty()) {
-      ""
-    }
-    else {
-      """
-    <key>CFBundleURLTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
-        <key>CFBundleURLName</key>
-        <string>Stacktrace</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          ${urlSchemes.joinToString(separator = "\n          ") { "<string>${it}</string>" }}
-        </array>
-      </dict>
-    </array>"""
-    }
-
-    val architectures = (if (!customizer.useXPlatLauncher) listOf("arm64", "x86_64") else when (arch) {
-      JvmArchitecture.x64 -> listOf("x86_64")
-      JvmArchitecture.aarch64 -> listOf("arm64")
-    }).joinToString(separator = "\n      ") { "<string>${it}</string>" }
-
-    val todayYear = LocalDate.now().year.toString()
-    //noinspection SpellCheckingInspection
-    substituteTemplatePlaceholders(
-      inputFile = macDistDir.resolve("Info.plist"),
-      outputFile = macDistDir.resolve("Info.plist"),
-      placeholder = "@@",
-      values = listOf(
-        Pair("build", context.fullBuildNumber),
-        Pair("doc_types", docTypes ?: ""),
-        Pair("executable", executable),
-        Pair("icns", targetIcnsFileName),
-        Pair("bundle_name", fullName),
-        Pair("product_state", isEap),
-        Pair("bundle_identifier", macCustomizer.bundleIdentifier),
-        Pair("year", todayYear),
-        Pair("version", version),
-        Pair("xx_error_file", errorFilePath),
-        Pair("xx_heap_dump", heapDumpPath),
-        Pair("vm_options", optionsToXml(launcherVmOptions)),
-        Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
-        Pair("class_path", classPath),
-        Pair("main_class_name", context.ideMainClassName.replace('.', '/')),
-        Pair("url_schemes", urlSchemesString),
-        Pair("architectures", architectures),
-        Pair("min_osx", macCustomizer.minOSXVersion),
-      )
-    )
+    substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch, macCustomizer, context)
 
     Files.createDirectories(macBinDir)
 
@@ -353,7 +280,7 @@ class MacDistributionBuilder(override val context: BuildContext,
               target,
               "@@",
               listOf(
-                Pair("product_full", fullName),
+                Pair("product_full", context.applicationInfo.fullProductName),
                 Pair("script_name", executable),
                 Pair("inspectCommandName", inspectCommandName),
               ),
@@ -595,3 +522,87 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
 
   return vmOptionsPath
 }
+
+private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
+                                              docTypes: String?,
+                                              arch: JvmArchitecture,
+                                              macCustomizer: MacDistributionCustomizer,
+                                              context: BuildContext) {
+  val executable = context.productProperties.baseFileName
+  val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
+  val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
+  val fullName = context.applicationInfo.fullProductName
+
+  //todo improve
+  val minor = context.applicationInfo.minorVersion
+  val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
+  val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
+  val isEap = if (isNotRelease) "-EAP" else ""
+
+  val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
+  val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
+  val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS, arch).toMutableList()
+  if (!bootClassPath.isEmpty()) {
+    //noinspection SpellCheckingInspection
+    additionalJvmArgs.add("-Xbootclasspath/a:${bootClassPath}")
+  }
+  val (launcherProperties, launcherVmOptions) = additionalJvmArgs.partition { it.startsWith("-D") }
+
+  val urlSchemes = macCustomizer.urlSchemes
+  val urlSchemesString = if (urlSchemes.isEmpty()) {
+    ""
+  }
+  else {
+    """
+      <key>CFBundleURLTypes</key>
+      <array>
+        <dict>
+          <key>CFBundleTypeRole</key>
+          <string>Editor</string>
+          <key>CFBundleURLName</key>
+          <string>Stacktrace</string>
+          <key>CFBundleURLSchemes</key>
+          <array>
+            ${urlSchemes.joinToString(separator = "\n          ") { "<string>${it}</string>" }}
+          </array>
+        </dict>
+      </array>"""
+  }
+
+  val architectures = (if (!macCustomizer.useXPlatLauncher) listOf("arm64", "x86_64")
+  else when (arch) {
+    JvmArchitecture.x64 -> listOf("x86_64")
+    JvmArchitecture.aarch64 -> listOf("arm64")
+  }).joinToString(separator = "\n      ") { "<string>${it}</string>" }
+
+  val todayYear = LocalDate.now().year.toString()
+  //noinspection SpellCheckingInspection
+  substituteTemplatePlaceholders(
+    inputFile = macAppDir.resolve("Info.plist"),
+    outputFile = macAppDir.resolve("Info.plist"),
+    placeholder = "@@",
+    values = listOf(
+      Pair("build", context.fullBuildNumber),
+      Pair("doc_types", docTypes ?: ""),
+      Pair("executable", executable),
+      Pair("icns", context.productProperties.targetIcnsFileName),
+      Pair("bundle_name", fullName),
+      Pair("product_state", isEap),
+      Pair("bundle_identifier", macCustomizer.bundleIdentifier),
+      Pair("year", todayYear),
+      Pair("version", version),
+      Pair("xx_error_file", errorFilePath),
+      Pair("xx_heap_dump", heapDumpPath),
+      Pair("vm_options", optionsToXml(launcherVmOptions)),
+      Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
+      Pair("class_path", classPath),
+      Pair("main_class_name", context.ideMainClassName.replace('.', '/')),
+      Pair("url_schemes", urlSchemesString),
+      Pair("architectures", architectures),
+      Pair("min_osx", macCustomizer.minOSXVersion),
+    )
+  )
+}
+
+private val ProductProperties.targetIcnsFileName: String
+  get() = "$baseFileName.icns"
