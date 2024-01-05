@@ -28,7 +28,7 @@ private class InlineCompletionSuggestionBuilderImpl : InlineCompletionSuggestion
   private val variants = ContainerUtil.createConcurrentList<InlineCompletionSuggestion.Variant>()
 
   override suspend fun variant(data: UserDataHolderBase, buildElements: suspend FlowCollector<InlineCompletionElement>.() -> Unit) {
-    require(!isBuilt.get()) {
+    check(!isBuilt.get()) {
       "Cannot add another variant after a suggestion is already built. Incorrect API usage."
     }
     variants += InlineCompletionSuggestion.Variant.build(data, buildElements = buildElements)

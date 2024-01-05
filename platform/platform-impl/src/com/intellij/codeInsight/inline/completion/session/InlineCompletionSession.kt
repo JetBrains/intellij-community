@@ -31,29 +31,29 @@ class InlineCompletionSession private constructor(
 
   @RequiresEdt
   @ApiStatus.Experimental
-  fun useNextVariant() {
+  suspend fun useNextVariant() {
     ThreadingAssertions.assertEventDispatchThread()
-    variantsProvider?.nextVariant()
+    variantsProvider?.useNextVariant()
   }
 
   @RequiresEdt
   @ApiStatus.Experimental
-  fun usePrevVariant() {
+  suspend fun usePrevVariant() {
     ThreadingAssertions.assertEventDispatchThread()
-    variantsProvider?.prevVariant()
+    variantsProvider?.usePrevVariant()
   }
 
   @RequiresEdt
   @ApiStatus.Experimental
-  fun getVariantsNumber(): Int {
-    return variantsProvider?.getVariantsNumber() ?: 0
+  fun getVariantsNumber(): Int? {
+    return variantsProvider?.getVariantsNumber()
   }
 
   @RequiresEdt
   @ApiStatus.Experimental
-  fun estimateNonEmptyVariantsNumber(): IntRange {
+  fun estimateNonEmptyVariantsNumber(): IntRange? {
     ThreadingAssertions.assertEventDispatchThread()
-    return variantsProvider?.estimateNonEmptyVariantsNumber() ?: IntRange.EMPTY
+    return variantsProvider?.estimateNonEmptyVariantsNumber()
   }
 
   override fun dispose() = Unit

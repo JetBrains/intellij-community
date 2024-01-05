@@ -39,7 +39,7 @@ internal class InlineCompletionInvocationTracker(
   private var language: Language? = null
   private var fileLanguage: Language? = null
 
-  fun createShowTracker() = InlineCompletionShowTracker(
+  fun createComputationTracker() = InlineCompletionComputationTracker(
     requestId,
     provider,
     invocationTime,
@@ -68,7 +68,7 @@ internal class InlineCompletionInvocationTracker(
     assert(!finished)
   }
 
-  fun hasSuggestion() {
+  fun hasSuggestions() {
     hasSuggestions = true
     assert(!finished)
   }
@@ -112,7 +112,7 @@ internal class InlineCompletionInvocationTracker(
       InvokedEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
       InvokedEvents.OUTCOME.with(
         when {
-          // fixed order
+          // fixed order TODO !!!!
           exception -> InvokedEvents.Outcome.EXCEPTION
           canceled -> InvokedEvents.Outcome.CANCELED
           hasSuggestions == true -> InvokedEvents.Outcome.SHOW

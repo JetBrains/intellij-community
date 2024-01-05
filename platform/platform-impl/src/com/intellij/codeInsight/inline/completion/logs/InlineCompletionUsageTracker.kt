@@ -13,15 +13,23 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
+// TODO add chosen variant index
+// TODO add how many times navigation
+// TODO add docs which suggestion info is sent
+@ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inline.completion", 24)
 
   const val INVOKED_EVENT_ID = "invoked"
-  internal object InvokedEvents {
+  const val COMPUTED_EVENT_ID = "computed"
+
+  @ApiStatus.Internal
+  object InvokedEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val EVENT = EventFields.Class("event")
     val PROVIDER = EventFields.Class("provider")
@@ -71,16 +79,20 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
-  object ShownEvents {
+  // TODO rename everywhere 'show'
+  @ApiStatus.Internal
+  object ComputedEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val PROVIDER = EventFields.Class("provider")
-    val LINES = EventFields.Int("lines")
-    val LENGTH = EventFields.Int("length")
+    val LINES = EventFields.IntList("lines")
+    val LENGTH = EventFields.IntList("length")
     val TYPING_DURING_SHOW = EventFields.Int("typing_during_show")
 
     val TIME_TO_SHOW = EventFields.Long("time_to_show")
     val SHOWING_TIME = EventFields.Long("showing_time")
     val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type")
+
+    val SWITCHING_VARIANTS_TIMES = EventFields.Int("switching_variants_times")
 
     enum class FinishType {
       SELECTED,
@@ -101,17 +113,18 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   internal val SHOWN_EVENT: VarargEventId = GROUP.registerVarargEvent(
-    "shown",
-    ShownEvents.REQUEST_ID,
+    COMPUTED_EVENT_ID,
+    ComputedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
-    ShownEvents.PROVIDER,
-    ShownEvents.LINES,
-    ShownEvents.LENGTH,
-    ShownEvents.TYPING_DURING_SHOW,
-    ShownEvents.TIME_TO_SHOW,
-    ShownEvents.SHOWING_TIME,
-    ShownEvents.FINISH_TYPE,
+    ComputedEvents.PROVIDER,
+    ComputedEvents.LINES,
+    ComputedEvents.LENGTH,
+    ComputedEvents.TYPING_DURING_SHOW,
+    ComputedEvents.TIME_TO_SHOW,
+    ComputedEvents.SHOWING_TIME,
+    ComputedEvents.FINISH_TYPE,
+    ComputedEvents.SWITCHING_VARIANTS_TIMES
   )
 
   override fun getGroup() = GROUP
@@ -123,42 +136,45 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   class Listener : InlineCompletionEventAdapter {
     private val lock = ReentrantLock()
     private var invocationTracker: InlineCompletionInvocationTracker? = null
-    private var showTracker: InlineCompletionShowTracker? = null
+    private var computationTracker: InlineCompletionComputationTracker? = null
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
         requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
+      computationTracker = invocationTracker!!.createComputationTracker()
     }
 
-    override fun onShow(event: InlineCompletionEventType.Show) = lock.withLock {
-      if (event.i == 0 && !event.element.text.isEmpty()) {
-        invocationTracker?.hasSuggestion()
+    override fun onComputed(event: InlineCompletionEventType.Computed) = lock.withLock {
+      if (!event.element.text.isEmpty()) {
+        invocationTracker?.hasSuggestions()
       }
       if (event.i == 0) {
-        // invocation tracker -> show tracker
-        showTracker = invocationTracker?.createShowTracker()
-        showTracker!!.firstShown(event.element)
+        computationTracker!!.firstComputed(event.variantIndex, event.element)
       }
       if (event.i != 0) {
-        showTracker!!.nextShown(event.element)
+        computationTracker!!.nextComputed(event.variantIndex, event.element)
       }
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      showTracker!!.truncateTyping(event.overtypedLength)
+      computationTracker!!.truncateTyping(event.overtypedLength)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
-      showTracker?.selected()
+      computationTracker?.selected()
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.canceled(event.finishType)
+      computationTracker?.canceled(event.finishType)
     }
 
-    override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
+    override fun onVariantSwitched(event: InlineCompletionEventType.VariantSwitched) {
+      computationTracker?.variantSwitched(event.fromVariantIndex, event.toVariantIndex, event.explicit)
+    }
+
+    override fun onNoVariants(event: InlineCompletionEventType.NoVariants) {
       invocationTracker?.noSuggestions()
     }
 

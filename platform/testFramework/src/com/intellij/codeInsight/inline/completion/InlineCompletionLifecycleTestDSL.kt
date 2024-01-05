@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.IdeActions
@@ -151,6 +152,22 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICUtil
   suspend fun callInlineCompletion() {
     callAction(IdeActions.ACTION_CALL_INLINE_COMPLETION)
+  }
+
+  @ICUtil
+  @ApiStatus.Experimental
+  suspend fun nextVariant() {
+    withContext(Dispatchers.EDT) {
+      InlineCompletionSession.getOrNull(fixture.editor)?.useNextVariant()
+    }
+  }
+
+  @ICUtil
+  @ApiStatus.Experimental
+  suspend fun prevVariant() {
+    withContext(Dispatchers.EDT) {
+      InlineCompletionSession.getOrNull(fixture.editor)?.usePrevVariant()
+    }
   }
 
   @ICUtil

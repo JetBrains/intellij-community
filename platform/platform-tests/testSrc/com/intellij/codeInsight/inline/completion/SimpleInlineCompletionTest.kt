@@ -4,22 +4,17 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
+import com.intellij.codeInsight.inline.completion.impl.SimpleInlineCompletionProvider
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-internal class SimpleInlineCompletionTest : BasePlatformTestCase() {
+internal class SimpleInlineCompletionTest : InlineCompletionTestCase() {
 
   private fun registerSuggestion(vararg suggestion: InlineCompletionElement) {
     InlineCompletionHandler.registerTestHandler(SimpleInlineCompletionProvider(suggestion.toList()), testRootDisposable)
-  }
-
-  // !!! VERY IMPORTANT !!!
-  override fun runInDispatchThread(): Boolean {
-    return false
   }
 
   @Test
@@ -82,19 +77,5 @@ internal class SimpleInlineCompletionTest : BasePlatformTestCase() {
     insert()
     assertFileContent("This is tutorial<caret>")
     assertInlineHidden()
-  }
-
-  private class SimpleInlineCompletionProvider(val suggestion: List<InlineCompletionElement>) : InlineCompletionProvider {
-    override val id: InlineCompletionProviderID = InlineCompletionProviderID("SimpleInlineCompletionProvider")
-
-    override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-      return InlineCompletionSuggestion.withFlow {
-        suggestion.forEach { emit(it) }
-      }
-    }
-
-    override fun isEnabled(event: InlineCompletionEvent): Boolean {
-      return event is InlineCompletionEvent.DocumentChange
-    }
   }
 }
