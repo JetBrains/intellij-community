@@ -26,15 +26,6 @@ public interface DnDSource extends DnDDropActionHandler {
    */
   @Nullable
   default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
-    return createDraggedImage(action, dragOrigin);
-  }
-
-  /**
-   * @deprecated override {@link DnDSource#createDraggedImage(DnDAction, Point, DnDDragStartBean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     return null;
   }
 

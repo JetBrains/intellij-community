@@ -74,7 +74,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     if (myImageProvider != null) {
       final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
       if (image != null) {
