@@ -1,0 +1,22 @@
+<html>
+<body>
+Reports SLF4J, Log4j2 logging calls, such as <code>logger.info("message: {}", key)</code> with similar log messages.
+These calls can be non-distinguishable from each other, and this introduces difficulties to understand where a certain log message is from.
+<p><b>Example (for Java):</b></p>
+<pre><code lang="java">
+  private static void request1(String text) {
+      log.info("Message: {}", text); //similar call
+      doSomething1();
+  }
+
+  private static void request2(int i) {
+      log.info("Message: {}", i); //similar call
+      doSomething2();
+  }
+</code></pre>
+
+
+<!-- tooltip end -->
+<p><small>New in 2024.1</small></p>
+</body>
+</html>

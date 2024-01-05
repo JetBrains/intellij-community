@@ -22,7 +22,13 @@ internal class LoggingStringPartEvaluator {
   companion object {
     fun calculateValue(expression: UExpression): List<PartHolder>? {
       if (!isString(expression)) return null
-      return tryJoin(recursiveCalculateValue(expression, Context(depth = 10, maxParts = 20)))
+      val sourcePsi = expression.sourcePsi ?: return null
+      val project = sourcePsi.project
+      return CachedValuesManager.getManager(project).getCachedValue(sourcePsi, CachedValueProvider {
+        return@CachedValueProvider CachedValueProvider.Result.create(
+          tryJoin(recursiveCalculateValue(sourcePsi.toUElementOfType<UExpression>(), Context(depth = 10, maxParts = 20))),
+          PsiModificationTracker.MODIFICATION_COUNT)
+      })
     }
 
     private fun recursiveCalculateValue(expression: UExpression?,

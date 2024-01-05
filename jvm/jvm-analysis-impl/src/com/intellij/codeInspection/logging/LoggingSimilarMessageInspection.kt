@@ -1,0 +1,323 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.logging
+
+import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.java.JavaBundle
+import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.uast.UastHintedVisitorAdapter
+import org.jetbrains.annotations.Nls
+import org.jetbrains.uast.*
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+import org.jetbrains.uast.visitor.AbstractUastVisitor
+
+private const val MIN_TEXT_LENGTH = 3
+private const val MAX_PART_COUNT = 10
+
+class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
+
+  //otherwise results will be inconsistent
+  override fun runForWholeFile(): Boolean {
+    return true
+  }
+
+  override fun buildVisitor(holder: ProblemsHolder,
+                            isOnTheFly: Boolean,
+                            session: LocalInspectionToolSession): PsiElementVisitor {
+    val project = holder.project
+    if (!(JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.SLF4J_LOGGER) ||
+          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER))) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+
+    return UastHintedVisitorAdapter.create(holder.file.language, PlaceholderCountMatchesArgumentCountVisitor(holder),
+                                           arrayOf(UFile::class.java), directOnly = true)
+  }
+
+  inner class PlaceholderCountMatchesArgumentCountVisitor(
+    private val holder: ProblemsHolder,
+  ) : AbstractUastNonRecursiveVisitor() {
+
+    override fun visitFile(node: UFile): Boolean {
+      val calls = collectCalls(node).toMutableSet()
+      if (calls.isEmpty()) return true
+      val groupedCalls: List<List<UCallExpression>> = calls.groupBy { it.receiver?.tryResolve().toUElementOfType<UVariable>() }
+        .toMutableMap()
+        .values.map { group ->
+          group.groupBy { it.methodName }.values
+        }.flatten()
+      val groups: List<List<MessageLog>> = groupedCalls.map { group ->
+        group.map { MessageLog(it, collectParts(it, LOGGER_TYPE_SEARCHERS.mapFirst(it)).splitWithPlaceholders()) }
+          .filter { log -> log.parts?.any { it.isConstant && it.text != null } ?: false }
+      }
+      for (group in groups) {
+        if (group.size <= 1) continue
+        var currentGroups: Set<List<MessageLog>> = setOf(group)
+        //prefilter
+        if (group.size > 5) {
+          val minLength = group
+                            .mapNotNull { it.parts }
+                            .filter { it.isNotEmpty() && it[0].isConstant && it[0].text != null && it[0].text?.isNotBlank() == true }
+                            .minOfOrNull { it[0].text?.length ?: 0 } ?: return true
+          if (minLength == 0) return true
+
+          currentGroups = group
+            .groupBy {
+              val parts = it.parts ?: return@groupBy ""
+              if (parts.isEmpty()) return@groupBy ""
+              val part0 = parts[0]
+              if (!part0.isConstant || part0.text == null || part0.text.length < minLength) return@groupBy ""
+              part0.text.substring(0, minLength)
+            }
+            .values
+            .toSet()
+        }
+        for (currentGroup in currentGroups) {
+          for (firstIndex in 0..currentGroup.lastIndex) {
+            for (secondIndex in firstIndex + 1..currentGroup.lastIndex) {
+              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts)) {
+                registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
+                registerProblem(holder, currentGroup[secondIndex].call, currentGroup[firstIndex].call)
+              }
+            }
+          }
+        }
+      }
+
+      return super.visitFile(node)
+    }
+
+    private fun collectCalls(file: UFile): Set<UCallExpression> {
+      val result = mutableSetOf<UCallExpression>()
+      file.accept(object : AbstractUastVisitor() {
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+          LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return false
+          result.add(node)
+          return true
+        }
+      })
+      return result
+    }
+  }
+
+  private fun collectParts(node: UCallExpression, searcher: LoggerTypeSearcher?): List<LoggingStringPartEvaluator.PartHolder>? {
+    if (searcher == null) return null
+    val arguments = node.valueArguments
+    val method = node.resolveToUElement() as? UMethod ?: return null
+    val parameters = method.uastParameters
+    val logStringArgument: UExpression?
+    if (parameters.isEmpty() || arguments.isEmpty()) {
+      logStringArgument = findMessageSetterStringArg(node, searcher) ?: return null
+    }
+    else {
+      val index = getLogStringIndex(parameters) ?: return null
+      logStringArgument = arguments[index - 1]
+    }
+
+    return LoggingStringPartEvaluator.calculateValue(logStringArgument)
+  }
+
+  private fun registerProblem(holder: ProblemsHolder, current: UCallExpression, other: UCallExpression) {
+    val anchor = current.sourcePsi ?: return
+    val otherElement = other.sourcePsi ?: return
+    val commonParent = PsiTreeUtil.findCommonParent(anchor, otherElement) ?: return
+    val textRange = anchor.textRange
+    val delta = commonParent.textRange?.startOffset ?: return
+    holder.registerProblem(commonParent, textRange.shiftLeft(delta),
+                           JvmAnalysisBundle.message("jvm.inspection.logging.similar.message.problem.descriptor"),
+                           NavigateToDuplicateFix(otherElement))
+  }
+
+}
+
+private class NavigateToDuplicateFix(call: PsiElement) : ModCommandQuickFix() {
+  private val myPointer = SmartPointerManager.getInstance(call.project).createSmartPsiElementPointer(call)
+
+  override fun getFamilyName(): @Nls String {
+    return JavaBundle.message("navigate.to.duplicate.fix")
+  }
+
+  override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
+    val element = myPointer.element
+    if (element == null) return ModCommand.nop()
+    return ModCommand.select(element)
+  }
+}
+
+private fun List<LoggingStringPartEvaluator.PartHolder>?.splitWithPlaceholders(): List<LoggingStringPartEvaluator.PartHolder>? {
+  if (this == null) return null
+  val result = mutableListOf<LoggingStringPartEvaluator.PartHolder>()
+  for (partHolder in this) {
+    if (partHolder.isConstant && partHolder.text != null) {
+      val withoutPlaceholders = partHolder.text.split("{}")
+      for ((index, clearPart) in withoutPlaceholders.withIndex()) {
+        result.add(LoggingStringPartEvaluator.PartHolder(clearPart, true))
+        if (index != withoutPlaceholders.lastIndex) {
+          result.add(LoggingStringPartEvaluator.PartHolder(clearPart, false))
+        }
+      }
+    }
+    else {
+      result.add(partHolder)
+    }
+  }
+  return result
+}
+
+private class PartHolderIterator(private val parts: List<LoggingStringPartEvaluator.PartHolder>) {
+  private var i = 0
+  private var partial: String? = null
+  fun hasNext(): Boolean {
+    return i < parts.size
+  }
+
+  fun isText(): Boolean {
+    val partHolder = parts[i]
+    return partHolder.isConstant && partHolder.text != null
+  }
+
+  fun move() {
+    i++
+    partial = null
+  }
+
+  fun current(): String? {
+    val local = partial
+    if (local != null) {
+      return local
+    }
+    val partHolder = parts[i]
+    return partHolder.text
+  }
+
+  fun isFirst(): Boolean {
+    return i == 0
+  }
+
+  fun move(delta: Int) {
+    partial = current()?.substring(delta)
+  }
+
+  fun isLast(): Boolean {
+    return i == parts.lastIndex
+  }
+
+  fun previousUnknown(): Boolean {
+    return if (i == 0) {
+      false
+    }
+    else {
+      val partHolder = parts[i - 1]
+      !partHolder.isConstant || partHolder.text == null
+    }
+  }
+}
+
+private data class MessageLog(val call: UCallExpression, val parts: List<LoggingStringPartEvaluator.PartHolder>?)
+
+private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
+                    second: List<LoggingStringPartEvaluator.PartHolder>?): Boolean {
+  if (first == null || second == null) return false
+  if (first.isEmpty() || second.isEmpty()) return false
+  if (first.size >= MAX_PART_COUNT || second.size >= MAX_PART_COUNT) return false
+  val firstIterator = PartHolderIterator(first)
+  val secondIterator = PartHolderIterator(second)
+  var intersection = 0
+  while (firstIterator.hasNext() && secondIterator.hasNext()) {
+    if (!firstIterator.isText()) {
+      firstIterator.move()
+      continue
+    }
+
+    if (!secondIterator.isText()) {
+      secondIterator.move()
+      continue
+    }
+
+    if (firstIterator.current() == secondIterator.current()) {
+      intersection += firstIterator.current()?.length ?: 0
+      firstIterator.move()
+      secondIterator.move()
+      continue
+    }
+
+    if (firstIterator.isFirst() && secondIterator.isFirst()) {
+      if (firstIterator.current()?.startsWith(secondIterator.current() ?: "") == true) {
+        val delta = secondIterator.current()?.length ?: 0
+        intersection += delta
+        secondIterator.move()
+        firstIterator.move(delta)
+        continue
+      }
+
+      if (secondIterator.current()?.startsWith(firstIterator.current() ?: "") == true) {
+        val delta = firstIterator.current()?.length ?: 0
+        intersection += delta
+        firstIterator.move()
+        secondIterator.move(delta)
+        continue
+      }
+
+      return false
+    }
+
+    if (firstIterator.isLast() && secondIterator.isLast()) {
+      if (firstIterator.current()?.endsWith(secondIterator.current() ?: "") == true) {
+        val delta = secondIterator.current()?.length ?: 0
+        intersection += delta
+        firstIterator.move()
+        secondIterator.move()
+        continue
+      }
+
+      if (secondIterator.current()?.endsWith(firstIterator.current() ?: "") == true) {
+        val delta = firstIterator.current()?.length ?: 0
+        intersection += delta
+        firstIterator.move()
+        secondIterator.move()
+        continue
+      }
+
+      return false
+    }
+
+    //There can be not only included staff, but intersection.
+    //This intersection is skipped deliberately because it can be used in real logs
+
+    if (secondIterator.previousUnknown()) {
+      var delta = firstIterator.current()?.indexOf(secondIterator.current() ?: "") ?: -1
+      if (delta != -1) {
+        delta += secondIterator.current()?.length ?: 0
+        intersection += delta
+        secondIterator.move()
+        firstIterator.move(delta)
+        continue
+      }
+    }
+
+    if (firstIterator.previousUnknown()) {
+      var delta = secondIterator.current()?.indexOf(firstIterator.current() ?: "") ?: -1
+      if (delta != -1) {
+        delta += firstIterator.current()?.length ?: 0
+        intersection += delta
+        firstIterator.move()
+        secondIterator.move(delta)
+        continue
+      }
+    }
+
+    return false
+  }
+
+  return intersection >= MIN_TEXT_LENGTH
+}

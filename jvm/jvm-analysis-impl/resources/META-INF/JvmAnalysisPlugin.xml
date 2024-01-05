@@ -69,6 +69,13 @@
                      key="jvm.inspection.logging.placeholder.count.matches.argument.count.display.name"
                      implementationClass="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionMerger"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WEAK WARNING" shortName="LoggingSimilarMessage"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.similar.message.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingSimilarMessageInspection"
+                     runForWholeFile="true"
+    />
 
     <!-- Performance -->
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UrlHashCode"
