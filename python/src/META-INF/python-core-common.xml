@@ -517,10 +517,6 @@
                        key="python.sdk.installation.notification.group"/>
 
 
-    <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageCompletionContributor"/>
-    <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectMetadataCompletionContributor"/>
     <localInspection language="TOML"
                      shortName="PyprojectInspection"
                      suppressId="PyprojectInspection"

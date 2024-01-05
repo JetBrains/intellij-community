@@ -6,6 +6,7 @@
               language="Requirements"
               fileNamesCaseInsensitive="requirements.txt"/>
     <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
+    <multiHostInjector implementation="com.jetbrains.python.requirements.RequirementsLanguageInjector"/>
     <lang.parserDefinition
       language="Requirements"
       implementationClass="com.jetbrains.python.requirements.RequirementsParserDefinition"/>
