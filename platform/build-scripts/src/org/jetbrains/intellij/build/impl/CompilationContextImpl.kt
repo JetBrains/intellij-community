@@ -250,7 +250,13 @@ class CompilationContextImpl private constructor(
     }
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
-    cleanOutput(keepCompilationState = CompiledClasses.keepCompilationState(options))
+    if (options.cleanOutputFolder || options.forceRebuild)
+      cleanOutput()
+    else {
+      Span.current().addEvent("skip output cleaning", Attributes.of(
+        AttributeKey.stringKey("dir"), "${paths.buildOutputDir}",
+      ))
+    }
   }
 
   private fun overrideClassesOutputDirectory() {
@@ -405,14 +411,7 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
-  val outDir = paths.buildOutputDir
-  if (!options.cleanOutputFolder) {
-    Span.current().addEvent("skip output cleaning", Attributes.of(
-      AttributeKey.stringKey("dir"), "$outDir",
-    ))
-    return
-  }
+internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = CompiledClasses.keepCompilationState(options)) {
   val compilationState = setOf(
     compilationData.dataStorageRoot,
     classesOutputDirectory,
@@ -425,6 +424,7 @@ private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
     }
   }
   spanBuilder("clean output").use { span ->
+    val outDir = paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), "${outDir.relativize(it)}"))
     }

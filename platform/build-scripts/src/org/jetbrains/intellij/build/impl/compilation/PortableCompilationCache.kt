@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.util.*
@@ -87,9 +87,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       context.options.incrementalCompilation = !forceRebuild
       // compilation is executed unconditionally here even if exact commit cache is downloaded
       // to have an additional validation step and not to ignore a local changes, for example in TeamCity Remote Run
-      CompiledClasses.compileLocally(
-        context, isPortableCacheDownloaded = remoteCache.shouldBeDownloaded && downloader.availableCommitDepth >= 0
-      )
+      CompiledClasses.compile(context, isPortableCacheDownloaded = remoteCache.shouldBeDownloaded && downloader.availableCommitDepth >= 0)
       isAlreadyUpdated = true
       context.options.incrementalCompilation = true
     }
@@ -150,10 +148,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private fun clean() {
-    for (it in listOf(context.compilationData.dataStorageRoot, context.classesOutputDirectory)) {
-      context.messages.info("Cleaning $it")
-      NioFiles.deleteRecursively(it)
-    }
+    context.cleanOutput(keepCompilationState = false)
   }
 
   private fun downloadCache() {

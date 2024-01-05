@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
+import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.jps.api.CanceledStatus
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -52,23 +53,45 @@ internal object CompiledClasses {
                        "so the archive with the compiled project output metadata won't be used to fetch compile output")
       options.pathToCompiledClassesArchivesMetadata = null
     }
+    if (options.forceRebuild && options.incrementalCompilation) {
+      messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, " +
+                       "so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.forceRebuild && options.useCompiledClassesFromProjectOutput) {
+      messages.error(
+        "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' options are specified"
+      )
+    }
+    if (options.forceRebuild && context.options.pathToCompiledClassesArchive != null) {
+      messages.error(
+        "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified"
+      )
+    }
+    if (options.forceRebuild && context.options.pathToCompiledClassesArchivesMetadata != null) {
+      messages.error(
+        "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified"
+      )
+    }
     if (!options.useCompiledClassesFromProjectOutput) {
       messages.info("Incremental compilation: ${options.incrementalCompilation}")
     }
   }
 
   fun isCompilationRequired(options: BuildOptions): Boolean {
-    return !options.useCompiledClassesFromProjectOutput &&
+    return options.forceRebuild ||
+           !options.useCompiledClassesFromProjectOutput &&
            options.pathToCompiledClassesArchive == null &&
            options.pathToCompiledClassesArchivesMetadata == null
   }
 
   fun keepCompilationState(options: BuildOptions): Boolean {
-    return PortableCompilationCache.IS_ENABLED ||
-           options.useCompiledClassesFromProjectOutput ||
-           options.pathToCompiledClassesArchive == null ||
-           options.pathToCompiledClassesArchivesMetadata != null ||
-           options.incrementalCompilation
+    return !options.forceRebuild &&
+           (PortableCompilationCache.IS_ENABLED ||
+            options.useCompiledClassesFromProjectOutput ||
+            options.pathToCompiledClassesArchive == null ||
+            options.pathToCompiledClassesArchivesMetadata != null ||
+            options.incrementalCompilation)
   }
 
   @Synchronized
@@ -107,7 +130,7 @@ internal object CompiledClasses {
         jpsCache.upload()
       }
       else -> {
-        compileLocally(context, moduleNames, includingTestsInModules, isPortableCacheDownloaded = false)
+        compile(context, moduleNames, includingTestsInModules, isPortableCacheDownloaded = false)
         return
       }
     }
@@ -128,7 +151,7 @@ internal object CompiledClasses {
            context.compilationData.isIncrementalCompilationDataAvailable()
   }
 
-  fun compileLocally(
+  fun compile(
     context: CompilationContext,
     moduleNames: Collection<String>? = null,
     includingTestsInModules: List<String>? = null,
@@ -150,6 +173,7 @@ internal object CompiledClasses {
         isIncrementalCompilationDataAvailable(context) -> "Compiled using local cache" to true
         else -> "Clean build" to false
       }
+      context.options.incrementalCompilation = isIncrementalCompilation
       if (!isIncrementalCompilation) {
         Span.current().addEvent("no compiled classes can be reused")
       }
@@ -210,6 +234,7 @@ internal object CompiledClasses {
       e is TimeoutCancellationException -> {
         context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
         successMessage = "$successMessage after timeout"
+        context.cleanOutput(keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
       PortableCompilationCache.IS_ENABLED -> {
@@ -217,6 +242,7 @@ internal object CompiledClasses {
       }
       else -> {
         context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
+        context.cleanOutput(keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
     }
