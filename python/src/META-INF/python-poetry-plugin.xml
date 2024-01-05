@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.intellij.python.community.impl.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
-  </extensions>
-</idea-plugin>
