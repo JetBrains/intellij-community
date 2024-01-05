@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -383,9 +382,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
-    val numberOfBuckets = systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]?.toIntOrNull() ?: 1
-    if (numberOfBuckets > 1) {
-      messages.info("Tests from bucket ${systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
+    if (options.bucketsCount > 1) {
+      messages.info("Tests from bucket ${options.bucketIndex} of ${options.bucketsCount} will be executed")
     }
     messages.block("Test classpath and runtime info") {
       runBlocking(Dispatchers.IO) {
@@ -411,8 +409,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                     envVariables = envVariables,
                     bootstrapClasspath = bootstrapClasspath,
                     modulePath = modulePath,
-                    testClasspath = testClasspath,
-                    numberOfBuckets = numberOfBuckets)
+                    testClasspath = testClasspath)
     notifySnapshotBuilt(allJvmArgs)
   }
 
@@ -703,8 +700,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
                               modulePath : List<String>?,
-                              testClasspath: List<String>,
-                              numberOfBuckets: Int) {
+                              testClasspath: List<String>) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
         .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
@@ -806,7 +802,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
             // only check on the first (full) attempt
             attempt == 1 &&
             // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
-            numberOfBuckets < 2) {
+            options.bucketsCount < 2) {
           throw NoTestsFound()
         }
 
