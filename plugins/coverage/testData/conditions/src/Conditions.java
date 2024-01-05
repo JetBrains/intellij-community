@@ -167,10 +167,10 @@ public class Conditions {
   }
 
   boolean andWithoutIf(boolean a, boolean b) {
-    return a && b; // TODO hint must be here
+    return a && b;
   }
 
   boolean orWithoutIf(boolean a, boolean b) {
-    return a || b; // TODO hint must be here
+    return a || b;
   }
 }

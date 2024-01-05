@@ -207,5 +207,13 @@ Hits: 1
 
 Line 170 coverage: PARTIAL
 Hits: 1
+    a
+        true hits: 1
+        false hits: 0
+
 Line 174 coverage: PARTIAL
 Hits: 1
+    a
+        true hits: 0
+        false hits: 1
+

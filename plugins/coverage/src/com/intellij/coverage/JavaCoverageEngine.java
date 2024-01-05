@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
@@ -610,10 +611,11 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   private static List<PsiExpression> collectExpressions(@NotNull Editor editor, @NotNull PsiFile psiFile, int startOffset, int endOffset) {
-    List<PsiExpression> expressions = new ArrayList<>();
+    Set<PsiExpression> expressions = new LinkedHashSet<>();
 
     for(int offset = startOffset; offset < endOffset; offset++) {
       PsiElement elementAt = psiFile.findElementAt(offset);
+      if (elementAt == null) continue;
       PsiElement statement = PsiTreeUtil.getParentOfType(elementAt, PsiStatement.class);
       if (statement == null) continue;
       PsiElement condition = null;
@@ -631,17 +633,23 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
       else if (statement instanceof PsiAssertStatement assertStatement) {
         condition = assertStatement.getAssertCondition();
+      } else {
+        PsiPolyadicExpression expression = PsiTreeUtil.findChildOfType(statement, PsiPolyadicExpression.class);
+        if (expression != null) {
+          IElementType tokenType = expression.getOperationTokenType();
+          if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
+            condition = expression;
+          }
+        }
       }
-      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(elementAt), false)) {
+      if (PsiTreeUtil.isAncestor(condition, elementAt, false)) {
         try {
           ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(editor.getProject()))
             .getControlFlow(statement, AllVariablesControlFlowPolicy.getInstance());
           for (Instruction instruction : controlFlow.getInstructions()) {
             if (instruction instanceof ConditionalBranchingInstruction branchingInstruction) {
               PsiExpression expression = branchingInstruction.expression;
-              if (!expressions.contains(expression)) {
-                expressions.add(expression);
-              }
+              expressions.add(expression);
             }
           }
         }
@@ -650,7 +658,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         }
       }
     }
-    return expressions;
+    return new ArrayList<>(expressions);
   }
 
   @Override
