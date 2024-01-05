@@ -466,7 +466,6 @@ public class GitRebaseProcess {
       untrackedPaths,
       GitBundle.message("rebase.git.operation.name"),
       message,
-      null,
       actions.toArray(new NotificationAction[0])
     );
   }
