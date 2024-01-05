@@ -309,6 +309,19 @@ public final class GitRebaseUtils {
   }
 
   /**
+   * @see git4idea.commands.GitImpl#REBASE_CONFIG_PARAMS
+   */
+  public static GitRebaseEditorHandler createRebaseEditor(@NotNull Project project,
+                                                          @NotNull VirtualFile root,
+                                                          boolean forInteractiveRebase) {
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, root);
+    if (!forInteractiveRebase) {
+      editor.setRebaseEditorShown();
+    }
+    return editor;
+  }
+
+  /**
    * Short commit info
    */
   public static class CommitInfo {
