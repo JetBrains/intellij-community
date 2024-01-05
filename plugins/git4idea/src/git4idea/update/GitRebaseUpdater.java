@@ -16,8 +16,10 @@ import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseProcess;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -57,6 +59,10 @@ public final class GitRebaseUpdater extends GitUpdater {
   @Override
   protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
+    if (!checkForRebasingPublishedCommits()) {
+      return GitUpdateResult.CANCEL;
+    }
+
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
     GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params);
@@ -64,6 +70,17 @@ public final class GitRebaseUpdater extends GitUpdater {
       new GitRebaser(myProject, myGit, myProgressIndicator).abortRebase(myRoot);
     }
     return result;
+  }
+
+  private boolean checkForRebasingPublishedCommits() {
+    GitBranchPair sourceAndTarget = getSourceAndTarget();
+    String currentRef = sourceAndTarget.getSource().getFullName();
+    String baseRef = sourceAndTarget.getTarget().getFullName();
+
+    if (GitRebaseProcess.isRebasingPublishedCommit(myRepository, baseRef, currentRef)) {
+      return GitRebaseProcess.askIfShouldRebasePublishedCommit();
+    }
+    return true;
   }
 
   private @NotNull String getRemoteBranchToMerge() {
@@ -86,7 +103,7 @@ public final class GitRebaseUpdater extends GitUpdater {
    */
   public boolean fastForwardMerge() {
     LOG.info("Trying fast-forward merge for " + myRoot);
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
     if (repository == null) {
       LOG.error("Repository is null for " + myRoot);
       return false;
