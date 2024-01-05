@@ -119,7 +119,7 @@ class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() 
           fun testJUnit4() {}
       
           @org.junit.jupiter.api.Test
-          fun testJUnit5() {}
+          public fun testJUnit5() {}
       }
     """.trimIndent(), "Migrate to JUnit 5")
   }

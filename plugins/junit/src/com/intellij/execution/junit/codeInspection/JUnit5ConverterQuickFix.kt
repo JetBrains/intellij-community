@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.execution.JUnitBundle
+import com.intellij.execution.junit.JUnitUtil
 import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
@@ -112,14 +114,14 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
     private fun changeVisibilityForTestClasses() {
       classes.forEach { uClass ->
         val file = uClass.getContainingUFile()?.sourcePsi ?: return@forEach
-        CompositeModCommandQuickFix.performActions(createModifierActions(uClass, modifierRequest(JvmModifier.PUBLIC, false)), file)
         changeVisibilityForTestMethods(uClass, file)
+        CompositeModCommandQuickFix.performActions(createModifierActions(uClass, modifierRequest(JvmModifier.PUBLIC, false)), file)
       }
     }
 
     private fun changeVisibilityForTestMethods(uClass: UClass, file: PsiFile) {
       uClass.methods.forEach {
-        if (TestFrameworks.getInstance().isTestMethod(it)) {
+        if (TestFrameworks.getInstance().isTestMethod(it) && !AnnotationUtil.isAnnotated(it, JUnitUtil.TEST5_ANNOTATION, 0)) {
           CompositeModCommandQuickFix.performActions(createModifierActions(it, modifierRequest(JvmModifier.PUBLIC, false)), file)
         }
       }
@@ -134,8 +136,8 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
           else -> migrateUsages.add(usage)
         }
       }
-      super.performRefactoring(migrateUsages.toTypedArray())
       changeVisibilityForTestClasses()
+      super.performRefactoring(migrateUsages.toTypedArray())
       CleanupInspectionUtil.getInstance().applyFixes(
         myProject,
         JUnitBundle.message("jvm.inspections.junit5.converter.quickfix.presentation.text"),

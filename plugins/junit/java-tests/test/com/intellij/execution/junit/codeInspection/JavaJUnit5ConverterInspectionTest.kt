@@ -136,7 +136,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
         void testJUnit4() {}
 
         @org.junit.jupiter.api.Test
-        void testJUnit5() {}
+        public void testJUnit5() {}
       }
     """.trimIndent(), "Migrate to JUnit 5")
   }

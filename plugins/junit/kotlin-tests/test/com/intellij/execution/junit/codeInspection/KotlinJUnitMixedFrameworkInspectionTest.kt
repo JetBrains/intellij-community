@@ -157,10 +157,10 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
         fun testFoo() { }
         
         @org.junit.jupiter.api.Test
-        fun testBar() { }
+        public fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        fun testFooBar() { }
+        public fun testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

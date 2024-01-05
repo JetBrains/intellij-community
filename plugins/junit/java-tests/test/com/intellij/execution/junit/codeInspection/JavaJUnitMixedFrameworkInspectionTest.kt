@@ -159,10 +159,10 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
         void testFoo() { }
         
         @org.junit.jupiter.api.Test
-        void testBar() { }
+        public void testBar() { }
         
         @org.junit.jupiter.api.Test
-        void testFooBar() { }
+        public void testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }
