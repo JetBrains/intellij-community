@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -206,8 +207,7 @@ class ModifiableRootModelBridgeImpl(
   override fun addContentEntry(url: String, useSourceOfModule: Boolean): ContentEntry {
     assertModelIsLive()
 
-    val e = if (LOG.isTraceEnabled) RuntimeException() else null
-    LOG.debug(e) { "Add content entry for url: $url, useSourceOfModule: $useSourceOfModule" }
+    LOG.debugWithTrace { "Add content entry for url: $url, useSourceOfModule: $useSourceOfModule" }
 
     val finalSource = if (useSourceOfModule) moduleEntity.entitySource
     else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
@@ -236,8 +236,7 @@ class ModifiableRootModelBridgeImpl(
   override fun removeContentEntry(entry: ContentEntry) {
     assertModelIsLive()
 
-    val e = if (LOG.isTraceEnabled) RuntimeException() else null
-    LOG.debug(e) { "Remove content entry for url: ${entry.url}" }
+    LOG.debugWithTrace { "Remove content entry for url: ${entry.url}" }
 
     val entryImpl = entry as ModifiableContentEntryBridge
     val contentEntryUrl = entryImpl.contentEntryUrl
@@ -750,4 +749,12 @@ internal fun getInternalFileSource(source: EntitySource) = when (source) {
   is CustomModuleEntitySource -> source.internalSource
   is JpsFileEntitySource -> source
   else -> null
+}
+
+/**
+ * Print a debug message and add a stack trace if trace logging is enabled
+ */
+private fun Logger.debugWithTrace(msg: () -> String) {
+  val e = if (this.isTraceEnabled) RuntimeException("Stack trace of the log entry:") else null
+  this.debug(e, msg)
 }
