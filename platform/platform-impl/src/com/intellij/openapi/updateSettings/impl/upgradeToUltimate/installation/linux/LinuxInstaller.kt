@@ -38,7 +38,7 @@ internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) 
     val installed = installationResult.appPath
     val shellPath = installed.resolve("bin").resolve("idea.sh")
 
-    val command = GeneralCommandLine("/usr/bin/setsid").withParameters(shellPath.pathString)
+    val command = GeneralCommandLine("sh", "-c", "${shellPath.pathString} &")
     
     return runCommand(command)
   }
