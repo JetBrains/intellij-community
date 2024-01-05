@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -158,7 +159,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
 
     fun schedule(runnable: Runnable) {
       if (isActive.get()) {
-        scheduledRunnables.add(runnable)
+        scheduledRunnables.add(ClientId.decorateRunnable(runnable))
       }
       else {
         runnable.run()
