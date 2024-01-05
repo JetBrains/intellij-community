@@ -28,6 +28,7 @@
     <lang.syntaxHighlighterFactory
       language="Requirements"
       implementationClass="com.intellij.python.community.impl.requirements.RequirementsSyntaxHighlighterFactory"/>
+    <multiHostInjector implementation="com.intellij.python.community.impl.requirements.RequirementsLanguageInjector"/>
     <completion.contributor language="Requirements"
                             implementationClass="com.intellij.python.community.impl.requirements.RequirementsPackageNameCompletionContributor"/>
     <completion.contributor language="Requirements"
@@ -542,10 +543,6 @@
                        key="python.sdk.installation.notification.group"/>
 
 
-    <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageCompletionContributor"/>
-    <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectMetadataCompletionContributor"/>
     <localInspection language="TOML"
                      shortName="PyprojectInspection"
                      suppressId="PyprojectInspection"
