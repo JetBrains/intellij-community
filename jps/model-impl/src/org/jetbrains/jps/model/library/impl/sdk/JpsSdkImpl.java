@@ -68,7 +68,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setHomePath(String homePath) {
     if (!Objects.equals(myHomePath, homePath)) {
       myHomePath = homePath;
-      fireElementChanged();
     }
   }
 
@@ -81,7 +80,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setVersionString(String versionString) {
     if (!Objects.equals(myVersionString, versionString)) {
       myVersionString = versionString;
-      fireElementChanged();
     }
   }
 }

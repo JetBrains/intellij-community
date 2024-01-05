@@ -36,14 +36,12 @@ public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootP
   public void setRelativeOutputPath(@NotNull String relativeOutputPath) {
     if (!Objects.equals(myRelativeOutputPath, relativeOutputPath)) {
       myRelativeOutputPath = relativeOutputPath;
-      fireElementChanged();
     }
   }
 
   public void setForGeneratedSources(boolean forGeneratedSources) {
     if (myForGeneratedSources != forGeneratedSources) {
       myForGeneratedSources = forGeneratedSources;
-      fireElementChanged();
     }
   }
 }

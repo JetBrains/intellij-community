@@ -44,7 +44,6 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   public void setExported(boolean exported) {
     if (myExported != exported) {
       myExported = exported;
-      fireElementChanged();
     }
   }
 
@@ -58,7 +57,6 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   public void setScope(@NotNull JpsJavaDependencyScope scope) {
     if (!scope.equals(myScope)) {
       myScope = scope;
-      fireElementChanged();
     }
   }
 

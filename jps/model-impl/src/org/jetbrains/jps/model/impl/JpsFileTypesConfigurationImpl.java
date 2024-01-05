@@ -48,7 +48,6 @@ public final class JpsFileTypesConfigurationImpl extends JpsElementBase<JpsFileT
   public void setIgnoredPatternString(@NotNull String ignoredPatternString) {
     if (!myIgnoredPatternString.equals(ignoredPatternString)) {
       myIgnoredPatternString = ignoredPatternString;
-      fireElementChanged();
     }
   }
 }

@@ -31,7 +31,6 @@ public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<Explode
   public void setExplodedUrl(String explodedUrl) {
     if (!Objects.equals(myExplodedUrl, explodedUrl)) {
       myExplodedUrl = explodedUrl;
-      fireElementChanged();
     }
   }
 
@@ -44,7 +43,6 @@ public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<Explode
   public void setExcludeExploded(boolean excludeExploded) {
     if (myExcludeExploded != excludeExploded) {
       myExcludeExploded = excludeExploded;
-      fireElementChanged();
     }
   }
 

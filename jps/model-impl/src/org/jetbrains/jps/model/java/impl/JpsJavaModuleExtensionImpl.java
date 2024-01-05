@@ -59,7 +59,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   public void setOutputUrl(String outputUrl) {
     if (!Objects.equals(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
-      fireElementChanged();
     }
   }
 
@@ -72,7 +71,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   public void setTestOutputUrl(String testOutputUrl) {
     if (!Objects.equals(myTestOutputUrl, testOutputUrl)) {
       myTestOutputUrl = testOutputUrl;
-      fireElementChanged();
     }
   }
 
@@ -85,7 +83,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;
-      fireElementChanged();
     }
   }
 
@@ -98,7 +95,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   public void setInheritOutput(boolean inheritOutput) {
     if (myInheritOutput != inheritOutput) {
       myInheritOutput = inheritOutput;
-      fireElementChanged();
     }
   }
 
@@ -111,7 +107,6 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   public void setExcludeOutput(boolean excludeOutput) {
     if (myExcludeOutput != excludeOutput) {
       myExcludeOutput = excludeOutput;
-      fireElementChanged();
     }
   }
 }

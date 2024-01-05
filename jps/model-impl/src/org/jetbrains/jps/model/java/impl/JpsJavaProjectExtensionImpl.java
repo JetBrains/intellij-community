@@ -36,7 +36,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setOutputUrl(String outputUrl) {
     if (!Objects.equals(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
-      fireElementChanged();
     }
   }
 
@@ -49,7 +48,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;
-      fireElementChanged();
     }
   }
 }

@@ -40,7 +40,6 @@ public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleEleme
   public void setData(@NotNull D data) {
     if (!myData.equals(data)) {
       myData = data;
-      fireElementChanged();
     }
   }
 

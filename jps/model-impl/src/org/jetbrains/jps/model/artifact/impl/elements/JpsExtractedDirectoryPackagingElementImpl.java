@@ -30,7 +30,6 @@ public class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackag
   public void setPathInJar(String pathInJar) {
     if (!Objects.equals(myPathInJar, pathInJar)) {
       myPathInJar = pathInJar;
-      fireElementChanged();
     }
   }
 }

@@ -29,7 +29,6 @@ public class JpsFileCopyPackagingElementImpl extends JpsFileCopyPackagingElement
   public void setRenamedOutputFileName(String renamedOutputFileName) {
     if (!Objects.equals(myRenamedOutputFileName, renamedOutputFileName)) {
       myRenamedOutputFileName = renamedOutputFileName;
-      fireElementChanged();
     }
   }
 }

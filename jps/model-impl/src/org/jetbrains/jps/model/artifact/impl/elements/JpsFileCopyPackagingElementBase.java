@@ -21,7 +21,6 @@ public abstract class JpsFileCopyPackagingElementBase<Self extends JpsFileCopyPa
   public void setFilePath(String filePath) {
     if (!Objects.equals(myFilePath, filePath)) {
       myFilePath = filePath;
-      fireElementChanged();
     }
   }
 }

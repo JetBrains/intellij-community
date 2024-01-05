@@ -60,7 +60,6 @@ class TestCustomSourceRootProperties(initialTestString: String?) : JpsElementBas
     set(value) {
       if (value != field) {
         field = value
-        fireElementChanged()
       }
     }
 

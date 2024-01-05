@@ -38,7 +38,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setCopyFormsRuntimeToOutput(boolean value) {
     if (myState.COPY_FORMS_RUNTIME_TO_OUTPUT != value) {
       myState.COPY_FORMS_RUNTIME_TO_OUTPUT = value;
-      fireElementChanged();
     }
   }
 
@@ -51,7 +50,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setInstrumentClasses(boolean value) {
     if (myState.INSTRUMENT_CLASSES != value) {
       myState.INSTRUMENT_CLASSES = value;
-      fireElementChanged();
     }
   }
 
