@@ -42,7 +42,7 @@ class UiRobot(override val driver: Driver, override val robotService: RobotServi
   }
 
   override val searchContext: SearchContext = object : SearchContext {
-    override val context = "root"
+    override val context = ""
 
     override fun findAll(xpath: String): List<Component> {
       return robotService.findAll(xpath)
