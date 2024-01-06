@@ -64,7 +64,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
       "intellij.jinja" -> IntellijIconClassGeneratorModuleConfig(
         className = "Jinja2Icons",
-        packageName = "com.jetbrains.jinja2"
+        packageName = "com.intellij.jinja"
       )
 
       "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsVisualisationIcons",
