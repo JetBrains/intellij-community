@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -2441,6 +2441,30 @@ public final class HighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
     }
 
+    return null;
+  }
+
+  static HighlightInfo.Builder checkLocalClassReferencedFromAnotherSwitchBranch(@NotNull PsiJavaCodeReferenceElement ref,
+                                                                                @NotNull PsiClass aClass) {
+    if (!(aClass.getParent() instanceof PsiDeclarationStatement declarationStatement) ||
+        !(declarationStatement.getParent() instanceof PsiCodeBlock codeBlock) ||
+        !(codeBlock.getParent() instanceof PsiSwitchBlock)) {
+      return null;
+    }
+    boolean classSeen = false;
+    for (PsiStatement statement : codeBlock.getStatements()) {
+      if (classSeen) {
+        if (PsiTreeUtil.isAncestor(statement, ref, true)) break;
+        if (statement instanceof PsiSwitchLabelStatement) {
+          String description =
+            JavaErrorBundle.message("local.class.referenced.from.other.switch.branch", HighlightUtil.formatClass(aClass));
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).descriptionAndTooltip(description);
+        }
+      }
+      else if (statement == declarationStatement) {
+        classSeen = true;
+      }
+    }
     return null;
   }
 

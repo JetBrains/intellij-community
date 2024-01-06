@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
@@ -1204,6 +1204,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
+      if (!hasErrorResults() && resolved instanceof PsiClass aClass) {
+        add(HighlightUtil.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass));
+      }
       if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
         HighlightingFeature.checkPreviewFeature(ref, myPreviewFeatureVisitor);
       }
