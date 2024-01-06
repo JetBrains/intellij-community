@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.featureStatistics.FeatureStatisticsUpdateListener
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import org.jetbrains.annotations.VisibleForTesting
 
 class StatisticsUpdate
@@ -44,6 +46,7 @@ class StatisticsUpdate
     }
     if (spared > 0) {
       mySpared += spared
+      application.messageBus.syncPublisher(FeatureStatisticsUpdateListener.TOPIC).completionStatUpdated(spared)
     }
   }
 
