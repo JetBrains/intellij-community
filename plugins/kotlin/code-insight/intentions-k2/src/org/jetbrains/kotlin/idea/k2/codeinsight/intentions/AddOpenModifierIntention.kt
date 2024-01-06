@@ -49,7 +49,7 @@ internal class AddOpenModifierIntention :
                 || ownerSymbol.modality == Modality.SEALED
     }
 
-    override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater) {
+    override fun apply(element: KtCallableDeclaration, context: ActionContext, updater: ModPsiUpdater) {
         element.addModifier(KtTokens.OPEN_KEYWORD)
     }
 }

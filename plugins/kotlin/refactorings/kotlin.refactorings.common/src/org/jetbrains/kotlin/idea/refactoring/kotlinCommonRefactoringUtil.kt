@@ -12,13 +12,12 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.changeSignature.ChangeInfo
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -74,10 +73,11 @@ fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
     else -> false
 }
 
-fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
+fun KtCallExpression.moveFunctionLiteralOutsideParentheses(moveCaretTo: ((Int) -> Unit)? = null) {
     assert(lambdaArguments.isEmpty())
     val argumentList = valueArgumentList!!
-    val argument = argumentList.arguments.last()
+    val arguments = argumentList.arguments
+    val argument = arguments.last()
     val expression = argument.getArgumentExpression()!!
     assert(expression.unpackFunctionLiteral() != null)
 
@@ -110,8 +110,12 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
     /* we should not remove empty parenthesis when callee is a call too - it won't parse */
     if (argumentList.arguments.size == 1 && calleeExpression !is KtCallExpression) {
         argumentList.delete()
+        calleeExpression?.let { moveCaretTo?.invoke(it.endOffset) }
     } else {
         argumentList.removeArgument(argument)
+        if (arguments.size > 1) {
+            arguments[arguments.size - 2]?.let { moveCaretTo?.invoke(it.endOffset) }
+        }
     }
 }
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(

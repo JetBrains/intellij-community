@@ -10,7 +10,7 @@ It could be considered as a small refactoring actions.
 - `kotlin.code-insight.intentions-shared`
 
 Preferably intention should extend `AbstractKotlinApplicableModCommandIntention` or `AbstractKotlinModCommandWithContext`.
-It works over ModCommand API that allows to perform analysis on a background thread.
+It works over ModCommand API (see `ModCommand`) that allows to perform analysis on a background thread.
 
 ### `AbstractKotlinApplicableModCommandIntention`
 The most important methods you need to implement:
@@ -53,12 +53,12 @@ There are two base classes for inspections: `AbstractKotlinApplicableInspection`
    - are the same as for `AbstractKotlinApplicableModCommandIntention`
  - `shouldApplyInWriteAction`
    - Whether `apply` should be performed in a write action.
- - `apply(element, project, editor)`
+ - `apply(element, project, updater)`
    - Applies a fix to element. 
-   - It should not use the Analysis API due to performance concerns, as it is usually executed on EDT. 
-   - It is executed in a write action if element is physical and `shouldApplyInWriteAction` returns `true`.
+   - ModCommand API based
+   - Executed on a background thread
 
-### `AbstractKotlinApplicableInspectionWithContext`
+### `AbstractKotlinApplicableModCommandInspectionWithContext`
 Similar to `AbstractKotlinApplicableInspection` plus Analysis API context:
  - `prepareContext(element)`
  - `apply(element, context, project, editor)`

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -39,7 +39,7 @@ internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspecti
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtPrefixExpression): Boolean = element.getKtType()?.isBoolean == true
 
-    override fun apply(element: KtPrefixExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtPrefixExpression, project: Project, updater: ModPsiUpdater) {
         element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
     }
 }

@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 
-class SplitIfIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpression::class) {
+class SplitIfIntention : AbstractKotlinApplicableModCommandIntention<KtExpression>(KtExpression::class) {
     override fun getActionName(element: KtExpression): String = familyName
 
-    override fun apply(element: KtExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
         val operator = when (element) {
             is KtIfExpression -> getFirstValidOperator(element)!!
             else -> element as KtOperationReferenceExpression
@@ -117,4 +117,5 @@ class SplitIfIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpre
         commentSaver.elementCreatedByText(expression, condition, TextRange(startOffset, endOffset))
         return expression
     }
+
 }

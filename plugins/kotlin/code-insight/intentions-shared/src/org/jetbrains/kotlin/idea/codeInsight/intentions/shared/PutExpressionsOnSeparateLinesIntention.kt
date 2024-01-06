@@ -35,7 +35,7 @@ internal class PutExpressionsOnSeparateLinesIntention :
     override fun getActionName(element: KtOperationReferenceExpression): String = familyName
     override fun getFamilyName(): String = KotlinBundle.message("put.expressions.on.separate.lines")
 
-    override fun invoke(context: ActionContext, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+    override fun apply(element: KtOperationReferenceExpression, context: ActionContext, updater: ModPsiUpdater) {
         val rootBinaryExpression = element.topmostBinaryExpression() ?: return
         val project = context.project
         val psiFactory = KtPsiFactory(project)

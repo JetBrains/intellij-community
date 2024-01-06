@@ -9,6 +9,10 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -23,6 +27,7 @@ import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
+import org.jetbrains.kotlin.idea.intentions.computeUnderProgressIndicatorAndWait
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -240,11 +245,24 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             localFixAction != null
         )
 
-        project.executeCommand(localFixAction!!.text, null) {
-            if (localFixAction.startInWriteAction()) {
-                runWriteAction { localFixAction.invoke(project, editor, file) }
-            } else {
-                localFixAction.invoke(project, editor, file)
+        val modCommandAction = localFixAction!!.asModCommandAction()
+        if (modCommandAction != null) {
+            val actionContext = ActionContext.from(editor, file)
+            val command: ModCommand = project.computeUnderProgressIndicatorAndWait {
+                runReadAction {
+                    modCommandAction.perform(actionContext)
+                }
+            }
+            project.executeCommand(localFixAction.text, null) {
+                ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+            }
+        } else {
+            project.executeCommand(localFixAction.text, null) {
+                if (localFixAction.startInWriteAction()) {
+                    runWriteAction { localFixAction.invoke(project, editor, file) }
+                } else {
+                    localFixAction.invoke(project, editor, file)
+                }
             }
         }
         return true

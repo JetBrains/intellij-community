@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
@@ -56,7 +56,7 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
         return element.left?.getKtType()?.isMarkedNullable == true
     }
 
-    override fun apply(element: KtBinaryExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtBinaryExpression, project: Project, updater: ModPsiUpdater) {
         val left = element.left ?: return
         element.replace(left)
     }

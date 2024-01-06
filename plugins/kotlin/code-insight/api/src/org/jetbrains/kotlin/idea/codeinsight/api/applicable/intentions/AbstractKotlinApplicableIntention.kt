@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
  *
  * If [apply] needs to use the Analysis API, inherit from [AbstractKotlinApplicableIntentionWithContext] instead.
  */
+@Deprecated("Use AbstractKotlinApplicableModCommandIntention")
 abstract class AbstractKotlinApplicableIntention<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : AbstractKotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableTool<ELEMENT> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.psi.KtElement
 /**
  * A [AbstractKotlinApplicableInspectionWithContext] that applies to an element if it has a specific [DIAGNOSTIC].
  */
-@Deprecated("Use AbstractKotlinApplicableModCommandInspectionWithContext")
-abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>
-    : AbstractKotlinApplicableInspectionWithContext<ELEMENT, CONTEXT>(), AbstractKotlinApplicableDiagnosticInspection<ELEMENT, DIAGNOSTIC> {
+abstract class AbstractKotlinApplicableModCommandDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>
+    : AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT, CONTEXT>(), AbstractKotlinApplicableDiagnosticInspection<ELEMENT, DIAGNOSTIC> {
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
      *

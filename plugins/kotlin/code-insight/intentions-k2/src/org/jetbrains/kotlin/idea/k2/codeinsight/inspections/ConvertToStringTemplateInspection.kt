@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
@@ -11,7 +11,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableModCommandInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
@@ -33,7 +33,7 @@ internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspe
     }
     class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtBinaryExpression, context: Context, project: Project, updater: ModPsiUpdater) {
         context.replacement.element?.let { element.replaced(it) }
     }
 

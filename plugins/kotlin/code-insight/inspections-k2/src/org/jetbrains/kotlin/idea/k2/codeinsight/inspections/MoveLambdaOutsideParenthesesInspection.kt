@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfNeeded
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -48,14 +47,8 @@ class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspectio
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
 
-    override fun shouldApplyInWriteAction(): Boolean {
-        return false
-    }
-
-    override fun apply(element: KtCallExpression, project: Project, editor: Editor?) {
-        runWriteActionIfNeeded(element.isPhysical) {
-            element.moveFunctionLiteralOutsideParentheses()
-        }
+    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
+        element.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
     }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> {

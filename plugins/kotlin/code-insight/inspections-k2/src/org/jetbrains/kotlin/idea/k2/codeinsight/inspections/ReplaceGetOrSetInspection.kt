@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class ReplaceGetOrSetInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
+    AbstractKotlinApplicableModCommandInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -79,12 +79,11 @@ internal class ReplaceGetOrSetInspection :
         return Context(functionSymbol.name, problemHighlightType)
     }
 
-    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, updater: ModPsiUpdater) {
         ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
             element,
-            isSet = context.calleeName == OperatorNameConventions.SET,
-            editor
-        )
+            isSet = context.calleeName == OperatorNameConventions.SET
+        ) { updater.moveCaretTo(it) }
     }
 
     context(KtAnalysisSession)

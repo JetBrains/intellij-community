@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -18,8 +20,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * For more complex inspections that should either visit multiple kinds of elements or register multiple (or zero) problems, simply use
  * [LocalInspectionTool].
  */
-@Deprecated("Use AbstractKotlinApplicableModCommandInspectionWithContext")
-abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+abstract class AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
@@ -33,18 +34,29 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
 
     override fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String = getActionFamilyName()
 
+    final override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
+        throw UnsupportedOperationException("apply(ELEMENT, CONTEXT, Project, Editor?) should not be invoked")
+    }
+
+    abstract fun apply(element: ELEMENT, context: CONTEXT, project: Project, updater: ModPsiUpdater)
+
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val context = prepareContextWithAnalyze(element) ?: return null
 
         val elementPointer = element.createSmartPointer()
         val inspectionWithContextClass = javaClass
-        val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
-            override fun applyTo(element: ELEMENT) {
-                apply(element, context, element.project, element.findExistingEditor())
+        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
+
+            override fun getFamilyName(): String = this@AbstractKotlinApplicableModCommandInspectionWithContext.getActionFamilyName()
+
+            override fun applyFix(
+                project: Project,
+                element: ELEMENT,
+                updater: ModPsiUpdater
+            ) {
+                apply(element, context, element.project, updater)
             }
 
-            override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspectionWithContext.shouldApplyInWriteAction()
-            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(it, context) } ?: familyName
             override fun getSubstitutedClass(): Class<*> = inspectionWithContextClass
         }

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<KtIfExpression>() {
-    override fun apply(element: KtIfExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtIfExpression, project: Project, updater: ModPsiUpdater) {
         val elseKeyword = element.lastSingleElseKeyword() ?: return
         val elseExpression = elseKeyword.getStrictParentOfType<KtIfExpression>()?.`else` ?: return
 

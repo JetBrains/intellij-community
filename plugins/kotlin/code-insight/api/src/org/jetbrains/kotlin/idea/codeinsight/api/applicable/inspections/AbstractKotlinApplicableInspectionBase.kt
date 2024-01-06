@@ -5,8 +5,11 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
@@ -89,4 +92,26 @@ internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtE
     final override fun startInWriteAction() = false
 
     final override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
+}
+
+internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix(), ReportingClassSubstitutor {
+    abstract override fun getName(): String
+
+    abstract override fun getFamilyName(): @IntentionFamilyName String
+
+    final override fun applyFix(
+        project: Project,
+        element: PsiElement,
+        updater: ModPsiUpdater
+    ) {
+        @Suppress("UNCHECKED_CAST")
+        val e = element as ELEMENT
+        applyFix(project, e, updater)
+    }
+
+    abstract fun applyFix(
+        project: Project,
+        element: ELEMENT,
+        updater: ModPsiUpdater
+    )
 }

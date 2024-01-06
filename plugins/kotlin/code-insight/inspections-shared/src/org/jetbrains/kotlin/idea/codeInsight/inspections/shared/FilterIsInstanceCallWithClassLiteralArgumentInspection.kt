@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -56,7 +56,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
         return classSymbol.typeParameters.isEmpty()
     }
 
-    override fun apply(element: KtCallExpression, project: Project, editor: Editor?) {
+    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
         val callee = element.calleeExpression ?: return
         val argument = element.valueArguments.singleOrNull() ?: return
         val typeName = argument.classLiteral()?.receiverExpression?.text ?: return

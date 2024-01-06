@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandDiagnosticInspectionWithContext
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<KtModifierListOwner>>(
     private val modifierSet: TokenSet,
-) : AbstractKotlinApplicableDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
+) : AbstractKotlinApplicableModCommandDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
     CleanupLocalInspectionTool {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -38,7 +38,7 @@ abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<
 
     override fun isApplicableByPsi(element: KtModifierListOwner): Boolean = element.modifierList?.getModifier(modifierSet) != null
 
-    override fun apply(element: KtModifierListOwner, context: ModifierContext, project: Project, editor: Editor?) {
+    override fun apply(element: KtModifierListOwner, context: ModifierContext, project: Project, updater: ModPsiUpdater) {
         element.removeModifier(context.modifier)
     }
 }

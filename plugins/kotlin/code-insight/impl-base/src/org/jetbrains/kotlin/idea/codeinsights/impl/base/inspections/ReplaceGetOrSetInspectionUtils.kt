@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
-import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -24,7 +23,7 @@ object ReplaceGetOrSetInspectionUtils {
         return true
     }
 
-    fun replaceGetOrSetWithPropertyAccessor(expression: KtDotQualifiedExpression, isSet: Boolean, editor: Editor?) {
+    fun replaceGetOrSetWithPropertyAccessor(expression: KtDotQualifiedExpression, isSet: Boolean, moveCaret: ((Int) -> Unit)?) {
         val callExpression = (expression.selectorExpression as? KtCallExpression) ?: return
         val newExpression = KtPsiFactory(expression.project).buildExpression {
             val allArguments = callExpression.valueArguments
@@ -48,18 +47,18 @@ object ReplaceGetOrSetInspectionUtils {
 
         val newElement = expression.replace(newExpression)
 
-        if (editor != null) {
-            moveCaret(editor, isSet, newElement)
+        if (moveCaret != null) {
+            moveCaret(moveCaret, isSet, newElement)
         }
     }
 
-    private fun moveCaret(editor: Editor, isSet: Boolean, newElement: PsiElement) {
+    private fun moveCaret(moveCaret: ((Int) -> Unit), isSet: Boolean, newElement: PsiElement) {
         val arrayAccessExpression = if (isSet) {
             newElement.getChildOfType()
         } else {
             newElement as? KtArrayAccessExpression
         } ?: return
 
-        arrayAccessExpression.leftBracket?.startOffset?.let { editor.caretModel.moveToOffset(it) }
+        arrayAccessExpression.leftBracket?.startOffset?.let { moveCaret.invoke(it) }
     }
 }

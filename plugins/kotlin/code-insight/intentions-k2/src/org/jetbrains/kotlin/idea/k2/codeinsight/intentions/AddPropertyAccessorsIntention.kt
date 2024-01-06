@@ -57,13 +57,12 @@ internal abstract class AbstractAddAccessorIntention(
         return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
     }
 
-    override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
+    override fun apply(element: KtProperty, context: ActionContext, updater: ModPsiUpdater) {
         addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
 }
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
-
 
 internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
 internal class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)

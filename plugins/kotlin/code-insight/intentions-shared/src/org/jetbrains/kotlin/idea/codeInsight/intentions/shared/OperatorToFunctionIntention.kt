@@ -123,7 +123,7 @@ internal class OperatorToFunctionIntention : AbstractKotlinApplicableModCommandI
 
     override fun getActionName(element: KtExpression): String = familyName
 
-    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
         OperatorToFunctionConverter.convert(element)
     }
 }

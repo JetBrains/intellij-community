@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -55,8 +55,7 @@ internal class UnusedVariableInspection
         return isApplicableByDiagnostic(element, diagnostic)
     }
 
-
-    override fun apply(element: KtNamedDeclaration, project: Project, editor: Editor?) {
+    override fun apply(element: KtNamedDeclaration, project: Project, updater: ModPsiUpdater) {
         val property = element as? KtProperty ?: return
         removeProperty(property)
     }
