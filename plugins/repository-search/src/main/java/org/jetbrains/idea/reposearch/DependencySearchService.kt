@@ -10,7 +10,10 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -29,9 +32,11 @@ typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 class DependencySearchService(private val project: Project) : Disposable {
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
   private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
-  private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Deferred<Collection<RepositoryArtifactData>>>()
+  private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<DeferredCacheKey, Deferred<Collection<RepositoryArtifactData>>>()
   private fun remoteProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { !it.isLocal }
   private fun localProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { it.isLocal }
+
+  private data class DeferredCacheKey(val provider: DependencySearchProvider, val cacheKey: String)
 
   override fun dispose() {
   }
@@ -124,34 +129,43 @@ class DependencySearchService(private val project: Project) : Disposable {
                                          parameters: SearchParameters,
                                          consumer: ResultConsumer,
                                          searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit) {
-    val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
-    val existingDeferred = deferredCache.putIfAbsent(cacheKey, thisNewDeferred)
-    if (existingDeferred != null && parameters.useCache()) {
-      fillResultsFromDeferredCache(existingDeferred, consumer)
-      return
-    }
-
     val providers = mutableSetOf<DependencySearchProvider>()
     providers.addAll(localProviders())
     if (!parameters.isLocalOnly) {
       providers.addAll(remoteProviders())
     }
 
-    val resultSet = RepositoryArtifactDataStorage()
-    coroutineScope {
+    supervisorScope {
       providers.map {
-        async {
-          try {
-            searchMethod(it) {
-              resultSet.add(it)
-              consumer(it)
-            }
-          }
-          catch (e: Exception) {
-            logWarn("Exception getting data from provider $it", e)
-          }
+        launch {
+          performSearchAsync(it, cacheKey, parameters, consumer, searchMethod)
         }
-      }.awaitAll()
+      }
+    }
+  }
+
+  private fun performSearchAsync(provider: DependencySearchProvider,
+                                 cacheKey: String,
+                                 parameters: SearchParameters,
+                                 consumer: ResultConsumer,
+                                 searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit) {
+    val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
+    val existingDeferred = deferredCache.putIfAbsent(DeferredCacheKey(provider, cacheKey), thisNewDeferred)
+    if (existingDeferred != null && parameters.useCache()) {
+      fillResultsFromDeferredCache(existingDeferred, consumer)
+      return
+    }
+
+    val resultSet = RepositoryArtifactDataStorage()
+
+    try {
+      searchMethod(provider) {
+        resultSet.add(it)
+        consumer(it)
+      }
+    }
+    catch (e: Exception) {
+      logWarn("Exception getting data from provider $provider", e)
     }
 
     if (!resultSet.isEmpty() && existingDeferred == null) {
