@@ -33,6 +33,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
@@ -181,6 +182,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
     blockingContext { // because we need correct modality
       application.invokeAndWait {
+        // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
+        // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
         incrementDumbCounter(trace = Throwable())
       }
     }
@@ -188,13 +191,18 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       return block()
     }
     finally {
-      decrementDumbCounter()
+      withContext(Dispatchers.EDT) {
+        blockingContext {
+          decrementDumbCounter()
+        }
+      }
       LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
     }
   }
 
   // We cannot make this function `suspend`, because we have a contract that if dumb task is queued from EDT, dumb service becomes dumb
   // immediately. DumbService.queue is blocking method at the moment.
+  @RequiresBlockingContext
   private fun incrementDumbCounter(trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
     if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
@@ -212,20 +220,22 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
   }
 
-  private suspend fun decrementDumbCounter() {
+  // this method is not suspend for the sake of symmetry: incrementDumbCounter is not suspend as of now
+  @RequiresBlockingContext
+  private fun decrementDumbCounter() {
+    ThreadingAssertions.assertEventDispatchThread()
+
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state
     if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-      withContext(Dispatchers.EDT) {
-        val exitDumb = writeAction {
-          val new = myState.updateAndGet { it.decrementDumbCounter() }
-          return@writeAction new.isSmart
-        }
-        if (exitDumb) {
-          LOG.info("exit dumb mode [${project.name}]")
-          dumbModeStartTrace = null
-          publishDumbModeChangedEvent()
-        }
+      val exitDumb = application.runWriteAction(Computable {
+        val new = myState.updateAndGet { it.decrementDumbCounter() }
+        return@Computable new.isSmart
+      })
+      if (exitDumb) {
+        LOG.info("exit dumb mode [${project.name}]")
+        dumbModeStartTrace = null
+        publishDumbModeChangedEvent()
       }
     }
   }
@@ -308,14 +318,18 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     invokeLaterOnEdtInScheduledTasksScope {
       dumbModeCounterWillBeDecrementedFromOnFinish = true
       myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
-        scope.launch(modality.asContextElement()) {
-          decrementDumbCounter()
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            decrementDumbCounter()
+          }
         }
       })
     }.invokeOnCompletion {
       if (!dumbModeCounterWillBeDecrementedFromOnFinish) {
-        scope.launch(modality.asContextElement()) {
-          decrementDumbCounter()
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            decrementDumbCounter()
+          }
         }
       }
     }
