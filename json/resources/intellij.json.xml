@@ -13,6 +13,10 @@
     <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
     </action>
+    <action id="JsonJacksonReformatAction" class="com.intellij.json.actions.JsonJacksonReformatAction">
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="after" relative-to-action="ReformatCode"/>
+      <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
