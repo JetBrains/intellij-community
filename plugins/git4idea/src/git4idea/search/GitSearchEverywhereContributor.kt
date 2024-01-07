@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -195,18 +196,17 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
   override fun showInFindResults() = false
 
   override fun isShownInSeparateTab(): Boolean {
-    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
-           VcsProjectLog.getInstance(project).logManager != null
+    return AdvancedSettings.getBoolean("git.search.everywhere.tab.enabled")
+           && ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME)
+           && VcsProjectLog.getInstance(project).logManager != null
   }
 
   override fun getDataForItem(element: Any, dataId: String): Any? = null
 
-  companion object {
-    class Factory : SearchEverywhereContributorFactory<Any> {
-      override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {
-        val project = initEvent.getRequiredData(CommonDataKeys.PROJECT)
-        return GitSearchEverywhereContributor(project)
-      }
+  class Factory : SearchEverywhereContributorFactory<Any> {
+    override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {
+      val project = initEvent.getRequiredData(CommonDataKeys.PROJECT)
+      return GitSearchEverywhereContributor(project)
     }
   }
 }

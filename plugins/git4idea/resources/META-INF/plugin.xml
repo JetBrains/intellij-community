@@ -792,7 +792,8 @@
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
-    <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
+    <advancedSetting default="false" id="git.search.everywhere.tab.enabled" groupKey="advanced.settings.git"/>
+    <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
     <warmupConfigurator implementation="git4idea.log.GitWarmupConfigurator"/>
