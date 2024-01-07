@@ -251,24 +251,32 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   private fun createDatabasePathStoreInCommonFolder(fileName: String, mask: String): Path? {
     val commonFolder = PathManager.getCommonDataPath()
-    val folder = commonFolder.resolve("IntelliJ")
-    val desiredDatabasePath = folder.resolve(fileName)
+    val intellijFolder = commonFolder.resolve("IntelliJ")
+    val desiredDatabasePath = intellijFolder.resolve(fileName)
 
     if (System.getProperty("ae.database.forceConfigFolder")?.toBoolean() == true) {
       return null
     }
 
+    // folder where the file is located is required to be writable for journal creation
+    if (intellijFolder.exists() && !intellijFolder.isWritable()) {
+      logger.warn("Folder $intellijFolder exist, but not writable")
+      return null
+    }
+
+    if (!intellijFolder.exists() && !commonFolder.isWritable()) {
+      logger.warn("Folder $intellijFolder does not exist and $commonFolder is not writable")
+      return null
+    }
+
     if (desiredDatabasePath.exists() && !desiredDatabasePath.isWritable()) {
-      logger.error("Desired file $desiredDatabasePath exists, but not writable")
+      logger.warn("Db file $desiredDatabasePath exists, but not writable")
       return null
     }
 
-    if (!desiredDatabasePath.exists() && !commonFolder.isWritable()) {
-      logger.error("Desired file $desiredDatabasePath does not exist and $commonFolder is not writable")
-      return null
+    if (!intellijFolder.exists()) {
+      intellijFolder.createDirectories()
     }
-
-    folder.createDirectories()
 
     return desiredDatabasePath
   }
