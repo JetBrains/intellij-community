@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
@@ -86,9 +87,19 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
         logger.info("Saving completed (reason: $reason)")
       }
     }
+    catch (t: TimeoutCancellationException) {
+      if (PlatformUtils.isPyCharm()) {
+        // for some reason PyCharm and DataSpell installers don't start `closeDatabaseImpl()` in time, but only a minute later
+        // this is not critical and no data will be (hopefully) lost, but the fix will be impletented a bit later
+        logger.warn("Saving timeout (saving reason: $reason)\n${dumpCoroutines(this)}", t)
+        logger.warn(dumpCoroutines(this))
+      }
+      else {
+        logger.error("Saving timeout (saving reason: $reason)\n${dumpCoroutines(this)}", t)
+      }
+    }
     catch (t: Throwable) {
-      logger.error("Saving failed (saving reason: $reason)", t)
-      println(dumpCoroutines(this))
+      logger.error("Saving failed (saving reason: $reason)\n${dumpCoroutines(this)}", t)
     }
   }
 
@@ -106,6 +117,10 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   private fun closeDatabaseImpl(isFinal: Boolean): Job? {
     while (true) {
       when (val state = myConnection.get()) {
+        // todo: [doExecuteBeforeConnectionClosed] may execute some actions
+        // in db, but if db was never inited, they will never be executed
+        // not a huge problem, because throttlers manually execute these actions,
+        // but might be good to get fixed
         is State.NotInitialized -> {
           return null
         }
@@ -168,7 +183,6 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
             val isNewFile = dbPath == null || !dbPath.exists()
             val newConnection = SqliteConnection(dbPath, false)
             val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
-            //error("Testing")
             ConnectionHolder(newConnection, newMetadata)
           }
           if (!connectionHolderDeferred.completeWith(conn)) {
@@ -228,8 +242,6 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     // todo if settings are migrated, hash is the same
     val fileName = "ae_${IdService.getInstance().id}-$majorVersion.db"
     val fileMask = "ae_${IdService.getInstance().id}-*.db"
-
-    // todo write path to file somewhere in the settings
 
     // Attempt 1: store db file in common folder for all ides
     val attempt1 = try {
