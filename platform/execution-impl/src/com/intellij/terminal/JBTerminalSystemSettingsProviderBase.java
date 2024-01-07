@@ -194,13 +194,13 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @Override
-  public TextStyle getSelectionColor() {
+  public @NotNull TextStyle getSelectionColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
                          fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   @Override
-  public TextStyle getFoundPatternColor() {
+  public @NotNull TextStyle getFoundPatternColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
                          fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
@@ -296,7 +296,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
-    return new TerminalActionPresentation("New Session", com.jediterm.terminal.ui.UIUtil.isMac
+    return new TerminalActionPresentation("New Session", SystemInfo.isMac
                                                          ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
                                                          : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
@@ -306,7 +306,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    return new TerminalActionPresentation("Close Session", com.jediterm.terminal.ui.UIUtil.isMac
+    return new TerminalActionPresentation("Close Session", SystemInfo.isMac
                                                            ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
                                                            : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
