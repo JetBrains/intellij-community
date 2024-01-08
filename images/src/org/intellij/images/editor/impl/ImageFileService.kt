@@ -2,6 +2,8 @@
 package org.intellij.images.editor.impl
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -35,7 +37,7 @@ internal class ImageFileService(
         try {
           val imageProvider = withContext(Dispatchers.IO) { IfsUtil.getImageProvider(file) }
           val format = withContext(Dispatchers.IO) { IfsUtil.getFormat(file) }
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             target.setImageProvider(imageProvider, format)
           }
         }
