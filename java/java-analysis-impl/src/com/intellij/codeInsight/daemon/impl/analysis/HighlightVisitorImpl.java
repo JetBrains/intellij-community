@@ -1252,7 +1252,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved, myFile));
     if (!hasErrorResults()) add(HighlightClassUtil.checkClassExtendsForeignInnerClass(ref, resolved));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkSelectStaticClassFromParameterizedType(resolved, ref));
-    if (!hasErrorResults()) {
+    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) {
+      add(GenericsHighlightUtil.checkDiamondTypeNotAllowed(newExpression));
+    }
+    if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) ||
+                               newExpression.getArrayDimensions().length == 0 && newExpression.getArrayInitializer() == null)) {
       add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor(), myJavaSdkVersion));
     }
 

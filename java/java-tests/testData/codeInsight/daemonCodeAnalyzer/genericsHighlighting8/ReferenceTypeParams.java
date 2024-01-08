@@ -64,12 +64,12 @@ abstract class GenericTest3 implements DummyList<<error descr="No wildcard expec
     <T> void foo () {}
     void bar () {
          this.<DummyList<? extends DummyList>>foo();
-         DummyList<DummyList<? super String>>[] l = <error descr="Generic array creation">new DummyList<DummyList<? super String>>[0]</error>;
-         DummyList<String>[] l1 = <error descr="Generic array creation">{}</error>;
+         DummyList<DummyList<? super String>>[] l = new DummyList<error descr="Generic array creation not allowed"><DummyList<? super String>></error>[0];
+         DummyList<String>[] l1 = <error descr="Generic array creation not allowed">{}</error>;
     }
 
     public <T> T[] getComponents (Class<T> baseInterfaceClass) {
-        T[] ts = <error descr="Generic array creation">{}</error>;
+        T[] ts = <error descr="Generic array creation not allowed">{}</error>;
 
         return ts;
     }
@@ -141,7 +141,7 @@ class ClassLiteral<T> {
 }
 
 class Outer<E> {
-    final Inner[] i = <error descr="Generic array creation">new Inner[10]</error>;
+    final Inner[] i = <error descr="Generic array creation not allowed">new Inner[10]</error>;
     class Inner {
     }
 }
