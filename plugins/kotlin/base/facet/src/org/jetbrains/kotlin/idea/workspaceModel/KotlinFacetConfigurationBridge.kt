@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import com.intellij.facet.ui.FacetEditorContext
-import com.intellij.facet.ui.FacetEditorTab
-import com.intellij.facet.ui.FacetValidatorsManager
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
@@ -83,13 +80,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
             ) {
             } as KotlinSettingsEntity.Builder) {
         myModule = originKotlinSettingsEntity.module
-    }
-
-    override fun createEditorTabs(editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager): Array<FacetEditorTab> {
-        val tabs = arrayListOf<FacetEditorTab>()
-        tabs += KotlinFacetEditorProviderService.getInstance(editorContext.project).getEditorTabs(this, editorContext, validatorsManager)
-        KotlinFacetConfigurationExtension.EP_NAME.extensionList.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
-        return tabs.toTypedArray()
     }
 
     override fun init(moduleEntity: ModuleEntity, entitySource: EntitySource) {

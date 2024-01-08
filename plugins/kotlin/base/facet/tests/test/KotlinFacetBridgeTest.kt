@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import com.intellij.facet.FacetManager
+import com.intellij.facet.impl.ui.FacetEditorImpl
+import com.intellij.facet.mock.MockFacetEditorContext
+import com.intellij.facet.ui.FacetEditorContext
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetConfigurable
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
@@ -9,6 +13,16 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
     fun testSimpleKotlinFacetCreate() {
         getKotlinFacet()
         checkStorageForEntityAndFacet()
+    }
+
+    fun testEditorTabConfigurationOnFacetCreation() {
+        val facet   = getKotlinFacet()
+        val editorContext: FacetEditorContext = MockFacetEditorContext(getKotlinFacet())
+        FacetEditorImpl(editorContext, facet.configuration).let {
+            it.getComponent()
+            it.reset()
+            assertNotNull(it.component)
+        }
     }
 
     fun testFacetRenameAndRemove() {
