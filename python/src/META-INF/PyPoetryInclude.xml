@@ -1,0 +1,8 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.toml.lang"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
+  </extensions>
+</idea-plugin>

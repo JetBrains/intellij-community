@@ -35,10 +35,8 @@
                             implementationClass="com.intellij.python.community.impl.requirements.RequirementsVersionCompletionContributor"/>
   </extensions>
 
-
-  <content>
-    <module name="intellij.python.community.impl/poetry"/>
-  </content>
+  <!-- Poetry. Can't extract module due to circular dependency between it and community.impl--> -->
+  <depends optional="true" config-file="PyPoetryInclude.xml">org.toml.lang</depends>
 
   <projectListeners>
     <listener
