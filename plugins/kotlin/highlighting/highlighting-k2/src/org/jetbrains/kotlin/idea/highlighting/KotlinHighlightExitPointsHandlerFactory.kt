@@ -1,12 +1,14 @@
 package org.jetbrains.kotlin.idea.highlighting
 
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPointsHandlerFactory
-import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsInlinedArgument
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsInlinedArgument
 
 class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPointsHandlerFactory() {
 
@@ -23,9 +25,12 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         }
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean =
-        analyze(functionLiteral) {
-            val returnType = functionLiteral.getAnonymousFunctionSymbol().returnType
-            !(returnType.isUnit || returnType.isNothing)
+        allowAnalysisOnEdt {
+            analyze(functionLiteral) {
+                val returnType = functionLiteral.getAnonymousFunctionSymbol().returnType
+                !(returnType.isUnit || returnType.isNothing)
+            }
         }
 }
