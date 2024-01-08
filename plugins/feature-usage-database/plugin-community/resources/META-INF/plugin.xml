@@ -1,4 +1,4 @@
-<idea-plugin require-restart="true">
+<idea-plugin require-restart="true" allow-bundled-update="true">
   <id>com.jetbrains.ae.database</id>
   <name>My Productivity</name>
   <description>This plugin stores information about how IDE is used. No data is sent from the machine</description>
