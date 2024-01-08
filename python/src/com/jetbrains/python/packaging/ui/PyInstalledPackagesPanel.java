@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.ui.ToggleActionButton;
-import com.intellij.webcore.packaging.*;
+import com.intellij.webcore.packaging.InstalledPackage;
+import com.intellij.webcore.packaging.InstalledPackagesPanel;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
@@ -131,7 +134,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
               }
               myNotificationArea.showWarning(builder.toString());
             }
-            myInstallButton.setEnabled(!invalid && installEnabled());
+            myInstallEnabled = !invalid && installEnabled();
           }
         }
       }, ModalityState.any());
@@ -187,7 +190,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   @Override
-  protected ToggleActionButton @NotNull [] getExtraActions() {
+  protected AnAction @NotNull [] getExtraActions() {
     final ToggleActionButton useCondaButton =
       new DumbAwareToggleActionButton(PyBundle.messagePointer("action.AnActionButton.text.use.conda.package.manager"),
                                       PythonIcons.Python.Anaconda) {

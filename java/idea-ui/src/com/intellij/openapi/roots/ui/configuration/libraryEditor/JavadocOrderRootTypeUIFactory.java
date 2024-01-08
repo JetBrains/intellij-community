@@ -4,10 +4,12 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -17,8 +19,6 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,12 @@ public final class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFacto
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new DumbAwareActionButton(JavaUiBundle.messagePointer("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
+      AnAction specifyUrlButton = new DumbAwareAction(JavaUiBundle.messagePointer("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(myEnabled);
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
@@ -63,11 +68,10 @@ public final class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFacto
 
         @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
+          return ActionUpdateThread.EDT;
         }
       };
-      specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
-      specifyUrlButton.addCustomUpdater(e -> myEnabled);
+      specifyUrlButton.setShortcutSet(CustomShortcutSet.fromString("alt S"));
       toolbarDecorator.addExtraAction(specifyUrlButton);
     }
 

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.formatter
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
@@ -191,15 +191,13 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
         val importLayoutPanel = ToolbarDecorator.createDecorator(layoutTable)
             .addExtraAction(
-                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.addPackageIcon) {
+                object : DumbAwareAction(KotlinBundle.message("button.add.package"), null, IconUtil.addPackageIcon) {
+                    init {
+                        shortcutSet = CommonShortcuts.getNewForDialogs()
+                    }
                     override fun actionPerformed(event: AnActionEvent) {
                         addPackage()
                     }
-
-                    override fun getShortcut(): ShortcutSet {
-                        return CommonShortcuts.getNewForDialogs()
-                    }
-
                     override fun getActionUpdateThread() = ActionUpdateThread.BGT
                 }
             )
