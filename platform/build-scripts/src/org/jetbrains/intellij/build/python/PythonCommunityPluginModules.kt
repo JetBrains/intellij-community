@@ -25,6 +25,7 @@ object PythonCommunityPluginModules {
     "intellij.python.grazie",
     "intellij.python.markdown",
     "intellij.python.reStructuredText",
+    "intellij.commandInterface",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
     "intellij.jupyter.core"

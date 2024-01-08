@@ -629,6 +629,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/twilight-color-scheme/intellij.color.scheme.twilight.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/twilight-color-scheme/intellij.color.scheme.twilight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/vibrant-ink-color-scheme/intellij.color.scheme.vibrant_ink.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/vibrant-ink-color-scheme/intellij.color.scheme.vibrant_ink.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/warm-neon-color-scheme/intellij.color.scheme.warmNeon.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/warm-neon-color-scheme/intellij.color.scheme.warmNeon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/commandInterface/intellij.commandInterface.iml" filepath="$PROJECT_DIR$/commandInterface/intellij.commandInterface.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" />

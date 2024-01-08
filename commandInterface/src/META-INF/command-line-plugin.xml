@@ -1,0 +1,26 @@
+<idea-plugin>
+
+  <!--
+   Extension points to support gnu command line language.
+   See {@link com.intellij.commandInterface.commandLine}
+  -->
+  <extensions defaultExtensionNs="com.intellij">
+
+
+    <lang.parserDefinition language="CommandLine"
+                           implementationClass="com.intellij.commandInterface.commandLine.CommandLineParserDefinition"/>
+    <lang.syntaxHighlighter language="CommandLine"
+                                   implementationClass="com.intellij.commandInterface.commandLine.CommandLineSyntaxHighlighter"/>
+    <psi.referenceContributor language="CommandLine"
+                              implementation="com.intellij.commandInterface.commandLine.CommandLineReferenceContributor"/>
+    <lang.elementManipulator forClass="com.intellij.commandInterface.commandLine.CommandLineElement"
+                             implementationClass="com.intellij.commandInterface.commandLine.CommandLineElementManipulator"/>
+    <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="com.intellij.commandInterface.CommandInterfaceBundle" key="commandLine.inspection.name"
+                     enabledByDefault="true" level="WARNING"
+                     groupKey="INSP.GROUP.python"
+                     groupBundle="messages.PyBundle"
+                     implementationClass="com.intellij.commandInterface.commandLine.CommandLineInspection"/>
+    <lang.documentationProvider language="CommandLine"
+                                implementationClass="com.intellij.commandInterface.commandLine.CommandLineDocumentationProvider"/>
+  </extensions>
+</idea-plugin>

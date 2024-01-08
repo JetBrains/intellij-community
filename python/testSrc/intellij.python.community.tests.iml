@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
   </component>
 </module>

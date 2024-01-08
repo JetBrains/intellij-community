@@ -19,8 +19,8 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.command.SimpleCommand;
+import com.intellij.commandInterface.command.Command;
+import com.intellij.commandInterface.command.SimpleCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  * @see PyProcessWithConsoleTestTask
- * @see com.jetbrains.commandInterface.command
+ * @see com.intellij.commandInterface.command
  */
 public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
   @NotNull
