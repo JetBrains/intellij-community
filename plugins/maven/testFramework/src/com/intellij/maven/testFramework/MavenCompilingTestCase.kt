@@ -1,151 +1,152 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.testFramework;
+package com.intellij.maven.testFramework
 
-import com.intellij.compiler.artifacts.ArtifactsTestUtil;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.io.TestFileSystemBuilder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.compiler.artifacts.ArtifactsTestUtil
+import com.intellij.compiler.impl.ModuleCompileScope
+import com.intellij.openapi.compiler.CompileScope
+import com.intellij.openapi.compiler.CompilerMessageCategory
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope
+import com.intellij.testFramework.CompilerTester
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.io.TestFileSystemBuilder
+import java.io.File
+import java.io.IOException
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingTestCase {
-  protected void compileModules(final String... moduleNames) {
-    compile(createModulesCompileScope(moduleNames));
+abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
+  protected fun compileModules(vararg moduleNames: String) {
+    compile(createModulesCompileScope(*moduleNames))
   }
 
-  protected void compileFile(final String moduleName, final VirtualFile file) throws Exception {
-    CompilerTester tester = new CompilerTester(getProject(), Collections.singletonList(getModule(moduleName)), null);
+  @Throws(Exception::class)
+  protected fun compileFile(moduleName: String, file: VirtualFile) {
+    val tester = CompilerTester(project, listOf(getModule(moduleName)), null)
     try {
-      tester.compileFiles(file);
+      tester.compileFiles(file)
     }
     finally {
-      tester.tearDown();
+      tester.tearDown()
     }
   }
 
-  protected void buildArtifacts(String... artifactNames) {
-    compile(createArtifactsScope(artifactNames));
+  protected fun buildArtifacts(vararg artifactNames: String) {
+    compile(createArtifactsScope(*artifactNames))
   }
 
-  private void compile(final CompileScope scope) {
+  private fun compile(scope: CompileScope) {
     try {
-      CompilerTester tester = new CompilerTester(getProject(), Arrays.asList(scope.getAffectedModules()), null);
+      val tester = CompilerTester(project, listOf(*scope.affectedModules), null)
       try {
-        List<CompilerMessage> messages = tester.make(scope);
-        for (CompilerMessage message : messages) {
-          if (message.getCategory() == CompilerMessageCategory.ERROR) {
-            fail("Compilation failed with error: " + message.getMessage());
+        val messages = tester.make(scope)
+        for (message in messages) {
+          if (message.category === CompilerMessageCategory.ERROR) {
+            fail("Compilation failed with error: " + message.message)
           }
         }
       }
       finally {
-        tester.tearDown();
+        tester.tearDown()
       }
     }
-    catch (Exception e) {
-      ExceptionUtil.rethrow(e);
+    catch (e: Exception) {
+      ExceptionUtil.rethrow(e)
     }
   }
 
-  private CompileScope createArtifactsScope(String[] artifactNames) {
-    List<Artifact> artifacts = new ArrayList<>();
-    for (String name : artifactNames) {
-      artifacts.add(ArtifactsTestUtil.findArtifact(getProject(), name));
+  private fun createArtifactsScope(vararg artifactNames: String): CompileScope {
+    val artifacts: MutableList<Artifact> = ArrayList()
+    for (name in artifactNames) {
+      artifacts.add(ArtifactsTestUtil.findArtifact(project, name))
     }
-    return ArtifactCompileScope.createArtifactsScope(getProject(), artifacts);
+    return ArtifactCompileScope.createArtifactsScope(project, artifacts)
   }
 
-  private CompileScope createModulesCompileScope(final String[] moduleNames) {
-    final List<Module> modules = new ArrayList<>();
-    for (String name : moduleNames) {
-      modules.add(getModule(name));
+  private fun createModulesCompileScope(vararg moduleNames: String): CompileScope {
+    val modules: MutableList<Module> = ArrayList()
+    for (name in moduleNames) {
+      modules.add(getModule(name))
     }
-    return new ModuleCompileScope(getProject(), modules.toArray(Module.EMPTY_ARRAY), false);
+    return ModuleCompileScope(project, modules.toTypedArray(), false)
   }
 
-  protected static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
-    assertEquals(content, loadResult(pomFile, relativePath));
+  @Throws(IOException::class)
+  protected fun assertResult(relativePath: String, content: String?) {
+    assertResult(projectPom, relativePath, content)
   }
 
-  protected static String loadResult(VirtualFile pomFile, String relativePath) throws IOException {
-    File file = new File(pomFile.getParent().getPath(), relativePath);
-    assertTrue("file not found: " + relativePath, file.exists());
-    return new String(FileUtil.loadFileText(file));
+  protected fun assertDirectory(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
+    fileSystemBuilder.build().assertDirectoryEqual(File(projectPom.parent.path, relativePath))
   }
 
-  protected void assertResult(String relativePath, String content) throws IOException {
-    assertResult(getProjectPom(), relativePath, content);
+  protected fun assertJar(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
+    fileSystemBuilder.build().assertFileEqual(File(projectPom.parent.path, relativePath))
   }
 
-  protected void assertDirectory(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
-    fileSystemBuilder.build().assertDirectoryEqual(new File(getProjectPom().getParent().getPath(), relativePath));
+  protected fun assertCopied(path: String) {
+    assertTrue(File(projectPom.parent.path, path).exists())
   }
 
-  protected void assertJar(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
-    fileSystemBuilder.build().assertFileEqual(new File(getProjectPom().getParent().getPath(), relativePath));
+  @Throws(IOException::class)
+  protected fun assertCopied(path: String, content: String?) {
+    val file = File(projectPom.parent.path, path)
+    assertTrue(file.exists())
+    assertEquals(content, FileUtil.loadFile(file))
   }
 
-  @Nullable
-  protected static String extractJdkVersion(@NotNull Module module, boolean fallbackToInternal) {
-    String jdkVersion = null;
-    Optional<Sdk> sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).getSdk());
+  protected fun assertNotCopied(path: String) {
+    assertFalse(File(projectPom.parent.path, path).exists())
+  }
 
-    if (sdk.isEmpty()) {
-      Optional<JdkOrderEntry> jdkEntry =
-        Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
-          .filter(JdkOrderEntry.class::isInstance)
-          .map(JdkOrderEntry.class::cast)
-          .findFirst();
-      if (jdkEntry.isPresent()) {
-        jdkVersion = jdkEntry.get().getJdkName();
+  @Throws(IOException::class)
+  protected fun assertResult(pomFile: VirtualFile, relativePath: String, content: String?) {
+    assertEquals(content, loadResult(pomFile, relativePath))
+  }
+
+  @Throws(IOException::class)
+  protected fun loadResult(pomFile: VirtualFile, relativePath: String): String {
+    val file = File(pomFile.parent.path, relativePath)
+    assertTrue("file not found: $relativePath", file.exists())
+    return String(FileUtil.loadFileText(file))
+  }
+
+  protected fun extractJdkVersion(module: Module, fallbackToInternal: Boolean): String? {
+    var jdkVersion: String? = null
+    val sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).sdk)
+
+    if (sdk.isEmpty) {
+      val jdkEntry =
+        Arrays.stream(ModuleRootManager.getInstance(module).orderEntries)
+          .filter { obj: OrderEntry? -> JdkOrderEntry::class.java.isInstance(obj) }
+          .map { obj: OrderEntry? -> JdkOrderEntry::class.java.cast(obj) }
+          .findFirst()
+      if (jdkEntry.isPresent) {
+        jdkVersion = jdkEntry.get().jdkName
       }
     }
     else {
-      jdkVersion = sdk.get().getVersionString();
+      jdkVersion = sdk.get().versionString
     }
 
     if (jdkVersion == null && fallbackToInternal) {
-      jdkVersion = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getVersionString();
+      jdkVersion = JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk.versionString
     }
 
     if (jdkVersion != null) {
-      final int quoteIndex = jdkVersion.indexOf('"');
+      val quoteIndex = jdkVersion.indexOf('"')
       if (quoteIndex != -1) {
-        jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length() - 1);
+        jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length - 1)
       }
     }
 
-    return jdkVersion;
+    return jdkVersion
   }
 
-  protected void assertCopied(String path) {
-    assertTrue(new File(getProjectPom().getParent().getPath(), path).exists());
-  }
-
-  protected void assertCopied(String path, String content) throws IOException {
-    final File file = new File(getProjectPom().getParent().getPath(), path);
-    assertTrue(file.exists());
-    assertEquals(content, FileUtil.loadFile(file));
-  }
-
-  protected void assertNotCopied(String path) {
-    assertFalse(new File(getProjectPom().getParent().getPath(), path).exists());
-  }
 }
