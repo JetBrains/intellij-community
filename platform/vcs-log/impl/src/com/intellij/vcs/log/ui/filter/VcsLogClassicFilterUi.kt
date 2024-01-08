@@ -20,7 +20,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.util.minimumWidth
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -46,6 +45,7 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
+import kotlin.math.max
 
 open class VcsLogClassicFilterUi(private val logData: VcsLogData,
                                  filterConsumer: Consumer<VcsLogFilterCollection>,
@@ -213,7 +213,6 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), DataProvider {
 
     init {
-      minimumWidth = JBUIScale.scale(150)
       text = textFilterModel.text
       textEditor.emptyText.setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"))
       FragmentedSettingsUtil.setupPlaceholderVisibility(textEditor);
@@ -230,6 +229,12 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
 
       textEditor.toolTipText = createTooltipText()
       Disposer.register(parentDisposable) { hidePopup() }
+    }
+
+    override fun getMinimumSize(): Dimension {
+      val size = super.getMinimumSize()
+      size.width = max(size.width, JBUIScale.scale(150))
+      return size
     }
 
     private fun applyFilter(addToHistory: Boolean) {
