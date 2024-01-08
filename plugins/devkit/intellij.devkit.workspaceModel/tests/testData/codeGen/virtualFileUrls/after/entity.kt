@@ -28,11 +28,13 @@ interface EntityWithUrls : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(simpleUrl: VirtualFileUrl,
-                        listOfUrls: List<VirtualFileUrl>,
-                        dataClassWithUrl: DataClassWithUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): EntityWithUrls {
+    operator fun invoke(
+      simpleUrl: VirtualFileUrl,
+      listOfUrls: List<VirtualFileUrl>,
+      dataClassWithUrl: DataClassWithUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null
+    ): EntityWithUrls {
       val builder = builder()
       builder.simpleUrl = simpleUrl
       builder.listOfUrls = listOfUrls.toMutableWorkspaceList()
@@ -46,9 +48,8 @@ interface EntityWithUrls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls,
-                                      modification: EntityWithUrls.Builder.() -> Unit): EntityWithUrls = modifyEntity(
-  EntityWithUrls.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls, modification: EntityWithUrls.Builder.() -> Unit): EntityWithUrls =
+  modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
 //endregion
 
 data class DataClassWithUrl(val url: VirtualFileUrl)

@@ -20,8 +20,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase(
-  dataSource) {
+open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
+                                                                                            WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -65,8 +65,8 @@ open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEn
   }
 
 
-  class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(
-    result), SimpleSymbolicIdEntity.Builder {
+  class Builder(result: SimpleSymbolicIdEntityData?) :
+    ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(result), SimpleSymbolicIdEntity.Builder {
     constructor() : this(SimpleSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

@@ -42,9 +42,8 @@ interface DefaultFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DefaultFieldEntity,
-                                      modification: DefaultFieldEntity.Builder.() -> Unit): DefaultFieldEntity = modifyEntity(
-  DefaultFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: DefaultFieldEntity, modification: DefaultFieldEntity.Builder.() -> Unit): DefaultFieldEntity =
+  modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class TestData(val name: String, val description: String)

@@ -45,8 +45,8 @@ open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) 
   }
 
 
-  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(
-    result), FinalFieldsEntity.Builder {
+  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
+                                                  FinalFieldsEntity.Builder {
     constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

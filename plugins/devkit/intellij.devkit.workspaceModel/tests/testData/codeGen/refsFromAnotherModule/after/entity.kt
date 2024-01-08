@@ -39,9 +39,8 @@ interface ReferredEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ReferredEntity,
-                                      modification: ReferredEntity.Builder.() -> Unit): ReferredEntity = modifyEntity(
-  ReferredEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ReferredEntity, modification: ReferredEntity.Builder.() -> Unit): ReferredEntity =
+  modifyEntity(ReferredEntity.Builder::class.java, entity, modification)
 
 var ContentRootEntity.Builder.ref: ReferredEntity
   by WorkspaceEntity.extension()

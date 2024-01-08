@@ -15,7 +15,8 @@ class MyService {
     companion object {
 
         @MyAnnotation
-        val companionObjectAppServiceSupplier1: Supplier<MyService> = CachedSingletonsRegistry.lazy { ApplicationManager.getApplication().getService(MyService::class.java) }
+        val companionObjectAppServiceSupplier1: Supplier<MyService> =
+            CachedSingletonsRegistry.lazy { ApplicationManager.getApplication().getService(MyService::class.java) }
 
 
         // to test naming conflicts

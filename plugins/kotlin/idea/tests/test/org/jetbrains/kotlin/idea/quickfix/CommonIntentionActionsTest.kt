@@ -378,9 +378,19 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
                 |import pkg.myannotation.NestedJavaAnnotation
                 |
                 |class Foo {
-                |   @JavaAnnotation(NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1), NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]), param = 3)
+                |   @JavaAnnotation(
+                |       NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1),
+                |       NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]),
+                |       param = 3
+                |   )
                 |   fun bar(){}
-                |   @JavaAnnotation(param = 1, value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(nestedParam = 3, value = ["foo21", "foo22", "foo23"])])
+                |   @JavaAnnotation(
+                |       param = 1,
+                |       value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(
+                |           nestedParam = 3,
+                |           value = ["foo21", "foo22", "foo23"]
+                |       )]
+                |   )
                 |   fun baz(){}
                 |}""".trim().trimMargin(), true
         )

@@ -64,8 +64,8 @@ open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : Enti
   }
 
 
-  class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
-    result), EntityWithUrls.Builder {
+  class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result),
+                                               EntityWithUrls.Builder {
     constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

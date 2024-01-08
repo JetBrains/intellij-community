@@ -12,15 +12,15 @@ jvm.kt:19
 Compile bytecode for defaultValue1(2)
 jvm.kt:25
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     defaultValue2()
 }
 jvm.kt:30
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     defaultValue2(2)
 }

@@ -1217,8 +1217,8 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         doTestChangeSignature(
             """
                 class C(
-                        p1: Int,
-                        p2: String<caret>
+                    p1: Int,
+                    p2: String<caret>
                 )
                 
                 fun foo() {
@@ -1227,8 +1227,8 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             """
                 class C(
-                        p2: String,
-                        p1: Int
+                    p2: String,
+                    p1: Int
                 )
                 
                 fun foo() {

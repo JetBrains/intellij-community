@@ -53,8 +53,8 @@ open class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData
   }
 
 
-  class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(
-    result), DefaultFieldEntity.Builder {
+  class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result),
+                                                   DefaultFieldEntity.Builder {
     constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

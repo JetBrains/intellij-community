@@ -139,7 +139,7 @@ abstract class AbstractSmartEnterTest : KotlinLightCodeInsightFixtureTestCaseBas
             """,
         """
             if (true &&
-                    false
+                false
             ) println()
             <caret>
             """

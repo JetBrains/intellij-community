@@ -49,9 +49,8 @@ interface FinalFieldsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity,
-                                      modification: FinalFieldsEntity.Builder.() -> Unit): FinalFieldsEntity = modifyEntity(
-  FinalFieldsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity, modification: FinalFieldsEntity.Builder.() -> Unit): FinalFieldsEntity =
+  modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class AnotherDataClass(val name: String,

@@ -23,9 +23,11 @@ interface GrandParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        entitySource: EntitySource,
-                        init: (Builder<GrandParentEntity>.() -> Unit)? = null): GrandParentEntity {
+    operator fun invoke(
+      data1: String,
+      entitySource: EntitySource,
+      init: (Builder<GrandParentEntity>.() -> Unit)? = null
+    ): GrandParentEntity {
       val builder = builder()
       builder.data1 = data1
       builder.entitySource = entitySource
@@ -52,10 +54,12 @@ interface ParentEntity : GrandParentEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        data2: String,
-                        entitySource: EntitySource,
-                        init: (Builder<ParentEntity>.() -> Unit)? = null): ParentEntity {
+    operator fun invoke(
+      data1: String,
+      data2: String,
+      entitySource: EntitySource,
+      init: (Builder<ParentEntity>.() -> Unit)? = null
+    ): ParentEntity {
       val builder = builder()
       builder.data1 = data1
       builder.data2 = data2
@@ -83,11 +87,13 @@ interface ChildEntity: ParentEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        data2: String,
-                        data3: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChildEntity {
+    operator fun invoke(
+      data1: String,
+      data2: String,
+      data3: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null
+    ): ChildEntity {
       val builder = builder()
       builder.data1 = data1
       builder.data2 = data2
@@ -101,6 +107,6 @@ interface ChildEntity: ParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity = modifyEntity(
-  ChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity =
+  modifyEntity(ChildEntity.Builder::class.java, entity, modification)
 //endregion

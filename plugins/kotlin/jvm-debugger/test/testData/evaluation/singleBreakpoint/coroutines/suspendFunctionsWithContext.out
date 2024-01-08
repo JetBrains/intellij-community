@@ -3,8 +3,8 @@ Run Java
 Connected to the target VM
 suspendFunctionsWithContext.kt:27
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     one() + two() + three()
 }

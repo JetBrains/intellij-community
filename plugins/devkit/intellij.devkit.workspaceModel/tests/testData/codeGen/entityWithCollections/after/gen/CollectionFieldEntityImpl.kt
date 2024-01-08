@@ -20,8 +20,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase(
-  dataSource) {
+open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -54,8 +54,8 @@ open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEnti
   }
 
 
-  class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(
-    result), CollectionFieldEntity.Builder {
+  class Builder(result: CollectionFieldEntityData?) :
+    ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(result), CollectionFieldEntity.Builder {
     constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

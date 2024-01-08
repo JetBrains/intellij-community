@@ -5,22 +5,22 @@ Run Java
 Connected to the target VM
 nestedCoroutineContexts.kt:17
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     contextName()
 }
 nestedCoroutineContexts.kt:23
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     contextName()
 }
 nestedCoroutineContexts.kt:29
 Compile bytecode for kotlinx.coroutines.runBlocking(
-        @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
-        coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     contextName()
 }

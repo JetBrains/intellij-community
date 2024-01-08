@@ -32,12 +32,14 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        name: String,
-                        related: SimpleId,
-                        sealedClassWithLinks: SealedClassWithLinks,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleSymbolicIdEntity {
+    operator fun invoke(
+      version: Int,
+      name: String,
+      related: SimpleId,
+      sealedClassWithLinks: SealedClassWithLinks,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null
+    ): SimpleSymbolicIdEntity {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -52,9 +54,10 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleSymbolicIdEntity,
-                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit): SimpleSymbolicIdEntity = modifyEntity(
-  SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleSymbolicIdEntity,
+  modification: SimpleSymbolicIdEntity.Builder.() -> Unit
+): SimpleSymbolicIdEntity = modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {

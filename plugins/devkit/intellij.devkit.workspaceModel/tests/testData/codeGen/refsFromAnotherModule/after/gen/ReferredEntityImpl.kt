@@ -24,8 +24,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -58,8 +58,8 @@ open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : Refe
   }
 
 
-  class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(
-    result), ReferredEntity.Builder {
+  class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(result),
+                                               ReferredEntity.Builder {
     constructor() : this(ReferredEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -139,8 +139,9 @@ open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : Refe
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+          _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(
+            true, CONTENTROOT_CONNECTION_ID
+          )] as? ContentRootEntity
         }
         else {
           this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
