@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
@@ -476,7 +476,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
     }
 
-    val allSources = storage.entitiesBySource { true }.keys
+    val allSources = storage.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource }
     saveEntities(storage, ImmutableEntityStorage.empty(), allSources, writer)
   }
 
@@ -632,7 +632,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       || source is CustomModuleEntitySource && source.internalSource in affectedSources
     }
     val loadedEntitiesToSave = storage.entitiesBySource(entitySourceFilter)
+      .groupBy { it.entitySource }
+      .mapValues { (_, value) -> value.groupBy { it.getEntityInterface() } }
     val unloadedEntitiesToSave = unloadedEntityStorage.entitiesBySource(entitySourceFilter)
+      .groupBy { it.entitySource }
+      .mapValues { (_, value) -> value.groupBy { it.getEntityInterface() } }
     //don't copy the map in the most common case (when there are no unloaded entities)
     val entitiesToSave = if (unloadedEntitiesToSave.isNotEmpty()) loadedEntitiesToSave + unloadedEntitiesToSave
     else loadedEntitiesToSave
@@ -696,9 +700,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           if (existingSerializers.isNotEmpty()) {
             val existingSources = existingSerializers.map { it.internalEntitySource }
             val entitiesWithOldSource = storage.entitiesBySource { it in existingSources } + unloadedEntityStorage.entitiesBySource { it in existingSources }
-            val entitiesSymbolicIds = entitiesWithOldSource.values
-              .flatMap { it.values }
-              .flatten()
+            val entitiesSymbolicIds = entitiesWithOldSource
               .filterIsInstance<WorkspaceEntityWithSymbolicId>()
               .joinToString(separator = "||") { "$it (SymbolicId: ${it.symbolicId})" }
             //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
@@ -709,7 +711,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                |Old file name: $oldFileName
                |Existing serializers: $existingSerializers
                |Their entity sources: $existingSources
-               |Entities with these sources in the storage: ${entitiesWithOldSource.mapValues { (_, value) -> value.values }}
+               |Entities with these sources in the storage: ${entitiesWithOldSource.toList()}
                |Entities with symbolic ids: $entitiesSymbolicIds
                |Original entities to save: ${
               entities.values.flatten().joinToString(

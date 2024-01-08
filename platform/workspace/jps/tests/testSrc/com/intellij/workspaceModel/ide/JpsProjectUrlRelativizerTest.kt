@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -214,26 +214,22 @@ class JpsProjectUrlRelativizerTest {
   }
 
   private fun getAbsolutePathsForEntities(storage: EntityStorage): List<String> {
-    val entitiesBySource = storage.entitiesBySource { true }
+    val entitiesList = storage.entitiesBySource { true }
     val vfuUrls = mutableSetOf<VirtualFileUrl>()
 
-    entitiesBySource.values.forEach { classToEntityMap ->
-      classToEntityMap.values.forEach { entitiesList ->
-        entitiesList.forEach { entity ->
+    entitiesList.forEach { entity ->
 
-          when (entity) {
-            is SourceRootEntity -> vfuUrls.add(entity.url)
-            is ExcludeUrlEntity -> vfuUrls.add(entity.url)
-            is ContentRootEntity -> vfuUrls.add(entity.url)
-            is FileCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is ArtifactEntity -> entity.outputUrl?.let { vfuUrls.add(it) }
-            is ExtractedDirectoryPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is DirectoryCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is JavaModuleSettingsEntity -> {
-              entity.compilerOutput?.let { vfuUrls.add(it) }
-              entity.compilerOutputForTests?.let { vfuUrls.add(it) }
-            }
-          }
+      when (entity) {
+        is SourceRootEntity -> vfuUrls.add(entity.url)
+        is ExcludeUrlEntity -> vfuUrls.add(entity.url)
+        is ContentRootEntity -> vfuUrls.add(entity.url)
+        is FileCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is ArtifactEntity -> entity.outputUrl?.let { vfuUrls.add(it) }
+        is ExtractedDirectoryPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is DirectoryCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is JavaModuleSettingsEntity -> {
+          entity.compilerOutput?.let { vfuUrls.add(it) }
+          entity.compilerOutputForTests?.let { vfuUrls.add(it) }
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -539,7 +539,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       val oldEntitySource = module.findModuleEntity(moduleEntityStore)?.entitySource ?: return
       fun changeSources(diffBuilder: MutableEntityStorage, storage: EntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
-        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
+        entitiesMap.forEach {
           if (it !is FacetEntity) {
             diffBuilder.modifyEntity(WorkspaceEntity.Builder::class.java, it) {
               this.entitySource = newSource

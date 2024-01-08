@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -207,20 +207,18 @@ internal class MutableEntityStorageImpl(
     return@addMeasuredTimeMillis entityData.wrapAsModifiable(this) as E?
   }
 
-  // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
-  @Suppress("USELESS_CAST", "UNCHECKED_CAST")
-  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean)
-    : Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> = getEntitiesBySourceTimeMs.addMeasuredTimeMillis {
-    indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
-      indexes.entitySourceIndex
-        .getIdsByEntry(source)!!.map {
-          val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
-                                                                     ?: run {
-                                                                       error("Cannot find an entity by id $it")
-                                                                     }
-          entityDataById.wrapAsModifiable(this)
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Sequence<WorkspaceEntity> {
+    return getEntitiesBySourceTimeMs.addMeasuredTimeMillis {
+      val index = indexes.entitySourceIndex
+      index.entries()
+        .filter(sourceFilter)
+        // Do not put conversion to sequence before filter. Otherwise, you'll get a ConcurrentModificationException what some code
+        //   will iterate over the sequence and update the builder. The immutable entity storage doesn't have this problem as it's unmodifiable
+        .asSequence()
+        .flatMap { source ->
+          val entityIds = index.getIdsByEntry(source) ?: error("Entity source $source expected to be in the index")
+          entityIds.asSequence().map { this.entityDataByIdOrDie(it).wrapAsModifiable(this) }
         }
-        .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
     }
   }
 
@@ -948,16 +946,15 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return indexes.symbolicIdIndex.getIdsByEntry(id) != null
   }
 
-  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
-    return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
-      indexes.entitySourceIndex
-        .getIdsByEntry(source)!!.map {
-          this.entityDataById(it)?.createEntity(this) ?: run {
-            error("Cannot find an entity by id $it")
-          }
-        }
-        .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
-    }
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Sequence<WorkspaceEntity> {
+    val index = indexes.entitySourceIndex
+    return index.entries()
+      .asSequence()
+      .filter(sourceFilter)
+      .flatMap { source ->
+        val entityIds = index.getIdsByEntry(source) ?: error("Entity source $source expected to be in the index")
+        entityIds.asSequence().map { this.entityDataByIdOrDie(it).createEntity(this) }
+      }
   }
 
   @Suppress("UNCHECKED_CAST")

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -143,8 +143,8 @@ class SimplePropertiesInStorageTest {
     assertEquals(source1, foo.entitySource)
     assertEquals(source2, foo2.entitySource)
     assertEquals(source2, builder.singleSampleEntity().entitySource)
-    assertEquals(foo2, builder.entitiesBySource { it == source2 }.values.flatMap { it.values.flatten() }.single())
-    assertTrue(builder.entitiesBySource { it == source1 }.values.all { it.isEmpty() })
+    assertEquals(foo2, builder.entitiesBySource { it == source2 }.single())
+    assertTrue(builder.entitiesBySource { it == source1 }.none())
   }
 
   @Test

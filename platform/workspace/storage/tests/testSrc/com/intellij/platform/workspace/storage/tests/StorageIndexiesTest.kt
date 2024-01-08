@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -25,10 +27,11 @@ class StorageIndexesTest {
     builder.addEntity(entity)
     assertEquals(MySource, entity.entitySource)
 
-    val entityMap = builder.entitiesBySource { it == MySource }[MySource]
-    assertEquals(3, entityMap?.size)
+    val entityMap = builder.entitiesBySource { it == MySource }
+      .groupBy { it.getEntityInterface() }
+    assertEquals(3, entityMap.size)
 
-    val entities = entityMap?.get(ParentSubEntity::class.java)
+    val entities = entityMap[ParentSubEntity::class.java]
     assertNotNull(entities)
     assertEquals(1, entities.size)
     val indexedEntity = entities[0]
@@ -66,6 +69,22 @@ class StorageIndexesTest {
     builder.addEntity(entity)
     val entityIds = builder.indexes.symbolicIdIndex.getIdsByEntry(entity.symbolicId)
     assertNotNull(entityIds)
+  }
+
+  @Test
+  fun `get entities by sources and update the builder in iteration`() {
+    val builder = MutableEntityStorage.create()
+    builder addEntity ParentEntity("ParentData", MySource)
+    builder addEntity ParentEntity("X", SampleEntitySource("X"))
+
+    val entities = builder.entitiesBySource { true }
+    assertDoesNotThrow {
+      entities.forEach {
+        builder.modifyEntity(WorkspaceEntity.Builder::class.java, it) {
+          this.entitySource = AnotherSource
+        }
+      }
+    }
   }
 
   private fun compareEntityByProperty(builder: MutableEntityStorage, originEntity: VFUEntity2,

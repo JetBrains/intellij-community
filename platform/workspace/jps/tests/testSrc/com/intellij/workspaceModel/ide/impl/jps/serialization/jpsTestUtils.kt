@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.workspaceModel.ide.impl.jps.serialization
@@ -229,15 +229,16 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
     serializer is JpsFileEntityTypeSerializer<E> && storage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
     && unloadedEntitiesStorage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
 
-  val allSources = storage.entitiesBySource { true } + unloadedEntitiesStorage.entitiesBySource { true }
-  val urlsFromSources = allSources.keys
+  val allSources = storage.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource } +
+                   unloadedEntitiesStorage.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource }
+  val urlsFromSources = allSources
     .filterIsInstance<JpsFileEntitySource>()
     .filterNot { it is JpsGlobalFileEntitySource } // Do not check global entity sources in project-level serializers
     .mapTo(HashSet()) { getNonNullActualFileUrl(it) }
   assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
     .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }.map { it.key }.sorted())
 
-  val fileIdFromEntities = allSources.keys.filterIsInstance(JpsProjectFileEntitySource.FileInDirectory::class.java).mapTo(
+  val fileIdFromEntities = allSources.filterIsInstance<JpsProjectFileEntitySource.FileInDirectory>().mapTo(
     HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()
   assertTrue("Some fileNameId aren't registered: ${unregisteredIds}", unregisteredIds.isEmpty())
@@ -389,7 +390,7 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
     }.map { it.entitySource }
   }
   if (forceAllFilesRewrite) {
-    changedSources.addAll(builder.entitiesBySource { true }.keys)
+    changedSources.addAll(builder.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource })
   }
   val writer = JpsFileContentWriterImpl(projectData.configLocation)
   projectData.serializers.saveEntities(builder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), changedSources, writer)

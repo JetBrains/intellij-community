@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.platform.workspace.storage.impl
@@ -93,15 +93,15 @@ internal class ReplaceBySourceAsTree {
     this.entityFilter = entityFilter
 
     // Process entities from the target storage
-    val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
-    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
+    val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter).toList()
+    val targetEntities = targetEntitiesToReplace.maybeShuffled()
     for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
     }
 
     // Process entities from the replaceWith storage
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
-    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
+    val replaceWithEntities = replaceWithEntitiesToReplace.toList().maybeShuffled()
     for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }

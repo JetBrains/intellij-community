@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
@@ -46,10 +46,10 @@ public interface EntityStorage {
   public fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
 
   /**
-   * Returns a map containing all entities from this storage which [entitySource][WorkspaceEntity.entitySource] property satisfies the
+   * Returns a sequence containing all entities from this storage which [entitySource][WorkspaceEntity.entitySource] property satisfies the
    * given [sourceFilter]. 
    */
-  public fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
+  public fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Sequence<WorkspaceEntity>
 }
 
 /**

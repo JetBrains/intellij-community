@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -436,8 +436,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @TestOnly
   fun markAllEntitiesAsDirty() {
-    val allSources = WorkspaceModel.getInstance(project).currentSnapshot.entitiesBySource { true }.keys +
-                     WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.keys
+    val allSources = WorkspaceModel.getInstance(project).currentSnapshot.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource } +
+                     WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.mapTo(
+                       HashSet()) { it.entitySource }
     synchronized(sourcesToSave) {
       sourcesToSave.addAll(allSources)
     }

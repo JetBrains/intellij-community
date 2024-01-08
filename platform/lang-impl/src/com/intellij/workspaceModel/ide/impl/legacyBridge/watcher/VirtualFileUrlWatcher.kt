@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -145,8 +145,8 @@ private class EntitySourceFileWatcher<T : EntitySource>(
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
                            diff: MutableEntityStorage) {
-    val entities = diff.entitiesBySource { it::class == entitySource }
-    for ((entitySource, mapOfEntities) in entities) {
+    val entitiesMap = diff.entitiesBySource { it::class == entitySource }.groupBy { it.entitySource }
+    for ((entitySource, entities) in entitiesMap) {
       @Suppress("UNCHECKED_CAST")
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
@@ -154,8 +154,8 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val newVfsUrl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
       val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
-      mapOfEntities.values.flatten().forEach {
-        diff.modifyEntity(WorkspaceEntity.Builder::class.java, it) { this.entitySource = newEntitySource }
+      entities.forEach { entity ->
+        diff.modifyEntity(WorkspaceEntity.Builder::class.java, entity) { this.entitySource = newEntitySource }
       }
     }
   }
