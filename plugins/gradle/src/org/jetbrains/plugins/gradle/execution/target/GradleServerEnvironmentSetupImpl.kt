@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
+import groovy.lang.MissingMethodException
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.wrapper.WrapperExecutor
@@ -337,6 +338,8 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java)
     // intellij.platform.externalSystem.rt
     classpathInferer.add(ExternalSystemSourceType::class.java)
+    // groovy runtime for serialization
+    classpathInferer.add(MissingMethodException::class.java)
 
     javaParameters.classPath.addAll(classpathInferer.getClasspath())
     javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
