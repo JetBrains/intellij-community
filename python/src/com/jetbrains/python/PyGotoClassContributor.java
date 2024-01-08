@@ -5,12 +5,14 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -26,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 
-public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx {
+public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-    if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
-    FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter);
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
+      if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
+      FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter);
+    });
   }
 
   @Override
@@ -41,12 +45,14 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
     IdFilter filter = parameters.getIdFilter();
     PsiManager psiManager = PsiManager.getInstance(project);
-    if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
-    FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
-      if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
-      PsiFile psiFile = psiManager.findFile(file);
-      return !(psiFile instanceof PyFile) || processor.process(psiFile);
-    }, scope);
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
+      FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
+        if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
+        PsiFile psiFile = psiManager.findFile(file);
+        return !(psiFile instanceof PyFile) || processor.process(psiFile);
+      }, scope);
+    });
   }
 
   @Nullable
@@ -65,5 +71,10 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
   @Override
   public Language getElementLanguage() {
     return PythonLanguage.getInstance();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
   }
 }
