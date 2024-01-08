@@ -19,6 +19,7 @@ import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
@@ -58,13 +59,13 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
   @Nullable
   @Override
   public String getQualifiedName(@NotNull NavigationItem item) {
-    return null;
+    return item instanceof PyQualifiedNameOwner qNameOwner ? qNameOwner.getQualifiedName() : null;
   }
 
   @Nullable
   @Override
   public String getQualifiedNameSeparator() {
-    return null;
+    return ".";
   }
 
   @Nullable
