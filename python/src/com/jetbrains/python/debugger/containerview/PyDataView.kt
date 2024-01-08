@@ -93,10 +93,6 @@ class PyDataView(private val project: Project) : DumbAware {
       dataViewerPanel.apply(value, false)
     }
     window.show()
-    //val dataView = window.contentManager.getContent(0)
-    //if (dataView != null) {
-    //  window.contentManager.setSelectedContent(dataView)
-    //}
   }
 
   fun closeTabs(ifClose: Predicate<PyFrameAccessor>) {
