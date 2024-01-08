@@ -6,7 +6,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTracker"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2FeedbackSurvey"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2SurveyNotificationAfterRestartPostStartupActivity"/>
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">
     <group id="OnboardingKotlin" internal="true">
@@ -14,6 +17,24 @@
               class="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction" internal="true"/>
       <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
     </group>
+    <group id="K2Satisfaction" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2FeedbackDialogAction"
+              class="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2FeedbackDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="test.k2.feedback.survey"
+            description="Enables the testing mode for K2 feedback survey"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="minimum.usage.time.before.showing.k2.survey"
+            description="In how many seconds after the start of K2 usage to show the survey"
+            defaultValue="86400"
+            restartRequired="false"/>
+  </extensions>
 
 </idea-plugin>
