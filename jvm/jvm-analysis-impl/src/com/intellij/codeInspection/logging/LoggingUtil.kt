@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -357,28 +360,33 @@ internal class LoggingUtil {
 
     fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
       val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
-      val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
-        is UQualifiedReferenceExpression -> {
-          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+      return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
+        val emptyResult = CachedValueProvider.Result.create(listOf<UCallExpression>(), PsiModificationTracker.MODIFICATION_COUNT)
+        val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+          is UQualifiedReferenceExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          is UCallExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          else -> {
+            null
+          }
         }
-        is UCallExpression -> {
-          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+        if (qualifier == null) {
+          return@CachedValueProvider emptyResult
         }
-        else -> {
-          null
+        val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+        if (uIfExpression == null) {
+          return@CachedValueProvider emptyResult
         }
-      }
-      if (qualifier == null) {
-        return emptyList()
-      }
-      val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
-      if (uIfExpression == null) {
-        return emptyList()
-      }
-      val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
-      return referencesForVariable.mapNotNull { it.selector as? UCallExpression }
-        .filter { it.sourcePsi?.containingFile != null }
-        .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
+        val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
+        val filtered = referencesForVariable.mapNotNull { it.selector as? UCallExpression }
+          .filter { it.sourcePsi?.containingFile != null }
+          .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
+        return@CachedValueProvider CachedValueProvider.Result.create(filtered,
+                                                                     PsiModificationTracker.MODIFICATION_COUNT)
+      })
     }
 
     enum class LoggerType {
@@ -393,5 +401,14 @@ internal class LoggingUtil {
     enum class LegacyLevelType {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
+
+    internal val GUARD_MAP = mapOf(
+      Pair("isTraceEnabled", "trace"),
+      Pair("isDebugEnabled", "debug"),
+      Pair("isInfoEnabled", "info"),
+      Pair("isWarnEnabled", "warn"),
+      Pair("isErrorEnabled", "error"),
+      Pair("isFatalEnabled", "fatal"),
+    )
   }
 }
