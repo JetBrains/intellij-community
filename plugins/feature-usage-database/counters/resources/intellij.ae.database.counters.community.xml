@@ -21,8 +21,6 @@
               topic="com.intellij.featureStatistics.FeatureStatisticsUpdateListener"/>
     <listener class="com.intellij.ae.database.counters.community.RunConfigurationListener"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.ae.database.counters.community.PluginInstalledUserActivityServiceInitializer"
-              topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ae.database.counters.community.ProjectOpenedTimeSpanUserActivityProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.ae.database.counters.community.CodingTimeUserActivityCommandListener"
