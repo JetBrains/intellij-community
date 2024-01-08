@@ -44,7 +44,7 @@ public class Switches {
   }
 
   void fullyCoveredSwitch(int x) {
-    switch (x) { // TODO coverage is PARTIAL, but default hints = 0 is hidden
+    switch (x) {
       case 1: {
         System.out.println("Case 1");
         break;

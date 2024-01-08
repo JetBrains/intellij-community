@@ -59,6 +59,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
+import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
@@ -566,7 +567,7 @@ public class JavaCoverageEngine extends CoverageEngine {
             return defaultResult;
           }
           PsiExpression expression = expressions.get(idx++);
-          addSwitchDataInfo(buf, switchData, expression);
+          addSwitchDataInfo(buf, switchData, expression, lineData.getStatus());
           hits += IntStream.of(switchData.getHits()).sum() + switchData.getDefaultHits();
         }
       }
@@ -595,16 +596,18 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits)).append("\n");
   }
 
-  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, PsiExpression expression) {
+  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, PsiExpression expression, int coverageStatus) {
     buf.append(indent).append(expression.getText()).append("\n");
+    boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
       int key = switchData.getKeys()[i];
       int switchHits = switchData.getHits()[i];
+      allBranchesHit &= switchHits > 0;
       buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");
     }
     int defaultHits = switchData.getDefaultHits();
-    boolean hasDefaultLabel = hasDefaultLabel(expression);
-    if (hasDefaultLabel || defaultHits > 0) {
+    boolean defaultCausesLinePartiallyCovered = allBranchesHit && coverageStatus != LineCoverage.FULL;
+    if (hasDefaultLabel(expression) || defaultCausesLinePartiallyCovered || defaultHits > 0) {
       buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
     }
   }

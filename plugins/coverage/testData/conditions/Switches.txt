@@ -34,6 +34,7 @@ Hits: 2
     x
         case 1: 1
         case 2: 1
+        default: 0
 
 Line 49 coverage: FULL
 Hits: 1
