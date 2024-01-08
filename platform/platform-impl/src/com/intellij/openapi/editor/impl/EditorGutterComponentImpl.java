@@ -2857,11 +2857,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @Nullable UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+  public @NotNull UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    List<PropertyBean> result = new ArrayList<>();
+    result.add(new PropertyBean("Use 'ide.debug.gutter.area' Registry to debug painting areas", null, true));
+
     Point point = event.getPoint();
     PointInfo pointInfo = getPointInfo(point);
     if (pointInfo != null) {
-      List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer, true));
       result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer), true));
       result.add(new PropertyBean("Accessible Name", pointInfo.renderer.getAccessibleName()));
@@ -2878,13 +2880,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     ActiveGutterRenderer gutterRenderer = getActiveRendererByMouseEvent(event);
     if (gutterRenderer != null) {
-      List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Clicked Renderer", gutterRenderer));
       result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(gutterRenderer)));
       return new UiInspectorInfo("ActiveGutterRenderer", result, null);
     }
 
-    return null;
+    return new UiInspectorInfo(null, result, null);
   }
 
   private final class LineNumbersRepainter implements CaretListener {
