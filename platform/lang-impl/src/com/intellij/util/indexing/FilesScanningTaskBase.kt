@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.IdeBundle
@@ -71,35 +71,33 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
         withBackgroundProgress(project, progressTitle, cancellable = false) {
           withRawProgressReporter {
-            coroutineScope {
-              async(Dispatchers.EDT) {
-                pauseReason.collect { paused ->
-                  rawProgressReporter!!.text(
-                    if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
-                    else progressTitle
-                  )
-                }
+            async(Dispatchers.EDT) {
+              pauseReason.collect { paused ->
+                rawProgressReporter!!.text(
+                  if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
+                  else progressTitle
+                )
               }
-              async(Dispatchers.EDT) {
-                progressReporter.subTaskTexts.collect {
-                  rawProgressReporter!!.details(it.firstOrNull())
-                }
-              }
-              async(Dispatchers.EDT) {
-                progressReporter.subTasksFinished.collect {
-                  val subTasksCount = progressReporter.subTasksCount
-                  if (subTasksCount > 0) {
-                    val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
-                    rawProgressReporter!!.fraction(newValue)
-                  }
-                  else {
-                    rawProgressReporter!!.fraction(0.0)
-                  }
-                }
-              }
-              shouldShowProgress.first { !it }
-              coroutineContext.cancelChildren() // cancel started async coroutines
             }
+            async(Dispatchers.EDT) {
+              progressReporter.subTaskTexts.collect {
+                rawProgressReporter!!.details(it.firstOrNull())
+              }
+            }
+            async(Dispatchers.EDT) {
+              progressReporter.subTasksFinished.collect {
+                val subTasksCount = progressReporter.subTasksCount
+                if (subTasksCount > 0) {
+                  val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
+                  rawProgressReporter!!.fraction(newValue)
+                }
+                else {
+                  rawProgressReporter!!.fraction(0.0)
+                }
+              }
+            }
+            shouldShowProgress.first { !it }
+            coroutineContext.cancelChildren() // cancel started async coroutines
           }
         }
       }
