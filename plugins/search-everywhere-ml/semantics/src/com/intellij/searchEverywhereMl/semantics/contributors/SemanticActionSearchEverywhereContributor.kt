@@ -125,6 +125,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
 
           val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
+          if (semanticMatches.isEmpty()) return@launch
           standardSearchJob.join()
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
