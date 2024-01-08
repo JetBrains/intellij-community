@@ -21,7 +21,7 @@ import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplat
 
 public final class PyPostfixTemplateProvider implements PostfixTemplateProvider {
 
-  private final @NotNull Set<PostfixTemplate> myTemplates = ContainerUtil.newHashSet(
+  private final @NotNull Set<PostfixTemplate> myTemplates = Set.of(
     new PyNotPostfixTemplate(this),
     new PyParenthesizedExpressionPostfixTemplate(this),
     new PyReturnPostfixTemplate(this),
