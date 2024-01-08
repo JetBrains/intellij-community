@@ -9,9 +9,17 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro
 
-class PyForPostfixTemplate(name: String, provider: PostfixTemplateProvider) : PyEditablePostfixTemplate(
-  name, name, "for \$VAR$ in \$EXPR$:\n    \$END$", "for e in expr",
-  setOf(PyPostfixTemplateExpressionCondition.PyIterable()), false, provider, true) {
+class PyForPostfixTemplate(name: String, provider: PostfixTemplateProvider) :
+  PyEditablePostfixTemplate(
+    name,
+    name,
+    "for \$VAR$ in \$EXPR$:\n    \$END$",
+    "for e in expr",
+    setOf(PyPostfixTemplateExpressionCondition.PyIterable()),
+    false,
+    provider,
+    true
+  ) {
 
   override fun addTemplateVariables(element: PsiElement, template: Template) {
     super.addTemplateVariables(element, template)

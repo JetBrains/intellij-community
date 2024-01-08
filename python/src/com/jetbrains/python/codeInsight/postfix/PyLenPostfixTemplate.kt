@@ -4,8 +4,16 @@ package com.jetbrains.python.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 
 class PyLenPostfixTemplate(provider: PostfixTemplateProvider) :
-  PyEditablePostfixTemplate("len", "len", "len(\$EXPR$)\$END$", DESCR,
-                            setOf(PyPostfixTemplateExpressionCondition.PyBuiltinLenApplicable()), false, provider, true) {
+  PyEditablePostfixTemplate(
+    "len",
+    "len",
+    "len(\$EXPR$)\$END$",
+    DESCR,
+    setOf(PyPostfixTemplateExpressionCondition.PyBuiltinLenApplicable()),
+    false,
+    provider,
+    true
+  ) {
 
   companion object {
     const val DESCR = "len(expr)"
