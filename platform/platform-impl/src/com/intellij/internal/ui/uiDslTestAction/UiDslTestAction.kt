@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.internal.ui.createListSelectionPanel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,13 +10,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBDimension
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JScrollPane
 import javax.swing.border.Border
 
 internal class UiDslTestAction : DumbAwareAction() {
@@ -23,7 +22,10 @@ internal class UiDslTestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslTestDialog(e.project).show()
+    UiDslTestDialog(e.project).apply {
+      title = e.presentation.text
+      show()
+    }
   }
 }
 
@@ -31,7 +33,6 @@ internal class UiDslTestAction : DumbAwareAction() {
 private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
   init {
-    title = "UI DSL Tests"
     init()
   }
 
@@ -40,26 +41,27 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
   }
 
   override fun createCenterPanel(): JComponent {
-    val tabbedPane = JBTabbedPane()
-    tabbedPane.minimumSize = JBDimension(300, 200)
-    tabbedPane.preferredSize = JBDimension(1000, 800)
-    tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
-    tabbedPane.addTab("Text Fields", createTextFields())
-    tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
-    tabbedPane.addTab("Text MaxLine", createTextMaxLinePanel())
-    tabbedPane.addTab("Groups", JScrollPane(GroupsPanel().panel))
-    tabbedPane.addTab("Segmented Button", SegmentedButtonPanel(myDisposable).panel)
-    tabbedPane.addTab("Visible/Enabled", createVisibleEnabled())
-    tabbedPane.addTab("Cells With Sub-Panels", createCellsWithPanels())
-    tabbedPane.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
-    tabbedPane.addTab("Resizable Rows", createResizableRows())
-    tabbedPane.addTab("Others", OthersPanel().panel)
-    tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
-    tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
-    tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
-    tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
-    tabbedPane.addTab("OnChange", OnChangePanel().panel)
-    tabbedPane.addTab("ListCellRenderer", JScrollPane(ListCellRendererPanel().panel))
+    val data = mapOf("Labels" to LabelsPanel().panel,
+                     "Labels" to LabelsPanel().panel,
+                     "Text Fields" to createTextFields(),
+                     "Comments" to createCommentsPanel(),
+                     "Text MaxLine" to createTextMaxLinePanel(),
+                     "Groups" to GroupsPanel().panel,
+                     "Segmented Button" to SegmentedButtonPanel(myDisposable).panel,
+                     "Visible/Enabled" to createVisibleEnabled(),
+                     "Cells With Sub-Panels" to createCellsWithPanels(),
+                     "Placeholder" to PlaceholderPanel(myDisposable).panel,
+                     "Resizable Rows" to createResizableRows(),
+                     "Others" to OthersPanel().panel,
+                     "Deprecated Api" to DeprecatedApiPanel().panel,
+                     "CheckBox/RadioButton" to CheckBoxRadioButtonPanel().panel,
+                     "Validation API" to ValidationPanel(myDisposable).panel,
+                     "Validation Refactoring API" to ValidationRefactoringPanel(myDisposable).panel,
+                     "OnChange" to OnChangePanel().panel,
+                     "ListCellRenderer" to ListCellRendererPanel().panel)
+
+    val listSelectionPanel = createListSelectionPanel(data, "UiDslTestAction.splitter.proportion")
+    listSelectionPanel.preferredSize = JBDimension(800, 600)
 
     return panel {
       row {
@@ -69,7 +71,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
 
       row {
-        cell(tabbedPane)
+        cell(listSelectionPanel)
           .align(Align.FILL)
       }.resizableRow()
     }
@@ -328,7 +330,7 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
             customComponent("Long Component2")
             button("button") { }
               .comment(if (labelAligned) "LABEL_ALIGNED: Button comment is aligned with Component1 (cell[1]), hard to fix, rare use case"
-              else "Button comment is aligned with button")
+                       else "Button comment is aligned with button")
           }.layout(rowLayout)
           if (labelAligned) {
             row {

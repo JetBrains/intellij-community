@@ -4,7 +4,10 @@ package com.intellij.internal.ui.uiDslTestAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -15,7 +18,7 @@ import javax.swing.JPanel
 import javax.swing.JToggleButton
 import javax.swing.border.Border
 
-@Suppress("DialogTitleCapitalization")
+@Suppress("UseJBColor")
 @ApiStatus.Internal
 internal class CheckBoxRadioButtonPanel {
   val panel: DialogPanel = panel {
@@ -50,53 +53,6 @@ internal class CheckBoxRadioButtonPanel {
 
           radioButton("Border: 0,0,0,0")
             .customize(Color.ORANGE, JBUI.Borders.customLine(Color.GREEN, 0, 0, 0, 0))
-        }
-      }
-    }
-
-    group("Buttons States (Check Focused Manually)") {
-      row {
-        panel {
-          row {
-            checkBox("checkBox")
-          }
-          row {
-            checkBox("checkBoxDisabled").enabled(false)
-          }
-          row {
-            checkBox("checkBoxSelected").selected(true)
-          }
-          row {
-            checkBox("checkBoxSelectedDisabled").selected(true).enabled(false)
-          }
-        }
-        panel {
-          row {
-            threeStateCheckBox("checkBoxIndeterminate")
-          }
-          row {
-            threeStateCheckBox("checkBoxIndeterminateDisabled").enabled(false)
-          }
-        }
-        panel {
-          buttonsGroup {
-            row {
-              radioButton("radioButton")
-            }
-            row {
-              radioButton("radioButtonSelected").selected(true)
-            }
-          }
-        }
-        panel {
-          buttonsGroup {
-            row {
-              radioButton("radioButtonDisabled").enabled(false)
-            }
-            row {
-              radioButton("radioButtonSelectedDisabled").selected(true).enabled(false)
-            }
-          }
         }
       }
     }
