@@ -69,6 +69,9 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
+    a && b
+        true hits: 0
+        false hits: 0
 
 Line 66 coverage: FULL
 Hits: 1
@@ -105,6 +108,9 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
+    a || b
+        true hits: 0
+        false hits: 0
 
 Line 90 coverage: FULL
 Hits: 1
@@ -125,6 +131,9 @@ Line 107 coverage: PARTIAL
 Hits: 1
     a
         true hits: 1
+        false hits: 0
+    a || b
+        true hits: 0
         false hits: 0
 
 Line 108 coverage: FULL
@@ -150,6 +159,12 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
+    b
+        true hits: 0
+        false hits: 0
+    a && b && c
+        true hits: 0
+        false hits: 0
 
 Line 129 coverage: FULL
 Hits: 1
@@ -162,6 +177,9 @@ Hits: 2
     b
         true hits: 0
         false hits: 1
+    a && b && c
+        true hits: 0
+        false hits: 0
 
 Line 138 coverage: FULL
 Hits: 2

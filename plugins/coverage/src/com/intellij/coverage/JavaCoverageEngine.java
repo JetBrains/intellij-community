@@ -583,7 +583,6 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, PsiExpression expression) {
-    if (jumpData.getTrueHits() + jumpData.getFalseHits() <= 0) return;
     PsiElement parentExpression = expression.getParent();
     buf.append(indent).append(expression.getText()).append("\n");
 
