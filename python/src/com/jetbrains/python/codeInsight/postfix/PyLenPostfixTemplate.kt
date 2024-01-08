@@ -8,14 +8,9 @@ class PyLenPostfixTemplate(provider: PostfixTemplateProvider) :
     "len",
     "len",
     "len(\$EXPR$)\$END$",
-    DESCR,
+    "len(expr)",
     setOf(PyPostfixTemplateExpressionCondition.PyBuiltinLenApplicable()),
     false,
     provider,
     true
-  ) {
-
-  companion object {
-    const val DESCR = "len(expr)"
-  }
-}
+  )
