@@ -53,6 +53,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -471,6 +472,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return new ComponentPopupBuilderImpl(content, preferableFocusComponent);
   }
 
+  @Override
+  public @NotNull RelativePoint guessBestPopupLocation(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    if (!(component instanceof JComponent)) {
+      throw new AssertionError("Component is null for " + action.getClass().getName() + "@" + event.getPlace() +
+                               "(" + event.getPresentation().getText() + "): " + component);
+    }
+    var point = CommonActionsPanel.getPreferredPopupPoint(action, component);
+    if (point != null) return point;
+    if (event.getInputEvent() instanceof MouseEvent me &&
+        me.getComponent() instanceof JComponent button) {
+      return RelativePoint.getSouthWestOf(button);
+    }
+    return guessBestPopupLocation(event.getDataContext());
+  }
 
   @Override
   public @NotNull RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext) {

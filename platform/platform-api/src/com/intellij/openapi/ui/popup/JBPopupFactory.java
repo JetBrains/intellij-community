@@ -5,6 +5,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -189,6 +190,10 @@ public abstract class JBPopupFactory {
                                                            boolean honorActionMnemonics,
                                                            int defaultOptionIndex,
                                                            boolean autoSelectionEnabled);
+
+  public @NotNull RelativePoint guessBestPopupLocation(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    return guessBestPopupLocation(event.getDataContext());
+  }
 
   public abstract @NotNull RelativePoint guessBestPopupLocation(@NotNull JComponent component);
 
