@@ -217,3 +217,39 @@ Hits: 1
         true hits: 0
         false hits: 1
 
+Line 178 coverage: FULL
+Hits: 2
+    i < n
+        true hits: 1
+        false hits: 1
+
+Line 179 coverage: FULL
+Hits: 1
+
+Line 184 coverage: FULL
+Hits: 1
+
+Line 186 coverage: FULL
+Hits: 4
+    elements
+        true hits: 3
+        false hits: 1
+
+Line 187 coverage: FULL
+Hits: 3
+
+Line 192 coverage: FULL
+Hits: 1
+
+Line 193 coverage: FULL
+Hits: 2
+    i < n
+        true hits: 1
+        false hits: 1
+
+Line 194 coverage: FULL
+Hits: 1
+
+Line 195 coverage: FULL
+Hits: 1
+

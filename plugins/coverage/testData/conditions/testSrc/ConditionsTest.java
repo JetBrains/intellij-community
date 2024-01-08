@@ -53,5 +53,9 @@ public class ConditionsTest extends TestCase {
 
     conditions.andWithoutIf(true, false);
     conditions.orWithoutIf(false, true);
+
+    conditions.forCycle(1);
+    conditions.forEachCycle();
+    conditions.whileCycle(1);
   }
 }
