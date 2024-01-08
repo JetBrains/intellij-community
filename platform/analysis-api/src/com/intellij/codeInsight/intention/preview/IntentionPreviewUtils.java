@@ -5,7 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
@@ -151,6 +151,6 @@ public final class IntentionPreviewUtils {
   @ApiStatus.Experimental
   @Contract(pure = true)
   public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context) {
-    return ModCommandService.getInstance().getPreview(modCommand, context);
+    return ModCommandExecutor.getInstance().getPreview(modCommand, context);
   }
 }

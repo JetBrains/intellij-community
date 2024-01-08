@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -495,5 +496,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
                                                                                 DumbProgressIndicator.INSTANCE);
     return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset2(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
+  }
+
+  @Override
+  protected @NotNull String getFileNamePresentation(Project project, VirtualFile file) {
+    String fileTitle = EditorTabPresentationUtil.getCustomEditorTabTitle(project, file);
+    return fileTitle != null ? fileTitle : super.getFileNamePresentation(project, file);
   }
 }
