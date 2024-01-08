@@ -1,5 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.SimpleJavaParameters
@@ -338,6 +339,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(ExternalSystemSourceType::class.java)
 
     javaParameters.classPath.addAll(classpathInferer.getClasspath())
+    javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
     javaParameters.mainClass = Main::class.java.name
     if (log.isDebugEnabled) {
       javaParameters.programParametersList.add("--debug")
