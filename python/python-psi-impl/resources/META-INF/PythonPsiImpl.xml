@@ -566,8 +566,8 @@
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
 
     <!-- TensorFlow -->
-    <importResolver implementation="com.jetbrains.tensorFlow.PyTensorFlowImportResolver"/>
-    <pyModuleMembersProvider implementation="com.jetbrains.tensorFlow.PyTensorFlowModuleMembersProvider"/>
+    <importResolver implementation="com.jetbrains.python.tensorFlow.PyTensorFlowImportResolver"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.tensorFlow.PyTensorFlowModuleMembersProvider"/>
   </extensions>
 
 </idea-plugin>
