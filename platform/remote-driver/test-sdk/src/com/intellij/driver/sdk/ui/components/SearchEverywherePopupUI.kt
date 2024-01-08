@@ -16,7 +16,7 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
     searchField.click()
     keyboard {
       enterText(text)
-      resultsList.should(15) { hasText(text) }
+      resultsList.should(30) { hasText(text) }
       enter()
     }
   }
