@@ -230,7 +230,9 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     //duplicates VmOptionsGenerator
     val commonOptions = listOf(
+      "-XX:+UseG1GC",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:CICompilerCount=2",
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:-OmitStackTraceInFastThrow",
       "-XX:+IgnoreUnrecognizedVMOptions",
