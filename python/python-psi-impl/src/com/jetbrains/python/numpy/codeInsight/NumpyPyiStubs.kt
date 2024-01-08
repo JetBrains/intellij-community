@@ -1,4 +1,4 @@
-package com.jetbrains.numpy.codeInsight
+package com.jetbrains.python.numpy.codeInsight
 
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.pyi.PyiFile

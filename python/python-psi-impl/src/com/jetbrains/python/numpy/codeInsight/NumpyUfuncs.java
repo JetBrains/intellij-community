@@ -1,4 +1,4 @@
-package com.jetbrains.numpy.codeInsight;
+package com.jetbrains.python.numpy.codeInsight;
 
 import org.jetbrains.annotations.Nullable;
 
