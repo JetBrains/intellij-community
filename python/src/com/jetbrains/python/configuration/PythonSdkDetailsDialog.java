@@ -4,12 +4,14 @@ package com.jetbrains.python.configuration;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -151,7 +153,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
                                    @NotNull AnActionButtonRunnable addAction,
                                    @NotNull AnActionButtonRunnable editAction,
                                    @NotNull AnActionButtonRunnable removeAction,
-                                   AnActionButton @NotNull ... extraActions) {
+                                   AnAction @NotNull ... extraActions) {
     return ToolbarDecorator.createDecorator(sdkList)
       .disableUpDownActions()
       .setAddAction(addAction)
@@ -413,14 +415,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   }
 
-  private class ShowPathButton extends AnActionButton implements DumbAware {
+  private class ShowPathButton extends DumbAwareAction {
     ShowPathButton() {
       super(PyBundle.messagePointer("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override
-    public boolean isEnabled() {
-      return getEditableSelectedSdk() != null;
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(getEditableSelectedSdk() != null);
     }
 
     @Override

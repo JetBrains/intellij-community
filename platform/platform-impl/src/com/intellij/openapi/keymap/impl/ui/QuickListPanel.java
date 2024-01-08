@@ -3,13 +3,13 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
@@ -64,14 +64,10 @@ final class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton(KeyMapBundle.message("keymap.action.add.separator"), AllIcons.General.SeparatorH) {
+                      .addExtraAction(new DumbAwareAction(KeyMapBundle.message("keymap.action.add.separator"), null, AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
                           myActionsModel.add(QuickList.SEPARATOR_ID);
-                        }
-                        @Override
-                        public @NotNull ActionUpdateThread getActionUpdateThread() {
-                          return ActionUpdateThread.BGT;
                         }
                       })
                       .setButtonComparator(

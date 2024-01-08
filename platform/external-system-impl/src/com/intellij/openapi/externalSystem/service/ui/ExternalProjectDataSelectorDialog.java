@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
@@ -22,6 +23,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -663,7 +665,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectAllButton extends AnActionButton {
+  private class SelectAllButton extends DumbAwareAction {
     SelectAllButton() {
       super(ExternalSystemBundle.messagePointer("action.text.select.all"), AllIcons.Actions.Selectall);
     }
@@ -686,14 +688,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         myShowSelectedRowsOnly = true;
       }
     }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 
-  private class UnselectAllButton extends AnActionButton {
+  private class UnselectAllButton extends DumbAwareAction {
     UnselectAllButton() {
       super(ExternalSystemBundle.messagePointer("action.text.unselect.all"), AllIcons.Actions.Unselectall);
     }
@@ -715,14 +712,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         reloadTree();
       }
     }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 
-  private class ShowSelectedOnlyButton extends ToggleActionButton {
+  private class ShowSelectedOnlyButton extends ToggleAction {
     ShowSelectedOnlyButton() {
       super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ToggleVisibility);
     }
@@ -734,7 +726,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -744,12 +736,20 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectRequiredButton extends AnActionButton {
+  private class SelectRequiredButton extends DumbAwareAction {
     SelectRequiredButton() {
       super(ExternalSystemBundle.message("select.required"),
             ExternalSystemBundle.message("select.modules.depended.on.currently.selected.modules"), AllIcons.Actions.IntentionBulb);
+    }
 
-      addCustomUpdater(e -> selectionState.getValue().isRequiredSelectionEnabled);
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(selectionState.getValue().isRequiredSelectionEnabled);
     }
 
     @Override
@@ -778,11 +778,6 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         reloadTree();
       }
       updateSelectionState();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
     }
 
     @Override
