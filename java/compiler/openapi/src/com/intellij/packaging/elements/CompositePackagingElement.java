@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
@@ -222,7 +222,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       }
       if (packagingElementEntity instanceof CompositePackagingElementEntity entity) {
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {
-          PackagingElement<?> data = (PackagingElement<?>)mapping.getDataByEntity(o);
+          PackagingElement<?> data = mapping.getDataByEntity(o);
           if (data == null) {
             data = (PackagingElement<?>)myPackagingElementInitializer.initialize(o, myProject, myStorage.getBase());
           }
