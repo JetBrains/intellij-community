@@ -1,6 +1,7 @@
-// PROBLEM: none
+// PROBLEM: Variable 'foo' is assigned to itself
 // WITH_STDLIB
-// IGNORE_K2
+// FIX: Remove self assignment
+// IGNORE_K1
 
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

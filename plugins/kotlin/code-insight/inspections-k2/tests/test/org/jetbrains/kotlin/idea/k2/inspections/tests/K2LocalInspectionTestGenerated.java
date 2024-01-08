@@ -3768,6 +3768,149 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/selfAssignment")
+    public static class SelfAssignment extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("applyCorrect.kt")
+        public void testApplyCorrect() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/applyCorrect.kt");
+        }
+
+        @TestMetadata("applyIncorrect.kt")
+        public void testApplyIncorrect() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/applyIncorrect.kt");
+        }
+
+        @TestMetadata("assignToProperty.kt")
+        public void testAssignToProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/assignToProperty.kt");
+        }
+
+        @TestMetadata("differentThese.kt")
+        public void testDifferentThese() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThese.kt");
+        }
+
+        @TestMetadata("differentThis.kt")
+        public void testDifferentThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.kt");
+        }
+
+        @TestMetadata("differentThis.k2.kt")
+        public void testDifferentThis_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.k2.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/list.kt");
+        }
+
+        @TestMetadata("localVal.kt")
+        public void testLocalVal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/localVal.kt");
+        }
+
+        @TestMetadata("localVar.kt")
+        public void testLocalVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/localVar.kt");
+        }
+
+        @TestMetadata("notAssignment.kt")
+        public void testNotAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/notAssignment.kt");
+        }
+
+        @TestMetadata("notSelf.kt")
+        public void testNotSelf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/notSelf.kt");
+        }
+
+        @TestMetadata("openProperty.kt")
+        public void testOpenProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/openProperty.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/parameter.kt");
+        }
+
+        @TestMetadata("property1.kt")
+        public void testProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/property1.kt");
+        }
+
+        @TestMetadata("property2.kt")
+        public void testProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/property2.kt");
+        }
+
+        @TestMetadata("property3.kt")
+        public void testProperty3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/property3.kt");
+        }
+
+        @TestMetadata("property4.k2.kt")
+        public void testProperty4_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/property4.k2.kt");
+        }
+
+        @TestMetadata("property5.k2.kt")
+        public void testProperty5_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/property5.k2.kt");
+        }
+
+        @TestMetadata("propertyHasDelegate.kt")
+        public void testPropertyHasDelegate() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasDelegate.kt");
+        }
+
+        @TestMetadata("propertyHasDelegate.k2.kt")
+        public void testPropertyHasDelegate_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasDelegate.k2.kt");
+        }
+
+        @TestMetadata("propertyHasGetter.kt")
+        public void testPropertyHasGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasGetter.kt");
+        }
+
+        @TestMetadata("propertyHasSetter.kt")
+        public void testPropertyHasSetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasSetter.kt");
+        }
+
+        @TestMetadata("sameThese.kt")
+        public void testSameThese() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThese.kt");
+        }
+
+        @TestMetadata("sameThis.kt")
+        public void testSameThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.kt");
+        }
+
+        @TestMetadata("sameThis.k2.kt")
+        public void testSameThis_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.k2.kt");
+        }
+
+        @TestMetadata("shadow.kt")
+        public void testShadow() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/shadow.kt");
+        }
+
+        @TestMetadata("withReceiver.kt")
+        public void testWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/withReceiver.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

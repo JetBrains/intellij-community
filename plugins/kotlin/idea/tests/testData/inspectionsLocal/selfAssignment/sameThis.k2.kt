@@ -1,13 +1,13 @@
-// PROBLEM: Variable 'foo' is assigned to itself
+// PROBLEM: none
 // WITH_STDLIB
-// FIX: Remove self assignment
-// IGNORE_K2
+// IGNORE_K1
 
 class Test {
     var foo = 1
 
     fun test() {
         with (Test()) {
+            this.foo = <caret>foo
         }
     }
 }

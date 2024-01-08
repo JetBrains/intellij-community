@@ -313,5 +313,14 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="WEAK WARNING" key="inspection.replace.array.of.with.literal.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.SelfAssignmentInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING" key="inspection.self.assignment.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
