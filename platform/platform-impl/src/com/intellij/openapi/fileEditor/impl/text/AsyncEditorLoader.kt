@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.concurrency.captureThreadContext
@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -107,10 +106,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
   private fun startInTests(tasks: List<Deferred<*>>, editor: EditorEx) {
     runWithModalProgressBlocking(project, "") {
-      // required for switch to
-      withRawProgressReporter {
-        tasks.awaitAll()
-      }
+      tasks.awaitAll()
     }
     editor.putUserData(ASYNC_LOADER, null)
 
