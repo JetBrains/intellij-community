@@ -596,7 +596,13 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   /**
    * Marker interface, button will be disabled if no selected element
+   * <p>
+   * AnActionButton reinvents the action update wheel and breaks MVC.
+   * We are slowly migrating to regular {@link AnAction}.
+   *
+   * @deprecated Use regular {@link com.intellij.openapi.project.DumbAwareAction}
    */
+  @Deprecated(forRemoval = true)
   public abstract static class ElementActionButton extends AnActionButton {
     public ElementActionButton(@NlsContexts.Button String text,
                                @NlsContexts.Tooltip String description,
