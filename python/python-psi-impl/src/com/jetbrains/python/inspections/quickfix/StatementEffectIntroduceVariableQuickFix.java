@@ -34,21 +34,16 @@ public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModComman
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyPsiUtils.assertValid(element);
-    if (element.isValid()) {
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(element), PyAssignmentStatement.class,
-                                                         "var = " + element.getText());
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(element), PyAssignmentStatement.class,
+                                                                             "var = " + element.getText());
 
-      element = element.replace(assignment);
-      if (element == null) return;
-      element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
-      if (element == null) return;
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
-      final PyExpression leftHandSideExpression = ((PyAssignmentStatement)element).getLeftHandSideExpression();
-      assert leftHandSideExpression != null;
-      updater.templateBuilder().field(leftHandSideExpression, "var");
-      builder.replaceElement(leftHandSideExpression, "var");
+    element = element.replace(assignment);
+    if (element == null) return;
+    element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
+    if (element == null) return;
+    final PyExpression leftHandSideExpression = ((PyAssignmentStatement)element).getLeftHandSideExpression();
+    assert leftHandSideExpression != null;
+    updater.templateBuilder().field(leftHandSideExpression, "var");
     }
-  }
 }
