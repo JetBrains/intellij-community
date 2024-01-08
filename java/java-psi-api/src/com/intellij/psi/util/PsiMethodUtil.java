@@ -59,7 +59,7 @@ public final class PsiMethodUtil {
           !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
       PsiMethod[] constructors = method.getContainingClass().getConstructors();
-      if (constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
         return false;
       }
       if (parameters.length == 1) {
