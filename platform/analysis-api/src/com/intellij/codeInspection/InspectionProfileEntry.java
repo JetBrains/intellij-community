@@ -196,7 +196,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     PsiUtilCore.ensureValid(file);
     FileViewProvider viewProvider = file.getViewProvider();
     Language elementLanguage = element.getLanguage();
-    List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(elementLanguage);
+    List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguageOrAny(elementLanguage);
     Language baseLanguage = viewProvider.getBaseLanguage();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
