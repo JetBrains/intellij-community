@@ -132,7 +132,7 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
   @Override
   public @Nullable GitPushSource getSource(@NotNull GitRepository repository) {
     GitLocalBranch currentBranch = repository.getCurrentBranch();
-    if (currentBranch != null) GitPushSource.create(currentBranch);
+    if (currentBranch != null) return GitPushSource.create(currentBranch);
 
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) return GitPushSource.createDetached(currentRevision);
