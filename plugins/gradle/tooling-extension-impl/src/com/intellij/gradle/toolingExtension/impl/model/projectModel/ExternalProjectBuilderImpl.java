@@ -7,7 +7,6 @@ import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.testing.AbstractTestTask;
@@ -36,8 +35,6 @@ import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.ge
  */
 @ApiStatus.Internal
 public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
-
-  public static final boolean is44OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.4");
 
   @Override
   public boolean canBuild(@NotNull String modelName) {
@@ -105,7 +102,7 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         boolean isInternalTest = GradleTaskUtil.getBooleanProperty(task, "idea.internal.test", false);
         boolean isEffectiveTest = "check".equals(taskName) && "verification".equals(task.getGroup());
         boolean isJvmTest = task instanceof Test;
-        boolean isAbstractTest = is44OrBetter && task instanceof AbstractTestTask;
+        boolean isAbstractTest = task instanceof AbstractTestTask;
         externalTask.setTest(isJvmTest || isAbstractTest || isInternalTest || isEffectiveTest);
         externalTask.setJvmTest(isJvmTest || isAbstractTest);
         externalTask.setType(ProjectExtensionsDataBuilderImpl.getType(task));
