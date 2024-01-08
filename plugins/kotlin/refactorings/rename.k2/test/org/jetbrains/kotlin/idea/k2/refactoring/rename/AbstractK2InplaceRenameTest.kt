@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractInplaceRenameTest
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 
 abstract class AbstractK2InplaceRenameTest : AbstractInplaceRenameTest() {

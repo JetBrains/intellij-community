@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities.Internal
 import org.jetbrains.kotlin.descriptors.Visibilities.Private
 import org.jetbrains.kotlin.descriptors.Visibilities.Protected
 import org.jetbrains.kotlin.descriptors.Visibilities.Public
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.test;
 
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

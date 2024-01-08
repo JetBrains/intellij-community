@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointApplicabilityTest
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.nio.file.Paths
 
 abstract class AbstractK2BreakpointApplicabilityTest : AbstractBreakpointApplicabilityTest()  {

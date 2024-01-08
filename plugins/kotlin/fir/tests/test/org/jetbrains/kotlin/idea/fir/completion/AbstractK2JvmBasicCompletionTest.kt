@@ -6,7 +6,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
     override val captureExceptions: Boolean = false

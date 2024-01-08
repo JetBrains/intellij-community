@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFirWithMppStdlibCompletionTest : KotlinFixtureCompletionBaseTestCase() {
     override fun isFirPlugin(): Boolean = true

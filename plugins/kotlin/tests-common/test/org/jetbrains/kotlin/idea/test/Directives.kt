@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+
 class Directives {
 
     private val directives = mutableMapOf<String, MutableList<String>?>()

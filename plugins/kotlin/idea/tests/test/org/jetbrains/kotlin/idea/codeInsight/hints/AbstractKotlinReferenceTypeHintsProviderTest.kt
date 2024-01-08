@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesT
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_FUNCTION_RETURN_TYPES
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_LOCAL_VARIABLE_TYPES
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_PROPERTY_TYPES
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File

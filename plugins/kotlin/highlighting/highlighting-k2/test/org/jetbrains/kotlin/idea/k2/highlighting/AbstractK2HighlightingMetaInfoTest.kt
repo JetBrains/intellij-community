@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOpti
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
 internal enum class OptionsParser {
     CLASS {

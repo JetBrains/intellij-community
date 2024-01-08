@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.unwrap
 import com.intellij.codeInsight.unwrap.Unwrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 

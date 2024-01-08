@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.codevision
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractKotlinCodeVisionProviderTest :

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.actions
 import org.jetbrains.kotlin.idea.actions.AbstractAddImportActionTestBase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractK2AddImportActionTest : AbstractAddImportActionTestBase() {
     override fun isFirPlugin(): Boolean = true

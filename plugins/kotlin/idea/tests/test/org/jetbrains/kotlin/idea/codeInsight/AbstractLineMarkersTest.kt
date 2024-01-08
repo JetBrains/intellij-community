@@ -21,6 +21,7 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
 import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData

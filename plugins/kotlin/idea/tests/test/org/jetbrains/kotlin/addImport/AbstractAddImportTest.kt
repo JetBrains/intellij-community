@@ -6,13 +6,13 @@ import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractAddImportTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String? {

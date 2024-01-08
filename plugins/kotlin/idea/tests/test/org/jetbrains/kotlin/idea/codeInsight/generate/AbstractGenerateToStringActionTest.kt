@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction.Generator
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

@@ -23,6 +23,7 @@ import com.intellij.util.io.jarFile
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 import kotlin.test.assertNotNull
 

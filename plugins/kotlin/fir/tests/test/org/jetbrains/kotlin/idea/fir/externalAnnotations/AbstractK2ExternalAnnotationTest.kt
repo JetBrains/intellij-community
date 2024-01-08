@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.externalAnnotations
 
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 abstract class AbstractK2ExternalAnnotationTest : AbstractExternalAnnotationTest() {

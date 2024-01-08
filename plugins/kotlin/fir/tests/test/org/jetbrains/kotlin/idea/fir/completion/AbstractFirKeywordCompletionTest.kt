@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.completion
 
 import org.jetbrains.kotlin.idea.completion.test.AbstractKeywordCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.firFileName
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFirKeywordCompletionTest : AbstractKeywordCompletionTest() {
     override val captureExceptions: Boolean = false

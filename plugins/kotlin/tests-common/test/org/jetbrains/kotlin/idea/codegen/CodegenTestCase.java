@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.codegen.ClassFileFactory;
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.idea.TestHelperGeneratorKt;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.*;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.test.TargetBackend;

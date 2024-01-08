@@ -6,7 +6,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.FindUsagesMultiModuleTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.nio.file.Paths
 
 class FindUsagesMultiModuleFirTest : FindUsagesMultiModuleTest() {

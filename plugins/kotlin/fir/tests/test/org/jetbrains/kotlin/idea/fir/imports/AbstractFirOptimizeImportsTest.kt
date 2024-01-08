@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
     override val runTestInWriteCommand: Boolean = false

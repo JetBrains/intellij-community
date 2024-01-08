@@ -5,7 +5,7 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import kotlin.io.path.Path
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {

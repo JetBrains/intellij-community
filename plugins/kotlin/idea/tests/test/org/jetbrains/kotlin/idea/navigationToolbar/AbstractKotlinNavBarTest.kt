@@ -6,7 +6,7 @@ import com.intellij.ide.navigationToolbar.NavBarModel
 import com.intellij.ide.navigationToolbar.NavBarPresentation
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 

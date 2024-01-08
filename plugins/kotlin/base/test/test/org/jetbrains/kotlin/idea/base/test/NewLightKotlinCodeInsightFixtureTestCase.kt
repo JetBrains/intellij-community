@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.services.impl.RegisteredDirectivesParser
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 import java.io.FileNotFoundException
 import java.lang.reflect.Modifier

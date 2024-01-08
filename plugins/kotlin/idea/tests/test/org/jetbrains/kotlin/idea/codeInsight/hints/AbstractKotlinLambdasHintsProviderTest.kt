@@ -11,7 +11,7 @@ import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHints
 import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_RETURN_EXPRESSIONS
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.io.File

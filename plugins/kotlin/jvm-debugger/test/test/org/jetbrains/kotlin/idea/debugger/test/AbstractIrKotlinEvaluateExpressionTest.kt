@@ -40,8 +40,8 @@ import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinterDelegate
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findStringWithPrefixes
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap

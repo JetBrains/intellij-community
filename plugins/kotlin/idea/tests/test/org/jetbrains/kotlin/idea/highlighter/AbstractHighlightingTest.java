@@ -12,6 +12,7 @@ import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.*;
 
 import java.io.File;

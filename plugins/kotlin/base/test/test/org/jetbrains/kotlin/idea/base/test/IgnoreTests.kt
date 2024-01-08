@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.test.utils
+package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.test.utils.withExtension
 import org.junit.Assert
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -264,8 +263,6 @@ object IgnoreTests {
 
     private val isTeamCityBuild: Boolean
         get() = System.getenv("TEAMCITY_VERSION") != null
-                || KtUsefulTestCase.IS_UNDER_TEAMCITY
-
 
     fun getFirTestFile(originalTestFile: File, vararg additionalFilesExtensions: String): File {
         if (originalTestFile.readLines().any { it.startsWith(DIRECTIVES.FIR_IDENTICAL) }) {

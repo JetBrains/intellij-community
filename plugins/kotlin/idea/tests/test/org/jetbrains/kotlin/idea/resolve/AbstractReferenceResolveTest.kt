@@ -12,7 +12,8 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.junit.Assert
 import kotlin.test.assertTrue

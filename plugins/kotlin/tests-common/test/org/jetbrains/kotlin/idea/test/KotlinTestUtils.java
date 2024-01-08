@@ -63,8 +63,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget;
 
 public final class KotlinTestUtils {
     public static final String TEST_MODULE_NAME = "test-module";
