@@ -1,14 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
@@ -31,7 +31,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * if a and b:
  *   #stuff here
  */
-public final class PyJoinIfIntention extends PyBaseIntentionAction {
+public final class PyJoinIfIntention extends PsiUpdateModCommandAction<PyIfStatement> {
+  public PyJoinIfIntention() {
+    super(PyIfStatement.class);
+  }
+  
   @Override
   @NotNull
   public String getFamilyName() {
@@ -39,37 +43,22 @@ public final class PyJoinIfIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return PyPsiBundle.message("INTN.join.if");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
-    PyIfStatement expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
-
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyIfStatement expression) {
     PyIfStatement outer = getIfStatement(expression);
-    if (outer != null) {
-      if (outer.getElsePart() != null || outer.getElifParts().length > 0) return false;
-      PyStatement firstStatement = getFirstStatement(outer);
-      PyStatementList outerStList = outer.getIfPart().getStatementList();
-      if (outerStList.getStatements().length != 1) return false;
-      if (firstStatement instanceof PyIfStatement inner) {
-        if (inner.getElsePart() != null || inner.getElifParts().length > 0) return false;
-        PyStatementList stList = inner.getIfPart().getStatementList();
-        if (stList.getStatements().length != 0) return true;
-      }
-    }
-    return false;
+    if (outer == null) return null;
+    if (outer.getElsePart() != null || outer.getElifParts().length > 0) return null;
+    PyStatement firstStatement = getFirstStatement(outer);
+    PyStatementList outerStList = outer.getIfPart().getStatementList();
+    if (outerStList.getStatements().length != 1) return null;
+    if (!(firstStatement instanceof PyIfStatement inner)) return null;
+    if (inner.getElsePart() != null || inner.getElifParts().length > 0) return null;
+    PyStatementList stList = inner.getIfPart().getStatementList();
+    if (stList.getStatements().length == 0) return null;
+    return Presentation.of(PyPsiBundle.message("INTN.join.if"));
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyIfStatement expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PyIfStatement expression, @NotNull ModPsiUpdater updater) {
     PyIfStatement outerIfStatement = getIfStatement(expression);
     if (outerIfStatement == null) return;
 
@@ -80,8 +69,8 @@ public final class PyJoinIfIntention extends PyBaseIntentionAction {
     PyExpression outerCondition = outerIfStatement.getIfPart().getCondition();
     if (outerCondition == null || innerCondition == null) return;
 
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    LanguageLevel pyVersion = LanguageLevel.forElement(file);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
+    LanguageLevel pyVersion = LanguageLevel.forElement(context.file());
     PyBinaryExpression fakeAndExpression = (PyBinaryExpression)elementGenerator.createExpressionFromText(pyVersion, "foo and bar");
     StringBuilder replacementText = new StringBuilder();
     if (PyReplaceExpressionUtil.isNeedParenthesis(fakeAndExpression.getLeftExpression(), outerCondition)) {
