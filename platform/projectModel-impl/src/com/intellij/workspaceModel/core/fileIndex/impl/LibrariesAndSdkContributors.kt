@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
@@ -206,7 +206,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   }
 }
 
-private class GlobalLibraryReference(val library: Library) : EntityReference<WorkspaceEntity>() {
+private class GlobalLibraryReference(val library: Library) : EntityReference<WorkspaceEntity> {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
   override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
 
@@ -223,7 +223,7 @@ private class GlobalLibraryReference(val library: Library) : EntityReference<Wor
   }
 }
 
-private class SdkReference(val sdk: Sdk) : EntityReference<WorkspaceEntity>() {
+private class SdkReference(val sdk: Sdk) : EntityReference<WorkspaceEntity> {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
   override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
 

@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E>() {
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E> {
   override fun resolve(storage: EntityStorage): E? {
     storage as EntityStorageInstrumentation
     return storage.resolveReference(this)

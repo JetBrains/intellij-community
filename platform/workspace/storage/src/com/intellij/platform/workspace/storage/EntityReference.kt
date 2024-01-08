@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import org.jetbrains.annotations.ApiStatus
@@ -16,15 +16,15 @@ import org.jetbrains.annotations.ApiStatus
  * reference resolves to the original entity, you need to also subscribe to changes in the storage.
  */
 @ApiStatus.NonExtendable
-public abstract class EntityReference<out E : WorkspaceEntity> {
+public interface EntityReference<out E : WorkspaceEntity> {
   /**
    * Returns an entity corresponding to this reference in [storage] or `null` if there is no such entity.
    */
-  public abstract fun resolve(storage: EntityStorage): E?
+  public fun resolve(storage: EntityStorage): E?
 
   /**
    * Checks whether this reference points to the given [entity].
    * This function works faster than resolving the reference and comparing the result.
    */
-  public abstract fun isReferenceTo(entity: WorkspaceEntity): Boolean
+  public fun isReferenceTo(entity: WorkspaceEntity): Boolean
 }
