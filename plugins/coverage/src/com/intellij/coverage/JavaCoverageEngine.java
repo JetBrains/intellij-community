@@ -78,6 +78,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * @author Roman.Chernyatchik
@@ -596,10 +597,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, PsiExpression expression, int coverageStatus) {
+    List<String> cases = extractCaseLabels(expression);;
     buf.append(indent).append(expression.getText()).append("\n");
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
-      int key = switchData.getKeys()[i];
+      String key = i < cases.size() ? cases.get(i) : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
       buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");
@@ -609,6 +611,19 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (hasDefaultLabel(expression) || defaultCausesLinePartiallyCovered || defaultHits > 0) {
       buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
     }
+  }
+
+  private static @NotNull List<String> extractCaseLabels(PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiSwitchStatement switchStatement)) return Collections.emptyList();
+    PsiCodeBlock body = switchStatement.getBody();
+    if (body == null) return Collections.emptyList();
+    return PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)
+      .stream().flatMap((label) -> {
+        PsiCaseLabelElementList list = label.getCaseLabelElementList();
+        if (list == null || list.getElementCount() == 0) return Stream.of();
+        return Stream.of(list.getElements());
+      }).map(PsiElement::getText).toList();
   }
 
   @NotNull

@@ -99,13 +99,13 @@ Hits: 1
 Line 119 coverage: PARTIAL
 Hits: 1
     s
-        case 0: 1
-        case 1: 0
-        case 2: 0
-        case 3: 0
-        case 4: 0
-        case 5: 0
-        case 6: 0
+        case "A": 1
+        case "B": 0
+        case "C": 0
+        case "D": 0
+        case "E": 0
+        case "F": 0
+        case "G": 0
 
 Line 121 coverage: FULL
 Hits: 1
@@ -113,8 +113,8 @@ Hits: 1
 Line 152 coverage: FULL
 Hits: 3
     s
-        case 0: 1
-        case 1: 1
+        case "A": 1
+        case "B": 1
         default: 1
 
 Line 154 coverage: FULL
@@ -129,8 +129,8 @@ Hits: 1
 Line 169 coverage: FULL
 Hits: 3
     s
-        case 0: 1
-        case 1: 1
+        case "Aa": 1
+        case "BB": 1
         default: 1
 
 Line 171 coverage: FULL
