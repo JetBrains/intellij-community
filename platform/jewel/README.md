@@ -52,7 +52,7 @@ For an **IntelliJ Platform plugin**, then you should depend on the appropriate `
 ```kotlin
 dependencies {
     // The platform version is a supported major IJP version (e.g., 232 or 233 for 2023.2 and 2023.3 respectively)
-    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-platform-specific:[jewel version]-ij-[platform version]")
+    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge:[jewel version]-ij-[platform version]")
 }
 ```
 
