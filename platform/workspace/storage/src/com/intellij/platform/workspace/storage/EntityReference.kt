@@ -26,5 +26,10 @@ public interface EntityReference<out E : WorkspaceEntity> {
    * Checks whether this reference points to the given [entity].
    * This function works faster than resolving the reference and comparing the result.
    */
-  public fun isReferenceTo(entity: WorkspaceEntity): Boolean
+  // An implementer of this function must take care about correct handling of type variance.
+  // The `@UnsafeVariance` annotation is required here to suppress the Kotlin compilation error.
+  // The need for this @UnsafeVariance annotation is discussed here KT-24214
+  //   The ticket contains a reference to the description of a very similar case where explained why such
+  //   cases don't always break the type variance.
+  public fun isReferenceTo(entity: @UnsafeVariance E): Boolean
 }

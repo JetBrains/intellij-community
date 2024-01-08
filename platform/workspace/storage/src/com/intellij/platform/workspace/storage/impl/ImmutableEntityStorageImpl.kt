@@ -41,7 +41,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
     return storage.resolveReference(this)
   }
 
-  override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
+  override fun isReferenceTo(entity: E): Boolean {
     return id == (entity as? WorkspaceEntityBase)?.id
   }
 
