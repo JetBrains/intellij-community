@@ -15,7 +15,7 @@
  */
 package com.jetbrains.extensions.python
 
-import com.jetbrains.extensions.isNameMatches
+import com.jetbrains.python.extensions.isNameMatches
 import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.types.PyClassLikeType
