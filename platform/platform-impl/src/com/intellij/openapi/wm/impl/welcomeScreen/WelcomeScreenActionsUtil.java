@@ -5,11 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.AnActionButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
@@ -46,40 +45,37 @@ public final class WelcomeScreenActionsUtil {
     }
   }
 
-  public static final class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
-    final JBOptionButton myButton;
+  public static final class ToolbarTextButtonWrapper extends AnActionWrapper implements CustomComponentAction {
+
+    private final List<AnAction> myActions;
 
     ToolbarTextButtonWrapper(@NotNull List<AnAction> actions) {
-      super(actions.get(0).getTemplatePresentation(), actions.get(0));
-      myButton = new JBOptionButton(null, null);
-      myButton.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            performAnActionForComponent(getDelegate(), myButton);
-        }
-      });
-      if (actions.size() > 1) {
-        myButton.setOptions(ContainerUtil.subList(actions, 1));
-      }
-      myButton.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
+      super(actions.get(0));
+      myActions = actions;
     }
 
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      myButton.putClientProperty(JBOptionButton.PLACE, place);
-      return myButton;
+      JBOptionButton button = new JBOptionButton(null, null);
+      button.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          performAnActionForComponent(getDelegate(), button);
+        }
+      });
+      if (myActions.size() > 1) {
+        button.setOptions(ContainerUtil.subList(myActions, 1));
+      }
+      button.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
+      button.putClientProperty(JBOptionButton.PLACE, place);
+      return button;
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      getDelegate().update(e);
-      myButton.getAction().putValue(Action.NAME, e.getPresentation().getText());
-      UIUtil.setEnabled(myButton, e.getPresentation().isEnabled(), true);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      if (!(component instanceof JBOptionButton button)) return;
+      button.getAction().putValue(Action.NAME, presentation.getText());
+      UIUtil.setEnabled(button, presentation.isEnabled(), true);
     }
 
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
@@ -103,15 +99,13 @@ public final class WelcomeScreenActionsUtil {
     ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 
-  static final class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
-
-    private static final Logger LOG = Logger.getInstance(LargeIconWithTextWrapper.class);
+  private static class LargeIconWithTextPanel extends NonOpaquePanel {
     final JButton myIconButton;
     final JBLabel myLabel;
-    private final JPanel myPanel;
 
-    LargeIconWithTextWrapper(@NotNull AnAction action) {
-      super(action.getTemplatePresentation(), action);
+    LargeIconWithTextPanel() {
+      super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
+
       myIconButton = new JButton();
       myIconButton.setBorder(JBUI.Borders.empty());
       myIconButton.setHorizontalAlignment(SwingConstants.CENTER);
@@ -139,56 +133,54 @@ public final class WelcomeScreenActionsUtil {
           updateIconBackground(false);
         }
       });
-      myIconButton.addActionListener(l -> performAnActionForComponent(action, myIconButton));
       Wrapper iconWrapper = new Wrapper(myIconButton);
       iconWrapper.setFocusable(false);
       iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
 
-      String text = getTemplateText();
-      if (Strings.isEmpty(text) && action.getActionUpdateThread() != ActionUpdateThread.BGT) {
-        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.WELCOME_SCREEN, null, DataContext.EMPTY_CONTEXT);
-        action.update(event);
-        text = event.getPresentation().getText();
-      }
-      if (Strings.isEmpty(text)) {
-        LOG.error("Action " + ActionManager.getInstance().getId(action) + " has empty text and cannot be shown properly");
-        text = "";
-      }
-      myLabel = new JBLabel(text, SwingConstants.CENTER);
+      myLabel = new JBLabel("", SwingConstants.CENTER);
       myLabel.setOpaque(false);
 
-      myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
-      myPanel.setFocusable(false);
-      myPanel.add(iconWrapper);
-      myPanel.add(myLabel);
+      setFocusable(false);
+      add(iconWrapper);
+      add(myLabel);
       myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
-    private void updateIconBackground(boolean selected) {
+    void updateIconBackground(boolean selected) {
       if (!ExperimentalUI.isNewUI()) {
         myIconButton.setSelected(selected);
         myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
         myIconButton.repaint();
       }
     }
+  }
+
+  static final class LargeIconWithTextWrapper extends AnActionWrapper implements CustomComponentAction {
+
+    LargeIconWithTextWrapper(@NotNull AnAction action) {
+      super(action);
+    }
 
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myPanel;
+      String text = presentation.getText();
+      if (StringUtil.isEmpty(text)) {
+        Utils.reportEmptyTextMenuItem(getDelegate(), place);
+      }
+      LargeIconWithTextPanel panel = new LargeIconWithTextPanel();
+      panel.myIconButton.addActionListener(l -> performAnActionForComponent(
+        getDelegate(), panel.myIconButton));
+      return panel;
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      getDelegate().update(e);
-      myIconButton.setIcon(e.getPresentation().getIcon());
-      myIconButton.setSelectedIcon(e.getPresentation().getSelectedIcon());
-      myLabel.setText(e.getPresentation().getText());
-      UIUtil.setEnabled(myPanel, e.getPresentation().isEnabled(), true);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      if (!(component instanceof LargeIconWithTextPanel panel)) return;
+      panel.myIconButton.setIcon(presentation.getIcon());
+      panel.myIconButton.setSelectedIcon(presentation.getSelectedIcon());
+      //noinspection DialogTitleCapitalization
+      panel.myLabel.setText(presentation.getText());
+      UIUtil.setEnabled(panel, presentation.isEnabled(), true);
     }
 
     static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
@@ -197,8 +189,8 @@ public final class WelcomeScreenActionsUtil {
   }
 
   public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
-                                                        @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
-                                                        int mainButtonsNum) {
+                                                               @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
+                                                               int mainButtonsNum) {
     DefaultActionGroup group = new DefaultActionGroup();
     collectAllActions(group, actionGroup);
     AnAction[] actions = group.getChildren(null);
