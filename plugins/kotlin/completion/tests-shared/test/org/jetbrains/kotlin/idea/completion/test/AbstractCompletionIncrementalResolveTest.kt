@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 /**
  * This test case allows to invoke the code completion twice, and to modify the
@@ -40,7 +40,7 @@ abstract class AbstractCompletionIncrementalResolveTest : KotlinLightCodeInsight
         val backspaceCount = InTextDirectivesUtils.getPrefixedInt(document.text, BACKSPACES_DIRECTIVE_PREFIX)
         assertTrue(
             "At least one of \"$TYPE_DIRECTIVE_PREFIX\" and \"$BACKSPACES_DIRECTIVE_PREFIX\" should be defined",
-            textToType != null || backspaceCount != null
+            textToType !=  null || backspaceCount != null
         )
 
         val beforeMarker = document.createRangeMarker(beforeMarkerOffset, beforeMarkerOffset + BEFORE_MARKER.length)

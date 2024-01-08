@@ -108,7 +108,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
         val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
 
-        if (pluginKind == KotlinPluginKind.FIR_PLUGIN) {
+        if (pluginKind == KotlinPluginMode.K2) {
             val expectedPath = Paths.get(testDataPath, expectedPathString)
 
             val k2ExpectedPathString = getExpectedPath(".fir" + expectedSuffix, addSuffixAfterExtension)
