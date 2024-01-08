@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" />
   </component>
 </module>

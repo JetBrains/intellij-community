@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.application.readAction
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -52,12 +54,15 @@ abstract class AbstractFirSealedClassInheritorsTest : AbstractProjectStructureTe
     }
 
     @OptIn(SymbolInternals::class)
-    private fun resolveActualInheritors(targetClass: KtClass): List<ClassId> =
-        resolveWithClearCaches(targetClass) { resolveSession ->
-            val targetFirClass = targetClass.resolveToFirSymbol(resolveSession, phase = FirResolvePhase.RAW_FIR).fir as FirRegularClass
-            assertTrue("Expected the target type `${targetFirClass.classId}` to be sealed.", targetFirClass.isSealed)
-            targetFirClass.getSealedClassInheritors(resolveSession.useSiteFirSession)
+    private fun resolveActualInheritors(targetClass: KtClass): List<ClassId> = runBlocking {
+        readAction {
+            resolveWithClearCaches(targetClass) { resolveSession ->
+                val targetFirClass = targetClass.resolveToFirSymbol(resolveSession, phase = FirResolvePhase.RAW_FIR).fir as FirRegularClass
+                assertTrue("Expected the target type `${targetFirClass.classId}` to be sealed.", targetFirClass.isSealed)
+                targetFirClass.getSealedClassInheritors(resolveSession.useSiteFirSession)
+            }
         }
+    }
 }
 
 data class FirSealedClassInheritorsTestProjectStructure(

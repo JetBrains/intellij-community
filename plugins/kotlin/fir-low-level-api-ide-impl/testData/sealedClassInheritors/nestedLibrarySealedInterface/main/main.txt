@@ -1,1 +1,5 @@
-
+/RegularClass.NestedSealedInterface.Nested2SealedInterfaceInheritor1
+/RegularClass.NestedSealedInterface.Nested2SealedInterfaceInheritor1.Nested3SealedInterfaceInheritor1
+/RegularClass.NestedSealedInterface.Nested2SealedInterfaceInheritor1.Nested3SealedInterfaceInheritor2
+/RegularClass.NestedSealedInterfaceInheritor1
+/RegularClass.NestedSealedInterfaceInheritor2

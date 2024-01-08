@@ -1,1 +1,2 @@
-
+/SealedClassInheritor1
+/SealedClassInheritor2
