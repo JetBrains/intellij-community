@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAction>, PerformWithDocumentsCommitted {
   private final AnAction myDelegate;
@@ -20,8 +23,11 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
   @Override
   public void update(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
+    JComponent customComponent =
+      session == UpdateSession.EMPTY || !(this instanceof CustomComponentAction) ? null :
+      e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (session == UpdateSession.EMPTY) myDelegate.update(e);
-    else e.getPresentation().copyFrom(session.presentation(myDelegate), null, true);
+    else e.getPresentation().copyFrom(session.presentation(myDelegate), customComponent, true);
   }
 
   @Override
