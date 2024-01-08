@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.annotate.GitAnnotationProvider.GitRawAnnotationProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 
@@ -32,5 +33,7 @@ interface GitAnnotationPerformanceListener {
                                    results: List<AnnotationResult>) {
   }
 
-  data class AnnotationResult(val providerId: String, val annotation: GitFileAnnotation?, val duration: Duration)
+  data class AnnotationResult(val providerId: String, val annotation: GitFileAnnotation?, val duration: Duration) {
+    fun byDefaultProvider(): Boolean = GitRawAnnotationProvider.isDefault(providerId)
+  }
 }

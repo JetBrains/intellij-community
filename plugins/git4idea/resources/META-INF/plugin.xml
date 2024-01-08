@@ -825,6 +825,10 @@
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Git4Idea">
+    <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint interface="git4idea.remote.GitHttpAuthDataProvider" name="GitHttpAuthDataProvider" dynamic="true"/>
     <extensionPoint interface="git4idea.remote.GitRepositoryHostingService" name="gitRepositoryHostingService" dynamic="true"/>
@@ -837,6 +841,8 @@
     <extensionPoint interface="git4idea.ui.branch.GitCurrentBranchPresenter" name="gitCurrentBranchPresenter" dynamic="true"/>
     <extensionPoint interface="git4idea.instant.InstantGitTokenProvider" name="instantGitTokenProvider" dynamic="true"/>
     <extensionPoint interface="git4idea.annotate.GitAnnotationPerformanceListener" name="gitAnnotationPerformanceListener" dynamic="true"/>
+    <extensionPoint interface="git4idea.annotate.GitAnnotationProvider$GitRawAnnotationProvider" name="gitRawAnnotationProvider"
+                    dynamic="true" area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <projectListeners>
