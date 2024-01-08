@@ -25,7 +25,8 @@ private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules", false)) {
+    val app = ApplicationManager.getApplication()
+    if (app.isCommandLine || app.isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules", false)) {
       throw ExtensionNotApplicableException.create()
     }
   }
