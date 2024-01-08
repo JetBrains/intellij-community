@@ -5,6 +5,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -26,7 +27,7 @@ public final class TitleWithToolbar extends JPanel {
     ActionGroup group = (ActionGroup)actionManager.getAction(actionGroupId);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, group, true);
     actionToolbar.setTargetComponent(targetComponent);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
 
     JLabel label = new JLabel(title.startsWith("<html>") ? title : UIUtil.replaceMnemonicAmpersand(title));
     label.setLabelFor(targetComponent);

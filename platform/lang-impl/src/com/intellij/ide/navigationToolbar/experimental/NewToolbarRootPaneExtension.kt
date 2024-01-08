@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
@@ -169,7 +170,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
           component.remove(it)
         }
         toolbar.targetComponent = null
-        toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
         component.add(toolbar.component, layoutConstraints)
       }
     }

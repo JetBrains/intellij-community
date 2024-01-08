@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBInsets
@@ -53,7 +54,7 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   init {
-    layoutPolicy = NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
     setActionButtonBorder(JBUI.Borders.empty(0, 3))
     setCustomButtonLook(segmentedButtonLook)
   }

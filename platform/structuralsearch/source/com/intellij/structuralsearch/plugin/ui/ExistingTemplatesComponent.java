@@ -10,6 +10,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -147,7 +148,7 @@ public final class ExistingTemplatesComponent {
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)actionManager.createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
     toolbar.setTargetComponent(patternTree);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
     toolbar.setForceMinimumSize(true);
     toolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 

@@ -4,6 +4,7 @@ package com.intellij.ide.ui.customization
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.QuickListsManager.Companion.getInstance
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
@@ -127,7 +128,7 @@ class ActionGroupPanel(
       val actionGroup = DefaultActionGroup(*createActions())
       val toolbar = ActionManager.getInstance().createActionToolbar("ActionGroupPanel", actionGroup, true).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
         targetComponent = tree
       }
       addToRight(toolbar.component)

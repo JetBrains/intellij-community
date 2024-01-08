@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -943,7 +944,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       ActionToolbar scopeChooserToolbar =
         ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
       scopeChooserToolbar.setTargetComponent(table);
-      scopeChooserToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+      scopeChooserToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
       ((ActionToolbarImpl) scopeChooserToolbar).setForceMinimumSize(true);
       JComponent component = scopeChooserToolbar.getComponent();
       component.setBorder(JBUI.Borders.empty());

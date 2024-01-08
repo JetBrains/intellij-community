@@ -3,8 +3,8 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
@@ -47,7 +47,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
       component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
       setReservePlaceAutoPopupIcon(false)
-      layoutPolicy = NOWRAP_LAYOUT_POLICY
+      layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
 
       component.isOpaque = false
       component.border = null
@@ -60,7 +60,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   ).apply {
     component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
     setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
 
     component.isOpaque = false
     component.border = null

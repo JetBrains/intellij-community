@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.project.DumbAwareAction
@@ -99,12 +100,12 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
     context.putUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, leftToolbar)
-    leftToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    leftToolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
     leftToolbar.targetComponent = mainPanel
     leftToolbarWrapper = Centerizer(leftToolbar.component, Centerizer.TYPE.VERTICAL)
 
     rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightToolbarGroup, true)
-    rightToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    rightToolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
     rightToolbar.targetComponent = mainPanel
 
     rightToolbarWrapper = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)

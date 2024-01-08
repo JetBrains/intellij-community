@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -1629,7 +1630,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
     toolbar.setBorder(JBUI.Borders.empty(3));
     return toolbar;
   }
@@ -1664,7 +1665,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
 
     return toolbar;
   }

@@ -9,6 +9,7 @@ import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -162,7 +163,7 @@ internal class SingleContentLayout(
           content.component
         ).apply {
           setReservePlaceAutoPopupIcon(false)
-          layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+          layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
         }
       }
     }
@@ -363,7 +364,7 @@ internal class SingleContentLayout(
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
       popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
       }.component
 
       layout = HorizontalTabLayoutWithHiddenControl {

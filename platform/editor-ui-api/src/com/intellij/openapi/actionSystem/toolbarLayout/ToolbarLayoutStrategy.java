@@ -29,7 +29,6 @@ public interface ToolbarLayoutStrategy {
   ToolbarLayoutStrategy VERTICAL_AUTOLAYOUT_STRATEGY =
     new RightActionsAdjusterStrategyWrapper(new AutoLayoutStrategy(SwingConstants.VERTICAL, false));
 
-
   List<Rectangle> calculateBounds(@NotNull Dimension size2Fit, @NotNull ActionToolbar toolbar);
 
   default void setMinimumButtonSize(@NotNull JBDimension size) {}
