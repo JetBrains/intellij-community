@@ -13,7 +13,7 @@ fun Driver.toggleDistractionFreeMode() {
 
 fun Driver.toggleZenMode() {
   invokeAction("ToggleZenMode")
-  Thread.sleep(1000)
+  Thread.sleep(5000)
 }
 
 fun Driver.togglePresentationMode() {
