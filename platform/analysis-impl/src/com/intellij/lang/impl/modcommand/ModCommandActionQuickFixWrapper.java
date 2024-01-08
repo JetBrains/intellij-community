@@ -7,10 +7,11 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix {
+final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implements ReportingClassSubstitutor {
   private final ModCommandAction myAction;
 
   ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action) {
@@ -34,6 +35,11 @@ final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {
     return myAction.getFamilyName();
+  }
+
+  @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myAction);
   }
 
   @Override

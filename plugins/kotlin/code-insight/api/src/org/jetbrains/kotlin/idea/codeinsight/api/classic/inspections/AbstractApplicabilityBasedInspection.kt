@@ -5,8 +5,8 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange

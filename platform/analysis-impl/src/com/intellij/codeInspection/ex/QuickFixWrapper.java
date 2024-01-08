@@ -13,6 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-public final class QuickFixWrapper implements IntentionAction, PriorityAction, CustomizableIntentionAction {
+public final class QuickFixWrapper implements IntentionAction, PriorityAction, CustomizableIntentionAction, ReportingClassSubstitutor {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
@@ -169,6 +170,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myFix);
+  }
+
+  @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
@@ -196,7 +202,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
-  private static final class ModCommandQuickFixAction implements ModCommandAction {
+  private static final class ModCommandQuickFixAction implements ModCommandAction, ReportingClassSubstitutor {
     private final @NotNull ProblemDescriptor myDescriptor;
     private final @NotNull ModCommandQuickFix myFix;
     private final @Nullable ModCommandAction myUnwrappedAction;
@@ -252,6 +258,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
       return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    }
+
+    @Override
+    public @NotNull Class<?> getSubstitutedClass() {
+      return ReportingClassSubstitutor.getClassToReport(myFix);
     }
 
     @Override

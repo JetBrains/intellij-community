@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -52,14 +53,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
 
   @NotNull
   private static Class<?> getOriginalHandlerClass(@NotNull CommonIntentionAction action) {
-    if (action instanceof IntentionActionDelegate actionDelegate) {
-      IntentionAction delegate = actionDelegate.getDelegate();
-      if (delegate != action) {
-        return getOriginalHandlerClass(delegate);
-      }
-    }
-    LocalQuickFix quickFix = QuickFixWrapper.unwrap(action);
-    return ReportingClassSubstitutor.getClassToReport(quickFix != null ? quickFix : action);
+    return ReportingClassSubstitutor.getClassToReport(action);
   }
 
   public static void reportShownIntentions(@NotNull Project project,

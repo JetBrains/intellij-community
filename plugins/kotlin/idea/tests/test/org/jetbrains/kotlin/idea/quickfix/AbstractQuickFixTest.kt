@@ -171,7 +171,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
         if (calledId != quickFixName) {
             throw FileComparisonFailedError(
-                "expected to find quickfix `called` id",
+                "expected to find quickfix `called` $quickFixName",
                 fileText,
                 fileText.replace("// $fusDirectiveName: $quickFixName", "// $fusDirectiveName: $calledId"),
                 file.toString()

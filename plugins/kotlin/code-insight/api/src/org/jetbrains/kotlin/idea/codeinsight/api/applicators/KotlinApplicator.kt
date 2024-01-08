@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
@@ -23,7 +23,8 @@ import kotlin.reflect.KClass
  * Uses some additional information from [INPUT] to apply the element
  */
 @FileModifier.SafeTypeForPreview
-sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> : ReportingClassSubstitutor {
+sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> :
+    ReportingClassSubstitutor {
 
     /**
      * Checks if applicator is applicable to specific element, can not use resolve inside

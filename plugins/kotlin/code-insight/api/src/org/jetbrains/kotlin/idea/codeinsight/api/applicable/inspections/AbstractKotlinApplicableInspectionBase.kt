@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.internal.statistic.ReportingClassSubstitutor
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
@@ -74,7 +74,8 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
     abstract override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor
 }
 
-internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix, ReportingClassSubstitutor {
+internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix,
+                                                                                          ReportingClassSubstitutor {
     abstract fun applyTo(element: ELEMENT)
 
     abstract fun shouldApplyInWriteAction(): Boolean
@@ -94,7 +95,8 @@ internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtE
     final override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
 }
 
-internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix(), ReportingClassSubstitutor {
+internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix(),
+                                                                                                    ReportingClassSubstitutor {
     abstract override fun getName(): String
 
     abstract override fun getFamilyName(): @IntentionFamilyName String

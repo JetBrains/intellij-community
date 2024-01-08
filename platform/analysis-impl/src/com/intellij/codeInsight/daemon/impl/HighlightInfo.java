@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -863,17 +864,8 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      ModCommandAction modCommandAction = getAction().asModCommandAction();
-      LocalQuickFix fix = QuickFixWrapper.unwrap(getAction());
-      if (fix != null) {
-        modCommandAction = ModCommandService.getInstance().unwrap(fix);
-      }
-      Object action = modCommandAction != null ? modCommandAction :
-                      fix != null ? fix : 
-                      IntentionActionDelegate.unwrap(getAction());
-      String name =
-        action instanceof CommonIntentionAction intentionAction ? intentionAction.getFamilyName() : ((LocalQuickFix)action).getFamilyName();
-      return "IntentionActionDescriptor: " + name + " (" + action.getClass() + ")";
+      String name = getAction().getFamilyName();
+      return "IntentionActionDescriptor: " + name + " (" + ReportingClassSubstitutor.getClassToReport(getAction()) + ")";
     }
 
     public @Nullable Icon getIcon() {

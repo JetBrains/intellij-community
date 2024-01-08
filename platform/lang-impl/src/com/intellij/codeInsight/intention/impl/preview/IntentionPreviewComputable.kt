@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionsMetadataService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diagnostic.PluginException
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
@@ -20,6 +19,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ActionContext
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -176,8 +176,7 @@ class IntentionPreviewComputable(private val project: Project,
     if (!action.startInWriteAction()) return IntentionPreviewInfo.EMPTY
     if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return IntentionPreviewInfo.EMPTY
     val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return IntentionPreviewInfo.EMPTY
-    val unwrapped = IntentionActionDelegate.unwrap(action)
-    val cls = (QuickFixWrapper.unwrap(unwrapped) ?: unwrapped)::class.java
+    val cls = ReportingClassSubstitutor.getClassToReport(action)
     val loader = cls.classLoader
     if (loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)) {
       logger<IntentionPreviewComputable>().error(
