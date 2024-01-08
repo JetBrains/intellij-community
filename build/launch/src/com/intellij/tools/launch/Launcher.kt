@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.util.Locale
+import java.util.*
 import java.util.logging.Logger
 
 object Launcher {
@@ -58,9 +58,7 @@ object Launcher {
       "-Dsun.io.useCanonCaches=false",
       "-Dteamcity.build.tempDir=${paths.tempFolder.canonicalPath}",
       "-Xmx${options.xmx}m",
-      "-XX:+UseG1GC",
       "-XX:-OmitStackTraceInFastThrow",
-      "-XX:CICompilerCount=2",
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",

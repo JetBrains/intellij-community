@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
@@ -13,9 +13,7 @@ object VmOptionsGenerator {
   private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
-    "-XX:+UseG1GC",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
-    "-XX:CICompilerCount=2",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
     "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
