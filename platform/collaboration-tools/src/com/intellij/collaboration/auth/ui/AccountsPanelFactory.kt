@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
@@ -174,16 +175,16 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
       .setRemoveActionUpdater { accountsModel is MutableAccountsListModel && accountsList.selectedValue != null }
 
     if (accountsModel is AccountsListModel.WithDefault) {
-      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(message("accounts.set.default"),
-                                                                           AllIcons.Actions.Checked) {
+      toolbar.addExtraAction(object : DumbAwareAction(message("accounts.set.default"),
+                                                      null, AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
           if (selected == accountsModel.defaultAccount) return
           if (selected != null) accountsModel.defaultAccount = selected
         }
 
-        override fun updateButton(e: AnActionEvent) {
-          isEnabled = isEnabled && accountsModel.defaultAccount != accountsList.selectedValue
+        override fun update(e: AnActionEvent) {
+          e.presentation.isEnabled = accountsModel.defaultAccount != accountsList.selectedValue
         }
 
         override fun getActionUpdateThread() = ActionUpdateThread.EDT
