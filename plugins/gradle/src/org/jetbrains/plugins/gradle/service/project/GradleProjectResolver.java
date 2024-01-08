@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -152,7 +153,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         getProjectDataFunction(resolverContext, projectResolverChain, false));
 
       // auto-discover buildSrc projects of the main and included builds
-      if (GradleVersion.version(resolverContext.getProjectGradleVersion()).compareTo(GradleVersion.version("8.0")) < 0) {
+      if (GradleVersionUtil.isGradleOlderThan(resolverContext.getProjectGradleVersion(), "8.0")) {
         File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
         new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
           .discoverAndAppendTo(projectDataNode);
@@ -571,7 +572,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
     GradleVersion usedGradleVersion = Objects.requireNonNullElseGet(gradleVersion, GradleVersion::current);
-    if (executionSettings.isParallelModelFetch() && usedGradleVersion.compareTo(GradleVersion.version("7.4")) >= 0) {
+    if (executionSettings.isParallelModelFetch() && GradleVersionUtil.isGradleAtLeast(usedGradleVersion, "7.4")) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!isBuildSrcProject) {

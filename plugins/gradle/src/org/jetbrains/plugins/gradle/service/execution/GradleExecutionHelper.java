@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -630,8 +631,7 @@ public class GradleExecutionHelper {
     @Nullable BuildEnvironment buildEnvironment
   ) {
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
-    boolean isEnvironmentCustomizationSupported =
-      gradleVersion != null && GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.5")) >= 0;
+    boolean isEnvironmentCustomizationSupported = gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "3.5");
     if (!isEnvironmentCustomizationSupported) {
       if (!settings.isPassParentEnvs() || !settings.getEnv().isEmpty()) {
         listener.onTaskOutput(taskId, String.format(
@@ -850,7 +850,7 @@ public class GradleExecutionHelper {
         try {
           String version = buildEnvironment.getGradle().getGradleVersion();
           LOG.debug("Gradle version: " + version);
-          if (GradleVersion.version(version).compareTo(GradleVersion.version("2.6")) >= 0) {
+          if (GradleVersionUtil.isGradleAtLeast(version, "2.6")) {
             LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
             LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
           }

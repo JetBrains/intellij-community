@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelAction;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
@@ -83,7 +84,7 @@ public class GradleModelFetchAction {
       return Collections.emptySet();
     }
     GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
-    if (gradleVersion.compareTo(GradleVersion.version("3.1")) < 0) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "3.1")) {
       return Collections.emptySet();
     }
     Set<String> processedBuildsPaths = new HashSet<>();
@@ -109,7 +110,7 @@ public class GradleModelFetchAction {
    * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
    */
   private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @NotNull GradleVersion version) {
-    if (version.compareTo(GradleVersion.version("8.0")) >= 0) {
+    if (GradleVersionUtil.isGradleAtLeast(version, "8.0")) {
       DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
       if (builds.isEmpty()) {
         return build.getIncludedBuilds();

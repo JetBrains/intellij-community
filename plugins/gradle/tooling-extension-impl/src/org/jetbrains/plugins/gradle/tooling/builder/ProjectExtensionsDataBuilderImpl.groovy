@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -22,7 +23,8 @@ import java.lang.reflect.Method
  */
 @CompileStatic
 class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
-  private static is35_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("3.5")
+
+  private static is35_OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("3.5")
 
   @Override
   boolean canBuild(String modelName) {
@@ -37,7 +39,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     result.configurations.addAll(collectConfigurations(project.configurations, false))
     result.configurations.addAll(collectConfigurations(project.buildscript.configurations, true))
 
-    if (GradleVersion.current().baseVersion < GradleVersion.version("8.2")){
+    if (GradleVersionUtil.isCurrentGradleOlderThan("8.2")){
       def convention = project.convention
       convention.plugins.each { key, value ->
         result.conventions.add(new DefaultGradleConvention(key, getType(value)))
@@ -54,7 +56,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     for (it in extensions.findAll()) {
       def extension = it as ExtensionContainer
       List<String> keyList =
-        GradleVersion.current() >= GradleVersion.version("4.5")
+        GradleVersionUtil.isCurrentGradleAtLeast("4.5")
           ? extractKeys(extension)
           : extractKeysViaReflection(extension)
 

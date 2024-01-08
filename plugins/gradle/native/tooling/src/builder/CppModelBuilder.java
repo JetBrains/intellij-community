@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.RegularFileProperty;
@@ -55,15 +56,12 @@ import java.util.*;
  */
 @Deprecated
 public class CppModelBuilder implements ModelBuilderService {
-  private static final boolean IS_51_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.1")) >= 0;
-  private static final boolean IS_410_OR_BETTER = IS_51_OR_BETTER ||
-                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
-  private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
-  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
-  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
+
+  private static final boolean IS_51_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("5.1");
+  private static final boolean IS_410_OR_BETTER = IS_51_OR_BETTER || GradleVersionUtil.isCurrentGradleAtLeast("4.10");
+  private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER || GradleVersionUtil.isCurrentGradleAtLeast("4.8");
+  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER || GradleVersionUtil.isCurrentGradleAtLeast("4.7");
+  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER || GradleVersionUtil.isCurrentGradleAtLeast("4.1");
 
   @Override
   public boolean canBuild(String modelName) {

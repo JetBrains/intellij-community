@@ -199,7 +199,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun targetCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (gradleVersion.isGradleOlderThan("8.2")) {
       withPostfix {
         assign("targetCompatibility", level)
       }
@@ -212,7 +212,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun sourceCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (gradleVersion.isGradleOlderThan("8.2")) {
       withPostfix {
         assign("sourceCompatibility", level)
       }

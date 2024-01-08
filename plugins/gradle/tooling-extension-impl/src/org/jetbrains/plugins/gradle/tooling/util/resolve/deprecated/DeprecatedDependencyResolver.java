@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
@@ -16,7 +17,6 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.internal.impldep.com.google.common.collect.*;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
@@ -44,15 +44,12 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
 @Deprecated
 public class DeprecatedDependencyResolver implements DependencyResolver {
 
-  private static final boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
-  static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
-                                                              (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
-  static final boolean is31OrBetter = isJavaLibraryPluginSupported ||
-                                      (GradleVersion.current().compareTo(GradleVersion.version("3.1")) >= 0);
-  private static final boolean isDependencySubstitutionsSupported = is31OrBetter ||
-                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
+  private static final boolean is4OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.0");
+  static final boolean isJavaLibraryPluginSupported = is4OrBetter || GradleVersionUtil.isCurrentGradleAtLeast("3.4");
+  static final boolean is31OrBetter = isJavaLibraryPluginSupported || GradleVersionUtil.isCurrentGradleAtLeast("3.1");
+  private static final boolean isDependencySubstitutionsSupported = is31OrBetter || GradleVersionUtil.isCurrentGradleNewerThan("2.5");
   private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
-                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
+                                                                    GradleVersionUtil.isCurrentGradleAtLeast("2.0");
 
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;

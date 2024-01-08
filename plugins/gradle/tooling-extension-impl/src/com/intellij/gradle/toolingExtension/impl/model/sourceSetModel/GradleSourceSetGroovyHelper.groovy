@@ -6,6 +6,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.gradle.api.Project
@@ -30,11 +31,10 @@ import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 class GradleSourceSetGroovyHelper {
 
-  private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
-  private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  private static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
-  private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
-  private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
+  private static final boolean is4OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.0")
+  private static final boolean is67OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("6.7")
+  private static final boolean is74OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("7.4")
+  private static final boolean is80OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.0")
 
   @NotNull
   @CompileDynamic

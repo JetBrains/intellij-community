@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.internal.file.DefaultFileCollectionFactory;
 import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.IdentityFileResolver;
@@ -54,31 +55,30 @@ public abstract class DaemonAction {
   @NotNull
   protected static DaemonParameters getDaemonParameters(BuildLayoutParameters layout) {
     // Constructors have changed for different versions of Gradle, need to use the correct version by reflection
-    GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
-     if (gradleBaseVersion.compareTo(GradleVersion.version("6.6")) >= 0) {
+     if (GradleVersionUtil.isCurrentGradleAtLeast("6.6")) {
       // DaemonParameters(BuildLayoutResult, FileCollectionFactory) with DefaultFileCollectionFactory using
       // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
       //   PropertyHost, FileSystem) using IdentityFileResolver()
       return daemonParameters6Dot6(layout);
     }
-    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.4")) >= 0) {
+    else if (GradleVersionUtil.isCurrentGradleAtLeast("6.4")) {
       // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
       // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
       //   PropertyHost, FileSystem) using IdentityFileResolver()
       return daemonParameters6Dot4(layout);
     }
-    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.3")) >= 0) {
+    else if (GradleVersionUtil.isCurrentGradleAtLeast("6.3")) {
       // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
       // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
       //   PropertyHost, FileSystem)
       return daemonParameters6Dot3(layout);
     }
-    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.0")) >= 0) {
+    else if (GradleVersionUtil.isCurrentGradleAtLeast("6.0")) {
       // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
       // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>)
       return daemonParameters6Dot0(layout);
     }
-    else if (gradleBaseVersion.compareTo(GradleVersion.version("5.3")) >= 0) {
+    else if (GradleVersionUtil.isCurrentGradleAtLeast("5.3")) {
       // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory constructor with no parameters
       return daemonParameters5Dot3(layout);
     }

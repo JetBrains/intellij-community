@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
@@ -38,8 +39,8 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   private static final String APP_DIR_PROPERTY = "appDirName"
   // Manifest.writeTo(Writer) was deprecated since 2.14.1 version
   // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
-  private static boolean is2_14_1_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("2.14.1")
-  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
+  private static boolean is2_14_1_OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("2.14.1")
+  private static is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
 
   @Override
   boolean canBuild(String modelName) {

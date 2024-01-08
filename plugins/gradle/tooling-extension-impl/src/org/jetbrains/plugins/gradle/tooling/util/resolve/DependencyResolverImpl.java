@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -27,7 +28,6 @@ import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
-import org.gradle.util.GradleVersion;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +54,8 @@ import static java.util.Collections.*;
 public final class DependencyResolverImpl implements DependencyResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
 
-  private static final GradleVersion GRADLE_BASE_VERSION = GradleVersion.current().getBaseVersion();
-  private static final boolean IS_83_OR_BETTER = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("8.3")) >= 0;
-  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("4.5")) >= 0;
+  private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
+  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE = GradleVersionUtil.isCurrentGradleAtLeast("4.5");
 
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;

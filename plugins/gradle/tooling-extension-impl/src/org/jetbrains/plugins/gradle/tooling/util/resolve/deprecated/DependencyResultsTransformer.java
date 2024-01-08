@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -18,7 +19,6 @@ import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.internal.impldep.com.google.common.io.Files;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
@@ -39,8 +39,8 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.Depre
 @Deprecated
 public class DependencyResultsTransformer {
 
-  private static final boolean is31orBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.1")) >= 0;
-  private static final boolean is46rBetter = is31orBetter && GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) >= 0;
+  private static final boolean is31orBetter = GradleVersionUtil.isCurrentGradleAtLeast("3.1");
+  private static final boolean is46rBetter = is31orBetter && GradleVersionUtil.isCurrentGradleAtLeast("4.6");
 
 
   private final @NotNull ModelBuilderContext myContext;

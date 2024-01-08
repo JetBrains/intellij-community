@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.UnknownConfigurationException;
@@ -12,7 +13,6 @@ import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.SettingsInternal;
 import org.gradle.api.internal.artifacts.DependencyResolutionServices;
 import org.gradle.api.internal.catalog.DefaultVersionCatalogBuilder;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
@@ -80,7 +80,7 @@ public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
 
   @Override
   public boolean canBuild(String modelName) {
-    return VersionCatalogsModel.class.getName().equals(modelName) && GradleVersion.current().compareTo(GradleVersion.version("7.0")) >= 0;
+    return VersionCatalogsModel.class.getName().equals(modelName) && GradleVersionUtil.isCurrentGradleAtLeast("7.0");
   }
 
   @Override

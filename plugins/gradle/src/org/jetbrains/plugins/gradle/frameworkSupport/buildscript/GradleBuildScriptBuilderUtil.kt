@@ -3,13 +3,14 @@
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
 
 fun GradleVersion.isGradleAtLeast(version: String): Boolean =
-  baseVersion >= GradleVersion.version(version)
+  GradleVersionUtil.isGradleAtLeast(this, version)
 
 fun GradleVersion.isGradleOlderThan(version: String): Boolean =
-  baseVersion < GradleVersion.version(version)
+  GradleVersionUtil.isGradleOlderThan(this, version)
 
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
   return when {

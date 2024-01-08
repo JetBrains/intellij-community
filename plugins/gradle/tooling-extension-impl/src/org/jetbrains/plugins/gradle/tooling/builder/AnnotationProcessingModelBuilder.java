@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
@@ -12,7 +13,6 @@ import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
@@ -28,10 +28,10 @@ import java.util.*;
 
 public class AnnotationProcessingModelBuilder extends AbstractModelBuilderService {
 
-  private static final boolean isAtLeastGradle3_4 = GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0;
-  private static final boolean isAtLeastGradle4_3 = isAtLeastGradle3_4 && GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0;
-  private static final boolean isAtLeastGradle4_5 = isAtLeastGradle4_3 && GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0;
-  private static final boolean isAtLeastGradle6_3 = isAtLeastGradle4_3 && GradleVersion.current().compareTo(GradleVersion.version("6.3")) >= 0;
+  private static final boolean isAtLeastGradle3_4 = GradleVersionUtil.isCurrentGradleAtLeast("3.4");
+  private static final boolean isAtLeastGradle4_3 = isAtLeastGradle3_4 && GradleVersionUtil.isCurrentGradleAtLeast("4.3");
+  private static final boolean isAtLeastGradle4_5 = isAtLeastGradle4_3 && GradleVersionUtil.isCurrentGradleAtLeast("4.5");
+  private static final boolean isAtLeastGradle6_3 = isAtLeastGradle4_3 && GradleVersionUtil.isCurrentGradleAtLeast("6.3");
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {

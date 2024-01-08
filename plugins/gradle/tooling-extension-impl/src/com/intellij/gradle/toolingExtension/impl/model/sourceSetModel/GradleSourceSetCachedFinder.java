@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.initialization.IncludedBuild;
@@ -11,7 +12,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.composite.internal.DefaultIncludedBuild;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
@@ -28,9 +28,8 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
 
 public class GradleSourceSetCachedFinder {
 
-  private static final @NotNull GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
-  private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
-  private static final boolean is73OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("7.3")) >= 0;
+  private static final boolean is51OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("5.1");
+  private static final boolean is73OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("7.3");
 
   private final @NotNull ArtifactsMap myArtifactsMap;
   private final @NotNull ConcurrentMap<String, Set<File>> mySourceMap;
@@ -74,7 +73,7 @@ public class GradleSourceSetCachedFinder {
     Map<String, String> sourceSetOutputDirsToArtifactsMap = new HashMap<>();
     List<Project> projects = new ArrayList<>(gradle.getRootProject().getAllprojects());
     boolean isCompositeBuildsSupported = isIsNewDependencyResolutionApplicable() ||
-                                         GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.1")) >= 0;
+                                         GradleVersionUtil.isCurrentGradleAtLeast("3.1");
     if (isCompositeBuildsSupported) {
       projects.addAll(exposeIncludedBuilds(gradle));
     }

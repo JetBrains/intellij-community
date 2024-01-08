@@ -11,7 +11,6 @@ import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.internal.metaobject.AbstractDynamicObject;
 import org.gradle.internal.metaobject.DynamicObject;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,12 +18,11 @@ import java.io.File;
 
 public final class GradleNegotiationUtil {
 
-  private static final GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
-  private static final boolean is33OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("3.3")) >= 0;
-  private static final boolean is37OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("3.7")) >= 0;
-  private static final boolean is45OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("4.5")) >= 0;
-  private static final boolean is49OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("4.9")) >= 0;
-  private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
+  private static final boolean is33OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("3.3");
+  private static final boolean is37OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("3.7");
+  private static final boolean is45OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.5");
+  private static final boolean is49OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.9");
+  private static final boolean is51OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("5.1");
 
   /**
    * Right now, there is no public API available to get this identityPath

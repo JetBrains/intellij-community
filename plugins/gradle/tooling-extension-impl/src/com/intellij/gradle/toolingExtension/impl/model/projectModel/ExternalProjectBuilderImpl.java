@@ -7,11 +7,11 @@ import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +37,7 @@ import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.ge
 @ApiStatus.Internal
 public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
-  private static final GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
-  public static final boolean is44OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("4.4")) >= 0;
+  public static final boolean is44OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.4");
 
   @Override
   public boolean canBuild(@NotNull String modelName) {

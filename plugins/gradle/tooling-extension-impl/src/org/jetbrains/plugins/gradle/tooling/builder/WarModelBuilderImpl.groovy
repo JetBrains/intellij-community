@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
@@ -29,9 +30,8 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
 
   private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
-  private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
-  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
-
+  private static is4OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.0")
+  private static is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
 
   @Override
   boolean canBuild(String modelName) {

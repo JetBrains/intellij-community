@@ -6,6 +6,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -561,21 +562,29 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {
-    return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) < 0;
+    return GradleVersionUtil.isGradleOlderThan(getCurrentGradleBaseVersion(), ver);
   }
 
+  /**
+   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
+   */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isGradleOlderOrSameAs(@NotNull String ver) {
-    return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) <= 0;
+    return GradleVersionUtil.isGradleOlderOrSameAs(getCurrentGradleBaseVersion(), ver);
   }
 
   protected boolean isGradleAtLeast(@NotNull String ver) {
-    return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) >= 0;
+    return GradleVersionUtil.isGradleAtLeast(getCurrentGradleBaseVersion(), ver);
   }
 
+  /**
+   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
+   */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isGradleNewerThan(@NotNull String ver) {
-    return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) > 0;
+    return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
   }
 
   protected boolean isNewDependencyResolutionApplicable() {

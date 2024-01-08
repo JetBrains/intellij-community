@@ -6,6 +6,7 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
@@ -57,8 +58,8 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     if (!isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         rootCauseText.startsWith("org.gradle.api.GradleException: Unable to start the daemon process.") &&
         rootCauseText.contains("FAILURE: Build failed with an exception.") &&
-        gradleVersionUsed != null && gradleVersionUsed.baseVersion <= GradleVersion.version("4.6")) {
-      if (gradleVersionUsed.baseVersion < GradleVersion.version("3.0")) {
+        gradleVersionUsed != null && GradleVersionUtil.isGradleOlderOrSameAs(gradleVersionUsed, "4.6")) {
+      if (GradleVersionUtil.isGradleOlderThan(gradleVersionUsed, "3.0")) {
         unableToStartDaemonProcessForJDK9 = true
       }
       else {
