@@ -13,15 +13,19 @@ private val logger = logger<IdService>()
 
 @Service(Service.Level.APP)
 @State(name = "AEIdeId", storages = [Storage("aeIdeId.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
-class IdService : PersistentStateComponent<IdService.State> {
-  data class State(
-    var id: String = UUID.randomUUID().toString()
-  )
+class IdService : PersistentStateComponentWithModificationTracker<IdService.State> {
+  class State: BaseState() {
+    var id: String? by string("undefined")
+  }
+
   companion object {
     fun getInstance() = ApplicationManager.getApplication().service<IdService>()
   }
 
-  val id get() = state.id
+  val id get() = state.id ?: run {
+    logger.error("id was not defined")
+    "undefined"
+  }
 
   val machineId by lazy { MachineIdManager.getAnonymizedMachineId("com.intellij.platform.ae.database", "salty") ?: "undefined" }
 
@@ -40,8 +44,13 @@ class IdService : PersistentStateComponent<IdService.State> {
   private var myState = State()
 
   override fun getState() = myState
+  override fun getStateModificationCount() = state.modificationCount
 
   override fun loadState(state: State) {
     myState = state
+  }
+
+  override fun noStateLoaded() {
+    myState.id = UUID.randomUUID().toString()
   }
 }
