@@ -129,7 +129,8 @@ public final class JavaMultiReleaseUtil {
    * null if the given file is not a version-specific file from a library, or a corresponding version is not supported by current IDE.
    */
   public static @Nullable LanguageLevel getVersion(@NotNull PsiFile file) {
-    return getVersion(file.getVirtualFile());
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile == null ? null : getVersion(virtualFile);
   }
 
   /**
