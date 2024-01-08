@@ -57,7 +57,10 @@ import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.TimedDeadzone
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -626,16 +629,6 @@ private class EditorTabs(
   private inner class EditorTabLabel(info: TabInfo) : SingleHeightLabel(this, info) {
     init {
       updateFont()
-    }
-
-    override fun processMouseEvent(e: MouseEvent) {
-      MouseEventAdapter.redispatch(e, scrollBar)
-      super.processMouseEvent(e)
-    }
-
-    override fun processMouseMotionEvent(e: MouseEvent) {
-      MouseEventAdapter.redispatch(e, scrollBar)
-      super.processMouseMotionEvent(e)
     }
 
     override fun updateUI() {
