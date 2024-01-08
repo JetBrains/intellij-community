@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
@@ -34,6 +35,8 @@ import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
@@ -244,7 +247,10 @@ public class GradleExecutionHelper {
                                       @NotNull ProjectConnection connection,
                                       @NotNull CancellationToken cancellationToken) {
     long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-    try {
+    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("EnsureInstalledWrapper")
+      .startSpan();
+    try (Scope ignore = span.makeCurrent()) {
       settings.setRemoteProcessIdleTtlInMs(100);
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
@@ -282,6 +288,7 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      span.end();
       try {
         // if autoimport is active, it should be notified of new files creation as early as possible,
         // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
@@ -303,7 +310,7 @@ public class GradleExecutionHelper {
     maybeFixSystemProperties(() -> {
       BuildLauncher launcher = getBuildLauncher(connection, id, List.of("wrapper"), settings, listener);
       launcher.withCancellationToken(cancellationToken);
-      launcher.run();
+      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExecuteWrapperTask", (ignore) -> launcher.run());
       return null;
     }, projectPath);
   }
@@ -816,7 +823,10 @@ public class GradleExecutionHelper {
                                                      @Nullable CancellationToken cancellationToken,
                                                      @Nullable GradleExecutionSettings settings) {
     BuildEnvironment buildEnvironment = null;
-    try {
+    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("GetBuildEnvironment")
+      .startSpan();
+    try (Scope ignore = span.makeCurrent()) {
       ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
       if (cancellationToken != null) {
         modelBuilder.withCancellationToken(cancellationToken);
@@ -852,6 +862,9 @@ public class GradleExecutionHelper {
     }
     catch (Throwable t) {
       LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
+    }
+    finally {
+      span.end();
     }
     return buildEnvironment;
   }

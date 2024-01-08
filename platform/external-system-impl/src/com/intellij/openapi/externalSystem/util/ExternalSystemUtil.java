@@ -322,7 +322,8 @@ public final class ExternalSystemUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         var activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
-          executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator);
+          ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncProjectTask",
+                                                  (ignore) -> executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator));
         }
         finally {
           activity.finished();
@@ -464,7 +465,9 @@ public final class ExternalSystemUtil {
       resolveProjectTask.execute(indicator, taskListener);
       var endTS = System.currentTimeMillis();
       LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
-      handleSyncResult(externalProjectPath, importSpec, resolveProjectTask, eventDispatcher, finishSyncEventSupplier);
+      ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
+                                              (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
+                                                                         eventDispatcher, finishSyncEventSupplier));
     }
   }
 

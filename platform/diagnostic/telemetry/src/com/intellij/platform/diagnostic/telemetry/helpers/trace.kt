@@ -89,6 +89,10 @@ fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
   tracer.spanBuilder(spanName).useWithScopeBlocking(operation::accept)
 }
 
+fun runWithSpan(tracer: Tracer, spanName: String, parentSpan: Span, operation: Consumer<Span>) {
+  tracer.spanBuilder(spanName).setParent(Context.current().with(parentSpan)).useWithScopeBlocking(operation::accept)
+}
+
 inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().use(operation)
 }

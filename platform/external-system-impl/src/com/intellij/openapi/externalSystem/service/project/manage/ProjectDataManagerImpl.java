@@ -5,17 +5,13 @@ import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
 import com.intellij.openapi.externalSystem.statistics.Phase;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,6 +23,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +41,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
 
   private final Lock myLock = new ReentrantLock();
-
-  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
 
   public static ProjectDataManagerImpl getInstance() {
     return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
@@ -134,7 +130,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
 
-    syncMetrics.getOrStartSpan(Phase.DATA_SERVICES.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
 
     boolean importSucceeded = false;
@@ -145,7 +140,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       .syncPublisher(ProjectDataImportListener.TOPIC);
 
     topic.onImportStarted(projectPath);
-    try {
+    Span dataServicesSpan = ExternalSystemTelemetryUtil.getTracer(projectSystemId)
+      .spanBuilder("ProjectDataServices")
+      .startSpan();
+    try (Scope tracingScope = dataServicesSpan.makeCurrent()) {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
       ProjectDataService.EP_NAME.forEachExtensionSafe(dataService -> allKeys.add(dataService.getTargetDataKey()));
@@ -166,7 +164,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
           indicator.setFraction((double)count++ / size);
         }
         long startTime = System.currentTimeMillis();
-        doImportData(key, grouped.get(key), projectData, project, modelsProvider,
+        doImportData(key, grouped.get(key), projectSystemId, projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
         trace.logPerformance("Data import by " + key, System.currentTimeMillis() - startTime);
       }
@@ -175,7 +173,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         postImportTask.run();
       }
 
-      commit(modelsProvider, project, true, "Imported data", activityId);
+      commit(modelsProvider, project, true, "Imported data", activityId, projectSystemId, Span.current());
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
@@ -203,10 +201,9 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
-      syncMetrics.endSpan(Phase.DATA_SERVICES.name());
+      dataServicesSpan.end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
-      syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", project.getName()));
 
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
@@ -261,6 +258,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @SuppressWarnings({"unchecked", "rawtypes"})
   private <T> void doImportData(@NotNull Key<T> key,
                                 @NotNull Collection<? extends DataNode<?>> nodes,
+                                @Nullable ProjectSystemId projectSystemId,
                                 @Nullable final ProjectData projectData,
                                 @NotNull final Project project,
                                 @NotNull final IdeModifiableModelsProvider modifiableModelsProvider,
@@ -295,10 +293,15 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     else {
       for (ProjectDataService<?, ?> service : services) {
         final long importStartTime = System.currentTimeMillis();
-        ((ProjectDataService)service).importData(toImport, projectData, project, modifiableModelsProvider);
+        String dataServiceName = service.getClass().getSimpleName();
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "ProjectDataService", (span) -> {
+          span.setAttribute("data.service.name", dataServiceName);
+          ((ProjectDataService)service).importData(toImport, projectData, project,
+                                                   modifiableModelsProvider);
+        });
         if (LOG.isDebugEnabled()) {
           final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
-          LOG.debug(String.format("Service %s imported data in %d ms", service.getClass().getSimpleName(), importTimeInMs));
+          LOG.debug(String.format("Service %s imported data in %d ms", dataServiceName, importTimeInMs));
         }
 
         if (projectData != null) {
@@ -309,7 +312,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
           ((ProjectDataService)service).removeData(orphanIdeDataComputable, toIgnore, projectData, project, modifiableModelsProvider);
           if (LOG.isDebugEnabled()) {
             final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
-            LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+            LOG.debug(String.format("Service %s computed and removed data in %d ms", dataServiceName, removeTimeInMs));
           }
         }
       }
@@ -398,7 +401,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
       }
 
-      commit(modelsProvider, project, synchronous, "Removed data", null);
+      commit(modelsProvider, project, synchronous, "Removed data", null, projectData.getOwner(), Span.current());
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
@@ -455,23 +458,24 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                              @NotNull Project project,
                              boolean synchronous,
                              @NotNull final String commitDesc,
-                             @Nullable Long activityId) {
+                             @Nullable Long activityId,
+                             ProjectSystemId projectSystemId,
+                             @NotNull Span parentSpan) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
-        syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
-
-        if (activityId != null) {
-          ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
-        }
-        final long startTime = System.currentTimeMillis();
-        modelsProvider.commit();
-        final long timeInMs = System.currentTimeMillis() - startTime;
-        if (activityId != null) {
-          syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
-          ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
-        }
-        LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", parentSpan, (ignore) -> {
+          if (activityId != null) {
+            ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
+          }
+          final long startTime = System.currentTimeMillis();
+          modelsProvider.commit();
+          final long timeInMs = System.currentTimeMillis() - startTime;
+          if (activityId != null) {
+            ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
+          }
+          LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
+        });
       }
     });
   }
