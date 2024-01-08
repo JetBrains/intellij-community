@@ -32,12 +32,12 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.UsageTargetUtil
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -357,7 +357,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun checkHighlighting(f: VirtualFile) {
     withContext(Dispatchers.EDT) {
-      dispatchAllInvocationEventsInIdeEventQueue()
+      UIUtil.dispatchAllInvocationEvents()
       FileDocumentManager.getInstance().saveAllDocuments()
 
       MavenLog.LOG.warn("checkHighlighting started")
@@ -380,6 +380,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       MavenLog.LOG.warn("checkHighlighting: test configured")
 
       try {
+        UIUtil.dispatchAllInvocationEvents()
         myFixture!!.testHighlighting(true, false, true, f)
       }
       catch (throwable: Throwable) {
