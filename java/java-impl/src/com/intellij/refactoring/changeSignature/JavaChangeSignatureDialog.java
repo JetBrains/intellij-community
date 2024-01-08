@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -43,7 +44,6 @@ import com.intellij.refactoring.ui.JavaComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableColumnAnimator;
 import com.intellij.ui.ToolbarDecorator;
@@ -82,7 +82,6 @@ import java.util.Set;
 public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, String, JavaMethodDescriptor, ParameterTableModelItemBase<ParameterInfoImpl>, JavaParameterTableModel> {
   private @Nullable ExceptionsTableModel myExceptionsModel;
   protected Set<PsiMethod> myMethodsToPropagateExceptions;
-  private @Nullable AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
   public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
@@ -158,14 +157,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return centerPanel;
   }
 
-  @Override
-  protected void updatePropagateButtons() {
-    super.updatePropagateButtons();
-    if (myPropExceptionsButton != null) {
-      myPropExceptionsButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
-    }
-  }
-
   protected boolean mayPropagateExceptions() {
     if (myExceptionsModel == null) {
       return false;
@@ -214,7 +205,18 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(JavaRefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
+    AnAction propagateExceptionAction = new AnAction(JavaRefactoringBundle.message("changeSignature.propagate.exceptions.title"),
+                                                     null, AllIcons.Hierarchy.Supertypes) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+      }
+
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<>();
@@ -229,15 +231,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                           callback));
         chooser.get().show();
       }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
     };
-    myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
+    propagateExceptionAction.setShortcutSet(CustomShortcutSet.fromString("alt X"));
 
-    final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
+    final JPanel panel = ToolbarDecorator.createDecorator(table)
+      .addExtraAction(propagateExceptionAction)
+      .createPanel();
     panel.setBorder(JBUI.Borders.empty());
 
     myExceptionsModel.addTableModelListener(getSignatureUpdater());

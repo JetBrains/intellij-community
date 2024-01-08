@@ -141,13 +141,13 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
     }
 
     private inner class FilterPopupMenuAction(private val quickFilters: List<Q>, private val filterListener: ((Q) -> Unit)?)
-      : AnActionButton(CollaborationToolsBundle.message("review.list.filter.quick.title")),
+      : DumbAwareAction(CollaborationToolsBundle.message("review.list.filter.quick.title")),
         DumbAware {
-      override fun updateButton(e: AnActionEvent) {
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+      override fun update(e: AnActionEvent) {
         e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
       }
-
-      override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
       override fun actionPerformed(e: AnActionEvent) {
         showQuickFiltersPopup(e.inputEvent!!.component as JComponent, quickFilters, filterListener)

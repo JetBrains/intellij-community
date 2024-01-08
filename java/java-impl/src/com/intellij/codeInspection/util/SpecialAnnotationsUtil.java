@@ -9,9 +9,9 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -120,7 +120,7 @@ public final class SpecialAnnotationsUtil {
       toolbarDecorator
         .setAddIcon(IconUtil.getAddClassIcon())
         .addExtraAction(
-          new AnActionButton(JavaBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
+          new DumbAwareAction(JavaBundle.message("special.annotations.list.annotation.pattern"), null, IconUtil.getAddPatternIcon()) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern.message"),
@@ -130,14 +130,10 @@ public final class SpecialAnnotationsUtil {
                 listModel.add(selectedPattern);
               }
             }
-
-            @Override
-            public @NotNull ActionUpdateThread getActionUpdateThread() {
-              return ActionUpdateThread.EDT;
-            }
-          }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
-                                 JavaBundle.message("special.annotations.list.annotation.pattern"),
-                                 JavaBundle.message("special.annotations.list.remove.pattern"));
+          })
+        .setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
+                             JavaBundle.message("special.annotations.list.annotation.pattern"),
+                             JavaBundle.message("special.annotations.list.remove.pattern"));
     }
     final var panel = toolbarDecorator.createPanel();
     final Dimension minimumSize = acceptPatterns ? InspectionOptionsPanel.getMinimumLongListSize() : InspectionOptionsPanel.getMinimumListSize();

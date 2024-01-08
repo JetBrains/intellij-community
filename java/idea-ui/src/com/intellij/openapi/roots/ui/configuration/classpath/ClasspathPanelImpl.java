@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -68,9 +69,9 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
-  private final AnActionButton myEditButton;
+  private final AnAction myEditButton;
   private final ModuleConfigurationState myState;
-  private AnActionButton myRemoveButton;
+  private AnAction myRemoveButton;
 
   public ClasspathPanelImpl(ModuleConfigurationState state) {
     super(new BorderLayout());
@@ -196,26 +197,21 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       WHEN_FOCUSED
     );
 
-    myEditButton = new AnActionButton(JavaUiBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
+    myEditButton = new DumbAwareAction(JavaUiBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         doEdit();
       }
 
       @Override
-      public boolean isEnabled() {
+      public void update(@NotNull AnActionEvent e) {
         ClasspathTableItem<?> selectedItem = getSelectedItem();
-        return selectedItem != null && selectedItem.isEditable();
+        e.getPresentation().setEnabled(selectedItem != null && selectedItem.isEditable());
       }
 
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
       }
     };
     add(createTableWithButtons(), BorderLayout.CENTER);

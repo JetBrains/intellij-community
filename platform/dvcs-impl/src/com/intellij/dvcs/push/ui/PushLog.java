@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -771,12 +771,13 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     }
   }
 
-  private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
+  private static class MyShowDetailsAction extends DumbAwareToggleAction {
+    private boolean myEnabled;
     @NotNull private final PushSettings mySettings;
     private final @NotNull Consumer<? super Boolean> myOnUpdate;
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<? super Boolean> onUpdate) {
-      super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
+      super(DvcsBundle.message("push.show.details"), null, AllIcons.Actions.PreviewDetailsVertically);
       mySettings = project.getService(PushSettings.class);
       myOnUpdate = onUpdate;
     }
@@ -791,20 +792,25 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myEnabled);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return getValue();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setShowDetailsInPushDialog(state);
       myOnUpdate.accept(state);
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
+    void setEnabled(boolean enabled) {
       myOnUpdate.accept(enabled && getValue());
-      super.setEnabled(enabled);
+      myEnabled = enabled;
     }
   }
 }

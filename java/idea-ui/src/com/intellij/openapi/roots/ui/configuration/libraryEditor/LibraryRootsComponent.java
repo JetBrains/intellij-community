@@ -80,7 +80,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private final Computable<? extends LibraryEditor> myLibraryEditorComputable;
   private LibraryRootsComponentDescriptor myDescriptor;
   private Module myContextModule;
-  private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
   private StructureTreeModel<AbstractTreeStructure> myTreeModel;
   private final LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
 
@@ -107,11 +106,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myRootRemovalHandler = myDescriptor.createRootRemovalHandler();
     init(new LibraryTreeStructure(this, myDescriptor));
     updatePropertiesLabel();
-    onRootsChanged();
-  }
-
-  private void onRootsChanged() {
-    myAddExcludedRootActionButton.setEnabled(!getNotExcludedRoots().isEmpty());
   }
 
   @NotNull
@@ -179,9 +173,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         popupItems.add(descriptor);
       }
     }
-    myAddExcludedRootActionButton = new AddExcludedRootActionButton();
-    toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
-    toolbarDecorator.addExtraAction(new AnActionButton(JavaUiBundle.messagePointer("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
+    toolbarDecorator.addExtraAction(new AddExcludedRootActionButton());
+    toolbarDecorator.addExtraAction(new DumbAwareAction(JavaUiBundle.messagePointer("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
+      {
+        setShortcutSet(CommonShortcuts.getDelete());
+      }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final List<Object> selectedElements = getSelectedElements();
@@ -212,8 +208,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
 
       @Override
-      public void updateButton(@NotNull AnActionEvent e) {
-        super.updateButton(e);
+      public void update(@NotNull AnActionEvent e) {
         Presentation presentation = e.getPresentation();
         if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
           presentation.setText(JavaUiBundle.message("action.text.cancel.exclusion"));
@@ -226,11 +221,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public ShortcutSet getShortcut() {
-        return CommonShortcuts.getDelete();
       }
     });
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
@@ -483,7 +473,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
-      onRootsChanged();
       myTreeModel.invalidateAsync();
     }
     return rootsToAttach;
@@ -501,7 +490,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private void libraryChanged(boolean putFocusIntoTree) {
-    onRootsChanged();
     updatePropertiesLabel();
     myTreeModel.invalidateAsync();
     if (putFocusIntoTree) {
@@ -562,9 +550,19 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return roots;
   }
 
-  private class AddExcludedRootActionButton extends AnActionButton {
+  private class AddExcludedRootActionButton extends DumbAwareAction {
     AddExcludedRootActionButton() {
       super(CommonBundle.messagePointer("button.exclude"), Presentation.NULL_STRING, AllIcons.Modules.AddExcludedRoot);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!getNotExcludedRoots().isEmpty());
     }
 
     @Override
@@ -596,11 +594,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         myLastChosen = files[0];
         libraryChanged(true);
       }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
   }
 }

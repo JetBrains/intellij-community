@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -192,7 +193,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
   }
 
-  private class CopyAction extends AnActionButton {
+  private class CopyAction extends DumbAwareAction {
     CopyAction() {
       super(JavaDebuggerBundle.messagePointer("button.copy"), JavaDebuggerBundle
         .messagePointer("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
@@ -207,8 +208,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      super.updateButton(e);
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
 

@@ -4,7 +4,7 @@ package git4idea.rebase.interactive.dialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToolbarDecorator
@@ -183,13 +182,9 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     return "reference.VersionControl.Git.RebaseCommits"
   }
 
-  private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
+  private class AnActionButtonSeparator : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
     }
 
     override fun actionPerformed(e: AnActionEvent) {
