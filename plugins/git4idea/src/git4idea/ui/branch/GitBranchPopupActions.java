@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitTag;
@@ -257,7 +258,7 @@ public final class GitBranchPopupActions {
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new RebaseAction(myProject, myRepositories, myBranchName),
+        new RebaseAction(myProject, myRepositories, myBranch),
         new MergeAction(myProject, myRepositories, myBranch),
         new Separator(),
         new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
@@ -513,7 +514,7 @@ public final class GitBranchPopupActions {
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new RebaseAction(myProject, myRepositories, myBranchName),
+        new RebaseAction(myProject, myRepositories, myBranch),
         new MergeAction(myProject, myRepositories, myBranch),
         new Separator(),
         new PullWithRebaseAction(myProject, myRepositories, myBranchName),
@@ -944,12 +945,14 @@ public final class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
+    private final @NotNull GitReference myReference;
 
-    RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull GitReference reference) {
       super(GitBundle.messagePointer("branches.rebase.current.onto.selected"));
       myProject = project;
       myRepositories = repositories;
-      myBranchName = branchName;
+      myBranchName = reference.getName();
+      myReference = reference;
     }
 
     @Override
@@ -980,8 +983,8 @@ public final class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.rebase(myRepositories, myBranchName);
+      String fullBranchName = (myReference instanceof GitBranch branch) ? branch.getFullName() : myBranchName;
+      GitBrancher.getInstance(myProject).rebase(myRepositories, fullBranchName);
     }
   }
 
