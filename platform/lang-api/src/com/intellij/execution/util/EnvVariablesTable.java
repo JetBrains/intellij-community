@@ -10,9 +10,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
@@ -288,16 +288,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  protected AnActionButton @NotNull [] createExtraActions() {
-    AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
+  protected AnAction @NotNull [] createExtraToolbarActions() {
+    AnAction copyButton = new DumbAwareAction(ActionsBundle.message("action.EditorCopy.text"), null, AllIcons.Actions.Copy) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPanel.performCopy(e.getDataContext());
       }
 
       @Override
-      public boolean isEnabled() {
-        return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT));
       }
 
       @Override
@@ -305,20 +305,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         return ActionUpdateThread.EDT;
       }
     };
-    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.MenuPaste) {
+    AnAction pasteButton = new DumbAwareAction(ActionsBundle.message("action.EditorPaste.text"), null, AllIcons.Actions.MenuPaste) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPanel.performPaste(e.getDataContext());
       }
 
       @Override
-      public boolean isEnabled() {
-        return myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT);
-      }
-
-      @Override
-      public boolean isVisible() {
-        return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT));
+        e.getPresentation().setVisible(myPanel.isPastePossible(DataContext.EMPTY_CONTEXT));
       }
 
       @Override
@@ -326,7 +322,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         return ActionUpdateThread.EDT;
       }
     };
-    return new AnActionButton[]{copyButton, pasteButton};
+    return new AnAction[]{copyButton, pasteButton};
   }
 
   public static @NotNull Map<String, String> parseEnvsFromText(String content) {

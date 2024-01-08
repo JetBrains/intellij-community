@@ -4,9 +4,9 @@ package org.jetbrains.idea.maven.server.ui
 import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -18,7 +18,7 @@ import javax.swing.SortOrder
 
 class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
-  val stop = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.stop"), AllIcons.Debugger.KillProcess) {
+  val stop = object : AnAction(MavenConfigurableBundle.message("connector.ui.stop"), null, AllIcons.Debugger.KillProcess) {
     override fun actionPerformed(e: AnActionEvent) {
       MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.KILL_MAVEN_CONNECTOR)
       val connector = tableView.selectedObject ?: return
@@ -26,29 +26,22 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
       this@ConnectorTable.refreshValues()
     }
 
-    override fun updateButton(e: AnActionEvent) {
+    override fun update(e: AnActionEvent) {
       val connector = tableView.selectedObject
-      isEnabled = connector?.state == MavenServerConnector.State.RUNNING
+      e.presentation.isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
-  val refresh = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.refresh"), AllIcons.Actions.Refresh) {
+  val refresh = object : AnAction(MavenConfigurableBundle.message("connector.ui.refresh"), null, AllIcons.Actions.Refresh) {
     override fun actionPerformed(e: AnActionEvent) {
       this@ConnectorTable.tableView.setModelAndUpdateColumns(createListModel())
       this@ConnectorTable.setModified()
     }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 
   init {
     tableView.selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
-    tableView.selectionModel.addListSelectionListener {
-      if (it.valueIsAdjusting) return@addListSelectionListener
-      val connector = tableView.selectedObject
-      stop.isEnabled = connector?.state == MavenServerConnector.State.RUNNING
-    }
   }
 
   override fun createListModel(): ListTableModel<MavenServerConnector> {
@@ -67,7 +60,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
                                                 SortOrder.DESCENDING)
   }
 
-  override fun createExtraActions(): Array<AnActionButton> {
+  override fun createExtraToolbarActions(): Array<AnAction> {
     return arrayOf(refresh, stop)
   }
 

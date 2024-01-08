@@ -8,11 +8,12 @@ import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
@@ -218,39 +219,41 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     }
 
     @Override
-    protected AnActionButton @NotNull [] createExtraActions() {
-      return myUserList
-             ? super.createExtraActions()
-             : ArrayUtil.append(super.createExtraActions(),
-                                new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Actions.Rollback) {
-                                  @Override
-                                  public void actionPerformed(@NotNull AnActionEvent e) {
-                                    stopEditing();
-                                    List<EnvironmentVariable> variables = getSelection();
-                                    for (EnvironmentVariable environmentVariable : variables) {
-                                      if (myParent.isModifiedSysEnv(environmentVariable)) {
-                                        environmentVariable.setValue(myParent.myParentDefaults.get(environmentVariable.getName()));
-                                        setModified();
-                                      }
-                                    }
-                                    getTableView().revalidate();
-                                    getTableView().repaint();
-                                  }
+    protected AnAction @NotNull [] createExtraToolbarActions() {
+      return myUserList ? super.createExtraToolbarActions() : ArrayUtil.append(
+        super.createExtraToolbarActions(),
+        new DumbAwareAction(ActionsBundle.message("action.ChangesView.Revert.text"), null, AllIcons.Actions.Rollback) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            stopEditing();
+            List<EnvironmentVariable> variables = getSelection();
+            for (EnvironmentVariable environmentVariable : variables) {
+              if (myParent.isModifiedSysEnv(environmentVariable)) {
+                environmentVariable.setValue(myParent.myParentDefaults.get(environmentVariable.getName()));
+                setModified();
+              }
+            }
+            getTableView().revalidate();
+            getTableView().repaint();
+          }
 
-                                  @Override
-                                  public boolean isEnabled() {
-                                    List<EnvironmentVariable> selection = getSelection();
-                                    for (EnvironmentVariable variable : selection) {
-                                      if (myParent.isModifiedSysEnv(variable)) return true;
-                                    }
-                                    return false;
-                                  }
+          @Override
+          public void update(@NotNull AnActionEvent e) {
+            List<EnvironmentVariable> selection = getSelection();
+            for (EnvironmentVariable variable : selection) {
+              if (myParent.isModifiedSysEnv(variable)) {
+                e.getPresentation().setEnabled(true);
+                return;
+              }
+            }
+            e.getPresentation().setEnabled(false);
+          }
 
-                                  @Override
-                                  public @NotNull ActionUpdateThread getActionUpdateThread() {
-                                    return ActionUpdateThread.EDT;
-                                  }
-                                });
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+        });
     }
 
     @Override
