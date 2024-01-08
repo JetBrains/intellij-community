@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
@@ -133,7 +133,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     actual.addAll(cmd.build().collectCommandsSynchronously())
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
-      if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {
+      if (i > 0 && !arg.contains(".encoding=")) {
         toCompare += when {
           arg.contains(File.pathSeparatorChar) -> arg.splitToSequence(File.pathSeparatorChar).map { mapPath(it) }.joinToString(":")
           arg.contains(File.separatorChar) -> mapPath(arg)
