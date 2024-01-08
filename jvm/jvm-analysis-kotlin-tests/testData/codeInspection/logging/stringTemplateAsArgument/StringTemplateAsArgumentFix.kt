@@ -23,6 +23,7 @@ class StringTemplateAsArgumentFix {
       loggerSlf4J.info("{} variable1: $variable1 {} {}", 1, 2, RuntimeException())
       loggerSlf4J.info("{} variable1: $variable1 {} {} {}", 1, 2, RuntimeException())
       loggerSlf4J.info("{} variable1: $variable1 {}", 1, 2)
+      loggerSlf4J.info("{} variable1: $variable1 {}" + "{} variable1: $variable1 {}", 1, 2, 3, 4)
   }
 
   fun getMethod() = 1

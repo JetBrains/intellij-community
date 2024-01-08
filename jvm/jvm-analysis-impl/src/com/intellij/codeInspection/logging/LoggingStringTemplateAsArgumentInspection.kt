@@ -99,8 +99,20 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         }
       }
 
-      if (stringExpression is UPolyadicExpression && isPattern(stringExpression)) {
-        parts.addAll(stringExpression.operands)
+      if (stringExpression is UPolyadicExpression && hasPattern(stringExpression)) {
+        if (isPattern(stringExpression)) {
+          parts.addAll(stringExpression.operands)
+        }
+        else {
+          for (operand in stringExpression.operands) {
+            if (isPattern(operand) && operand is UPolyadicExpression) {
+              parts.addAll(operand.operands)
+            }
+            else {
+              parts.add(operand)
+            }
+          }
+        }
       }
 
       if (parts.isEmpty()) {
@@ -153,13 +165,37 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
       }
     }
 
-    private fun isPattern(stringExpression: UPolyadicExpression): Boolean {
+    /**
+     * @param stringExpression The string expression to check.
+     * @return True if the string expression consists of patterns or string only, false otherwise.
+     */
+    private fun hasPattern(stringExpression: UPolyadicExpression): Boolean {
       //it needs to be customized for Java
-      return stringExpression is UInjectionHost &&
-             stringExpression.lang == Language.findLanguageByID("kotlin") &&
-             !stringExpression.operands.all { it is ULiteralExpression }
+      if (isPattern(stringExpression)) return true
+
+      var foundPattern = false
+      for (operand in stringExpression.operands) {
+        if(isPattern(operand)){
+          foundPattern = true
+          continue
+        }
+        if (operand is ULiteralExpression && !operand.getExpressionType().canBeText()) {
+          return false
+        }
+
+        continue
+      }
+      return foundPattern
     }
+
   }
+}
+
+private fun isPattern(stringExpression: UExpression): Boolean {
+  return stringExpression is UPolyadicExpression &&
+         stringExpression is UInjectionHost &&
+         stringExpression.lang == Language.findLanguageByID("kotlin") &&
+         !stringExpression.operands.all { it is ULiteralExpression }
 }
 
 private fun PsiType?.canBeText(): Boolean {
@@ -204,13 +240,14 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
     if (indexStringExpression == 1) {
       parametersBeforeString.add(valueArguments[0])
     }
-    val textPattern = StringBuilder()
-    val stringTemplate = valueArguments[indexStringExpression]
-    var indexOuterPlaceholder = indexStringExpression + 1
-    if (stringTemplate is UPolyadicExpression) {
-      val loggerType = getLoggerType(uCallExpression)
+    val argument = valueArguments[indexStringExpression]
 
-      for (operand in stringTemplate.operands) {
+    val textPattern = StringBuilder()
+    var indexOuterPlaceholder = indexStringExpression + 1
+    if (argument is UPolyadicExpression) {
+      val operands = flatPatterns(argument)
+      val loggerType = getLoggerType(uCallExpression)
+      for (operand in operands) {
         if (operand is ULiteralExpression && operand.isString) {
           val text = operand.value.toString()
           val countPlaceHolders = countPlaceHolders(text, loggerType)
@@ -238,7 +275,7 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
     }
     else {
       textPattern.append("{}")
-      parametersAfterString.add(stringTemplate)
+      parametersAfterString.add(argument)
     }
 
     if (indexOuterPlaceholder < valueArguments.size) {
@@ -247,6 +284,23 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
       }
     }
     return MethodContext(parametersBeforeString, parametersAfterString, textPattern)
+  }
+
+
+  private fun flatPatterns(polyadicExpression: UPolyadicExpression): List<UExpression> {
+    if (isPattern(polyadicExpression)) {
+      return polyadicExpression.operands
+    }
+    val result = mutableListOf<UExpression>()
+    for (operand in polyadicExpression.operands) {
+      if (operand is UPolyadicExpression) {
+        result.addAll(flatPatterns(operand))
+      }
+      else {
+        result.add(operand)
+      }
+    }
+    return result
   }
 
   data class MethodContext(val parametersBeforeString: MutableList<UExpression>,
