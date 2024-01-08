@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -14,7 +15,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -52,7 +56,7 @@ public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
 
   private final Object myInitialBreakpoint;
-  private final List<BreakpointPanelProvider> myBreakpointsPanelProviders;
+  private final List<BreakpointPanelProvider<?>> myBreakpointsPanelProviders;
 
   private BreakpointItemsTreeController myTreeController;
 
@@ -87,13 +91,13 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
   private final Disposable myListenerDisposable = Disposer.newDisposable();
-  private final List<ToggleActionButton> myToggleRuleActions = new ArrayList<>();
+  private final List<ToggleAction> myToggleRuleActions = new ArrayList<>();
 
   private XBreakpointManagerImpl getBreakpointManager() {
     return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider> providers) {
+  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider<?>> providers) {
     super(project);
     myProject = project;
     myBreakpointsPanelProviders = providers;
@@ -184,18 +188,18 @@ public class BreakpointsDialog extends DialogWrapper {
     return new Action[]{getOKAction(), getHelpAction()};
   }
 
-  private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
-    private final XBreakpointGroupingRule myRule;
+  private class ToggleBreakpointGroupingRuleEnabledAction extends DumbAwareToggleAction {
+    private final XBreakpointGroupingRule<?, ?> myRule;
 
-    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
-      super(rule.getPresentableName(), rule.getIcon());
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule<?, ?> rule) {
+      super(rule.getPresentableName(), null, rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override

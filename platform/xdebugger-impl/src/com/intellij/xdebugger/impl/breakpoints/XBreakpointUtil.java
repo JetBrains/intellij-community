@@ -97,8 +97,8 @@ public final class XBreakpointUtil {
     return Pair.create(null, null);
   }
 
-  public static List<BreakpointPanelProvider> collectPanelProviders() {
-    List<BreakpointPanelProvider> panelProviders = new ArrayList<>();
+  public static List<BreakpointPanelProvider<?>> collectPanelProviders() {
+    List<BreakpointPanelProvider<?>> panelProviders = new ArrayList<>();
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }

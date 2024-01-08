@@ -8,13 +8,13 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -156,7 +156,8 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
 }
 
 internal open class SquareAnActionButton(@JvmField protected val window: ToolWindowImpl)
-  : ToggleActionButton(window.stripeTitleProvider, null), DumbAware {
+  : DumbAwareToggleAction(window.stripeTitleProvider) {
+
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun isSelected(e: AnActionEvent): Boolean {

@@ -6,12 +6,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -392,9 +393,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     refreshSdkList();
   }
 
-  private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
+  private class ToggleVirtualEnvFilterButton extends DumbAwareToggleAction {
     ToggleVirtualEnvFilterButton() {
-      super(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"), Presentation.NULL_STRING, AllIcons.General.Filter);
     }
 
     @Override
@@ -411,7 +412,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -82,7 +83,6 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private boolean myShowOnlyConflicts;
   private final JPanel mySystemShortcutConflictsPanel;
-  private ToggleActionButton myShowOnlyConflictsButton;
 
   public KeymapPanel() { this(false); }
 
@@ -294,7 +294,6 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
     if (selectedKeymap == null) selectedKeymap = new KeymapImpl();
     SystemShortcuts systemShortcuts = SystemShortcuts.getInstance();
     systemShortcuts.updateKeymapConflicts(selectedKeymap);
-    myShowOnlyConflictsButton.setVisible(!systemShortcuts.getUnmutedKeymapConflicts().isEmpty());
     myActionsTree.setBaseFilter(myShowOnlyConflicts ? systemShortcuts.createKeymapConflictsActionFilter() : null);
     myActionsTree.reset(selectedKeymap, myQuickLists, myFilteringPanel.getShortcut());
     fillConflictsPanel(selectedKeymap);
@@ -356,15 +355,22 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
     group.add(new EditShortcutAction());
 
-    myShowOnlyConflictsButton = new ToggleActionButton(KeyMapBundle.messagePointer("keymap.show.system.conflicts"), AllIcons.General.ShowWarning) {
+    AnAction showConflictsAction = new DumbAwareToggleAction(KeyMapBundle.messagePointer("keymap.show.system.conflicts"),
+                                                             Presentation.NULL_STRING, AllIcons.General.ShowWarning) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
-        return myShowOnlyConflicts;
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible(!SystemShortcuts.getInstance().getUnmutedKeymapConflicts().isEmpty());
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myShowOnlyConflicts;
       }
 
       @Override
@@ -381,7 +387,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
         }
       }
     };
-    group.add(myShowOnlyConflictsButton);
+    group.add(showConflictsAction);
 
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);

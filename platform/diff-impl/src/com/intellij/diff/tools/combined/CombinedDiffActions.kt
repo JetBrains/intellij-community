@@ -14,11 +14,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.pom.Navigatable
-import com.intellij.ui.ToggleActionButton
 
 internal class CombinedNextBlockAction(private val context: DiffContext) : NextChangeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -113,13 +112,14 @@ private fun DiffContext.getCombinedDiffNavigation(): CombinedDiffNavigation? = g
 
 internal class CombinedToggleExpandByDefaultAction(private val textSettings: TextDiffSettingsHolder.TextDiffSettings,
                                                    private val foldingModels: () -> List<FoldingModelSupport>) :
-  ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
+  DumbAwareToggleAction(message("collapse.unchanged.fragments"), null, null) {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isVisible = textSettings.contextRange != -1
   }
-
-  override fun isVisible(): Boolean = textSettings.contextRange != -1
 
   override fun isSelected(e: AnActionEvent): Boolean = !textSettings.isExpandByDefault
 

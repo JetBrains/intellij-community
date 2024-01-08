@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.ToggleActionButton;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -384,16 +384,11 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
+  public static class ToggleAutoScrollAction extends DumbAwareToggleAction {
     @NotNull protected final TextDiffSettings mySettings;
 
-    @Override
-    public boolean isVisible() {
-      return super.isVisible() && !mySettings.isEnableAligningChangesMode();
-    }
-
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
-      super(DiffBundle.message("synchronize.scrolling"), AllIcons.Actions.SynchronizeScrolling);
+      super(DiffBundle.message("synchronize.scrolling"), null, AllIcons.Actions.SynchronizeScrolling);
       mySettings = settings;
     }
 
@@ -403,7 +398,13 @@ public final class TextDiffViewerUtil {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(!mySettings.isEnableAligningChangesMode());
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.isEnableSyncScroll();
     }
 
@@ -413,12 +414,12 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
+  public static class ToggleExpandByDefaultAction extends DumbAwareToggleAction {
     @NotNull protected final TextDiffSettings mySettings;
     private final FoldingModelSupport myFoldingSupport;
 
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings, @NotNull FoldingModelSupport foldingSupport) {
-      super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
+      super(DiffBundle.message("collapse.unchanged.fragments"), null, AllIcons.Actions.Collapseall);
       mySettings = settings;
       myFoldingSupport = foldingSupport;
     }
@@ -429,8 +430,9 @@ public final class TextDiffViewerUtil {
     }
 
     @Override
-    public boolean isVisible() {
-      return mySettings.getContextRange() != -1 && myFoldingSupport.isEnabled();
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(mySettings.getContextRange() != -1 && myFoldingSupport.isEnabled());
     }
 
     @Override
