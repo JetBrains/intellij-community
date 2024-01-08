@@ -4,17 +4,24 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDraftNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import java.net.URL
@@ -26,7 +33,7 @@ interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewMo
 
   val replyVm: Flow<GitLabDiscussionReplyViewModel?>
 
-  val position: Flow<GitLabNotePosition?>
+  val position: StateFlow<GitLabNotePosition?>
 
   sealed interface NoteItem {
     data class Note(val vm: GitLabNoteViewModel) : NoteItem
@@ -84,12 +91,10 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   }.modelFlow(cs, LOG)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val position: Flow<GitLabNotePosition?> = discussion.firstNote().flatMapLatest {
-    it?.position ?: flowOf(null)
-  }.distinctUntilChanged().modelFlow(cs, LOG)
-
-  private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
-    notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
+  override val position: StateFlow<GitLabNotePosition?> =
+    discussion.notes.map(List<GitLabMergeRequestNote>::firstOrNull).flatMapLatest {
+      it?.position ?: flowOf(null)
+    }.stateInNow(cs, discussion.notes.value.firstOrNull()?.position?.value)
 
   override fun changeResolvedState() {
     taskLauncher.launch {
@@ -127,5 +132,5 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
 
   override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
 
-  val position: Flow<GitLabNotePosition?> = note.position
+  val position: StateFlow<GitLabNotePosition?> = note.position
 }

@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+
+inline fun <reified T> T.classAsCoroutineName() = CoroutineName(T::class.java.name)
+
 /**
  * Prefer creating a service to supply a parent scope
  */
@@ -224,6 +227,19 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
 fun <T> Flow<T>.withInitial(initial: T): Flow<T> = flow {
   emit(initial)
   emitAll(this@withInitial)
+}
+
+/**
+ * In principle, it is an analogue of [stateIn] with [SharingStarted.Eagerly],
+ * with a notable difference being that a [defaultValue] may never be emitted if a value is already available in the source flow
+ */
+@ApiStatus.Internal
+fun <T> Flow<T>.stateInNow(cs: CoroutineScope, defaultValue: T): StateFlow<T> {
+  val result = MutableStateFlow(defaultValue)
+  cs.launchNow {
+    collect(result)
+  }
+  return result.asStateFlow()
 }
 
 /**

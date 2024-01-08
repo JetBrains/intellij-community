@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
+import java.util.concurrent.CancellationException
+
 /**
  * Represents the state of computing some value of type [T]
  *
@@ -17,6 +19,18 @@ value class ComputedResult<out T> internal constructor(
     fun <T> loading(): ComputedResult<T> = ComputedResult(null)
     fun <T> success(value: T): ComputedResult<T> = ComputedResult(Result.success(value))
     fun <T> failure(error: Throwable): ComputedResult<T> = ComputedResult(Result.failure(error))
+
+    suspend fun <T> compute(computer: suspend () -> T): ComputedResult<T>? =
+      try {
+        val result = computer()
+        success(result)
+      }
+      catch (ce: CancellationException) {
+        null
+      }
+      catch (e: Exception) {
+        failure(e)
+      }
   }
 }
 

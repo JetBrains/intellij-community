@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -17,8 +21,10 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LstRange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 
 /**
@@ -70,10 +76,13 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   init {
-    cs.launch {
-      val originalContent = fileVm.getOriginalContent()
-      setReviewHeadContent(originalContent)
-      updateRanges()
+    cs.launchNow {
+      fileVm.originalContent.collectLatest { result ->
+        result?.getOrNull()?.also {
+          setReviewHeadContent(it)
+          updateRanges()
+        }
+      }
     }
 
     documentTracker.addHandler(object : DocumentTracker.Handler {
@@ -83,15 +92,15 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     })
   }
 
-  val newDiscussions: Flow<List<ShiftedNewDiscussion>> = fileVm.newDiscussions.map {
+  val newDiscussions: StateFlow<List<ShiftedNewDiscussion>> = fileVm.newDiscussions.map {
     it.map(::ShiftedNewDiscussion)
-  }
-  val draftDiscussions: Flow<List<ShiftedDraftNote>> = fileVm.draftNotes.map {
+  }.stateInNow(cs, emptyList())
+  val draftDiscussions: StateFlow<List<ShiftedDraftNote>> = fileVm.draftNotes.map {
     it.map(::ShiftedDraftNote)
-  }
-  val discussions: Flow<List<ShiftedDiscussion>> = fileVm.discussions.map {
+  }.stateInNow(cs, emptyList())
+  val discussions: StateFlow<List<ShiftedDiscussion>> = fileVm.discussions.map {
     it.map(::ShiftedDiscussion)
-  }
+  }.stateInNow(cs, emptyList())
 
   override fun isValid(): Boolean = true
 
@@ -121,22 +130,22 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   inner class ShiftedDiscussion(val vm: GitLabMergeRequestEditorDiscussionViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+    override val isVisible: StateFlow<Boolean> = vm.isVisible
+    override val line: StateFlow<Int?> = postReviewRanges.combineState(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }
 
   inner class ShiftedDraftNote(val vm: GitLabMergeRequestEditorDraftNoteViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+    override val isVisible: StateFlow<Boolean> = vm.isVisible
+    override val line: StateFlow<Int?> = postReviewRanges.combineState(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }
 
   inner class ShiftedNewDiscussion(val vm: GitLabMergeRequestEditorNewDiscussionViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = flowOf(true)
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+    override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
+    override val line: StateFlow<Int?> = postReviewRanges.combineState(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }

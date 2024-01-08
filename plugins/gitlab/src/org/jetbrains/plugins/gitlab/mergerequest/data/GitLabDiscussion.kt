@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -24,7 +24,7 @@ interface GitLabDiscussion {
   val id: GitLabId
 
   val createdAt: Date
-  val notes: Flow<List<GitLabNote>>
+  val notes: StateFlow<List<GitLabNote>>
   val canAddDraftNotes: Boolean
 
   val canResolve: Boolean
@@ -41,7 +41,7 @@ val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
   get() = notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
 
 interface GitLabMergeRequestDiscussion : GitLabDiscussion {
-  override val notes: Flow<List<GitLabMergeRequestNote>>
+  override val notes: StateFlow<List<GitLabMergeRequestNote>>
 }
 
 private val LOG = logger<GitLabDiscussion>()
@@ -101,7 +101,7 @@ class LoadedGitLabDiscussion(
     }
   }.stateIn(cs, SharingStarted.Eagerly, discussionData.notes)
 
-  override val notes: Flow<List<GitLabMergeRequestNote>> =
+  override val notes: StateFlow<List<GitLabMergeRequestNote>> =
     loadedNotes
       .mapDataToModel(
         GitLabNoteDTO::id,
@@ -109,8 +109,7 @@ class LoadedGitLabDiscussion(
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes
-      }
-      .modelFlow(cs, LOG)
+      }.stateInNow(cs, emptyList())
 
   override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
   override val canAddDraftNotes: Boolean =

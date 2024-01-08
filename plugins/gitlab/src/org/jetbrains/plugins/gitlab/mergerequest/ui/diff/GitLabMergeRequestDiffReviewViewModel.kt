@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
@@ -30,7 +31,7 @@ interface GitLabMergeRequestDiffReviewViewModel {
 internal class GitLabMergeRequestDiffReviewViewModelImpl(
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
-  discussionsViewOption: Flow<DiscussionsViewOption>,
+  discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestDiffReviewViewModel {
 
