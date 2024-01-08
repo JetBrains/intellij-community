@@ -83,11 +83,16 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
             .toSet()
         }
         for (currentGroup in currentGroups) {
+          val alreadyHasWarning = mutableSetOf<Int>()
           for (firstIndex in 0..currentGroup.lastIndex) {
             for (secondIndex in firstIndex + 1..currentGroup.lastIndex) {
               if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts)) {
-                registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
-                registerProblem(holder, currentGroup[secondIndex].call, currentGroup[firstIndex].call)
+                if (alreadyHasWarning.add(firstIndex)) {
+                  registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
+                }
+                if (alreadyHasWarning.add(secondIndex)) {
+                  registerProblem(holder, currentGroup[secondIndex].call, currentGroup[firstIndex].call)
+                }
               }
             }
           }
