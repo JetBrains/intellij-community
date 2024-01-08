@@ -24,7 +24,6 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
@@ -71,7 +70,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    * Ensure that sys.path[0] is script folder, not helpers folder
    */
   @Test
-  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {})
   public void testSysPath() throws Exception {
     runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner) {
 

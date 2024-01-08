@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,8 +29,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -123,10 +119,6 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
 
-
-        final List<String> assemblyRefs = ReadAction.compute(() -> collectAssemblyReferences(fileToRunTaskIn));
-
-
         try {
           final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
 
@@ -136,7 +128,6 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
           else {
             refresher.getGenerator()
               .commandBuilder()
-              .assemblyRefs(assemblyRefs)
               .targetModule(myQualifiedName, null)
               .runGeneration(indicator);
           }
@@ -182,27 +173,6 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     return qualifiedName.startsWith("gi.repository");
   }
 
-  private List<String> collectAssemblyReferences(PsiFile file) {
-    if (!(PythonSdkFlavor.getFlavor(mySdk) instanceof IronPythonSdkFlavor)) {
-      return Collections.emptyList();
-    }
-    final List<String> result = new ArrayList<>();
-    file.accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyCallExpression(@NotNull PyCallExpression node) {
-        super.visitPyCallExpression(node);
-        // TODO: What if user loads it not by literal? We need to ask user for list of DLLs
-        if (node.isCalleeText("AddReference", "AddReferenceByPartialName", "AddReferenceByName")) {
-          final PyExpression[] args = node.getArguments();
-          if (args.length == 1 && args[0] instanceof PyStringLiteralExpression) {
-            result.add(((PyStringLiteralExpression)args[0]).getStringValue());
-          }
-        }
-      }
-    });
-    return result;
-  }
-
   /**
    * Checks if this fix can help you to generate binary stubs
    *
@@ -214,14 +184,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
         !(importStatementBase instanceof PyFromImportStatement && ((PyFromImportStatement)importStatementBase).isStarImport())) {
       return false;
     }
-    final Sdk sdk = getPythonSdk(importStatementBase);
-    if (sdk == null) {
-      return false;
-    }
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-    if (flavor instanceof IronPythonSdkFlavor) {
-      return true;
-    }
+
     return isGtk(importStatementBase);
   }
 

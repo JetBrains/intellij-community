@@ -10,12 +10,10 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.debug.PyDebuggerTask;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
 
-  @EnvTestTagsRequired(tags = {}, skipOnFlavors = IronPythonSdkFlavor.class)
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {})
   @Test
   public void test1() {
     doTest(getTestName(true) + ".py");
