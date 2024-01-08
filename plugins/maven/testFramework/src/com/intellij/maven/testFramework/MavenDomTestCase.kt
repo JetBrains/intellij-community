@@ -357,13 +357,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun checkHighlighting(f: VirtualFile) {
     withContext(Dispatchers.EDT) {
-      UIUtil.dispatchAllInvocationEvents()
-      FileDocumentManager.getInstance().saveAllDocuments()
-
       MavenLog.LOG.warn("checkHighlighting started")
-
       VirtualFileManager.getInstance().syncRefresh()
       MavenLog.LOG.warn("checkHighlighting: VFS refreshed")
+      FileDocumentManager.getInstance().saveAllDocuments()
+      UIUtil.dispatchAllInvocationEvents()
 
       val psiFile = findPsiFile(f)
 
@@ -398,8 +396,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       finally {
         MavenLog.LOG.warn("checkHighlighting finished")
       }
-
-      FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 
