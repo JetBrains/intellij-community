@@ -173,8 +173,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       Icon icon = descriptor.getToolbarIcon();
       if (icon != null) {
-        AttachItemAction action = new AttachItemAction(descriptor, descriptor.getButtonText(), icon);
-        toolbarDecorator.addExtraAction(AnActionButton.fromAction(action));
+        toolbarDecorator.addExtraAction(new AttachItemAction(descriptor, descriptor.getButtonText(), icon));
       }
       else {
         popupItems.add(descriptor);

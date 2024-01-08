@@ -25,7 +25,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
@@ -157,14 +156,13 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       else {
         String text = child.getTemplateText();
         if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
-          AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
+          AnAction button = new AnActionWrapper(child) {
             @Override
-            public void updateButton(@NotNull AnActionEvent e) {
-              getDelegate().update(e);
+            public void update(@NotNull AnActionEvent e) {
+              super.update(e);
               e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
           };
-          button.setShortcut(child.getShortcutSet());
           group.add(button);
         }
         else {

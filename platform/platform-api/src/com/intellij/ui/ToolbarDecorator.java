@@ -360,7 +360,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction action : actions) {
       if (!(action instanceof Separator)) {
-        addExtraAction(AnActionButton.fromAction(action));
+        addExtraAction(action);
       }
     }
     return this;

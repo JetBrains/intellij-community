@@ -122,8 +122,8 @@ final class AssociationsEditor implements Disposable {
     myList.setMinimumSize(new Dimension(120, 200));
     myList.getEmptyText().setText(XPathBundle.message("status.text.no.associated.files"));
     JPanel rightPanel = ToolbarDecorator.createDecorator(myList)
-      .addExtraAction(AnActionButton.fromAction(new AddAssociationActionWrapper()))
-      .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
+      .addExtraAction(new AddAssociationActionWrapper())
+      .addExtraAction(new RemoveAssociationAction())
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     final IdeaTitledBorder border =
       IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBInsets.emptyInsets());
