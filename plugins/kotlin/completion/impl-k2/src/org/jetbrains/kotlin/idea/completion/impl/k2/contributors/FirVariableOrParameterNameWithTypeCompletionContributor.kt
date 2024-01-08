@@ -200,9 +200,9 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         val isLateinitVar = (variableOrParameter as? KtProperty)?.hasModifier(KtTokens.LATEINIT_KEYWORD) == true
         if (!isLateinitVar) {
-            lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
+            lookupElement.suppressItemSelectionByCharsOnTyping = true
         }
-        lookupElement.putUserData(KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON, Unit)
+        lookupElement.hideLookupOnColon = true
 
         return lookupElement.suppressAutoInsertion()
     }

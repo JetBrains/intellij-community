@@ -166,8 +166,7 @@ class BasicCompletionSession(
 
             if (isAtFunctionLiteralStart(position)) {
                 collector.addLookupElementPostProcessor { lookupElement ->
-                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                    lookupElement
+                    lookupElement.apply { suppressItemSelectionByCharsOnTyping = true }
                 }
             }
         }
@@ -850,8 +849,7 @@ class BasicCompletionSession(
 
             addKind(KotlinCompletionKindName.DECLARATION_NAME) {
                 collector.addLookupElementPostProcessor { lookupElement ->
-                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                    lookupElement
+                    lookupElement.apply { suppressItemSelectionByCharsOnTyping = true }
                 }
             }
 

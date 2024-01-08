@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
+import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -53,7 +53,7 @@ internal class FunctionLookupElementFactory {
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
             .withTailText(getTailText(signature, options))
             .let { withCallableSignatureInfo(signature, it) }
-            .also { it.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit) }
+            .also { it.acceptOpeningBrace = true }
         return updateLookupElementBuilder(options, builder)
     }
 

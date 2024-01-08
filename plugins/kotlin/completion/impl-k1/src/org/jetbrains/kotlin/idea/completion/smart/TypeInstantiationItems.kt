@@ -268,7 +268,7 @@ class TypeInstantiationItems(
                     lookupElement = lookupElement.keepOldArgumentListOnTab()
                 }
                 if (isLambda) {
-                    lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+                    lookupElement.acceptOpeningBrace = true
                 }
             }
             lookupElement = lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.INSTANTIATION)

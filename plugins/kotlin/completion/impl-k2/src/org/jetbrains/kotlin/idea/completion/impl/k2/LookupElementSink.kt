@@ -120,5 +120,5 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
 
 private object SuppressItemSelectionByCharsOnTypingWrapper : LookupElementWrapper {
     override fun wrap(element: LookupElement): LookupElement =
-        element.apply { putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit) }
+        element.apply { suppressItemSelectionByCharsOnTyping = true }
 }

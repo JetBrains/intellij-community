@@ -187,9 +187,9 @@ class VariableOrParameterNameWithTypeCompletion(
         val typeLookupElement = type.createTypeLookupElement(factory) ?: return null
         val lookupElement = NameWithTypeLookupElementDecorator(parameterName, type.idString, typeLookupElement, shouldInsertType)
         if (!shouldInsertType) {
-            lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
+            lookupElement.suppressItemSelectionByCharsOnTyping = true
         }
-        lookupElement.putUserData(KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON, Unit)
+        lookupElement.hideLookupOnColon = true
         return lookupElement.suppressAutoInsertion()
     }
 
