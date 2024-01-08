@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -175,7 +175,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     return true
   }
 
-  override fun hashCode() = 0
+  // for cache, we need distinct hash code, but we cannot compute it by content, as we should not call iconListSupplier to compute hash code
+  override fun hashCode() = System.identityHashCode(this)
 
   fun setIcon(icon: Icon?, layer: Int) {
     setIcon(icon = icon, layer = layer, hShift = 0, vShift = 0)

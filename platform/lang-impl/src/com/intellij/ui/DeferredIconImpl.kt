@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.PowerSaveMode
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
@@ -330,13 +329,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   override fun getToolTip(composite: Boolean): String? = (scaledDelegateIcon as? IconWithToolTip)?.getToolTip(composite)
 
-  override fun equals(other: Any?): Boolean = when {
-    this === other -> true
-    other === null -> false
-    else -> scaledDelegateIcon == ((other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other)
+  override fun equals(other: Any?): Boolean {
+    return when {
+      this === other -> true
+      other !is DeferredIconImpl<*> -> false
+      else -> param == other.param
+    }
   }
 
-  override fun hashCode(): Int = Objects.hash(param, scaledDelegateIcon)
+  override fun hashCode(): Int = param.hashCode()
 
   override fun toString(): String = "Deferred. Base=$scaledDelegateIcon"
 
