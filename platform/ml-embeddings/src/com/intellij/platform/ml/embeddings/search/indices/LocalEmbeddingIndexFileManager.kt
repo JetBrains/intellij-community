@@ -93,7 +93,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
       if (!idsPath.exists() || !embeddingsPath.exists()) return@coroutineScope null
       val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
       val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
-      embeddingsPath.inputStream().use { input ->
+      embeddingsPath.inputStream().buffered().use { input ->
         ids to ids.map {
           ensureActive()
           FloatTextEmbedding(FloatArray(dimensions) {
@@ -106,7 +106,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   }
 
   fun saveIds(ids: List<String>) = lock.write {
-    idsPath.outputStream().use { output ->
+    idsPath.outputStream().buffered().use { output ->
       mapper.writer(prettyPrinter).writeValue(output, ids)
     }
   }
@@ -119,7 +119,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
         mapper.writer(prettyPrinter).writeValue(output, ids)
       }
       val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-      embeddingsPath.outputStream().use { output ->
+      embeddingsPath.outputStream().buffered().use { output ->
         embeddings.forEach { embedding ->
           ensureActive()
           embedding.values.forEach {
