@@ -543,6 +543,14 @@ fun <T : CommandChain> T.unlinkMavenProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}unlinkMavenProject ${projectPath}")
 }
 
+fun <T : CommandChain> T.downloadGradleSources(): T = apply {
+  addCommand("${CMD_PREFIX}downloadGradleSources")
+}
+
+fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}downloadMavenArtifacts $sources $docs")
+}
+
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)
