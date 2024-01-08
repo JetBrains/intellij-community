@@ -458,6 +458,9 @@
     <registryKey defaultValue="true"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
+    <registryKey defaultValue="false"
+                 description="Enable pyi tensorflow stubs in Typeshed"
+                 key="enable.tensorflow.pyi.stubs"/>
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true"
                  description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.type.hints.literal.string" defaultValue="true"
@@ -548,7 +551,8 @@
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
 
     <!-- NumPy -->
-    <typeProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider" order="before pythonDocstringTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider"
+                  order="before pythonDocstringTypeProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <resolveResultRater implementation="com.jetbrains.python.numpy.codeInsight.NumpyResolveRater"/>
@@ -568,6 +572,7 @@
     <!-- TensorFlow -->
     <importResolver implementation="com.jetbrains.python.tensorFlow.PyTensorFlowImportResolver"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.tensorFlow.PyTensorFlowModuleMembersProvider"/>
+    <pyiStubSuppressor implementation="com.jetbrains.python.tensorFlow.TensorflowPyiStubsSuppressor"/>
   </extensions>
 
 </idea-plugin>
