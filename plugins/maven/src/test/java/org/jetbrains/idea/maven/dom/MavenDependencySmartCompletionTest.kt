@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
+
+  override fun importProjectOnSetup() = true
   @Test
   fun testCompletion() = runBlocking {
     createProjectPom("""
@@ -21,6 +23,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "junit:junit")
   }
+
+
 
   @Test
   fun testInsertDependency() = runBlocking {
@@ -171,12 +175,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdThenVersion() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """.trimIndent())
-
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
@@ -216,11 +214,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -257,11 +250,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdNonExactmatch() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -283,11 +271,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdInsideManagedDependency() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -330,18 +313,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdWithManagedDependency() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
-                      <dependencyManagement>
-                        <dependencies>
-                          <dependency>
-                            <groupId>org.intellijgroup</groupId>
-                            <artifactId>intellijartifact</artifactId>
-                            <version>1.0</version>
-                          </dependency>
-                        </dependencies>
-                      </dependencyManagement>
-                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -394,22 +365,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
-                    <properties>
-                      <ioClassifier>ccc</ioClassifier>  <ioType>ttt</ioType></properties>
-                    <dependencyManagement>
-                      <dependencies>
-                        <dependency>
-                          <groupId>commons-io</groupId>
-                          <artifactId>commons-io</artifactId>
-                          <classifier>${'$'}{ioClassifier}</classifier>
-                          <type>${'$'}{ioType}</type>
-                          <version>2.4</version>
-                        </dependency>
-                      </dependencies>
-                    </dependencyManagement>
-                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>

@@ -2,27 +2,24 @@
 package org.jetbrains.idea.maven.indices;
 
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.RepositoryKind;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 
 import java.util.Collection;
 import java.util.Set;
 
-public interface MavenGAVIndex {
-  Collection<String> getGroupIds();
+public interface MavenGAVIndex extends MavenRepositoryIndex {
+  @NotNull Collection<@NotNull String> getGroupIds();
 
-  Set<String> getArtifactIds(String groupId);
+  @NotNull Set<@NotNull String> getArtifactIds(@NotNull String groupId);
 
-  Set<String> getVersions(String groupId, String artifactId);
+  @NotNull Set<@NotNull String> getVersions(@NotNull String groupId, @NotNull String artifactId);
 
-  boolean hasGroupId(String groupId);
+  boolean hasGroupId(@NotNull String groupId);
 
-  boolean hasArtifactId(String groupId, String artifactId);
+  boolean hasArtifactId(@NotNull String groupId, @NotNull String artifactId);
 
-  boolean hasVersion(String groupId, String artifactId, String version);
-
-  RepositoryKind getKind();
-
-  @Nullable MavenRepositoryInfo getRepository();
+  boolean hasVersion(@NotNull String groupId, @NotNull String artifactId, @NotNull String version);
 }

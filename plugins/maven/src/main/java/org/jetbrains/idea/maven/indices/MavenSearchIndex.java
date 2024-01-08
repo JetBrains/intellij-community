@@ -16,25 +16,28 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 
 import java.io.File;
 import java.util.Set;
 
-public interface MavenSearchIndex {
+public interface MavenSearchIndex extends MavenRepositoryIndex {
 
-  void close(boolean releaseIndexContext);
+  @Topic.AppLevel
+  Topic<IndexListener> INDEX_IS_BROKEN =
+    new Topic<>("Maven Index Broken Listener", IndexListener.class);
 
   @NlsSafe
   String getRepositoryId();
 
   File getRepositoryFile();
 
-  @Nullable MavenRepositoryInfo getRepository();
+  @NotNull
+  MavenRepositoryInfo getRepository();
 
   @NlsSafe
   String getRepositoryUrl();

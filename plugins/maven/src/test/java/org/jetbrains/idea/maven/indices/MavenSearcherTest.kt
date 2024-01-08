@@ -25,19 +25,21 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   private val JMOCK_VERSIONS = arrayOf("jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0")
   private val COMMONS_IO_VERSIONS = arrayOf("commons-io:commons-io:2.4")
 
-  private var myIndicesFixture: MavenIndicesTestFixture? = null
+  private lateinit var myIndicesFixture: MavenIndicesTestFixture
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
     myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project)
-    myIndicesFixture!!.setUp()
+    myIndicesFixture.setUp()
+    myIndicesFixture.indicesManager.scheduleUpdateContentLocalClassIndex(true)
+    myIndicesFixture.indicesManager.waitForLuceneUpdateCompleted()
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      myIndicesFixture!!.tearDown()
+      myIndicesFixture.tearDown()
     }
     catch (e: Throwable) {
       addSuppressedException(e)

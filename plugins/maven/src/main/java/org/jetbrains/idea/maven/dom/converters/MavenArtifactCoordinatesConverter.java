@@ -26,11 +26,12 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenIndexUtils;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -42,6 +43,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
@@ -56,11 +58,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     ConverterStrategy strategy = selectStrategy(context);
     boolean isValid = strategy.isValid(id, manager, context);
     if (!isValid) {
-      MavenIndex localIndex = manager.getIndex().getLocalIndex();
-      if (localIndex == null) return null;
-      Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), id, "pom", null);
+      MavenRepositoryInfo repository = MavenIndexUtils.getLocalRepository(contextProject);
+      if (repository == null) return null;
+      Path artifactPath = MavenUtil.getArtifactPath(Path.of(repository.getUrl()), id, "pom", null);
       if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile());
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile(), repository.getUrl());
         return s;
       }
       return null;
@@ -180,14 +182,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      MavenIndicesManager.getInstance(project).scheduleUpdateContentAll();
+      MavenIndicesManager.getInstance(project).scheduleUpdateContentAll(true);
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return MavenUtil.isPomFile(project, file.getVirtualFile())
-             && ContainerUtil.exists(MavenIndicesManager.getInstance(project).getIndex()
-                                       .getGAVIndices(), i -> i.getRepository() != null && !"central".equals(i.getRepository().getName()));
+             && ContainerUtil.exists(MavenIndexUtils.getRemoteRepositoriesNoResolve(project), r -> !Objects.equals(r.getName(), "central"));
     }
   }
 

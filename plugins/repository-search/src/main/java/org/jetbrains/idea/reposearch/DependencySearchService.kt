@@ -1,6 +1,7 @@
 package org.jetbrains.idea.reposearch
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CompletableDeferred
@@ -38,6 +40,7 @@ class DependencySearchService(private val project: Project) : Disposable {
   private fun localProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { it.isLocal() }
 
   private data class DeferredCacheKey(val provider: DependencySearchProvider, val cacheKey: String)
+
 
   override fun dispose() {
   }

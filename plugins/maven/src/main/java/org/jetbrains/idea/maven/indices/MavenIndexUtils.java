@@ -3,12 +3,13 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -96,12 +97,6 @@ public final class MavenIndexUtils {
     }
   }
 
-  @NotNull
-  public static Map<String, Set<String>> getRemoteRepositoryIdsByUrl(Project project) {
-    if (project.isDisposed()) return Collections.emptyMap();
-    return getRemoteRepositoriesMap(project);
-  }
-
   @Nullable
   public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
@@ -111,17 +106,21 @@ public final class MavenIndexUtils {
            : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), RepositoryKind.LOCAL);
   }
 
-  private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    if (project.isDisposed()) {
-      return Collections.emptyMap();
-    }
+  @NotNull
+  public static List<MavenRemoteRepository> getRemoteRepositoriesNoResolve(Project project) {
 
-    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
+    if (project.isDisposed()) {
+      return Collections.emptyList();
+    }
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+
+    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(repositories);
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensionList()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
 
-    return groupRemoteRepositoriesByUrl(remoteRepositories);
+    return remoteRepositories.stream().toList();
   }
 
 
@@ -140,6 +139,16 @@ public final class MavenIndexUtils {
       pathOrUrl = pathOrUrl.substring(0, pathOrUrl.length() - 1);
     }
     return pathOrUrl;
+  }
+
+  static List<MavenRepositoryInfo> getAllRepositories(Project project) {
+    List<MavenRepositoryInfo> all = new ArrayList<>();
+    var local = getLocalRepository(project);
+    if (local != null) {
+      all.add(local);
+    }
+    all.addAll(ContainerUtil.map(getRemoteRepositoriesNoResolve(project), rr -> new MavenRepositoryInfo(rr.getId(), rr.getName(), rr.getUrl(), RepositoryKind.REMOTE)));
+    return all;
   }
 
   static class IndexPropertyHolder {

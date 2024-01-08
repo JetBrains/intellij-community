@@ -1219,6 +1219,7 @@ $libPath<caret></systemPath>
                          <dependency>
                            <groupId>junit</groupId>
                            <artifactId>junit</artifactId>
+                           <version>3.8.1</version>
                            <exclusions>
                              <<error descr="'artifactId' child tag should be defined">exclusion</error>>
                                <groupId>jmock</groupId>

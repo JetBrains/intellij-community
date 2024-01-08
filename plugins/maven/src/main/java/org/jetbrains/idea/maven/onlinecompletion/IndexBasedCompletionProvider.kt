@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.maven.indices.MavenGAVIndex
+import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -13,7 +14,7 @@ import kotlin.math.min
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) : DependencySearchProvider {
+internal class IndexBasedCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
   override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> =
     search(MavenId(searchString))
@@ -24,17 +25,18 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) 
   private fun search(mavenId: MavenId): List<RepositoryArtifactData> {
     MavenLog.LOG.debug("Index: get local maven artifacts started")
     val result = buildList {
-      for (groupId in myIndex.groupIds) {
+      val index = MavenIndicesManager.getInstance(myProject).getCommonGavIndex()
+      for (groupId in index.groupIds) {
         if (groupId == null) continue
         if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
           continue
         }
-        for (artifactId in myIndex.getArtifactIds(groupId)) {
+        for (artifactId in index.getArtifactIds(groupId)) {
           if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
             continue
           }
           if (artifactId == null) continue
-          val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
+          val info = MavenRepositoryArtifactInfo(groupId, artifactId, index.getVersions(groupId, artifactId))
           add(info)
           MavenLog.LOG.debug("Index: local maven artifact found ${info.groupId}:${info.artifactId}, completions: ${info.items.size}")
         }
@@ -42,7 +44,7 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) 
     }
     MavenLog.LOG.debug("Index: get local maven artifacts finished")
     return result
-}
+  }
 
   private fun nonExactMatches(template: String, real: String): Boolean {
     val splittedTemplate = template.split(delimiters = charArrayOf('-', '.'))
@@ -63,4 +65,4 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) 
   }
 
   override fun isLocal() = true
-  }
+}

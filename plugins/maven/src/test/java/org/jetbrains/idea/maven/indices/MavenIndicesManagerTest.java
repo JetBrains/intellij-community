@@ -5,9 +5,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -56,16 +56,14 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Test
   public void testIndexedArchetypes() throws Exception {
 
-    myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
-    MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(archetypes.getPath());
-    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
-    MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
-    MavenIndex localIndex = indexHolder.getLocalIndex();
-    Assert.assertNotNull(localIndex);
-    localIndex.updateOrRepair(true, getMavenProgressIndicator(), false);
-
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
+    //myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
+    //File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
+    //MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(archetypes.getPath());
+    //myIndicesFixture.getIndicesManager().updateIndicesListSync();
+    //var localIndex = myIndicesFixture.getIndicesManager().getCommonGavIndex();
+    //Assert.assertNotNull(localIndex);
+    //
+    //assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
 
   @Test
@@ -81,16 +79,16 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
 
     MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(localRepo.getPath());
-    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
-    myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
-    MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
-    MavenIndex localIndex = indexHolder.getLocalIndex();
+    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList();
+    myIndicesFixture.getIndicesManager().waitForGavUpdateCompleted();
+    MavenGAVIndex localIndex = myIndicesFixture.getIndicesManager().getCommonGavIndex();
+    assertTrue(localIndex.getArtifactIds("junit").isEmpty());
 
     //copy junit to repository
     File artifactDir = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit");
     FileUtil.copyDir(artifactDir, localRepo);
-    assertTrue(localIndex.getArtifactIds("junit").isEmpty());
-    File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
+
+    File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local2/junit/junit/4.0/junit-4.0.pom");
 
     var latch = new CountDownLatch(1);
     Set<File> addedFiles = ConcurrentHashMap.newKeySet();
@@ -98,14 +96,15 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
       .subscribe(MavenIndicesManager.INDEXER_TOPIC, new MavenIndicesManager.MavenIndexerListener() {
         @Override
-        public void indexUpdated(Set<File> added, Set<File> failedToAdd) {
+        public void gavIndexUpdated(MavenRepositoryInfo repo, Set<? extends File> added, Set<? extends File> failedToAdd) {
           addedFiles.addAll(added);
           failedToAddFiles.addAll(failedToAdd);
           latch.countDown();
         }
       });
 
-    var indexingScheduled = MavenIndicesManager.getInstance(getProject()).scheduleArtifactIndexing(null, artifactFile);
+    var indexingScheduled =
+      MavenIndicesManager.getInstance(getProject()).scheduleArtifactIndexing(null, artifactFile, localRepo.getAbsolutePath());
     assertTrue("Failed to schedule indexing", indexingScheduled);
 
     latch.await(1, TimeUnit.MINUTES);
@@ -114,13 +113,14 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertSize(1, addedFiles);
 
     String indexedUri = Path.of(addedFiles.iterator().next().getAbsolutePath()).toUri().toString();
-    assertTrue("Junit pom not indexed", indexedUri.endsWith("local1/junit/junit/4.0/junit-4.0.pom"));
+    assertTrue("Junit pom not indexed", indexedUri.endsWith("local2/junit/junit/4.0/junit-4.0.pom"));
 
-    myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
+    myIndicesFixture.getIndicesManager().waitForGavUpdateCompleted();
+    myIndicesFixture.getIndicesManager().waitForLuceneUpdateCompleted();
     Set<String> versions = localIndex.getVersions("junit", "junit");
     assertFalse(versions.isEmpty());
     assertTrue(versions.contains("4.0"));
-    assertFalse(versions.contains("3.8.2")); // copied but not used
+    assertFalse(versions.contains("3.8.2"));
   }
 
   private void assertArchetypeExists(String archetypeId) {

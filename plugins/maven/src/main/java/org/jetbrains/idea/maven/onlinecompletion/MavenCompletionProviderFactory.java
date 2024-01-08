@@ -23,22 +23,7 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
 
     List<DependencySearchProvider> result = new ArrayList<>();
     result.add(new ProjectModulesCompletionProvider(project));
-
-    addIndices(project, result);
-
+    result.add(new IndexBasedCompletionProvider(project));
     return result;
-  }
-
-  private static void addIndices(Project project, List<DependencySearchProvider> result) {
-    List<MavenGAVIndex> remoteIndices = MavenIndicesManager.getInstance(project).getIndex().getGAVIndices();
-    for (MavenGAVIndex index : remoteIndices) {
-      MavenRepositoryInfo repository = index.getRepository();
-      if (repository == null) continue;
-
-      if (!repository.getName().toLowerCase(Locale.ROOT).contains("central")
-          && !repository.getUrl().toLowerCase(Locale.ROOT).contains("repo.maven.apache.org/maven2")) {
-        result.add(new IndexBasedCompletionProvider(index));
-      }
-    }
   }
 }

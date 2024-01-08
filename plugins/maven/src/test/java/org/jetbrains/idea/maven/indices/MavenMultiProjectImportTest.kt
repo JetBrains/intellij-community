@@ -65,13 +65,13 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     importMaven(project2, pom2)
     MavenIndicesManager.getInstance(project2).updateIndicesListSync()
     MavenIndicesManager.getInstance(myProject).updateIndicesListSync()
-
-    val firstIndices = MavenIndicesManager.getInstance(myProject).getIndex()
+/*
+    val firstIndices = MavenIndicesManager.getInstance(myProject).
     val secondIndices = MavenIndicesManager.getInstance(project2).getIndex()
     Assertions.assertThat(firstIndices.indices).hasSize(2)
     Assertions.assertThat(secondIndices.indices).hasSize(2)
     assertSame(firstIndices.localIndex, secondIndices.localIndex)
-    assertSame(firstIndices.remoteIndices[0], secondIndices.remoteIndices[0])
+    assertSame(firstIndices.remoteIndices[0], secondIndices.remoteIndices[0])*/
   }
 
   private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {

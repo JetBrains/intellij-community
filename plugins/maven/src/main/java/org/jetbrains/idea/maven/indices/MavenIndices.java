@@ -25,8 +25,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.reposearch.DependencySearchService;
@@ -62,46 +62,6 @@ public class MavenIndices implements Disposable {
     myProject = project;
   }
 
-  void updateRepositoriesList() {
-    if (isDisposed) return;
-    updateIndicesLock.lock();
-    try {
-      Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(myProject);
-      MavenRepositoryInfo localRepository = MavenIndexUtils.getLocalRepository(myProject);
-      if (localRepository == null || myProject.isDisposed()) {
-        return;
-      }
-
-      if (myIndexHolder.isEquals(remoteRepositoryIdsByUrl.keySet(), localRepository.getUrl())) return;
-
-      MavenLog.LOG.debug("start update indices " + myIndexHolder);
-
-      MavenIndex localIndex = myIndexHolder.getLocalIndex();
-      List<MavenIndex> remoteIndices = myIndexHolder.getRemoteIndices();
-
-      if (isDisposed) return;
-      RepositoryDiffContext context = new RepositoryDiffContext(myIndexer, myIndicesDir);
-
-      RepositoryDiff<MavenIndex> localDiff = getLocalDiff(localRepository, context, localIndex);
-      RepositoryDiff<List<MavenIndex>> remoteDiff = getRemoteDiff(remoteRepositoryIdsByUrl, remoteIndices, context);
-
-      myIndexHolder = new MavenIndexHolder(remoteDiff.newIndices, localDiff.newIndices);
-      MavenLog.LOG.debug("new indices " + myIndexHolder);
-
-      if (isDisposed) closeIndices(myIndexHolder.getIndices());
-
-      indicesInit = true;
-
-      closeIndices(getOldIndices(localDiff, remoteDiff));
-      clearDependencySearchCache(myProject);
-    }
-    catch (AlreadyDisposedException | IncorrectOperationException e) {
-      myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
-    }
-    finally {
-      updateIndicesLock.unlock();
-    }
-  }
 
   public boolean isIndicesInit() {
     return indicesInit;
@@ -202,7 +162,7 @@ public class MavenIndices implements Disposable {
   static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenRepositoryInfo localRepo,
                                                  @NotNull RepositoryDiffContext context,
                                                  @Nullable MavenIndex currentLocalIndex) {
-    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.getUrl(), currentLocalIndex.getRepositoryPathOrUrl())) {
+    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.getUrl(), currentLocalIndex.getRepository().getUrl())) {
       return new RepositoryDiff<>(currentLocalIndex, null);
     }
 
@@ -217,13 +177,13 @@ public class MavenIndices implements Disposable {
     @NotNull List<MavenIndex> currentRemoteIndex,
     @NotNull RepositoryDiffContext context) {
     Map<String, MavenIndex> currentRemoteIndicesByUrls = currentRemoteIndex.stream()
-      .collect(Collectors.toMap(i -> i.getRepositoryPathOrUrl(), Function.identity()));
+      .collect(Collectors.toMap(i -> i.getRepository().getUrl(), Function.identity()));
     if (currentRemoteIndicesByUrls.keySet().equals(remoteRepositoryIdsByUrl.keySet())) {
       return new RepositoryDiff<>(currentRemoteIndex, Collections.emptyList());
     }
 
     List<MavenIndex> oldIndices = ContainerUtil
-      .filter(currentRemoteIndex, i -> !remoteRepositoryIdsByUrl.containsKey(i.getRepositoryPathOrUrl()));
+      .filter(currentRemoteIndex, i -> !remoteRepositoryIdsByUrl.containsKey(i.getRepository().getUrl()));
 
     List<MavenIndex> newMavenIndices = ContainerUtil.map(remoteRepositoryIdsByUrl
                                                            .entrySet(), e -> {
@@ -261,6 +221,13 @@ public class MavenIndices implements Disposable {
       this.newIndices = newIndices;
       this.oldIndices = oldIndices;
     }
+  }
+
+
+  //todo: move this logic and this file into MavenIndicesManager
+
+  static class UpdateRepositoryResult {
+    List<MavenIndex> mavenIndexreated;
   }
 
   static class RepositoryDiffContext {

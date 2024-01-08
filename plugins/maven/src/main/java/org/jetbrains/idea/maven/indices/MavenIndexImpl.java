@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public final class MavenIndexImpl implements MavenIndex {
+public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
 
   private static final String DATA_DIR_PREFIX = "data";
 
@@ -202,7 +202,6 @@ public final class MavenIndexImpl implements MavenIndex {
 
   @Override
   public MavenRepositoryInfo getRepository() {
-    if (myKind == RepositoryKind.ONLINE) return null;
     return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
@@ -217,7 +216,7 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   @Override
-  public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
+  public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean explicit)
     throws MavenProcessCanceledException {
     StructuredIdeActivity activity = MavenIndexUsageCollector.INDEX_UPDATE.started(null);
     boolean isSuccess = false;
@@ -247,7 +246,7 @@ public final class MavenIndexImpl implements MavenIndex {
       if (fullUpdate) {
         MavenIndexId mavenIndexId = getMavenIndexId(newDataContextDir, "update");
         try {
-          updateNexusContext(mavenIndexId, progress, multithreaded);
+          updateNexusContext(mavenIndexId, progress, explicit);
         }
         finally {
           myNexusIndexer.releaseIndex(mavenIndexId);
@@ -277,7 +276,7 @@ public final class MavenIndexImpl implements MavenIndex {
                             MavenIndexUsageCollector.IS_CENTRAL.with(myKind == RepositoryKind.REMOTE && isCentral),
                             MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == RepositoryKind.REMOTE && !isCentral),
                             MavenIndexUsageCollector.IS_SUCCESS.with(finalIsSuccess),
-                            MavenIndexUsageCollector.MANUAL.with(multithreaded)
+                            MavenIndexUsageCollector.MANUAL.with(explicit)
                           )
       );
       indexUpdateLock.unlock();
@@ -449,7 +448,7 @@ public final class MavenIndexImpl implements MavenIndex {
    */
   @Override
   @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends File> artifactFiles) {
     var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
@@ -755,7 +754,7 @@ public final class MavenIndexImpl implements MavenIndex {
     }
 
     @NotNull
-    List<AddArtifactResponse> addArtifacts(Collection<File> artifactFiles) {
+    List<AddArtifactResponse> addArtifacts(Collection<? extends File> artifactFiles) {
       return myNexusIndexer.addArtifacts(mavenIndexId, artifactFiles);
     }
 

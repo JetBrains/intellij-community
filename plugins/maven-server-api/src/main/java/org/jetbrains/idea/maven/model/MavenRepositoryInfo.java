@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenRepositoryInfo implements Serializable {
   private final String myId;
@@ -59,5 +60,21 @@ public class MavenRepositoryInfo implements Serializable {
     MavenId.append(builder, myUrl);
 
     return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MavenRepositoryInfo info = (MavenRepositoryInfo)o;
+    return Objects.equals(myId, info.myId) &&
+           Objects.equals(myName, info.myName) &&
+           Objects.equals(myUrl, info.myUrl) &&
+           myKind == info.myKind;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myId, myName, myUrl, myKind);
   }
 }

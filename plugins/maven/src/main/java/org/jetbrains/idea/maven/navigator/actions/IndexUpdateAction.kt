@@ -29,7 +29,7 @@ abstract class IndexUpdateAction : DumbAwareAction() {
 
     val manager = MavenSystemIndicesManager.getInstance()
     MavenSystemIndicesManager.getInstance().cs.launch(Dispatchers.IO + CoroutineName(this.javaClass.name)) {
-      manager.startUpdateIndex(mavenRepo)
+      manager.startUpdateLuceneIndex(mavenRepo)
     }
   }
 

@@ -140,7 +140,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   @NotNull
-  public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<File> artifactFiles) {
+  public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<? extends File> artifactFiles) {
     return perform(() -> {
       try {
         return getOrCreateWrappee().addArtifacts(mavenIndexId, new ArrayList<>(artifactFiles), ourToken);

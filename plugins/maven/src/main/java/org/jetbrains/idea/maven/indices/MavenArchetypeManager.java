@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -72,10 +73,6 @@ public class MavenArchetypeManager {
     if (!indicesManager.isInit()) {
       indicesManager.updateIndicesListSync();
     }
-    MavenIndexHolder indexHolder = indicesManager.getIndex();
-    for (MavenIndex index : indexHolder.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
 
     for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
       result.addAll(each.getArchetypes());
@@ -85,12 +82,7 @@ public class MavenArchetypeManager {
 
   public Collection<MavenArchetype> getLocalArchetypes() {
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    if (!indicesManager.isInit()) indicesManager.updateIndicesListSync();
-
-    MavenIndex localIndex = indicesManager.getIndex().getLocalIndex();
-    if (localIndex == null) return Collections.emptySet();
-
-    return localIndex.getArchetypes();
+    return Collections.emptyList();
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
@@ -178,11 +170,11 @@ public class MavenArchetypeManager {
 
   private void addToLocalIndex(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
     MavenId mavenId = new MavenId(groupId, artifactId, version);
-    MavenIndex localIndex = MavenIndicesManager.getInstance(myProject).getIndex().getLocalIndex();
-    if (localIndex == null) return;
-    Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), mavenId, "jar", null);
+    MavenRepositoryInfo localRepo = MavenIndexUtils.getLocalRepository(myProject);
+    if (localRepo == null) return;
+    Path artifactPath = MavenUtil.getArtifactPath(Path.of(localRepo.getUrl()), mavenId, "jar", null);
     if (artifactPath != null && artifactPath.toFile().exists()) {
-      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile());
+      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile(), localRepo.getUrl());
     }
   }
 

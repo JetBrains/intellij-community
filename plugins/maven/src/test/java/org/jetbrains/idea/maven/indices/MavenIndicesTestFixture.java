@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 public class MavenIndicesTestFixture {
   private final Path myDir;
@@ -68,8 +69,14 @@ public class MavenIndicesTestFixture {
 
   public void setUpAfterImport() {
     MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"));
-    getIndicesManager().scheduleUpdateIndicesList(null);
-    getIndicesManager().waitForBackgroundTasksInTests();
+    //todo: rewrite al this to coroutines
+    CompletableFuture<Void> f = new CompletableFuture<>();
+    getIndicesManager().scheduleUpdateIndicesList(() -> {
+      f.complete(null);
+      return null;
+    });
+    f.join();
+    getIndicesManager().waitForGavUpdateCompleted();
     UIUtil.dispatchAllInvocationEvents();
   }
 

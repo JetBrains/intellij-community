@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object MavenIndexUsageCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("maven.indexing", 2)
+  val GROUP = EventLogGroup("maven.indexing", 3)
 
   @JvmField
   val IS_LOCAL = EventFields.Boolean("is_local")
@@ -24,6 +24,12 @@ object MavenIndexUsageCollector : CounterUsagesCollector() {
   val MANUAL = EventFields.Boolean("manual")
 
   @JvmField
+  val GROUPS_COUNT = EventFields.RoundedInt("groups_count")
+
+  @JvmField
+  val ARTIFACTS_COUNT = EventFields.RoundedInt("artifacts_count")
+
+  @JvmField
   val INDEX_UPDATE = GROUP.registerIdeActivity("index.update",
                                                finishEventAdditionalFields = arrayOf(IS_LOCAL,
                                                                                      IS_CENTRAL,
@@ -32,10 +38,19 @@ object MavenIndexUsageCollector : CounterUsagesCollector() {
                                                                                      MANUAL))
 
   @JvmField
+  val GAV_INDEX_UPDATE = GROUP.registerIdeActivity("gav.index.update",
+                                                   finishEventAdditionalFields = arrayOf(MANUAL,
+                                                                                         IS_SUCCESS,
+                                                                                         GROUPS_COUNT,
+                                                                                         ARTIFACTS_COUNT))
+
+
+  @JvmField
   val INDEX_BROKEN = GROUP.registerEvent("index.broken")
 
   @JvmField
-  val INDEX_OPENED = GROUP.registerEvent("index.open", IS_LOCAL, IS_CENTRAL, IS_PRIVATE_REMOTE)
+  val INDEX_OPENED = GROUP.registerEvent("index.open", IS_LOCAL, IS_CENTRAL,
+                                         IS_PRIVATE_REMOTE)
 
   @JvmField
   val ADD_ARTIFACT_FROM_POM = GROUP.registerEvent("artifact.from.pom.added")

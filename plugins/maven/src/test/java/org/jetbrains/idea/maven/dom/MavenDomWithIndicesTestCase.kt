@@ -17,12 +17,14 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
@@ -59,6 +61,12 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   protected open fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(dir.toPath(), project)
   }
+
+  override suspend fun importProjectsAsync(files: List<VirtualFile>) {
+    super.importProjectsAsync(files)
+    MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted();
+  }
+
   override fun tearDown() {
     try {
       if (myIndicesFixture != null) {
@@ -80,16 +88,19 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     artifactIdsToIndex.addAll(expectedArtifactIds!!)
 
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
-      .subscribe(MavenIndicesManager.INDEXER_TOPIC, MavenIndexerListener { added, failedToAdd ->
-        artifactIdsToIndex.removeIf { artifactId: String? ->
-          ContainerUtil.exists(added) { file: File ->
-            file.path.contains(
-              artifactId!!)
+      .subscribe(MavenIndicesManager.INDEXER_TOPIC, object : MavenIndexerListener {
+        override fun gavIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {
+          artifactIdsToIndex.removeIf { artifactId: String? ->
+            added.any { file: File ->
+              file.path.contains(
+                artifactId!!)
+            }
+          }
+          if (artifactIdsToIndex.isEmpty()) {
+            latch.countDown()
           }
         }
-        if (artifactIdsToIndex.isEmpty()) {
-          latch.countDown()
-        }
+
       })
 
     action()
@@ -133,5 +144,10 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     }
 
     assertUnorderedElementsAreEqual(artifactIds, actualEvents)
+  }
+
+  override suspend fun checkHighlighting() {
+    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
+    super.checkHighlighting()
   }
 }
