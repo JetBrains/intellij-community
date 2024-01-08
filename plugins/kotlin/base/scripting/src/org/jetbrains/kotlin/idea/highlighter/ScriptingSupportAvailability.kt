@@ -5,13 +5,16 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 class ScriptingSupportAvailability: KotlinSupportAvailability {
     override fun name(): String = KotlinBaseScriptingBundle.message("scripting.support.availability.name")
 
-    override fun isSupported(ktFile: KtFile): Boolean =
-        Registry.`is`("kotlin.k2.scripting.enabled", true) ||
+    override fun isSupported(ktElement: KtElement): Boolean {
+        val ktFile = ktElement.containingFile as? KtFile ?: return true
+        return Registry.`is`("kotlin.k2.scripting.enabled", true) ||
                 !KotlinScriptingSettings.getInstance(ktFile.project).showK2SupportWarning ||
                 !ktFile.isScript()
+    }
 }

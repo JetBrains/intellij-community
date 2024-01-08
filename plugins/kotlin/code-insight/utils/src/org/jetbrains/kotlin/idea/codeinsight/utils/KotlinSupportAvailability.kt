@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 interface KotlinSupportAvailability {
@@ -17,12 +18,12 @@ interface KotlinSupportAvailability {
         private val handlers: List<KotlinSupportAvailability>
             get() = EP_NAME.extensionList
 
-        fun isSupported(ktFile: KtFile): Boolean {
-            return !handlers.any { !it.isSupported(ktFile) }
+        fun isSupported(ktElement: KtElement): Boolean {
+            return handlers.all { it.isSupported(ktElement) }
         }
 
         fun isSupported(project: Project, file: VirtualFile): Boolean {
-            return !handlers.any { !it.isSupported(project, file) }
+            return handlers.all { it.isSupported(project, file) }
         }
     }
 
@@ -31,9 +32,9 @@ interface KotlinSupportAvailability {
 
     fun isSupported(project: Project, file: VirtualFile): Boolean {
         if (!file.isValid || !file.isKotlinFileType()) return true
-        return (file.toPsiFile(project) as? KtFile)?.let(::isSupported) ?: true
+        return (file.toPsiFile(project) as? KtFile)?.let(::isSupported) != false
     }
 
-    fun isSupported(ktFile: KtFile): Boolean
+    fun isSupported(ktElement: KtElement): Boolean
 
 }

@@ -43,6 +43,8 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
             it.withAttachment("element", element)
         }
 
+        if (!KotlinSupportAvailability.isSupported(element)) return
+
         invokeChangeSignature(element, elementAtCaret as KtElement, project, editor, dataContext)
     }
 
@@ -52,7 +54,7 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
             it.withAttachment("element", element)
         }
 
-        (element.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return }
+        if (!KotlinSupportAvailability.isSupported(element)) return
 
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
         val context = dataContext?.let { CommonDataKeys.PSI_FILE.getData(it) } ?: element
