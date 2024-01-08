@@ -42,7 +42,6 @@
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />

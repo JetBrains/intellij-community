@@ -33,7 +33,6 @@
     <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />

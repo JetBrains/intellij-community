@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
