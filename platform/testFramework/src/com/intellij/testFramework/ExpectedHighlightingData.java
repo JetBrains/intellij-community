@@ -255,7 +255,6 @@ public class ExpectedHighlightingData {
                           "|effecttype=\"(?<effecttype>[A-Z]+)\"" +
                           "|fonttype=\"(?<fonttype>[0-9]+)\"" +
                           "|textAttributesKey=\"(?<textAttributesKey>(?:\\\\\"|[^\"])*)\"" +
-                          "|bundleMsg=\"(?<bundleMsg>(?:\\\\\"|[^\"])*)\"" +
                           "|tooltip=\"(?<tooltip>(?:\\\\\"|[^\"])*)\"" +
                           "))*" +
                           "\\s*(?<closed>/)?>";
@@ -281,7 +280,6 @@ public class ExpectedHighlightingData {
     String effectType = matcher.group("effecttype");
     String fontType = matcher.group("fonttype");
     String attrKey = matcher.group("textAttributesKey");
-    String bundleMessage = matcher.group("bundleMsg");
     @NlsSafe String tooltip = matcher.group("tooltip");
     boolean closed = matcher.group("closed") != null;
 
