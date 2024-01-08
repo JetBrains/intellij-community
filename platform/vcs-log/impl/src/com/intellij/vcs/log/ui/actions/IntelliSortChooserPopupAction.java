@@ -26,6 +26,8 @@ public class IntelliSortChooserPopupAction extends DefaultActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
+
     VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
