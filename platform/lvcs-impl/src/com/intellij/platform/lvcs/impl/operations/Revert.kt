@@ -7,10 +7,8 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.integration.revertion.SelectionReverter
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
-import com.intellij.platform.lvcs.impl.diff.createSelectionCalculator
 import com.intellij.platform.lvcs.impl.diff.getDiff
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
 import com.intellij.util.text.DateFormatUtil
@@ -22,16 +20,17 @@ internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGa
   val targetRevisionId = selection.leftRevision
   if (targetRevisionId == RevisionId.Current) return null
 
-  val rootEntry = runReadAction { gateway.createTransientRootEntry() }
   val commandNameSupplier = Supplier {
     return@Supplier getRevertCommandName(selection.leftItem, isOldContentUsed)
   }
 
   if (scope is ActivityScope.Selection) {
-    val calculator = createSelectionCalculator(gateway, scope, rootEntry, selection, isOldContentUsed)
+    val calculator = selection.data.getSelectionCalculator(this, gateway, scope, isOldContentUsed)
     return SelectionReverter(project, this, gateway, calculator, targetRevisionId, getEntryPath(gateway, scope), scope.from, scope.to,
                              commandNameSupplier)
   }
+
+  val rootEntry = selection.data.getRootEntry(gateway)
   val entryPath = getEntryPath(gateway, scope)
   val diff = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   return DifferenceReverter(project, this, gateway, diff, commandNameSupplier)

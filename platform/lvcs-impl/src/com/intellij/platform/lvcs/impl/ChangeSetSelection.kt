@@ -2,19 +2,19 @@
 package com.intellij.platform.lvcs.impl
 
 sealed interface ChangeSetSelection {
-  val allChangeSets: List<ChangeSetActivityItem>
+  val data: ActivityData
 
   val leftItem: ChangeSetActivityItem?
   val rightItem: ChangeSetActivityItem?
 
-  data class Single(val changeSet: ChangeSetActivityItem, override val allChangeSets: List<ChangeSetActivityItem>) : ChangeSetSelection {
+  data class Single(val changeSet: ChangeSetActivityItem, override val data: ActivityData) : ChangeSetSelection {
     override val leftItem: ChangeSetActivityItem get() = changeSet
     override val rightItem: ChangeSetActivityItem? get() = null
   }
 
   data class Interval(val leftChangeSet: ChangeSetActivityItem,
                       val rightChangeSet: ChangeSetActivityItem,
-                      override val allChangeSets: List<ChangeSetActivityItem>) : ChangeSetSelection {
+                      override val data: ActivityData) : ChangeSetSelection {
     override val leftItem: ChangeSetActivityItem get() = leftChangeSet
     override val rightItem: ChangeSetActivityItem get() = rightChangeSet
   }
@@ -28,7 +28,7 @@ fun ActivitySelection.toChangeSetSelection(): ChangeSetSelection? {
   if (selectedItems.size == 1) {
     val selectedActivityItem = selectedItems.single()
     if (selectedActivityItem is ChangeSetActivityItem) {
-      return ChangeSetSelection.Single(selectedActivityItem, allItems.filterIsInstance<ChangeSetActivityItem>())
+      return ChangeSetSelection.Single(selectedActivityItem, data)
     }
     return null
   }
@@ -36,7 +36,7 @@ fun ActivitySelection.toChangeSetSelection(): ChangeSetSelection? {
   val firstItem = selectedItems.first()
   val lastItem = selectedItems.last()
   if (firstItem is ChangeSetActivityItem && lastItem is ChangeSetActivityItem) {
-    return ChangeSetSelection.Interval(lastItem, firstItem, allItems.filterIsInstance<ChangeSetActivityItem>())
+    return ChangeSetSelection.Interval(lastItem, firstItem, data)
   }
   return null
 }

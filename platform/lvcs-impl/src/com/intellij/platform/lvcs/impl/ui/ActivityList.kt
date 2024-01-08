@@ -2,6 +2,7 @@
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.platform.lvcs.impl.ActivityData
 import com.intellij.platform.lvcs.impl.ActivityItem
 import com.intellij.platform.lvcs.impl.ActivityPresentation
 import com.intellij.platform.lvcs.impl.ActivitySelection
@@ -17,10 +18,10 @@ import java.util.*
 internal class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  private var allItems = emptyList<ActivityItem>()
+  private var data = ActivityData.EMPTY
   private var visibleItems: Set<ActivityItem>? = null
 
-  val selection: ActivitySelection get() = ActivitySelection(selectedIndices.map { model.getElementAt(it) }, allItems)
+  val selection: ActivitySelection get() = ActivitySelection(selectedIndices.map { model.getElementAt(it) }, data)
 
   init {
     cellRenderer = ActivityItemRenderer(presentationFunction)
@@ -32,10 +33,10 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
     MyDoubleClickListener().installOn(this)
   }
 
-  fun setItems(items: List<ActivityItem>) {
+  fun setData(data: ActivityData) {
     doWithPreservedSelection {
-      allItems = items
-      val filteringModel = FilteringListModel(createDefaultListModel(items))
+      this.data = data
+      val filteringModel = FilteringListModel(createDefaultListModel(data.items))
       setModel(filteringModel)
       filteringModel.setFilter { visibleItems?.contains(it) != false }
     }

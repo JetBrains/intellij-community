@@ -7,9 +7,7 @@ import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.ui.models.DirectoryChangeModel
-import com.intellij.history.integration.ui.models.SelectionCalculator
 import com.intellij.history.integration.ui.views.DirectoryChange
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.lvcs.impl.*
 
@@ -37,7 +35,7 @@ internal fun LocalHistoryFacade.getDiff(gateway: IdeaGateway,
                                         scope: ActivityScope,
                                         selection: ChangeSetSelection,
                                         isOldContentUsed: Boolean): List<Difference> {
-  val rootEntry = runReadAction { gateway.createTransientRootEntry() }
+  val rootEntry = selection.data.getRootEntry(gateway)
   val entryPath = getEntryPath(gateway, scope)
   return getDiff(rootEntry, selection, entryPath, isOldContentUsed).toList()
 }
@@ -52,16 +50,5 @@ internal fun getChanges(gateway: IdeaGateway, scope: ActivityScope, diff: List<D
       return@map DirectoryChange(DirectoryChangeModel(difference, gateway))
     }
     return@map Change(difference.getLeftContentRevision(gateway), difference.getRightContentRevision(gateway))
-  }
-}
-
-internal fun LocalHistoryFacade.createSelectionCalculator(gateway: IdeaGateway, scope: ActivityScope.Selection, rootEntry: RootEntry,
-                                                          selection: ChangeSetSelection, isOldContentUsed: Boolean): SelectionCalculator {
-  val entryPath = getEntryPath(gateway, scope)
-  val changeSets = selection.allChangeSets.map { RevisionId.ChangeSet(it.id) }
-  return object : SelectionCalculator(gateway, listOf(RevisionId.Current) + changeSets, scope.from, scope.to) {
-    override fun getEntry(revision: RevisionId): Entry? {
-      return findEntry(rootEntry, revision, entryPath, isOldContentUsed)
-    }
   }
 }

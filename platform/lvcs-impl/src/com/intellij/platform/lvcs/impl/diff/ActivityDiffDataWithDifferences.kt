@@ -3,9 +3,7 @@ package com.intellij.platform.lvcs.impl.diff
 
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
-import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.platform.lvcs.impl.*
@@ -15,14 +13,13 @@ private data class ActivityDiffDataWithDifferences(val facade: LocalHistoryFacad
                                                    val gateway: IdeaGateway,
                                                    val scope: ActivityScope,
                                                    val selection: ChangeSetSelection,
-                                                   val rootEntry: RootEntry,
                                                    val differences: List<Difference>,
                                                    val isOldContentUsed: Boolean) : ActivityDiffData {
   override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
     val fileDifferences = JBIterable.from(differences).filter { it.isFile }
     return when (scope) {
       is ActivityScope.Selection -> {
-        val calculator = facade.createSelectionCalculator(gateway, scope, rootEntry, selection, isOldContentUsed)
+        val calculator = selection.data.getSelectionCalculator(facade, gateway, scope, isOldContentUsed)
         fileDifferences.map {
           SelectionDifferenceWrapper(gateway, scope, selection, it, calculator, isOldContentUsed)
         }
@@ -45,7 +42,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
                                                isOldContentUsed: Boolean): ActivityDiffData {
-  val rootEntry = runReadAction { gateway.createTransientRootEntry() }
+  val rootEntry = selection.data.getRootEntry(gateway)
   val entryPath = getEntryPath(gateway, scope)
   val differences = if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) {
     val leftEntry = findEntry(rootEntry, selection.leftRevision, entryPath, isOldContentUsed)
@@ -55,5 +52,5 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
   else {
     getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   }
-  return ActivityDiffDataWithDifferences(this, gateway, scope, selection, rootEntry, differences, isOldContentUsed)
+  return ActivityDiffDataWithDifferences(this, gateway, scope, selection, differences, isOldContentUsed)
 }

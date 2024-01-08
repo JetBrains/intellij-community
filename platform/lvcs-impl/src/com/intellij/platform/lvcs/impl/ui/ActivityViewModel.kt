@@ -20,7 +20,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
   internal val activityProvider: ActivityProvider = LocalHistoryActivityProvider(project, gateway)
 
-  private val activityItemsFlow = MutableStateFlow<List<ActivityItem>>(emptyList())
+  private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
 
   private val scopeFilterFlow = MutableStateFlow<String?>(null)
@@ -34,8 +34,9 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
           activityProvider.loadActivityList(activityScope, filter)
         }
         withContext(Dispatchers.EDT) {
-          activityItemsFlow.value = activityItems
-          eventDispatcher.multicaster.onItemsLoadingStopped(activityItems)
+          val activityData = ActivityData(activityItems)
+          activityItemsFlow.value = activityData
+          eventDispatcher.multicaster.onItemsLoadingStopped(activityData)
         }
       }
     }
@@ -50,9 +51,9 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
     if (activityProvider.isActivityFilterSupported(activityScope)) {
       coroutineScope.launch {
-        combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, items) ->
+        combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
-          val result = activityProvider.filterActivityList(activityScope, items, filter)
+          val result = activityProvider.filterActivityList(activityScope, data, filter)
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
         }
       }
@@ -84,7 +85,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
 interface ActivityModelListener : EventListener {
   fun onItemsLoadingStarted()
-  fun onItemsLoadingStopped(items: List<ActivityItem>)
+  fun onItemsLoadingStopped(data: ActivityData)
   fun onDiffDataLoaded(diffData: ActivityDiffData?)
   fun onFilteringStarted()
   fun onFilteringStopped(result: Set<ActivityItem>?)

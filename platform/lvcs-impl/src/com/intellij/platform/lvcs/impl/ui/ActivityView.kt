@@ -97,8 +97,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(true)
         progressStripe.startLoading()
       }
-      override fun onItemsLoadingStopped(items: List<ActivityItem>) {
-        activityList.setItems(items)
+      override fun onItemsLoadingStopped(data: ActivityData) {
+        activityList.setData(data)
         activityList.updateEmptyText(false)
         progressStripe.stopLoading()
       }

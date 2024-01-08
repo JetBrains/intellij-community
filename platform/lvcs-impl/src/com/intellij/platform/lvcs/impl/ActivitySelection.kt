@@ -4,4 +4,4 @@ package com.intellij.platform.lvcs.impl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-data class ActivitySelection(val selectedItems: List<ActivityItem>, val allItems: List<ActivityItem>)
+data class ActivitySelection(val selectedItems: List<ActivityItem>, val data: ActivityData)

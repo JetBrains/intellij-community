@@ -6,7 +6,6 @@ import com.intellij.history.core.collectChanges
 import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.diff.createDiffData
@@ -42,13 +41,13 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return result
   }
 
-  override fun filterActivityList(scope: ActivityScope, items: List<ActivityItem>, activityFilter: String?): Set<ActivityItem>? {
-    val changeSets = items.filterIsInstance<ChangeSetActivityItem>().mapTo(mutableSetOf()) { it.id }
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>? {
+    val changeSets = data.items.filterIsInstance<ChangeSetActivityItem>().mapTo(mutableSetOf()) { it.id }
     if (activityFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
     val path = gateway.getPathOrUrl(fileScope.file)
-    val rootEntry = runReadAction { gateway.createTransientRootEntry() }.copy()
+    val rootEntry = data.getRootEntry(gateway).copy()
     val filteredIds = mutableSetOf<Long>()
     facade.processContents(gateway, rootEntry, path, changeSets, before = true) { changeSetId, content ->
       if (content?.contains(activityFilter, true) == true) {
@@ -56,7 +55,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
       }
       true
     }
-    return items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
+    return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
