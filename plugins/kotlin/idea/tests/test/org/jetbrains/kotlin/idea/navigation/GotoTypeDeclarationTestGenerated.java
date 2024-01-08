@@ -98,6 +98,16 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/thisInExtensionPropertyAccessor.test");
     }
 
+    @TestMetadata("typeAliasInstance.test")
+    public void testTypeAliasInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasInstance.test");
+    }
+
+    @TestMetadata("typeAliasType.test")
+    public void testTypeAliasType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasType.test");
+    }
+
     @TestMetadata("variableType.test")
     public void testVariableType() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/variableType.test");
