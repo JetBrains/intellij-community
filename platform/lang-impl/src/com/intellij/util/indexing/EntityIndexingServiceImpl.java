@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.SmartList;
@@ -108,8 +108,8 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(getBuildersOnWorkspaceChange(project, ((WorkspaceEventRescanningInfo)change).events, entityStorage));
       }
       else if (change instanceof WorkspaceEntitiesRootsChangedRescanningInfo) {
-        List<EntityReference<WorkspaceEntity>> references = ((WorkspaceEntitiesRootsChangedRescanningInfo)change).references;
-        List<@NotNull WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(entityStorage));
+        List<EntityPointer<WorkspaceEntity>> pointers = ((WorkspaceEntitiesRootsChangedRescanningInfo)change).pointers;
+        List<@NotNull WorkspaceEntity> entities = ContainerUtil.mapNotNull(pointers, (ref) -> ref.resolve(entityStorage));
         builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
       }
       else if (change instanceof BuiltRescanningInfo) {
@@ -396,8 +396,8 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   @Override
-  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityReference<WorkspaceEntity>> references) {
-    return new WorkspaceEntitiesRootsChangedRescanningInfo(references);
+  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityPointer<WorkspaceEntity>> pointers) {
+    return new WorkspaceEntitiesRootsChangedRescanningInfo(pointers);
   }
 
   @Override
@@ -427,22 +427,22 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static final class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
     @NotNull
-    private final List<EntityReference<WorkspaceEntity>> references;
+    private final List<EntityPointer<WorkspaceEntity>> pointers;
 
-    private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityReference<WorkspaceEntity>> entities) {
-      this.references = entities;
+    private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityPointer<WorkspaceEntity>> entities) {
+      this.pointers = entities;
     }
   }
 
   @Override
   public @NotNull Collection<IndexableFilesIterator> createIteratorsForOrigins(@NotNull Project project,
                                                                                @NotNull EntityStorage entityStorage,
-                                                                               @NotNull Collection<EntityReference<?>> entityReferences,
+                                                                               @NotNull Collection<EntityPointer<?>> entityPointers,
                                                                                @NotNull Collection<Sdk> sdks,
                                                                                @NotNull Collection<LibraryId> libraryIds,
                                                                                @NotNull Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders,
                                                                                @NotNull Collection<VirtualFile> filesFromIndexableSetContributors) {
-    List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(entityReferences, (ref) -> ref.resolve(entityStorage));
+    List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(entityPointers, (ref) -> ref.resolve(entityStorage));
     List<IndexableIteratorBuilder> builders = new ArrayList<>(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
 
     for (Sdk sdk : sdks) {

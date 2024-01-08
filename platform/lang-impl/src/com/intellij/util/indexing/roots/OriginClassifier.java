@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -24,7 +24,7 @@ import java.util.HashSet;
 final class OriginClassifier {
   private static final Logger LOG = Logger.getInstance(OriginClassifier.class);
   public final EntityStorage entityStorage;
-  public final Collection<EntityReference<?>> entityReferences = new HashSet<>();
+  public final Collection<EntityPointer<?>> myEntityPointers = new HashSet<>();
   public final Collection<Sdk> sdks = new HashSet<>();
   public final Collection<LibraryId> libraryIds = new HashSet<>();
   public final Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders = new SmartList<>();
@@ -58,9 +58,9 @@ final class OriginClassifier {
       return;
     }
 
-    EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
-    if (entityReference != null) {
-      entityReferences.add(entityReference);
+    EntityPointer<?> entityPointer = WorkspaceFileSetRecognizer.INSTANCE.getEntityPointer(fileSet);
+    if (entityPointer != null) {
+      myEntityPointers.add(entityPointer);
       return;
     }
 

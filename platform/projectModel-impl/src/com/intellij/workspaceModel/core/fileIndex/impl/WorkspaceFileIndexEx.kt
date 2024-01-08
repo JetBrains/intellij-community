@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.components.serviceIfCreated
@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
@@ -135,5 +135,5 @@ interface WorkspaceFileSetVisitor {
 
 @ApiStatus.Internal
 interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
-  val entitiesToReindex: Set<EntityReference<WorkspaceEntity>>
+  val entitiesToReindex: Set<EntityPointer<WorkspaceEntity>>
 }

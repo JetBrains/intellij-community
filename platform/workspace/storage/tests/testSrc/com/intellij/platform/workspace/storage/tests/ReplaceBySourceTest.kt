@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityChange
@@ -142,7 +142,7 @@ class ReplaceBySourceTest {
   fun `entity modification`() {
     val entity = builder add NamedEntity("hello2", MySource)
     replacement = createBuilderFrom(builder)
-    val replacementEntity = entity.createReference<NamedEntity>().resolve(replacement)!!
+    val replacementEntity = entity.createPointer<NamedEntity>().resolve(replacement)!!
     val modified = replacement.modifyEntity(replacementEntity) {
       myName = "Hello Alex"
     }

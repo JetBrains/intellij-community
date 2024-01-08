@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -57,7 +57,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
+        it.modifyEntity(collectionEntity.createPointer<CollectionFieldEntity>().resolve(it)!!) {
           names.add(baz)
         }
       }
@@ -71,7 +71,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
+        it.modifyEntity(collectionEntity.createPointer<CollectionFieldEntity>().resolve(it)!!) {
           names = mutableListOf(baz)
         }
       }

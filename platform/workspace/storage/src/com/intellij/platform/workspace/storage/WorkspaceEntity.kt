@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.annotations.Abstract
@@ -14,7 +14,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * Instances of [WorkspaceEntity] obtained from an [ImmutableEntityStorage] are immutable, further modifications will not affect them. This
  * means that they can be used without any locks. However, references to [WorkspaceEntity] instances must not be saved in long-living data 
  * structures, because each instance holds a reference to the whole snapshot, and this will create a memory leak. 
- * If you need to refer to entities from some caches, use [EntityReference] or [ExternalEntityMapping].
+ * If you need to refer to entities from some caches, use [EntityPointer] or [ExternalEntityMapping].
  * 
  * ## Equality and identity
  *
@@ -90,9 +90,9 @@ public interface WorkspaceEntity {
   public val entitySource: EntitySource
 
   /**
-   * Creates a reference encapsulating an internal ID of this entity. 
+   * Creates a pointer encapsulating an internal ID of this entity.
    */
-  public fun <E : WorkspaceEntity> createReference(): EntityReference<E>
+  public fun <E : WorkspaceEntity> createPointer(): EntityPointer<E>
 
   /**
    * Returns the interface describing the specific type of this entity.

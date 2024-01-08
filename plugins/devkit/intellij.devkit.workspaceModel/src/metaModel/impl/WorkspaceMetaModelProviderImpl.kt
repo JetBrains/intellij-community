@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
@@ -314,7 +314,7 @@ internal object StandardNames {
   val ENTITY_SOURCE = FqName(EntitySource::class.qualifiedName!!)
   val VIRTUAL_FILE_URL = FqName(VirtualFileUrl::class.qualifiedName!!)
   val SYMBOLIC_ENTITY_ID = FqName(SymbolicEntityId::class.qualifiedName!!)
-  val ENTITY_REFERENCE = FqName(EntityReference::class.qualifiedName!!)
+  val ENTITY_POINTER = FqName(EntityPointer::class.qualifiedName!!)
 }
 
 internal val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_ENUM)

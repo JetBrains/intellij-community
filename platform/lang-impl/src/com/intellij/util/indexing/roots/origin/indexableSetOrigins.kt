@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.origin
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
@@ -31,16 +31,16 @@ internal data class IndexableSetContributorOriginImpl(override val indexableSetC
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin
 
 internal data class ModuleAwareContentEntityOriginImpl(override val module: Module,
-                                                       override val reference: EntityReference<*>,
+                                                       override val reference: EntityPointer<*>,
                                                        override val rootHolder: IndexingRootHolder) : ModuleAwareContentEntityOrigin
 
-internal data class GenericContentEntityOriginImpl(override val reference: EntityReference<*>,
+internal data class GenericContentEntityOriginImpl(override val reference: EntityPointer<*>,
                                                    override val rootHolder: IndexingRootHolder) : GenericContentEntityOrigin
 
-internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
+internal data class ExternalEntityOriginImpl(override val reference: EntityPointer<*>,
                                              override val rootHolder: IndexingSourceRootHolder) : ExternalEntityOrigin
 
-internal data class CustomKindEntityOriginImpl(override val reference: EntityReference<*>,
+internal data class CustomKindEntityOriginImpl(override val reference: EntityPointer<*>,
                                                override val rootHolder: IndexingRootHolder) : CustomKindEntityOrigin
 
 internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>,

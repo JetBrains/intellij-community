@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts
 
 import com.intellij.java.workspace.entities.ArtifactEntity
@@ -79,7 +79,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     model.commit()
   }
 
-  private val parentPathToArtifactReferences: Map<String, List<EntityReference<ArtifactEntity>>>
+  private val parentPathToArtifactReferences: Map<String, List<EntityPointer<ArtifactEntity>>>
     get() {
       val storage = project.workspaceModel.entityStorage.current
       return (storage as ImmutableEntityStorage).cached(query)
@@ -107,7 +107,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
           processFileOrDirectoryCopyElements(artifactEntity) { entity ->
             var path = VfsUtilCore.urlToPath(entity.filePath.url)
             while (path.isNotEmpty()) {
-              add(artifactEntity.createReference<ArtifactEntity>() to path)
+              add(artifactEntity.createPointer<ArtifactEntity>() to path)
               path = PathUtil.getParentPath(path)
             }
             true

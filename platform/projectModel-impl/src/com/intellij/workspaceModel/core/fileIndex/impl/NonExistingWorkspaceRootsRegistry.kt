@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -10,7 +9,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
@@ -20,10 +19,8 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import java.util.*
 
 internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexDataImpl) {
@@ -32,20 +29,20 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
   private val nonExistingFiles = MultiMap.create<VirtualFileUrl, NonExistingFileSetData>()
   
   fun registerUrl(root: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
-    registerUrl(root, entity.createReference(), storageKind, fileSetKind)
+    registerUrl(root, entity.createPointer(), storageKind, fileSetKind)
   }
 
-  fun registerUrl(root: VirtualFileUrl, reference: EntityReference<WorkspaceEntity>, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
+  fun registerUrl(root: VirtualFileUrl, reference: EntityPointer<WorkspaceEntity>, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
     nonExistingFiles.putValue(root, NonExistingFileSetData(reference, storageKind, fileSetKind))
   }
 
   fun unregisterUrl(fileUrl: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind) {
     nonExistingFiles.removeValueIf(fileUrl) { (reference, kind) ->
-      kind == storageKind && reference.isReferenceTo(entity)
+      kind == storageKind && reference.isPointerTo(entity)
     }
   }
 
-  fun unregisterUrl(fileUrl: VirtualFileUrl, reference: EntityReference<WorkspaceEntity>, storageKind: EntityStorageKind) {
+  fun unregisterUrl(fileUrl: VirtualFileUrl, reference: EntityPointer<WorkspaceEntity>, storageKind: EntityStorageKind) {
     nonExistingFiles.removeValueIf(fileUrl) { (ref, kind) ->
       kind == storageKind && ref == reference
     }
@@ -134,7 +131,7 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     if (includingJarDirectory != null) {
       //todo handle JAR directories inside WorkspaceFileIndex instead
       storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).forEach {
-        entityChanges.addAffectedEntity(it.first.createReference(), allRootsWereRemoved)
+        entityChanges.addAffectedEntity(it.first.createPointer(), allRootsWereRemoved)
       }
       return
     }
@@ -154,7 +151,7 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
       var hasEntities = false
       indexData.processFileSets(virtualFile) {
         if (it.entityStorageKind == EntityStorageKind.MAIN) {
-          entityChanges.addAffectedEntity(it.entityReference, allRootsWereRemoved)
+          entityChanges.addAffectedEntity(it.entityPointer, allRootsWereRemoved)
         }
         hasEntities = true
       }
@@ -205,14 +202,14 @@ private class VfsChangeApplierImpl(
     }
   }
 
-  override val entitiesToReindex: Set<EntityReference<WorkspaceEntity>>
+  override val entitiesToReindex: Set<EntityPointer<WorkspaceEntity>>
     get() = entityChanges.entitiesToReindex
 }
 
 private class EntityChangeStorage {
   private var isInitialized = false
-  lateinit var entitiesToReindex: MutableSet<EntityReference<WorkspaceEntity>>
-  lateinit var affectedEntities: MutableSet<EntityReference<WorkspaceEntity>>
+  lateinit var entitiesToReindex: MutableSet<EntityPointer<WorkspaceEntity>>
+  lateinit var affectedEntities: MutableSet<EntityPointer<WorkspaceEntity>>
   lateinit var filesToInvalidate: MutableSet<VirtualFile>
   lateinit var urlsToCleanUp: MutableSet<VirtualFileUrl>
 
@@ -228,7 +225,7 @@ private class EntityChangeStorage {
 
   fun hasChanges() = isInitialized
 
-  fun addAffectedEntity(reference: EntityReference<WorkspaceEntity>, allRootsWereRemoved: Boolean) {
+  fun addAffectedEntity(reference: EntityPointer<WorkspaceEntity>, allRootsWereRemoved: Boolean) {
     init()
     affectedEntities.add(reference)
     if (!allRootsWereRemoved) {
@@ -256,7 +253,7 @@ fun getOldAndNewUrls(event: VFileEvent): Pair<String, String> {
 }
 
 internal data class NonExistingFileSetData(
-  val reference: EntityReference<WorkspaceEntity>,
+  val reference: EntityPointer<WorkspaceEntity>,
   val storageKind: EntityStorageKind,
   val fileSetKind: NonExistingFileSetKind
 )

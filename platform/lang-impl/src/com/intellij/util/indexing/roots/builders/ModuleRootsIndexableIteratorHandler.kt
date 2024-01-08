@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
@@ -60,7 +60,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     fun <E : WorkspaceEntity> registerIterators(builder: ModuleAwareCustomizedContentEntityBuilder<E>, entityStorage: EntityStorage) {
       entityStorage.resolve(builder.moduleId)?.findModule(entityStorage)?.also { module ->
         result.addAll(
-          IndexableEntityProviderMethods.createModuleAwareContentEntityIterators(module, builder.entityReference, builder.roots, builder.presentation))
+          IndexableEntityProviderMethods.createModuleAwareContentEntityIterators(module, builder.entityPointer, builder.roots, builder.presentation))
       }
     }
 

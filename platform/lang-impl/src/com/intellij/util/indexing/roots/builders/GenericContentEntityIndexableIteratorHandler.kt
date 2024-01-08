@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
@@ -20,7 +20,7 @@ class GenericContentEntityIndexableIteratorHandler : IndexableIteratorBuilderHan
     @Suppress("UNCHECKED_CAST")
     builders as Collection<GenericContentEntityBuilder<WorkspaceEntity>>
 
-    return builders.groupBy { it.entityReference }.mapNotNull { entry ->
+    return builders.groupBy { it.entityPointer }.mapNotNull { entry ->
       entry.value.fold(MutableIndexingUrlRootHolder()) { holder, builder ->
         holder.addRoots(builder.roots)
         return@fold holder

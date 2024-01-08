@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ReadAction;
@@ -68,7 +68,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     if (files.isEmpty()) return Collections.emptyList();
     OriginClassifier classifier = OriginClassifier.classify(project, files);
     Collection<IndexableFilesIterator> iterators =
-      EntityIndexingServiceEx.getInstanceEx().createIteratorsForOrigins(project, classifier.entityStorage, classifier.entityReferences,
+      EntityIndexingServiceEx.getInstanceEx().createIteratorsForOrigins(project, classifier.entityStorage, classifier.myEntityPointers,
                                                                         classifier.sdks, classifier.libraryIds,
                                                                         classifier.filesFromAdditionalLibraryRootsProviders,
                                                                         classifier.filesFromIndexableSetContributors);

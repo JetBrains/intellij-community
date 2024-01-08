@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
@@ -732,7 +732,7 @@ class ArtifactTest : ArtifactsTestCase() {
     val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
 
     WorkspaceModel.getInstance(project).updateProjectModel {
-      it.removeEntity(artifactEntity.createReference<ArtifactEntity>().resolve(it)!!)
+      it.removeEntity(artifactEntity.createPointer<ArtifactEntity>().resolve(it)!!)
     }
 
     artifactBridge.rootElement.children

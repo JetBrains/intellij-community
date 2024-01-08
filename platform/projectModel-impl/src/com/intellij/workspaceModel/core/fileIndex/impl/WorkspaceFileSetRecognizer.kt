@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
@@ -23,8 +23,8 @@ object WorkspaceFileSetRecognizer {
     return fileSet.asSafely<WorkspaceFileSetWithCustomData<*>>()?.data.asSafely<ModuleRelatedRootData>()?.module
   }
 
-  fun getEntityReference(fileSet: WorkspaceFileSet): EntityReference<*>? {
-    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference
+  fun getEntityPointer(fileSet: WorkspaceFileSet): EntityPointer<*>? {
+    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer
     if (entityReference == null) return null
     if (LibrariesAndSdkContributors.isPlaceholderReference(entityReference)) return null
     if (NonIncrementalContributors.isPlaceholderReference(entityReference)) return null

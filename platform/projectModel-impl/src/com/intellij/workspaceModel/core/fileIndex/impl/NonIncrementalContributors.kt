@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -58,8 +58,8 @@ internal class NonIncrementalContributors(private val project: Project,
       synchronized(lock) {
         if (!upToDate) {
           allRoots.forEach { file ->
-            fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
-            fileSetsByPackagePrefix.removeByPrefixAndReference("", NonIncrementalMarker)
+            fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityPointer === NonIncrementalMarker }
+            fileSetsByPackagePrefix.removeByPrefixAndPointer("", NonIncrementalMarker)
           }
           excludedUrls.forEach {
             nonExistingFilesRegistry.unregisterUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN)
@@ -174,18 +174,18 @@ internal class NonIncrementalContributors(private val project: Project,
 
   companion object {
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference is NonIncrementalMarker
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
     }
 
-    fun isPlaceholderReference(entityReference: EntityReference<WorkspaceEntity>): Boolean {
-      return entityReference is NonIncrementalMarker
+    fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {
+      return entityPointer is NonIncrementalMarker
     }
   }
 }
 
 private object SyntheticLibrarySourceRootData : ModuleOrLibrarySourceRootData
 
-private object NonIncrementalMarker : EntityReference<WorkspaceEntity> {
+private object NonIncrementalMarker : EntityPointer<WorkspaceEntity> {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
-  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
+  override fun isPointerTo(entity: WorkspaceEntity): Boolean = false
 }

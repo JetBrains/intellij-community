@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import com.intellij.openapi.diagnostic.logger
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.currentStackTrace
-import org.jetbrains.annotations.NonNls
 
 /**
  * Writeable interface to storage. 
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.NonNls
  * children.
  * 
  * In order to modify or remove an entity, you first need to find its instance in this instance of [MutableEntityStorage]. You can do this
- * by [resolving][SymbolicEntityId.resolve] its [SymbolicEntityId], or by [resolving][EntityReference.resolve] an [EntityReference], or
+ * by [resolving][SymbolicEntityId.resolve] its [SymbolicEntityId], or by [resolving][EntityPointer.resolve] an [EntityPointer], or
  * iterating by children of another entity:
  * ```
  * WorkspaceModel.getInstance(project).updateProjectModel("Update module") { builder ->

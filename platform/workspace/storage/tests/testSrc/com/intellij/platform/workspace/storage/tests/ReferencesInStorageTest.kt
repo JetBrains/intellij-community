@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -85,7 +85,7 @@ class ReferencesInStorageTest {
     builder.addEntity(parent2)
     builder.assertConsistency()
     val child = XChildEntity("child", MySource) {
-      dataClass = DataClassX("data", parent2.createReference())
+      dataClass = DataClassX("data", parent2.createPointer())
       this.parentEntity = parent1
       this.childChild = emptyList()
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.platform.workspace.storage.tests.trace
@@ -65,7 +65,7 @@ class TraceTest {
   fun `traced storage creates traced entities for resolve reference`() {
     ReadTracker.trace(snapshot) {
       val entity = it.resolve(NameId("name"))!!
-      val entityRef = entity.createReference<NamedEntity>()
+      val entityRef = entity.createPointer<NamedEntity>()
       val resolvedEntity = entityRef.resolve(it)
       val createdSnapshot = resolvedEntity!!.asBase().snapshot
       assertIs<ReadTracker>(createdSnapshot)

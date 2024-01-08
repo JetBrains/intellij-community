@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -238,16 +238,16 @@ private class SourceRootAdder : EntityAdder {
 
     entitiesToRemoveFromOrphanage.forEach {
       // This should be done before remove
-      val contentRootReference = it.contentRoot.createReference<ContentRootEntity>()
-      val moduleReference = it.contentRoot.module.createReference<ModuleEntity>()
+      val contentRootPointer = it.contentRoot.createPointer<ContentRootEntity>()
+      val modulePointer = it.contentRoot.module.createPointer<ModuleEntity>()
 
       builder.removeEntity(it)
 
-      val content = contentRootReference.resolve(builder) ?: return@forEach
+      val content = contentRootPointer.resolve(builder) ?: return@forEach
       if (content.sourceRoots.isEmpty() && content.excludedUrls.isEmpty()) {
         builder.removeEntity(content)
 
-        val module = moduleReference.resolve(builder) ?: return@forEach
+        val module = modulePointer.resolve(builder) ?: return@forEach
         if (module.contentRoots.isEmpty()) {
           builder.removeEntity(module)
         }
@@ -306,16 +306,16 @@ private class ExcludeRootAdder : EntityAdder {
   override fun cleanOrphanage(builder: MutableEntityStorage) {
     entitiesToRemoveFromOrphanage.forEach {
       // This should be done before removing
-      val moduleReference = it.contentRoot?.module?.createReference<ModuleEntity>()
-      val contentReference = it.contentRoot?.createReference<ContentRootEntity>()
+      val modulePointer = it.contentRoot?.module?.createPointer<ModuleEntity>()
+      val contentPointer = it.contentRoot?.createPointer<ContentRootEntity>()
 
       builder.removeEntity(it)
 
-      val content = contentReference?.resolve(builder) ?: return@forEach
+      val content = contentPointer?.resolve(builder) ?: return@forEach
       if (content.excludedUrls.isEmpty() && content.sourceRoots.isEmpty()) {
         builder.removeEntity(content)
 
-        val module = moduleReference?.resolve(builder) ?: return@forEach
+        val module = modulePointer?.resolve(builder) ?: return@forEach
         if (module.contentRoots.isEmpty()) {
           builder.removeEntity(module)
         }

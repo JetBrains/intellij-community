@@ -4,19 +4,19 @@ package com.intellij.platform.workspace.storage
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents a reference to an entity which can be stored outside [EntityStorage].
+ * Represents a pointer to an entity which can be stored outside [EntityStorage].
  *
- * The reference can be obtained via [WorkspaceEntity.createReference]. An instance of this class stores an internal ID of the entity,
- * and doesn't contain reference to the original storage, so it's ok to store them in long-living data structures, this won't create a 
+ * The pointer can be obtained via [WorkspaceEntity.createPointer]. An instance of this class stores an internal ID of the entity,
+ * and doesn't contain pointer to the original storage, so it's ok to store them in long-living data structures, this won't create a
  * memory leak.
  *
- * The reference will resolve to the same entity for the same storage, and will survive [modifications][MutableEntityStorage.modifyEntity],
- * but if the entity is removed or replaced by a different one by [MutableEntityStorage.replaceBySource], the reference may either 
+ * The pointer will resolve to the same entity for the same storage, and will survive [modifications][MutableEntityStorage.modifyEntity],
+ * but if the entity is removed or replaced by a different one by [MutableEntityStorage.replaceBySource], the pointer may either
  * resolve to `null` or resolve to a completely different entity which reused the same internal ID. So if you need to be sure that the
- * reference resolves to the original entity, you need to also subscribe to changes in the storage.
+ * pointer resolves to the original entity, you need to also subscribe to changes in the storage.
  */
 @ApiStatus.NonExtendable
-public interface EntityReference<out E : WorkspaceEntity> {
+public interface EntityPointer<out E : WorkspaceEntity> {
   /**
    * Returns an entity corresponding to this reference in [storage] or `null` if there is no such entity.
    */
@@ -31,5 +31,5 @@ public interface EntityReference<out E : WorkspaceEntity> {
   // The need for this @UnsafeVariance annotation is discussed here KT-24214
   //   The ticket contains a reference to the description of a very similar case where explained why such
   //   cases don't always break the type variance.
-  public fun isReferenceTo(entity: @UnsafeVariance E): Boolean
+  public fun isPointerTo(entity: @UnsafeVariance E): Boolean
 }

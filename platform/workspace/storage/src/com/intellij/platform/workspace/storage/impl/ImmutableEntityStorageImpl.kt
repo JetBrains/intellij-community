@@ -35,18 +35,18 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E> {
+internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityPointer<E> {
   override fun resolve(storage: EntityStorage): E? {
     storage as EntityStorageInstrumentation
     return storage.resolveReference(this)
   }
 
-  override fun isReferenceTo(entity: E): Boolean {
+  override fun isPointerTo(entity: E): Boolean {
     return id == (entity as? WorkspaceEntityBase)?.id
   }
 
   override fun equals(other: Any?): Boolean {
-    return id == (other as? EntityReferenceImpl<*>)?.id
+    return id == (other as? EntityPointerImpl<*>)?.id
   }
 
   override fun hashCode(): Int {
@@ -985,8 +985,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
-    reference as EntityReferenceImpl<T>
+  override fun <T : WorkspaceEntity> resolveReference(reference: EntityPointer<T>): T? {
+    reference as EntityPointerImpl<T>
     return this.entityDataById(reference.id)?.createEntity(this) as? T
   }
 
