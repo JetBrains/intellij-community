@@ -61,7 +61,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
-  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls String config) throws IOException {
     boolean useConventions = isGradleOlderThan("8.2");
     config += "\n\n def useConventions = " + useConventions + "\n" + """
       allprojects {
@@ -578,7 +578,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "    group 'server'\n" +
       "    version '1.0-SNAPSHOT'\n" +
       "    apply plugin: 'java'\n" +
-      (isGradleNewerOrSameAs("8.2")
+      (isGradleAtLeast("8.2")
        ? "  java { sourceCompatibility = 1.8 }\n"
        : "    sourceCompatibility = 1.8\n") +
       "}\n" +
@@ -782,9 +782,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addPostfix("configurations { tests }")
             .withTask("testJar", "Jar", task -> {
               task.code("dependsOn testClasses");
-              if (isGradleNewerOrSameAs("8.2")) {
+              if (isGradleAtLeast("8.2")) {
                 task.code("archiveBaseName = \"${project.base.archivesName}-tests\"");
-              } else if (isGradleNewerOrSameAs("7.0")) {
+              } else if (isGradleAtLeast("7.0")) {
                 task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
               } else {
                 task.code("baseName = \"${project.archivesBaseName}-tests\"");
@@ -964,7 +964,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("5.0+")
   public void testProjectDependencyOnShadowedArtifacts() throws Exception {
-    String shadowVersion = isGradleNewerOrSameAs("8.0") ? "8.1.1" : "5.2.0";
+    String shadowVersion = isGradleAtLeast("8.0") ? "8.1.1" : "5.2.0";
     createSettingsFile("include 'moduleA', 'moduleB' ");
     createProjectSubFile("moduleA/build.gradle",  script(it -> {
       it.withPlugin("com.github.johnrengelman.shadow", shadowVersion);
@@ -1373,8 +1373,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
-    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
+    String mainClassesOutputPath = isGradleAtLeast("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    String testClassesOutputPath = isGradleAtLeast("4.0") ? "/build/classes/java/test" : "/build/classes/test";
 
     assertModuleOutput("project.project1.main", getProjectPath() + "/project1" + mainClassesOutputPath, "");
     assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1" + testClassesOutputPath);
@@ -2258,7 +2258,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModules("project", "project.main", "project.test", "project.customSrc");
     assertModuleLibDeps("project.test");
-    if (isGradleNewerOrSameAs("3.0") && isGradleOlderOrSameAs("4.0")) {
+    if (isGradleAtLeast("3.0") && isGradleOlderOrSameAs("4.0")) {
       MultiMap<String, String> expectedVariants = MultiMap.create();
       expectedVariants.putValues("junit", asList("junit:junit:4.12", "junit-4.12.jar"));
       expectedVariants.putValues("hamcrest", asList("org.hamcrest:hamcrest-core:1.3", "hamcrest-core-1.3.jar"));

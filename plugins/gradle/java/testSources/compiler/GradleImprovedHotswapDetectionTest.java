@@ -123,7 +123,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
       expected.add(implJar);
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList("build/tmp/compileJava/previous-compilation-data.bin",
                              "api/build/tmp/compileJava/previous-compilation-data.bin",
                              "impl/build/tmp/compileJava/previous-compilation-data.bin"));
@@ -158,7 +158,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
       expected.add(implJar);
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList("build/tmp/compileJava/previous-compilation-data.bin",
                              "build/tmp/compileTestJava/previous-compilation-data.bin",
                              "api/build/tmp/compileJava/previous-compilation-data.bin",
@@ -194,7 +194,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
     } else {
       assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
@@ -257,7 +257,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
     }
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.add("impl/build/tmp/compileJava/previous-compilation-data.bin");
     }
 
@@ -277,7 +277,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileTestJava/previous-compilation-data.bin");
     } else {
       assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
@@ -311,7 +311,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
     } else {
       assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();

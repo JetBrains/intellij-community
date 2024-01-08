@@ -247,7 +247,7 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile, shouldBeStarted = false)
 
-    if (isGradleNewerOrSameAs("6.9")) {
+    if (isGradleAtLeast("6.9")) {
       ensureDeleted(projectArgsFile, moduleArgsFile, compositeArgsFile, compositeModuleArgsFile)
       executeRunConfiguration(":composite:printArgs")
       assertDebugJvmArgs(":printArgs", projectArgsFile, shouldBeStarted = false)

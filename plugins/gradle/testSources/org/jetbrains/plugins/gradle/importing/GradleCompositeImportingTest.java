@@ -104,7 +104,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("my-app-name.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     assertTasksProjectPath("adhoc", getProjectPath());
-    if (isGradleNewerOrSameAs("6.8")) {
+    if (isGradleAtLeast("6.8")) {
       /* Has to be :my-app: as this is the name of the included build (rootProject.name) is not used for path construction */
       assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app:");
       assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
@@ -167,7 +167,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("app.main", "lib.runtime.runtime-mod.main", COMPILE);
 
     assertTasksProjectPath("app", getProjectPath());
-    if (isGradleNewerOrSameAs("6.8")) {
+    if (isGradleAtLeast("6.8")) {
       assertTasksProjectPath("lib", getProjectPath(), ":lib:");
     }
     else {
@@ -282,7 +282,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         .addImplementationDependency("my.group.lib_2:runtime");
     }));
 
-    if (isGradleNewerOrSameAs("4.0")) {
+    if (isGradleAtLeast("4.0")) {
       assertModules("app", "app_main", "app_test",
                     "app-runtime", "app-runtime_main", "app-runtime_test",
                     "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
@@ -295,7 +295,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                     "lib2", "my.group.lib_2-runtime", "my.group.lib_2-runtime_main", "my.group.lib_2-runtime_test");
     }
 
-    if (isGradleNewerOrSameAs("4.0")) {
+    if (isGradleAtLeast("4.0")) {
       assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
@@ -367,8 +367,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
     String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
-    String myUtilsApiMainModuleName = isGradleNewerOrSameAs("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
-    if (isGradleNewerOrSameAs("4.0")) {
+    String myUtilsApiMainModuleName = isGradleAtLeast("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
+    if (isGradleAtLeast("4.0")) {
       assertModules(
         // non-gradle modules
         "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
@@ -583,7 +583,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
-    if (isGradleNewerOrSameAs("6.6")) {
+    if (isGradleAtLeast("6.6")) {
       createSettingsFile("""
                          rootProject.name = "root-project"
                          include 'sub-project'

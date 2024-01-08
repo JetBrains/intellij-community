@@ -55,12 +55,12 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
 
     var expectedExecutionTree: String = "-\n" +
                                         " -failed\n"
-    if (isGradleNewerOrSameAs("3.3") &&
+    if (isGradleAtLeast("3.3") &&
         isGradleOlderThan("4.5")) {
       expectedExecutionTree += "  :buildSrc:clean\n"
     }
 
-    if (isGradleNewerOrSameAs("3.3") && isGradleOlderThan("8.0")) {
+    if (isGradleAtLeast("3.3") && isGradleOlderThan("8.0")) {
       expectedExecutionTree += "  :buildSrc:compileJava\n" +
                                "  :buildSrc:compileGroovy\n" +
                                "  :buildSrc:processResources\n" +
@@ -76,7 +76,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                                "  :buildSrc:build\n"
     }
 
-    if (isGradleNewerOrSameAs("8.0")) {
+    if (isGradleAtLeast("8.0")) {
       expectedExecutionTree += "  :buildSrc:compileJava\n" +
                                "  :buildSrc:compileGroovy\n" +
                                "  :buildSrc:processResources\n" +
@@ -89,16 +89,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTreeEquals(expectedExecutionTree)
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
-    val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
+    val tryScanSuggestion = if (isGradleAtLeast("4.10")) " Run with --scan to get full insights." else ""
+    val className = if (isGradleAtLeast("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
 
     val tryText = when {
-      isGradleNewerOrSameAs("8.2") ->
+      isGradleAtLeast("8.2") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights.
                                  |> Get more help at https://help.gradle.org."""
-      isGradleNewerOrSameAs("7.4") ->
+      isGradleAtLeast("7.4") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights."""
@@ -159,7 +159,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
     }
@@ -174,7 +174,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -201,7 +201,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -226,7 +226,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -258,7 +258,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val requiredByProject = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
       isGradleOlderThan("4.0") -> "dependencies"
-      isGradleNewerOrSameAs("4.6") && isGradleOlderThan("7.4") -> "artifacts"
+      isGradleAtLeast("4.6") && isGradleOlderThan("7.4") -> "artifacts"
       else -> "files"
     }
 
@@ -283,7 +283,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     // successful import when repository is added
     importProject {
       withBuildScriptRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
     }
@@ -297,7 +297,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     GradleSettings.getInstance(myProject).isOfflineWork = true
     importProject {
       withBuildScriptRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
@@ -327,7 +327,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     GradleSettings.getInstance(myProject).isOfflineWork = false
     importProject {
       withBuildScriptRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
@@ -396,7 +396,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                              " -failed\n" +
                              "  -build.gradle\n" +
                              "   only buildscript {}" +
-                             (if (isGradleNewerOrSameAs("7.4")) {", pluginManagement {}"} else {""}) +
+                             (if (isGradleAtLeast("7.4")) {", pluginManagement {}"} else {""}) +
                              " and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
 
   }
@@ -416,16 +416,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
       val trySuggestion = when {
-        isGradleNewerOrSameAs("8.2") ->
+        isGradleAtLeast("8.2") ->
           """|> Run with --debug option to get more log output.
              |> Run with --scan to get full insights.
              |> Get more help at https://help.gradle.org."""
 
-        isGradleNewerOrSameAs("7.4") ->
+        isGradleAtLeast("7.4") ->
           """|> Run with --debug option to get more log output.
              |> Run with --scan to get full insights."""
 
-        isGradleNewerOrSameAs("4.10") ->
+        isGradleAtLeast("4.10") ->
           "|Run with --debug option to get more log output. Run with --scan to get full insights."
 
         else ->

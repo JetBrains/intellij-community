@@ -134,7 +134,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots("project", getProjectPath());
     assertNoExcludePatterns("project", "build.gradle");
 
-    if (isGradleNewerOrSameAs("4.0")) {
+    if (isGradleAtLeast("4.0")) {
       assertModuleOutputs("project.main",
                           getProjectPath() + "/build/classes/java/main",
                           getProjectPath() + "/build/resources/main");
@@ -171,7 +171,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   private void assertDelegatedMergedBaseJavaProject() {
-    if (isGradleNewerOrSameAs("4.0")) {
+    if (isGradleAtLeast("4.0")) {
       assertModuleOutputs("project",
                           getProjectPath() + "/build/classes/java/main",
                           getProjectPath() + "/build/resources/main",
@@ -205,9 +205,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFolders("project");
 
-    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    String mainClassesOutputPath = isGradleAtLeast("4.0") ? "/build/classes/java/main" : "/build/classes/main";
     assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
-    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
+    String testClassesOutputPath = isGradleAtLeast("4.0") ? "/build/classes/java/test" : "/build/classes/test";
     assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
 
     getCurrentExternalProjectSettings().setDelegatedBuild(false);
@@ -911,7 +911,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "        }",
         "        integrationTest(JvmTestSuite) { ",
         "            dependencies {",
-        isGradleNewerOrSameAs("7.6")
+        isGradleAtLeast("7.6")
         ? "                implementation project() "
         : "                implementation project ",
         "            }",

@@ -82,7 +82,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
   @TargetVersions("8.0+")
   public void testDelegationBuildsBuildSrc() throws IOException {
     var buildPath = isGradleNewerThan("4.0") ? "build/classes/java" : "build/classes";
-    var junitTestAnnotation = isGradleNewerOrSameAs("4.7") ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+    var junitTestAnnotation = isGradleAtLeast("4.7") ? "org.junit.jupiter.api.Test" : "org.junit.Test";
 
     createProjectSubFile("settings.gradle", settingsScript(
       it -> it.setProjectName("project")
@@ -279,13 +279,13 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                              path("impl/build/generated/sources/annotationProcessor/java/main")));
     }
 
-    if (isGradleNewerOrSameAs("6.3")) {
+    if (isGradleAtLeast("6.3")) {
       expected.addAll(asList(path("build/generated/sources/headers/java/main"),
                              path("api/build/generated/sources/headers/java/main"),
                              path("impl/build/generated/sources/headers/java/main")));
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList(path("build/tmp/compileJava/previous-compilation-data.bin"),
                              path("api/build/tmp/compileJava/previous-compilation-data.bin"),
                              path("impl/build/tmp/compileJava/previous-compilation-data.bin")));
@@ -322,12 +322,12 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                              path("build/generated/sources/annotationProcessor/java/test")));
     }
 
-    if (isGradleNewerOrSameAs("6.3")) {
+    if (isGradleAtLeast("6.3")) {
       expected.addAll(asList(path("build/generated/sources/headers/java/main"),
                              path("build/generated/sources/headers/java/test")));
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList(path("build/tmp/compileTestJava/previous-compilation-data.bin"),
                              path("build/tmp/compileJava/previous-compilation-data.bin")));
     }

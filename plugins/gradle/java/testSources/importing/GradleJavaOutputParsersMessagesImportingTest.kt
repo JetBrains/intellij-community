@@ -49,7 +49,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
     var expectedExecutionTree: String
     when {
-      isGradleNewerOrSameAs("4.7") -> expectedExecutionTree =
+      isGradleAtLeast("4.7") -> expectedExecutionTree =
         "-\n" +
         " -successful\n" +
         "  :api:compileJava\n" +
@@ -78,7 +78,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewTreeSame(expectedExecutionTree)
 
     when {
-      isGradleNewerOrSameAs("4.7") -> expectedExecutionTree =
+      isGradleAtLeast("4.7") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  -:brokenProject:compileJava\n" +
@@ -198,7 +198,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -241,7 +241,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -282,7 +282,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")
@@ -330,7 +330,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     importProject {
       withJavaPlugin()
       withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
       addTestImplementationDependency("junit:junit:4.12")
       addTestImplementationDependency("junit:junit:99.99")

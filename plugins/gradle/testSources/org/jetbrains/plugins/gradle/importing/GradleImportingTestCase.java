@@ -283,7 +283,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       },
       () -> {
         deprecationError.set(null);
-        if (isGradleNewerOrSameAs("7.0")) {
+        if (isGradleAtLeast("7.0")) {
           GradleSystemSettings.getInstance().setGradleVmOptions("");
         }
       },
@@ -370,7 +370,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }
-    if (isGradleNewerOrSameAs("7.0")) {
+    if (isGradleAtLeast("7.0")) {
       String failOnWarning = "-Dorg.gradle.warning.mode=fail";
       String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
       if (StringUtil.isEmpty(originalVmOptions)) {
@@ -569,7 +569,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) <= 0;
   }
 
-  protected boolean isGradleNewerOrSameAs(@NotNull String ver) {
+  protected boolean isGradleAtLeast(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) >= 0;
   }
 
@@ -579,7 +579,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected boolean isNewDependencyResolutionApplicable() {
-    return isGradleNewerOrSameAs("4.5") && getCurrentExternalProjectSettings().isResolveModulePerSourceSet();
+    return isGradleAtLeast("4.5") && getCurrentExternalProjectSettings().isResolveModulePerSourceSet();
   }
 
   protected String getExtraPropertiesExtensionFqn() {

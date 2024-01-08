@@ -219,7 +219,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |  Task '--unknown-option' not found in root project 'project'.
       """.trimMargin())
 
-    if (isGradleNewerOrSameAs("7.0")) {
+    if (isGradleAtLeast("7.0")) {
       executeAndWait("taskWithArgs")
         .assertExecutionTree("""
           |-

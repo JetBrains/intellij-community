@@ -108,7 +108,7 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
     // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project.
     // Before Gradle 8.0 there are separate TAPI requests per `buildSrc` project in a composite
     // and hence included build models can be handled more than once
-    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8") || isGradleNewerOrSameAs("8.0")) 1 else 2
+    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8") || isGradleAtLeast("8.0")) 1 else 2
 
     assertReceivedModels(
       projectPath, "project",
