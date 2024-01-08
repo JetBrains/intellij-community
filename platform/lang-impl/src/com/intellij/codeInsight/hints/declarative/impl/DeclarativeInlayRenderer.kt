@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
-import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -93,6 +91,13 @@ class DeclarativeInlayRenderer(
   }
 
   internal fun toInlayData(): InlayData {
-    return presentationList.toInlayData(position, providerId)
+    val inlay = this.inlay!! // null cannot be here because this method is called only on the renderer got from the inlay instance
+    val pos = when (position) {
+      // important to store position based on the inlay offset, not the renderer one
+      // the latter does not receive updates from the inlay model when the document is changed
+      is InlineInlayPosition -> InlineInlayPosition(inlay.offset, position.relatedToPrevious, position.priority)
+      is EndOfLinePosition -> EndOfLinePosition(inlay.editor.document.getLineNumber(inlay.offset))
+    }
+    return presentationList.toInlayData(pos, providerId)
   }
 }
