@@ -29,7 +29,6 @@ import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.util.concurrent.CopyOnWriteArrayList
-import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 
@@ -39,9 +38,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   protected val tablePanel = JPanel(BorderLayout())
 
-  val table: AbstractDataViewTable by lazy {
-    createMainTable()
-  }
+  protected var table: AbstractDataViewTable? = null
 
   private var formatTextField: EditorTextField = createEditorField()
 
@@ -66,7 +63,8 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     get() = colored
     set(state) {
       colored = state
-      if (!table.isEmpty) {
+      val table = table
+      if (table != null && !table.isEmpty) {
         (table.getDefaultRenderer(table.getColumnClass(0)) as ColoredCellRenderer).setColored(state)
         table.repaint()
       }
@@ -74,11 +72,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   private val model: AsyncArrayTableModel?
     get() {
-      val model = table.model
-      return if (model is AsyncArrayTableModel) {
-        table.model as AsyncArrayTableModel
-      }
-      else null
+      return table?.model as? AsyncArrayTableModel
     }
 
   var isModified = false
@@ -91,9 +85,9 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   init {
     border = JBUI.Borders.empty(5)
 
-    sliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5))
+    //  sliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5))
     PyDataViewCompletionProvider().apply(sliceTextField)
-    formatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7))
+    //  formatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7))
 
     val panel = panel {
       row { cell(tablePanel).align(Align.FILL).resizableColumn() }.resizableRow()
@@ -147,9 +141,10 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     }
   }
 
-  protected open fun createMainTable(): AbstractDataViewTable {
+  protected open fun getOrCreateMainTable(): AbstractDataViewTable {
     val mainTable = JBTableWithRowHeaders(PyDataView.isAutoResizeEnabled(project))
     tablePanel.add(mainTable.scrollPane, BorderLayout.CENTER)
+    table = mainTable
     return mainTable
   }
 
@@ -207,33 +202,41 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   @Throws(PyDebuggerException::class)
   protected open fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy) = Unit
 
+  protected open fun updateTabNameAndSliceField(chunk: ArrayChunk, originalDebugValue: PyDebugValue, modifier: Boolean) {
+    // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
+    val debugValue = chunk.value
+    val realName = if (debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
+    var shownName = realName
+    if (modifier && originalVarName != shownName) {
+      shownName = String.format(MODIFIED_VARIABLE_FORMAT, originalVarName)
+    }
+    else {
+      originalVarName = realName
+    }
+    sliceTextField.setText(originalVarName)
+
+    // Modifier flag means that variable changes are temporary
+    modifiedVarName = realName
+    if (sliceTextField.editor != null) {
+      sliceTextField.getCaretModel().moveToOffset(originalVarName!!.length)
+    }
+    for (listener in listeners) {
+      listener.onNameChanged(shownName)
+    }
+    formatTextField.text = chunk.format
+  }
+
   protected open fun updateUI(chunk: ArrayChunk, originalDebugValue: PyDebugValue,
                               strategy: DataViewStrategy, modifier: Boolean) {
     val debugValue = chunk.value
     val model = strategy.createTableModel(chunk.rows, chunk.columns, this, debugValue)
     model.addToCache(chunk)
     UIUtil.invokeLaterIfNeeded {
+      val table = table ?: getOrCreateMainTable()
       table.setModel(model, modifier)
-      // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
-      val realName = if (debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
-      var shownName = realName
-      if (modifier && originalVarName != shownName) {
-        shownName = String.format(MODIFIED_VARIABLE_FORMAT, originalVarName)
-      }
-      else {
-        originalVarName = realName
-      }
-      sliceTextField.setText(originalVarName)
 
-      // Modifier flag means that variable changes are temporary
-      modifiedVarName = realName
-      if (sliceTextField.editor != null) {
-        sliceTextField.getCaretModel().moveToOffset(originalVarName!!.length)
-      }
-      for (listener in listeners) {
-        listener.onNameChanged(shownName)
-      }
-      formatTextField.text = chunk.format
+      updateTabNameAndSliceField(chunk, originalDebugValue, modifier)
+
       val cellRenderer = strategy.createCellRenderer(Double.MIN_VALUE, Double.MAX_VALUE, chunk)
       cellRenderer.setColored(colored)
       model.fireTableDataChanged()
@@ -276,7 +279,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   }
 
   fun resize(autoResize: Boolean) {
-    table.setAutoResize(autoResize)
+    table?.setAutoResize(autoResize)
     apply(sliceTextField.getText(), false)
   }
 
@@ -288,7 +291,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     errorLabel.visible(true)
     errorLabel.text(text)
     if (!modifier) {
-      table.setEmpty()
+      table?.setEmpty()
       for (listener in listeners) {
         listener.onNameChanged(PyBundle.message("debugger.data.view.empty.tab"))
       }
