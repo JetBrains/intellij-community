@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import junit.framework.TestCase
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.junit.Test
 import java.io.File
@@ -11,7 +10,7 @@ class GradleBuildScriptFileTest : GradleImportingTestCase() {
 
   @Test
   fun `test gradle build script source file`() {
-    createSettingsFile("include 'project1', 'project2'");
+    createSettingsFile("include 'project1', 'project2'")
     createProjectSubFile("project1/build.gradle")
     createProjectSubFile("project2/build.gradle.kts")
     importProject("")
@@ -19,14 +18,13 @@ class GradleBuildScriptFileTest : GradleImportingTestCase() {
 
     assertModuleBuildScript("project", "build.gradle")
     assertModuleBuildScript("project.project1", "project1/build.gradle")
-    if (GradleVersion.version(gradleVersion) >= GradleVersion.version("4.0")){
+    if (isGradleAtLeast("4.0")) {
       assertModuleBuildScript("project.project2", "project2/build.gradle.kts")
     }
-
   }
 
   private fun assertModuleBuildScript(moduleName: String, expectedRelativePath: String?) {
-    val actualScriptFile = GradleUtil.getGradleBuildScriptSource(getModule(moduleName));
+    val actualScriptFile = GradleUtil.getGradleBuildScriptSource(getModule(moduleName))
     if (expectedRelativePath == null) {
       TestCase.assertNull(actualScriptFile)
     }
@@ -36,7 +34,5 @@ class GradleBuildScriptFileTest : GradleImportingTestCase() {
       val actual = actualScriptFile?.toNioPath()?.toFile()?.canonicalPath
       TestCase.assertEquals(expected, actual)
     }
-
-
   }
 }

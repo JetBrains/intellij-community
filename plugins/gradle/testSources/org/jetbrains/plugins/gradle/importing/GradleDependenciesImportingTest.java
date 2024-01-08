@@ -26,8 +26,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.gradle.util.GradleVersion;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
@@ -208,7 +206,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.api", "project.impl");
 
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("1.12")) < 0) {
+    if (isGradleOlderThan("1.12")) {
       assertModuleModuleDepScope("project", "project.impl", DependencyScope.RUNTIME);
     }
     else {
@@ -280,7 +278,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project.project2.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
     assertModuleLibDepScope("project.project2.main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
 
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) >= 0) {
+    if (isGradleAtLeast("2.5")) {
       boolean gradleOlderThen_3_4 = isGradleOlderThan("3.4");
       importProjectUsingSingeModulePerGradleProject();
       assertModules("project", "project.project1", "project.project2");
@@ -408,7 +406,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDep("project.test", depName, depJar.getUrl());
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
 
-    final boolean isArtifactResolutionQuerySupported = GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.0")) >= 0;
+    final boolean isArtifactResolutionQuerySupported = isGradleAtLeast("2.0");
     final String depTestsName =
       isArtifactResolutionQuerySupported ? "Gradle: dep:dep:tests:1.0" : PathUtil.toPresentableUrl(depTestsJar.getUrl());
     assertModuleLibDep("project.test", depTestsName, depTestsJar.getUrl());
@@ -1044,26 +1042,29 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertMergedModuleCompileModuleDepScope("project.project-tests", "project.project1");
 
-    boolean gradleOlderThen_3_4 = isGradleOlderThan("3.4");
-    if (gradleOlderThen_3_4) {
-      assertModuleModuleDepScope("project.project-tests", "project.project2", DependencyScope.RUNTIME);
-    }
-    else {
+    if (isGradleAtLeast("3.4")) {
       assertModuleModuleDepScope("project.project-tests", "project.project2", DependencyScope.RUNTIME, DependencyScope.TEST);
     }
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.0")) > 0) {
-      if (isGradleNewerThan("4.5")) {
-        assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0",
-                                ar(DependencyScope.PROVIDED));
-        assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1",
-                                ar(DependencyScope.RUNTIME, DependencyScope.TEST));
-      }
-      else {
-        assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0",
-                                gradleOlderThen_3_4 ? ar(DependencyScope.COMPILE) : ar(DependencyScope.PROVIDED, DependencyScope.TEST));
-        assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1",
-                                gradleOlderThen_3_4 ? ar(DependencyScope.RUNTIME) : ar(DependencyScope.RUNTIME, DependencyScope.TEST));
-      }
+    else {
+      assertModuleModuleDepScope("project.project-tests", "project.project2", DependencyScope.RUNTIME);
+    }
+    if (isGradleNewerThan("4.5")) {
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0",
+                              ar(DependencyScope.PROVIDED));
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1",
+                              ar(DependencyScope.RUNTIME, DependencyScope.TEST));
+    }
+    else if (isGradleAtLeast("3.4")) {
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0",
+                              ar(DependencyScope.PROVIDED, DependencyScope.TEST));
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1",
+                              ar(DependencyScope.RUNTIME, DependencyScope.TEST));
+    }
+    else if (isGradleNewerThan("2.0")) {
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0",
+                              ar(DependencyScope.COMPILE));
+      assertModuleLibDepScope("project.project-tests", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1",
+                              ar(DependencyScope.RUNTIME));
     }
   }
 
@@ -1113,7 +1114,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleModuleDepScope("project.project2", "project.project1", DependencyScope.PROVIDED, DependencyScope.TEST,
                                  DependencyScope.RUNTIME);
     }
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.0")) > 0) {
+    if (isGradleNewerThan("2.0")) {
       assertMergedModuleCompileLibDepScope("project.project2", "Gradle: org.hamcrest:hamcrest-core:1.3");
       assertMergedModuleCompileLibDepScope("project.project2", "Gradle: junit:junit:4.11");
     }
@@ -1735,7 +1736,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.projectA", "project.projectB", "project.projectC");
     assertMergedModuleCompileModuleDepScope("project.projectB", "project.projectA");
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) >= 0) {
+    if (isGradleAtLeast("2.5")) {
       assertModuleModuleDepScope("project.projectC", "project.projectA", DependencyScope.PROVIDED);
     }
     assertModuleModuleDepScope("project.projectC", "project.projectB", DependencyScope.PROVIDED);
@@ -1843,7 +1844,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project");
 
     // Gradle built-in models has been fixed since 2.3 version, https://issues.gradle.org/browse/GRADLE-3170
-    if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.3")) >= 0) {
+    if (isGradleAtLeast("2.3")) {
       assertModuleLibDep("project", depName, classesJar.getUrl(), sourcesJar.getUrl(), javadocJar.getUrl());
     }
     assertMergedModuleCompileLibDepScope("project", depName);

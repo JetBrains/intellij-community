@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
@@ -222,7 +221,7 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
     cleanupBeforeReImport()
     ExternalSystemUtil.refreshProject(projectPath, ImportSpecBuilder(myProject, SYSTEM_ID).use(ProgressExecutionMode.MODAL_SYNC))
 
-    if (currentGradleBaseVersion >= GradleVersion.version("4.8")) {
+    if (isGradleAtLeast("4.8")) {
       assertReceivedModels(
         projectPath, "project",
         mapOf("name" to "project", "prop_loaded_1" to "error")

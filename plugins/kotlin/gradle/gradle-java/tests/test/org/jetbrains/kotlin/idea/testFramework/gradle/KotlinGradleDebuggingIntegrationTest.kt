@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.testFramework.gradle
 
 import com.intellij.openapi.util.Couple
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -49,8 +48,7 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
         )
         ensureDeleted(execArgsFile)
         ensureDeleted(testArgsFile)
-        val gradle82OrLater = GradleVersion.version(gradleVersion) >= GradleVersion.version("8.2")
-        val mergedScriptParameters = if (gradle82OrLater) {
+        val mergedScriptParameters = if (isGradleAtLeast("8.2")) {
             scriptParameters + "--warning-mode=summary" // KGP causes deprecation warnings
         } else {
             scriptParameters
@@ -65,7 +63,7 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
         testArgsFileAssertion
             .describedAs("test run should enable assertions")
             .contains(ENABLE_ASSERTIONS_FLAG)
-        if (gradle82OrLater) {
+        if (isGradleAtLeast("8.2")) {
             assertThat(output)
                 .describedAs("KGP causes deprecation warnings since Gradle 8.2. If it is not a case anymore, then change the warning-mode to `fail` and remove this assertion")
                 .contains("Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0")
@@ -76,7 +74,7 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
     }
 
     override fun handleDeprecationError(errorInfo: Couple<String>?) {
-        if (errorInfo != null && GradleVersion.version(gradleVersion) >= GradleVersion.version("8.2")) {
+        if (errorInfo != null && isGradleAtLeast("8.2")) {
             assertThat(errorInfo.second)
                 .describedAs("JavaPluginConvention usage causes deprecation warnings during import since Gradle 8.2. If it's not a case anymore, remove this workaround")
                 .isEqualTo("The org.gradle.api.plugins.JavaPluginConvention type has been deprecated. This is scheduled to be removed in Gradle 9.0. Consult the upgrading guide for further information: https://docs.gradle.org/8.3/userguide/upgrading_version_8.html#java_convention_deprecation\n" +

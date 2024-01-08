@@ -221,10 +221,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
-    int javaVer = javaRuntimeVersion.feature;
-    GradleVersion gradleBaseVersion = getCurrentGradleBaseVersion();
-    Assume.assumeFalse("Skip integration tests running on JDK " + javaVer + "(>9) for " + gradleBaseVersion + "(<3.0)",
-                       javaVer > 9 && gradleBaseVersion.compareTo(GradleVersion.version("3.0")) < 0);
+    var javaFeatureVersion = javaRuntimeVersion.feature;
+    var gradleBaseVersion = getCurrentGradleBaseVersion();
+    var message = "Skip integration tests running on JDK " + javaFeatureVersion + "(>9) for " + gradleBaseVersion + "(<3.0)";
+    Assume.assumeFalse(message, javaFeatureVersion > 9 && isGradleOlderThan("3.0"));
   }
 
   @NotNull

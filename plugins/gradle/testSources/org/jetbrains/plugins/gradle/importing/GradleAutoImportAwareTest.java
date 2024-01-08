@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
@@ -44,7 +43,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
       jb-annotations = { module = "org.jetbrains:annotations", version = "16.0.2" }
       """);
 
-    if(getCurrentGradleVersion().compareTo(GradleVersion.version("7.0.2")) <= 0){
+    if (isGradleOlderOrSameAs("7.0.2")) {
       createSettingsFile("enableFeaturePreview('VERSION_CATALOGS')");
     }
 
@@ -60,7 +59,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
   public void testCustomVersionCatalogTomlIsWatched() throws Exception {
     var settingsFile = new StringBuilder();
 
-    if(getCurrentGradleVersion().compareTo(GradleVersion.version("7.0.2")) == 0){
+    if (isGradleOlderOrSameAs("7.0.2")) {
       settingsFile.append("enableFeaturePreview('VERSION_CATALOGS')\n\n");
     }
 
