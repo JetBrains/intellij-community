@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.api.Action
@@ -66,7 +66,7 @@ class TargetIncomingConnector : IncomingConnector {
     }
     else {
       val inetAddresses = InetAddresses()
-      val inetAddress = inetAddresses.remote.find { it.hostName == bindingHost || it.hostAddress == bindingHost }
+      val inetAddress = (inetAddresses.remote + inetAddresses.loopback).find { it.hostName == bindingHost || it.hostAddress == bindingHost }
       return inetAddress ?: if (allowRemote) null else addressFactory.localBindingAddress
     }
   }
