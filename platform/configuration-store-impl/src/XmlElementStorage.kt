@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -21,7 +21,7 @@ import com.intellij.util.io.safeOutputStream
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.OutputStream
 import java.io.Writer
@@ -376,10 +376,12 @@ private fun getChangedComponentNames(oldStateMap: StateMap, newStateMap: StateMa
   return diffs
 }
 
+@Internal
 enum class DataStateChanged {
   LOADED, SAVED
 }
 
+@Internal
 interface DataWriterFilter {
   enum class ElementLevel {
     ZERO, FIRST
@@ -437,7 +439,7 @@ internal fun DataWriter?.writeTo(file: Path,
 internal abstract class StringDataWriter : DataWriter {
   final override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
     output.bufferedWriter().use {
-      write(it, lineSeparator.separatorString, filter)
+      write(writer = it, lineSeparator = lineSeparator.separatorString, filter = filter)
     }
   }
 
@@ -457,13 +459,15 @@ internal fun createDataWriterForElement(element: Element, storageFilePathForDebu
 
     override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
       output.bufferedWriter().use {
-        JbXmlOutputter(lineSeparator.separatorString, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
+        JbXmlOutputter(lineSeparator = lineSeparator.separatorString,
+                       elementFilter = filter?.toElementFilter(),
+                       storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
       }
     }
   }
 }
 
-@ApiStatus.Internal
+@Internal
 interface ExternalStorageWithInternalPart {
   val internalStorage: StateStorage
 }
