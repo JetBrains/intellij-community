@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -64,6 +65,8 @@ public interface ActionToolbar {
    */
   String SECONDARY_ACTION_CONSTRAINT = "Constraint.SecondaryAction";
 
+  String SECONDARY_ACTION_PROPERTY = "ClientProperty.SecondaryAction";
+
   @MagicConstant(intValues = {NOWRAP_LAYOUT_POLICY, WRAP_LAYOUT_POLICY, AUTO_LAYOUT_POLICY})
   @interface LayoutPolicy {
   }
@@ -94,21 +97,43 @@ public interface ActionToolbar {
    * @return the current layout policy
    * @see #NOWRAP_LAYOUT_POLICY
    * @see #WRAP_LAYOUT_POLICY
+   *
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release. Please do not rely on value
+   * returned by this method. Use {@link ActionToolbar#getLayoutStrategy()} instead
    */
   @LayoutPolicy
-  int getLayoutPolicy();
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default int getLayoutPolicy() {
+    return 0;
+  }
 
   /**
-   * Sets the new component layout policy, either {@link #WRAP_LAYOUT_POLICY} or {@link #NOWRAP_LAYOUT_POLICY}.
+   * Sets the layout policy for the toolbar.
+   *
+   * @param layoutPolicy the layout policy to set. Use one of the following constants:
+   *                     {@link ActionToolbar#NOWRAP_LAYOUT_POLICY},
+   *                     {@link ActionToolbar#WRAP_LAYOUT_POLICY},
+   *                     {@link ActionToolbar#AUTO_LAYOUT_POLICY}.
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release.
+   * Method does not have any effect any more. Use {@link ActionToolbar#setLayoutStrategy(ToolbarLayoutStrategy)} instead.
    */
-  void setLayoutPolicy(@LayoutPolicy int layoutPolicy);
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default void setLayoutPolicy(@LayoutPolicy int layoutPolicy) {}
+
+  @NotNull
+  ToolbarLayoutStrategy getLayoutStrategy();
+
+  void setLayoutStrategy(@NotNull ToolbarLayoutStrategy strategy);
 
   /**
    * If the value is {@code true}, all buttons on the toolbar have the same size.
    * It is useful when you create an "Outlook"-like toolbar.
-   * Currently, this method can be considered as a hot-fix.
+   *
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release.
+   * Method does not have any effect any more. Please use {@link ActionToolbar#setLayoutStrategy(ToolbarLayoutStrategy)} instead
    */
-  void adjustTheSameSize(boolean value);
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default void adjustTheSameSize(boolean value) {}
 
   /**
    * Sets the minimum size of the toolbar buttons.

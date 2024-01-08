@@ -1,0 +1,112 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.actionSystem.toolbarLayout
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.Rectangle
+import javax.swing.JComponent
+import javax.swing.SwingConstants
+import kotlin.math.max
+
+class AutoLayoutStrategy(private val myOrientation: Int, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
+
+  override fun calculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
+
+    val component = toolbar.component
+    val componentCount = component.componentCount
+    val insets: Insets = component.insets
+
+    val res = List(componentCount) { Rectangle() }
+
+    val autoButtonSize = AllIcons.Ide.Link.iconWidth
+    var full = false
+
+    val widthToFit: Int = size2Fit.width - insets.left - insets.right
+    val heightToFit: Int = size2Fit.height - insets.top - insets.bottom
+
+    if (myOrientation == SwingConstants.HORIZONTAL) {
+      var eachX = 0
+      var maxHeight = heightToFit
+      for (i in 0 until componentCount) {
+        val eachComp: Component = component.getComponent(i)
+        val isLast = i == componentCount - 1
+
+        val eachBound = Rectangle(getChildPreferredSize(component, i))
+        maxHeight = max(eachBound.height.toDouble(), maxHeight.toDouble()).toInt()
+
+        if (!full) {
+          val inside = if (isLast) eachX + eachBound.width <= widthToFit else eachX + eachBound.width + autoButtonSize <= widthToFit
+
+          if (inside) {
+            val isSecondaryButton = (eachComp as? JComponent)?.getClientProperty(ActionToolbar.SECONDARY_ACTION_PROPERTY) == true
+            if (isSecondaryButton) {
+              assert(isLast)
+              if (size2Fit.width != Int.MAX_VALUE && !myNoGapMode) {
+                eachBound.x = size2Fit.width - insets.right - eachBound.width
+                eachX = eachBound.maxX.toInt() - insets.left
+              }
+              else {
+                eachBound.x = insets.left + eachX
+              }
+            }
+            else {
+              eachBound.x = insets.left + eachX
+              eachX += eachBound.width
+            }
+            eachBound.y = insets.top
+          }
+          else {
+            full = true
+          }
+        }
+
+        if (full) {
+          eachBound.x = Int.MAX_VALUE
+          eachBound.y = Int.MAX_VALUE
+        }
+
+        res.get(i).setBounds(eachBound)
+      }
+
+      for (r in res) {
+        if (r.height < maxHeight) {
+          r.y += (maxHeight - r.height) / 2
+        }
+      }
+    }
+    else {
+      var eachY = 0
+      for (i in 0 until componentCount) {
+        val eachBound = Rectangle(getChildPreferredSize(component, i))
+        if (!full) {
+          val outside = if (i < componentCount - 1) {
+            eachY + eachBound.height + autoButtonSize < heightToFit
+          }
+          else {
+            eachY + eachBound.height < heightToFit
+          }
+          if (outside) {
+            eachBound.x = insets.left
+            eachBound.y = insets.top + eachY
+            eachY += eachBound.height
+          }
+          else {
+            full = true
+          }
+        }
+
+        if (full) {
+          eachBound.x = Int.MAX_VALUE
+          eachBound.y = Int.MAX_VALUE
+        }
+
+        res.get(i).setBounds(eachBound)
+      }
+    }
+
+    return res
+  }
+}
