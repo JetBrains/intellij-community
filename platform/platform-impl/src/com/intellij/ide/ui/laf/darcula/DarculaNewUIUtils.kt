@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -13,9 +14,9 @@ import java.awt.geom.RoundRectangle2D
 import kotlin.math.max
 
 /**
- * Paints non focused border rect inside [rect], outlined border can come outside
+ * Paints rounded border for focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
  */
-internal fun paintBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean) {
+internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean) {
   val g2 = g.create() as Graphics2D
 
   try {
@@ -43,6 +44,29 @@ internal fun paintBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Ou
         paintRectangle(g2, rect, arc, lw)
       }
     }
+  }
+  finally {
+    g2.dispose()
+  }
+}
+
+/**
+ * Fills part of component inside border
+ */
+internal fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Color) {
+  val g2 = g.create() as Graphics2D
+
+  try {
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+
+    val arc = DarculaUIUtil.COMPONENT_ARC.float
+    val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
+    border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
+    g2.translate(rect.x, rect.y)
+    g2.color = color
+    g2.fill(border)
   }
   finally {
     g2.dispose()

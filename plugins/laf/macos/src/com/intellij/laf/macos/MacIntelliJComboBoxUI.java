@@ -42,12 +42,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
-  protected void installDarculaDefaults() {
+  protected void installDefaults() {
+    super.installDefaults();
     comboBox.setOpaque(false);
   }
-
-  @Override
-  protected void uninstallDarculaDefaults() {}
 
   @Override
   protected JButton createArrowButton() {

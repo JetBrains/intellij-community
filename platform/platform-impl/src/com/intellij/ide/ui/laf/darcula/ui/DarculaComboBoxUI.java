@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.*;
@@ -52,11 +53,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
                                                                           JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41)));
 
   protected static final int DEFAULT_BORDER_COMPENSATION = 1;
-  private float myArc = COMPONENT_ARC.getFloat();
-  private Insets myBorderCompensation = JBUI.insets(DEFAULT_BORDER_COMPENSATION);
-  private boolean myPaintArrowButton = true;
+  private final float myArc;
+  private final Insets myBorderCompensation;
+  private final boolean myPaintArrowButton;
 
-  public DarculaComboBoxUI() {}
+  public DarculaComboBoxUI() {
+    this(COMPONENT_ARC.getFloat(), JBUI.insets(DEFAULT_BORDER_COMPENSATION), true);
+  }
 
   public DarculaComboBoxUI(float arc,
                            Insets borderCompensation,
@@ -68,11 +71,39 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @SuppressWarnings("unused")
   @Deprecated
-  public DarculaComboBoxUI(JComboBox c) {}
+  public DarculaComboBoxUI(JComboBox c) {
+    this();
+  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaComboBoxUI();
+  }
+
+  /**
+   * Used for backward compatibility of customized borders (e.g. overriding methods like paintBorder in DarculaComboBoxUI or
+   * changing parameters like {@link #myArc}). The plan for the future is to remove Border and ErrorBorderCapable implementations
+   * from DarculaComboBoxUI and use {@link DarculaComboBoxBorder} or its descendants instead.
+   *
+   * @return true if this DarculaComboBoxUI has no specific customization for Border, so {@link DarculaComboBoxBorder} can use own rendering
+   */
+  @ApiStatus.Internal
+  final boolean isNewBorderSupported(JComboBox<?> comboBox) {
+    ComboBoxUI ui = comboBox.getUI();
+
+    // Overridden ui means possible legacy paint (we don't know about paint details, so it's safer to keep custom paint)
+    if (!(ui instanceof DarculaComboBoxUI) || ui.getClass() != DarculaComboBoxUI.class) {
+      return false;
+    }
+
+    // Some UI customizations are not supported by DarculaComboBoxBorderNew for now. Can be implemented later when needed
+    if (myArc != COMPONENT_ARC.getFloat()
+        || !(myBorderCompensation instanceof JBInsets && myBorderCompensation.equals(JBUI.insets(DEFAULT_BORDER_COMPENSATION)))
+        || !myPaintArrowButton) {
+      return false;
+    }
+
+    return true;
   }
 
   private KeyListener editorKeyListener;
@@ -82,21 +113,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected void installDefaults() {
     super.installDefaults();
-    installDarculaDefaults();
+    if (comboBox.getBorder() == null) {
+      comboBox.setBorder(this);
+    }
   }
 
   @Override
   protected void uninstallDefaults() {
     super.uninstallDefaults();
-    uninstallDarculaDefaults();
-  }
-
-  protected void installDarculaDefaults() {
-    comboBox.setBorder(this);
-  }
-
-  protected void uninstallDarculaDefaults() {
-    comboBox.setBorder(null);
+    if (comboBox.getBorder() == this) {
+      comboBox.setBorder(null);
+    }
   }
 
   @Override
@@ -254,7 +281,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return path;
   }
 
-  private static @NotNull JBInsets getDefaultComboBoxInsets() {
+  @ApiStatus.Internal
+  static @NotNull JBInsets getDefaultComboBoxInsets() {
     return JBUI.insets(3);
   }
 
@@ -271,22 +299,26 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Rectangle r = new Rectangle(c.getSize());
     JBInsets.removeFrom(r, myBorderCompensation);
 
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-      g2.translate(r.x, r.y);
-
-      float bw = isBorderless(c) ? LW.getFloat() : BW.getFloat();
-
-      g2.setColor(getBackgroundColor());
-      g2.fill(getOuterShape(r, bw, myArc));
+    if (comboBox.getBorder() instanceof DarculaComboBoxBorder comboBoxBorder && isNewBorderSupported(comboBox)) {
+      comboBoxBorder.paintComboBoxBackground(g2, comboBox, getBackgroundColor());
     }
-    finally {
-      g2.dispose();
+    else {
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+        g2.translate(r.x, r.y);
+
+        float bw = isBorderless(c) ? LW.getFloat() : BW.getFloat();
+
+        g2.setColor(getBackgroundColor());
+        g2.fill(getOuterShape(r, bw, myArc));
+      }
+      finally {
+        g2.dispose();
+      }
     }
 
     if (!comboBox.isEditable()) {
-      checkFocus();
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
     }
     // remove staled renderers from hierarchy
@@ -461,6 +493,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
+   */
+  @Deprecated
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JComponent)) return;
@@ -501,6 +537,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
+   */
+  @Deprecated
   protected void paintBorder(Component c, Graphics2D g2, float bw, Rectangle r, float lw, float arc) {
     Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     border.append(getOuterShape(r, bw, arc), false);
@@ -516,28 +556,37 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     g2.fill(border);
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details and
+   * {@link DarculaComboBoxBorder#paintComboBoxBackground(Graphics2D, JComboBox, Color)}
+   */
   protected RectangularShape getOuterShape(Rectangle r, float bw, float arc) {
     return new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
+   */
   protected RectangularShape getInnerShape(Rectangle r, float bw, float lw, float arc) {
     return new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc);
   }
 
   protected void checkFocus() {
-    hasFocus = false;
+    hasFocus = hasComboBoxFocus(comboBox);
+  }
+
+  @ApiStatus.Internal
+  static boolean hasComboBoxFocus(JComboBox<?> comboBox) {
     if (!comboBox.isEnabled()) {
-      hasFocus = false;
-      return;
+      return false;
     }
 
-    hasFocus = hasFocus(comboBox);
-    if (hasFocus) return;
+    if (hasFocus(comboBox)) {
+      return true;
+    }
 
     ComboBoxEditor ed = comboBox.getEditor();
-    if (ed != null) {
-      hasFocus = hasFocus(ed.getEditorComponent());
-    }
+    return ed != null && hasFocus(ed.getEditorComponent());
   }
 
   protected static boolean hasFocus(Component c) {
@@ -545,14 +594,22 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
+   */
+  @Deprecated
   @Override
   public Insets getBorderInsets(Component c) {
     return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) :
            isBorderless(c) ? JBInsets.emptyInsets() : getDefaultComboBoxInsets();
   }
 
+  /**
+   * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
+   */
+  @Deprecated
   @Override
-  public boolean isBorderOpaque() {
+  public final boolean isBorderOpaque() {
     return false;
   }
 

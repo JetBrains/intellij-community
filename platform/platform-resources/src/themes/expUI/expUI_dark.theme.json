@@ -212,6 +212,7 @@
         "background": "Grey2",
         "nonEditableBackground": "Grey3"
       },
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder",
       "minimumSize": "49,28",
       "nonEditableBackground": "Grey3"
     },

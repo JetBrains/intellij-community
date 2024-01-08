@@ -201,6 +201,7 @@
 
     "ComboBox": {
       "background": "Grey14",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder",
       "disabledBackground": "Grey13",
       "minimumSize": "49,28",
       "ArrowButton": {

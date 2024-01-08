@@ -30,6 +30,7 @@ internal class ComponentsTestAction : DumbAwareAction() {
       tabbedPane.minimumSize = JBDimension(300, 200)
       tabbedPane.preferredSize = JBDimension(1000, 800)
       tabbedPane.addTab("JBOptionButton", JBOptionButtonPanel().panel)
+      tabbedPane.addTab("ComboBox", ComboBoxPanel().panel)
       return tabbedPane
     }
   }
