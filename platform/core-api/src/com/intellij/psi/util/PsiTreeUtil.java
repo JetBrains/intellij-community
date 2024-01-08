@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -43,13 +43,13 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
-   * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
+   * @param strict   whether to start search from the element ({@code true}) or from the element's parent ({@code false}).
+   * @return {@code true} if the element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract(value = "null, _, _ -> false", pure = true)
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
-    // fast path to avoid loading tree
+    // fast path to avoid loading the tree
     if (ancestor instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)ancestor).getStub() != null ||
         element instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)element).getStub() != null) {
       if (ancestor.getContainingFile() != element.getContainingFile()) return false;
@@ -71,8 +71,8 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
-   * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
+   * @param strict   whether to start search from the element ({@code true}) or from the element's parent ({@code false}).
+   * @return {@code true} if the element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
   public static boolean isContextAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
@@ -211,7 +211,7 @@ public class PsiTreeUtil {
    * @param strict  if {@code false} {@code element} is also included in the search
    * @param aClass  element type to search for
    * @param stopAt  element type to abort the search at
-   * @param <T>     type to cast found element to
+   * @param <T>     type to cast the found element to
    * @return first found element, or {@code null} if nothing found
    */
   @Contract("null, _, _, _ -> null")
@@ -242,12 +242,12 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursive (depth first) search for first element of given {@code classes}.
+   * Recursive (depth-first) search for the first element of given {@code classes}.
    *
    * @param element a PSI element to start search from.
    * @param strict  if {@code false} {@code element} is also included in the search.
    * @param classes element types to search for.
-   * @param <T>     type to cast found element to.
+   * @param <T>     type to cast the found element to.
    * @return first found element, or {@code null} if nothing found.
    */
   @SafeVarargs
@@ -317,6 +317,9 @@ public class PsiTreeUtil {
 
   /**
    * Non-recursive search for an element of type {@link T} amongst given {@code element} children.
+   * <p>
+   * If stubs are available, consider using {@link #getStubChildOfType(PsiElement, Class)} instead for improved performance.
+   * </p>
    *
    * @param element a PSI element to start search from.
    * @param aClass  element type to search for.
@@ -426,6 +429,9 @@ public class PsiTreeUtil {
     return result;
   }
 
+  /**
+   * @see #getChildOfType(PsiElement, Class)
+   */
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
@@ -803,11 +809,11 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Finds the closest element, skipping elements which match given predicate.
+   * Finds the closest element, skipping elements matching the given predicate.
    *
    * @param element   element to start search from
-   * @param next      a function to obtain next element
-   * @param condition a predicate to test whether element should be skipped
+   * @param next      a function to obtain the next element
+   * @param condition a predicate to test whether the element should be skipped
    */
   @Contract("null, _, _ -> null")
   public static @Nullable PsiElement skipMatching(@Nullable PsiElement element,
@@ -1063,7 +1069,7 @@ public class PsiTreeUtil {
 
   /**
    * @param element element to start the search from
-   * @return the first leaf descendant of the element (first child of first child and so on until leaf element is found).
+   * @return the first leaf descendant of the element (first child of first child and so on until the leaf element is found).
    * May return the input element if it has no children.
    */
   public static @NotNull PsiElement getDeepestFirst(@NotNull PsiElement element) {
@@ -1078,7 +1084,7 @@ public class PsiTreeUtil {
 
   /**
    * @param element element to start the search from
-   * @return the last leaf descendant of the element (last child of last child and so on until leaf element is found).
+   * @return the last leaf descendant of the element (last child of last child and so on until the leaf element is found).
    * May return the input element if it has no children.
    */
   public static @NotNull PsiElement getDeepestLast(@NotNull PsiElement element) {
