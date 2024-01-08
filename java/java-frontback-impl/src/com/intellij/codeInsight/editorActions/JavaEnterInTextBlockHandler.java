@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -52,9 +51,9 @@ public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandl
       editor.getCaretModel().moveToOffset(offset + 1 + indent);
     }
     else {
-      int indent = getIndent(text, secondLineStart + 1);
-      if (indent == -1) return Result.Continue;
-      String newLine = '\n' + StringUtil.repeatSymbol(' ', indent);
+      String indentString = getIndentString(text, secondLineStart + 1);
+      if (indentString == null) return Result.Continue;
+      String newLine = '\n' + indentString;
       document.insertString(offset, newLine);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       editor.getCaretModel().moveToOffset(offset + newLine.length());
@@ -78,19 +77,24 @@ public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandl
     return file != null && file.getLanguage() == JavaLanguage.INSTANCE;
   }
   private static int getIndent(@NotNull String text, int start) {
-    int indent = 0;
+    String indentString = getIndentString(text, start);
+    return indentString != null ? indentString.length() : -1;
+  }
+
+  private static @Nullable String getIndentString(@NotNull String text, int start) {
+    StringBuilder result = new StringBuilder();
     for (int i = start; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == '\n') {
-        indent = 0;
+        result = new StringBuilder();
         continue;
       }
       if (Character.isWhitespace(c)) {
-        indent++;
+        result.append(c);
         continue;
       }
-      return indent;
+      return result.toString();
     }
-    return -1;
+    return null;
   }
 }
