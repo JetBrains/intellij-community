@@ -96,7 +96,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     configureFromFileText("X.java", text);
 
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{
       new MyClassAnnotator()}, ()->{
       getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("MyClass var1"));
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
@@ -108,7 +108,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     });
   }
 
-  public static class MyClassAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyClassAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiReference && element.getText().equals("MyClass")) {

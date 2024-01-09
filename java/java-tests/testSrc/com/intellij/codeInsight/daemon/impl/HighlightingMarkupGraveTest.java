@@ -44,7 +44,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     return true;
   }
 
-  public static class MyStoppableAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyStoppableAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     private static final String SWEARING = "No swearing";
     private final AtomicBoolean allowToRun = new AtomicBoolean(true);
 
@@ -70,7 +70,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   public void testSymbolSeverityHighlightersAreAppliedOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
-      DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
+      DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
         String text = """
           class ClassName {
@@ -143,7 +143,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   public void testStoredHighlightersAreAppliedImmediatelyOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
-      DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
+      DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
         String text = """
           class X {
