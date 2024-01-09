@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogWrapper
@@ -30,11 +30,11 @@ import javax.swing.ScrollPaneConstants
 
 abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
                                   val product: SettingsContributor,
-                                  controller: ImportSettingsController) : ImportSettingsPage {
+                                  controller: ImportSettingsController) : OnboardingPage {
   companion object {
     fun createPage(provider: ActionsDataProvider<*>,
                    product: SettingsContributor,
-                   controller: ImportSettingsController): ImportSettingsPage {
+                   controller: ImportSettingsController): OnboardingPage {
       if (provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
         return SyncSettingChooserPage(provider, product, controller)
       }

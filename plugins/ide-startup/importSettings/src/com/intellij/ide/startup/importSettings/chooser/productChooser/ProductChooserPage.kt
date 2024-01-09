@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.ActionManager
@@ -24,7 +24,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class ProductChooserPage(val controller: ImportSettingsController) : ImportSettingsPage {
+class ProductChooserPage(val controller: ImportSettingsController) : OnboardingPage {
 
   override val stage = StartupWizardStage.ProductChoicePage
   override fun confirmExit(parentComponent: Component?): Boolean {
@@ -64,7 +64,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : ImportSetti
     group.add(SyncChooserAction(controller))
     group.add(JbChooserAction(controller))
     group.add(ExpChooserAction(controller))
-    group.add(SkipImportAction { controller.skipImport() })
+    group.add(SkipImportAction { controller.skipImportAction.invoke() })
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {

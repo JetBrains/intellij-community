@@ -2,8 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.openapi.components.service
-import com.jetbrains.rd.util.reactive.IOptPropertyView
-import com.jetbrains.rd.util.reactive.IPropertyView
+import com.jetbrains.rd.util.reactive.*
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -40,31 +39,47 @@ interface PluginService {
   fun install(ids: List<String>): PluginImportProgress
 }
 
-interface PluginImportProgress {
-  val progressMessage: IPropertyView<@Nls String?>
-  val progress: IOptPropertyView<Int>
+interface PluginImportProgress : ImportProgress {
+  val complete: Signal<PluginInstallationResult>
+}
+
+interface PluginInstallationResult {
+  val icon: Icon
+  val message: String
 }
 
 interface WizardPlugin {
+  enum class State {
+    IN_PROGRESS,
+    INSTALLED,
+    CHECKED,
+    UNCHECKED,
+    ERROR
+  }
+
   val id: String
   val icon: Icon
   val name: String
   val description: String
+
+  val state: IProperty<State>
 }
 
 interface KeymapService {
-  val maps: List<WizardKeymap>
+  val keymaps: List<WizardKeymap>
+  val shortcuts: List<Shortcut>
   fun chosen(id: String)
 }
 
-data class WizardKeymap (
+data class Shortcut(
   val id: String,
-  val title: String,
-  val description: String,
-  val keymaps: List<Shortcut>
+  val name: @Nls String
 )
 
-data class Shortcut (
-  val name: String,
-  val shortcut: String
-)
+
+interface WizardKeymap {
+  val id: String
+  val name: String
+  val description: @Nls String
+  fun getShortcutValue(id: String): String
+}

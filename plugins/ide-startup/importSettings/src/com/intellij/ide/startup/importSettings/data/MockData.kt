@@ -347,11 +347,11 @@ class TestChildrenSettings(override val name: String,
 class TestSimpleImport(override val message: String, override val progress: ImportProgress) : DialogImportData
 
 class TestImportFromProduct(
-  override val from: DialogImportItem,
+  override val  from: DialogImportItem,
   override val to: DialogImportItem,
   override val progress: ImportProgress, override val message: String? = "From ${from.item.name}") : ImportFromProduct
 
-class TestImportProgress(lifetime: Lifetime) : ImportProgress {
+open class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
 

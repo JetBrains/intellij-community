@@ -106,7 +106,10 @@ enum class StartupWizardStage {
   ProductChoicePage,
   SettingsToSyncPage,
   SettingsToImportPage,
-  ImportProgressPage
+  ImportProgressPage,
+  WizardThemePage,
+  WizardKeymapPage,
+  WizardPluginPage
 }
 
 object IdeStartupWizardCollector : CounterUsagesCollector() {

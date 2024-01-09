@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.openapi.rd.createLifetime
@@ -23,7 +23,7 @@ import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
 import javax.swing.*
 
-class ImportProgressPage(importFromProduct: DialogImportData, controller: ImportSettingsController) : ImportSettingsPage {
+class ImportProgressPage(importFromProduct: DialogImportData, controller: ImportSettingsController) : OnboardingPage {
 
   override val stage = StartupWizardStage.ImportProgressPage
 

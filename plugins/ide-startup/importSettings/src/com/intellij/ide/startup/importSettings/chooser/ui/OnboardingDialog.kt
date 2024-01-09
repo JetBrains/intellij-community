@@ -27,7 +27,7 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
     preferredSize = JBDimension(640, 457)
   }
 
-  private var currentPage: ImportSettingsPage = object  : ImportSettingsPage {
+  private var currentPage: OnboardingPage = object  : OnboardingPage {
     override val content: JComponent = JPanel()
     override val stage: StartupWizardStage = StartupWizardStage.InitialStart
     override fun confirmExit(parentComponent: Component?): Boolean = true
@@ -48,7 +48,7 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
     close(code)
   }
 
-  fun changePage(page: ImportSettingsPage) {
+  fun changePage(page: OnboardingPage) {
     overlay.clearNotifications()
     pane.remove(currentPage.content)
     Disposer.dispose(currentPage)
@@ -103,7 +103,7 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
   }
 }
 
-interface ImportSettingsPage: Disposable {
+interface OnboardingPage: Disposable {
   val content: JComponent
   val stage: StartupWizardStage?
 

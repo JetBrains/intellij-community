@@ -203,12 +203,6 @@ interface DialogImportData {
   val progress: ImportProgress
 }
 
-interface ImportProgress {
-  val progressMessage: IPropertyView<@Nls String?>
-  val progress: IOptPropertyView<Int>
-}
-
-
 data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
 
   companion object {
