@@ -206,10 +206,26 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val configImportDeferred: Deferred<Job?> = async {
     if (isHeadless) {
-      if (configImportNeededDeferred.await()) {
-        // make sure we lock the dir before writing
-        lockSystemDirsJob.join()
+      if (!configImportNeededDeferred.await()) {
+        return@async null
+      }
+      // make sure we lock the dir before writing
+      lockSystemDirsJob.join()
+      if (!ConfigImportHelper.isHeadlessAutomaticConfigImportAllowed()) {
         enableNewUi(logDeferred)
+      } else {
+        val log = logDeferred.await()
+        importConfig(
+          args = args,
+          targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
+          log = log,
+          appStarter = appStarterDeferred.await(),
+          euaDocumentDeferred = euaDocumentDeferred,
+          headlessAutoImport = true
+        )
+        if (ConfigImportHelper.isNewUser()) {
+          enableNewUi(logDeferred)
+        }
       }
       return@async null
     }
@@ -488,9 +504,25 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
 
 private suspend fun importConfig(args: List<String>,
                                  targetDirectoryToImportConfig: Path,
-                                 log: Logger,
-                                 appStarter: AppStarter,
-                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+                                 log: Logger,                                 appStarter: AppStarter,
+                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+                                 headlessAutoImport: Boolean = false) {
+  if (headlessAutoImport) {
+    // headless AppStarters are not notified about config import
+    val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
+    withContext(RawSwingDispatcher) {
+      try {
+        ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log, true)
+        log.info("Automatic config import completed")
+      } catch (e: UnsupportedOperationException) {
+        log.info("Automatic config import is not possible", e)
+      }
+    }
+    EarlyAccessRegistryManager.invalidate()
+    IconLoader.clearCache()
+    return
+  }
+
   span("screen reader checking") {
     runCatching {
       enableScreenReaderSupportIfNecessary()

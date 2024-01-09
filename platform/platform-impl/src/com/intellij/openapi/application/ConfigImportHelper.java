@@ -83,6 +83,7 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
+  public static final String ALLOW_HEADLESS_AUTOMATIC_CONFIG_IMPORT = "intellij.allow.headless.auto.config.import";
   public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
   public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
@@ -110,6 +111,10 @@ public final class ConfigImportHelper {
     return !Files.exists(configPath) || Files.exists(configPath.resolve(CUSTOM_MARKER_FILE_NAME));
   }
 
+  public static boolean isHeadlessAutomaticConfigImportAllowed() {
+    return SystemProperties.getBooleanProperty(ALLOW_HEADLESS_AUTOMATIC_CONFIG_IMPORT, false);
+  }
+
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
                                      @NotNull Path newConfigDir,
                                      @NotNull List<String> args,
@@ -124,7 +129,7 @@ public final class ConfigImportHelper {
   /**
    * @throws UnsupportedOperationException only if {@param mustBeAutomaticMigration} is true and config import without interaction with user is not possible
    */
-  static void importConfigsTo(boolean veryFirstStartOnThisComputer,
+  public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
                                      @NotNull Path newConfigDir,
                                      @NotNull List<String> args,
                                      @NotNull Logger log,
