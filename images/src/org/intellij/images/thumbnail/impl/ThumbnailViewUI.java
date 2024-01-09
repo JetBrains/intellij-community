@@ -476,7 +476,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         if (MouseEvent.BUTTON1 == e.getButton() && e.getClickCount() == 2) {
           // Double click
           list.setSelectedIndex(index);
-          VirtualFile selected = (VirtualFile)list.getSelectedValue();
+          VirtualFile selected = list.getSelectedValue();
           if (selected != null) {
             if (selected.isDirectory()) {
               thumbnailView.setRoot(selected);
