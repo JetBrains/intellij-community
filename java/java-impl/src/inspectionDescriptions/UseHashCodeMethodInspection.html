@@ -1,19 +1,15 @@
 <html>
 <body>
-<p>
-Informs you when bitwise operations can be replaced with the <code>Long.hashCode()</code> or <code>Double.hashCode()</code> method.
-  It detects instances of the pattern <code>(int)(x ^ (x >>> 32))</code> where <code>x</code> is a variable of type <code>long</code> or
-  the result of the previous <code>Double.doubleToLongBits()</code> call. This replacement shortens the code improves its readability.
-</p>
-<p>
-  Example:
-</p>
+Reports bitwise operations that can be replaced with a call to the <code>Long.hashCode()</code> or <code>Double.hashCode()</code> methods.
+It detects the construct <code>(int)(x ^ (x >>> 32))</code> where <code>x</code> is a variable of type <code>long</code> or
+the result of a previous <code>Double.doubleToLongBits()</code> call. The replacement shortens the code, improving its readability.
+<p><b>Example:</b></p>
 <pre><code>
-int result = (int)(var ^ (var >>> 32));
+  int result = (int)(var ^ (var >>> 32));
 </code></pre>
-After applying the quick-fix:
+<p>After applying the quick-fix:</p>
 <pre><code>
-int result = Long.hashCode(var);
+  int result = Long.hashCode(var);
 </code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 8 or higher.
