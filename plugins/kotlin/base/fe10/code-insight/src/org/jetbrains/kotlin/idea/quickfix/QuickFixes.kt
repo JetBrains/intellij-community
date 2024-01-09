@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFact
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
+@Service
 class QuickFixes {
     private val factories: Multimap<DiagnosticFactory<*>, KotlinIntentionActionsFactory> =
         HashMultimap.create<DiagnosticFactory<*>, KotlinIntentionActionsFactory>()
