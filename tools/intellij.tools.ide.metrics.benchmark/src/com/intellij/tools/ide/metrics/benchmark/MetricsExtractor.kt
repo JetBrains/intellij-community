@@ -4,7 +4,10 @@ package com.intellij.tools.ide.metrics.benchmark
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.tool.withRetryAsync
-import com.intellij.tools.ide.metrics.collector.metrics.*
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.metrics.medianValue
+import com.intellij.tools.ide.metrics.collector.metrics.rangeValue
+import com.intellij.tools.ide.metrics.collector.metrics.standardDeviationValue
 import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
@@ -21,7 +24,7 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
 
   @Suppress("TestOnlyProblems")
   suspend fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
-    val originalMetrics: List<PerformanceMetrics.Metric>? = withRetryAsync(retries = 3, delayBetweenRetries = 300.milliseconds) {
+    val originalMetrics: List<PerformanceMetrics.Metric>? = withRetryAsync(retries = 10, delayBetweenRetries = 300.milliseconds) {
       TelemetryManager.getInstance().forceFlushMetrics()
       extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
     }
