@@ -2,22 +2,13 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.documentation.mdn.*
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.XmlElementFactory
-import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
-import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.refactoring.suggested.createSmartPointer
-import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -28,12 +19,9 @@ import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryConfigurator
 import com.intellij.webSymbols.utils.match
-import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlElementDescriptor
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
-import com.intellij.xml.util.XmlUtil.HTML_URI
 import java.util.*
 
 class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
@@ -46,74 +34,6 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       listOf(StandardHtmlSymbolsScope(it))
     }
     ?: emptyList()
-
-  companion object {
-
-    @JvmStatic
-    fun getHtmlNSDescriptor(project: Project): HtmlNSDescriptorImpl? {
-      return CachedValuesManager.getManager(project).getCachedValue(project) {
-        val descriptor = XmlElementFactory.getInstance(project)
-          .createTagFromText("<div>")
-          .getNSDescriptor(HTML_URI, true)
-        if (descriptor !is HtmlNSDescriptorImpl) {
-          return@getCachedValue CachedValueProvider.Result.create<HtmlNSDescriptorImpl>(null, ModificationTracker.EVER_CHANGED)
-        }
-        CachedValueProvider.Result.create(descriptor, descriptor.getDescriptorFile()!!)
-      }
-    }
-
-    @JvmStatic
-    fun getStandardHtmlAttributeDescriptors(tag: XmlTag): Sequence<XmlAttributeDescriptor> =
-      getHtmlElementDescriptor(tag)
-        ?.getDefaultAttributeDescriptors(tag)
-        ?.asSequence()
-        ?.filter { !it.getName(tag).contains(':') }
-      ?: emptySequence()
-
-    @JvmStatic
-    fun getStandardHtmlAttributeDescriptor(tag: XmlTag, attrName: String): XmlAttributeDescriptor? =
-      getHtmlElementDescriptor(tag)
-        ?.getDefaultAttributeDescriptor(attrName.adjustCase(tag), tag)
-        ?.takeIf { !it.getName(tag).contains(':') }
-
-    private fun getHtmlElementDescriptor(tag: XmlTag): HtmlElementDescriptorImpl? =
-      when (val tagDescriptor = tag.descriptor) {
-        is HtmlElementDescriptorImpl -> tagDescriptor
-        is WebSymbolElementDescriptor, is AnyXmlElementDescriptor -> {
-          getStandardHtmlElementDescriptor(tag)
-          ?: getStandardHtmlElementDescriptor(tag, "div")
-        }
-        else -> null
-      }
-
-    private fun getStandardHtmlElementDescriptor(tag: XmlTag, name: String = tag.localName): HtmlElementDescriptorImpl? {
-      val parentTag = tag.parentTag
-      if (parentTag != null) {
-        parentTag.getNSDescriptor(parentTag.namespace, false)
-          .asSafely<HtmlNSDescriptorImpl>()
-          ?.getElementDescriptorByName(parentTag.localName.adjustCase(tag))
-          ?.asSafely<HtmlElementDescriptorImpl>()
-          ?.getElementDescriptor(name.adjustCase(tag), parentTag)
-          ?.asSafely<HtmlElementDescriptorImpl>()
-          ?.let { return it }
-      }
-      return getHtmlNSDescriptor(tag.project)
-        ?.getElementDescriptorByName(name.adjustCase(tag))
-        ?.asSafely<HtmlElementDescriptorImpl>()
-    }
-
-    private fun String.adjustCase(tag: XmlTag) =
-      if (tag.isCaseSensitive) this else StringUtil.toLowerCase(this)
-
-    fun List<WebSymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
-      flatMap { it.unwrapMatchedSymbols() }
-        .all { it is StandardHtmlSymbol }
-
-    fun WebSymbol.hasOnlyStandardHtmlSymbolsOrExtensions(): Boolean =
-      unwrapMatchedSymbols()
-        .all { it is StandardHtmlSymbol || it.extension }
-
-  }
 
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,
@@ -152,17 +72,17 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
           WebSymbol.HTML_ELEMENTS ->
-            (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
-             ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
+            (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
+             ?: HtmlDescriptorUtils.getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
              ?: emptyArray())
               .map { HtmlElementDescriptorBasedSymbol(it, tag) }
               .toList()
           WebSymbol.HTML_ATTRIBUTES ->
-            getStandardHtmlAttributeDescriptors(tag)
+            HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               .toList()
           WebSymbol.JS_EVENTS ->
-            getStandardHtmlAttributeDescriptors(tag)
+            HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .filter { it.name.startsWith("on") }
               .map { HtmlEventDescriptorBasedSymbol(it) }
               .toList()
@@ -177,17 +97,17 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
           WebSymbol.HTML_ELEMENTS ->
-            getStandardHtmlElementDescriptor(tag, qualifiedName.name)
+            HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag, qualifiedName.name)
               ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
           WebSymbol.HTML_ATTRIBUTES ->
-            getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
+            HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
               ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
           WebSymbol.JS_EVENTS -> {
-            getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
+            HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
               ?.let { HtmlEventDescriptorBasedSymbol(it) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
