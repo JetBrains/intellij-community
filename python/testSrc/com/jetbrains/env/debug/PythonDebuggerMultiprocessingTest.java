@@ -13,9 +13,11 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
@@ -297,6 +299,44 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
         waitForOutput("Process finished with exit code 0");
+      }
+    });
+  }
+
+  @Test
+  @TestFor(issues = "PY-65353")
+  public void testDebuggerStopsOnBreakpointInEveryProcess() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_2.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(5);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        var expectedValues = new HashSet<String>();
+        for (int i = 0; i < 3; i++) {
+          expectedValues.add(Integer.toString(i));
+        }
+
+        waitForPause();
+        var first = eval("x").getValue();
+        assertTrue(expectedValues.contains(first));
+        expectedValues.remove(first);
+        resume();
+
+        waitForPause();
+        var second = eval("x").getValue();
+        assertTrue(expectedValues.contains(second));
+        expectedValues.remove(second);
+        resume();
+
+        waitForPause();
+        var third = eval("x").getValue();
+        assertTrue(expectedValues.contains(third));
+        resume();
+
+        waitForTerminate();
       }
     });
   }
