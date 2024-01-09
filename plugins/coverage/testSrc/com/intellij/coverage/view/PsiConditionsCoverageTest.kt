@@ -35,6 +35,9 @@ class PsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
   @Test
   fun `test comments and parentheses`() = assertHints("CommentsAndParentheses")
 
+  @Test
+  fun `test all conditions`() = assertHints("AllConditions")
+
 
   private fun assertHints(className: String): Unit = runBlocking {
     assertNoSuites()
@@ -86,3 +89,42 @@ private val LineData.stringStatus
     LineCoverage.FULL -> "FULL"
     else -> error("Unexpected status")
   }
+
+private fun generateBoolExpressions(operators: Int): Collection<Pair<String, String>> {
+  if (operators == 0) return listOf("?" to "")
+  val result = LinkedHashSet<Pair<String, String>>()
+  for (left in 0..<operators) {
+    val right = operators - 1 - left
+    val leftExpressions = generateBoolExpressions(left)
+    val rightExpressions = generateBoolExpressions(right)
+    for ((l, lop) in leftExpressions) {
+      for ((r, rop) in rightExpressions) {
+        for (op in listOf("&&", "||")) {
+          val ls = wrap(lop, op, l)
+          val rs = wrap(rop, op, r)
+          result.add("$ls $op $rs" to op)
+        }
+      }
+    }
+  }
+  return result
+}
+
+private fun wrap(topOp: String, newOp: String, expr: String) = if (topOp == "" || topOp == newOp || newOp == "||" && topOp == "&&") expr else "($expr)"
+
+private fun main() {
+  val operators = 2
+  val variables = (0..operators).map { 'a' + it }.map(Char::toString).toList()
+  val prefix = "void test$operators(${variables.joinToString { "boolean $it" }}) {\n  "
+  generateBoolExpressions(operators)
+    .map { it.first  }
+    .map { expression ->
+      val indices = expression.withIndex().filter { it.value == '?' }.map { it.index }
+      var s = expression
+      indices.forEachIndexed { i, index -> s = s.replaceRange(index..index, variables[i]) }
+      s
+    }
+    .mapIndexed { i, e -> "int res$i = $e ? 1 : 2;" }
+    .joinToString(prefix = prefix, separator = "\n  ", postfix = "\n}")
+    .also { println(it) }
+}
