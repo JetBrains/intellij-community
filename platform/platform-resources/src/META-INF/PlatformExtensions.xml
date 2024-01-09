@@ -1734,10 +1734,6 @@
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
 
-    <registryKey key="rdct.new.async.actions"
-                 defaultValue="false"
-                 description="Turns on the new async action system"/>
-
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
   </extensions>
 
