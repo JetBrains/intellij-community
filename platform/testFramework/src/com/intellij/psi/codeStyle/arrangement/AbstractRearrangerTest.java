@@ -116,6 +116,17 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
     return new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter);
   }
+  
+  protected void doTest(@NotNull String initial, @NotNull String expected, @NotNull List<?> rules) {
+    doTest(initial, expected, rules, List.of());
+  }
+  
+  protected void doTest(@NotNull String initial, @NotNull String expected, @NotNull List<?> rules, 
+                        @NotNull List<ArrangementGroupingRule> groups) {
+    List<ArrangementSectionRule> sectionRules = getSectionRules(rules);
+    StdArrangementSettings arrangementSettings = new StdArrangementSettings(groups, sectionRules);
+    doTestWithSettings(initial, expected, arrangementSettings, null);
+  }
 
   protected void doTest(@NotNull Map<String, ?> args) {
     @SuppressWarnings("unchecked") List<ArrangementGroupingRule> groupingRules =

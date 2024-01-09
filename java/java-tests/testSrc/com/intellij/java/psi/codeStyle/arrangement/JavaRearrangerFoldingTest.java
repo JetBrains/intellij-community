@@ -1,177 +1,143 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.psi.codeStyle.arrangement
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi.codeStyle.arrangement;
 
-import groovy.transform.CompileStatic
+import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
-
-@CompileStatic
-class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
-  
-  void "test dummy"() {
-  }
-
-  void "test that doc comment folding is preserved"() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 1
-    doTest(
-      initial: '''\
-import <fold>java.util.List;
-import java.util.Set;</fold>
-
-<fold text="/**...*/">/**
-* Class comment
-*/</fold>
-class Test {
-
-  <fold text="/**...*/>/**
-   * Method comment
-   */</fold>
-  private void test(List<String> l) {}
-
-  <fold text="/**...*/>/**
-   * Another method comment
-   */</fold>
-  public void test(Set<String> s) {}
-}''',
-
-      rules: [rule(PUBLIC), rule(PRIVATE)],
-
-      expected: '''\
-import <fold>java.util.List;
-import java.util.Set;</fold>
-
-<fold text="/**...*/">/**
-* Class comment
-*/</fold>
-class Test {
-
-  <fold text="/**...*/>/**
-   * Another method comment
-   */</fold>
-  public void test(Set<String> s) {}
-
-  <fold text="/**...*/>/**
-   * Method comment
-   */</fold>
-  private void test(List<String> l) {}
-}'''
-    )
-  }
-
-  void "test that doc comment and method folding is preserved"() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 1
-    doTest(
-      initial: '''\
 import java.util.List;
-import java.util.Set;
 
-class MyTest {
-    <fold text="/**...*/">/**
-     * comment 1
-     *
-     * @param s
-     */</fold>
-    private void test(String s) {
-    }
+import static com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 
-    /**
-     * comment 2
-     *
-     * @param i
-     */
-    public void test(int i) {
-    }
-}''',
+public class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
+  public void test_that_doc_comment_folding_is_preserved() {
+    getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
+    doTest("""
+             import <fold>java.util.List;
+             import java.util.Set;</fold>
 
-      rules: [rule(PUBLIC), rule(PRIVATE)],
+             <fold text="/**...*/">/**
+             * Class comment
+             */</fold>
+             class Test {
 
-      expected: '''\
-import java.util.List;
-import java.util.Set;
+               <fold text="/**...*/>/**
+                * Method comment
+                */</fold>
+               private void test(List<String> l) {}
 
-class MyTest {
-    /**
-     * comment 2
-     *
-     * @param i
-     */
-    public void test(int i) {
-    }
+               <fold text="/**...*/>/**
+                * Another method comment
+                */</fold>
+               public void test(Set<String> s) {}
+             }""", """
+             import <fold>java.util.List;
+             import java.util.Set;</fold>
 
-    <fold text="/**...*/">/**
-     * comment 1
-     *
-     * @param s
-     */</fold>
-    private void test(String s) {
-    }
-}'''
-    )
+             <fold text="/**...*/">/**
+             * Class comment
+             */</fold>
+             class Test {
+
+               <fold text="/**...*/>/**
+                * Another method comment
+                */</fold>
+               public void test(Set<String> s) {}
+
+               <fold text="/**...*/>/**
+                * Method comment
+                */</fold>
+               private void test(List<String> l) {}
+             }""", List.of(rule(PUBLIC), rule(PRIVATE)));
   }
 
-  void "test that single doc comment folding is preserved"() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 1
-    doTest(
-      initial: '''\
-package a.b;
+  public void test_that_doc_comment_and_method_folding_is_preserved() {
+    getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
+    doTest("""
+             import java.util.List;
+             import java.util.Set;
 
-class MyTest {
-    /**
-     * private comment
-     *
-     * @param s
-     */
-    private void test(String s) {
-    }
+             class MyTest {
+                 <fold text="/**...*/">/**
+                  * comment 1
+                  *
+                  * @param s
+                  */</fold>
+                 private void test(String s) {
+                 }
 
-    /**
-     * comment 2
-     *
-     * @param i
-     */
-    public void test(int i) <fold text="{...}">{
-        System.out.println(1);
-    }</fold>
-}''',
+                 /**
+                  * comment 2
+                  *
+                  * @param i
+                  */
+                 public void test(int i) {
+                 }
+             }""", """
+             import java.util.List;
+             import java.util.Set;
 
-      rules: [rule(PUBLIC), rule(PRIVATE)],
+             class MyTest {
+                 /**
+                  * comment 2
+                  *
+                  * @param i
+                  */
+                 public void test(int i) {
+                 }
 
-      expected: '''\
-package a.b;
+                 <fold text="/**...*/">/**
+                  * comment 1
+                  *
+                  * @param s
+                  */</fold>
+                 private void test(String s) {
+                 }
+             }""", List.of(rule(PUBLIC), rule(PRIVATE)));
+  }
 
-class MyTest {
-    /**
-     * comment 2
-     *
-     * @param i
-     */
-    public void test(int i) <fold text="{...}">{
-        System.out.println(1);
-    }</fold>
+  public void test_that_single_doc_comment_folding_is_preserved() {
+    getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
+    doTest("""
+             package a.b;
 
-    /**
-     * private comment
-     *
-     * @param s
-     */
-    private void test(String s) {
-    }
-}'''
-    )
+             class MyTest {
+                 /**
+                  * private comment
+                  *
+                  * @param s
+                  */
+                 private void test(String s) {
+                 }
+
+                 /**
+                  * comment 2
+                  *
+                  * @param i
+                  */
+                 public void test(int i) <fold text="{...}">{
+                     System.out.println(1);
+                 }</fold>
+             }""", """
+             package a.b;
+
+             class MyTest {
+                 /**
+                  * comment 2
+                  *
+                  * @param i
+                  */
+                 public void test(int i) <fold text="{...}">{
+                     System.out.println(1);
+                 }</fold>
+
+                 /**
+                  * private comment
+                  *
+                  * @param s
+                  */
+                 private void test(String s) {
+                 }
+             }""", List.of(rule(PUBLIC), rule(PRIVATE)));
   }
 }

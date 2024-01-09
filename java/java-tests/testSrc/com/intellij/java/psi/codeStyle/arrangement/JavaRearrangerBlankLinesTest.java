@@ -1,199 +1,165 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.psi.codeStyle.arrangement
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi.codeStyle.arrangement;
 
-import groovy.transform.CompileStatic
+import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PACKAGE_PRIVATE
+import java.util.List;
 
-@CompileStatic
-class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PACKAGE_PRIVATE;
 
-  void testPreserveRelativeBlankLines() {
-    commonSettings.BLANK_LINES_AROUND_CLASS = 2
-    commonSettings.BLANK_LINES_AROUND_FIELD = 1
-    commonSettings.BLANK_LINES_AROUND_METHOD = 2
-    commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2
-    commonSettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 3
-    doTest(
-      initial: '''\
-class Test {
-  private void method1() {}
+public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
+  public void testPreserveRelativeBlankLines() {
+    getCommonSettings().BLANK_LINES_AROUND_CLASS = 2;
+    getCommonSettings().BLANK_LINES_AROUND_FIELD = 1;
+    getCommonSettings().BLANK_LINES_AROUND_METHOD = 2;
+    getCommonSettings().BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2;
+    getCommonSettings().BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 3;
+    doTest("""
+             class Test {
+               private void method1() {}
 
-  public void method2() {}
+               public void method2() {}
 
-  private int i;
+               private int i;
 
-  public int j;
-  public static int k;
-}
-interface MyInterface {
-  void test1();
-  void test2();
-  int i = 0;
-  int j = 0;
-}''',
-      expected: '''\
-interface MyInterface {
-  int i = 0;
+               public int j;
+               public static int k;
+             }
+             interface MyInterface {
+               void test1();
+               void test2();
+               int i = 0;
+               int j = 0;
+             }""", """
+             interface MyInterface {
+               int i = 0;
 
 
-  int j = 0;
+               int j = 0;
 
 
 
-  void test1();
+               void test1();
 
 
 
-  void test2();
-}
+               void test2();
+             }
 
 
-class Test {
-  public static int k;
+             class Test {
+               public static int k;
 
-  public int j;
+               public int j;
 
-  private int i;
-
-
-  public void method2() {}
+               private int i;
 
 
-  private void method1() {}
-}''',
-      rules: classic
-    )
+               public void method2() {}
+
+
+               private void method1() {}
+             }""", classic);
   }
 
-  void testCutBlankLines() {
-    commonSettings.BLANK_LINES_AROUND_FIELD = 0
-    commonSettings.BLANK_LINES_AROUND_METHOD = 1
-    doTest(
-      initial: '''\
-class Test {
+  public void testCutBlankLines() {
+    getCommonSettings().BLANK_LINES_AROUND_FIELD = 0;
+    getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
+    doTest("""
+             class Test {
 
-    void test1() {
-    }
-    
-    void test2() {
-    }
-    
-    int i;
-    int j;
-}''',
-      expected: '''\
-class Test {
+                 void test1() {
+                 }
 
-    int i;
-    int j;
-    
-    void test1() {
-    }
+                 void test2() {
+                 }
 
-    void test2() {
-    }
-}''',
-      rules: [rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)]
-    )
-  }
-  
-  void "test blank lines settings are not applied to anonymous classes"() {
-    commonSettings.BLANK_LINES_AROUND_CLASS = 1
-    def text = '''\
-class Test {
-  void test() {
-    a(new Intf() {});
-    a(new Intf() {});
-  }
-}'''
-    doTest(initial: text, expected: text, rules: [rule(CLASS)] )
+                 int i;
+                 int j;
+             }""", """
+             class Test {
+
+                 int i;
+                 int j;
+
+                 void test1() {
+                 }
+
+                 void test2() {
+                 }
+             }""", List.of(AbstractRearrangerTest.rule(FIELD, PACKAGE_PRIVATE), AbstractRearrangerTest.rule(METHOD)));
   }
 
-  void "test statements on the same line"() {
-    def before = '''\
-
-
-
-public enum Sender {a, b; private String value;
-}
-'''
-    doTest(initial: before, expected: before)
+  public void test_blank_lines_settings_are_not_applied_to_anonymous_classes() {
+    getCommonSettings().BLANK_LINES_AROUND_CLASS = 1;
+    String text = """
+      class Test {
+        void test() {
+          a(new Intf() {});
+          a(new Intf() {});
+        }
+      }""";
+    doTest(text, text, List.of(AbstractRearrangerTest.rule(CLASS)));
   }
 
+  public void test_statements_on_the_same_line() {
+    String before = """
 
 
-  void "test keep blank lines between fields"() {
-    def text = '''\
-public class Test {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AddCurrentUser.class);
 
-
-  private GlobalQueryService globalQueryService;
-  private EventCoordinationService eventCoordinationService;
-}
-'''
-    doTest(
-      initial: text,
-      expected: text,
-      rules: classic
-    )
+      public enum Sender {a, b; private String value;
+      }
+      """;
+    doTest(before, before, List.of());
   }
 
-  void "test keep blank lines between fields more fair test"() {
-    doTest(
-      initial: '''\
-public class Test {
-    private static final int t = 12;
+  public void test_keep_blank_lines_between_fields() {
+    String text = """
+      public class Test {
+        private static final Logger LOGGER = LoggerFactory.getLogger(AddCurrentUser.class);
 
 
-    public int q = 2;
-    private int e = 3;
-    public int t11 = 23;
-
-    private void test() {
-    }
-
-    public void main() {
-    }
-
-}
-''',
-      expected: '''\
-public class Test {
-    private static final int t = 12;
-
-
-    public int q = 2;
-    public int t11 = 23;
-    private int e = 3;
-
-    public void main() {
-    }
-
-    private void test() {
-    }
-
-}
-''',
-      rules: classic
-    )
+        private GlobalQueryService globalQueryService;
+        private EventCoordinationService eventCoordinationService;
+      }
+      """;
+    doTest(text, text, classic);
   }
 
+  public void test_keep_blank_lines_between_fields_more_fair_test() {
+    doTest("""
+             public class Test {
+                 private static final int t = 12;
 
+
+                 public int q = 2;
+                 private int e = 3;
+                 public int t11 = 23;
+
+                 private void test() {
+                 }
+
+                 public void main() {
+                 }
+
+             }
+             """, """
+             public class Test {
+                 private static final int t = 12;
+
+
+                 public int q = 2;
+                 public int t11 = 23;
+                 private int e = 3;
+
+                 public void main() {
+                 }
+
+                 private void test() {
+                 }
+
+             }
+             """, classic);
+  }
 }

@@ -1,102 +1,76 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.psi.codeStyle.arrangement
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi.codeStyle.arrangement;
 
-import groovy.transform.CompileStatic
+import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import java.util.List;
 
-@CompileStatic
-class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 
-  void "test rearrangement doesn't brake anon classes alignment"() {
+public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
+  public void test_rearrangement_doesn_t_brake_anon_classes_alignment() {
 
-    def text = '''\
-public class Test {
-    public static void main(String[] args) {
-        Action action1 = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        };
-        Action action2 = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        };
-    }
-}
-'''
-    doTest(
-      initial: text,
-      expected: text,
-      rules: classic
-    )
+    String text = """
+      public class Test {
+          public static void main(String[] args) {
+              Action action1 = new AbstractAction() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                  }
+              };
+              Action action2 = new AbstractAction() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                  }
+              };
+          }
+      }
+      """;
+    doTest(text, text, classic);
   }
 
-  void "test anonymous classes inside method"() {
-    doTest(
-      initial: '''\
-public class Rearranging {
+  public void test_anonymous_classes_inside_method() {
+    doTest("""
+             public class Rearranging {
 
-    public void Testing() {
+                 public void Testing() {
 
-        class Model {
-            private Cat cat = new Cat();
-            private Dog dog = new Dog();
-            class Cat { private String catSound = "MIAU"; }
-            class Dog { private String dogSound = "AUAU"; }
-        }
+                     class Model {
+                         private Cat cat = new Cat();
+                         private Dog dog = new Dog();
+                         class Cat { private String catSound = "MIAU"; }
+                         class Dog { private String dogSound = "AUAU"; }
+                     }
 
-        class Born { private String date; }
+                     class Born { private String date; }
 
-        class Die { private String date; }
+                     class Die { private String date; }
 
-    }
+                 }
 
-    private int value;
-}
-''',
-      expected: '''\
-public class Rearranging {
+                 private int value;
+             }
+             """, """
+             public class Rearranging {
 
-    private int value;
+                 private int value;
 
-    public void Testing() {
+                 public void Testing() {
 
-        class Model {
-            private Cat cat = new Cat();
-            private Dog dog = new Dog();
-            class Cat { private String catSound = "MIAU"; }
-            class Dog { private String dogSound = "AUAU"; }
-        }
+                     class Model {
+                         private Cat cat = new Cat();
+                         private Dog dog = new Dog();
+                         class Cat { private String catSound = "MIAU"; }
+                         class Dog { private String dogSound = "AUAU"; }
+                     }
 
-        class Born { private String date; }
+                     class Born { private String date; }
 
-        class Die { private String date; }
+                     class Die { private String date; }
 
-    }
-}
-''',
-      rules: [rule(FIELD),
-              rule(ENUM),
-              rule(INTERFACE),
-              rule(CLASS),
-              rule(CONSTRUCTOR),
-              rule(METHOD)]
-    )
+                 }
+             }
+             """, List.of(AbstractRearrangerTest.rule(FIELD), AbstractRearrangerTest.rule(ENUM), AbstractRearrangerTest.rule(INTERFACE),
+                          AbstractRearrangerTest.rule(CLASS), AbstractRearrangerTest.rule(CONSTRUCTOR), AbstractRearrangerTest.rule(METHOD)));
   }
 }

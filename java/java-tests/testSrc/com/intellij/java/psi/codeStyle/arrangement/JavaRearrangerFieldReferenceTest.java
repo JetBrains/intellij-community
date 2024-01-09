@@ -1,569 +1,462 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.psi.codeStyle.arrangement
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
-import groovy.transform.CompileStatic
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
+import java.util.List;
 
-@CompileStatic
-class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 
-  private List<StdArrangementMatchRule> defaultFieldsArrangement = [
-    rule(FIELD, STATIC, FINAL),
-    rule(FIELD, PUBLIC),
-    rule(FIELD, PROTECTED),
-    rule(FIELD, PACKAGE_PRIVATE),
-    rule(FIELD, PRIVATE)
-  ]
+public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
+  private final List<StdArrangementMatchRule> defaultFieldsArrangement =
+    List.of(rule(FIELD, STATIC, FINAL), rule(FIELD, PUBLIC),
+            rule(FIELD, PROTECTED), rule(FIELD, PACKAGE_PRIVATE),
+            rule(FIELD, PRIVATE));
 
-  void "test keep referenced package private field before public one which has reference through binary expression"() {
-    doTest(initial: '''\
-public class TestRunnable {
-    int i = 1;
-    public int j = i + 1;
-    public int k = 3;
-    public int m = 23;
-}
-''',
-           expected: '''\
-public class TestRunnable {
-    public int k = 3;
-    public int m = 23;
-    int i = 1;
-    public int j = i + 1;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_package_private_field_before_public_one_which_has_reference_through_binary_expression() {
+    doTest("""
+             public class TestRunnable {
+                 int i = 1;
+                 public int j = i + 1;
+                 public int k = 3;
+                 public int m = 23;
+             }
+             """, """
+             public class TestRunnable {
+                 public int k = 3;
+                 public int m = 23;
+                 int i = 1;
+                 public int j = i + 1;
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced fields before those who has reference through binary expression"() {
-    doTest(initial: '''\
-public class javaTest {
-    int i1 = 1;
-    protected int i2 = i1 + 4;
-}
-''',
-           expected: '''\
-public class javaTest {
-    int i1 = 1;
-    protected int i2 = i1 + 4;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_fields_before_those_who_has_reference_through_binary_expression() {
+    doTest("""
+             public class javaTest {
+                 int i1 = 1;
+                 protected int i2 = i1 + 4;
+             }
+             """, """
+             public class javaTest {
+                 int i1 = 1;
+                 protected int i2 = i1 + 4;
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced static fields before those who has reference through binary expression"() {
-    doTest(initial: '''\
-public class CodeFormatTest {
-        private static String PREFIX = "prefix.";
-        public static String NAME = PREFIX + "name";
-        private static String PRIVATE_NAME = PREFIX + "private name";
-        public static String TEST = "OK!";
-        public static String BOOK = "ATLAS";
-}
-''',
-            expected: '''\
-public class CodeFormatTest {
-        public static String TEST = "OK!";
-        public static String BOOK = "ATLAS";
-        private static String PREFIX = "prefix.";
-        public static String NAME = PREFIX + "name";
-        private static String PRIVATE_NAME = PREFIX + "private name";
-}
-''',
-            rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_static_fields_before_those_who_has_reference_through_binary_expression() {
+    doTest("""
+             public class CodeFormatTest {
+                     private static String PREFIX = "prefix.";
+                     public static String NAME = PREFIX + "name";
+                     private static String PRIVATE_NAME = PREFIX + "private name";
+                     public static String TEST = "OK!";
+                     public static String BOOK = "ATLAS";
+             }
+             """, """
+             public class CodeFormatTest {
+                     public static String TEST = "OK!";
+                     public static String BOOK = "ATLAS";
+                     private static String PREFIX = "prefix.";
+                     public static String NAME = PREFIX + "name";
+                     private static String PRIVATE_NAME = PREFIX + "private name";
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced static fields before those who has direct reference"() {
-    doTest(initial: '''\
-public class CodeFormatTest {
-        private static String PREFIX = "prefix.";
-        public static String NAME = PREFIX;
-}
-''',
-            expected: '''\
-public class CodeFormatTest {
-        private static String PREFIX = "prefix.";
-        public static String NAME = PREFIX;
-}
-''',
-            rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_static_fields_before_those_who_has_direct_reference() {
+    doTest("""
+             public class CodeFormatTest {
+                     private static String PREFIX = "prefix.";
+                     public static String NAME = PREFIX;
+             }
+             """, """
+             public class CodeFormatTest {
+                     private static String PREFIX = "prefix.";
+                     public static String NAME = PREFIX;
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced fields before those who has direct reference"() {
-    doTest(initial: '''\
-public class CodeFormatTest {
-        private String PREFIX = "prefix.";
-        public String NAME = PREFIX;
-}
-''',
-           expected: '''\
-public class CodeFormatTest {
-        private String PREFIX = "prefix.";
-        public String NAME = PREFIX;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_fields_before_those_who_has_direct_reference() {
+    doTest("""
+             public class CodeFormatTest {
+                     private String PREFIX = "prefix.";
+                     public String NAME = PREFIX;
+             }
+             """, """
+             public class CodeFormatTest {
+                     private String PREFIX = "prefix.";
+                     public String NAME = PREFIX;
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced fields before those who has reference through polyadic expression"() {
-    doTest(initial: '''\
-public class CodeFormatTest {
-        private String PREFIX = "prefix.";
-        public String NAME = "ololo" + "bobob" + "line" + PREFIX + "ququ";
-}
-''',
-           expected: '''\
-public class CodeFormatTest {
-        private String PREFIX = "prefix.";
-        public String NAME = "ololo" + "bobob" + "line" + PREFIX + "ququ";
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_fields_before_those_who_has_reference_through_polyadic_expression() {
+    doTest("""
+             public class CodeFormatTest {
+                     private String PREFIX = "prefix.";
+                     public String NAME = "ololo" + "bobob" + "line" + PREFIX + "ququ";
+             }
+             """, """
+             public class CodeFormatTest {
+                     private String PREFIX = "prefix.";
+                     public String NAME = "ololo" + "bobob" + "line" + PREFIX + "ququ";
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test keep referenced field before who has reference through parenthesized nested binary expression"() {
-    doTest(initial: '''\
-public class TestRunnable {
-    int i = 3;
-    public int j = (1 + i);
-}
-''',
-           expected: '''\
-public class TestRunnable {
-    int i = 3;
-    public int j = (1 + i);
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_field_before_who_has_reference_through_parenthesized_nested_binary_expression() {
+    doTest("""
+             public class TestRunnable {
+                 int i = 3;
+                 public int j = (1 + i);
+             }
+             """, """
+             public class TestRunnable {
+                 int i = 3;
+                 public int j = (1 + i);
+             }
+             """, defaultFieldsArrangement);
   }
 
-
-
-  void "test keep referenced fields before those who has reference through nested binary expression"() {
-    doTest(initial: '''\
-public class TestRunnable {
-    int i = 3;
-    public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1)) + (3 + i) + 5) + 4;
-}
-''',
-           expected: '''\
-public class TestRunnable {
-    int i = 3;
-    public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1)) + (3 + i) + 5) + 4;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_keep_referenced_fields_before_those_who_has_reference_through_nested_binary_expression() {
+    doTest("""
+             public class TestRunnable {
+                 int i = 3;
+                 public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1)) + (3 + i) + 5) + 4;
+             }
+             """, """
+             public class TestRunnable {
+                 int i = 3;
+                 public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1)) + (3 + i) + 5) + 4;
+             }
+             """, defaultFieldsArrangement);
   }
 
-
-  void "test multiple references on instance fields"() {
-    doTest(initial: '''\
-public class TestRunnable {
-    int i = 3;
-    int k = 12;
-    public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1 + k)) + (3 + i) + 5) + 4;
-    public int q = 64;
-}
-''',
-           expected: '''\
-public class TestRunnable {
-    public int q = 64;
-    int i = 3;
-    int k = 12;
-    public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1 + k)) + (3 + i) + 5) + 4;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_multiple_references_on_instance_fields() {
+    doTest("""
+             public class TestRunnable {
+                 int i = 3;
+                 int k = 12;
+                 public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1 + k)) + (3 + i) + 5) + 4;
+                 public int q = 64;
+             }
+             """, """
+             public class TestRunnable {
+                 public int q = 64;
+                 int i = 3;
+                 int k = 12;
+                 public int j = (1 + 2 + (5 + (5 + (5 + i))) + (1 + (i + 1 + k)) + (3 + i) + 5) + 4;
+             }
+             """, defaultFieldsArrangement);
   }
 
+  public void test_field_initializer_has_reference_to_method() {
+    doTest("""
+             public class TestRunnable {
+                 public int foo() {
+                     return 15;
+                 }
 
-  void "test field initializer has reference to method"() {
-    doTest(initial: '''\
-public class TestRunnable {
-    public int foo() {
-        return 15;
-    }
+                 public int q = 64 + foo();
+                 int i = 3;
+                 int k = 12;
+             }
+             """, """
+             public class TestRunnable {
+                 public int q = 64 + foo();
+                 int i = 3;
+                 int k = 12;
 
-    public int q = 64 + foo();
-    int i = 3;
-    int k = 12;
-}
-''',
-           expected: '''\
-public class TestRunnable {
-    public int q = 64 + foo();
-    int i = 3;
-    int k = 12;
-
-    public int foo() {
-        return 15;
-    }
-}
-''',
-           rules: [rule(CLASS),
-                   rule(FIELD, PUBLIC),
-                   rule(FIELD, PACKAGE_PRIVATE),
-                   rule(METHOD, PUBLIC)]
-    )
+                 public int foo() {
+                     return 15;
+                 }
+             }
+             """, List.of(rule(CLASS), rule(FIELD, PUBLIC),
+                          rule(FIELD, PACKAGE_PRIVATE), rule(METHOD, PUBLIC)));
   }
 
-  void "test illegal field reference arranged to legal"() {
-    doTest(initial: '''\
-public class Alfa {
-    int i = 3;
-    public int j = i + 1 + q;
-    int q = 2 + 3;
-    public int r = 3;
-}
-''',
-           expected: '''\
-public class Alfa {
-    public int r = 3;
-    int i = 3;
-    int q = 2 + 3;
-    public int j = i + 1 + q;
-}
-''',
-           rules: defaultFieldsArrangement
-    )
+  public void test_illegal_field_reference_arranged_to_legal() {
+    doTest("""
+             public class Alfa {
+                 int i = 3;
+                 public int j = i + 1 + q;
+                 int q = 2 + 3;
+                 public int r = 3;
+             }
+             """, """
+             public class Alfa {
+                 public int r = 3;
+                 int i = 3;
+                 int q = 2 + 3;
+                 public int j = i + 1 + q;
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test field references work ok with enums"() {
-    doTest(
-      initial: '''\
-public class Q {
-    private static final Q A = new Q(Q.E.EC);
-    private static final Q B = new Q(Q.E.EB);
-    private static final Q C = new Q(Q.E.EA);
-    private static final Q D = new Q(Q.E.EA);
-    private final E e;
-    private static final int seven = 7;
+  public void test_field_references_work_ok_with_enums() {
+    doTest("""
+             public class Q {
+                 private static final Q A = new Q(Q.E.EC);
+                 private static final Q B = new Q(Q.E.EB);
+                 private static final Q C = new Q(Q.E.EA);
+                 private static final Q D = new Q(Q.E.EA);
+                 private final E e;
+                 private static final int seven = 7;
 
-    private Q(final Q.E e) {
-        this.e = e;
-    }
+                 private Q(final Q.E e) {
+                     this.e = e;
+                 }
 
-    public static enum E {
-        EA,
-        EB,
-        EC,
-    }
-}
-''',
-      expected: '''\
-public class Q {
-    private static final Q A = new Q(Q.E.EC);
-    private static final Q B = new Q(Q.E.EB);
-    private static final Q C = new Q(Q.E.EA);
-    private static final Q D = new Q(Q.E.EA);
-    private static final int seven = 7;
-    private final E e;
+                 public static enum E {
+                     EA,
+                     EB,
+                     EC,
+                 }
+             }
+             """, """
+             public class Q {
+                 private static final Q A = new Q(Q.E.EC);
+                 private static final Q B = new Q(Q.E.EB);
+                 private static final Q C = new Q(Q.E.EA);
+                 private static final Q D = new Q(Q.E.EA);
+                 private static final int seven = 7;
+                 private final E e;
 
-    private Q(final Q.E e) {
-        this.e = e;
-    }
+                 private Q(final Q.E e) {
+                     this.e = e;
+                 }
 
-    public static enum E {
-        EA,
-        EB,
-        EC,
-    }
-}
-''',
-      rules: defaultFieldsArrangement
-    )
+                 public static enum E {
+                     EA,
+                     EB,
+                     EC,
+                 }
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test IDEA-123733"() {
-    doTest(
-      initial: '''\
-class First {
-    protected int test = 12;
-}
+  public void test_IDEA_123733() {
+    doTest("""
+             class First {
+                 protected int test = 12;
+             }
 
-class Second extends First {
-    void test() {}
+             class Second extends First {
+                 void test() {}
 
-    private int q = test;
-    public int t = q;
-}
-''',
-      expected: '''\
-class First {
-    protected int test = 12;
-}
+                 private int q = test;
+                 public int t = q;
+             }
+             """, """
+             class First {
+                 protected int test = 12;
+             }
 
-class Second extends First {
-    private int q = test;
-    public int t = q;
+             class Second extends First {
+                 private int q = test;
+                 public int t = q;
 
-    void test() {}
-}
-''',
-      rules: defaultFieldsArrangement
-    )
+                 void test() {}
+             }
+             """, defaultFieldsArrangement);
   }
 
-  void "test IDEA-123875"() {
-    doTest(
-      initial: '''\
-public class RearrangeFail {
+  public void test_IDEA_123875() {
+    doTest("""
+             public class RearrangeFail {
 
-    public static final byte[] ENTITIES_END = "</entities>".getBytes();
-    private final Element entitiesEndElement = new Element(ENTITIES_END);
+                 public static final byte[] ENTITIES_END = "</entities>".getBytes();
+                 private final Element entitiesEndElement = new Element(ENTITIES_END);
 
-    public static final byte[] ENTITIES_START = "<entities>".getBytes();
-    private final Element entitiesStartElement = new Element(ENTITIES_START);
+                 public static final byte[] ENTITIES_START = "<entities>".getBytes();
+                 private final Element entitiesStartElement = new Element(ENTITIES_START);
 
-}
-''',
-      expected: '''\
-public class RearrangeFail {
+             }
+             """, """
+             public class RearrangeFail {
 
-    public static final byte[] ENTITIES_END = "</entities>".getBytes();
-    public static final byte[] ENTITIES_START = "<entities>".getBytes();
-    private final Element entitiesEndElement = new Element(ENTITIES_END);
-    private final Element entitiesStartElement = new Element(ENTITIES_START);
+                 public static final byte[] ENTITIES_END = "</entities>".getBytes();
+                 public static final byte[] ENTITIES_START = "<entities>".getBytes();
+                 private final Element entitiesEndElement = new Element(ENTITIES_END);
+                 private final Element entitiesStartElement = new Element(ENTITIES_START);
 
-}
-''',
-      rules: [
-        rule(PUBLIC, STATIC, FINAL),
-        rule(PRIVATE),
-      ]
-    )
+             }
+             """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE)));
   }
 
-  void "test IDEA-125099"() {
-    doTest(
-      initial: '''\
-public class test {
+  public void test_IDEA_125099() {
+    doTest("""
+             public class test {
 
-    private int a = 2;
+                 private int a = 2;
 
-    public static final String TEST = "1";
-    public static final String SHOULD_BE_IN_BETWEEN = "2";
-    public static final String USERS_ROLE_ID_COLUMN = TEST;
-}
-''',
-      expected: '''\
-public class test {
+                 public static final String TEST = "1";
+                 public static final String SHOULD_BE_IN_BETWEEN = "2";
+                 public static final String USERS_ROLE_ID_COLUMN = TEST;
+             }
+             """, """
+             public class test {
 
-    public static final String TEST = "1";
-    public static final String SHOULD_BE_IN_BETWEEN = "2";
-    public static final String USERS_ROLE_ID_COLUMN = TEST;
-    private int a = 2;
-}
-''',
-      rules: [
-        rule(PUBLIC, STATIC, FINAL),
-        rule(PRIVATE)
-      ]
-    )
-  }
-  
-  void "test IDEA-128071"() {
-    doTest(
-      initial: '''
-public class FormatTest {
-    public int a = 3;
-    private static final String FACEBOOK_CLIENT_ID = "";
-    public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
-}
-''',
-      expected: '''
-public class FormatTest {
-    private static final String FACEBOOK_CLIENT_ID = "";
-    public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
-    public int a = 3;
-}
-''',
-      rules: [
-        rule(PUBLIC, STATIC, FINAL),
-        rule(PRIVATE, STATIC, FINAL),
-        rule(PUBLIC)
-      ]
-    )
+                 public static final String TEST = "1";
+                 public static final String SHOULD_BE_IN_BETWEEN = "2";
+                 public static final String USERS_ROLE_ID_COLUMN = TEST;
+                 private int a = 2;
+             }
+             """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE)));
   }
 
-  void "test field dependency through method call"() {
-    doTest(
-      initial: '''
-public class TmpTest {
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
+  public void test_IDEA_128071() {
+    doTest("""
 
-    private static String create(int i) {
-        return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
-    }
+             public class FormatTest {
+                 public int a = 3;
+                 private static final String FACEBOOK_CLIENT_ID = "";
+                 public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
+             }
+             """, """
 
-    public static void main(String[] args) {
-        System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
-    }
-}
-''',
-      expected: '''
-public class TmpTest {
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
-
-    public static void main(String[] args) {
-        System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
-    }
-
-    private static String create(int i) {
-        return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
-    }
-}
-''',
-      rules: [
-        rule(FIELD),
-        rule(PRIVATE, FIELD),
-        rule(PUBLIC, METHOD),
-        rule(PRIVATE, METHOD)
-      ]
-    )
+             public class FormatTest {
+                 private static final String FACEBOOK_CLIENT_ID = "";
+                 public static final String FACEBOOK_OAUTH_URL = "".concat(FACEBOOK_CLIENT_ID).concat("");
+                 public int a = 3;
+             }
+             """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE, STATIC, FINAL),
+                          rule(PUBLIC)));
   }
 
-  void "test only dependencies withing same initialization scope"() {
-    doTest(
-      initial: '''
-public class TestArrangementBuilder {
-    private String theString = "";
-    private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
+  public void test_field_dependency_through_method_call() {
+    doTest("""
 
-    public TestArrangement build() {
-        return new TestArrangement(theString);
-    }
+             public class TmpTest {
+                 private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+                 static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
 
-    public class TestArrangement {
-        private final String theString;
+                 private static String create(int i) {
+                     return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
+                 }
 
-        public TestArrangement() {
-            this("");
-        }
+                 public static void main(String[] args) {
+                     System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
+                 }
+             }
+             """, """
 
-        public TestArrangement(@NotNull String aString) {
-            theString = aString;
-        }
-    }
-}
-''',
-      expected: '''
-public class TestArrangementBuilder {
-    private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
-    private String theString = "";
+             public class TmpTest {
+                 private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+                 static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
 
-    public TestArrangement build() {
-        return new TestArrangement(theString);
-    }
+                 public static void main(String[] args) {
+                     System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
+                 }
 
-    public class TestArrangement {
-        private final String theString;
-
-        public TestArrangement() {
-            this("");
-        }
-
-        public TestArrangement(@NotNull String aString) {
-            theString = aString;
-        }
-    }
-}
-''',
-      rules: [
-        rule(PUBLIC, STATIC, FINAL),
-        rule(PRIVATE, STATIC, FINAL),
-        rule(PRIVATE, FINAL),
-        rule(PRIVATE)
-      ]
-    )
+                 private static String create(int i) {
+                     return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
+                 }
+             }
+             """, List.of(rule(FIELD), rule(PRIVATE, FIELD),
+                          rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)));
   }
 
+  public void test_only_dependencies_withing_same_initialization_scope() {
+    doTest("""
 
-  void testIdea264100() {
-    doTest(
-      initial: '''
-public class Test {
-    private static final String AAA = "aaa";
-    static final String BBB = AAA;
-    static final String CCC = BBB;
-    private static final Object O2 = "";
-    public static final Object O1 = "";
-    public static final Object DR = "";
-    private static final Object DA = DR;
-    private static final Object B1 = O2.toString() + DA;
-    private static final Object B2 = O2.toString() + DA;
-    private static final Object B3 = O1.toString() + DA;
-    private static final Object B4 = O1.toString() + DA;
-}
-''',
-      expected: '''
-public class Test {
-    public static final Object O1 = "";
-    public static final Object DR = "";
-    private static final String AAA = "aaa";
-    static final String BBB = AAA;
-    static final String CCC = BBB;
-    private static final Object O2 = "";
-    private static final Object DA = DR;
-    private static final Object B1 = O2.toString() + DA;
-    private static final Object B2 = O2.toString() + DA;
-    private static final Object B3 = O1.toString() + DA;
-    private static final Object B4 = O1.toString() + DA;
-}
-''',
-      rules: [
-        rule(STATIC, FINAL),
-        rule(PRIVATE, STATIC, FINAL)
-      ]
-    )
+             public class TestArrangementBuilder {
+                 private String theString = "";
+                 private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
+
+                 public TestArrangement build() {
+                     return new TestArrangement(theString);
+                 }
+
+                 public class TestArrangement {
+                     private final String theString;
+
+                     public TestArrangement() {
+                         this("");
+                     }
+
+                     public TestArrangement(@NotNull String aString) {
+                         theString = aString;
+                     }
+                 }
+             }
+             """, """
+
+             public class TestArrangementBuilder {
+                 private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
+                 private String theString = "";
+
+                 public TestArrangement build() {
+                     return new TestArrangement(theString);
+                 }
+
+                 public class TestArrangement {
+                     private final String theString;
+
+                     public TestArrangement() {
+                         this("");
+                     }
+
+                     public TestArrangement(@NotNull String aString) {
+                         theString = aString;
+                     }
+                 }
+             }
+             """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE, STATIC, FINAL),
+                          rule(PRIVATE, FINAL), rule(PRIVATE)));
   }
 
-  void testIdea218936() {
-    doTest(
-      initial:  '''
-public class TestOne {
-    int value;
-    public int a = 0, b = value;
-}
-''',
-      expected: '''
-public class TestOne {
-    int value;
-    public int a = 0, b = value;
-}
-''',
-      rules: [
-        rule(PUBLIC),
-        rule(PACKAGE_PRIVATE)
-      ]
-    )
+  public void testIdea264100() {
+    doTest("""
+
+             public class Test {
+                 private static final String AAA = "aaa";
+                 static final String BBB = AAA;
+                 static final String CCC = BBB;
+                 private static final Object O2 = "";
+                 public static final Object O1 = "";
+                 public static final Object DR = "";
+                 private static final Object DA = DR;
+                 private static final Object B1 = O2.toString() + DA;
+                 private static final Object B2 = O2.toString() + DA;
+                 private static final Object B3 = O1.toString() + DA;
+                 private static final Object B4 = O1.toString() + DA;
+             }
+             """, """
+
+             public class Test {
+                 public static final Object O1 = "";
+                 public static final Object DR = "";
+                 private static final String AAA = "aaa";
+                 static final String BBB = AAA;
+                 static final String CCC = BBB;
+                 private static final Object O2 = "";
+                 private static final Object DA = DR;
+                 private static final Object B1 = O2.toString() + DA;
+                 private static final Object B2 = O2.toString() + DA;
+                 private static final Object B3 = O1.toString() + DA;
+                 private static final Object B4 = O1.toString() + DA;
+             }
+             """, List.of(rule(STATIC, FINAL), rule(PRIVATE, STATIC, FINAL)));
+  }
+
+  public void testIdea218936() {
+    doTest("""
+
+             public class TestOne {
+                 int value;
+                 public int a = 0, b = value;
+             }
+             """, """
+
+             public class TestOne {
+                 int value;
+                 public int a = 0, b = value;
+             }
+             """, List.of(rule(PUBLIC), rule(PACKAGE_PRIVATE)));
   }
 }

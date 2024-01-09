@@ -1,1025 +1,949 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.psi.codeStyle.arrangement
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi.codeStyle.arrangement;
 
-import groovy.transform.CompileStatic
+import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import java.util.List;
 
-@CompileStatic
-class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
+import static com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 
-  void "test single section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  // --- Public Methods ---
+public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
+  public void test_single_section() {
+    doTest("""
 
-  public void test() {}
+             class MyClass
+             {
+               // --- Public Methods ---
 
-  // --- End Public Methods ---
+               public void test() {}
 
-  private int number;
-}''',
-      expected: '''
-class MyClass
-{
-  private int number;
+               // --- End Public Methods ---
 
-  // --- Public Methods ---
-  public void test() {}
-  // --- End Public Methods ---
-}''',
-      rules: [
-        rule(FIELD),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))]
-    )
+               private int number;
+             }""", """
+
+             class MyClass
+             {
+               private int number;
+
+               // --- Public Methods ---
+               public void test() {}
+               // --- End Public Methods ---
+             }""", List.of(rule(FIELD),
+                           section("// --- Public Methods ---",
+                                   "// --- End Public Methods ---",
+                                   rule(METHOD))));
   }
 
-  void "test multi section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  // --- Private Methods ---
+  public void test_multi_section() {
+    doTest("""
 
-  private void foo() {}
+             class MyClass
+             {
+               // --- Private Methods ---
 
-  // --- End Private Methods ---
+               private void foo() {}
 
-  // --- Public Methods ---
+               // --- End Private Methods ---
 
-  public void test() {}
+               // --- Public Methods ---
 
-  // --- End Public Methods ---
+               public void test() {}
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+               // --- End Public Methods ---
 
-  // --- Public Methods ---
-  public void test() {}
-  // --- End Public Methods ---
+               public int p;
+             }""", """
 
-  // --- Private Methods ---
-  private void foo() {}
-  // --- End Private Methods ---
-}''',
-      rules: [
-        section(rule(FIELD)),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(PUBLIC, METHOD)),
-        section("// --- Private Methods ---", "// --- End Private Methods ---", rule(PRIVATE, METHOD))
-      ]
-    )
+             class MyClass
+             {
+               public int p;
+
+               // --- Public Methods ---
+               public void test() {}
+               // --- End Public Methods ---
+
+               // --- Private Methods ---
+               private void foo() {}
+               // --- End Private Methods ---
+             }""", List.of(section(rule(FIELD)),
+                           section("// --- Public Methods ---",
+                                   "// --- End Public Methods ---",
+                                   rule(PUBLIC, METHOD)),
+                           section("// --- Private Methods ---",
+                                   "// --- End Private Methods ---",
+                                   rule(PRIVATE, METHOD))));
   }
 
+  public void test_multi_region() {
+    doTest("""
 
-  void "test multi region"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  //region Private Methods
+             class MyClass
+             {
+               //region Private Methods
 
-  private void foo() {}
+               private void foo() {}
 
-  //endregion private
+               //endregion private
 
-  //region Public Methods
+               //region Public Methods
 
-  public void test() {}
+               public void test() {}
 
-  //endregion public
+               //endregion public
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+               public int p;
+             }""", """
 
-  //region Public Methods
-  public void test() {}
-  //endregion public
+             class MyClass
+             {
+               public int p;
 
-  //region Private Methods
-  private void foo() {}
-  //endregion private
-}''',
-      rules: [
-        section(rule(FIELD)),
-        section("//region Public Methods", "//endregion public", rule(PUBLIC, METHOD)),
-        section("//region Private Methods", "//endregion private", rule(PRIVATE, METHOD))]
-    )
+               //region Public Methods
+               public void test() {}
+               //endregion public
+
+               //region Private Methods
+               private void foo() {}
+               //endregion private
+             }""",
+           List.of(
+             section(rule(FIELD)),
+             section("//region Public Methods", "//endregion public", rule(PUBLIC, METHOD)),
+             section("//region Private Methods", "//endregion private", rule(PRIVATE, METHOD))));
   }
 
+  public void test_new_single_section() {
+    doTest("""
 
-  void "test new single section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  public void test() {}
+             class MyClass
+             {
+               public void test() {}
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+               public int p;
+             }""", """
 
-// --- Public Methods ---
-  public void test() {}
-// --- End Public Methods ---
-}''',
-      rules: [
-        section(rule(FIELD)),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))]
-    )
+             class MyClass
+             {
+               public int p;
+
+             // --- Public Methods ---
+               public void test() {}
+             // --- End Public Methods ---
+             }""",
+           List.of(
+             section(rule(FIELD)),
+             section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))));
   }
 
+  public void test_all_new_multi_section_without_comments() {
+    doTest("""
 
-  void "test all new multi section without comments"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  public void test() {}
+             class MyClass
+             {
+               public void test() {}
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+               public int p;
+             }""", """
 
-// --- Public Methods ---
-  public void test() {}
-// --- End Public Methods ---
-}''',
-      rules: [
-        section(rule(FIELD)),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))
-      ]
-    )
+             class MyClass
+             {
+               public int p;
+
+             // --- Public Methods ---
+               public void test() {}
+             // --- End Public Methods ---
+             }""", List.of(section(rule(FIELD)),
+                           section("// --- Public Methods ---",
+                                   "// --- End Public Methods ---",
+                                   rule(METHOD))));
   }
 
+  public void test_new_multi_section() {
+    doTest("""
 
-  void "test new multi section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  public int p;
+             class MyClass
+             {
+               public int p;
 
-  public void test() {}
-}''',
-      expected: '''
-class MyClass
-{
-// --- Fields ---
-  public int p;
-// --- Fields ---
+               public void test() {}
+             }""", """
 
-// --- Public Methods ---
-  public void test() {}
-// --- End Public Methods ---
-}''',
-      rules: [
-        section("// --- Fields ---", "// --- Fields ---", rule(FIELD)),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))]
-    )
+             class MyClass
+             {
+             // --- Fields ---
+               public int p;
+             // --- Fields ---
+
+             // --- Public Methods ---
+               public void test() {}
+             // --- End Public Methods ---
+             }""", List.of(section("// --- Fields ---", "// --- Fields ---", rule(FIELD)),
+                           section("// --- Public Methods ---", "// --- End Public Methods ---",
+                                   rule(METHOD))));
   }
 
+  public void test_new_not_arranged_multi_section() {
+    doTest("""
 
-  void "test new not arranged multi section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  public void test() {}
+             class MyClass
+             {
+               public void test() {}
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-// --- Fields ---
-  public int p;
-// --- Fields ---
+               public int p;
+             }""", """
 
-// --- Public Methods ---
-  public void test() {}
-// --- End Public Methods ---
-}''',
-      rules: [
-        section("// --- Fields ---", "// --- Fields ---", rule(FIELD)),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))
-      ]
-    )
+             class MyClass
+             {
+             // --- Fields ---
+               public int p;
+             // --- Fields ---
+
+             // --- Public Methods ---
+               public void test() {}
+             // --- End Public Methods ---
+             }""", List.of(section("// --- Fields ---", "// --- Fields ---", rule(FIELD)),
+                           section("// --- Public Methods ---", "// --- End Public Methods ---",
+                                   rule(METHOD))));
   }
 
-  void "test blank lines"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  // --- Public Methods ---
-  public void test() {}
-  // --- End Public Methods ---
+  public void test_blank_lines() {
+    doTest("""
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+             class MyClass
+             {
+               // --- Public Methods ---
+               public void test() {}
+               // --- End Public Methods ---
 
-  // --- Public Methods ---
-  public void test() {}
-  // --- End Public Methods ---
-}''',
-      rules: [
-        rule(FIELD),
-        section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))]
-    )
+               public int p;
+             }""", """
+
+             class MyClass
+             {
+               public int p;
+
+               // --- Public Methods ---
+               public void test() {}
+               // --- End Public Methods ---
+             }""", List.of(rule(FIELD),
+                           section("// --- Public Methods ---",
+                                   "// --- End Public Methods ---",
+                                   rule(METHOD))));
   }
 
-  void "test multi rules in section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  private void foo() {
-    System.out.println("Hellow!");
+  public void test_multi_rules_in_section() {
+    doTest("""
+
+             class MyClass
+             {
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+
+               // --- Methods ---
+               public void test() {}
+               // --- End Methods ---
+
+               public int p;
+             }""", """
+
+             class MyClass
+             {
+               public int p;
+
+               // --- Methods ---
+               public void test() {}
+
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+               // --- End Methods ---
+             }""", List.of(rule(FIELD),
+                           section("// --- Methods ---", "// --- End Methods ---",
+                                   rule(PUBLIC, METHOD),
+                                   rule(PRIVATE, METHOD))));
   }
 
-  // --- Methods ---
-  public void test() {}
-  // --- End Methods ---
+  public void test_multi_rules_in_new_section() {
+    doTest("""
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+             class MyClass
+             {
+               private int i;
 
-  // --- Methods ---
-  public void test() {}
+               private void foo() {
+                 System.out.println("Hello!");
+               }
 
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-  // --- End Methods ---
-}''',
-      rules: [
-        rule(FIELD),
-        section("// --- Methods ---", "// --- End Methods ---", rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))]
-    )
-  }
+               // --- Methods ---
+               public void test() {}
+               // --- End Methods ---
 
-  void "test multi rules in new section"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  private int i;
+               public int p;
+             }""", """
 
-  private void foo() {
-    System.out.println("Hellow!");
-  }
+             class MyClass
+             {
+             // --- Properties ---
+               public int p;
+               private int i;
+             // --- End Properties ---
 
-  // --- Methods ---
-  public void test() {}
-  // --- End Methods ---
+               // --- Methods ---
+               public void test() {}
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-// --- Properties ---
-  public int p;
-  private int i;
-// --- End Properties ---
-
-  // --- Methods ---
-  public void test() {}
-
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-  // --- End Methods ---
-}''',
-      rules: [
-        section("// --- Properties ---", "// --- End Properties ---", rule(PUBLIC, FIELD), rule(PRIVATE, FIELD)),
-        section("// --- Methods ---", "// --- End Methods ---", rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))]
-    )
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+               // --- End Methods ---
+             }""", List.of(
+      section("// --- Properties ---", "// --- End Properties ---", rule(PUBLIC, FIELD),
+              rule(PRIVATE, FIELD)),
+      section("// --- Methods ---", "// --- End Methods ---", rule(PUBLIC, METHOD),
+              rule(PRIVATE, METHOD))));
   }
 
+  public void test_section_without_close_comment() {
+    doTest("""
 
-  void "test section without close comment"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  private void foo() {
-    System.out.println("Hellow!");
+             class MyClass
+             {
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+
+               // --- Methods ---
+               public void test() {}
+
+               public int p;
+             }""", """
+
+             class MyClass
+             {
+               public int p;
+
+               // --- Methods ---
+               public void test() {}
+
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+             }""", List.of(section(rule(FIELD)),
+                           section("// --- Methods ---", null,
+                                   rule(PUBLIC,
+                                        METHOD),
+                                   rule(PRIVATE,
+                                        METHOD))));
   }
 
-  // --- Methods ---
-  public void test() {}
+  public void test_new_section_without_close_comment() {
+    doTest("""
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-  public int p;
+             class MyClass
+             {
+               private void foo() {
+                 System.out.println("Hello!");
+               }
 
-  // --- Methods ---
-  public void test() {}
+               // --- Methods ---
+               public void test() {}
 
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-}''',
-      rules: [
-        section(rule(FIELD)),
-        section("// --- Methods ---", null, rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))
-      ]
-    )
-  }
+               public int p;
+             }""", """
 
-  void "test new section without close comment"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  private void foo() {
-    System.out.println("Hellow!");
+             class MyClass
+             {
+             // --- Properties ---
+               public int p;
+
+               // --- Methods ---
+               public void test() {}
+
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+             }""", List.of(section("// --- Properties ---", null, rule(FIELD)),
+                           section("// --- Methods ---", null, rule(PUBLIC, METHOD),
+                                   rule(PRIVATE, METHOD))));
   }
 
-  // --- Methods ---
-  public void test() {}
+  public void test_new_section_in_hierarchy() {
+    doTest("""
 
-  public int p;
-}''',
-      expected: '''
-class MyClass
-{
-// --- Properties ---
-  public int p;
+             class MyClass
+             {
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+               public void test() {}
+             }""", """
 
-  // --- Methods ---
-  public void test() {}
+             //region --- Class ---
+             class MyClass
+             {
+             //region --- Methods ---
+               public void test() {}
 
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-}''',
-      rules: [
-        section("// --- Properties ---", null, rule(FIELD)),
-        section("// --- Methods ---", null, rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))
-      ]
-    )
-  }
-
-  void "test new section in hierarchy"() {
-    doTest(
-      initial: '''
-class MyClass
-{
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-  public void test() {}
-}''',
-      expected: '''
-//region --- Class ---
-class MyClass
-{
-//region --- Methods ---
-  public void test() {}
-
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-//endregion methods
-}
-//endregion class''',
-      rules: [
-        section("//region --- Class ---", "//endregion class", rule(CLASS)),
-        section("//region --- Methods ---", "//endregion methods", rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))
-      ]
-    )
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+             //endregion methods
+             }
+             //endregion class""",
+           List.of(section("//region --- Class ---", "//endregion class", rule(CLASS)),
+                   section("//region --- Methods ---", "//endregion methods",
+                           rule(PUBLIC, METHOD),
+                           rule(PRIVATE, METHOD))));
   }
 
-  void "test new sections in hierarchy"() {
-    doTest(
-      initial: '''
-interface MyI {
-}
+  public void test_new_sections_in_hierarchy() {
+    doTest("""
 
-class MyClass
-{
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-  public void test() {}
-}''',
-      expected: '''
-//region --- Class ---
-class MyClass
-{
-//region --- Methods ---
-  public void test() {}
+             interface MyI {
+             }
 
-  private void foo() {
-    System.out.println("Hellow!");
-  }
-//endregion methods
-}
+             class MyClass
+             {
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+               public void test() {}
+             }""", """
 
-interface MyI {
-}
-//endregion class''',
-      rules: [
-        section("//region --- Class ---", "//endregion class", rule(CLASS), rule(INTERFACE)),
-        section("//region --- Methods ---", "//endregion methods", rule(PUBLIC, METHOD), rule(PRIVATE, METHOD))]
-    )
-  }
+             //region --- Class ---
+             class MyClass
+             {
+             //region --- Methods ---
+               public void test() {}
 
-  void "test two methods section comments in a row"() {
-    doTest(
-      initial:'''
-public class SuperTest {
-    //publicS
-    public void test() {
-    }
-//publicE
-//privateS
-    private void testPrivate() {
-    }
-//privateE
+               private void foo() {
+                 System.out.println("Hello!");
+               }
+             //endregion methods
+             }
 
-    public int t;
-}
-''',
-      expected:'''
-public class SuperTest {
-    public int t;
-
-    //publicS
-    public void test() {
-    }
-//publicE
-
-//privateS
-    private void testPrivate() {
-    }
-//privateE
-}
-''',
-      rules: [
-        rule(FIELD),
-        section("//publicS", "//publicE", rule(PUBLIC, METHOD)),
-        section("//privateS", "//privateE", rule(PRIVATE, METHOD))
-      ]
-    )
+             interface MyI {
+             }
+             //endregion class""", List.of(
+      section("//region --- Class ---", "//endregion class", rule(CLASS),
+              rule(INTERFACE)),
+      section("//region --- Methods ---", "//endregion methods", rule(PUBLIC, METHOD),
+              rule(PRIVATE, METHOD))));
   }
 
-  void "test two fields section comments in a row"() {
-    doTest(
-      initial:'''
-public class SuperTest {
-    public void test() {}
+  public void test_two_methods_section_comments_in_a_row() {
+    doTest("""
 
-    //publicFieldStart
-    public int test = 2;
-//publicFieldEnd
-//privateFieldStart
-    private int pr = 1;
-//privateFieldEnd
-}
-''',
-      expected:'''
-public class SuperTest {
-    //publicFieldStart
-    public int test = 2;
-//publicFieldEnd
-//privateFieldStart
-    private int pr = 1;
-//privateFieldEnd
+             public class SuperTest {
+                 //publicS
+                 public void test() {
+                 }
+             //publicE
+             //privateS
+                 private void testPrivate() {
+                 }
+             //privateE
 
-    public void test() {}
-}
-''',
-      rules: [
-        section("//publicFieldStart", "//publicFieldEnd", rule(PUBLIC, FIELD)),
-        section("//privateFieldStart", "//privateFieldEnd", rule(PRIVATE, FIELD)),
-        rule(METHOD)
-      ]
-    )
+                 public int t;
+             }
+             """, """
+
+             public class SuperTest {
+                 public int t;
+
+                 //publicS
+                 public void test() {
+                 }
+             //publicE
+
+             //privateS
+                 private void testPrivate() {
+                 }
+             //privateE
+             }
+             """, List.of(rule(FIELD),
+                          section("//publicS", "//publicE",
+                                  rule(PUBLIC, METHOD)),
+                          section("//privateS", "//privateE",
+                                  rule(PRIVATE, METHOD))));
   }
 
-  void "test no additional sections added"() {
-    doTest(
-      initial: '''
-//sectionClassStart
-public class Test {
-}
-//sectionClassEnd
-''',
-      expected: '''
-//sectionClassStart
-public class Test {
-}
-//sectionClassEnd
-''',
-      rules: [
-        section("//sectionClassStart", "//sectionClassEnd", rule(CLASS))
-      ]
-    )
+  public void test_two_fields_section_comments_in_a_row() {
+    doTest("""
+
+             public class SuperTest {
+                 public void test() {}
+
+                 //publicFieldStart
+                 public int test = 2;
+             //publicFieldEnd
+             //privateFieldStart
+                 private int pr = 1;
+             //privateFieldEnd
+             }
+             """, """
+
+             public class SuperTest {
+                 //publicFieldStart
+                 public int test = 2;
+             //publicFieldEnd
+             //privateFieldStart
+                 private int pr = 1;
+             //privateFieldEnd
+
+                 public void test() {}
+             }
+             """,
+           List.of(section("//publicFieldStart", "//publicFieldEnd", rule(PUBLIC, FIELD)),
+                   section("//privateFieldStart", "//privateFieldEnd", rule(PRIVATE, FIELD)),
+                   rule(METHOD)));
   }
 
-  void "test inner classes sections"() {
-    doTest(
-      initial: '''
-//sectionClassStart
-public class Test {
+  public void test_no_additional_sections_added() {
+    doTest("""
 
-    interface Testable {
-    }
+             //sectionClassStart
+             public class Test {
+             }
+             //sectionClassEnd
+             """, """
 
-}
-//sectionClassEnd
-class Double {
-}
-''',
-      expected: '''
-//sectionClassStart
-public class Test {
-
-//sectionInterfaceStart
-    interface Testable {
-    }
-//sectionInterfaceEnd
-
-}
-
-class Double {
-}
-//sectionClassEnd
-''',
-      rules: [
-        section("//sectionClassStart", "//sectionClassEnd", rule(CLASS)),
-        section("//sectionInterfaceStart", "//sectionInterfaceEnd", rule(INTERFACE))
-      ]
-    )
+             //sectionClassStart
+             public class Test {
+             }
+             //sectionClassEnd
+             """, List.of(section("//sectionClassStart", "//sectionClassEnd", rule(CLASS))));
   }
 
-  void "test a lot of sections"() {
-    def rules = [
+  public void test_inner_classes_sections() {
+    doTest("""
+
+             //sectionClassStart
+             public class Test {
+
+                 interface Testable {
+                 }
+
+             }
+             //sectionClassEnd
+             class Double {
+             }
+             """, """
+
+             //sectionClassStart
+             public class Test {
+
+             //sectionInterfaceStart
+                 interface Testable {
+                 }
+             //sectionInterfaceEnd
+
+             }
+
+             class Double {
+             }
+             //sectionClassEnd
+             """, List.of(section("//sectionClassStart", "//sectionClassEnd", rule(CLASS)),
+                          section("//sectionInterfaceStart", "//sectionInterfaceEnd",
+                                  rule(INTERFACE))));
+  }
+
+  public void test_a_lot_of_sections() {
+    List<ArrangementSectionRule> rules = List.of(
       section("//sectionInterfaceStart", "//sectionInterfaceEnd", rule(INTERFACE)),
       section("//sectionEnumStart", "//sectionEnumEnd", rule(ENUM)),
       section("//sectionClassStart", "//sectionClassEnd", rule(CLASS)),
       section("//sectionPublicFieldStart", "//sectionPublicFieldEnd", rule(FIELD, PUBLIC)),
       section("//sectionPrivateFieldStart", "//sectionPrivateFieldEnd", rule(FIELD, PRIVATE)),
       section("//sectionPublicMethodStart", "//sectionPublicMethodEnd", rule(METHOD, PUBLIC)),
-      section("//sectionPrivateMethodStart", "//sectionPrivateMethodEnd", rule(METHOD, PRIVATE)),
-    ]
+      section("//sectionPrivateMethodStart", "//sectionPrivateMethodEnd",
+              rule(METHOD, PRIVATE)));
 
-    doTest(
-      initial: '''
-public class SuperTest {
+    doTest("""
 
-    class T {}
+             public class SuperTest {
 
-    class R {}
+                 class T {}
 
-    interface I {}
+                 class R {}
 
-    enum Q {}
+                 interface I {}
 
-    public void test() {}
+                 enum Q {}
 
-    private void teste2() {}
+                 public void test() {}
 
-    public void testtt() {}
+                 private void teste2() {}
 
-    public int a;
+                 public void testtt() {}
 
-    private int b;
-}
+                 public int a;
 
-class Test {}
-''',
-      expected: '''
-//sectionClassStart
-public class SuperTest {
+                 private int b;
+             }
 
-//sectionInterfaceStart
-    interface I {}
-//sectionInterfaceEnd
+             class Test {}
+             """, """
 
-//sectionEnumStart
-    enum Q {}
-//sectionEnumEnd
+             //sectionClassStart
+             public class SuperTest {
 
-//sectionClassStart
-    class T {}
+             //sectionInterfaceStart
+                 interface I {}
+             //sectionInterfaceEnd
 
-    class R {}
-//sectionClassEnd
-//sectionPublicFieldStart
-    public int a;
-//sectionPublicFieldEnd
-//sectionPrivateFieldStart
-    private int b;
-//sectionPrivateFieldEnd
+             //sectionEnumStart
+                 enum Q {}
+             //sectionEnumEnd
 
-//sectionPublicMethodStart
-    public void test() {}
+             //sectionClassStart
+                 class T {}
 
-    public void testtt() {}
-//sectionPublicMethodEnd
+                 class R {}
+             //sectionClassEnd
+             //sectionPublicFieldStart
+                 public int a;
+             //sectionPublicFieldEnd
+             //sectionPrivateFieldStart
+                 private int b;
+             //sectionPrivateFieldEnd
 
-//sectionPrivateMethodStart
-    private void teste2() {}
-//sectionPrivateMethodEnd
-}
+             //sectionPublicMethodStart
+                 public void test() {}
 
-class Test {}
-//sectionClassEnd
-''',
-      rules: rules
-    )
+                 public void testtt() {}
+             //sectionPublicMethodEnd
 
-    doTest(
-      initial: '''
-//sectionClassStart
-public class SuperTest {
+             //sectionPrivateMethodStart
+                 private void teste2() {}
+             //sectionPrivateMethodEnd
+             }
 
-//sectionInterfaceStart
-    interface I {}
-//sectionInterfaceEnd
+             class Test {}
+             //sectionClassEnd
+             """, rules);
 
-//sectionEnumStart
-    enum Q {}
-//sectionEnumEnd
+    doTest("""
 
-//sectionClassStart
-    class T {}
+             //sectionClassStart
+             public class SuperTest {
 
-    class R {}
-//sectionClassEnd
+             //sectionInterfaceStart
+                 interface I {}
+             //sectionInterfaceEnd
 
-//sectionPublicFieldStart
-    public int a;
-//sectionPublicFieldEnd
+             //sectionEnumStart
+                 enum Q {}
+             //sectionEnumEnd
 
-//sectionPrivateFieldStart
-    private int b;
-//sectionPrivateFieldEnd
+             //sectionClassStart
+                 class T {}
 
-//sectionPublicMethodStart
-    public void test() {}
+                 class R {}
+             //sectionClassEnd
 
-    public void testtt() {}
-//sectionPublicMethodEnd
+             //sectionPublicFieldStart
+                 public int a;
+             //sectionPublicFieldEnd
 
-//sectionPrivateMethodStart
-    private void teste2() {}
-//sectionPrivateMethodEnd
+             //sectionPrivateFieldStart
+                 private int b;
+             //sectionPrivateFieldEnd
 
-    private void newPrivateTest() {}
+             //sectionPublicMethodStart
+                 public void test() {}
 
-    class NewClass {}
+                 public void testtt() {}
+             //sectionPublicMethodEnd
 
-    interface NewInterface {}
-}
+             //sectionPrivateMethodStart
+                 private void teste2() {}
+             //sectionPrivateMethodEnd
 
-class Test {}
-//sectionClassEnd
+                 private void newPrivateTest() {}
 
-class NewOuterClass {}
-''',
-      expected: '''
-//sectionClassStart
-public class SuperTest {
+                 class NewClass {}
 
-//sectionInterfaceStart
-    interface I {}
-    interface NewInterface {}
-//sectionInterfaceEnd
-//sectionEnumStart
-    enum Q {}
-//sectionEnumEnd
+                 interface NewInterface {}
+             }
 
-//sectionClassStart
-    class T {}
+             class Test {}
+             //sectionClassEnd
 
-    class R {}
+             class NewOuterClass {}
+             """, """
 
-    class NewClass {}
-//sectionClassEnd
-//sectionPublicFieldStart
-    public int a;
-//sectionPublicFieldEnd
-//sectionPrivateFieldStart
-    private int b;
-//sectionPrivateFieldEnd
+             //sectionClassStart
+             public class SuperTest {
 
-//sectionPublicMethodStart
-    public void test() {}
+             //sectionInterfaceStart
+                 interface I {}
+                 interface NewInterface {}
+             //sectionInterfaceEnd
+             //sectionEnumStart
+                 enum Q {}
+             //sectionEnumEnd
 
-    public void testtt() {}
-//sectionPublicMethodEnd
+             //sectionClassStart
+                 class T {}
 
-//sectionPrivateMethodStart
-    private void teste2() {}
+                 class R {}
 
-    private void newPrivateTest() {}
-//sectionPrivateMethodEnd
-}
+                 class NewClass {}
+             //sectionClassEnd
+             //sectionPublicFieldStart
+                 public int a;
+             //sectionPublicFieldEnd
+             //sectionPrivateFieldStart
+                 private int b;
+             //sectionPrivateFieldEnd
 
-class Test {}
+             //sectionPublicMethodStart
+                 public void test() {}
 
-class NewOuterClass {}
-//sectionClassEnd
-''',
-      rules: rules
-    )
+                 public void testtt() {}
+             //sectionPublicMethodEnd
+
+             //sectionPrivateMethodStart
+                 private void teste2() {}
+
+                 private void newPrivateTest() {}
+             //sectionPrivateMethodEnd
+             }
+
+             class Test {}
+
+             class NewOuterClass {}
+             //sectionClassEnd
+             """, rules);
   }
 
-  void "test range rearrangement"() {
-    doTest(
-      initial: '''
-public class Test {
-    //pubMS
-<range>    public void test1() {}
-    private void test2() {}
-    public void test3() {}</range>
-    //pubME
+  public void test_range_rearrangement() {
+    doTest("""
 
-    //privMS
-    private void test4() {}
-    //privME
-}
-''',
-      expected: '''
-public class Test {
-    //pubMS
-    public void test1() {}
+             public class Test {
+                 //pubMS
+             <range>    public void test1() {}
+                 private void test2() {}
+                 public void test3() {}</range>
+                 //pubME
 
-    public void test3() {}
-    //pubME
+                 //privMS
+                 private void test4() {}
+                 //privME
+             }
+             """, """
 
-    //privMS
-    private void test2() {}
-    private void test4() {}
-    //privME
-}
-''',
-      rules: [
-        section("//pubMS", "//pubME", rule(PUBLIC, METHOD)),
-        section("//privMS", "//privME", rule(PRIVATE, METHOD))
-      ]
-    )
+             public class Test {
+                 //pubMS
+                 public void test1() {}
+
+                 public void test3() {}
+                 //pubME
+
+                 //privMS
+                 private void test2() {}
+                 private void test4() {}
+                 //privME
+             }
+             """, List.of(section("//pubMS", "//pubME", rule(PUBLIC, METHOD)),
+                          section("//privMS", "//privME", rule(PRIVATE, METHOD))));
   }
 
-  void "test on range with nested sections"() {
-    doTest(
-      initial: '''
-//classStart
-public class Test {
+  public void test_on_range_with_nested_sections() {
+    doTest("""
 
-    //classStart
-<range>    class R {}
-    class T {}
-    public void test() {}</range>
-    //classEnd
+             //classStart
+             public class Test {
 
-    //publicMethodStart
-    public void tester() {}
-    //publicMethodEnd
-}
+                 //classStart
+             <range>    class R {}
+                 class T {}
+                 public void test() {}</range>
+                 //classEnd
 
-class NewOne {
-}
-//classEnd
-''',
-      expected: '''
-//classStart
-public class Test {
+                 //publicMethodStart
+                 public void tester() {}
+                 //publicMethodEnd
+             }
 
-    //classStart
-    class R {}
-    class T {}
-    //classEnd
+             class NewOne {
+             }
+             //classEnd
+             """, """
 
-    //publicMethodStart
-    public void test() {}
-    public void tester() {}
-    //publicMethodEnd
-}
+             //classStart
+             public class Test {
 
-class NewOne {
-}
-//classEnd
-''',
-      rules: [
-        section("//classStart", "//classEnd", rule(CLASS)),
-        section("//publicMethodStart", "//publicMethodEnd", rule(PUBLIC, METHOD))
-      ]
-    )
+                 //classStart
+                 class R {}
+                 class T {}
+                 //classEnd
+
+                 //publicMethodStart
+                 public void test() {}
+                 public void tester() {}
+                 //publicMethodEnd
+             }
+
+             class NewOne {
+             }
+             //classEnd
+             """, List.of(section("//classStart", "//classEnd", rule(CLASS)),
+                          section("//publicMethodStart", "//publicMethodEnd",
+                                  rule(PUBLIC, METHOD))));
   }
 
   //Now comes failing tests - to fix in future
 
   //TODO look at upper one - it succeeds this is not!!!
-  void "do not test on range with three inner sections"() {
-    doTest(
-      initial: '''
-//classStart
-public class Test {
+  public void do_not_test_on_range_with_three_inner_sections() {
+    doTest("""
 
-    //classStart
-<range>    class R {}
-    class T {}
-    public void test() {}</range>
-    //classEnd
+             //classStart
+             public class Test {
 
-    //fieldStart
-    public int i = 1;
-    //fieldEnd
+                 //classStart
+             <range>    class R {}
+                 class T {}
+                 public void test() {}</range>
+                 //classEnd
 
-    //publicMethodStart
-    public void tester() {}
-    //publicMethodEnd
-}
+                 //fieldStart
+                 public int i = 1;
+                 //fieldEnd
 
-class NewOne {
-}
-//classEnd
-''',
-      expected: '''
-//classStart
-public class Test {
+                 //publicMethodStart
+                 public void tester() {}
+                 //publicMethodEnd
+             }
 
-    //classStart
-    class R {}
-    class T {}
-    //classEnd
+             class NewOne {
+             }
+             //classEnd
+             """, """
 
-    //fieldStart
-    public int i = 1;
-    //fieldEnd
+             //classStart
+             public class Test {
 
-    //publicMethodStart
-    public void test() {}
-    public void tester() {}
-    //publicMethodEnd
-}
+                 //classStart
+                 class R {}
+                 class T {}
+                 //classEnd
 
-class NewOne {
-}
-//classEnd
-''',
-      rules: [
-        section("//classStart", "//classEnd", rule(CLASS)),
-        section("//fieldStart", "//fieldEnd", rule(FIELD)),
-        section("//publicMethodStart", "//publicMethodEnd", rule(PUBLIC, METHOD))
-      ]
-    )
+                 //fieldStart
+                 public int i = 1;
+                 //fieldEnd
+
+                 //publicMethodStart
+                 public void test() {}
+                 public void tester() {}
+                 //publicMethodEnd
+             }
+
+             class NewOne {
+             }
+             //classEnd
+             """, List.of(section("//classStart", "//classEnd", rule(CLASS)),
+                          section("//fieldStart", "//fieldEnd", rule(FIELD)),
+                          section("//publicMethodStart", "//publicMethodEnd",
+                                  rule(PUBLIC, METHOD))));
   }
 
-  void "do not test field has not only section comments"() {
-    doTest(
-      initial: '''\
-class Test {
+  public void do_not_test_field_has_not_only_section_comments() {
+    doTest("""
+             class Test {
 
-  //method start
-  //field1
-  public int field1 = 1;
+               //method start
+               //field1
+               public int field1 = 1;
 
-  //method end
+               //method end
 
-  public void method test() {}
+               public void method test() {}
 
-}
-''',
-      expected: '''\
-class Test {
+             }
+             """, """
+             class Test {
 
-  //field1
-  public int field1 = 1;
+               //field1
+               public int field1 = 1;
 
-  //method start
-  public void method test() {}
-  //method end
+               //method start
+               public void method test() {}
+               //method end
 
-}
-''',
-      rules: [
-        rule(FIELD),
-        section("//method start", "//method end", rule(METHOD))
-      ]
-    )
+             }
+             """, List.of(rule(FIELD),
+                          section("//method start", "//method end",
+                                  rule(METHOD))));
   }
 
+  public void do_not_test_class_has_not_only_section_comments() {
+    doTest("""
+             //class start
+             //main class
+             public class Test {
+             }
+             //class end
 
-  void "do not test class has not only section comments"() {
-    doTest(
-      initial: '''\
-//class start
-//main class
-public class Test {
-}
-//class end
+             interface I {
+             }
 
-interface I {
-}
+             class A {
+             }
 
-class A {
-}
+             class B {
+             }
+             """, """
+             interface I {
+             }
 
-class B {
-}
-''',
-      expected: '''\
-interface I {
-}
+             //class start
+             //main class
+             public class Test {
+             }
 
-//class start
-//main class
-public class Test {
-}
+             class A {
+             }
 
-class A {
-}
-
-class B {
-}
-//class end
-''',
-      rules: [
-        rule(INTERFACE),
-        section("//class start", "//class end", rule(CLASS))
-      ]
-    )
+             class B {
+             }
+             //class end
+             """, List.of(rule(INTERFACE),
+                          section("//class start", "//class end",
+                                  rule(CLASS))));
   }
 
-  void "do not test method has not only section comments"() {
-    doTest(
-      initial: '''\
-class Test {
+  public void do_not_test_method_has_not_only_section_comments() {
+    doTest("""
+             class Test {
 
-  //methods start
-  //first
-  public void test() {}
+               //methods start
+               //first
+               public void test() {}
 
-  private void t() {}
-  //method end
-}
-''',
-      expected: '''\
-class Test {
+               private void t() {}
+               //method end
+             }
+             """, """
+             class Test {
 
-  //methods start
-  private void t() {}
+               //methods start
+               private void t() {}
 
-  //first
-  public void test() {}
-  //method end
+               //first
+               public void test() {}
+               //method end
 
-}
-''',
-      rules: [
-        section("//methods start", "//method end", rule(PRIVATE, METHOD), rule(PUBLIC, METHOD))
-      ]
-    )
+             }
+             """, List.of(
+      section("//methods start", "//method end", rule(PRIVATE, METHOD),
+              rule(PUBLIC, METHOD))));
   }
-
 }
