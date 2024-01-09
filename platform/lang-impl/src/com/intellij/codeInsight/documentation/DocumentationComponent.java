@@ -272,10 +272,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
+    myCorner = new ActionButton(gearActions, null, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
       @Override
       protected DataContext getDataContext() {
         return DataManager.getInstance().getDataContext(myCorner);
@@ -684,7 +681,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
-      setPopup(true);
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     }
   }
 

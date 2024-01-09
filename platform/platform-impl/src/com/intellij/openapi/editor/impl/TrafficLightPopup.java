@@ -190,14 +190,10 @@ final class TrafficLightPopup {
       myContent.add(createDetailsPanel(analyzerStatus), gc);
     }
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
     java.util.List<AnAction> actions = controller.getActions();
     if (!actions.isEmpty()) {
       ActionButton menuButton = new ActionButton(new MenuAction(actions, compactViewAction),
-                                                 presentation,
+                                                 null,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
@@ -368,7 +364,9 @@ final class TrafficLightPopup {
 
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {
-      setPopup(true);
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
       addAll(actions);
       add(compactViewAction);
     }
