@@ -135,13 +135,14 @@ class JbSettingsImporter(private val configDirPath: Path,
       // there's currently only one reason to restart after reading configs
       // plugins are handled separately
       return Registry.getInstance().isRestartNeeded
-    } catch (th: Throwable) {
+    }
+    catch (th: Throwable) {
       LOG.error(th)
       return false
     }
   }
 
-  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: ()->Unit) {
+  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
 
@@ -151,14 +152,15 @@ class JbSettingsImporter(private val configDirPath: Path,
     saveSettings(ApplicationManager.getApplication(), true)
   }
 
-  private fun loadNotLoadedComponents(notLoadedComponents: Collection<String>) {
+  private fun loadNotLoadedComponents(componentsToLoad: Collection<String>) {
     val appServiceClasses = hashSetOf<Class<*>>()
     (ApplicationManager.getApplication() as ComponentManagerImpl).processAllImplementationClasses { componentClass, _ ->
       appServiceClasses.add(componentClass)
     }
-
+    val notLoadedComponents = arrayListOf<String>()
+    notLoadedComponents.addAll(componentsToLoad)
     val pluginSet = PluginManagerCore.getPluginSet()
-    for (mainDescriptor in pluginSet.enabledPlugins) {
+    for (mainDescriptor in pluginSet.enabledPlugins + pluginSet.getEnabledModules()) {
       // we don't check classloader for sub descriptors because url set is the same
       val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
                               ?: continue
@@ -168,13 +170,14 @@ class JbSettingsImporter(private val configDirPath: Path,
           val parameterValues = stateAnnotation.getParameterValues(false)
           val nameValue = parameterValues.find { it.name == "name" } ?: continue
           val storages = parameterValues.find { it.name == "storages" } ?: continue
-          if (notLoadedComponents.contains(nameValue.value.toString())) {
+          if (notLoadedComponents.remove(nameValue.value.toString())) {
             try {
               val clazz = pluginClassLoader.loadClass(classInfo.name)
               if (!appServiceClasses.contains(clazz) && !isAppLevelLightService(clazz))
                 continue
               val psc = ApplicationManager.getApplication().instantiateClass(clazz, mainDescriptor.pluginId)
               componentStore.initComponent(psc, null, mainDescriptor.pluginId)
+              ApplicationManager.getApplication().getService(clazz)
               val storage = (storages.value as Array<*>).find {
                 val info = it as AnnotationInfo
                 val deprecated = info.getParameterValues(false).find { pv -> pv.name == "deprecated" }
@@ -189,6 +192,10 @@ class JbSettingsImporter(private val configDirPath: Path,
           }
         }
       }
+    }
+
+    for (component in notLoadedComponents) {
+      LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
     }
   }
 

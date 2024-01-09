@@ -49,10 +49,12 @@ internal class SettingsControllerMediator : SettingsController {
       StoragePathMacros.CACHE_FILE -> {
         StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag), oldStorage = null)
       }
+      /*
       StoragePathMacros.NON_ROAMABLE_FILE -> {
         val oldStorage = XmlFileStorage(file)
         StateStorageBackedByController(this, java.util.List.of(NonShareableInternalTag), oldStorage)
       }
+      */
       else -> null
     }
   }
