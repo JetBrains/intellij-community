@@ -426,7 +426,8 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * @param automaticMigrationIsExpected this parameter is to remember about {@link MigrateConfigApp} case with automatic migration.
+   * @param automaticMigrationIsExpected this parameter is to remember about {@link ConfigImportHelper#isHeadlessAutomaticConfigImportAllowed()}
+   *                                     case with automatic migration.
    * @throws UnsupportedOperationException if {@param automaticMigrationIsExpected} is true
    */
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs, boolean automaticMigrationIsExpected) {
