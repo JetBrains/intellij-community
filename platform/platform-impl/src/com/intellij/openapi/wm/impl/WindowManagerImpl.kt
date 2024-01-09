@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -82,7 +83,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   internal val defaultFrameInfoHelper: FrameInfoHelper = FrameInfoHelper()
 
-  private var frameReuseEnabled = false
+  var frameReuseEnabled = false
+    private set
+    @Internal get
 
   init {
     val app = ApplicationManager.getApplication()
