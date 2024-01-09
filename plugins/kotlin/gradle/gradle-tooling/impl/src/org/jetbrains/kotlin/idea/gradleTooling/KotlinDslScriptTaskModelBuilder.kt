@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.PREPARATION_TASK_NAME
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
@@ -37,8 +37,8 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
         ).withDescription("Unable to set $PREPARATION_TASK_NAME sync task.")
     }
 
-    private fun kotlinDslScriptsModelImportSupported(currentGradleVersion: String): Boolean {
-        return GradleVersion.version(currentGradleVersion) >= GradleVersion.version("6.0")
+    private fun kotlinDslScriptsModelImportSupported(gradleVersion: String): Boolean {
+        return GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.0")
     }
 
     internal fun KotlinExtensionReflection.parseKotlinGradlePluginVersion(): KotlinGradlePluginVersion? {

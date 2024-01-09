@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.ModifiableRootModel
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -33,6 +32,7 @@ import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import javax.swing.Icon
 
 abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
@@ -146,8 +146,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
     }
 
     private fun addJvmTargetTask(buildScriptData: BuildScriptDataBuilder) {
-        val minGradleVersion = GradleVersion.version("5.0")
-        if (buildScriptData.gradleVersion >= minGradleVersion)
+        if (buildScriptData.gradleVersion.isGradleAtLeast("5.0"))
             buildScriptData
                 .addOther(
                     """

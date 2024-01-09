@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -65,8 +65,8 @@ fun getGradleScriptInputsStamp(
 
 const val minimal_gradle_version_supported = "6.0"
 
-fun kotlinDslScriptsModelImportSupported(currentGradleVersion: String): Boolean {
-    return GradleVersion.version(currentGradleVersion) >= GradleVersion.version(minimal_gradle_version_supported)
+fun kotlinDslScriptsModelImportSupported(gradleVersion: String): Boolean {
+    return GradleVersionUtil.isGradleAtLeast(gradleVersion, minimal_gradle_version_supported)
 }
 
 fun getGradleProjectSettings(project: Project): Collection<GradleProjectSettings> =
