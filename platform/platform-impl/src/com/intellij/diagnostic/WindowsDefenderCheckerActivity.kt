@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
@@ -47,7 +47,12 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val paths = checker.getPathsToExclude(project)
+    val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project))
+    if (paths.isEmpty()) {
+      LOG.info("all paths are on a DevDrive")
+      return
+    }
+
     val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
     val auto = DiagnosticBundle.message("defender.config.auto")
     val manual = DiagnosticBundle.message("defender.config.manual")

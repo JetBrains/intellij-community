@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -13,13 +13,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.sun.jna.Memory;
+import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
-import com.sun.jna.platform.win32.Ole32;
+import com.sun.jna.platform.win32.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,6 +145,78 @@ public class WindowsDefenderChecker {
     });
 
     return new ArrayList<>(paths);
+  }
+
+  public final @NotNull List<Path> filterDevDrivePaths(@NotNull List<Path> paths) {
+    if (!JnaLoader.isLoaded()) {
+      LOG.debug("JNA is not loaded");
+      return paths;
+    }
+
+    var buildNumber = SystemInfo.getWinBuildNumber();
+    if (buildNumber == null || buildNumber < 22621) {
+      if (LOG.isDebugEnabled()) LOG.debug("DevDrive feature is not supported on " + buildNumber);
+      return paths;
+    }
+
+    try (var volInfo = new FILE_FS_PERSISTENT_VOLUME_INFORMATION()) {
+      return paths.stream().filter(path -> !isOnDevDrive(path, volInfo)).toList();
+    }
+    catch (Exception e) {
+      LOG.warn("DevDrive detection failed", e);
+      return paths;
+    }
+  }
+
+  @SuppressWarnings("SpellCheckingInspection") private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
+  private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
+  private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
+
+  @SuppressWarnings({"unused", "FieldMayBeFinal"})
+  @Structure.FieldOrder({"VolumeFlags", "FlagMask", "Version", "Reserved"})
+  public static final class FILE_FS_PERSISTENT_VOLUME_INFORMATION extends Structure implements AutoCloseable {
+    public int VolumeFlags;
+    public int FlagMask;
+    public int Version;
+    public int Reserved;
+
+    @Override
+    public void close() {
+      if (getPointer() instanceof Memory m) m.close();
+    }
+  }
+
+  // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_fs_persistent_volume_information
+  private static boolean isOnDevDrive(Path path, FILE_FS_PERSISTENT_VOLUME_INFORMATION volInfo) {
+    var handle = Kernel32.INSTANCE.CreateFile(
+      path.toString(), WinNT.FILE_READ_ATTRIBUTES, WinNT.FILE_SHARE_READ | WinNT.FILE_SHARE_WRITE, null, WinNT.OPEN_EXISTING,
+      WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
+    if (handle == WinBase.INVALID_HANDLE_VALUE) {
+      var err = Kernel32.INSTANCE.GetLastError();
+      LOG.warn("CreateFile(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
+      return false;
+    }
+    try {
+      volInfo.FlagMask = PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME;
+      volInfo.Version = 1;
+      volInfo.write();
+      if (Kernel32.INSTANCE.DeviceIoControl(handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE,
+                                            volInfo.getPointer(), volInfo.size(), volInfo.getPointer(), volInfo.size(), null, null)) {
+        volInfo.read();
+        if (LOG.isDebugEnabled()) LOG.debug(path + ": 0x" + Integer.toHexString(volInfo.VolumeFlags));
+        return volInfo.VolumeFlags == (PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME);
+      }
+      else {
+        if (LOG.isDebugEnabled()) {
+          var err = Kernel32.INSTANCE.GetLastError();
+          LOG.debug("DeviceIoControl(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
+        }
+        return false;
+      }
+    }
+    finally {
+      Kernel32.INSTANCE.CloseHandle(handle);
+    }
   }
 
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
