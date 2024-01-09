@@ -25,6 +25,8 @@
               topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.ae.database.counters.community.CodingTimeUserActivityCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="com.intellij.ae.database.counters.community.MyDynamicPluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 
   <incompatible-with>com.intellij.cwm.guest</incompatible-with>

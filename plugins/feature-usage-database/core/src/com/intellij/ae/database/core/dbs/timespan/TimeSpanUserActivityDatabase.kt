@@ -15,6 +15,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.sqlite.ObjectBinderFactory
 import org.jetbrains.sqlite.SqliteConnection
 import java.time.Instant
@@ -36,7 +37,13 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
   companion object {
     internal suspend fun getInstanceAsync() = serviceAsync<TimeSpanUserActivityDatabase>()
   }
+
   private val throttler = TimeSpanUserActivityDatabaseThrottler(cs, this)
+
+  @TestOnly
+  fun cancelBackgroundUpdate() {
+    throttler.cancelBackgroundUpdate()
+  }
 
   override suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan? {
     return execute { database ->
@@ -49,7 +56,8 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
         ObjectBinderFactory.create4<String, String, String, Int>()
       )
 
-      longestActivityStatement.binder.bind(activity.id, InstantUtils.formatForDatabase(from ?: InstantUtils.SomeTimeAgo), InstantUtils.formatForDatabase(until ?: InstantUtils.NowButABitLater), 1)
+      longestActivityStatement.binder.bind(activity.id, InstantUtils.formatForDatabase(from ?: InstantUtils.SomeTimeAgo),
+                                           InstantUtils.formatForDatabase(until ?: InstantUtils.NowButABitLater), 1)
 
       longestActivityStatement.executeQuery().let {
         val activityId = it.getString(0) ?: error("Required column activityId was not found")
@@ -76,6 +84,37 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
     throttler.submitManual(activity, id, kind, canBeStale, moment, extra)
   }
 
+  override suspend fun endAllEvents(): Int {
+    return execute { db ->
+      val stmt = db.prepareStatement(
+        """
+        UPDATE timespanUserActivity
+        SET ended_at = ?,
+            is_finished = ?
+        """.trimIndent(),
+        ObjectBinderFactory.create2<String, Int>(),
+      )
+
+      val dbEndedAt = InstantUtils.formatForDatabase(InstantUtils.Now)
+      val dbIsFinished = BooleanUtils.formatForDatabase(true)
+      stmt.binder.bind(dbEndedAt, dbIsFinished)
+      stmt.executeUpdate()
+      return@execute db.affectedRows()
+    } ?: 0
+  }
+
+  override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+    return execute { db ->
+      val stmt = db.prepareStatement(
+        "DELETE FROM timespanUserActivity WHERE activity_id = ?",
+        ObjectBinderFactory.create1<String>(),
+      )
+      stmt.binder.bind(activity.id)
+      stmt.executeUpdate()
+      return@execute db.affectedRows()
+    } ?: 0
+  }
+
   override suspend fun endEventInternal(
     databaseId: Int?,
     activity: DatabaseBackedTimeSpanUserActivity,
@@ -92,11 +131,11 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
       if (databaseId != null) {
         val endEventUpdateStatement = database.prepareStatement(
           """
-      UPDATE timespanUserActivity 
-      SET ended_at = ?,
-          is_finished = ?
-      WHERE id = ?
-    """.trimIndent(),
+        UPDATE timespanUserActivity 
+        SET ended_at = ?,
+            is_finished = ?
+        WHERE id = ?
+      """.trimIndent(),
           ObjectBinderFactory.create3<String, Int, Int>(),
         )
         endEventUpdateStatement.binder.bind(dbEndedAt, dbIsFinished, databaseId)
@@ -107,17 +146,17 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLa
       else {
         val endEventInsertStatement = database.prepareStatement(
           """
-      INSERT INTO timespanUserActivity (
-        activity_id,
-        ide_id,
-        started_at,
-        ended_at,
-        is_finished,
-        extra
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-      RETURNING id;
-    """.trimIndent(),
+          INSERT INTO timespanUserActivity (
+            activity_id,
+            ide_id,
+            started_at,
+            ended_at,
+            is_finished,
+            extra
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
+          RETURNING id;
+          """.trimIndent(),
           ObjectBinderFactory.create6<String, Int, String, String, Int, String?>(),
         )
 
@@ -181,11 +220,16 @@ interface ITimeSpanUserActivityDatabase : IReadOnlyTimeSpanUserActivityDatabase 
                            canBeStale: Boolean,
                            extra: Map<String, String>? = null,
                            moment: Instant?)
+
   suspend fun submitPeriodicEvent(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String, extra: Map<String, String>? = null)
   suspend fun cancel(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String)
 }
 
 internal interface IInternalTimeSpanUserActivityDatabase {
+  suspend fun endAllEvents(): Int
+
+  suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int
+
   suspend fun endEventInternal(
     databaseId: Int?,
     activity: DatabaseBackedTimeSpanUserActivity,

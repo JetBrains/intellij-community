@@ -18,7 +18,7 @@ import com.intellij.psi.util.validOrNull
 object TestFileCreatedUserActivity : WritableDatabaseBackedCounterUserActivity() {
   override val id = "test.file.created"
 
-  internal suspend fun write() {
+  suspend fun write() {
     submit(1)
   }
 }

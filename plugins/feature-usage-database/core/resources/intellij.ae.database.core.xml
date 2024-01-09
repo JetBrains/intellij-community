@@ -12,5 +12,6 @@
       serviceImplementation="com.intellij.ae.database.core.baseEvents.fus.AddStatisticsEventLogListenerTemporary"
       preload="true"
     />
+    <postStartupActivity implementation="com.intellij.ae.database.core.IdServiceTempPreloader"/>
   </extensions>
 </idea-plugin>

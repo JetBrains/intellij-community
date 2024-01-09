@@ -14,9 +14,12 @@ import com.intellij.execution.ExecutionListener
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.sqlite.ObjectBinderFactory
 import java.time.Instant
 
@@ -30,8 +33,27 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   // TODO add flag 'errorProne' that fill turn off logs about bad end?
   override val id = "runconfig.running"
 
-  // TODO pass time from build infra?
-  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int) {
+  private var lastBuildAtLock = Mutex()
+  private var lastBuildAt = 0L
+
+  @Deprecated("Only to fix Rider compilation")
+  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int) = writeRunConfigurationStart(kind, id, System.currentTimeMillis())
+
+  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int, timeStart: Long) {
+    /**
+     * Sometimes [BuildProgressListener] reports events, sometimes [ExecutionListener].
+     * Sometimes they both report build events. So if a build event happened within 27ms, we will skip it
+     */
+    if (kind == RunConfigurationEventKind.Build) {
+      lastBuildAtLock.withLock {
+        if (timeStart - lastBuildAt <= 27) {
+          return
+        }
+        else {
+          lastBuildAt = timeStart
+        }
+      }
+    }
     val data = mapOf("act" to kind.eventName)
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
@@ -95,32 +117,46 @@ enum class RunConfigurationEventKind(val eventName: String) {
 
 internal class RunConfigurationListener : ExecutionListener {
   override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+    if (!isAllowed(env)) return
     val id = System.identityHashCode(handler) // not the best ID out there, but it works
 
-    when {
-      env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) } -> {
+    val timeStart = System.currentTimeMillis()
+
+    when { // should be similar to [isAllowed]
+      env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build", true) } -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id)
+          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id, timeStart)
         }
       }
       env.executor is DefaultDebugExecutor || env.executor.id.contains("debug", true) -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Debug, id)
+          it.writeRunConfigurationStart(RunConfigurationEventKind.Debug, id, timeStart)
         }
       }
       else -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Run, id)
+          it.writeRunConfigurationStart(RunConfigurationEventKind.Run, id, timeStart)
         }
       }
     }
   }
 
   override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+    if (!isAllowed(env)) return
+
     val id = System.identityHashCode(handler)
     FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
       it.writeEnd(id)
     }
+  }
+
+  private fun isAllowed(env: ExecutionEnvironment): Boolean {
+    // todo: extension point
+    if ((env.runProfile.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId?.idString == "com.intellij.database") {
+      return false
+    }
+
+    return true
   }
 }
 
@@ -136,12 +172,13 @@ internal class BuildListenerProjectActivity : ProjectActivity {
 internal class BuildListener : BuildProgressListener {
   override fun onEvent(buildId: Any, event: BuildEvent) {
     val id = System.identityHashCode(buildId)
+    val timeStart = System.currentTimeMillis()
     when (event) {
       is StartBuildEvent -> {
         // Skip Gradle initial loading
         if (event.buildDescriptor.title == "Classes up-to-date check") return
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id)
+          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id, timeStart)
         }
       }
       is FinishBuildEvent -> {

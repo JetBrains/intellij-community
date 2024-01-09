@@ -51,6 +51,14 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         return 0
       }
 
+      override suspend fun endAllEvents(): Int {
+        return 0
+      }
+
+      override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+        error("Called removeEvent which doesn't work in current test")
+      }
+
       override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
         error("Called executeBeforeConnectionClosed which doesnt work in current test")
       }
@@ -166,6 +174,14 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       val endedEvents = mutableListOf<String>()
 
       val fakeDatabase = object : IInternalTimeSpanUserActivityDatabase {
+        override suspend fun endAllEvents(): Int {
+          return 0
+        }
+
+        override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+          return 1
+        }
+
         override suspend fun endEventInternal(databaseId: Int?,
                                               activity: DatabaseBackedTimeSpanUserActivity,
                                               startedAt: Instant,
@@ -227,6 +243,14 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         private fun nextId(): Int {
           idSeq += 1
           return idSeq
+        }
+
+        override suspend fun endAllEvents(): Int {
+          return 0
+        }
+
+        override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+          error("This method shouldn't be called in this test")
         }
 
         override suspend fun endEventInternal(databaseId: Int?,
@@ -296,6 +320,97 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
       Assert.assertEquals(activity1DbId, savedEvents[myActivity1.id])
       Assert.assertEquals(activity2DbId, savedEvents[myActivity2.id])
 
+      throttlerCoroutine.cancel()
+    }
+  }
+
+  fun testDanglingEventsCommited() {
+    val onDatabaseDeath = mutableListOf<suspend (Boolean) -> Unit>()
+
+    timeoutRunBlocking {
+      var endAllEventsCalled = false
+
+      val fakeDatabase = object : IInternalTimeSpanUserActivityDatabase {
+        override suspend fun endAllEvents(): Int {
+          endAllEventsCalled = true
+          return 1
+        }
+
+        override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+          error("This method shouldn't be called in this test")
+        }
+
+        override suspend fun endEventInternal(databaseId: Int?,
+                                              activity: DatabaseBackedTimeSpanUserActivity,
+                                              startedAt: Instant,
+                                              endedAt: Instant,
+                                              isFinished: Boolean,
+                                              extra: Map<String, String>?): Int {
+          error("This method shouldn't be called in this test")
+        }
+
+        override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
+          onDatabaseDeath.add(action)
+        }
+      }
+
+      val initLock = Mutex(true)
+
+      val throttlerCoroutine = launch {
+        TimeSpanUserActivityDatabaseThrottler(this, fakeDatabase)
+        initLock.unlock()
+      }
+
+      initLock.withLock {
+        Assert.assertTrue(endAllEventsCalled)
+        throttlerCoroutine.cancel()
+      }
+    }
+  }
+
+  fun testCancelActivity() {
+    val activity = object : DatabaseBackedTimeSpanUserActivity() {
+      override val id: String get() = "testActivity"
+    }
+
+    timeoutRunBlocking {
+      val removedEvents = mutableListOf<String>()
+
+      val fakeDatabase = object : IInternalTimeSpanUserActivityDatabase {
+        override suspend fun endAllEvents(): Int {
+          return 1
+        }
+
+        override suspend fun removeEvent(activity: DatabaseBackedTimeSpanUserActivity): Int {
+          removedEvents.add(activity.id)
+          return 1
+        }
+
+        override suspend fun endEventInternal(databaseId: Int?,
+                                              activity: DatabaseBackedTimeSpanUserActivity,
+                                              startedAt: Instant,
+                                              endedAt: Instant,
+                                              isFinished: Boolean,
+                                              extra: Map<String, String>?): Int {
+          error("This method shouldn't be called in this test")
+        }
+
+        override fun executeBeforeConnectionClosed(action: suspend (isFinal: Boolean) -> Unit) {
+        }
+      }
+
+      val cancelLock = Mutex(true)
+
+      val throttlerCoroutine = launch {
+        val throttler = TimeSpanUserActivityDatabaseThrottler(this, fakeDatabase)
+        throttler.submitPeriodic(activity, activity.id, false, null)
+        throttler.cancel(activity, activity.id)
+        cancelLock.unlock()
+      }
+
+      Assert.assertFalse(removedEvents.contains(activity.id))
+      cancelLock.lock()
+      Assert.assertTrue(removedEvents.contains(activity.id))
       throttlerCoroutine.cancel()
     }
   }

@@ -20,6 +20,7 @@ class IdService : PersistentStateComponentWithModificationTracker<IdService.Stat
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().service<IdService>()
+    suspend fun getInstanceAsync() = ApplicationManager.getApplication().serviceAsync<IdService>()
   }
 
   val id get() = state.id ?: run {
