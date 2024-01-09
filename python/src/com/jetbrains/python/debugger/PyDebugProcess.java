@@ -870,7 +870,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       if (exceptionDataContainer == null) return;
 
       XValueChildrenList exceptionDataValues = loadVariable(exceptionDataContainer);
-      if (exceptionDataValues.size() < 2) return;
+      if (exceptionDataValues == null || exceptionDataValues.size() < 2) return;
 
       PyDebugValue exceptionData = ((PyDebugValue)exceptionDataValues.getValue(1));
       String exceptionType = exceptionData.getType();
