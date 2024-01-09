@@ -185,6 +185,8 @@ public interface ActionToolbar {
 
   void setSecondaryActionsTooltip(@NotNull @NlsContexts.Tooltip String secondaryActionsTooltip);
 
+  void setSecondaryActionsShortcut(@NotNull String secondaryActionsShortcut);
+
   void setSecondaryActionsIcon(Icon icon);
 
   void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon);

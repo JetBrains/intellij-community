@@ -131,7 +131,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
   private Supplier<? extends Dimension> myMinimumButtonSizeSupplier = Dimension::new;
-  //todo maybe move to LayoutStrategy #idea-326561
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   private ToolbarLayoutStrategy myLayoutStrategy;
@@ -1525,6 +1524,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryActions.getTemplatePresentation().setText(secondaryActionsTooltip);
   }
 
+  @Override
   public void setSecondaryActionsShortcut(@NotNull String secondaryActionsShortcut) {
     mySecondaryActions.getTemplatePresentation().putClientProperty(SECONDARY_SHORTCUT, secondaryActionsShortcut);
   }
