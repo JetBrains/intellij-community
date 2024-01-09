@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FoldInitializerAndIfToElvisInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtIfExpression, FoldInitializerAndIfToElvisInspection.IfExpressionData>() {
+    AbstractKotlinApplicableModCommandInspectionWithContext<KtIfExpression, FoldInitializerAndIfToElvisInspection.IfExpressionData>() {
 
     data class IfExpressionData(
         val initializer: KtExpression,
@@ -110,28 +110,33 @@ class FoldInitializerAndIfToElvisInspection :
         )
     }
 
-    override fun apply(element: KtIfExpression, context: IfExpressionData, project: Project, editor: Editor?) {
+    override fun apply(element: KtIfExpression, context: IfExpressionData, project: Project, updater: ModPsiUpdater) {
         val factory = KtPsiFactory(element.project)
 
-        val childRangeBefore = PsiChildRange(context.variableDeclaration, element)
+        val variableDeclaration = updater.getWritable(context.variableDeclaration)
+        val initializer = updater.getWritable(context.initializer)
+        val ifNullExpr = updater.getWritable(context.ifNullExpression)
+        val typeChecked = updater.getWritable(context.typeChecked)
+
+        val childRangeBefore = PsiChildRange(variableDeclaration, element)
         val commentSaver = CommentSaver(childRangeBefore)
         val childRangeAfter = childRangeBefore.withoutLastStatement()
 
-        val elvis = createElvisExpression(context, factory)
+        val elvis = createElvisExpression(initializer, ifNullExpr, typeChecked, factory)
 
-        val positionedElvis = context.initializer.replaced(elvis)
+        val positionedElvis = initializer.replaced(elvis)
         element.delete()
 
         if (context.variableTypeString != null) {
             val typeReference = factory.createType(context.variableTypeString)
-            context.variableDeclaration.setTypeReference(typeReference)?.let { shortenReferences(it) }
+            variableDeclaration.setTypeReference(typeReference)?.let { shortenReferences(it) }
         }
 
         commentSaver.restore(childRangeAfter)
 
-        context.variableDeclaration.reformat()
+        variableDeclaration.reformat()
 
-        positionedElvis.right?.textOffset?.let { editor?.caretModel?.moveToOffset(it) }
+        positionedElvis.right?.textOffset?.let { updater.moveCaretTo(it) }
     }
 
     override fun getProblemDescription(element: KtIfExpression, context: IfExpressionData) =
@@ -175,11 +180,11 @@ class FoldInitializerAndIfToElvisInspection :
     }
 
     private fun createElvisExpression(
-        ifExpressionData: IfExpressionData,
+        initializer: KtExpression,
+        ifNullExpr: KtExpression,
+        typeReference: KtTypeReference?,
         factory: KtPsiFactory
     ): KtBinaryExpression {
-        val (initializer, _, ifNullExpr, typeReference) = ifExpressionData
-
         val pattern = "$0 ?: $1"
         val newInitializer = if (initializer is KtBinaryExpression &&
             initializer.operationToken == KtTokens.ELVIS &&

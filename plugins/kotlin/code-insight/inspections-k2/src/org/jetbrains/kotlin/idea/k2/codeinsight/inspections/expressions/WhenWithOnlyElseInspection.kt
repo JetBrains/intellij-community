@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -11,13 +11,11 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
@@ -45,7 +43,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
  * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection
-    : AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
+    : AbstractKotlinApplicableModCommandInspectionWithContext<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -105,16 +103,15 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, editor: Editor?) {
-        if (editor == null) return
-
+    override fun apply(element: KtWhenExpression, context: Context, project: Project, updater: ModPsiUpdater) {
         val factory = KtPsiFactory(project)
         val newCaretPosition = element.startOffset
+        val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
 
-        val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, factory) ?: return
+        val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
         element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
 
-        editor.caretModel.moveToOffset(newCaretPosition)
+        updater.moveCaretTo(newCaretPosition)
     }
 
     /**
@@ -128,19 +125,19 @@ internal class WhenWithOnlyElseInspection
      *  Additionally, track if _we_ inserted a call to `kotlin.run`. In that case, we will attempt to shorten the reference to `run`,
      *  once we have done the actual transformation in Step 3.2 below. This preserves explicit, user-supplied calls to `kotlin.run`.
      */
-    private fun rewriteElseBranch(context: Context, factory: KtPsiFactory): Pair<KtExpression, Boolean>? {
-        val elseExpression = context.elseExpression.dereference() ?: return null
+    private fun rewriteElseBranch(context: Context, elseExpression: KtExpression, factory: KtPsiFactory, updater: ModPsiUpdater): Pair<KtExpression, Boolean>? {
         val info = context.subjectVariableInfo
 
         if (info?.initializer == null) {
             return elseExpression to false
         }
 
-        val subjectVariable = info.subjectVariable.dereference() ?: return null
-        val initializer = info.initializer.dereference() ?: return null
+        val subjectVariable = info.subjectVariable.dereference().let(updater::getWritable) ?: return null
+        val initializer = info.initializer.dereference().let(updater::getWritable) ?: return null
         val isInitializerPure = info.isInitializerPure
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
-        val references = allowAnalysisFromWriteAction { ReferencesSearch.search(subjectVariable).findAll() }
+
+        val references = ReferencesSearch.search(subjectVariable).findAll()
+
         val occurrences = references.size
         return when {
             occurrences == 0 && isInitializerPure ->

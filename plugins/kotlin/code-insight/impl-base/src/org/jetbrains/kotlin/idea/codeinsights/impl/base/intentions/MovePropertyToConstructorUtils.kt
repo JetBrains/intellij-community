@@ -19,7 +19,8 @@ object MovePropertyToConstructorUtils {
 
         val newParameter = when (info) {
             is MovePropertyToConstructorInfo.ReplacementParameter-> {
-                val constructorParameter = info.constructorParameterToReplace.dereference() ?: return
+                val constructorParameter =
+                    info.constructorParameterToReplace.dereference() ?: return
                 val parameterText = property.buildReplacementConstructorParameterText(constructorParameter, info.propertyAnnotationsText)
                 constructorParameter.replace(factory.createParameter(parameterText))
             }

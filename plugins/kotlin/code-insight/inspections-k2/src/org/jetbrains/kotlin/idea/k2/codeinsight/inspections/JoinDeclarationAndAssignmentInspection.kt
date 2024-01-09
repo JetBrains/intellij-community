@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ScrollType
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class JoinDeclarationAndAssignmentInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+    AbstractKotlinApplicableModCommandInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
     data class Context(
         val assignment: KtBinaryExpression,
         val canEraseDeclaredType: Boolean,
@@ -69,7 +69,8 @@ class JoinDeclarationAndAssignmentInspection :
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = ApplicabilityRanges.SELF
 
-    context(KtAnalysisSession) override fun prepareContext(element: KtProperty): Context? {
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
 
@@ -133,10 +134,11 @@ class JoinDeclarationAndAssignmentInspection :
                 && element.receiverTypeReference == null
                 && element.name != null
 
-    override fun apply(element: KtProperty, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtProperty, context: Context, project: Project, updater: ModPsiUpdater) {
         if (element.typeReference == null) return
 
-        val assignment = context.assignment
+        val assignment = updater.getWritable(context.assignment)
+        val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
         val initializer = assignment.right ?: return
 
         element.initializer = initializer
@@ -160,16 +162,16 @@ class JoinDeclarationAndAssignmentInspection :
             }
         }
 
-        if (context.movePropertyToConstructorInfo != null) {
-            newProperty.moveToConstructor(context.movePropertyToConstructorInfo)
+        if (movePropertyToConstructorInfo != null) {
+            newProperty.moveToConstructor(movePropertyToConstructorInfo)
             return
         }
 
         if (context.canEraseDeclaredType) {
             newProperty.typeReference = null
-            editor?.update(newProperty, false)
+            updater.update(newProperty, false)
         } else {
-            editor?.update(newProperty, context.canOmitDeclaredType)
+            updater.update(newProperty, context.canOmitDeclaredType)
         }
     }
 
@@ -293,7 +295,7 @@ class JoinDeclarationAndAssignmentInspection :
         if (any { it.parent.isInvalidParent() }) return false
 
         val hasOtherAssignmentsInSecondaryConstructors = drop(1).any {
-            it.parents.match(KtBlockExpression::class, last = KtSecondaryConstructor::class) != null
+            it.parents(false).match(KtBlockExpression::class, last = KtSecondaryConstructor::class) != null
         }
         return !hasOtherAssignmentsInSecondaryConstructors
     }
@@ -358,22 +360,16 @@ class JoinDeclarationAndAssignmentInspection :
         return type1.isEqualTo(type2)
     }
 
-    private fun Editor.update(newProperty: KtProperty, canOmitDeclaredType: Boolean) {
+    private fun ModPsiUpdater.update(newProperty: KtProperty, canOmitDeclaredType: Boolean) {
         val newInitializer = newProperty.initializer ?: return
-        PsiDocumentManager.getInstance(newProperty.project).doPostponedOperationsAndUnblockDocument(document)
-
         if (canOmitDeclaredType) {
             val colon = newProperty.colon ?: return
             val typeReference = newProperty.typeReference ?: return
-            selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
-            moveCaret(typeReference.endOffset, ScrollType.CENTER)
+            select(TextRange(colon.startOffset, typeReference.endOffset))
+            moveCaretTo(typeReference.endOffset)
         } else {
-            moveCaret(newInitializer.startOffset, ScrollType.CENTER)
+            moveCaretTo(newInitializer)
         }
     }
 
-    private fun Editor.moveCaret(offset: Int, scrollType: ScrollType) {
-        caretModel.moveToOffset(offset)
-        scrollingModel.scrollToCaret(scrollType)
-    }
 }

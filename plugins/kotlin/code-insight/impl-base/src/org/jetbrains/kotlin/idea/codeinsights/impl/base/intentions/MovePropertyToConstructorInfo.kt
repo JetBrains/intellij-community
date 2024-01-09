@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -18,12 +19,23 @@ sealed interface MovePropertyToConstructorInfo {
     data class ReplacementParameter(
         val constructorParameterToReplace: SmartPsiElementPointer<KtParameter>,
         val propertyAnnotationsText: String?,
-    ) : MovePropertyToConstructorInfo
+    ) : MovePropertyToConstructorInfo {
+        override fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo =
+            ReplacementParameter(
+                constructorParameterToReplace.dereference()?.let { updater.getWritable(it).createSmartPointer() } ?: constructorParameterToReplace,
+                propertyAnnotationsText
+            )
+
+    }
 
     data class AdditionalParameter(
         val parameterTypeText: String,
         val propertyAnnotationsText: String?,
-    ) : MovePropertyToConstructorInfo
+    ) : MovePropertyToConstructorInfo {
+        override fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo = this
+    }
+
+    fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo
 
     companion object {
         context(KtAnalysisSession)
