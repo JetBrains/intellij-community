@@ -6,7 +6,11 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVar
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 internal interface InlineCompletionVariantsProvider : Disposable {
 
@@ -14,16 +18,22 @@ internal interface InlineCompletionVariantsProvider : Disposable {
   fun currentVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
-  suspend fun useNextVariant(): InlineCompletionPresentableVariant
+  @RequiresBlockingContext
+  fun useNextVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
-  suspend fun usePrevVariant(): InlineCompletionPresentableVariant
+  @RequiresBlockingContext
+  fun usePrevVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
   fun getVariantsNumber(): Int
 
   @RequiresEdt
   fun estimateNonEmptyVariantsNumber(): IntRange
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult)
 }
 
 internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
@@ -49,17 +59,15 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return currentVariant
   }
 
-  override suspend fun useNextVariant(): InlineCompletionPresentableVariant {
+  override fun useNextVariant(): InlineCompletionPresentableVariant {
     ThreadingAssertions.assertEventDispatchThread()
-    //disposeCurrentVariant()
     val index = currentVariant.index
     val nextIndex = findStateIndex(index + 1, false) { isPossibleToShow(it) } ?: return currentVariant
     return useVariant(nextIndex, force = false)
   }
 
-  override suspend fun usePrevVariant(): InlineCompletionPresentableVariant {
+  override fun usePrevVariant(): InlineCompletionPresentableVariant {
     ThreadingAssertions.assertEventDispatchThread()
-    //disposeCurrentVariant()
     val index = currentVariant.index
     val prevIndex = findStateIndex(index - 1, true) { isPossibleToShow(it) } ?: return currentVariant
     return useVariant(prevIndex, force = false)
@@ -84,45 +92,130 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
           potentiallyNonEmptyResults++
           nonEmptyResults++
         }
-        Status.COMPLETED_EMPTY -> Unit
+        Status.COMPLETED_EMPTY, Status.INVALIDATED -> Unit
       }
     }
 
     return IntRange(nonEmptyResults, potentiallyNonEmptyResults)
   }
 
-  override fun dispose() {
-    //disposeCurrentVariant()
+  override fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult) {
+    ThreadingAssertions.assertEventDispatchThread()
+
+    // TODO logging
+    // TODO logging of typed completely
+    for ((index, state) in variantsStates.withIndex()) {
+      if (state.isInvalidated()) {
+        continue
+      }
+
+      val snapshot = InlineCompletionSuggestion.VariantSnapshot(
+        state.data,
+        state.elements,
+        index,
+        isCurrentlyDisplaying = index == currentVariant.index
+      )
+      when (val updated = updater(snapshot)) {
+        is InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed -> {
+          val newSnapshot = updated.snapshot
+          if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) { // TODO describe in docs
+            state.elements.clear()
+            state.elements.addAll(newSnapshot.elements)
+            newSnapshot.data.copyUserDataTo(state.data)
+            updateCurrentVariant()
+          }
+          else {
+            state.invalidate() // TODO describe it in docs
+          }
+        }
+        InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Invalidated -> {
+          state.invalidate()
+        }
+        InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same -> Unit
+      }
+    }
+
+    if (variantsStates[currentVariant.index].isInvalidated()) {
+      currentVariantInvalidated()
+    }
   }
 
-  protected abstract suspend fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement)
+  override fun dispose() = Unit
 
-  // TODO add direction
+  @RequiresBlockingContext
   @RequiresEdt
-  protected abstract suspend fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
-
-  @RequiresEdt
-  protected abstract suspend fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
+  protected abstract fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement)
 
   @RequiresEdt
-  protected suspend fun elementComputed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
+  protected abstract fun disposeCurrentVariant()
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  protected abstract fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
+
+  @RequiresEdt
+  protected abstract fun dataChanged()
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  protected fun elementComputed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
     ThreadingAssertions.assertEventDispatchThread()
     validateIndex(variantIndex)
 
     val state = variantsStates[variantIndex]
+    if (state.isInvalidated()) {
+      return
+    }
+
     state.elements += element
     state.status = Status.IN_PROGRESS_NON_EMPTY
     if (currentVariant.index == variantIndex) {
       currentVariant.addElement(element, elementIndex)
     }
+
+    dataChanged()
   }
 
   @RequiresEdt
-  protected fun variantComputed(variantIndex: Int) {
+  protected suspend fun variantComputing(variantIndex: Int, computation: suspend () -> Unit): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+    val state = variantsStates[variantIndex]
+    coroutineScope {
+      state.job = launch {
+        ThreadingAssertions.assertEventDispatchThread() // just in case
+        if (state.isInvalidated()) {
+          return@launch
+        }
+        variantStartedComputing(variantIndex)
+        computation()
+        variantComputed(variantIndex)
+      }
+    }
+    return !state.isInvalidated()
+  }
+
+  @RequiresEdt
+  private fun variantStartedComputing(variantIndex: Int) {
+    ThreadingAssertions.assertEventDispatchThread()
+
+    validateIndex(variantIndex)
+    val state = variantsStates[variantIndex]
+    if (state.isInvalidated()) {
+      return
+    }
+    state.status = Status.IN_PROGRESS_EMPTY
+  }
+
+  @RequiresEdt
+  private fun variantComputed(variantIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     validateIndex(variantIndex)
 
     val state = variantsStates[variantIndex]
+    if (state.isInvalidated()) {
+      return
+    }
+
     state.status = when (state.status) {
       Status.IN_PROGRESS_EMPTY -> Status.COMPLETED_EMPTY
       Status.IN_PROGRESS_NON_EMPTY -> Status.COMPLETED_NON_EMPTY
@@ -130,11 +223,29 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     }
   }
 
-  @RequiresEdt
-  protected fun variantStartedComputing(variantIndex: Int) {
-    ThreadingAssertions.assertEventDispatchThread()
-    validateIndex(variantIndex)
-    variantsStates[variantIndex].status = Status.IN_PROGRESS_EMPTY
+  private fun currentVariantInvalidated() {
+    val newIndex = chooseNewVariantAfterInvalidation()
+    if (newIndex == null) {
+      disposeCurrentVariant() // TODO workaround
+    }
+    else {
+      useVariant(newIndex, true) // TODO decide on force
+    }
+  }
+
+  private fun chooseNewVariantAfterInvalidation(): Int? {
+    val index = currentVariant.index
+    for (i in index - 1 downTo 0) {
+      if (variantsStates[i].status.isPossibleToShow()) {
+        return i
+      }
+    }
+    for (i in index + 1 until variantsStates.size) {
+      if (variantsStates[i].status.isPossibleToShow() || variantsStates[i].status.isInProgress()) {
+        return i
+      }
+    }
+    return null
   }
 
   /**
@@ -155,7 +266,8 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
    * Creates [InlineCompletionPresentableVariant] for the variant [index] and fills it with elements.
    */
   @RequiresEdt
-  private suspend fun getVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
+  @RequiresBlockingContext
+  private fun getVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val variant = prepareVariant(index, force)
     val state = variantsStates[index]
     state.elements.forEachIndexed { elementIndex, element ->
@@ -168,21 +280,31 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
    * Same as [getVariant], but also sets [currentVariant] to it.
    */
   @RequiresEdt
-  private suspend fun useVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
+  @RequiresBlockingContext
+  private fun useVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val fromIndex = currentVariant.index
     if (index == fromIndex) {
       return currentVariant
     }
 
-    beforeVariantSwitched(fromIndex, index, !force)
+    disposeCurrentVariant()
     val variant = getVariant(index, force)
     check(variant.index == index)
     currentVariant = variant
     afterVariantSwitched(fromIndex, index, !force)
+    dataChanged()
     return variant
   }
 
-  protected suspend fun forceNextVariant() {
+  @RequiresEdt
+  private fun updateCurrentVariant() {
+    disposeCurrentVariant()
+    currentVariant = getVariant(currentVariant.index, true)
+    dataChanged()
+  }
+
+  @RequiresBlockingContext
+  protected fun forceNextVariant() {
     val nextIndex = currentVariant.index + 1
     check(nextIndex in variantsStates.indices)
     useVariant(index = nextIndex, force = true)
@@ -231,11 +353,12 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
 private class InlineCompletionPresentableVariantImpl(
   override val data: UserDataHolderBase,
   override val index: Int,
-  private val onAdd: suspend (InlineCompletionElement, Int) -> Unit
+  private val onAdd: (InlineCompletionElement, Int) -> Unit
 ) : InlineCompletionPresentableVariant {
 
   @RequiresEdt
-  suspend fun addElement(element: InlineCompletionElement, elementIndex: Int) {
+  @RequiresBlockingContext
+  fun addElement(element: InlineCompletionElement, elementIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     onAdd(element, elementIndex)
   }
@@ -247,13 +370,35 @@ private class InlineCompletionVariantState(
 ) {
 
   var status: Status = Status.NOT_STARTED
+    set(value) {
+      ThreadingAssertions.assertEventDispatchThread()
+      check(!isInvalidated())
+      field = value
+    }
+
+  var job: Job? = null
+
+  @RequiresBlockingContext
+  fun invalidate() {
+    ThreadingAssertions.assertEventDispatchThread()
+    status = Status.INVALIDATED
+    elements.clear()
+    job?.cancel()
+  }
+
+  // TODO nonEmpty() completed() ....
+
+  fun isInvalidated(): Boolean {
+    return status == Status.INVALIDATED
+  }
 
   enum class Status {
     NOT_STARTED,
     IN_PROGRESS_EMPTY,
     IN_PROGRESS_NON_EMPTY,
     COMPLETED_EMPTY,
-    COMPLETED_NON_EMPTY
+    COMPLETED_NON_EMPTY,
+    INVALIDATED
   }
 }
 
@@ -263,4 +408,8 @@ private fun Status.isPossibleToShow(): Boolean {
 
 private fun Status.isCompleted(): Boolean {
   return this == Status.COMPLETED_NON_EMPTY || this == Status.COMPLETED_EMPTY
+}
+
+private fun Status.isInProgress(): Boolean {
+  return this == Status.IN_PROGRESS_NON_EMPTY || this == Status.IN_PROGRESS_EMPTY
 }

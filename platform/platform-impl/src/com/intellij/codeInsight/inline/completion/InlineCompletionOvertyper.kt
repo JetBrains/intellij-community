@@ -5,6 +5,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper.Upda
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -24,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * @see InlineCompletionProvider.overtyper
  * @see InlineCompletionElementManipulator
  */
+@Deprecated(message = "TODO") // TODO
 interface InlineCompletionOvertyper {
 
   /**
@@ -48,6 +51,7 @@ interface InlineCompletionOvertyper {
   class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
+  @Deprecated(message = "TODO")
   abstract class Adapter : InlineCompletionOvertyper {
     override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
       return when (typing) {
@@ -90,22 +94,23 @@ interface InlineCompletionOvertyper {
  *
  * @see InlineCompletionElementManipulator
  */
+@Deprecated(
+  message = "Use InlineCompletionEventBasedSuggestionUpdater.Default"
+)
+// TODO
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
-  override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
-    val fragment = typing.typed
-    check(fragment.length == 1)
-    if (!context.textToInsert().startsWith(fragment)) {
-      return null
-    }
-    return truncateFirstSymbol(context.state.elements.map { it.element })?.let { UpdatedElements(it, 1) }
-  }
 
-  private fun truncateFirstSymbol(elements: List<InlineCompletionElement>): List<InlineCompletionElement>? {
-    val newFirstElementIndex = elements.indexOfFirst { it.text.isNotEmpty() }
-    check(newFirstElementIndex >= 0)
-    val firstElement = elements[newFirstElementIndex]
-    val manipulator = InlineCompletionElementManipulator.getApplicable(firstElement) ?: return null
-    val newFirstElement = manipulator.truncateFirstSymbol(firstElement)
-    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1)
+  private val suggestionUpdater = InlineCompletionEventBasedSuggestionUpdater.Default()
+
+  override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
+    val event = InlineCompletionEvent.DocumentChange(typing, context.editor)
+    val elements = context.state.elements.map { it.element }
+    val variant = InlineCompletionSuggestion.VariantSnapshot(context, elements, -1, true)
+    val result = suggestionUpdater.update(event, variant)
+    return when (result) {
+      is InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
+      InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Invalidated -> null
+      InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same -> UpdatedElements(elements, 0)
+    }
   }
 }

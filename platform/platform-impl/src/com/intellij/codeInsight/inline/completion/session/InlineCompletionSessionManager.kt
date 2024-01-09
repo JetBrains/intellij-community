@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
+import com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -48,7 +50,7 @@ internal abstract class InlineCompletionSessionManager {
    * After that, it results in one of [UpdateSessionResult], and calls [onUpdate] with this result.
    *
    * @return `false` if session does not exist.
-   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.Overtyped], meaning that
+   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.Changed], meaning that
    * the update succeeded.
    *
    * @see InlineCompletionOvertyper
@@ -65,14 +67,53 @@ internal abstract class InlineCompletionSessionManager {
       return false
     }
 
-    val result = updateContext(session.context, session.provider.overtyper, request)
+    val result = updateSession(session, request)
     onUpdate(session, result)
     return result !is UpdateSessionResult.Invalidated
   }
 
   private fun invalidate(session: InlineCompletionSession) = onUpdate(session, UpdateSessionResult.Invalidated)
 
-  private fun updateContext(
+  private fun updateSession(session: InlineCompletionSession, request: InlineCompletionRequest): UpdateSessionResult {
+    session.context.expectedStartOffset = request.endOffset
+
+    val provider = session.provider
+    val overtyper = provider.overtyper
+    return if (overtyper::class == DefaultInlineCompletionOvertyper::class) {
+      // New behaviour
+      updateSession(session, provider.suggestionUpdater, request)
+    }
+    else {
+      // Preserving old behaviour
+      updateSessionDeprecated(session.context, overtyper, request)
+    }
+  }
+
+  private fun updateSession(
+    session: InlineCompletionSession,
+    suggestionUpdater: InlineCompletionEventBasedSuggestionUpdater,
+    request: InlineCompletionRequest
+  ): UpdateSessionResult {
+    val event = request.event
+
+    if (session.getVariantsNumber() == null) { // variants are not provided yet
+      return when (suggestionUpdater.updateWhenAwaitingVariants(event)) {
+        true -> UpdateSessionResult.Same
+        false -> UpdateSessionResult.Invalidated
+      }
+    }
+
+    session.update { variant -> suggestionUpdater.update(event, variant) }
+    // TODO better if
+    return if (!session.context.isDisposed && session.context.state.elements.isNotEmpty()) {
+      UpdateSessionResult.Same
+    }
+    else {
+      UpdateSessionResult.Invalidated
+    }
+  }
+
+  private fun updateSessionDeprecated(
     context: InlineCompletionContext,
     overtyper: InlineCompletionOvertyper,
     request: InlineCompletionRequest
@@ -80,7 +121,7 @@ internal abstract class InlineCompletionSessionManager {
     return when (request.event) {
       is InlineCompletionEvent.DocumentChange -> {
         val updatedResult = overtyper.overtype(context, request.event.typing)?.let { overtyped ->
-          UpdateSessionResult.Overtyped(overtyped.elements, overtyped.overtypedLength, request.endOffset)
+          UpdateSessionResult.Changed(overtyped.elements, overtyped.overtypedLength, request.endOffset)
         }
         updatedResult ?: UpdateSessionResult.Invalidated
       }
@@ -90,9 +131,15 @@ internal abstract class InlineCompletionSessionManager {
   }
 
   protected sealed interface UpdateSessionResult {
-    class Overtyped(
+    class Changed(
       val newElements: List<InlineCompletionElement>,
       val overtypedLength: Int,
+      val newOffset: Int
+    ) : UpdateSessionResult
+
+    // TODO logs
+    class AnotherVariant(
+      val newElements: List<InlineCompletionElement>,
       val newOffset: Int
     ) : UpdateSessionResult
 

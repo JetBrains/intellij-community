@@ -8,7 +8,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class InlineCompletionContext internal constructor(val editor: Editor, val language: Language) : UserDataHolderBase(), Disposable {
+class InlineCompletionContext internal constructor(
+  val editor: Editor,
+  val language: Language,
+  internal var expectedStartOffset: Int // TODO it should not be here
+) : UserDataHolderBase(), Disposable {
   private val myState = InlineCompletionState().also {
     Disposer.register(this, it)
   }

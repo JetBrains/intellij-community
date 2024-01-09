@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.suggestion
 import com.intellij.openapi.util.UserDataHolderBase
 
 internal interface InlineCompletionPresentableVariant {
+  // TODO make index: raw and actual
   val index: Int
 
   // TODO do we need this?

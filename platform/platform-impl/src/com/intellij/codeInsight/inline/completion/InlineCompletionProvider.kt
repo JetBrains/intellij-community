@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -98,8 +99,13 @@ interface InlineCompletionProvider {
   /**
    * @see InlineCompletionOvertyper
    */
+  @Deprecated(message = "TODO") // TODO
   val overtyper: InlineCompletionOvertyper
     get() = DefaultInlineCompletionOvertyper()
+
+  // TODO docs
+  val suggestionUpdater: InlineCompletionEventBasedSuggestionUpdater
+    get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")

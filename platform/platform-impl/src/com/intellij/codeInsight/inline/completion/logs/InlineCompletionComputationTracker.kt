@@ -60,6 +60,7 @@ internal class InlineCompletionComputationTracker(
     assert(!computedLogSent)
   }
 
+  // TODO track only one variant
   fun truncateTyping(truncateTyping: Int) {
     assert(variantStates.any { it.firstComputed }) // TODO
     typingDuringComputation += truncateTyping

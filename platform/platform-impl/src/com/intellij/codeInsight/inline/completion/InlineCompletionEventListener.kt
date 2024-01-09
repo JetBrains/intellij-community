@@ -54,8 +54,17 @@ sealed class InlineCompletionEventType {
 
   class Change @ApiStatus.Internal constructor(
     override val variantIndex: Int,
+    val lengthDiff: Int
+  ) : PerVariantEventType() {
+
+    @Deprecated(message = "") // TODO
     val overtypedLength: Int
-  ) : PerVariantEventType()
+      get() = lengthDiff
+  }
+
+  // TODO docs
+  // TODO make logs of it
+  class Invalidated @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 
   class Empty @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 }
@@ -72,6 +81,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
       is InlineCompletionEventType.Computed -> onComputed(event)
       is InlineCompletionEventType.Show -> onShow(event)
       is InlineCompletionEventType.Change -> onChange(event)
+      is InlineCompletionEventType.Invalidated -> onInvalidated(event)
       is InlineCompletionEventType.Insert -> onInsert(event)
       is InlineCompletionEventType.Hide -> onHide(event)
       is InlineCompletionEventType.Completion -> onCompletion(event)
@@ -86,6 +96,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
   fun onComputed(event: InlineCompletionEventType.Computed) {}
   fun onShow(event: InlineCompletionEventType.Show) {}
   fun onChange(event: InlineCompletionEventType.Change) {}
+  fun onInvalidated(event: InlineCompletionEventType.Invalidated) {}
   fun onInsert(event: InlineCompletionEventType.Insert) {}
   fun onHide(event: InlineCompletionEventType.Hide) {}
   fun onCompletion(event: InlineCompletionEventType.Completion) {}

@@ -7,12 +7,16 @@ import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.annotations.ApiStatus
 
 // TODO docs
 // TODO renaming
 interface InlineCompletionSuggestion {
 
   suspend fun getVariants(): List<Variant>
+
+  val updater: InlineCompletionEventBasedSuggestionUpdater
+    get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
 
   interface Variant {
 
@@ -40,6 +44,19 @@ interface InlineCompletionSuggestion {
       ): Variant {
         return Impl(data, elements)
       }
+    }
+  }
+
+  // TODO take out from here
+  class VariantSnapshot @ApiStatus.Internal constructor(
+    val data: UserDataHolderBase,
+    val elements: List<InlineCompletionElement>,
+    val index: Int,
+    val isCurrentlyDisplaying: Boolean
+  ) {
+
+    fun copy(elements: List<InlineCompletionElement>): VariantSnapshot {
+      return VariantSnapshot(data, elements, index, isCurrentlyDisplaying)
     }
   }
 

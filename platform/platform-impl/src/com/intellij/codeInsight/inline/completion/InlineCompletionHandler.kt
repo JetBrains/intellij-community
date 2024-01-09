@@ -165,7 +165,6 @@ class InlineCompletionHandler(
     currentCoroutineContext().ensureActive()
 
     val context = session.context
-    val offset = request.endOffset
 
     val result = Result.runCatching {
       val variants = request(session.provider, request).getVariants()
@@ -183,7 +182,7 @@ class InlineCompletionHandler(
         // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
         withContext(Dispatchers.EDT) {
           val variantsComputer = coroutineToIndicator {
-            getVariantsComputer(variants, context, offset, this@coroutineScope)
+            getVariantsComputer(variants, context, this@coroutineScope)
           }
           session.assignVariants(variantsComputer)
         }
@@ -306,6 +305,7 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     val presentable = element.toPresentable()
     presentable.render(editor, endOffset() ?: startOffset)
@@ -319,7 +319,7 @@ class InlineCompletionHandler(
 
         val context = session.context
         when (result) {
-          is UpdateSessionResult.Overtyped -> {
+          is UpdateSessionResult.Changed -> {
             trace(InlineCompletionEventType.Change(-1, result.overtypedLength)) // TODO correct index
             editor.inlayModel.execute(true) {
               context.clear()
@@ -333,6 +333,7 @@ class InlineCompletionHandler(
           UpdateSessionResult.Invalidated -> {
             hide(context, FinishType.INVALIDATED)
           }
+          is UpdateSessionResult.AnotherVariant -> TODO() // TODO
         }
       }
     }
@@ -343,66 +344,66 @@ class InlineCompletionHandler(
   private fun getVariantsComputer(
     variants: List<InlineCompletionSuggestion.Variant>,
     context: InlineCompletionContext,
-    offset: Int,
     scope: CoroutineScope
   ): InlineCompletionVariantsComputer {
     return object : InlineCompletionVariantsComputer(variants) {
       private val job = scope.launch(Dispatchers.EDT) {
         val allVariantsEmpty = AtomicBoolean(true)
         for ((variantIndex, variant) in variants.withIndex()) {
-          variantStartedComputing(variantIndex)
           val isEmpty = AtomicBoolean(false)
-          variant.elements.flowOn(Dispatchers.Default)
-            .onEmpty {
-              traceAsync(InlineCompletionEventType.Empty(variantIndex))
-              isEmpty.set(true)
-            }
-            .withIndex()
-            .onEach { (elementIndex, element) ->
-              ensureActive()
-              elementComputed(variantIndex, elementIndex, element)
-              copyData()
-              allVariantsEmpty.set(false)
-            }
-            .collect { (elementIndex, element) ->
-              // TODO simplify
-              ensureActive()
-              traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
-            }
+          val isSuccess = variantComputing(variantIndex) {
+            variant.elements.flowOn(Dispatchers.Default)
+              .onEmpty {
+                traceAsync(InlineCompletionEventType.Empty(variantIndex))
+                isEmpty.set(true)
+              }
+              .withIndex()
+              .onEach { (elementIndex, element) ->
+                ensureActive()
+                // TODO make without coroutineToIndicator
+                coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
+                allVariantsEmpty.set(false)
+              }
+              .collect { (elementIndex, element) ->
+                // TODO simplify
+                ensureActive()
+                traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
+              }
+          }
 
-          variantComputed(variantIndex)
-          traceAsync(InlineCompletionEventType.VariantComputed(variantIndex))
+          if (isSuccess) {
+            traceAsync(InlineCompletionEventType.VariantComputed(variantIndex))
+          }
 
-          if (isEmpty.get() && allVariantsEmpty.get() && variantIndex < variants.size - 1) {
-            forceNextVariant()
+          if ((!isSuccess || isEmpty.get()) && allVariantsEmpty.get() && variantIndex < variants.size - 1) {
+            coroutineToIndicator { forceNextVariant() }
           }
         }
       }
 
-      override suspend fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
+      override fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
         ThreadingAssertions.assertEventDispatchThread()
         // TODO logging
-        context.renderElement(element, offset)
+        context.renderElement(element, context.expectedStartOffset)
       }
 
-      override suspend fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
+      override fun disposeCurrentVariant() {
         ThreadingAssertions.assertEventDispatchThread()
         context.clear()
       }
 
-      override suspend fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
+      override fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
         ThreadingAssertions.assertEventDispatchThread()
-        traceAsync(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
-         // copyData() // TODO why?
+        trace(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
+      }
+
+      override fun dataChanged() {
+        currentVariant().data.copyUserDataTo(context) // TODO
       }
 
       override fun dispose() {
         super.dispose()
         job.cancel()
-      }
-
-      private fun copyData() {
-        currentVariant().data.copyUserDataTo(context) // TODO
       }
     }
   }
