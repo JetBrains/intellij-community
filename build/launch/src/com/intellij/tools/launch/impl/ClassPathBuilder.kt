@@ -20,12 +20,12 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
 
   companion object {
     fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
-      val launcherFolder = paths.logFolder
-      if (!launcherFolder.exists()) {
-        launcherFolder.mkdirs()
+      val logFolder = paths.logFolder
+      if (!logFolder.exists()) {
+        logFolder.mkdirs()
       }
 
-      val classPathArgFile = launcherFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
+      val classPathArgFile = logFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
       CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile,
                                                 listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
