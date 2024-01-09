@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FoldInitializerAndIfToElvisInspection :
-    AbstractKotlinApplicableModCommandInspectionWithContext<KtIfExpression, FoldInitializerAndIfToElvisInspection.IfExpressionData>() {
+    AbstractKotlinApplicableInspectionWithContext<KtIfExpression, FoldInitializerAndIfToElvisInspection.IfExpressionData>() {
 
     data class IfExpressionData(
         val initializer: KtExpression,

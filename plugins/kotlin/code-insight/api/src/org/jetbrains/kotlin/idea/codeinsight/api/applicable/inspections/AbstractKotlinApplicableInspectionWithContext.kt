@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * For more complex inspections that should either visit multiple kinds of elements or register multiple (or zero) problems, simply use
  * [LocalInspectionTool].
  */
-abstract class AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
@@ -45,7 +45,7 @@ abstract class AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT :
         val inspectionWithContextClass = javaClass
         val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
 
-            override fun getFamilyName(): String = this@AbstractKotlinApplicableModCommandInspectionWithContext.getActionFamilyName()
+            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
 
             override fun applyFix(
                 project: Project,

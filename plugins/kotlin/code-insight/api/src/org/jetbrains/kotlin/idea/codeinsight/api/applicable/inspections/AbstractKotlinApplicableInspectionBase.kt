@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
- * [AbstractKotlinApplicableModCommandInspectionWithContext].
+ * [AbstractKotlinApplicableInspectionWithContext].
  */
 abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(), KotlinApplicableToolBase<ELEMENT> {
     /**

@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class JoinDeclarationAndAssignmentInspection :
-    AbstractKotlinApplicableModCommandInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+    AbstractKotlinApplicableInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
     data class Context(
         val assignment: KtBinaryExpression,
         val canEraseDeclaredType: Boolean,

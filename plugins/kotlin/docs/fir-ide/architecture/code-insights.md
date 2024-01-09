@@ -58,7 +58,7 @@ There are two base classes for inspections: `AbstractKotlinApplicableInspection`
    - ModCommand API based
    - Executed on a background thread
 
-### `AbstractKotlinApplicableModCommandInspectionWithContext`
+### `AbstractKotlinApplicableInspectionWithContext`
 Similar to `AbstractKotlinApplicableInspection` plus Analysis API context:
  - `prepareContext(element)`
    - prepares Analysis API context on a physical PSI
