@@ -527,61 +527,66 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (lineData == null) {
       return CoverageBundle.message("hits.title", 0);
     }
-    final StringBuilder buf = new StringBuilder();
-    String defaultResult = CoverageBundle.message("hits.title", lineData.getHits());
-    buf.append(defaultResult).append("\n");
-
-    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
-      String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
-      if (report != null) {
-        buf.append(report);
-        return report;
-      }
-    }
-
-    TextRange range = TextRange.create(startOffset, endOffset);
-    List<SwitchExpression> switches = JavaCoveragePsiUtilsKt.getSwitches(psiFile, range);
-    List<ConditionExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
-
     try {
-      int idx = 0;
-      int hits = 0;
-
-      if (lineData.getJumps() != null) {
-        for (JumpData jumpData : lineData.getJumps()) {
-          if (idx >= conditions.size()) {
-            LOG.info("Cannot map coverage report data with PSI: there are more branches in report then in PSI");
-            return defaultResult;
-          }
-          ConditionExpression expression = conditions.get(idx++);
-          addJumpDataInfo(buf, jumpData, expression);
-          hits += jumpData.getTrueHits() + jumpData.getFalseHits();
+      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
+        String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
+        if (report != null) {
+          return report;
         }
       }
 
-      if (lineData.getSwitches() != null) {
-        for (SwitchData switchData : lineData.getSwitches()) {
-          if (idx >= switches.size()) {
-            LOG.info("Cannot map coverage report data with PSI: there are more switches in report then in PSI");
-            return defaultResult;
-          }
-          SwitchExpression expression = switches.get(idx++);
-          addSwitchDataInfo(buf, switchData, expression, lineData.getStatus());
-          hits += IntStream.of(switchData.getHits()).sum() + switchData.getDefaultHits();
-        }
-      }
-      if (lineData.getHits() > hits && hits > 0) {
-        buf.append(JavaCoverageBundle.message("report.unknown.outcome",lineData.getHits() - hits));
-      }
+      TextRange range = TextRange.create(startOffset, endOffset);
+      List<SwitchCoverageExpression> switches = JavaCoveragePsiUtilsKt.getSwitches(psiFile, range);
+      List<ConditionCoverageExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
+
+      return createBriefReport(lineData, conditions, switches);
     }
     catch (Exception e) {
-      LOG.info(e);
-      return defaultResult;
+      LOG.error(e);
+      return CoverageBundle.message("hits.title", lineData.getHits());
     }
+  }
+
+  public static @NotNull String createBriefReport(@NotNull LineData lineData,
+                                                  List<ConditionCoverageExpression> conditions,
+                                                  List<SwitchCoverageExpression> switches) {
+    StringBuilder buf = new StringBuilder();
+    String defaultResult = CoverageBundle.message("hits.title", lineData.getHits());
+    buf.append(defaultResult).append("\n");
+    int idx = 0;
+    int hits = 0;
+
+    if (lineData.getJumps() != null) {
+      for (JumpData jumpData : lineData.getJumps()) {
+        if (idx >= conditions.size()) {
+          LOG.info("Cannot map coverage report data with PSI: there are more branches in report then in PSI");
+          return defaultResult;
+        }
+        ConditionCoverageExpression expression = conditions.get(idx++);
+        addJumpDataInfo(buf, jumpData, expression);
+        hits += jumpData.getTrueHits() + jumpData.getFalseHits();
+      }
+    }
+
+    if (lineData.getSwitches() != null) {
+      for (SwitchData switchData : lineData.getSwitches()) {
+        if (idx >= switches.size()) {
+          LOG.info("Cannot map coverage report data with PSI: there are more switches in report then in PSI");
+          return defaultResult;
+        }
+        SwitchCoverageExpression expression = switches.get(idx++);
+        addSwitchDataInfo(buf, switchData, expression, lineData.getStatus());
+        hits += IntStream.of(switchData.getHits()).sum() + switchData.getDefaultHits();
+      }
+    }
+    if (lineData.getHits() > hits && hits > 0) {
+      buf.append(JavaCoverageBundle.message("report.unknown.outcome", lineData.getHits() - hits));
+    }
+
     return buf.toString();
   }
 
-  private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, ConditionExpression expression) {
+  private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, ConditionCoverageExpression expression) {
     buf.append(indent).append(expression.getExpression()).append("\n");
     boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
@@ -591,7 +596,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits)).append("\n");
   }
 
-  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchExpression expression, int coverageStatus) {
+  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchCoverageExpression expression, int coverageStatus) {
     buf.append(indent).append(expression.getExpression()).append("\n");
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {

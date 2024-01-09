@@ -6,10 +6,10 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 
-internal data class SwitchExpression(val expression: String, val cases: List<String>, val hasDefault: Boolean)
-internal data class ConditionExpression(val expression: String, val isReversed: Boolean)
+data class SwitchCoverageExpression(val expression: String, val cases: List<String>, val hasDefault: Boolean)
+data class ConditionCoverageExpression(val expression: String, val isReversed: Boolean)
 
-internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchExpression> {
+internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverageExpression> {
   val parent = getEnclosingParent(psiFile, range) ?: return emptyList()
   val switchBlocks = mutableListOf<PsiSwitchBlock>()
   parent.accept(object : RangePsiVisitor(range) {
@@ -32,11 +32,11 @@ internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchExpress
   return switchBlocks.mapNotNull { block ->
     val expression = block.expression?.withoutParentheses()?.text ?: return@mapNotNull null
     val cases = extractCaseLabels(block).mapNotNull { if (it is PsiExpression) it.withoutParentheses() else it }.map(PsiElement::getText)
-    SwitchExpression(expression, cases, hasDefaultLabel(block))
+    SwitchCoverageExpression(expression, cases, hasDefaultLabel(block))
   }
 }
 
-internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionExpression> {
+internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCoverageExpression> {
   val parent = getEnclosingParent(psiFile, range) ?: return emptyList()
   fun PsiElement.startsInRange() = textOffset in range
 
@@ -99,13 +99,13 @@ private fun PsiPolyadicExpression.isBoolOperator(): Boolean {
   return tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND
 }
 
-private fun PsiExpression.breakIntoConditions(): List<ConditionExpression> {
+private fun PsiExpression.breakIntoConditions(): List<ConditionCoverageExpression> {
   val expression = this.withoutParentheses() ?: return emptyList()
   if (expression is PsiPolyadicExpression && expression.isBoolOperator()) {
     return expression.operands.flatMap { it.breakIntoConditions() }
   }
   else {
-    return listOf(ConditionExpression(expression.text, this.isReversedCondition()))
+    return listOf(ConditionCoverageExpression(expression.text, this.isReversedCondition()))
   }
 }
 
