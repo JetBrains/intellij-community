@@ -14,8 +14,20 @@ data class MetricWithAttributes(val metric: Metric,
 
 private val logger = logger<OpentelemetryJsonParser>()
 
+private fun applyAliases(spanElements: List<SpanElement>, aliases: Map<String, String>): List<SpanElement> {
+  return spanElements.map {
+    if (aliases.containsKey(it.name)) {
+      it.copy(name = aliases[it.name]!!)
+    }
+    else {
+      it
+    }
+  }
+}
+
 /**
  * Reports duration of `nameSpan` and all its children spans.
+ * Replaces the names with an alias, if one was passed.
  * Besides, all attributes are reported as counters.
  * If there are multiple values with the same name:
  * 1. They will be re-numbered `<value>_1`, `<value>_2`, etc. and the sum will be recorded as `<value>`.
@@ -25,8 +37,18 @@ private val logger = logger<OpentelemetryJsonParser>()
  */
 fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
-                                  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor()): List<Metric> {
+                                  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
+                                  aliases: Map<String, String> = mapOf()): List<Metric> {
   val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList()
+    .let {
+      if (aliases.isNotEmpty()) {
+        applyAliases(it, aliases)
+      }
+      else {
+        it
+      }
+    }
+
   val spanToMetricMap = spanElements.mapNotNull { metricSpanProcessor.process(it) }
     .groupBy { it.metric.id.name }
   return combineMetrics(spanToMetricMap)
@@ -43,7 +65,7 @@ fun getMetricsFromSpanAndChildren(file: Path,
  * @throws IllegalStateException if the fromSpan or toSpan is null.
  * @throws IllegalArgumentException if the size of the toSpans is not greater than or equal to the size of the fromSpans.
  */
-fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: String, toSpanName: String) : List<Metric> {
+fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: String, toSpanName: String): List<Metric> {
   val betweenSpanProcessor = SpanInfoProcessor()
   val spanElements = OpentelemetryJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
   val spanToMetricMap = spanElements
@@ -58,8 +80,8 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
   val metrics = mutableListOf<MetricWithAttributes>()
   val sortedFromSpans = fromSpanMetrics.sortedByDescending { info -> info.startTimestamp }
   val spanIds = sortedFromSpans.map { it.spanId }.toSet()
-  val sortedToSpans = toSpanMetrics.sortedByDescending { info -> info.startTimestamp }.filter { spanIds.contains(it.parentSpanId)  }
-  for(i in fromSpanMetrics.indices) {
+  val sortedToSpans = toSpanMetrics.sortedByDescending { info -> info.startTimestamp }.filter { spanIds.contains(it.parentSpanId) }
+  for (i in fromSpanMetrics.indices) {
     val currentToSpan = sortedToSpans[i]
     val currentFromSpan = sortedFromSpans[i]
     if (currentFromSpan.spanId != currentToSpan.parentSpanId) {
