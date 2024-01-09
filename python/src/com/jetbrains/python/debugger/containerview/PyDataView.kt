@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -114,18 +114,21 @@ class PyDataView(private val project: Project) : DumbAware {
 
   fun updateTabs(handler: ProcessHandler) {
     saveSelectedInfo()
-    contentManager.contents.forEach {
-      val panel: PyDataViewerPanel = getPanel(it.component)
+    contentManager.contents.forEach { content ->
+      val panel: PyDataViewerPanel = getPanel(content.component)
       val accessor = panel.frameAccessor
       if (accessor !is PyDebugProcess) {
         return@forEach
       }
 
-      //ToDo restore tabs hiding and showing.
-      //val shouldBeShown = Comparing.equal(handler, accessor.processHandler)
-      // it.isHidden = !shouldBeShown
+      val shouldBeShown = Comparing.equal(handler, accessor.processHandler)
+      if (!shouldBeShown) {
+        contentManager.removeContent(content, true)
+      }
     }
+
     restoreSelectedInfo(handler)
+
     if (contentManager.selectedContent == null) {
       val accessor = getFrameAccessor(handler)
       if (accessor != null) {
@@ -194,13 +197,12 @@ class PyDataView(private val project: Project) : DumbAware {
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.isCloseable = true
     if (frameAccessor is PydevConsoleCommunication) {
-      content.setIcon(PythonIcons.Python.PythonConsole)
+      content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
     }
     if (frameAccessor is PyDebugProcess) {
-      content.setIcon(AllIcons.Toolwindows.ToolWindowDebugger)
-      val name = frameAccessor.session.sessionName
-      content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", name)
+      content.icon = AllIcons.Toolwindows.ToolWindowDebugger
+      content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", frameAccessor.session.sessionName)
     }
     // ToDo restore empty text.
     //  info.setText(PyBundle.message("debugger.data.view.empty.tab"))
@@ -246,17 +248,19 @@ class PyDataView(private val project: Project) : DumbAware {
   }
 
   companion object {
+    private val LOG by lazy { thisLogger() }
+
     private const val DATA_VIEWER_ID = "SciView"
+
     const val COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault"
     const val AUTO_RESIZE = "python.debugger.dataview.autoresize"
-    private val LOG = Logger.getInstance(PyDataView::class.java)
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
     fun isAutoResizeEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(AUTO_RESIZE, true)
-
     fun isColoringEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(COLORED_BY_DEFAULT, true)
-    fun setColoringEnabled(project: Project, value: Boolean) = PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value,
-                                                                                                                 true)
+    fun setColoringEnabled(project: Project, value: Boolean) {
+      PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
+    }
 
     fun getInstance(project: Project): PyDataView = project.getService(PyDataView::class.java)
   }
