@@ -45,7 +45,7 @@ class KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
         if (!checkDescriptor(callableDescriptor, project, editor)) return
 
         require(callableDescriptor is CallableDescriptor)
-        runChangeSignature(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context, null)
+        runChangeSignature(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, element, null)
     }
 
     fun findDescriptor(element: KtElement): CallableDescriptor? {

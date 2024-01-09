@@ -42,7 +42,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             ChangeSignatureAction.getChangeSignatureHandler(callableDeclaration)?.invoke(project, arrayOf(callableDeclaration), dataContext)
             return
         }
-        runChangeSignature(project, editor, callableDeclaration, context)
+        runChangeSignature(project, editor, callableDeclaration)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
@@ -84,7 +84,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
 
     private fun runChangeSignature(
-        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, context: PsiElement
+        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration
     ) {
 
         val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
@@ -92,7 +92,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
         val callableToRefactor = superMethods.firstOrNull() as? KtNamedDeclaration ?: return
         when {
             callableToRefactor is KtFunction || callableToRefactor is KtClass -> {
-                KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableToRefactor), context, null).show()
+                KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableToRefactor), callableDescriptor, null).show()
             }
 
             callableToRefactor is KtProperty || callableToRefactor is KtParameter && callableToRefactor.hasValOrVar() -> {
@@ -102,7 +102,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             callableToRefactor is KtParameter -> {
                 val ownerFunction = callableToRefactor.ownerFunction
                 if (ownerFunction is KtCallableDeclaration) {
-                    runChangeSignature(project, editor, ownerFunction, context)
+                    runChangeSignature(project, editor, ownerFunction)
                 }
             }
         }
