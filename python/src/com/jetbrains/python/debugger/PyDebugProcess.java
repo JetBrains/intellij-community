@@ -352,7 +352,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             myProcessHandler.destroyProcess();
           }
           if (shouldLogConnectionException(e)) {
-            PyDebugProcess.getNotificationGroup()
+            getNotificationGroup()
               .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
               .notify(myProject);
           }
@@ -1105,12 +1105,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                getFunctionNameForBreakpoint(breakpoint),
                                policy
       );
-    }
-  }
-
-  public void addTemporaryBreakpoint(String typeId, String file, int line) {
-    if (isConnected()) {
-      myDebugger.setTempBreakpoint(typeId, file, line);
     }
   }
 
