@@ -3,6 +3,7 @@ package com.intellij.maven.testFramework
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil
 import com.intellij.compiler.impl.ModuleCompileScope
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.compiler.CompileScope
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.Module
@@ -66,7 +67,7 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
     for (name in artifactNames) {
       artifacts.add(ArtifactsTestUtil.findArtifact(project, name))
     }
-    return ArtifactCompileScope.createArtifactsScope(project, artifacts)
+    return ReadAction.nonBlocking<CompileScope> { ArtifactCompileScope.createArtifactsScope(project, artifacts) }.executeSynchronously()
   }
 
   private fun createModulesCompileScope(vararg moduleNames: String): CompileScope {
