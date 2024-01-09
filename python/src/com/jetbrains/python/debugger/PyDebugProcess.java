@@ -107,6 +107,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     new ConcurrentHashMap<>();
 
   private final Set<PyThreadInfo> mySuspendedThreads = Collections.synchronizedSet(new HashSet<>());
+
+  private record BreakpointHitContext(@NotNull XBreakpoint<?> breakpoint,
+                                      @Nullable String evaluatedLogExpression,
+                                      @NotNull XSuspendContext suspendContext) {
+  }
+
+  private final List<BreakpointHitContext> myBreakpointHits = new LinkedList<>();
+
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
   private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
@@ -649,7 +657,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void resume(@Nullable XSuspendContext context) {
-    passResumeToAllThreads();
+    if (myBreakpointHits.isEmpty()) {
+      passResumeToAllThreads();
+    }
+    else {
+      var breakpointHitContext = myBreakpointHits.remove(0);
+      var shouldStop = getSession().breakpointReached(breakpointHitContext.breakpoint, breakpointHitContext.evaluatedLogExpression,
+                                                      breakpointHitContext.suspendContext);
+      if (!shouldStop) {
+        resume(breakpointHitContext.suspendContext);
+      }
+    }
   }
 
   @Override
@@ -708,6 +726,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private void passToCurrentThread(@Nullable XSuspendContext context, final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
+    myBreakpointHits.clear();
     if (isConnected()) {
       String threadId = threadIdBeforeResumeOrStep(context);
 
@@ -801,7 +820,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
@@ -836,9 +856,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   @NotNull
-  public  XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+  public XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    XValueChildrenList values =  myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), groupType);
+    XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), groupType);
     if (values != null) {
       PyDebugValue.getAsyncValues(frame, this, values);
     }
@@ -1176,11 +1196,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
         if (updateSourcePosition) {
           if (breakpoint != null) {
-            boolean shouldSuspend = getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext);
-            if (!shouldSuspend) resume(suspendContext);
+            if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
+              resume(suspendContext);
+            }
           }
           else {
             ((XDebugSessionImpl)getSession()).positionReached(suspendContext, isFailedTestStop(threadInfo));
+          }
+        }
+        else {
+          if (breakpoint != null) {
+            // Hit a breakpoint while already suspended. We have to remember it and stop on this breakpoint later.
+            myBreakpointHits.add(new BreakpointHitContext(breakpoint, threadInfo.getMessage(), suspendContext));
           }
         }
       }

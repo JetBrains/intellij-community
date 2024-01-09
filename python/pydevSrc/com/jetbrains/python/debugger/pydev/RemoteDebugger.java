@@ -594,73 +594,76 @@ public class RemoteDebugger implements ProcessDebugger {
 
   // todo: extract response processing
   private void processThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
-    switch (frame.getCommand()) {
-      case AbstractCommand.CREATE_THREAD -> {
-        final PyThreadInfo thread = parseThreadEvent(frame);
-        if (!thread.isPydevThread()) {  // ignore pydevd threads
-          myThreads.put(thread.getId(), thread);
-          if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
-            // Sometimes the notification about new threads may come slow from the Python side. We should check if
-            // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
-            suspendThread(thread.getId());
-          }
-        }
-      }
-      case AbstractCommand.SUSPEND_THREAD -> {
-        final PyThreadInfo event = parseThreadEvent(frame);
-        PyThreadInfo thread = myThreads.get(event.getId());
-        if (thread == null) {
-          LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
-          myThreads.put(event.getId(), event);
-          thread = event;
-        }
-        thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-        thread.setStopReason(event.getStopReason());
-        thread.setMessage(event.getMessage());
-        boolean updateSourcePosition = true;
-        if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD) {
-          // That means that the thread was stopped manually from the Java side either while suspending all threads
-          // or after the "Pause" command. In both cases we shouldn't change debugger focus if session is already suspended.
-          updateSourcePosition = !myDebugProcess.getSession().isSuspended();
-        }
-        myDebugProcess.threadSuspended(thread, updateSourcePosition);
-      }
-      case AbstractCommand.RESUME_THREAD -> {
-        final String id = ProtocolParser.getThreadId(frame.getPayload());
-        final PyThreadInfo thread = myThreads.get(id);
-        if (thread != null) {
-          thread.updateState(PyThreadInfo.State.RUNNING, null);
-          myDebugProcess.threadResumed(thread);
-        }
-      }
-      case AbstractCommand.KILL_THREAD -> {
-        final String id = frame.getPayload();
-        final PyThreadInfo thread = myThreads.get(id);
-        if (thread != null) {
-          thread.updateState(PyThreadInfo.State.KILLED, null);
-          myThreads.remove(id);
-        }
-        if (myDebugProcess.getSession().getCurrentPosition() == null) {
-          for (PyThreadInfo threadInfo : myThreads.values()) {
-            // notify UI of suspended threads left in debugger if one thread finished its work
-            if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
-              myDebugProcess.threadResumed(threadInfo);
-              myDebugProcess.threadSuspended(threadInfo, true);
+    // The method must be synchronized because in the case of multiprocess debugging,
+    // each process `RemoteDebugger` shares the same session. Altering the session's state
+    // in an unsynchronized manner can cause race conditions.
+    synchronized (myDebugProcess.getSession()) {
+      switch (frame.getCommand()) {
+        case AbstractCommand.CREATE_THREAD -> {
+          final PyThreadInfo thread = parseThreadEvent(frame);
+          if (!thread.isPydevThread()) {  // ignore pydevd threads
+            myThreads.put(thread.getId(), thread);
+            if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
+              // Sometimes the notification about new threads may come slow from the Python side. We should check if
+              // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
+              suspendThread(thread.getId());
             }
           }
         }
-      }
-      case AbstractCommand.SHOW_CONSOLE -> {
-        final PyThreadInfo event = parseThreadEvent(frame);
-        PyThreadInfo thread = myThreads.get(event.getId());
-        if (thread == null) {
-          myThreads.put(event.getId(), event);
-          thread = event;
+        case AbstractCommand.SUSPEND_THREAD -> {
+          final PyThreadInfo event = parseThreadEvent(frame);
+          PyThreadInfo thread = myThreads.get(event.getId());
+          if (thread == null) {
+            LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
+            myThreads.put(event.getId(), event);
+            thread = event;
+          }
+          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+          thread.setStopReason(event.getStopReason());
+          thread.setMessage(event.getMessage());
+          boolean updateSourcePosition = true;
+          if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD || event.getStopReason() == AbstractCommand.SET_BREAKPOINT) {
+            updateSourcePosition = !myDebugProcess.getSession().isSuspended();
+          }
+          myDebugProcess.threadSuspended(thread, updateSourcePosition);
         }
-        thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
-        thread.setStopReason(event.getStopReason());
-        thread.setMessage(event.getMessage());
-        myDebugProcess.showConsole(thread);
+        case AbstractCommand.RESUME_THREAD -> {
+          final String id = ProtocolParser.getThreadId(frame.getPayload());
+          final PyThreadInfo thread = myThreads.get(id);
+          if (thread != null) {
+            thread.updateState(PyThreadInfo.State.RUNNING, null);
+            myDebugProcess.threadResumed(thread);
+          }
+        }
+        case AbstractCommand.KILL_THREAD -> {
+          final String id = frame.getPayload();
+          final PyThreadInfo thread = myThreads.get(id);
+          if (thread != null) {
+            thread.updateState(PyThreadInfo.State.KILLED, null);
+            myThreads.remove(id);
+          }
+          if (myDebugProcess.getSession().getCurrentPosition() == null) {
+            for (PyThreadInfo threadInfo : myThreads.values()) {
+              // notify UI of suspended threads left in debugger if one thread finished its work
+              if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
+                myDebugProcess.threadResumed(threadInfo);
+                myDebugProcess.threadSuspended(threadInfo, true);
+              }
+            }
+          }
+        }
+        case AbstractCommand.SHOW_CONSOLE -> {
+          final PyThreadInfo event = parseThreadEvent(frame);
+          PyThreadInfo thread = myThreads.get(event.getId());
+          if (thread == null) {
+            myThreads.put(event.getId(), event);
+            thread = event;
+          }
+          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+          thread.setStopReason(event.getStopReason());
+          thread.setMessage(event.getMessage());
+          myDebugProcess.showConsole(thread);
+        }
       }
     }
   }
