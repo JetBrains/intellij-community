@@ -3,10 +3,9 @@ package org.jetbrains.plugins.notebooks.jupyter.preview
 
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PathUtil
-import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.EmptyHttpHeaders
 import io.netty.handler.codec.http.FullHttpRequest
@@ -52,13 +51,13 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
       // static/css/.. <--our resource
       // lib/python.jar <--getJarPathForClass
       val result = File(File(myPath).parentFile.parentFile, path)
-      assert(result.exists()) { "Can't find $result" }
       return result.toURI().toURL()
     }
   }
 
-  override fun isSupported(request: FullHttpRequest): Boolean =
-    super.isSupported(request) && request.uri().let { it.startsWith(prefix) || it in absolutePathFiles }
+  override fun isSupported(request: FullHttpRequest): Boolean {
+    return super.isSupported(request) && request.uri().let { it.startsWith(prefix) || it in absolutePathFiles }
+  }
 
   override fun process(urlDecoder: QueryStringDecoder,
                        request: FullHttpRequest,
@@ -67,15 +66,27 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     val fullUri = URI(str).path
     val uri = getFileFromUrl(fullUri) ?: return false
 
-    val extension = FileUtilRt.getExtension(uri)
-    // map files used for debugging
-    if (extension in allowedTypes || (ApplicationManager.getApplication().isInternal && extension == "map")) {
-      return readFile(request, context.channel(), uri)
+    val readBytes = processInternalLibs(request, uri) ?: return false
+    sendData(readBytes, "$appName/$uri", request, context.channel(), EmptyHttpHeaders.INSTANCE)
+    return true
+  }
+
+  fun processInternalLibs(request: FullHttpRequest, uri: String): ByteArray? {
+    try {
+      val extension = FileUtilRt.getExtension(uri)
+      // map files used for debugging
+      if (extension in allowedTypes || (ApplicationManager.getApplication().isInternal && extension == "map")) {
+        return readFile(uri)
+      }
+      else {
+        thisLogger().info("Extension not allowed: $extension")
+      }
+      return null
     }
-    else {
-      Logger.getInstance(JupyterCefHttpHandlerBase::class.java).warn("Extension not allowed: $extension")
+    catch (t: Throwable) {
+      thisLogger().info("Cannot process: ${request.uri()}", t)
+      return null
     }
-    return false
   }
 
   private fun getFileFromUrl(fullUri: String): String? {
@@ -98,13 +109,12 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
 
   abstract val appName: String
 
-  private fun readFile(request: FullHttpRequest, channel: Channel, file: String): Boolean {
+  private fun readFile(file: String): ByteArray? {
     //Ignore this one because it is used for Widget support
     if (file.contains("BASE_EXTENSION_PATH"))
-      return false
+      return null
     val appName = appName
     val resource = getResource("$appName/$file")
-    val bytes = resource.readBytes()
-    return sendData(bytes, "$appName/$file", request, channel, EmptyHttpHeaders.INSTANCE)
+    return resource.readBytes()
   }
 }
