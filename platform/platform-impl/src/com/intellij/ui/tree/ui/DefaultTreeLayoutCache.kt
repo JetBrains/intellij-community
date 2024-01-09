@@ -122,6 +122,43 @@ class DefaultTreeLayoutCache(
 
   override fun isExpanded(path: TreePath?): Boolean = getNode(path)?.isChildrenVisible == true
 
+  fun updateExpandedPaths(expandedNodes: Set<TreePath>?) {
+    rows.clear()
+    for (node in nodeByPath.values) {
+      node.isExpanded = false
+    }
+    if (expandedNodes == null) {
+      return
+    }
+    for (expandedNodePath in expandedNodes) {
+      val expandedNode = getOrCreateNode(expandedNodePath)
+      if (expandedNode?.isLeaf == false) {
+        expandedNode.isExpanded = true
+      }
+    }
+    val root = root ?: return
+    val location = Location("updateExpandedPaths(set size=%d)", expandedNodes.size)
+    rows.update(location) {
+      if (isRootVisible) {
+        rows.add(root)
+      }
+      updateExpandedPaths(root)
+      treeSelectionModel?.resetRowSelection()
+    }
+    checkInvariants(location)
+  }
+
+  private fun updateExpandedPaths(node: Node?) {
+    if (node?.isExpanded != true) {
+      return
+    }
+    val children = node.children ?: node.loadChildren()
+    for (child in children) {
+      rows.add(child)
+      updateExpandedPaths(child)
+    }
+  }
+
   override fun getPreferredHeight(): Int = if (rowHeight > 0) {
     rows.size * rowHeight
   }
@@ -661,6 +698,9 @@ class DefaultTreeLayoutCache(
     override fun iterator(): Iterator<Node> = nodes.iterator()
 
     fun clear() {
+      for (node in nodes) {
+        node.row = -1
+      }
       nodes.clear()
     }
 
@@ -695,6 +735,8 @@ class DefaultTreeLayoutCache(
         minimumAffectedRow = -1
       }
     }
+
+    fun add(value: Node) = add(size, value)
 
     fun add(index: Int, value: Node) {
       nodes.add(index, value)

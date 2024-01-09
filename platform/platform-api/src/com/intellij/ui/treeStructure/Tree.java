@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -16,6 +17,7 @@ import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -35,6 +37,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
+import java.util.List;
 import java.util.*;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
@@ -53,6 +56,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SCROLL_FROM_SOURCE_BLOCKED = Key.create("auto scroll from source temporarily blocked");
+  private static final @NotNull Logger LOG = Logger.getInstance(Tree.class);
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -73,6 +77,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private final @Nullable Tree.ExpandImpl expandImpl;
 
+  @ApiStatus.Internal
+  public static boolean isBulkExpandCollapseSupported() {
+    return Registry.is("ide.tree.bulk.expand.api", true);
+  }
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -83,7 +92,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
-    if (Registry.is("ide.tree.bulk.expand.api", true)) {
+    if (isBulkExpandCollapseSupported()) {
       expandImpl = new ExpandImpl();
     }
     else {
@@ -419,6 +428,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return null; // TODO not implemented
   }
 
+  public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (expandImpl == null) {
+      paths.forEach(super::expandPath);
+    }
+    else {
+      expandImpl.expandPaths(paths);
+    }
+  }
+
   @Override
   public void collapsePath(TreePath path) {
     int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
@@ -433,7 +451,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (!path.isDescendant(next)) break;
         if (isExpanded(next)) deque.addFirst(next);
       }
-      deque.forEach(super::collapsePath);
+      collapsePaths(deque);
+    }
+  }
+
+  public void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (expandImpl == null) {
+      paths.forEach(super::collapsePath);
+    }
+    else {
+      expandImpl.collapsePaths(paths);
     }
   }
 
@@ -451,6 +478,41 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
+  public @NotNull Set<TreePath> getExpandedPaths() {
+    if (expandImpl != null) {
+      return expandImpl.getExpandedPaths();
+    }
+    else {
+      // This is more or less dead code by design, just in case somebody decides to disable
+      // the bulk operations through the registry and call this method explicitly.
+      // The bulk operations themselves don't call this if they're disabled (obviously),
+      // and if they're enabled, the branch above will be executed instead.
+      var result = new HashSet<TreePath>();
+      var rootPath = getRootPath();
+      if (!isRootVisible() || isExpanded(rootPath)) {
+        result.add(rootPath);
+      }
+      var children = getExpandedDescendants(rootPath);
+      while (children.hasMoreElements()) {
+        var child = children.nextElement();
+        result.add(child);
+      }
+      return result;
+    }
+  }
+
+  private @Nullable TreePath getRootPath() {
+    var model = treeModel;
+    if (model == null) {
+      return null;
+    }
+    var rootObject = model.getRoot();
+    if (rootObject == null) {
+      return null;
+    }
+    return new TreePath(rootObject);
   }
 
   @Override
@@ -536,12 +598,33 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   protected TreeModelListener createTreeModelListener() {
-    if (expandImpl != null) {
-      return expandImpl.createTreeModelListener();
-    }
-    else {
-      return super.createTreeModelListener();
-    }
+    // Can't just create a listener here because this function
+    // is called from a base class constructor, so our class isn't initialized yet.
+    return new TreeModelListener() {
+
+      private @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
+        if (expandImpl != null) {
+          return expandImpl.createTreeModelListener();
+        }
+        else {
+          return Tree.super.createTreeModelListener();
+        }
+      });
+
+      private @NotNull TreeModelListener delegate() { return delegate.get();  }
+
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) { delegate().treeNodesChanged(e); }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) { delegate().treeNodesInserted(e); }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) { delegate().treeNodesRemoved(e); }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
+    };
   }
 
   private void blockAutoScrollFromSource() {
@@ -945,6 +1028,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       expandedState.put(path, Boolean.TRUE);
     }
 
+    @NotNull Set<TreePath> getExpandedPaths() {
+      var result = new HashSet<TreePath>();
+      var rootPath = getRootPath();
+      if (!isRootVisible() || isExpanded(rootPath)) {
+        result.add(rootPath);
+      }
+      for (Map.Entry<TreePath, Boolean> e : expandedState.entrySet()) {
+        if (e.getValue()) {
+          result.add(e.getKey());
+        }
+      }
+      return result;
+    }
+
     @Nullable Enumeration<TreePath> getExpandedDescendants(@Nullable TreePath parent) {
       if (parent == null || !isExpanded(parent)) {
         return null;
@@ -989,6 +1086,166 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         }
       }
       return false;
+    }
+
+    void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
+      var started = 0L;
+      var count = 0L;
+      if (LOG.isDebugEnabled()) {
+        started = System.currentTimeMillis();
+      }
+      var pathList = toList(paths);
+      if (pathList.size() == 1) {
+        setExpandedState(pathList.get(0), true);
+        return;
+      }
+      pathList.sort(Comparator.comparing(TreePath::getPathCount));
+      Set<TreePath> toExpand = new LinkedHashSet<>();
+      Set<TreePath> toNotExpand = new HashSet<>();
+      for (TreePath path : pathList) {
+        ++count;
+        shouldAllParentsBeExpanded(path, toExpand, toNotExpand);
+      }
+      try {
+        beginBulkOperation();
+        for (TreePath path : toExpand) {
+          expandedState.put(path, Boolean.TRUE);
+          fireTreeExpanded(path);
+        }
+      }
+      finally {
+        endBulkOperation();
+      }
+      if (accessibleContext != null) {
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Expanded " + count + " paths, time: " + (System.currentTimeMillis() - started) + " ms");
+      }
+    }
+
+    private void beginBulkOperation() {
+      var ui = getUI();
+      if (ui instanceof TreeUiBulkExpandCollapseSupport bulk) {
+        bulk.beginBulkOperation();
+      }
+    }
+
+    private void endBulkOperation() {
+      var ui = getUI();
+      if (ui instanceof TreeUiBulkExpandCollapseSupport bulk) {
+        bulk.endBulkOperation();
+      }
+    }
+
+    void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+      var started = 0L;
+      var count = 0L;
+      if (LOG.isDebugEnabled()) {
+        started = System.currentTimeMillis();
+      }
+      var pathList = toList(paths);
+      if (pathList.size() == 1) {
+        setExpandedState(pathList.get(0), false);
+        return;
+      }
+      pathList.sort(Comparator.comparing(TreePath::getPathCount));
+      Set<TreePath> toExpand = new LinkedHashSet<>();
+      Set<TreePath> toNotExpand = new HashSet<>();
+      Set<TreePath> toCollapse = new LinkedHashSet<>();
+      for (TreePath path : pathList) {
+        ++count;
+        TreePath parent = path.getParentPath();
+        if (parent == null || toExpand.contains(parent) || toCollapse.contains(parent)) {
+          toCollapse.add(path);
+        }
+        else if (!toNotExpand.contains(parent)) {
+          if (shouldAllParentsBeExpanded(parent, toExpand, toNotExpand)) {
+            toCollapse.add(path);
+          }
+        }
+      }
+      List<TreePath> toCollapseList = new ArrayList<>(toCollapse);
+      Collections.reverse(toCollapseList);
+      try {
+        beginBulkOperation();
+        for (TreePath path : toExpand) {
+          expandedState.put(path, Boolean.TRUE);
+          fireTreeExpanded(path);
+        }
+        for (TreePath path : toCollapseList) {
+          expandedState.put(path, Boolean.FALSE);
+          fireTreeCollapsed(path);
+          if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
+            addSelectionPath(path);
+          }
+        }
+      }
+      finally {
+        endBulkOperation();
+      }
+      if (accessibleContext != null) {
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Collapsed " + count + " paths, time: " + (System.currentTimeMillis() - started) + " ms");
+      }
+    }
+
+    private static @NotNull ArrayList<TreePath> toList(@NotNull Iterable<@NotNull TreePath> paths) {
+      ArrayList<TreePath> pathList;
+      if (paths instanceof Collection<TreePath> pathCollection) {
+        pathList = new ArrayList<>(pathCollection);
+      }
+      else {
+        pathList = new ArrayList<>();
+        paths.forEach(pathList::add);
+      }
+      return pathList;
+    }
+
+    private boolean shouldAllParentsBeExpanded(
+      @NotNull TreePath path,
+      @NotNull Set<@NotNull TreePath> toExpand,
+      @NotNull Set<@NotNull TreePath> toNotExpand
+    ) {
+      Deque<TreePath> stack = null;
+      TreePath parentPath = path;
+      var result = true;
+      while (parentPath != null) {
+        if (isExpanded(parentPath) || toExpand.contains(parentPath)) {
+          parentPath = null;
+        }
+        else if (toNotExpand.contains(parentPath)) {
+          parentPath = null;
+          result = false;
+        }
+        else {
+          if (stack == null) {
+            stack = new ArrayDeque<>();
+          }
+          stack.push(parentPath);
+          parentPath = parentPath.getParentPath();
+        }
+      }
+      while (stack != null && !stack.isEmpty()) {
+        parentPath = stack.pop();
+        if (result) {
+          try {
+            fireTreeWillExpand(parentPath);
+          }
+          catch (ExpandVetoException eve) {
+            result = false;
+          }
+        }
+        if (result) {
+          toExpand.add(parentPath);
+        }
+        else {
+          toNotExpand.add(parentPath);
+        }
+      }
+      return result;
     }
 
     void setExpandedState(@Nullable TreePath path, boolean state) {
