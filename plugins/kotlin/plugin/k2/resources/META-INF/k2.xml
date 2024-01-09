@@ -186,9 +186,6 @@
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
 
-    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
-                             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
                     serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsFirImpl"/>
 
