@@ -4,12 +4,12 @@
 package com.intellij.webSymbols.context.impl
 
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -352,14 +352,6 @@ private fun matchFileExt(fileName: String, fileExtensions: List<String>): Boolea
   return fileExtensions.any { ext == it }
 }
 
-class WebSymbolsContextProjectRootsListener : ModuleRootListener {
-
-  override fun rootsChanged(event: ModuleRootEvent) {
-    event.project.serviceIfCreated<WebSymbolsContextDiscoveryInfo>()?.clear()
-  }
-
-}
-
 private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: ContextName, project: Project, file: VirtualFile) {
   synchronized(reloadMonitor) {
     if (project.getUserData(CONTEXT_RELOAD_MARKER_KEY) != null) {
@@ -389,16 +381,20 @@ private val Project.contextInfo
   get() = service<WebSymbolsContextDiscoveryInfo>()
 
 @Service(Service.Level.PROJECT)
-private class WebSymbolsContextDiscoveryInfo(private val project: Project) {
+private class WebSymbolsContextDiscoveryInfo(private val project: Project) : Disposable {
 
   private val previousContext = ConcurrentHashMap<ContextKind, MutableMap<VirtualFile, String>>()
   private val proximityCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, MutableMap<Pair<ContextKind, ContextName>, CachedValue<Int?>>>()
   private val configCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedValue<ContextConfigInDir>>()
 
-  fun clear() {
-    previousContext.clear()
-    proximityCache.clear()
-    configCache.clear()
+  init {
+    project.messageBus.connect(this).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        previousContext.clear()
+        proximityCache.clear()
+        configCache.clear()
+      }
+    })
   }
 
   fun getProximityFromExtensions(dir: VirtualFile, kind: ContextKind, name: ContextName): Int? =
@@ -421,4 +417,6 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project) {
         CachedValueProvider.Result.create(result, result.dependencies)
       }
     }.value
+
+  override fun dispose() {}
 }
