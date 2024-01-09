@@ -353,7 +353,6 @@ private fun suppressWarnings(project: JpsProject) {
   val compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).currentCompilerOptions
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.DEPRECATION = false
-  @Suppress("SpellCheckingInspection")
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 }
 
