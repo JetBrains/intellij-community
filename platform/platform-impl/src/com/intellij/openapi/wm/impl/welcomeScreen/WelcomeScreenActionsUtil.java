@@ -143,7 +143,6 @@ public final class WelcomeScreenActionsUtil {
       setFocusable(false);
       add(iconWrapper);
       add(myLabel);
-      myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
     void updateIconBackground(boolean selected) {
@@ -180,6 +179,7 @@ public final class WelcomeScreenActionsUtil {
       panel.myIconButton.setSelectedIcon(presentation.getSelectedIcon());
       //noinspection DialogTitleCapitalization
       panel.myLabel.setText(presentation.getText());
+      panel.myIconButton.getAccessibleContext().setAccessibleName(presentation.getText());
       UIUtil.setEnabled(panel, presentation.isEnabled(), true);
     }
 
