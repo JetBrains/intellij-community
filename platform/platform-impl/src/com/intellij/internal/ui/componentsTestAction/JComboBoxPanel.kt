@@ -6,7 +6,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class ComboBoxPanel {
+internal class JComboBoxPanel {
 
   val panel: DialogPanel = panel {
     val items = (1..10).map { "Item $it" }.toList()

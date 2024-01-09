@@ -12,7 +12,7 @@ import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 
 /**
- * ComboBox border for new UI. Uses own rendering only if [DarculaComboBoxUI.isNewBorderSupported], otherwise uses
+ * ComboBox border for new UI themes. Uses own rendering only if [DarculaComboBoxUI.isNewBorderSupported], otherwise uses
  * border paint from DarculaComboBoxUI itself for backward compatibility (which can be removed later)
  */
 open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {

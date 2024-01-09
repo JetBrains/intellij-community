@@ -287,7 +287,14 @@ public final class DarculaUIUtil {
   @Deprecated(forRemoval = true)
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
+
+  /**
+   * @deprecated For new themes {@link #ARROW_SEGMENT_WIDTH} should be used
+   */
+  @Deprecated
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
+  public static final JBValue ARROW_SEGMENT_WIDTH = new JBValue.Float(28);
+
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Component.focusWidth", 2);
   private static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);

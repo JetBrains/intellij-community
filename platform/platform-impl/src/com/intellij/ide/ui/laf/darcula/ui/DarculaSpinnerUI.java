@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -311,8 +312,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       public Dimension getPreferredSize() {
         Insets i = spinner.getInsets();
         int minHeight = isCompact(spinner) ? JBUIScale.scale(10) : JBUIScale.scale(12);
-        return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left,
-                             minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
+        int minWidth = (isNewUiTheme(spinner) ? ARROW_SEGMENT_WIDTH.get() : ARROW_BUTTON_WIDTH.get()) + i.right;
+        return new Dimension(minWidth, minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
       }
     };
 
@@ -320,6 +321,10 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     b.setBorder(JBUI.Borders.empty());
 
     return b;
+  }
+
+  private static boolean isNewUiTheme(@Nullable JSpinner c) {
+    return c != null && c.getBorder() instanceof DarculaSpinnerBorderNew;
   }
 
   protected static class LayoutManagerDelegate implements LayoutManager {

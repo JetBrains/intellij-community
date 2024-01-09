@@ -88,8 +88,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
    * @return true if this DarculaComboBoxUI has no specific customization for Border, so {@link DarculaComboBoxBorder} can use own rendering
    */
   @ApiStatus.Internal
-  final boolean isNewBorderSupported(JComboBox<?> comboBox) {
+  final boolean isNewBorderSupported(@NotNull JComboBox<?> comboBox) {
     ComboBoxUI ui = comboBox.getUI();
+
+    if (!(comboBox.getBorder() instanceof DarculaComboBoxBorder)) {
+      return false;
+    }
 
     // Overridden ui means possible legacy paint (we don't know about paint details, so it's safer to keep custom paint)
     if (!(ui instanceof DarculaComboBoxUI) || ui.getClass() != DarculaComboBoxUI.class) {
@@ -104,6 +108,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     return true;
+  }
+
+  private static int getArrowSegmentWidth(@Nullable JComboBox<?> comboBox) {
+    return comboBox != null
+           && comboBox.getUI() instanceof DarculaComboBoxUI ui
+           && ui.isNewBorderSupported(comboBox)
+           ? ARROW_SEGMENT_WIDTH.get() : ARROW_BUTTON_WIDTH.get();
   }
 
   private KeyListener editorKeyListener;
@@ -260,7 +271,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   static @NotNull Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
     int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.ComboBox.minimumSize().height) + i.top + i.bottom;
-    return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, height);
+    return new Dimension(getArrowSegmentWidth(comboBox) + i.right, height);
   }
 
   static Shape getArrowShape(Component button) {
@@ -560,6 +571,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
    * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details and
    * {@link DarculaComboBoxBorder#paintComboBoxBackground(Graphics2D, JComboBox, Color)}
    */
+  @Deprecated
   protected RectangularShape getOuterShape(Rectangle r, float bw, float arc) {
     return new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
   }
@@ -567,6 +579,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   /**
    * @deprecated See {@link #isNewBorderSupported(JComboBox)} for details
    */
+  @Deprecated
   protected RectangularShape getInnerShape(Rectangle r, float bw, float lw, float arc) {
     return new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc);
   }
@@ -645,7 +658,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public Dimension getMinimumSize(JComponent c) {
     Dimension minSize = super.getMinimumSize(c);
     Insets i = c.getInsets();
-    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + ARROW_BUTTON_WIDTH.get() + i.left + i.right;
+    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + getArrowSegmentWidth(comboBox) + i.left + i.right;
     return getSizeWithButton(minSize, editor != null ? editor.getMinimumSize() : null);
   }
 

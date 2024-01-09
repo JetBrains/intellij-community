@@ -29,12 +29,14 @@ internal class ComponentsTestAction : DumbAwareAction() {
 
     override fun createCenterPanel(): JComponent {
       val data = mapOf("JBOptionButton" to JBOptionButtonPanel().panel,
-                       "ComboBox" to ComboBoxPanel().panel,
+                       "JTextField" to JTextFieldPanel().panel,
+                       "JComboBox" to JComboBoxPanel().panel,
+                       "JSpinner" to JSpinnerPanel().panel,
                        "JCheckBox" to JCheckBoxPanel().panel,
                        "JRadioButton" to JRadioButtonPanel().panel,
                        "ThreeStateCheckBoxPanel" to ThreeStateCheckBoxPanel().panel)
 
-      val result = createListSelectionPanel(data, "UiDslTestAction.splitter.proportion")
+      val result = createListSelectionPanel(data, "ComponentsTestAction.splitter.proportion")
       result.preferredSize = JBDimension(800, 600)
 
       return result
