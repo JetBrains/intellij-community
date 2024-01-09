@@ -16,13 +16,16 @@
 package org.jetbrains.idea.maven.compiler
 
 import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.maven.model.impl.MavenIdBean
@@ -31,8 +34,6 @@ import org.junit.Test
 import java.io.IOException
 
 class ResourceFilteringTest : MavenCompilingTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
   fun testBasic() = runBlocking {
     createProjectSubFile("resources/file.properties", """
@@ -592,7 +593,9 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     assertResult("target/classes/file.properties", "value=1")
 
     WriteAction.runAndWait<IOException> { VfsUtil.saveText(filter, "xxx=2") }
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    withContext(Dispatchers.EDT) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
     compileModules("project")
     assertResult("target/classes/file.properties", "value=2")
   }
