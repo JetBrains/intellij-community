@@ -271,7 +271,8 @@ abstract class AlignedDiffModelBase(
     for (changeInlay in changeInlays) {
       val range = changeInlay.change.range
 
-      val prefixDelta = calcSoftWrapsHeight(editor2, last2, range.start2) - calcSoftWrapsHeight(editor1, last1, range.start1)
+      val prefixDelta = calcEffectiveVisualLinesHeight(editor2, last2, range.start2) -
+                        calcEffectiveVisualLinesHeight(editor1, last1, range.start1)
 
       if (prefixDelta >= 0) {
         changeInlay.setTop(prefixDelta, 0)
@@ -280,12 +281,11 @@ abstract class AlignedDiffModelBase(
         changeInlay.setTop(0, -prefixDelta)
       }
 
-      val bodyDelta = (range.end2 - range.start2) * editor2.lineHeight -
-                      (range.end1 - range.start1) * editor1.lineHeight +
-                      calcSoftWrapsHeight(editor2, range.start2, range.end2) -
-                      calcSoftWrapsHeight(editor1, range.start1, range.end1) +
-                      changeInlay.innerSourceInlay2.sumOf { it.heightInPixels } -
-                      changeInlay.innerSourceInlay1.sumOf { it.heightInPixels }
+      val bodyDelta =
+        calcEffectiveVisualLinesHeight(editor2, range.start2, range.end2) -
+        calcEffectiveVisualLinesHeight(editor1, range.start1, range.end1) +
+        changeInlay.innerSourceInlay2.sumOf { it.heightInPixels } -
+        changeInlay.innerSourceInlay1.sumOf { it.heightInPixels }
       if (bodyDelta >= 0) {
         changeInlay.setBottom(bodyDelta, 0)
       }
@@ -309,17 +309,24 @@ abstract class AlignedDiffModelBase(
     }
   }
 
-  private fun calcSoftWrapsHeight(editor: Editor, line1: Int, line2: Int): Int {
-    val softWrapModel = editor.softWrapModel
-    var count = 0
+  /**
+   * Make adjustments to SoftWraps and folded lines
+   */
+  private fun calcEffectiveVisualLinesHeight(editor: Editor, startLine: Int, endLine: Int): Int {
+    if (startLine == endLine) return 0
 
-    val range = DiffUtil.getLinesRange(editor.document, line1, line2)
-    for (softWrap in softWrapModel.getSoftWrapsForRange(range.startOffset, range.endOffset)) {
-      if (softWrapModel.isVisible(softWrap)) {
-        count++
-      }
+    val document = editor.document
+    val lineCount = document.lineCount
+    if (lineCount == 0) return 0
+
+    val vLine1 = editor.offsetToVisualLine(document.getLineStartOffset(startLine), false)
+    val vLine2 = if (endLine == lineCount) {
+      editor.offsetToVisualLine(document.getLineStartOffset(endLine - 1), false) + 1
     }
-    return editor.lineHeight * count
+    else {
+      editor.offsetToVisualLine(document.getLineStartOffset(endLine), false)
+    }
+    return editor.lineHeight * (vLine2 - vLine1)
   }
 
   override fun dispose() {
