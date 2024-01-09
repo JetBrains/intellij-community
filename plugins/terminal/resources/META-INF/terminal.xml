@@ -59,7 +59,7 @@
     <completion.contributor language="any"
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.completion.TerminalCommandSpecCompletionContributor"
-                            order="first, before shShebang, before liveTemplates"/>
+                            order="first, before shShebang, before liveTemplates, after ml_context"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"
