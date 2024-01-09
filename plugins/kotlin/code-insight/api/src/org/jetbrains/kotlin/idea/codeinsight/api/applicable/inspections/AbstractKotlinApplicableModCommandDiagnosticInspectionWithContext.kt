@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A [AbstractKotlinApplicableInspectionWithContext] that applies to an element if it has a specific [DIAGNOSTIC].
+ * A [AbstractKotlinApplicableModCommandInspectionWithContext] that applies to an element if it has a specific [DIAGNOSTIC].
  */
 abstract class AbstractKotlinApplicableModCommandDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>
     : AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT, CONTEXT>(), AbstractKotlinApplicableDiagnosticInspection<ELEMENT, DIAGNOSTIC> {
@@ -15,6 +15,8 @@ abstract class AbstractKotlinApplicableModCommandDiagnosticInspectionWithContext
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
      * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext.prepareContext
+     *
+     * @param element a physical PSI
      */
     context(KtAnalysisSession)
     abstract fun prepareContextByDiagnostic(element: ELEMENT, diagnostic: DIAGNOSTIC): CONTEXT?

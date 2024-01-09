@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext]
- * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext].
+ * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableModCommandInspectionWithContext].
  */
 interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : KotlinApplicableToolBase<ELEMENT> {
     /**
@@ -35,6 +34,8 @@ interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : Kotlin
      *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
      * - The [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] instance itself.
      * - [PsiElement], consider using [com.intellij.psi.SmartPsiElementPointer] instead.
+     *
+     * @param element a physical PSI
      */
     context(KtAnalysisSession)
     fun prepareContext(element: ELEMENT): CONTEXT?

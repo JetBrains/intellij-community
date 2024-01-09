@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
- * [AbstractKotlinApplicableInspectionWithContext].
+ * [AbstractKotlinApplicableModCommandInspectionWithContext].
  */
 abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(), KotlinApplicableToolBase<ELEMENT> {
     /**

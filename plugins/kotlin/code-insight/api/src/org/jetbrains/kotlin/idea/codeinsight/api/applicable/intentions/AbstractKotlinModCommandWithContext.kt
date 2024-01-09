@@ -87,12 +87,16 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
      * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
      * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via
      * [prepareContext]. [apply] is executed in a write action if [element] is physical and [shouldApplyInWriteAction] returns `true`.
+     *
+     * @param element a non-physical PSI
+     *
      */
     open fun apply(element: ELEMENT, context: AnalysisActionContext<CONTEXT>, updater: ModPsiUpdater) {
         apply(element, context.analyzeContext, context.actionContext.project, editor = null)
     }
 
-    override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
+    final override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
+        throw UnsupportedOperationException("apply(ELEMENT, CONTEXT, Project, Editor?) should not be invoked")
     }
 
 }

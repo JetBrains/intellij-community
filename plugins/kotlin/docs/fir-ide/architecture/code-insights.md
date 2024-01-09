@@ -61,7 +61,10 @@ There are two base classes for inspections: `AbstractKotlinApplicableInspection`
 ### `AbstractKotlinApplicableModCommandInspectionWithContext`
 Similar to `AbstractKotlinApplicableInspection` plus Analysis API context:
  - `prepareContext(element)`
- - `apply(element, context, project, editor)`
+   - prepares Analysis API context on a physical PSI
+ - `apply(element, context, project, updater)`
+   - `element` is a non-physical PSI
+   - if `context` keeps some physical PSI you need to convert it with `ModPsiUpdater#getWritable` before non-physical file would be changed
 
 ## Quick Fixes
 Quick fixes are actions on errors and warnings provided by compiler - they are registered in `KotlinK2QuickFixRegistrar`.
