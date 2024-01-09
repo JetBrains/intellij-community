@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -133,6 +134,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
         withContext(Dispatchers.EDT) {
             assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
             codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
+            (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
             FileDocumentManager.getInstance().saveAllDocuments()
             checkResult(pomVFile)
