@@ -215,7 +215,7 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder",
       "minimumSize": "49,28",
       "nonEditableBackground": "Grey3",
-      "padding": "1,9,1,9"
+      "padding": "1,9,1,6"
     },
 
     "ComboPopup.border": "1,1,1,1,#43454A",

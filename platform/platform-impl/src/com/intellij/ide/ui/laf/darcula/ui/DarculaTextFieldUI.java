@@ -96,7 +96,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       return JBInsets.create(0, 3);
     }
 
-    return JBInsets.create(2, isNewUiTheme(c) ? 9 : 6);
+    return isNewUiTheme(c) ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 6);
   }
 
   protected float bw() {
