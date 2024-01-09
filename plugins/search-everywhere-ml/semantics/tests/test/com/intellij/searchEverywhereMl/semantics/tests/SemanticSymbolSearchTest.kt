@@ -12,8 +12,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSymbolSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
@@ -34,7 +34,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     assertEquals(5, storage.index.size)
 
-    var neighbours = storage.searchNeighboursIfEnabled("begin indexing", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5).asSequence().filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
@@ -128,7 +128,8 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     SemanticSearchFileChangeListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
-    SemanticSearchSettings.getInstance().enabledInSymbolsTab = true
+    SearchEverywhereSemanticSettings.getInstance().enabledInSymbolsTab = true
     storage.generateEmbeddingsIfNecessary().join()
+    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(storage, true)
   }
 }

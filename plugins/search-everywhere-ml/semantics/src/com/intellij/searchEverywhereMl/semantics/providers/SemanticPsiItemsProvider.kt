@@ -17,11 +17,12 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     if (pattern.isBlank()) return emptyList()
     return getEmbeddingsStorage()
-      .searchNeighboursIfEnabled(pattern, itemLimit, similarityThreshold)
+      .searchNeighbours(pattern, itemLimit, similarityThreshold)
       .flatMap { createItemDescriptors(it.text, it.similarity, pattern) }
   }
 
-  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+  override suspend fun streamSearch(pattern: String,
+                                    similarityThreshold: Double?): Sequence<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     if (pattern.isBlank()) return emptySequence()
     return getEmbeddingsStorage()
       .streamSearchNeighbours(pattern, similarityThreshold)

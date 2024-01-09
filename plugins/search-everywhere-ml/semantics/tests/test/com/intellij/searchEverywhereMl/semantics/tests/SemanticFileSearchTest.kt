@@ -10,9 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
@@ -32,7 +32,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    var neighbours = storage.searchNeighboursIfEnabled("index project job", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("index project job", 10, 0.5).asSequence().filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
@@ -148,7 +148,8 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     SemanticSearchFileChangeListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
-    SemanticSearchSettings.getInstance().enabledInFilesTab = true
+    SearchEverywhereSemanticSettings.getInstance().enabledInFilesTab = true
     storage.generateEmbeddingsIfNecessary().join()
+    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(storage, true)
   }
 }

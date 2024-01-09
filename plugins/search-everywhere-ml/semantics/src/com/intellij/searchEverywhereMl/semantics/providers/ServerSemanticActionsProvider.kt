@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
 
@@ -23,13 +23,13 @@ class ServerSemanticActionsProvider(model: GotoActionModel, presentationProvider
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
-    if (!SemanticSearchSettings.getInstance().enabledInActionsTab || pattern.isBlank()) return emptyList()
+    if (pattern.isBlank()) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
       "pattern" to pattern,
       "items_limit" to ITEMS_LIMIT,
       "similarity_threshold" to similarityThreshold,
-      "token" to SemanticSearchSettings.getInstance().getActionsAPIToken()
+      "token" to SearchEverywhereSemanticSettings.getInstance().getActionsAPIToken()
     ))
 
     val modelResponse: ModelResponse = when (
@@ -47,10 +47,6 @@ class ServerSemanticActionsProvider(model: GotoActionModel, presentationProvider
 
   override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     return searchIfEnabled(pattern, similarityThreshold).asSequence()
-  }
-
-  override fun isEnabled(): Boolean {
-    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   companion object {

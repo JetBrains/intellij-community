@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ml.embeddings.search.settings
+package com.intellij.searchEverywhereMl.semantics.settings
 
 import com.intellij.openapi.components.Service
 
 @Service(Service.Level.APP)
-class MockSemanticSearchSettings : SemanticSearchSettings {
+class MockSearchEverywhereSemanticSettings: SearchEverywhereSemanticSettings {
   override var enabledInActionsTab = false
   override var enabledInFilesTab = false
   override var enabledInSymbolsTab = false

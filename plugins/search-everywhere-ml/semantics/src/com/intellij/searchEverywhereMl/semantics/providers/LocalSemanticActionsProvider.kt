@@ -5,7 +5,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 
 class LocalSemanticActionsProvider(model: GotoActionModel, presentationProvider: suspend (AnAction) -> Presentation) :
   SemanticActionsProvider(model, presentationProvider) {
@@ -13,7 +12,7 @@ class LocalSemanticActionsProvider(model: GotoActionModel, presentationProvider:
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (pattern.isBlank()) return emptyList()
     return ActionEmbeddingsStorage.getInstance()
-      .searchNeighboursIfEnabled(pattern, ITEMS_LIMIT, similarityThreshold)
+      .searchNeighbours(pattern, ITEMS_LIMIT, similarityThreshold)
       .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
   }
 
@@ -24,10 +23,6 @@ class LocalSemanticActionsProvider(model: GotoActionModel, presentationProvider:
       .toList()
       .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
     return list.asSequence()
-  }
-
-  override fun isEnabled(): Boolean {
-    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   companion object {

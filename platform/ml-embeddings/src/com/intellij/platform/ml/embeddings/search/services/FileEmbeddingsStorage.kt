@@ -14,7 +14,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -53,8 +52,6 @@ class FileEmbeddingsStorage(project: Project, coroutineScope: CoroutineScope)
 
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.files.limit")
-
-  override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 
   override suspend fun getIndexableEntities(files: Iterable<VirtualFile>?): ScanResult<IndexableFile> {
     val filesCount = AtomicInteger(0)

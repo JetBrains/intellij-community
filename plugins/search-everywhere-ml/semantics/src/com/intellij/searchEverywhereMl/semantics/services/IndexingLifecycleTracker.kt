@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -16,7 +16,7 @@ class IndexingLifecycleTracker: Disposable {
   private var readyIndexCount = 0
 
   private val totalIndexCount
-    get() = SemanticSearchSettings.getInstance().run {
+    get() = SearchEverywhereSemanticSettings.getInstance().run {
       listOf(enabledInFilesTab, enabledInClassesTab, enabledInSymbolsTab).filter { it }.size
     }
 

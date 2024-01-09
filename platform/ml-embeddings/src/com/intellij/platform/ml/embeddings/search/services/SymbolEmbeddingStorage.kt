@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.io.File
@@ -45,8 +44,6 @@ class SymbolEmbeddingStorage(project: Project, cs: CoroutineScope)
 
   override val indexMemoryWeight: Int = 2
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.symbols.limit")
-
-  override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInSymbolsTab
 
   override fun traversePsiFile(file: PsiFile): Flow<IndexableSymbol> = FileIndexableEntitiesProvider.extractSymbols(file)
 

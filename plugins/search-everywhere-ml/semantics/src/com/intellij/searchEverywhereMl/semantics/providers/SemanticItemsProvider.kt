@@ -4,12 +4,11 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 
 interface SemanticItemsProvider<I> {
   suspend fun search(pattern: String, similarityThreshold: Double? = null): List<FoundItemDescriptor<I>>
+
   suspend fun searchIfEnabled(pattern: String, similarityThreshold: Double? = null): List<FoundItemDescriptor<I>> {
-    if (isEnabled()) {
-      return search(pattern, similarityThreshold)
-    }
-    return emptyList()
+    return if (isEnabled()) search(pattern, similarityThreshold) else emptyList()
   }
+
   fun isEnabled(): Boolean
 
   fun convertCosineSimilarityToInteger(similarityScore: Double): Int {

@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 
 
 abstract class SemanticActionsProvider(private val actionModel: GotoActionModel,
@@ -13,6 +14,8 @@ abstract class SemanticActionsProvider(private val actionModel: GotoActionModel,
   private val actionManager = ActionManager.getInstance()
 
   internal var includeDisabledActions: Boolean = false
+
+  override fun isEnabled(): Boolean = SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab
 
   protected suspend fun createItemDescriptor(actionId: String,
                                              similarityScore: Double,

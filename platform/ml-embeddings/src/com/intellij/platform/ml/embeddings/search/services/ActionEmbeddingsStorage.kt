@@ -14,9 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
@@ -31,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Generates the embeddings for actions not present in the loaded state at the IDE startup event if semantic action search is enabled
  */
 @Service(Service.Level.APP)
-class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddingsStorage() {
+class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorage {
   val index = InMemoryEmbeddingSearchIndex(
     File(PathManager.getSystemPath())
       .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
@@ -79,25 +77,15 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   }
 
   @RequiresBackgroundThread
-  override suspend fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    if (!checkSearchEnabled()) {
-      return emptyList()
-    }
-    return searchNeighbours(text, topK, similarityThreshold)
-  }
-
-  @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+    if (index.size == 0) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
-    if (!checkSearchEnabled()) {
-      return emptySequence()
-    }
-
+    if (index.size == 0) return emptySequence()
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
   }
@@ -108,8 +96,6 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
     private val LOG = logger<ActionEmbeddingsStorage>()
 
     fun getInstance(): ActionEmbeddingsStorage = service()
-
-    private suspend fun checkSearchEnabled() = serviceAsync<SemanticSearchSettings>().enabledInActionsTab
 
     private fun shouldIndexAction(action: AnAction): Boolean {
       return !(action is ActionGroup && !action.isSearchable) && action.templatePresentation.hasText()

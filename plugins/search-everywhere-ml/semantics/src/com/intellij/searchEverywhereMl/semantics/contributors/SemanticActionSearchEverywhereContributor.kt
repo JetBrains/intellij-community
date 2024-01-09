@@ -15,19 +15,18 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -103,7 +102,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
         val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
         val mutex = Mutex()
 
-        val itemsProvider = SemanticSearchSettings.getInstance().run {
+        val itemsProvider = SearchEverywhereSemanticSettings.getInstance().run {
           if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model, presentationProvider)
           else LocalSemanticActionsProvider(model, presentationProvider)
         }

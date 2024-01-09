@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import kotlinx.coroutines.CoroutineScope
@@ -44,8 +43,6 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope) : FileContent
 
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.classes.limit")
-
-  override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 
   override fun traversePsiFile(file: PsiFile): Flow<IndexableClass> = FileIndexableEntitiesProvider.extractClasses(file)
 

@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
 
 abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val project: Project,
-                                                                      private val cs: CoroutineScope) : AbstractEmbeddingsStorage() {
+                                                                      private val cs: CoroutineScope) : EmbeddingsStorage {
   abstract val index: DiskSynchronizedEmbeddingSearchIndex
 
   private val indexSetupJob = AtomicReference<Job>(null)
@@ -37,8 +37,6 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   abstract val indexMemoryWeight: Int
   open val indexStrongLimit: Int? = null
-
-  abstract fun checkSearchEnabled(): Boolean
 
   abstract suspend fun getIndexableEntities(files: Iterable<VirtualFile>? = null): ScanResult<T>
 
@@ -58,6 +56,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
     logger.debug { "Loaded embedding index from disk, size: ${index.size}, root: ${index.root}" }
     generateEmbeddingsIfNecessary()
+    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(this@DiskSynchronizedEmbeddingsStorage, true)
     project.messageBus.syncPublisher(SemanticIndexingFinishListener.FINISHED).finished()
   }
 
@@ -66,23 +65,21 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
     EmbeddingIndexMemoryManager.getInstance().registerIndex(index, indexMemoryWeight, indexStrongLimit)
   }
 
-  fun tryStopGeneratingEmbeddings() = indexSetupJob.getAndSet(null)?.cancel()
-
-  @RequiresBackgroundThread
-  override suspend fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    if (!checkSearchEnabled()) return emptyList()
-    return searchNeighbours(text, topK, similarityThreshold)
+  fun tryStopGeneratingEmbeddings() {
+    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(this, false)
+    indexSetupJob.getAndSet(null)?.cancel()
   }
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+    if (index.size == 0) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
-    if (!checkSearchEnabled()) return emptySequence()
+    if (index.size == 0) return emptySequence()
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
   }
