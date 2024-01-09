@@ -203,6 +203,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       topPanel = JBUI.Panels.simplePanel(myDiffInfoWrapper).addToLeft(myToolbarWrapper).addToRight(rightPanel);
       GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
       GuiUtils.installVisibilityReferent(topPanel, myRightToolbar.getComponent());
+      RemoteTransferUIManager.forceDirectTransfer(topPanel);
     }
     else {
       JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
