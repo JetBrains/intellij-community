@@ -841,10 +841,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   // used in third-party plugins
   public List<Module> importProjects() {
-    return updateAllMavenProjectsSync(MavenImportSpec.IMPLICIT_IMPORT);
+    scheduleUpdateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT);
+    return List.of();
   }
 
   @ApiStatus.Internal
