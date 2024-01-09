@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -53,7 +54,8 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
       }
       selectedFile = fileEditorManager.getSelectedFiles()[0];
     }
-    presentation.setEnabled(fileEditorManager.getSiblings(selectedFile).size() > 1);
+    presentation.setEnabled(!ApplicationManager.getApplication().isUnitTestMode()
+                            && fileEditorManager.getSiblings(selectedFile).size() > 1);
   }
 
   @Override
