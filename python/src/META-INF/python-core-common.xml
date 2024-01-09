@@ -447,7 +447,7 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
