@@ -34,6 +34,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -172,7 +173,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     return ReadAction.compute(() -> {
       synchronized (myLock) {
         if (myCompilationPhase) {
-          return GlobalSearchScope.allScope(project);
+          return ProjectScope.getContentScope(project);
         }
         if (project.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getManager(project).getCachedValue(this, () ->
@@ -188,13 +189,10 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     final Set<Module> dirtyModules = getAllDirtyModules();
     if (dirtyModules.isEmpty()) return myExcludedFilesScope;
     if (dirtyModules.size() == ModuleManager.getInstance(myProject).getModules().length) {
-      return GlobalSearchScope.allScope(myProject);
+      return ProjectScope.getContentScope(myProject);
     }
-    GlobalSearchScope dirtyModuleScope = GlobalSearchScope.union(dirtyModules
-                                                                   .stream()
-                                                                   .map(Module::getModuleWithDependentsScope)
-                                                                   .toArray(GlobalSearchScope[]::new));
-    return dirtyModuleScope.union(myExcludedFilesScope);
+    return GlobalSearchScope.union(
+      ContainerUtil.append(ContainerUtil.map(dirtyModules, Module::getModuleWithDependentsScope), myExcludedFilesScope));
   }
 
   @NotNull Set<Module> getAllDirtyModules() {
