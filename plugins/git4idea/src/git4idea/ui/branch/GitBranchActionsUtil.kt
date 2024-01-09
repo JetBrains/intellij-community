@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -61,12 +61,11 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
           }
           else {
             // Fast-forward all non-current branches in the selection
-            val localBranchName = localBranch.name
-            val remoteBranchName = remoteBranch.nameForRemoteOperations
-            val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
+            val refspec = "${localBranch.fullName}:${localBranch.fullName}"
+            val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, refspec)
             try {
               fetchResult.throwExceptionIfFailed()
-              successfullyUpdated.add(localBranchName)
+              successfullyUpdated.add(localBranch.name)
             }
             catch (ignored: VcsException) {
               fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
