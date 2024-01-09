@@ -17,11 +17,12 @@ class MPSBuilder {
         fun main(args: Array<String>) {
             val home = args[0]
 
-            val options = BuildOptions()
+            val options = BuildOptions(
+                validateImplicitPlatformModule = false,
+            )
             options.incrementalCompilation = true
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
-            options.validateImplicitPlatformModule = false
             options.buildStepsToSkip.add(BuildOptions.MAC_SIGN_STEP)
             options.buildStepsToSkip.add(BuildOptions.MAC_NOTARIZE_STEP)
 
@@ -33,11 +34,10 @@ class MPSBuilder {
 
             runBlocking(Dispatchers.Default) {
                 val buildContext = BuildContextImpl.createContext(
-                    BuildDependenciesCommunityRoot(Path.of("$home/community")),
-                    Path.of(home),
-                    MPSProperties(),
-                    buildTools,
-                    options
+                    projectHome = Path.of(home),
+                    productProperties = MPSProperties(),
+                    proprietaryBuildTools = buildTools,
+                    options = options
                 )
 
                 val buildTasks = BuildTasks.create(buildContext)
@@ -49,15 +49,16 @@ class MPSBuilder {
                         "intellij.platform.jps.model.serialization.tests"
                     )
                 )
+
                 buildTasks.buildDistributions()
 
-                val binDir = buildContext.paths.getDistAll() + "/bin";
+                val binDir = buildContext.paths.distAllDir + "/bin";
                 copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.x64), Path.of("$binDir/linux/amd64"))
                 copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.aarch64), Path.of("$binDir/linux/aarch64"))
                 copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.x64), Path.of("$binDir/mac/amd64"))
                 copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.aarch64), Path.of("$binDir/mac/aarch64"))
 
-                val jpsArtifactDir = "${buildContext.paths.getDistAll()}/lib/jps"
+                val jpsArtifactDir = "${buildContext.paths.distAllDir}/lib/jps"
                 val jpsArtifactPath = Path.of(jpsArtifactDir)
                 buildContext.notifyArtifactBuilt(jpsArtifactPath)
             }

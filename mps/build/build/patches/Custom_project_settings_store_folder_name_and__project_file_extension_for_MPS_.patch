@@ -15,38 +15,47 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
    /**
     * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
 
-Index: platform/configuration-store-impl/src/ProjectStoreBase.kt
+Index: platform/configuration-store-impl/src/ProjectStoreImpl.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/configuration-store-impl/src/ProjectStoreBase.kt b/platform/configuration-store-impl/src/ProjectStoreBase.kt
---- a/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
-+++ b/platform/configuration-store-impl/src/ProjectStoreBase.kt	(date 1679351103233)
-@@ -115,10 +115,11 @@
+diff --git a/platform/configuration-store-impl/src/ProjectStoreImpl.kt b/platform/configuration-store-impl/src/ProjectStoreImpl.kt
+--- a/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision 5fae0bafa59db4d0adedcbfaeeb394647dce2959)
++++ b/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(date 1708600813429)
+@@ -93,11 +93,11 @@
      val storageManager = storageManager
      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
      val macros = ArrayList<Macro>(5)
 -    if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-+    // MPS Hack: do not hack ProjectFileType, but make *.mpr file be project file
 +    if (file.toString().endsWith(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)) {
        macros.add(Macro(PROJECT_FILE, file))
  
--      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
-+      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
+       val workspacePath = file.parent.resolve("${file.fileName.toString()
+-        .removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
++        .removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
        macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
  
        if (isUnitTestMode) {
-@@ -153,7 +154,7 @@
-     val presentableUrl = if (dotIdea == null) file else projectBasePath
-     val cacheFileName = doGetProjectFileName(
-       presentableUrl = presentableUrl.systemIndependentPath,
--      name = (presentableUrl.fileName ?: "").toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION),
-+      name = (presentableUrl.fileName ?: "").toString().removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/),
-       hashSeparator = ".",
-       extensionWithDot = ".xml",
-     )
- 
+
+Index: platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
+--- a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(revision 858b2cd664da5ab63421443a2b30f3a73da40ca7)
++++ b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(date 1704800610080)
+@@ -202,7 +202,7 @@
+     else -> {
+       // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
+       // user projects will not have long names as in our tests
+-      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
++      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)
+     }
+   }
+   name = sanitizeFileName(name, truncateIfNeeded = false)
+
 Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP

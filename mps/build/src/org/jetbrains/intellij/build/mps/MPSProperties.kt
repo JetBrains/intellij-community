@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.mps
 import org.jetbrains.intellij.build.*
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import java.io.File
@@ -73,6 +74,14 @@ class MPSProperties : JetBrainsProductProperties() {
 
         productLayout.addPlatformSpec { layout, _ ->
 
+            for (moduleName in listOf(
+                "intellij.java.frontback.impl",
+                "intellij.java.frontback.psi",
+                "intellij.java.frontback.psi.impl",
+            )) {
+                layout.withModule(moduleName, "java-frontback.jar")
+            }
+
             for (moduleName in listOf("intellij.platform.testFramework", "intellij.platform.testFramework.common", "intellij.java.testFramework", "intellij.platform.testFramework.core")) {
                 if (!productLayout.productApiModules.contains(moduleName)) {
                     layout.withModule(moduleName, "testFramework.jar")
@@ -102,8 +111,8 @@ class MPSProperties : JetBrainsProductProperties() {
         buildSourcesArchive = true
     }
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-        val communityHome = context.paths.communityHome
+    override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path) {
+        val communityHome = COMMUNITY_ROOT.communityRoot
         FileSet(Path.of("$communityHome/lib/ant")).includeAll().copyToDir(Path.of("$targetDirectory/lib/ant"))
 
         // copy binaries

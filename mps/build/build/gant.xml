@@ -162,35 +162,8 @@
         </replaceregexp>
     </target>
 
-    <target name="artifacts" description="Copy IDEA Community artifacts and update paths (add the community folder)">
-        <echo message="Copy and update IDEA Community libraries"/>
-        <delete dir="${basedir}/../.idea/artifacts"/>
-        <mkdir dir="${basedir}/../.idea/artifacts"/>
-        <copy todir="${basedir}/../.idea/artifacts">
-            <fileset dir="${community.folder}/.idea/artifacts"/>
-        </copy>
-        <replaceregexp flags="g" byline="true">
-            <regexp pattern="\$PROJECT_DIR\$"/>
-            <substitution expression="\0/community"/>
-            <fileset dir="${basedir}/../.idea/artifacts"/>
-        </replaceregexp>
-    </target>
-
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
-
-        <property name="patchVcsExtensions"
-                  value="${basedir}/patches/VcsExtensions.patch"/>
-        <echo message="Applying ${patchVcsExtensions}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${patchVcsExtensions}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchVcsExtensions}"/>
-        </exec>
 
         <property name="patchIconLoader"
                   value="${basedir}/patches/IconLoader-MPS-36435.patch"/>
@@ -255,19 +228,6 @@
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
             <arg value="${patchDisableCoursesAndTextSearch}"/>
-        </exec>
-
-        <property name="patchChangeGroupingSupport"
-                  value="${basedir}/patches/ChangeGroupingSupport.patch"/>
-        <echo message="Applying ${patchChangeGroupingSupport}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchChangeGroupingSupport}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchChangeGroupingSupport}"/>
         </exec>
 
         <property name="patchFile"
@@ -344,7 +304,7 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="patch,compiler,modules,kotlinc,jar-repositories,libraries,artifacts"
+    <target name="prepare" depends="patch,compiler,modules,kotlinc,jar-repositories,libraries"
             description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
