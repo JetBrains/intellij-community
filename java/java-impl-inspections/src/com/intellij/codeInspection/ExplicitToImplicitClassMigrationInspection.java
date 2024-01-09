@@ -3,23 +3,24 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ExplicitToImplicitClassMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-
-  private static final String JAVA_SUFFIX = ".java";
 
   @NotNull
   @Override
@@ -29,6 +30,12 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum()) {
+          return;
+        }
+
+        PsiElement lBrace = aClass.getLBrace();
+        PsiElement rBrace = aClass.getRBrace();
+        if (lBrace == null || rBrace == null) {
           return;
         }
 
@@ -50,12 +57,13 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         }
 
         String fileName = file.getName();
-        if (!fileName.endsWith(JAVA_SUFFIX)) {
+        if (!fileName.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION)) {
           return;
         }
 
         String className = aClass.getName();
-        if (className == null || !className.equals(fileName.substring(0, fileName.length() - JAVA_SUFFIX.length()))) {
+        if (className == null ||
+            !className.equals(fileName.substring(0, fileName.length() - JavaFileType.DOT_DEFAULT_EXTENSION.length()))) {
           return;
         }
 
@@ -67,7 +75,9 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
-        if (aClass.getExtendsListTypes().length != 0 || aClass.getImplementsListTypes().length != 0) {
+        PsiClassType[] extendsListTypes = aClass.getExtendsListTypes();
+        if ((extendsListTypes.length != 0 && !onlyObjectExtends(extendsListTypes)) ||
+            aClass.getImplementsListTypes().length != 0) {
           return;
         }
 
@@ -89,8 +99,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           }
         }
 
-        Project project = aClass.getProject();
-        PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(file.getPackageName());
+        Project project = holder.getProject();
+        PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("");
         if (aPackage == null) {
           return;
         }
@@ -113,18 +123,19 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         if (first != null) {
           return;
         }
-        PsiElement lBrace = aClass.getLBrace();
-        PsiElement rBrace = aClass.getRBrace();
-        if (lBrace == null || rBrace == null) {
-          return;
-        }
 
         if (PsiTreeUtil.hasErrorElements(aClass)) {
           return;
         }
 
-        holder.registerProblem(classIdentifier, JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"),
-                               new ReplaceWithImplicitClassFix());
+        holder.registerProblem(aClass, new TextRange(0, classIdentifier.getTextRangeInParent().getEndOffset()),
+                               JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"), new ReplaceWithImplicitClassFix());
+      }
+
+      private static boolean onlyObjectExtends(PsiClassType[] types) {
+        if (types.length != 1) return false;
+        PsiClassType type = types[0];
+        return type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
       }
     };
   }
@@ -141,23 +152,18 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);
       if (psiClass == null) {
         return;
       }
-      StringBuilder builder = new StringBuilder();
       PsiElement lBrace = psiClass.getLBrace();
       PsiElement rBrace = psiClass.getRBrace();
-      if (lBrace == null || rBrace == null) {
+      if (lBrace == null || rBrace == null || lBrace.getNextSibling() == null || rBrace.getPrevSibling() == null) {
         return;
       }
-      PsiElement psiElement = lBrace.getNextSibling();
       CommentTracker tracker = new CommentTracker();
-      while (psiElement != null && psiElement != rBrace) {
-        builder.append(tracker.text(psiElement));
-        psiElement = psiElement.getNextSibling();
-      }
-      PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(builder.toString(), psiClass);
+      String body = tracker.rangeText(lBrace.getNextSibling(), rBrace.getPrevSibling());
+      PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(body, psiClass);
       PsiElement replaced = tracker.replace(psiClass, newClass);
       tracker.insertCommentsBefore(replaced);
     }

@@ -99,7 +99,7 @@ public interface PsiJavaParserFacade {
   PsiParameter createParameterFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates an implicit class from the specified body text (the text between the braces).
+   * Creates an implicit class from the specified body text.
    *
    * @param body    the body text of the class to create.
    * @param context the PSI element used as context for resolving references which cannot be resolved
