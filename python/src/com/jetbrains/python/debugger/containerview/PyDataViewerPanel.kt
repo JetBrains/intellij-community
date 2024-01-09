@@ -25,6 +25,7 @@ import com.jetbrains.python.debugger.*
 import com.jetbrains.python.debugger.array.AbstractDataViewTable
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders
+import com.jetbrains.python.debugger.statistics.PyDataViewerCollector
 import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -85,9 +86,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   init {
     border = JBUI.Borders.empty(5)
 
-    //  sliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5))
     PyDataViewCompletionProvider().apply(sliceTextField)
-    //  formatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7))
 
     val panel = panel {
       row { cell(tablePanel).align(Align.FILL).resizableColumn() }.resizableRow()
@@ -170,6 +169,8 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
       val debugValue = getDebugValue(name, true, modifier)
       ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier) } }
     }
+
+    PyDataViewerCollector.slicingApplied.log()
   }
 
   fun apply(debugValue: PyDebugValue, modifier: Boolean) {
@@ -189,6 +190,8 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
           isModified = modifier
           this.debugValue = debugValue
         }
+
+        PyDataViewerCollector.logDataOpened(type, arrayChunk.columns, arrayChunk.rows)
       }
       catch (e: IllegalArgumentException) {
         ApplicationManager.getApplication().invokeLater { setError(e.localizedMessage, modifier) } //NON-NLS
