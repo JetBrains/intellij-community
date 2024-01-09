@@ -89,6 +89,13 @@ private object ProjectLoadedService {
 }
 
 private fun runOnProjectInit(project: Project) {
+  if (System.getProperty("ide.performance.screenshot") != null) {
+    @Suppress("DEPRECATION")
+    (ProjectLoadedService.registerScreenshotTaking(
+      System.getProperty("ide.performance.screenshot"), project.coroutineScope))
+    LOG.info("Option ide.performance.screenshot is initialized, screenshots will be captured")
+  }
+
   if (ProjectLoaded.TEST_SCRIPT_FILE_PATH == null || ProjectLoadedService.scriptStarted) {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       LOG.info(PerformanceTestingBundle.message("startup.silent"))
@@ -97,11 +104,6 @@ private fun runOnProjectInit(project: Project) {
   }
 
   ProjectLoadedService.scriptStarted = true
-  if (System.getProperty("ide.performance.screenshot") != null) {
-    @Suppress("DEPRECATION")
-    (ProjectLoadedService.registerScreenshotTaking(
-      System.getProperty("ide.performance.screenshot"), project.coroutineScope))
-  }
 
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
