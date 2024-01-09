@@ -15,7 +15,5 @@ fun test(sealedClass: SealedClass): String {
     }
 }
 
-// IGNORE_K2
-
 // IGNORE_K1
 // K1 analysis runs into a lazy value recursion exception.

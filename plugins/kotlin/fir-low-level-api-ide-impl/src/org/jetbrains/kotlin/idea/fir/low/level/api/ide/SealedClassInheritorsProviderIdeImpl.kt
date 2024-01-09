@@ -37,8 +37,15 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
         //    cheap, hence the decision to avoid it. If a `PackageScope` is needed in the future, it'd be best to extract a
         //    `PackageNameScope` which operates just with the qualified package name, to avoid `PsiPackage`. (At the time of writing, this
         //    is possible with the implementation of `PackageScope`.)
+        //  - We ignore local classes to avoid lazy resolve contract violations. See KT-63795.
         //  - KMP is unlikely to be fully supported. See KTIJ-28421.
-        val classIds = DirectKotlinClassInheritorsSearch.search(sealedKtClass, ktModule.contentScope)
+        val searchParameters = DirectKotlinClassInheritorsSearch.SearchParameters(
+            ktClass = sealedKtClass,
+            searchScope = ktModule.contentScope,
+            includeLocal = false,
+        )
+
+        val classIds = DirectKotlinClassInheritorsSearch.search(searchParameters)
             .mapNotNull { (it as? KtClassOrObject)?.classIdIfNonLocal }
             .filter { it.packageFqName == classId.packageFqName }
             .toMutableList()
