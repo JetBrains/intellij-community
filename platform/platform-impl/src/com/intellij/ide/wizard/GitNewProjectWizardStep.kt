@@ -25,13 +25,15 @@ class GitNewProjectWizardStep(
 
   private val gitRepositoryInitializer = GitRepositoryInitializer.getInstance()
 
+  private val isGitStepEnabled = gitRepositoryInitializer != null && context.isCreatingNewProject
+
   private val gitProperty = propertyGraph.property(false)
     .bindBooleanStorage(GIT_PROPERTY_NAME)
 
-  override val git: Boolean get() = gitRepositoryInitializer != null && gitProperty.get()
+  override val git: Boolean get() = isGitStepEnabled && gitProperty.get()
 
   override fun setupUI(builder: Panel) {
-    if (gitRepositoryInitializer != null && context.isCreatingNewProject) {
+    if (isGitStepEnabled) {
       with(builder) {
         row("") {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
