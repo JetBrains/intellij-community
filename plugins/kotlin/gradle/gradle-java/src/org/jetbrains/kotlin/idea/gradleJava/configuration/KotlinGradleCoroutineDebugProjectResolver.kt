@@ -7,32 +7,45 @@ import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.util.Consumer
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 
 class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtension() {
     companion object {
         val log = Logger.getInstance(this::class.java)
+        private const val MIN_SUPPORTED_GRADLE_VERSION = "4.6" // CommandLineArgumentProvider is available only since Gradle 4.6
     }
 
     override fun enhanceTaskProcessing(taskNames: MutableList<String>, initScriptConsumer: Consumer<String>, parameters: Map<String, String>) {
         try {
             val allowCoroutineAgent = KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug ?: false
-            if (allowCoroutineAgent) {
-                setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer)
+            val gradleVersion = parameters[GradleProjectResolverExtension.GRADLE_VERSION]?.let { GradleVersion.version(it) }
+            if (allowCoroutineAgent && (gradleVersion == null || gradleVersion >= GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION))) {
+                setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer, gradleVersion == null)
             }
         } catch (e: Exception) {
             log.error("Gradle: not possible to attach a coroutine debugger agent.", e)
         }
     }
 
-    private fun setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer: Consumer<String>) {
+    private fun setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer: Consumer<String>, shouldCheckGradleVersion: Boolean) {
+        val gradleVersionCheck = if (shouldCheckGradleVersion) {
+            //language=Gradle
+            """
+                if (org.gradle.util.GradleVersion.current() < org.gradle.util.GradleVersion.version("$MIN_SUPPORTED_GRADLE_VERSION")) return
+            """.trimIndent()
+        } else {
+            ""
+        }
         val script =
             //language=Gradle
             """
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
                 taskGraph.allTasks.each { Task task ->
                     if (!(task instanceof Test || task instanceof JavaExec)) return
+                    $gradleVersionCheck
                     for (arg in task.getAllJvmArgs() + task.getJvmArgs()) {
                         if (arg == "-D$DEBUG_PROPERTY_NAME=$DEBUG_PROPERTY_VALUE_OFF") {
                             return
