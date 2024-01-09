@@ -32,6 +32,9 @@ class PsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
   @Test
   fun `test switches hints`() = assertHints("Switches")
 
+  @Test
+  fun `test comments and parentheses`() = assertHints("CommentsAndParentheses")
+
 
   private fun assertHints(className: String): Unit = runBlocking {
     assertNoSuites()
