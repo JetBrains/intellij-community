@@ -76,7 +76,7 @@ private class OpenApiPluginSuggestion(val project: Project,
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedCommercialIde.name)) {
         val pluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
         if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-          project.service<UltimateInstallationService>().install(pluginId)
+          project.service<UltimateInstallationService>().install(pluginId, suggestedCommercialIde.downloadUrl)
         } else {
           FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedCommercialIde.downloadUrl, pluginId)
         }

@@ -19,6 +19,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux.LinuxInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.mac.MacOsInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstaller
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.progressStep
@@ -63,7 +64,7 @@ class UltimateInstallationService(
     }
   }
 
-  fun install(pluginId: PluginId? = null) {
+  fun install(pluginId: PluginId? = null, defaultDownloadUrl: String) {
     coroutineScope.launch {
       try {
         installerLock.withLock {
@@ -74,14 +75,16 @@ class UltimateInstallationService(
             val build = productData?.channels?.firstOrNull { it.status == ChannelStatus.RELEASE }?.builds?.first()
                         ?: return@withBackgroundProgress
 
-            //val result = tryToInstallViaToolbox(build)
-            //if (result) {
-            //  FUSEventSource.EDITOR.logTryUltimateToolboxUsed(project, pluginId)
-            //  return@withBackgroundProgress 
-            //}
-
+            if (Registry.`is`("ide.try.ultimate.automatic.installation.use.toolbox")) {
+              val result = tryToInstallViaToolbox(build)
+              if (result) {
+                FUSEventSource.EDITOR.logTryUltimateToolboxUsed(project, pluginId)
+                return@withBackgroundProgress
+              }
+            }
+            
             if (!tryToInstall(build, pluginId)) {
-              useFallback(pluginId)
+              useFallback(pluginId, defaultDownloadUrl)
             }
           }
         }
@@ -93,7 +96,7 @@ class UltimateInstallationService(
           }
           else -> {
             ultimateInstallationLogger.warn("Installation process is failed", e)
-            useFallback(pluginId)
+            useFallback(pluginId, defaultDownloadUrl)
           }
         }
       }
@@ -115,8 +118,8 @@ class UltimateInstallationService(
     val downloadActivity = FUSEventSource.EDITOR.logTryUltimateDownloadStarted(project, pluginId)
     val downloadResult = progressStep(1.0, text = IdeBundle.message("plugins.advertiser.ultimate.download")) {
       withRawProgressReporter {
-        coroutineToIndicator { 
-          installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator) 
+        coroutineToIndicator {
+          installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator)
         }
       }
     } ?: return false
@@ -129,14 +132,16 @@ class UltimateInstallationService(
     installActivity.finished()
 
     val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
-    val startResult = installer!!.startUltimate(installResult)
+    val startResult = indeterminateStep(IdeBundle.message("plugins.advertiser.ultimate.opening")) {
+      installer!!.startUltimate(installResult)
+    }
     openActivity.finished()
-    
+
     return startResult
   }
 
-  private fun useFallback(pluginId: PluginId? = null) {
-    //FUSEventSource.EDITOR.logTryUltimateFallback(project, ideaUltimate.defaultDownloadUrl, pluginId)
+  private fun useFallback(pluginId: PluginId? = null, defaultDownloadUrl: String) {
+    FUSEventSource.EDITOR.logTryUltimateFallback(project, defaultDownloadUrl, pluginId)
   }
 }
 

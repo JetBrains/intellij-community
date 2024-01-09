@@ -413,7 +413,7 @@ open class PluginAdvertiserServiceImpl(
         NotificationAction.createSimpleExpiring(
           IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
           if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-            project.service<UltimateInstallationService>().install()
+            project.service<UltimateInstallationService>().install(defaultDownloadUrl = ideaUltimate.downloadUrl)
           } else {
             FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
           }

@@ -59,7 +59,7 @@ private class FrameworkPluginSuggestion(val project: Project, val framework: Fra
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
       val pluginId = PluginId.getId(framework.pluginId)
       if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-        project.service<UltimateInstallationService>().install(pluginId)
+        project.service<UltimateInstallationService>().install(pluginId, ideaUltimate.downloadUrl)
       } else {
         FUSEventSource.EDITOR.openDownloadPageAndLog(project, ideaUltimate.downloadUrl, pluginId)
       }

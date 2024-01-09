@@ -29,7 +29,7 @@ internal class SuggestedIdeBanner : JPanel() {
     ActionListener {
       val downloadUrl = suggestedIde?.downloadUrl ?: return@ActionListener
       if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-        ProjectManager.getInstance().defaultProject.service<UltimateInstallationService>().install(pluginId)
+        ProjectManager.getInstance().defaultProject.service<UltimateInstallationService>().install(pluginId, downloadUrl)
       } else {
         FUSEventSource.PLUGINS_SEARCH.openDownloadPageAndLog(project = null, url = downloadUrl, pluginId = pluginId)
       }
