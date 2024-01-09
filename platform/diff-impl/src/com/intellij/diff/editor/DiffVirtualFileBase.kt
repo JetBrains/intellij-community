@@ -12,7 +12,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 
 abstract class DiffVirtualFileBase(name: String) :
   LightVirtualFile(name, DiffFileType.INSTANCE, ""),
-  DiffContentVirtualFile, VirtualFileWithoutContent, IdeDocumentHistoryImpl.SkipFromDocumentHistory {
+  DiffContentVirtualFile, VirtualFileWithoutContent {
   init {
     useDiffWindowDimensionKey()
     turnOffReopeningWindow()
