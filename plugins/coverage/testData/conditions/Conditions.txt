@@ -57,7 +57,7 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    a && b
+    b
         true hits: 0
         false hits: 1
 
@@ -69,7 +69,7 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
 
@@ -81,7 +81,7 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    a && b
+    b
         true hits: 1
         false hits: 0
 
@@ -93,7 +93,7 @@ Hits: 4
     a
         true hits: 2
         false hits: 2
-    a && b
+    b
         true hits: 1
         false hits: 1
 
@@ -108,7 +108,7 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    a || b
+    b
         true hits: 0
         false hits: 0
 
@@ -120,7 +120,7 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a || b
+    b
         true hits: 1
         false hits: 0
 
@@ -132,7 +132,7 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    a || b
+    b
         true hits: 0
         false hits: 0
 
@@ -144,7 +144,7 @@ Hits: 4
     a
         true hits: 2
         false hits: 2
-    a || b
+    b
         true hits: 1
         false hits: 1
 
@@ -162,7 +162,7 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    a && b && c
+    c
         true hits: 0
         false hits: 0
 
@@ -177,7 +177,7 @@ Hits: 2
     b
         true hits: 0
         false hits: 1
-    a && b && c
+    c
         true hits: 0
         false hits: 0
 
@@ -192,7 +192,7 @@ Hits: 3
     b
         true hits: 1
         false hits: 1
-    a && b && c
+    c
         true hits: 0
         false hits: 1
 
@@ -207,7 +207,7 @@ Hits: 4
     b
         true hits: 2
         false hits: 1
-    a && b && c
+    c
         true hits: 1
         false hits: 1
 
@@ -294,7 +294,7 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a || b
+    b
         true hits: 1
         false hits: 0
 

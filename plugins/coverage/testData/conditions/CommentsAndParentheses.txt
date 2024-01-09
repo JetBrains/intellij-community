@@ -3,7 +3,7 @@ Hits: 1
 
 Line 3 coverage: PARTIAL
 Hits: 1
-    (a)
+    a
         true hits: 0
         false hits: 1
 
@@ -12,7 +12,7 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    (a && (b))
+    b
         true hits: 0
         false hits: 1
 
@@ -27,13 +27,13 @@ Hits: 1
     a
         true hits: 1
         false hits: 0
-    a /* comment */ && b
+    b
         true hits: 0
         false hits: 1
 
 Line 19 coverage: PARTIAL
 Hits: 1
-    (((((a)))))
+    a
         true hits: 1
         false hits: 0
 
@@ -62,5 +62,17 @@ Line 39 coverage: FULL
 Hits: 1
 
 Line 41 coverage: FULL
+Hits: 1
+
+Line 46 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 1
+        default: 0
+
+Line 48 coverage: FULL
+Hits: 1
+
+Line 50 coverage: FULL
 Hits: 1
 

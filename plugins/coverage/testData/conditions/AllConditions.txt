@@ -6,7 +6,7 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
 
@@ -15,7 +15,7 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a || b
+    b
         true hits: 0
         false hits: 1
 
@@ -27,7 +27,7 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    a && b && c
+    c
         true hits: 0
         false hits: 0
 
@@ -39,7 +39,7 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    a || b && c
+    c
         true hits: 0
         false hits: 0
 
@@ -51,7 +51,7 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    a && (b || c)
+    c
         true hits: 0
         false hits: 0
 
@@ -63,7 +63,7 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    a || b || c
+    c
         true hits: 0
         false hits: 1
 
@@ -72,10 +72,10 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
-    a && b || c
+    c
         true hits: 0
         false hits: 1
 
@@ -84,10 +84,10 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    (a || b)
+    b
         true hits: 0
         false hits: 1
-    (a || b) && c
+    c
         true hits: 0
         false hits: 0
 
@@ -102,7 +102,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a && b && c && d
+    d
         true hits: 0
         false hits: 0
 
@@ -117,7 +117,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a || b && c && d
+    d
         true hits: 0
         false hits: 0
 
@@ -132,7 +132,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a && (b || c && d)
+    d
         true hits: 0
         false hits: 0
 
@@ -147,7 +147,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 1
-    a || b || c && d
+    d
         true hits: 0
         false hits: 0
 
@@ -162,7 +162,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a && b && (c || d)
+    d
         true hits: 0
         false hits: 0
 
@@ -177,7 +177,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a || b && (c || d)
+    d
         true hits: 0
         false hits: 0
 
@@ -192,7 +192,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 0
-    a && (b || c || d)
+    d
         true hits: 0
         false hits: 0
 
@@ -207,7 +207,7 @@ Hits: 1
     c
         true hits: 0
         false hits: 1
-    a || b || c || d
+    d
         true hits: 0
         false hits: 1
 
@@ -219,10 +219,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    b && c
+    c
         true hits: 0
         false hits: 0
-    a && (b && c || d)
+    d
         true hits: 0
         false hits: 0
 
@@ -234,10 +234,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    b && c
+    c
         true hits: 0
         false hits: 0
-    a || b && c || d
+    d
         true hits: 0
         false hits: 1
 
@@ -249,10 +249,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    (b || c)
+    c
         true hits: 0
         false hits: 0
-    a && (b || c) && d
+    d
         true hits: 0
         false hits: 0
 
@@ -264,10 +264,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    (b || c)
+    c
         true hits: 0
         false hits: 1
-    a || (b || c) && d
+    d
         true hits: 0
         false hits: 0
 
@@ -276,13 +276,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
     c
         true hits: 0
         false hits: 1
-    a && b || c && d
+    d
         true hits: 0
         false hits: 0
 
@@ -291,13 +291,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
     c
         true hits: 0
         false hits: 1
-    a && b || c || d
+    d
         true hits: 0
         false hits: 1
 
@@ -306,13 +306,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    (a || b)
+    b
         true hits: 0
         false hits: 1
     c
         true hits: 0
         false hits: 0
-    (a || b) && c && d
+    d
         true hits: 0
         false hits: 0
 
@@ -321,13 +321,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    (a || b)
+    b
         true hits: 0
         false hits: 1
     c
         true hits: 0
         false hits: 0
-    (a || b) && (c || d)
+    d
         true hits: 0
         false hits: 0
 
@@ -339,10 +339,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    a && b && c
+    c
         true hits: 0
         false hits: 0
-    a && b && c || d
+    d
         true hits: 0
         false hits: 1
 
@@ -354,10 +354,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    (a || b && c)
+    c
         true hits: 0
         false hits: 0
-    (a || b && c) && d
+    d
         true hits: 0
         false hits: 0
 
@@ -369,10 +369,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 0
-    a && (b || c)
+    c
         true hits: 0
         false hits: 0
-    a && (b || c) || d
+    d
         true hits: 0
         false hits: 1
 
@@ -384,10 +384,10 @@ Hits: 1
     b
         true hits: 0
         false hits: 1
-    (a || b || c)
+    c
         true hits: 0
         false hits: 1
-    (a || b || c) && d
+    d
         true hits: 0
         false hits: 0
 
@@ -396,13 +396,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    a && b
+    b
         true hits: 0
         false hits: 0
-    (a && b || c)
+    c
         true hits: 0
         false hits: 1
-    (a && b || c) && d
+    d
         true hits: 0
         false hits: 0
 
@@ -411,13 +411,13 @@ Hits: 1
     a
         true hits: 0
         false hits: 1
-    (a || b)
+    b
         true hits: 0
         false hits: 1
-    (a || b) && c
+    c
         true hits: 0
         false hits: 0
-    (a || b) && c || d
+    d
         true hits: 0
         false hits: 1
 

@@ -46,6 +46,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,11 +54,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -78,7 +75,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * @author Roman.Chernyatchik
@@ -543,7 +539,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
 
-    List<PsiExpression> expressions = collectExpressions(editor, psiFile, startOffset, endOffset);
+    TextRange range = TextRange.create(startOffset, endOffset);
+    List<SwitchExpression> switches = JavaCoveragePsiUtilsKt.getSwitches(psiFile, range);
+    List<ConditionExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
 
     try {
       int idx = 0;
@@ -551,11 +549,11 @@ public class JavaCoverageEngine extends CoverageEngine {
 
       if (lineData.getJumps() != null) {
         for (JumpData jumpData : lineData.getJumps()) {
-          if (idx >= expressions.size()) {
+          if (idx >= conditions.size()) {
             LOG.info("Cannot map coverage report data with PSI: there are more branches in report then in PSI");
             return defaultResult;
           }
-          PsiExpression expression = expressions.get(idx++);
+          ConditionExpression expression = conditions.get(idx++);
           addJumpDataInfo(buf, jumpData, expression);
           hits += jumpData.getTrueHits() + jumpData.getFalseHits();
         }
@@ -563,11 +561,11 @@ public class JavaCoverageEngine extends CoverageEngine {
 
       if (lineData.getSwitches() != null) {
         for (SwitchData switchData : lineData.getSwitches()) {
-          if (idx >= expressions.size()) {
+          if (idx >= switches.size()) {
             LOG.info("Cannot map coverage report data with PSI: there are more switches in report then in PSI");
             return defaultResult;
           }
-          PsiExpression expression = expressions.get(idx++);
+          SwitchExpression expression = switches.get(idx++);
           addSwitchDataInfo(buf, switchData, expression, lineData.getStatus());
           hits += IntStream.of(switchData.getHits()).sum() + switchData.getDefaultHits();
         }
@@ -583,12 +581,9 @@ public class JavaCoverageEngine extends CoverageEngine {
     return buf.toString();
   }
 
-  private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, PsiExpression expression) {
-    PsiElement parentExpression = expression.getParent();
-    buf.append(indent).append(expression.getText()).append("\n");
-
-    boolean reverse = parentExpression instanceof PsiPolyadicExpression polyadicExpression && polyadicExpression.getOperationTokenType() == JavaTokenType.OROR
-                      || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
+  private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, ConditionExpression expression) {
+    buf.append(indent).append(expression.getExpression()).append("\n");
+    boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
     buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits)).append("\n");
 
@@ -596,91 +591,20 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits)).append("\n");
   }
 
-  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, PsiExpression expression, int coverageStatus) {
-    List<String> cases = extractCaseLabels(expression);;
-    buf.append(indent).append(expression.getText()).append("\n");
+  private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchExpression expression, int coverageStatus) {
+    buf.append(indent).append(expression.getExpression()).append("\n");
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
-      String key = i < cases.size() ? cases.get(i) : Integer.toString(switchData.getKeys()[i]);
+      String key = i < expression.getCases().size() ? expression.getCases().get(i) : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
       buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");
     }
     int defaultHits = switchData.getDefaultHits();
     boolean defaultCausesLinePartiallyCovered = allBranchesHit && coverageStatus != LineCoverage.FULL;
-    if (hasDefaultLabel(expression) || defaultCausesLinePartiallyCovered || defaultHits > 0) {
+    if (expression.getHasDefault() || defaultCausesLinePartiallyCovered || defaultHits > 0) {
       buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
     }
-  }
-
-  private static @NotNull List<String> extractCaseLabels(PsiExpression expression) {
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiSwitchStatement switchStatement)) return Collections.emptyList();
-    PsiCodeBlock body = switchStatement.getBody();
-    if (body == null) return Collections.emptyList();
-    return PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)
-      .stream().flatMap((label) -> {
-        PsiCaseLabelElementList list = label.getCaseLabelElementList();
-        if (list == null || list.getElementCount() == 0) return Stream.of();
-        return Stream.of(list.getElements());
-      }).map(PsiElement::getText).toList();
-  }
-
-  @NotNull
-  private static List<PsiExpression> collectExpressions(@NotNull Editor editor, @NotNull PsiFile psiFile, int startOffset, int endOffset) {
-    Set<PsiExpression> expressions = new LinkedHashSet<>();
-
-    for(int offset = startOffset; offset < endOffset; offset++) {
-      PsiElement elementAt = psiFile.findElementAt(offset);
-      if (elementAt == null) continue;
-      PsiElement statement = PsiTreeUtil.getParentOfType(elementAt, PsiStatement.class);
-      if (statement == null) continue;
-      PsiElement condition = null;
-      if (statement instanceof PsiIfStatement ifStatement) {
-        condition = ifStatement.getCondition();
-      }
-      else if (statement instanceof PsiSwitchStatement switchStatement) {
-        condition = switchStatement.getExpression();
-      }
-      else if (statement instanceof PsiConditionalLoopStatement loopStatement) {
-        condition = loopStatement.getCondition();
-      }
-      else if (statement instanceof PsiForeachStatement foreachStatement) {
-        condition = foreachStatement.getIteratedValue();
-      }
-      else if (statement instanceof PsiAssertStatement assertStatement) {
-        condition = assertStatement.getAssertCondition();
-      } else {
-        PsiConditionalExpression conditionalExpression = PsiTreeUtil.findChildOfType(statement, PsiConditionalExpression.class);
-        if (conditionalExpression != null) {
-          condition = conditionalExpression.getCondition();
-        } else {
-          PsiPolyadicExpression expression = PsiTreeUtil.findChildOfType(statement, PsiPolyadicExpression.class);
-          if (expression != null) {
-            IElementType tokenType = expression.getOperationTokenType();
-            if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
-              condition = expression;
-            }
-          }
-        }
-      }
-      if (PsiTreeUtil.isAncestor(condition, elementAt, false)) {
-        try {
-          ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(editor.getProject()))
-            .getControlFlow(statement, AllVariablesControlFlowPolicy.getInstance());
-          for (Instruction instruction : controlFlow.getInstructions()) {
-            if (instruction instanceof ConditionalBranchingInstruction branchingInstruction) {
-              PsiExpression expression = branchingInstruction.expression;
-              expressions.add(expression);
-            }
-          }
-        }
-        catch (AnalysisCanceledException e) {
-          return Collections.emptyList();
-        }
-      }
-    }
-    return new ArrayList<>(expressions);
   }
 
   @Override
@@ -727,26 +651,6 @@ public class JavaCoverageEngine extends CoverageEngine {
                           testName.equals(CoverageListener.sanitize(method.getName(), className.length())))
         .forEach(elements::add);
     });
-  }
-
-
-  private static boolean hasDefaultLabel(final PsiElement conditionExpression) {
-    boolean hasDefault = false;
-    final PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(conditionExpression, PsiSwitchStatement.class);
-    final PsiCodeBlock body = ((PsiSwitchStatementImpl)conditionExpression.getParent()).getBody();
-    if (body != null) {
-      final PsiElement bodyElement = body.getFirstBodyElement();
-      if (bodyElement != null) {
-        PsiSwitchLabelStatement label = PsiTreeUtil.getNextSiblingOfType(bodyElement, PsiSwitchLabelStatement.class);
-        while (label != null) {
-          if (label.getEnclosingSwitchStatement() == switchStatement) {
-            hasDefault |= label.isDefaultCase();
-          }
-          label = PsiTreeUtil.getNextSiblingOfType(label, PsiSwitchLabelStatement.class);
-        }
-      }
-    }
-    return hasDefault;
   }
 
   public JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,

@@ -41,4 +41,13 @@ public class CommentsAndParentheses {
         System.out.println(0);
     }
   }
+
+  void extraBracketsInSwitch(int x) {
+    switch ((((((x)))))) {
+      case 1:
+        System.out.println(1);
+      default:
+        System.out.println(0);
+    }
+  }
 }

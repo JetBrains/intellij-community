@@ -11,5 +11,6 @@ public class CommentsAndParenthesesTest extends TestCase {
     o.extraBracketsInIf(true);
     o.commentInSwitch(1);
     o.commentInSwitchExpression(1, 0);
+    o.extraBracketsInSwitch(1);
   }
 }
