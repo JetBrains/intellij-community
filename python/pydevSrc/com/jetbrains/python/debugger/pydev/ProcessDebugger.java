@@ -67,7 +67,7 @@ public interface ProcessDebugger {
     return DataViewerCommandResult.NOT_IMPLEMENTED;
   }
 
-  void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
+  void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback);
 
   PyDebugValue changeVariable(String threadId, String frameId, PyDebugValue var, String value)
     throws PyDebuggerException;

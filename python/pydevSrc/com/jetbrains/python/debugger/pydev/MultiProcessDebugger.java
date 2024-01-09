@@ -255,7 +255,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 

@@ -217,7 +217,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public void loadReferrers(final String threadId,
                             final String frameId,
                             final PyReferringObjectsValue var,
-                            final PyDebugCallback<XValueChildrenList> callback) {
+                            final PyDebugCallback<? super XValueChildrenList> callback) {
     GetReferrersCommand cmd = new GetReferrersCommand(this, threadId, frameId, var);
 
     cmd.execute(new PyDebugCallback<>() {
