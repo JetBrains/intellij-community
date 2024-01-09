@@ -33,6 +33,9 @@ object MissingKeyProviderCollector : CounterUsagesCollector() {
    * to avoid spamming the same over and over again during one search session.
    */
   fun report(sessionId: Int) {
+    if (unsupportedClasses.isEmpty()) {
+      return
+    }
     KEY_NOT_COMPUTED_EVENT.log(sessionId, unsupportedClasses.toList())
     unsupportedClasses.clear()
   }
