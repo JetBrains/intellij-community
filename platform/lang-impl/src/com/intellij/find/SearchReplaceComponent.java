@@ -722,6 +722,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_AUTOLAYOUT_STRATEGY);
+    toolbar.setLayoutSecondaryActions(true);
     if (ExperimentalUI.isNewUI()) toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;

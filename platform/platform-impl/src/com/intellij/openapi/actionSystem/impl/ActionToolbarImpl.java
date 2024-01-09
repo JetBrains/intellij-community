@@ -211,7 +211,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     };
 
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
-    myLayoutStrategy = new RightActionsAdjusterStrategyWrapper(new NoWrapLayoutStrategy(myOrientation, false));
+    myLayoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY;
 
     mySecondaryActions = new DefaultActionGroup() {
       @Override
@@ -323,7 +323,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return baseline;
   }
 
-  //todo use instead with AutoLayout #idea-326561
+  @Override
   public void setLayoutSecondaryActions(boolean val) {
     myLayoutSecondaryActions = val;
   }
@@ -1594,6 +1594,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutStrategy(myOrientation == SwingConstants.HORIZONTAL ? ToolbarLayoutStrategy.HORIZONTAL_AUTOLAYOUT_STRATEGY : ToolbarLayoutStrategy.VERTICAL_AUTOLAYOUT_STRATEGY);
+      setLayoutSecondaryActions(true);
     }
   }
 

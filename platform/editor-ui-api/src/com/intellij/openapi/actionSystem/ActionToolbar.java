@@ -189,6 +189,8 @@ public interface ActionToolbar {
 
   void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon);
 
+  void setLayoutSecondaryActions(boolean val);
+
   @NotNull ActionGroup getActionGroup();
 
   @NotNull List<AnAction> getActions();
