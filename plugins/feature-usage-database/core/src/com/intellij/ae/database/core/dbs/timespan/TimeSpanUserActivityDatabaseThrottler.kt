@@ -4,12 +4,10 @@ import com.intellij.ae.database.core.activities.DatabaseBackedTimeSpanUserActivi
 import com.intellij.ae.database.core.activities.toKey
 import com.intellij.ae.database.core.utils.InstantUtils
 import com.intellij.openapi.diagnostic.logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
@@ -24,22 +22,39 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
 
   private val events = HashMap<String, EventDescriptor>()
   private val eventsLock = Mutex()
+  private val updaterJob: Job? = if (runBackgroundUpdater) startBackgroundUpdater(cs) else null
 
   init {
-    if (runBackgroundUpdater) {
-      cs.launch {
-        while (isActive) {
-          delay(updatePause)
-          commitChanges(false)
-        }
-      }
-    }
+    /*cs.launch {
+      submitDanglingEvents()
+    }*/
 
     database.executeBeforeConnectionClosed { isFinal ->
       if (isFinal) {
         commitChanges(true)
         commitStaleEvents()
       }
+    }
+  }
+
+  private fun startBackgroundUpdater(cs: CoroutineScope): Job {
+    return cs.launch {
+      while (isActive) {
+        delay(updatePause)
+        commitChanges(false)
+      }
+    }
+  }
+
+  @TestOnly
+  fun cancelBackgroundUpdate() {
+    updaterJob?.cancel("in test")
+  }
+
+  private suspend fun submitDanglingEvents() {
+    eventsLock.withLock {
+      val affected = database.endAllEvents()
+      logger.warn("Submitted ${affected} dangling events")
     }
   }
 
@@ -69,7 +84,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
         TimeSpanUserActivityDatabaseManualKind.End -> {
           val event = events[activity.toKey(id)]
           if (event == null) {
-            logger.warn("Tried to end activity ${activity.toKey(id)} that wasn't started")
+            logger.info("Tried to end activity ${activity.toKey(id)} that wasn't started")
             null
           }
           else {
@@ -84,11 +99,13 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
   }
 
   suspend fun cancel(activity: DatabaseBackedTimeSpanUserActivity, id: String) {
-    /**
-     * TODO: this method should check if data is already written to DB and delete record from there
-     */
     eventsLock.withLock {
       val activityId = activity.toKey(id)
+
+      if (database.removeEvent(activity) == 0) {
+        logger.info("Attempt to remove non-existent activity $activityId")
+      }
+
       if (events.remove(activityId) == null) {
         logger.info("Tried to cancel activity ${activity.toKey(id)} that wasn't started")
       }

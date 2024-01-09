@@ -1,7 +1,14 @@
 <idea-plugin require-restart="true" allow-bundled-update="true">
   <id>com.jetbrains.ae.database</id>
-  <name>My Productivity</name>
-  <description>This plugin stores information about how IDE is used. No data is sent from the machine</description>
+  <name>Local Productivity Statistics</name>
+  <description><![CDATA[
+  <p>The <i>Local Productivity Statistics</i> plugin gathers local statistics on your machine on how IDE is used.</p>
+  <p>For the purpose of Local Productivity Statistics plugin, no data are transferred from your computer,
+  and the database is not shared or synchronized with any remote storage or third-party service.
+  JetBrains does not have access to your personal data created in the IDEs.
+  For more information on data protection, please click here:
+  <a href="https://www.jetbrains.com/legal/docs/privacy/privacy/">https://www.jetbrains.com/legal/docs/privacy/privacy/</a></p>
+  ]]></description>
   <vendor>JetBrains</vendor>
 
   <incompatible-with>com.intellij.cwm.guest</incompatible-with>

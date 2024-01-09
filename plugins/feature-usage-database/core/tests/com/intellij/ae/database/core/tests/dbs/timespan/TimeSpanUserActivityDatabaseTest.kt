@@ -2,21 +2,23 @@
 package com.intellij.ae.database.core.tests.dbs.timespan
 
 import com.intellij.ae.database.core.activities.DatabaseBackedTimeSpanUserActivity
+import com.intellij.ae.database.core.activities.WritableDatabaseBackedTimeSpanUserActivity
 import com.intellij.ae.database.core.dbs.SqliteLazyInitializedDatabase
 import com.intellij.ae.database.core.dbs.timespan.TimeSpanUserActivityDatabase
+import com.intellij.ae.database.core.dbs.timespan.TimeSpanUserActivityDatabaseManualKind
 import com.intellij.ae.database.core.tests.dbs.runDatabaseLayerTest
 import com.intellij.ae.database.core.utils.InstantUtils
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sqlite.ObjectBinderFactory
 import org.junit.jupiter.api.Assertions
+import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-// TODO fix broken test
 class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
   private val databaseFactory = { cs: CoroutineScope ->
-    TimeSpanUserActivityDatabase(cs)
+    TimeSpanUserActivityDatabase(cs).also { it -> it.cancelBackgroundUpdate() }
   }
 
   private data class TestEvent(
@@ -56,15 +58,58 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
     } ?: error("Unexpected null in getActivityEvents")
   }
 
-  fun testEndEventInternal() = runDatabaseLayerTest(databaseFactory) { db, initDb, cs ->
-    val testActivity = object : DatabaseBackedTimeSpanUserActivity() {
-      override val id: String get() = "testActivity1"
+  fun testEndAllEvents() = runDatabaseLayerTest(databaseFactory) { db, initDb, cs ->
+    val testActivity1 = object : DatabaseBackedTimeSpanUserActivity() {
+      override val id: String get() = "testEndAllActivity1"
     }
 
+    val testActivity2 = object : WritableDatabaseBackedTimeSpanUserActivity() {
+      override val canBeStale: Boolean = true
+      override val id: String get() = "testEndAllActivity2"
+    }
+
+    db.submitManual(
+      testActivity1,
+      id=testActivity1.id,
+      canBeStale=false,
+      kind=TimeSpanUserActivityDatabaseManualKind.Start,
+      moment= Instant.now()
+    )
+    db.submitPeriodicEvent(testActivity2, id=testActivity2.id)
+    Assertions.assertTrue(initDb.getActivityEvents(testActivity1.id).all { !it.isFinished })
+    Assertions.assertTrue(initDb.getActivityEvents(testActivity2.id).all { !it.isFinished })
+    db.endAllEvents()
+    Assertions.assertTrue(initDb.getActivityEvents(testActivity1.id).all { it.isFinished })
+    Assertions.assertTrue(initDb.getActivityEvents(testActivity2.id).all { it.isFinished })
+  }
+
+  fun testRemoveEvent() = runDatabaseLayerTest(databaseFactory) { db, initDb, cs ->
+    val testActivity1 = object : DatabaseBackedTimeSpanUserActivity() {
+      override val id: String get() = "testRemoveActivity1"
+    }
+
+    db.endEventInternal(
+      null,
+      testActivity1,
+      InstantUtils.Now,
+      InstantUtils.NowButABitLater,
+      false,
+    )
+
+    Assertions.assertEquals(1, initDb.getActivityEvents(testActivity1.id).size)
+    db.removeEvent(testActivity1)
+    Assertions.assertEquals(0, initDb.getActivityEvents(testActivity1.id).size)
+  }
+
+  fun testEndEventInternal() = runDatabaseLayerTest(databaseFactory) { db, initDb, cs ->
+    val testActivity = object : DatabaseBackedTimeSpanUserActivity() {
+      override val id: String get() = "testEndActivity1"
+    }
+
+    // Assert event stored correctly on first call
     val initialStart = InstantUtils.Now
     val initialEnd = InstantUtils.NowButABitLater
     val insertedId = db.endEventInternal(null, testActivity, initialStart, initialEnd, isFinished = false)
-
 
     // Assert event stored correctly on first call
     val storedEvents1 = initDb.getActivityEvents(testActivity.id)
@@ -79,7 +124,7 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
     val updatedEnd = initialEnd + 10.seconds.toJavaDuration()
     val updatedId = db.endEventInternal(insertedId, testActivity, initialEnd, updatedEnd, isFinished = true)
 
-    // Assert id didn't changeb
+    // Assert id didn't change
     Assertions.assertEquals(insertedId, updatedId)
 
     // Assert event updated correctly on consequent calls
