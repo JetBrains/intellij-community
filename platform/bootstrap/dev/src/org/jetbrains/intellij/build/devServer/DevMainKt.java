@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.devServer;
 
 import com.intellij.idea.Main;
@@ -15,7 +15,10 @@ public final class DevMainKt {
   public static void main(String[] rawArgs) throws Throwable {
     long start = System.currentTimeMillis();
     // separate method to not retain local variables like implClass
-    build();
+    if (!build()) {
+      // Unable to build the classpath: terminate.
+      return;
+    }
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
@@ -25,8 +28,17 @@ public final class DevMainKt {
     Main.main(rawArgs);
   }
 
-  private static void build() throws Throwable {
-    PathClassLoader classLoader = (PathClassLoader)DevMainKt.class.getClassLoader();
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static boolean build() throws Throwable {
+    if (!(DevMainKt.class.getClassLoader() instanceof PathClassLoader classLoader)) {
+      System.err.println("********************************************************************************************");
+      System.err.println("* The current class loader is not a com.intellij.util.lang.PathClassLoader.                *");
+      System.err.println("* This may mean that the \"Plugin DevKit\" IntelliJ IDEA plugin is outdated or absent.       *");
+      System.err.println("* Please make sure you have the latest version of the Plugin DevKit installed and enabled. *");
+      System.err.println("********************************************************************************************");
+      return false;
+    }
+
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
     Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
@@ -40,6 +52,6 @@ public final class DevMainKt {
       .invokeExact();
 
     classLoader.reset(newClassPath);
+    return true;
   }
 }
-
