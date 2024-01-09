@@ -19,14 +19,20 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.*
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.io.copy
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
 import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import java.io.FileInputStream
 import java.io.InputStream
+import java.nio.file.CopyOption
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -116,6 +122,16 @@ class JbSettingsImporter(private val configDirPath: Path,
 
       loadNotLoadedComponents(notLoadedComponents)
 
+      // load code style scheme manager
+      CodeStyleSchemes.getInstance()
+
+      val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
+      schemeManagerFactory.process {
+        if ((configDirPath / it.fileSpec).isDirectory()) {
+          allFiles.addAll(filesFromFolder(configDirPath / it.fileSpec, it.fileSpec))
+        }
+      }
+
       LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
       val componentAndFilesMap = filterComponents(allFiles, categories)
       val componentFiles = componentAndFilesMap.values.toSet()
@@ -127,6 +143,10 @@ class JbSettingsImporter(private val configDirPath: Path,
       Registry.setValueChangeListener(object : RegistryValueListener {
         // do nothing
       })
+      // copy scheme files first:
+      schemeFiles.forEach {
+        (configDirPath / it).copy(PathManager.getConfigDir() / it)
+      }
       withExternalStreamProvider(storageManager) {
         componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
       }
