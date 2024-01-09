@@ -651,11 +651,16 @@ public class JavaCoverageEngine extends CoverageEngine {
       else if (statement instanceof PsiAssertStatement assertStatement) {
         condition = assertStatement.getAssertCondition();
       } else {
-        PsiPolyadicExpression expression = PsiTreeUtil.findChildOfType(statement, PsiPolyadicExpression.class);
-        if (expression != null) {
-          IElementType tokenType = expression.getOperationTokenType();
-          if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
-            condition = expression;
+        PsiConditionalExpression conditionalExpression = PsiTreeUtil.findChildOfType(statement, PsiConditionalExpression.class);
+        if (conditionalExpression != null) {
+          condition = conditionalExpression.getCondition();
+        } else {
+          PsiPolyadicExpression expression = PsiTreeUtil.findChildOfType(statement, PsiPolyadicExpression.class);
+          if (expression != null) {
+            IElementType tokenType = expression.getOperationTokenType();
+            if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
+              condition = expression;
+            }
           }
         }
       }

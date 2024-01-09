@@ -54,8 +54,15 @@ public class ConditionsTest extends TestCase {
     conditions.andWithoutIf(true, false);
     conditions.orWithoutIf(false, true);
 
-    conditions.forCycle(1);
+    conditions.forCycle(3);
     conditions.forEachCycle();
-    conditions.whileCycle(1);
+    conditions.whileCycle(3);
+
+    conditions.ternaryOperator1(true);
+    conditions.ternaryOperator2(false);
+    conditions.ternaryOperatorFull(true);
+    conditions.ternaryOperatorFull(false);
+
+    conditions.ternaryOr(false, true);
   }
 }

@@ -236,13 +236,13 @@ Hits: 1
         false hits: 1
 
 Line 178 coverage: FULL
-Hits: 2
+Hits: 4
     i < n
-        true hits: 1
+        true hits: 3
         false hits: 1
 
 Line 179 coverage: FULL
-Hits: 1
+Hits: 3
 
 Line 184 coverage: FULL
 Hits: 1
@@ -260,14 +260,41 @@ Line 192 coverage: FULL
 Hits: 1
 
 Line 193 coverage: FULL
-Hits: 2
+Hits: 4
     i < n
-        true hits: 1
+        true hits: 3
         false hits: 1
 
 Line 194 coverage: FULL
-Hits: 1
+Hits: 3
 
 Line 195 coverage: FULL
+Hits: 3
+
+Line 200 coverage: PARTIAL
 Hits: 1
+    a
+        true hits: 1
+        false hits: 0
+
+Line 204 coverage: PARTIAL
+Hits: 1
+    a
+        true hits: 0
+        false hits: 1
+
+Line 208 coverage: FULL
+Hits: 2
+    a
+        true hits: 1
+        false hits: 1
+
+Line 212 coverage: PARTIAL
+Hits: 1
+    a
+        true hits: 0
+        false hits: 1
+    a || b
+        true hits: 1
+        false hits: 0
 

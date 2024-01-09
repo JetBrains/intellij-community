@@ -195,4 +195,20 @@ public class Conditions {
       i++;
     }
   }
+
+  String ternaryOperator1(boolean a) {
+    return a ? "1" : "2";
+  }
+
+  String ternaryOperator2(boolean a) {
+    return a ? "1" : "2";
+  }
+
+  String ternaryOperatorFull(boolean a) {
+    return a ? "1" : "2";
+  }
+
+  String ternaryOr(boolean a, boolean b) {
+    return a || b ? "1" : "2";
+  }
 }
