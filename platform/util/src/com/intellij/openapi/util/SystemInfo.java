@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -106,16 +106,11 @@ public final class SystemInfo {
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
 
   /**
-   * Build number is the only more or less stable approach to get comparable win version.
-   * See <a href="https://www.gaijin.at/en/infos/windows-version-numbers">list of builds</a>.
-   * There is also <a href="https://en.wikipedia.org/wiki/Windows_10_version_history">Wikipedia article</a>.
-   * And <a href="https://en.wikipedia.org/wiki/Windows_11_version_history">another one for Windows 11</a>.
-   * <p>
-   * ReleaseID (1903, 2004 e.t.c.) is marketing term which is not a number since 20H2 while build numbers
-   * grow since NT 3.1 (see the first link) and this trend is unlikely to change.
+   * Build number is the only more or less stable approach to get comparable Windows versions.
+   * See <a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">list of builds</a>.
    */
   public static @Nullable Long getWinBuildNumber() {
-    return isWin10OrNewer ? WinBuildVersionKt.getWinBuildNumber() : null;
+    return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
   }
 
   public static @NotNull String getMacOSMajorVersion() {
