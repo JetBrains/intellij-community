@@ -19,6 +19,9 @@ interface InlineCompletionProviderSpecificUsageData {
    * If you write information on every typing and cancellation, it slows down the editor and typing.
    */
   fun getAdditionalInvocationUsageData(descriptor: InvocationDescriptor): List<EventPair<*>> = emptyList()
+  fun skipLogging() = false
+
+  fun getId(): String
 
   companion object {
     val EP_NAME: ExtensionPointName<InlineCompletionProviderSpecificUsageData> = create("com.intellij.inline.completion.usage.data")

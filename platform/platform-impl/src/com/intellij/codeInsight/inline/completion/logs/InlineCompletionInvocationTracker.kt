@@ -92,7 +92,7 @@ internal class InlineCompletionInvocationTracker(
     buildList {
       val descriptor = InlineCompletionProviderSpecificUsageData.InvocationDescriptor(request.editor, request.file)
       InlineCompletionProviderSpecificUsageData.EP_NAME.forEachExtensionSafe {
-        if (getPluginInfo(it.javaClass).isSafeToReport()) {
+        if (getPluginInfo(it.javaClass).isSafeToReport() && !it.skipLogging()) {
           addAll(it.getAdditionalInvocationUsageData(descriptor))
         }
       }
