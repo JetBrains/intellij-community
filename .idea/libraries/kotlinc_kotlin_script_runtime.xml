@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.0.0-dev-12050">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.0-dev-12050/kotlin-script-runtime-2.0.0-dev-12050.jar">
-          <sha256sum>a635f5374226a72ddc4becd4bb1483c6185f448960fd9f8140e8e7e82a0b62f8</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-script-runtime">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.0-dev-12050/kotlin-script-runtime-2.0.0-dev-12050.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-script-runtime/2.0.255-dev-255/kotlin-script-runtime-2.0.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.0-dev-12050/kotlin-script-runtime-2.0.0-dev-12050-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-script-runtime/2.0.255-dev-255/kotlin-script-runtime-2.0.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
