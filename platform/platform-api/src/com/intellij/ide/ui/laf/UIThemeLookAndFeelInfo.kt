@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.UIDefaults
@@ -51,4 +52,6 @@ class UIThemeExportableBean(
 
 @Internal
 fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolean =
-  theme?.editorSchemeId == Scheme.getBaseName(name)
+  (theme?.editorSchemeId ?: defaultNonLaFSchemeName()) == Scheme.getBaseName(name)
+
+private fun defaultNonLaFSchemeName() = if (StartupUiUtil.isDarkTheme) "Darcula" else "Default"
