@@ -95,9 +95,10 @@ enum class RunConfigurationEventKind(val eventName: String) {
 
 internal class RunConfigurationListener : ExecutionListener {
   override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+    if (!isAllowed(env)) return
     val id = System.identityHashCode(handler) // not the best ID out there, but it works
 
-    when {
+    when { // should be similar to [isAllowed]
       env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) } -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id)
@@ -117,10 +118,21 @@ internal class RunConfigurationListener : ExecutionListener {
   }
 
   override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+    if (!isAllowed(env)) return
+
     val id = System.identityHashCode(handler)
     FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
       it.writeEnd(id)
     }
+  }
+
+  private fun isAllowed(env: ExecutionEnvironment): Boolean {
+    // todo: extension point
+    if (env.runProfile.javaClass.simpleName == "DatabaseScriptRunConfiguration") {
+      return false
+    }
+    return env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) }
+           || env.executor is DefaultDebugExecutor || env.executor.id.contains("debug", true)
   }
 }
 
