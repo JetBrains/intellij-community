@@ -88,7 +88,16 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public @Nullable AllModels execute(@NotNull BuildController controller) {
     ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     try {
-      return doExecute(controller, converterExecutor);
+      configureAdditionalTypes(controller);
+      boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+      if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
+        onExecuteStart(controller);
+      }
+      AllModels allModels = doExecute(controller, converterExecutor, isProjectsLoadedAction);
+      if (!isProjectsLoadedAction && myAllModels != null) {
+        onExecuteEnd();
+      }
+      return allModels;
     }
     finally {
       converterExecutor.shutdown();
@@ -101,26 +110,36 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
+  /**
+   * On first execution of the {@link #doExecute(BuildController, ExecutorService, boolean)}.
+   * This method will be called only once, before the first invocation of the method.
+   */
+  private void onExecuteStart(@NotNull BuildController controller) {
+    long startTime = System.currentTimeMillis();
+    myGradleBuild = controller.getBuildModel();
+    AllModels allModels = new AllModels(myGradleBuild);
+    allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
+    long startTimeBuildEnv = System.currentTimeMillis();
+    BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
+    allModels.setBuildEnvironment(convert(buildEnvironment));
+    allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
+    myAllModels = allModels;
+    myModelConverter = getToolingModelConverter(controller);
+  }
+
+  /**
+   * After last execution of the {@link #doExecute(BuildController, ExecutorService, boolean)}.
+   * This method will be called only once, after the last invocation of the method.
+   */
+  private void onExecuteEnd() {
+
+  }
+
   private @Nullable AllModels doExecute(
     @NotNull BuildController controller,
-    @NotNull ExecutorService converterExecutor
+    @NotNull ExecutorService converterExecutor,
+    boolean isProjectsLoadedAction
   ) {
-    configureAdditionalTypes(controller);
-
-    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
-    if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-      long startTime = System.currentTimeMillis();
-      myGradleBuild = controller.getBuildModel();
-      AllModels allModels = new AllModels(myGradleBuild);
-      allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
-      long startTimeBuildEnv = System.currentTimeMillis();
-      BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
-      allModels.setBuildEnvironment(convert(buildEnvironment));
-      allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
-      myAllModels = allModels;
-      myModelConverter = getToolingModelConverter(controller);
-    }
-
     assert myAllModels != null;
     assert myGradleBuild != null;
     assert myModelConverter != null;
