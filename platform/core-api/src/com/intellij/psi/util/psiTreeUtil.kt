@@ -128,17 +128,14 @@ fun PsiElement?.isAncestor(element: PsiElement, strict: Boolean = false): Boolea
   return PsiTreeUtil.isAncestor(this, element, strict)
 }
 
-val PsiElement.firstLeaf: PsiElement
-  get() = PsiTreeUtil.firstChild(this)
+fun PsiElement.firstLeaf(): PsiElement = PsiTreeUtil.firstChild(this)
 
-val PsiElement.lastLeaf: PsiElement
-  get() = PsiTreeUtil.lastChild(this)
+fun PsiElement.lastLeaf(): PsiElement = PsiTreeUtil.lastChild(this)
 
-val PsiElement.childLeafs: Sequence<PsiElement>
-  get() {
-    val lastLeaf = lastLeaf
-    return generateSequence(firstLeaf) { it.nextLeaf() }.takeWhileInclusive { it !== lastLeaf }
-  }
+fun PsiElement.childLeafs(): Sequence<PsiElement> {
+  val lastLeaf = lastLeaf()
+  return generateSequence(firstLeaf()) { it.nextLeaf() }.takeWhileInclusive { it !== lastLeaf }
+}
 
 fun PsiElement.prevLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.prevLeaf(this, skipEmptyElements)
 
