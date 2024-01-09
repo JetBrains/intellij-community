@@ -41,7 +41,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.name
 
 @Obsolete
 fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
@@ -414,31 +413,40 @@ private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
     ))
     return
   }
-  val outputDirectoriesToKeep = HashSet<String>(4)
-  outputDirectoriesToKeep.add("log")
-  if (keepCompilationState) {
-    outputDirectoriesToKeep.add(compilationData.dataStorageRoot.name)
-    outputDirectoriesToKeep.add("classes")
-    outputDirectoriesToKeep.add(paths.jpsArtifacts.name)
+  val compilationState = setOf(
+    compilationData.dataStorageRoot,
+    classesOutputDirectory,
+    paths.jpsArtifacts,
+  )
+  val outputDirectoriesToKeep = buildSet {
+    add(paths.logDir)
+    if (keepCompilationState) {
+      addAll(compilationState)
+    }
   }
-  spanBuilder("clean output")
-    .setAttribute("path", outDir.toString())
-    .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
-    .use { span ->
-      Files.newDirectoryStream(outDir).use { dirStream ->
-        for (file in dirStream) {
-          val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
-          if (outputDirectoriesToKeep.contains(file.name)) {
-            span.addEvent("skip cleaning", attributes)
-          }
-          else {
-            span.addEvent("delete", attributes)
-            NioFiles.deleteRecursively(file)
+  spanBuilder("clean output").use { span ->
+    outputDirectoriesToKeep.forEach {
+      span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), "${outDir.relativize(it)}"))
+    }
+    Files.newDirectoryStream(outDir).use { dirStream ->
+      var pathsToBeCleanedStream = dirStream - outputDirectoriesToKeep
+      if (!keepCompilationState) {
+        pathsToBeCleanedStream = pathsToBeCleanedStream + compilationState
+      }
+      for (path in pathsToBeCleanedStream) {
+        val pathToBeCleaned = outDir.relativize(path)
+        span.addEvent("delete", Attributes.of(AttributeKey.stringKey("dir"), "$pathToBeCleaned"))
+        outputDirectoriesToKeep.forEach {
+          check(!it.startsWith(path)) {
+            val outputDirectoryToKeep = outDir.relativize(it)
+            "'$outputDirectoryToKeep' is going to be cleaned together with '$pathToBeCleaned'. " +
+            "Please configure a different location for '$outputDirectoryToKeep'"
           }
         }
+        NioFiles.deleteRecursively(path)
       }
-      null
     }
+  }
 }
 
 private fun printEnvironmentDebugInfo() {
