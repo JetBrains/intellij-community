@@ -2,14 +2,12 @@ package com.intellij.tools.launch.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.tools.launch.ModulesProvider
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
@@ -17,7 +15,7 @@ import java.util.*
 import java.util.logging.Logger
 import kotlin.io.path.pathString
 
-class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
+class ClassPathBuilder(private val paths: PathsProvider, private val modulesToScopes: Map<String, JpsJavaClasspathKind>) {
   private val logger = Logger.getLogger(ClassPathBuilder::class.java.name)
 
   companion object {
@@ -28,7 +26,8 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
       }
 
       val classPathArgFile = launcherFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
-      CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile, listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
+      CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile,
+                                                listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
     }
   }
@@ -54,23 +53,19 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     JpsJavaExtensionService.getInstance().getProjectExtension(model.project)!!.outputUrl =
       "file://${FileUtil.toSystemIndependentName(paths.outputRootFolder.path)}"
 
-    val modulesList = arrayListOf<String>()
-    modulesList.add("intellij.platform.boot")
-    modulesList.add(modules.mainModule)
-    modulesList.addAll(modules.additionalModules)
-    modulesList.add("intellij.configurationScript")
+    val startupModules = listOf("intellij.platform.boot", "intellij.configurationScript")
+      .associateWith { JpsJavaClasspathKind.PRODUCTION_RUNTIME }
 
-    return createClassPathArgFileForModules(modulesList, logClasspath)
+    return createClassPathArgFileForModules(modulesToScopes + startupModules, logClasspath)
   }
 
-  private fun createClassPathArgFileForModules(modulesList: List<String>, logClasspath: Boolean): File {
+  private fun createClassPathArgFileForModules(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean): File {
     val classpath = mutableListOf<String>()
-    for (moduleName in modulesList) {
+    for ((moduleName, jpsJavaClasspathKind) in modulesToScopes) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
                    ?: throw Exception("Module $moduleName not found")
-      if (isModuleExcluded(module)) continue
 
-      classpath.addAll(getClasspathForModule(module))
+      classpath.addAll(getClasspathForModule(module, jpsJavaClasspathKind))
     }
 
     // Uncomment for big debug output
@@ -81,24 +76,19 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
         logger.info("  $path")
       }
       logger.info("-- END")
-    } else {
+    }
+    else {
       logger.warning("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
     return createClassPathArgFile(paths, classpath)
   }
 
-  private fun getClasspathForModule(module: JpsModule): List<String> {
+  private fun getClasspathForModule(module: JpsModule, jpsJavaClasspathKind: JpsJavaClasspathKind): List<String> {
     return JpsJavaExtensionService
       .dependencies(module)
       .recursively()
-      .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
-      .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
+      .includedIn(jpsJavaClasspathKind)
       .classes().roots.filter { it.exists() }.map { it.toPath().toRealPath().pathString }.toList()
-  }
-
-  private fun isModuleExcluded(module: JpsModule?): Boolean {
-    if (module == null) return true
-    return modules.excludedModules.contains(module.name)
   }
 }

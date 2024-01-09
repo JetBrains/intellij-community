@@ -4,6 +4,7 @@ import com.intellij.tools.launch.impl.ClassPathBuilder
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -16,10 +17,10 @@ object Launcher {
   private const val STRACE_PROPERTY_KEY = "com.intellij.tools.launch.Launcher.run.under.strace"
 
   fun launch(paths: PathsProvider,
-             modules: ModulesProvider,
+             modulesToScopes: Map<String, JpsJavaClasspathKind>,
              options: LauncherOptions,
              logClasspath: Boolean): Pair<Process, String?> {
-    val classPathBuilder = ClassPathBuilder(paths, modules)
+    val classPathBuilder = ClassPathBuilder(paths, modulesToScopes)
     logger.info("Building classpath")
     val classPathArgFile = classPathBuilder.build(logClasspath)
     logger.info("Done building classpath")
