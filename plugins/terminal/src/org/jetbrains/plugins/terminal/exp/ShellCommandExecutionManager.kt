@@ -4,6 +4,8 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
+import com.jediterm.core.input.InputEvent.CTRL_MASK
+import com.jediterm.core.input.KeyEvent.VK_HOME
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalUtil
@@ -155,7 +157,11 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
       val clearPrompt: String = when (session.shellIntegration.shellType) {
-        ShellType.POWERSHELL -> ""
+        ShellType.POWERSHELL -> {
+          // Simulate pressing Ctrl+Home to delete all the characters from
+          // the cursor's position to the beginning of a line.
+          starter.terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
+        }
         // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
         else -> "\u0015"
       }
