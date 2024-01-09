@@ -46,14 +46,14 @@ class IjentNioFileSystem(
       "user",  // TODO Works only on BSD/macOS.
     )
 
-  override fun getPath(first: String, vararg more: String): IjentNioPath =
-    more
-      .fold(
-        IjentPath.parse(first, isWindows).getOrThrow()
-      ) { absPath, childName ->
-        absPath.getChild(childName).getOrThrow()
-      }
+  override fun getPath(first: String, vararg more: String): IjentNioPath {
+    val os = if (isWindows) IjentPath.Absolute.OS.WINDOWS else IjentPath.Absolute.OS.UNIX
+    return IjentPath.parse(first, os)
+      .getOrThrow()
+      .resolve(IjentPath.Relative.build(*more).getOrThrow())
+      .getOrThrow()
       .toNioPath()
+  }
 
   override fun getPathMatcher(syntaxAndPattern: String): PathMatcher {
     TODO("Not yet implemented")

@@ -22,8 +22,8 @@ sealed interface IjentPathResult<P : IjentPath> {
 sealed interface IjentPath {
   companion object {
     @JvmStatic
-    fun parse(raw: String, isWindows: Boolean): IjentPathResult<out IjentPath> =
-      when (val absoluteResult = Absolute.parse(raw, isWindows)) {
+    fun parse(raw: String, os: Absolute.OS?): IjentPathResult<out IjentPath> =
+      when (val absoluteResult = Absolute.parse(raw, os)) {
         is Ok -> absoluteResult
         is IjentPathResult.Err -> Relative.parse(raw)
       }
@@ -40,6 +40,12 @@ sealed interface IjentPath {
    * IjentRelativePath.parse("a/b/c", false).nameCount == 3
    * ```
    *
+   * ```kotlin
+   * IjentAbsolutePath.parse("C:\\", isWindows = true).nameCount == 0
+   * IjentAbsolutePath.parse("C:\\Users", isWindows = true).nameCount == 1
+   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).nameCount == 2
+   * ```
+   *
    * See [java.nio.file.Path.getNameCount]
    */
   val nameCount: Int
@@ -47,13 +53,17 @@ sealed interface IjentPath {
   /**
    * Returns a part of the path.
    *
+   * This method tries to behave like [java.nio.file.Path.getName].
+   *
    * ```kotlin
    * IjentRelativePath.parse("", false).getName(0) == ""
    * IjentRelativePath.parse("a", false).getName(0) == "a"
    * IjentRelativePath.parse("a/b/c", false).getName(1) == "b"
    * ```
    *
-   * See [java.nio.file.Path.getName]
+   * ```kotlin
+   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).getName(0) == "Users"
+   * ```
    */
   fun getName(index: Int): Relative
 
@@ -108,14 +118,21 @@ sealed interface IjentPath {
     companion object {
       @JvmStatic
       fun parse(raw: String): IjentPathResult<out Relative> =
-        TODO()
+        ArrayListIjentRelativePath.parse(raw)
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
       fun build(vararg parts: String): IjentPathResult<out Relative> =
-        TODO()
+        build(listOf(*parts))
+
+      /**
+       * The parts of the path must not contain / or \.
+       */
+      @JvmStatic
+      fun build(parts: List<String>): IjentPathResult<out Relative> =
+        ArrayListIjentRelativePath.build(parts)
     }
 
     override val parent: Relative?
@@ -153,15 +170,23 @@ sealed interface IjentPath {
   interface Absolute : IjentPath, Comparable<Absolute> {
     companion object {
       @JvmStatic
-      fun parse(raw: String, isWindows: Boolean): IjentPathResult<out Absolute> =
-        TODO()
+      fun parse(raw: String, os: OS?): IjentPathResult<out Absolute> =
+        ArrayListIjentAbsolutePath.parse(raw, os)
 
       @JvmStatic
-      fun build(vararg parts: String, isWindows: Boolean): IjentPathResult<out Absolute> =
-        TODO()
+      fun build(vararg parts: String): IjentPathResult<out Absolute> =
+        build(listOf(*parts), null)
+
+      @JvmStatic
+      fun build(parts: List<String>, os: OS?): IjentPathResult<out Absolute> =
+        ArrayListIjentAbsolutePath.build(parts, os)
     }
 
-    val isWindows: Boolean
+    enum class OS {
+      WINDOWS, UNIX
+    }
+
+    val os: OS
 
     /** See [java.nio.file.Path.getRoot] */
     val root: Absolute
@@ -177,10 +202,15 @@ sealed interface IjentPath {
     /** See [java.nio.file.Path.resolve] */
     override fun resolve(other: Relative): IjentPathResult<out Absolute>
 
-    /** See [java.nio.file.Path.relativize] */
-    fun relativize(other: Absolute): Relative {
-      TODO()
-    }
+    /**
+     * See [java.nio.file.Path.relativize].
+     *
+     * ```kotlin
+     * IjentPathAbsolute.parse("C:\\foo\\bar\\baz", isWindows = true).relativize(IjentPathAbsolute.parse("C:\\foo\\oops", isWindows = true))
+     *   == IjentPathAbsolute.parse("..\..\oops", isWindows = true)
+     * ```
+     */
+    fun relativize(other: Absolute): IjentPathResult<out Relative>
 
     override fun getChild(name: String): IjentPathResult<out Absolute>
 
@@ -193,45 +223,3 @@ sealed interface IjentPath {
     fun toDebugString(): String
   }
 }
-
-
-//fun main() {
-//  if ("windows" in System.getProperty("os.name").lowercase()) {
-//    // C:\
-//    println(java.nio.file.Path.of("C:\\Users").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("C:\\").parent)
-//
-//    // \\wsl.localhost\Ubuntu\
-//    println(java.nio.file.Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("\\\\wsl.localhost\\Ubuntu").parent)
-//
-//    // java.nio.file.InvalidPathException: UNC path is missing sharename: \\wsl.localhost
-//    println(java.nio.file.Path.of("\\\\wsl.localhost").parent)
-//  }
-//  else {
-//    // /
-//    println(java.nio.file.Path.of("/tmp").root)
-//
-//    // /
-//    println(java.nio.file.Path.of("/").root)
-//
-//    // null
-//    println(java.nio.file.Path.of("/").parent)
-//  }
-//
-//  // null
-//  println(java.nio.file.Path.of("").parent)
-//
-//  // null
-//  println(java.nio.file.Path.of("").root)
-//
-//  // ..
-//  println(java.nio.file.Path.of("abc").relativize(java.nio.file.Path.of("")))
-//
-//  // def
-//  println(java.nio.file.Path.of("").relativize(java.nio.file.Path.of("def")))
-//}

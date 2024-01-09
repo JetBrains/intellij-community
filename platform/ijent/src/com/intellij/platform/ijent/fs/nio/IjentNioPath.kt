@@ -95,7 +95,7 @@ class IjentNioPath internal constructor(
   override fun relativize(other: Path): Path =
     when (val otherIjentPath = other.toIjentPath(isWindows)) {
       is IjentPath.Absolute -> when (ijentPath) {
-        is IjentPath.Absolute -> ijentPath.relativize(otherIjentPath).toNioPath()
+        is IjentPath.Absolute -> ijentPath.relativize(otherIjentPath).getOrThrow().toNioPath()
         is IjentPath.Relative -> throw InvalidPathException("$this.relativize($other)",
                                                             "Can't relativize these paths")
       }

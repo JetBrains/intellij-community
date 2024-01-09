@@ -28,7 +28,7 @@ class MockIjentFileSystemApi(
 
   override suspend fun getRootDirectories(): Collection<IjentPath.Absolute> =
     fileTree.roots.map { dir ->
-      IjentPath.Absolute.parse(dir.name, isWindows).getOrThrow()
+      IjentPath.Absolute.build(dir.name).getOrThrow()
     }
 
   private var userHome: IjentPath.Absolute? = null
