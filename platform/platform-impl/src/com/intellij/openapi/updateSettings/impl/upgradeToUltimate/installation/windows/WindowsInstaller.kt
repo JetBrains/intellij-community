@@ -72,7 +72,7 @@ internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val appPath = installationResult.appPath
     val exePath = appPath.resolve("bin").resolve("idea64.exe").pathString
-    val command = GeneralCommandLine().withExePath(exePath)
+    val command = GeneralCommandLine("cmd", "/c", "start").withParameters("", exePath)
 
     return runCommand(command)
   }
