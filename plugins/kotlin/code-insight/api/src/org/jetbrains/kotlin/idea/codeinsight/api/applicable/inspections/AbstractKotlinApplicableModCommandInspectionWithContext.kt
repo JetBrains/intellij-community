@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
 import org.jetbrains.kotlin.psi.KtElement
@@ -42,8 +41,7 @@ abstract class AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT :
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val context = prepareContextWithAnalyze(element) ?: return null
-
-        val elementPointer = element.createSmartPointer()
+        val name = getActionName(element, context)
         val inspectionWithContextClass = javaClass
         val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
 
@@ -57,7 +55,7 @@ abstract class AbstractKotlinApplicableModCommandInspectionWithContext<ELEMENT :
                 apply(element, context, element.project, updater)
             }
 
-            override fun getName(): String = elementPointer.element?.let { getActionName(it, context) } ?: familyName
+            override fun getName(): String = name
             override fun getSubstitutedClass(): Class<*> = inspectionWithContextClass
         }
 

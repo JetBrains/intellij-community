@@ -27,7 +27,7 @@ import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
-import org.jetbrains.kotlin.idea.intentions.computeUnderProgressIndicatorAndWait
+import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -249,7 +249,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val modCommandAction = localFixAction!!.asModCommandAction()
         if (modCommandAction != null) {
             val actionContext = ActionContext.from(editor, file)
-            val command: ModCommand = project.computeUnderProgressIndicatorAndWait {
+            val command: ModCommand = project.computeOnBackground {
                 runReadAction {
                     modCommandAction.perform(actionContext)
                 }

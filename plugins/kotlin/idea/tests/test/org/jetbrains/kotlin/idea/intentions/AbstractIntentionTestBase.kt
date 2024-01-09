@@ -10,12 +10,10 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
@@ -37,9 +35,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -191,7 +187,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val mainFilePath = mainFile.name
         val isApplicableExpected: Boolean = isApplicableDirective(fileText)
 
-        val isApplicableOnPooled: Boolean = project.computeUnderProgressIndicatorAndWait {
+        val isApplicableOnPooled: Boolean = project.computeOnBackground {
             runReadAction{ intentionAction.isAvailable(project, editor, file) }
         }
         Assert.assertTrue(
@@ -227,7 +223,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         project.executeCommand(intentionAction.text, null, action)
                     } else {
                         val actionContext = ActionContext.from(editor, file)
-                        val command: ModCommand = project.computeUnderProgressIndicatorAndWait {
+                        val command: ModCommand = project.computeOnBackground {
                             runReadAction {
                                 modCommandAction.perform(actionContext)
                             }
@@ -270,24 +266,12 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 }
 
 @ApiStatus.Internal
-fun <T> Project.computeUnderProgressIndicatorAndWait(compute: () -> T): T {
-    val result = CompletableFuture<T>()
-    val progressIndicator = ProgressIndicatorBase()
+fun <T> Project.computeOnBackground(compute: () -> T): T {
     try {
-        val task = object : Task.Backgroundable(this, "compute", false) {
-            override fun run(indicator: ProgressIndicator) {
-                try {
-                    result.complete(compute())
-                } catch (e: Throwable) {
-                    result.completeExceptionally(e)
-                }
-            }
-        }
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
-        return result.get(10, TimeUnit.MINUTES)
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+            compute()
+        }, "compute", true, this)
     } catch (e: ExecutionException) {
         throw e.cause!!
-    } finally {
-        progressIndicator.cancel()
     }
 }
