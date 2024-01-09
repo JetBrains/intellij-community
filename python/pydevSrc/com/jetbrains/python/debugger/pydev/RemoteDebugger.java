@@ -58,7 +58,6 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final String LOCAL_VERSION = "0.1";
   public static final String TEMP_VAR_PREFIX = "__py_debug_temp_var_";
-  public static final String TYPE_RENDERERS_TEMP_VAR_PREFIX = "__py_debug_user_type_renderers_temp_var_";
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
@@ -221,7 +220,7 @@ public class RemoteDebugger implements ProcessDebugger {
                             final PyDebugCallback<XValueChildrenList> callback) {
     GetReferrersCommand cmd = new GetReferrersCommand(this, threadId, frameId, var);
 
-    cmd.execute(new PyDebugCallback<List<PyDebugValue>>() {
+    cmd.execute(new PyDebugCallback<>() {
       @Override
       public void ok(List<PyDebugValue> value) {
         XValueChildrenList list = new XValueChildrenList();
@@ -314,11 +313,11 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private void clearTempVariables(final String threadId) {
     final Map<String, Set<String>> threadVars = myTempVars.get(threadId);
-    if (threadVars == null || threadVars.size() == 0) return;
+    if (threadVars == null || threadVars.isEmpty()) return;
 
     for (Map.Entry<String, Set<String>> entry : threadVars.entrySet()) {
       final Set<String> frameVars = entry.getValue();
-      if (frameVars == null || frameVars.size() == 0) continue;
+      if (frameVars == null || frameVars.isEmpty()) continue;
 
       final String expression = "del " + StringUtil.join(frameVars, ",");
       final String wrappedExpression = String.format("try:\n    %s\nexcept:\n    pass", expression);
