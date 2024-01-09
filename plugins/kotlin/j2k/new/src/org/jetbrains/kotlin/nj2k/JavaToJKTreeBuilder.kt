@@ -638,7 +638,7 @@ class JavaToJKTreeBuilder(
             return jkClass
         }
 
-        fun PsiClass.toJKClass(): JKClass =
+        private fun PsiClass.toJKClass(): JKClass =
             JKClass(
                 nameIdentifier.toJK(),
                 inheritanceInfo(),
@@ -652,7 +652,7 @@ class JavaToJKTreeBuilder(
                 hasTrailingCommaAfterEnumEntries()
             )
 
-        fun PsiClass.toJKRecordClass(): JKRecordClass =
+        private fun PsiClass.toJKRecordClass(): JKRecordClass =
             JKRecordClass(
                 nameIdentifier.toJK(),
                 recordComponents(),
