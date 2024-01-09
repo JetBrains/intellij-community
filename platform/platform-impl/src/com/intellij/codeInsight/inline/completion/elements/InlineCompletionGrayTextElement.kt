@@ -59,7 +59,7 @@ class InlineCompletionGrayTextElement(override val text: String) : InlineComplet
       editor.forceLeanLeft()
 
       val line = lines.first()
-      if (line.isBlank()) {
+      if (line.isEmpty()) {
         suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object : EditorCustomElementRenderer {
           override fun calcWidthInPixels(inlay: Inlay<*>) = 1
           override fun calcHeightInPixels(inlay: Inlay<*>) = 1
