@@ -420,7 +420,7 @@ public class BasicDeclarationParser {
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
-  private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
+   static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
     if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) ||
         tokenType != JavaTokenType.IDENTIFIER ||
         !"non".equals(builder.getTokenText()) ||

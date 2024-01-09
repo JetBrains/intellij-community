@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -180,12 +180,13 @@ public class BasicStatementParser {
     }
     else if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
       PsiBuilder.Marker refPos = builder.mark();
+      boolean nonSealed = BasicDeclarationParser.isNonSealedToken(builder, tokenType);
       myParser.getDeclarationParser().parseAnnotations(builder);
       skipQualifiedName(builder);
-      IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
+      IElementType current = builder.getTokenType(), next = builder.lookAhead(1);
       refPos.rollbackTo();
 
-      if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
+      if (current == JavaTokenType.LT || current == JavaTokenType.DOT && next == JavaTokenType.AT || nonSealed) {
         PsiBuilder.Marker declStatement = builder.mark();
 
         if (myParser.getDeclarationParser().parse(builder, BasicDeclarationParser.BaseContext.CODE_BLOCK) != null) {
@@ -194,7 +195,7 @@ public class BasicStatementParser {
         }
 
         BasicReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
-        if (suspectedLT == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+        if (current == JavaTokenType.LT && (type == null || !type.isParameterized)) {
           declStatement.rollbackTo();
         }
         else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {

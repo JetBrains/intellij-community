@@ -20,7 +20,7 @@ sealed interface Foos {
 
 sealed interface ID0 {}
 non-sealed interface ID1 extends ID0 {}
-<error descr="Modifier 'non-sealed' not allowed here">non-sealed</error> interface ID extends ID1 {}
+<error descr="Modifier 'non-sealed' not allowed on classes that do not have a sealed superclass">non-sealed</error> interface ID extends ID1 {}
 
 enum ImplicitlySealedEnum {
   A {}

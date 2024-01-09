@@ -1105,6 +1105,7 @@ public final class HighlightUtil {
       modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
     boolean isAllowed = true;
+    String message = null;
     IntentionAction fix = null;
     if (modifierOwner instanceof PsiClass aClass) {
       boolean privateOrProtected = PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier);
@@ -1158,10 +1159,16 @@ public final class HighlightUtil {
           isAllowed = false;
         }
       }
-      if (PsiModifier.NON_SEALED.equals(modifier) && !aClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if ((PsiModifier.NON_SEALED.equals(modifier) || PsiModifier.SEALED.equals(modifier)) &&
+          modifierOwnerParent instanceof PsiDeclarationStatement) {
+        isAllowed = false; // JLS 14.3
+        message = JavaErrorBundle.message("modifier.not.allowed.on.local.classes", modifier);
+      }
+      else if (PsiModifier.NON_SEALED.equals(modifier) && !aClass.hasModifierProperty(PsiModifier.SEALED)) {
         isAllowed = Arrays.stream(aClass.getSuperTypes())
           .map(PsiClassType::resolve)
           .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED));
+        message = JavaErrorBundle.message("modifier.not.allowed.on.classes.without.sealed.super");
       }
     }
     else if (modifierOwner instanceof PsiMethod method) {
@@ -1217,7 +1224,7 @@ public final class HighlightUtil {
 
     isAllowed &= incompatibles != null;
     if (!isAllowed) {
-      String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
+      if (message == null) message = JavaErrorBundle.message("modifier.not.allowed", modifier);
       HighlightInfo.Builder highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
       IntentionAction action = fix != null ? fix : getFixFactory().createModifierListFix(modifierList, modifier, false, false);
@@ -1473,8 +1480,7 @@ public final class HighlightUtil {
       }
     }
 
-    if (value instanceof Float) {
-      Float number = (Float)value;
+    if (value instanceof Float number) {
       if (number.isInfinite()) {
         String message = JavaErrorBundle.message("floating.point.number.too.large");
         if (description != null) {
@@ -1490,8 +1496,7 @@ public final class HighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
     }
-    else if (value instanceof Double) {
-      Double number = (Double)value;
+    else if (value instanceof Double number) {
       if (number.isInfinite()) {
         String message = JavaErrorBundle.message("floating.point.number.too.large");
         if (description != null) {
@@ -2456,8 +2461,7 @@ public final class HighlightUtil {
       if (classSeen) {
         if (PsiTreeUtil.isAncestor(statement, ref, true)) break;
         if (statement instanceof PsiSwitchLabelStatement) {
-          String description =
-            JavaErrorBundle.message("local.class.referenced.from.other.switch.branch", HighlightUtil.formatClass(aClass));
+          String description = JavaErrorBundle.message("local.class.referenced.from.other.switch.branch", formatClass(aClass));
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).descriptionAndTooltip(description);
         }
       }
