@@ -13,154 +13,142 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.indices;
+package org.jetbrains.idea.maven.indices
 
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.junit.Test;
+import org.junit.Test
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
+class MavenSearcherTest : MavenIndicesTestCase() {
+  override fun runInDispatchThread() = true
 
+  private val JUNIT_VERSIONS = arrayOf("junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1")
+  private val JMOCK_VERSIONS = arrayOf("jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0")
+  private val COMMONS_IO_VERSIONS = arrayOf("commons-io:commons-io:2.4")
 
-public class MavenSearcherTest extends MavenIndicesTestCase {
-  @Override
-  public boolean runInDispatchThread() {
-    return true;
+  private var myIndicesFixture: MavenIndicesTestFixture? = null
+
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
+    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project)
+    myIndicesFixture!!.setUp()
   }
 
-  private static final String[] JUNIT_VERSIONS = {"junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1"};
-  private static final String[] JMOCK_VERSIONS = {"jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0"};
-  private static final String[] COMMONS_IO_VERSIONS = {"commons-io:commons-io:2.4"};
-
-  MavenIndicesTestFixture myIndicesFixture;
-
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(getDir().toPath(), getProject());
-    myIndicesFixture.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
+  @Throws(Exception::class)
+  override fun tearDown() {
     try {
-      myIndicesFixture.tearDown();
+      myIndicesFixture!!.tearDown()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
   @Test
-  public void testClassSearch() {
-
+  fun testClassSearch() {
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
-                             "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1");
+                             "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1")
     assertClassSearchResults("TESTcase",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
-                             "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1");
+                             "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1")
 
     assertClassSearchResults("After",
                              "After(org.junit) junit:junit:4.0",
-                             "AfterClass(org.junit) junit:junit:4.0");
+                             "AfterClass(org.junit) junit:junit:4.0")
     assertClassSearchResults("After ",
-                             "After(org.junit) junit:junit:4.0");
+                             "After(org.junit) junit:junit:4.0")
     assertClassSearchResults("*After",
                              "After(org.junit) junit:junit:4.0",
                              "AfterClass(org.junit) junit:junit:4.0",
                              "BeforeAndAfterRunner(org.junit.internal.runners) junit:junit:4.0",
-                             "InvokedAfterMatcher(org.jmock.core.matcher) jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0");
+                             "InvokedAfterMatcher(org.jmock.core.matcher) jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0")
 
     // do not include package hits 
     assertClassSearchResults("JUnit",
                              "JUnit4TestAdapter(junit.framework) junit:junit:4.0",
                              "JUnit4TestAdapterCache(junit.framework) junit:junit:4.0",
                              "JUnit4TestCaseFacade(junit.framework) junit:junit:4.0",
-                             "JUnitCore(org.junit.runner) junit:junit:4.0");
+                             "JUnitCore(org.junit.runner) junit:junit:4.0")
 
     assertClassSearchResults("org.junit.After",
                              "After(org.junit) junit:junit:4.0",
-                             "AfterClass(org.junit) junit:junit:4.0");
+                             "AfterClass(org.junit) junit:junit:4.0")
 
     assertClassSearchResults("org.After",
                              "After(org.junit) junit:junit:4.0",
-                             "AfterClass(org.junit) junit:junit:4.0");
+                             "AfterClass(org.junit) junit:junit:4.0")
 
     assertClassSearchResults("junit.After",
                              "After(org.junit) junit:junit:4.0",
-                             "AfterClass(org.junit) junit:junit:4.0");
+                             "AfterClass(org.junit) junit:junit:4.0")
 
     assertClassSearchResults("or.jun.After",
                              "After(org.junit) junit:junit:4.0",
-                             "AfterClass(org.junit) junit:junit:4.0");
+                             "AfterClass(org.junit) junit:junit:4.0")
 
     // do not include other packages
     assertClassSearchResults("junit.framework.Test ",
-                             "Test(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
+                             "Test(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1")
 
-    assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
+    assertClassSearchResults("!@][#$%)(^&*()_") // shouldn't throw
   }
 
   @Test
-  public void testArtifactSearch() {
-    if (ignore()) return;
-    assertArtifactSearchResults("");
-    assertArtifactSearchResults("j:j",
-                                Stream.concat(Arrays.stream(JMOCK_VERSIONS), Arrays.stream(JUNIT_VERSIONS)).toArray(String[]::new));
-    assertArtifactSearchResults("junit", JUNIT_VERSIONS);
-    assertArtifactSearchResults("junit 3.", JUNIT_VERSIONS);
-    assertArtifactSearchResults("uni 3.");
-    assertArtifactSearchResults("juni juni 3.");
-    assertArtifactSearchResults("junit foo", JUNIT_VERSIONS);
-    assertArtifactSearchResults("juni:juni:3.", JUNIT_VERSIONS);
-    assertArtifactSearchResults("junit:", JUNIT_VERSIONS);
-    assertArtifactSearchResults("junit:junit", JUNIT_VERSIONS);
-    assertArtifactSearchResults("junit:junit:3.", JUNIT_VERSIONS);
-    assertArtifactSearchResults("junit:junit:4.0", JUNIT_VERSIONS);
+  fun testArtifactSearch() {
+    if (ignore()) return
+    assertArtifactSearchResults("")
+    assertArtifactSearchResults("j:j", *(JMOCK_VERSIONS + JUNIT_VERSIONS))
+    assertArtifactSearchResults("junit", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("junit 3.", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("uni 3.")
+    assertArtifactSearchResults("juni juni 3.")
+    assertArtifactSearchResults("junit foo", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("juni:juni:3.", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("junit:", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("junit:junit", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("junit:junit:3.", *JUNIT_VERSIONS)
+    assertArtifactSearchResults("junit:junit:4.0", *JUNIT_VERSIONS)
   }
 
   @Test
-  public void testArtifactSearchDash() {
-    if (ignore()) return;
-    assertArtifactSearchResults("commons", COMMONS_IO_VERSIONS);
-    assertArtifactSearchResults("commons-", COMMONS_IO_VERSIONS);
-    assertArtifactSearchResults("commons-io", COMMONS_IO_VERSIONS);
+  fun testArtifactSearchDash() {
+    if (ignore()) return
+    assertArtifactSearchResults("commons", *COMMONS_IO_VERSIONS)
+    assertArtifactSearchResults("commons-", *COMMONS_IO_VERSIONS)
+    assertArtifactSearchResults("commons-io", *COMMONS_IO_VERSIONS)
   }
 
-  private void assertClassSearchResults(String pattern, String... expected) {
-    assertOrderedElementsAreEqual(getClassSearchResults(pattern), expected);
+  private fun assertClassSearchResults(pattern: String, vararg expected: String) {
+    assertOrderedElementsAreEqual(getClassSearchResults(pattern), *expected)
   }
 
-  private List<String> getClassSearchResults(String pattern) {
-    List<String> actualArtifacts = new ArrayList<>();
-    for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(getProject(), pattern, 100)) {
-      StringBuilder s = new StringBuilder(eachResult.getClassName() + "(" + eachResult.getPackageName() + ")");
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
-        if (s.length() > 0) s.append(" ");
-        s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
+  private fun getClassSearchResults(pattern: String): List<String> {
+    val actualArtifacts: MutableList<String> = ArrayList()
+    for (eachResult in MavenClassSearcher().search(project, pattern, 100)) {
+      val s = StringBuilder(eachResult.className + "(" + eachResult.packageName + ")")
+      for (eachVersion in eachResult.searchResults.items) {
+        if (s.length > 0) s.append(" ")
+        s.append(eachVersion.groupId).append(":").append(eachVersion.artifactId).append(":").append(eachVersion.version)
       }
-      actualArtifacts.add(s.toString());
+      actualArtifacts.add(s.toString())
     }
-    return actualArtifacts;
+    return actualArtifacts
   }
 
-  private void assertArtifactSearchResults(String pattern, String... expected) {
-    List<String> actual = new ArrayList<>();
-    StringBuilder s;
-    for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(getProject(), pattern, 100)) {
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
-        s = new StringBuilder();
-        s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
-        actual.add(s.toString());
+  private fun assertArtifactSearchResults(pattern: String, vararg expected: String) {
+    val actual: MutableList<String> = ArrayList()
+    var s: StringBuilder
+    for (eachResult in MavenArtifactSearcher().search(project, pattern, 100)) {
+      for (eachVersion in eachResult.searchResults.items) {
+        s = StringBuilder()
+        s.append(eachVersion.groupId).append(":").append(eachVersion.artifactId).append(":").append(eachVersion.version)
+        actual.add(s.toString())
       }
     }
-    assertUnorderedElementsAreEqual(actual, expected);
+    assertUnorderedElementsAreEqual(actual, *expected)
   }
 }
