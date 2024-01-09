@@ -257,15 +257,13 @@ internal class WorkspaceModuleImporter(
     val mavenProject = importData.mavenProject
     val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
 
-    var inheritCompilerOutput = true
+    val inheritCompilerOutput = !importingSettings.isUseMavenOutput
     var compilerOutputUrl: VirtualFileUrl? = null
     var compilerOutputUrlForTests: VirtualFileUrl? = null
 
     val moduleType = importData.moduleData.type
 
-    if (moduleType.containsCode && importingSettings.isUseMavenOutput) {
-
-      inheritCompilerOutput = false
+    if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
         compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
       }
