@@ -261,13 +261,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void forceWorkspaceImportIfNeeded() {
-    if (!myState.workspaceImportForciblyTurnedOn) {
-      var importingSettings = getImportingSettings();
+    var importingSettings = getImportingSettings();
+    if (!importingSettings.isWorkspaceImportForciblyTurnedOn()) {
       if (!importingSettings.isWorkspaceImportEnabled()) {
         importingSettings.setWorkspaceImportEnabled(true);
         myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
       }
-      myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
+      // turn workspace import on if it is turned off once for each existing project
+      importingSettings.setWorkspaceImportForciblyTurnedOn(true);
     }
   }
 

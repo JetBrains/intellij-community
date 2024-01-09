@@ -16,8 +16,6 @@
 
 package org.jetbrains.idea.maven.project;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +26,4 @@ public class MavenProjectsManagerState {
 
   public Set<String> ignoredFiles = new TreeSet<>();
   public List<String> ignoredPathMasks = new ArrayList<>();
-
-  @ApiStatus.Internal
-  public boolean workspaceImportForciblyTurnedOn = false;
 }
