@@ -405,7 +405,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         @Override
         public Dimension getPreferredSize() {
           Dimension preferredSize = super.getPreferredSize();
-          if (!isPreferredSizeSet()) {
+          Dimension preferredViewportSize = ((Scrollable)contextComponent).getPreferredScrollableViewportSize();
+          if (!isPreferredSizeSet() && preferredViewportSize == null) {
             setPreferredSize(new Dimension(0, preferredSize.height));
           }
           return preferredSize;
