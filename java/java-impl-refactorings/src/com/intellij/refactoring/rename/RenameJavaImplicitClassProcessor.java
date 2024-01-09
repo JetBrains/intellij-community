@@ -40,38 +40,40 @@ public class RenameJavaImplicitClassProcessor extends RenamePsiFileProcessor {
   }
 
   public static class MyPsiFileRenameDialog extends PsiFileRenameDialog {
-    @NotNull
-    private final PsiImplicitClass myImplicitClass;
     @Nullable
     private final String myExtension;
 
     private MyPsiFileRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
       super(project, element, nameSuggestionContext, editor);
-      myImplicitClass = Objects.requireNonNull(JavaImplicitClassUtil.getImplicitClassFor(element));
       myExtension = Optional.ofNullable(((PsiJavaFile)element).getVirtualFile())
         .map(file -> file.getExtension())
         .orElse(null);
     }
 
+    public PsiImplicitClass getImplicitClass() {
+      return Objects.requireNonNull(JavaImplicitClassUtil.getImplicitClassFor(getPsiElement()));
+    }
+
     @Override
     protected void canRun() throws ConfigurationException {
       String name = super.getNewName();
-      if (Comparing.strEqual(name, myImplicitClass.getQualifiedName())) throw new ConfigurationException(null);
-      if (!PsiNameHelper.getInstance(myImplicitClass.getProject()).isIdentifier(name)) {
+      if (Comparing.strEqual(name, getImplicitClass().getQualifiedName())) throw new ConfigurationException(null);
+      if (!PsiNameHelper.getInstance(getProject()).isIdentifier(name)) {
         throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
       }
     }
 
     @Override
     protected String getFullName() {
-      String name = DescriptiveNameUtil.getDescriptiveName(myImplicitClass);
-      String type = UsageViewUtil.getType(myImplicitClass);
+      PsiImplicitClass implicitClass = getImplicitClass();
+      String name = DescriptiveNameUtil.getDescriptiveName(implicitClass);
+      String type = UsageViewUtil.getType(implicitClass);
       return StringUtil.isEmpty(name) ? type : type + " '" + name + "'";
     }
 
     @Override
     public String[] getSuggestedNames() {
-      String name = myImplicitClass.getQualifiedName();
+      String name = getImplicitClass().getQualifiedName();
       if (name != null) {
         return new String[]{name};
       }
