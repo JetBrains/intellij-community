@@ -455,6 +455,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myMlService.onDialogClose();
     }
 
+    if (myUsagePreviewPanel != null) {
+      myUsagePreviewPanel.releaseEditor();
+    }
+
     for (Disposable disposable : myUsagePreviewDisposableList) {
       Disposer.dispose(disposable);
     }
