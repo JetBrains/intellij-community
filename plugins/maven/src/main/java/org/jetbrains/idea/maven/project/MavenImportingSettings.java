@@ -75,6 +75,18 @@ public class MavenImportingSettings implements Cloneable {
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private boolean workspaceImportForciblyTurnedOn = false;
+
+  @ApiStatus.Internal
+  public boolean isWorkspaceImportForciblyTurnedOn() {
+    return workspaceImportForciblyTurnedOn;
+  }
+
+  @ApiStatus.Internal
+  public void setWorkspaceImportForciblyTurnedOn(boolean workspaceImportForciblyTurnedOn) {
+    this.workspaceImportForciblyTurnedOn = workspaceImportForciblyTurnedOn;
+  }
+
   public enum GeneratedSourcesFolder {
     IGNORE("maven.settings.generated.folder.ignore"),
     AUTODETECT("maven.settings.generated.folder.autodetect"),
