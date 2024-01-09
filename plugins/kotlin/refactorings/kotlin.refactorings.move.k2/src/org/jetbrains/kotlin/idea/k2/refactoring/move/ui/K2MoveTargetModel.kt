@@ -62,7 +62,6 @@ sealed interface K2MoveTargetModel {
                 ).align(AlignX.FILL).component
                 pkgChooser.prependItem(pkgName.asString())
             }.layout(RowLayout.PARENT_GRID)
-
             row {
                 label(KotlinBundle.message("label.text.destination")).align(AlignX.LEFT)
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
@@ -70,15 +69,22 @@ sealed interface K2MoveTargetModel {
                         return pkgChooser.text
                     }
                 }).align(AlignX.FILL).component
-                destinationChooser.comboBox.addPropertyChangeListener {
-                    if (it.propertyName != "model") return@addPropertyChangeListener
-                    // this will be invoked when package/source root changes
-                    directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
-                    pkgName = FqName(pkgChooser.text)
-                    RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
-                    revalidateButtons()
-                }
             }.layout(RowLayout.PARENT_GRID)
+
+            fun updateDirectory() {
+                directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
+                revalidateButtons()
+            }
+
+            destinationChooser.comboBox.addPropertyChangeListener { // Invoked from package chooser update
+                if (it.propertyName != "model") return@addPropertyChangeListener
+                pkgName = FqName(pkgChooser.text)
+                RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, pkgChooser.text)
+                updateDirectory()
+            }
+            destinationChooser.comboBox.addActionListener {
+                updateDirectory()
+            }
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
         }
 
