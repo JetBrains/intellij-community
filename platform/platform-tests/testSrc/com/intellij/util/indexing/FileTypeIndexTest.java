@@ -104,6 +104,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     ensureUpToDate();
     flushNotifications();
     assertEquals(2, (int)notifications.getOrDefault(testFiletype, 0));
+    Disposer.dispose(disposable);
   }
 
   public void testEventualNotificationReceipt() throws IOException, InterruptedException {

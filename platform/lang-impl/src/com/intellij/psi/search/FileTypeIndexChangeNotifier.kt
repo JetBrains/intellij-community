@@ -24,6 +24,7 @@ internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIn
       }
   }
 
+  @Synchronized
   fun notifyPending() {
     val fileTypes = hashSetOf<FileType>()
     while (true) {
