@@ -8,11 +8,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -48,9 +44,7 @@ public abstract class ProjectTaskRunner {
   public Promise<Result> run(@NotNull Project project,
                              @NotNull ProjectTaskContext context,
                              ProjectTask @NotNull ... tasks) {
-    AsyncPromise<Result> promise = new AsyncPromise<>();
-    run(project, context, new ProjectTaskNotificationAdapter(promise), Arrays.asList(tasks));
-    return promise;
+    throw new UnsupportedOperationException(); 
   }
 
   /**
@@ -123,56 +117,4 @@ public abstract class ProjectTaskRunner {
   public boolean isFileGeneratedEventsSupported() {
     return false;
   }
-
-  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-  /**
-   * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
-   */
-  @Deprecated(forRemoval = true)
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
-  }
-
-  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final @NotNull AsyncPromise<? super Result> myPromise;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
-      myPromise = promise;
-    }
-
-    @Override
-    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
-      myPromise.setResult(new Result() {
-        @Override
-        public boolean isAborted() {
-          return taskResult.isAborted();
-        }
-
-        @Override
-        public boolean hasErrors() {
-          return taskResult.getErrors() > 0;
-        }
-      });
-    }
-  }
-
-  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
-    if (callback != null) {
-      //noinspection deprecation
-      promise
-        .onSuccess(result -> callback.finished(new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
-        .onError(throwable -> callback.finished(new ProjectTaskResult(true, 0, 0)));
-    }
-  }
-
-  private void assertUnsupportedOperation(@SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
-    if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method in " + getClass());
-    }
-  }
-  //</editor-fold>
 }
