@@ -11,7 +11,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -20,7 +19,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
@@ -498,7 +496,7 @@ public class HighlightInfo implements Segment {
     s += "; severity=" + getSeverity();
     synchronized (this) {
       if (quickFixActionRanges != null) {
-        s += "; quickFixes: " + quickFixActionRanges;
+        s += "; quickFixes: " + StringUtil.join(quickFixActionRanges, q-> q.getFirst().myAction.getClass().getName(), ", ");
       }
     }
     if (gutterIconRenderer != null) {
@@ -918,8 +916,10 @@ public class HighlightInfo implements Segment {
     if (highlighter == null) {
       throw new RuntimeException("info not applied yet");
     }
+    TextRange range = highlighter.getTextRange();
     if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(highlighter.getTextRange());
+    String text = highlighter.getDocument().getText();
+    return text.substring(Math.min(range.getStartOffset(), text.length()), Math.min(range.getEndOffset(), text.length()));
   }
 
   /**
