@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
@@ -15,12 +15,21 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
+enum class PowerStatus {
+  UNKNOWN, AC, BATTERY;
+
+  companion object {
+    @JvmStatic
+    fun getPowerStatus(): PowerStatus = PowerService.service.status()
+  }
+}
 
 internal interface PowerService {
   fun status(): PowerStatus
 
   companion object {
     internal val LOG: Logger = logger<PowerStatus>()
+
     val service: PowerService by lazy {
       try {
         when {
@@ -31,19 +40,16 @@ internal interface PowerService {
         }
       }
       catch (t: Throwable) {
-        PowerService.LOG.warn(t)
+        LOG.warn(t)
         NullPowerService()
       }
     }
   }
 }
 
-
-
 private class NullPowerService : PowerService {
   override fun status() = PowerStatus.UNKNOWN
 }
-//</editor-fold>
 
 //<editor-fold desc="Windows implementation">
 @Suppress("ClassName", "PropertyName", "FunctionName", "unused")
@@ -87,7 +93,7 @@ private class WinPowerService : PowerService {
 private class MacPowerService : PowerService {
   /**
    * In IOKit, "power sources" include batteries and UPS devices.
-   * The method returns "BATTERY" in following cases:
+   * The method returns "BATTERY" in the following cases:
    * - when a system has a battery which is discharging
    * - when a system has no discharging batteries but has a discharging UPS
    */
@@ -180,9 +186,9 @@ private class MacPowerService : PowerService {
 //<editor-fold desc="Linux implementation">
 private class LinuxPowerService : PowerService {
   /**
-   * Returns "AC" if there is at least one online source of type "Mains".
-   * Returns "BATTERY" if there is at least one source of type "Battery" in a discharging state.
-   * UPSes doesn't seem to be represented via sysfs.
+   * Returns "AC" if there is at least one online source of a type "Mains".
+   * Returns "BATTERY" if there is at least one source of a type "Battery" in a discharging state.
+   * UPSes don't seem to be represented via SysFS.
    * See [https://github.com/torvalds/linux/blob/master/drivers/power/supply/power_supply_sysfs.c].
    */
   override fun status(): PowerStatus {
@@ -222,5 +228,6 @@ private class LinuxPowerService : PowerService {
 
   private fun read(device: File, key: String): String =
     try { BufferedReader(FileReader(File(device, key))).use { it.readLine() } }
-    catch (e: IOException) { "-" }
+    catch (_: IOException) { "-" }
 }
+//</editor-fold>
