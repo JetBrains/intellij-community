@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -157,7 +157,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     if (runtimeDir != null) {
       dirs.add(runtimeDir)
       val javaExecutablePath = "jbr/bin/java"
-      check(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "${javaExecutablePath} was not found under ${runtimeDir}" }
+      check(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $runtimeDir" }
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
@@ -182,7 +182,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
   }
 
-  internal val snapArtifactName: String? by lazy {
+  private val snapArtifactName: String? by lazy {
     "${customizer.snapName ?: return@lazy null}_${snapVersion}_amd64.snap"
   }
 
@@ -432,7 +432,7 @@ private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
                   listOf("-Dsun.tools.attach.tmp.only=true",
                          "-Dawt.lock.fair=true")
-  VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\n")
+  writeVmOptions(file = vmOptionsPath, vmOptions = vmOptions, separator = "\n")
 
   return vmOptionsPath
 }

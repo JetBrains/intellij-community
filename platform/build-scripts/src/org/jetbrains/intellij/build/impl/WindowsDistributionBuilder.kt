@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -448,7 +448,7 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
 private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
   val vmOptions = VmOptionsGenerator.computeVmOptions(context)
-  VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\r\n")
+  writeVmOptions(file = vmOptionsPath, vmOptions = vmOptions, separator = "\r\n")
 
   return vmOptionsPath
 }

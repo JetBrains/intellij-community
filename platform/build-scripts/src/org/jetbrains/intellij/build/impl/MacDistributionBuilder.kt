@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -23,7 +23,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
-import java.util.function.BiConsumer
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -94,7 +93,9 @@ class MacDistributionBuilder(override val context: BuildContext,
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"
     )
-    customizer.getCustomIdeaProperties(context.applicationInfo).forEach(BiConsumer { k, v -> platformProperties.add("$k=$v") })
+    for ((k, v) in customizer.getCustomIdeaProperties(context.applicationInfo)) {
+      platformProperties.add("$k=$v")
+    }
 
     layoutMacApp(ideaPropertyContent = ideaProperties!!,
                  platformProperties = platformProperties,
@@ -518,7 +519,7 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
   val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
                       listOf("-Dapple.awt.application.appearance=system")
   val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
-  VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, "\n")
+  writeVmOptions(file = vmOptionsPath, vmOptions = fileVmOptions, separator = "\n")
 
   return vmOptionsPath
 }

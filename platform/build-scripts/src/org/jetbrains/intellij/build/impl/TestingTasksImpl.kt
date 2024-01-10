@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
@@ -31,7 +31,6 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
 import java.util.regex.Pattern
 import java.util.stream.Stream
 import kotlin.io.path.readLines
@@ -456,7 +455,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
 
-    jvmArgs.addAll(0, VmOptionsGenerator.computeVmOptions(true, null))
+    jvmArgs.addAll(0, computeVmOptions(isEAP = true, customJvmMemoryOptions = null))
 
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 
@@ -491,7 +490,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
 
-    System.getProperties().forEach(BiConsumer { key, value ->
+    System.getProperties().forEach { key, value ->
       key as String
 
       if (key.startsWith("pass.")) {
@@ -505,7 +504,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       if (key.startsWith("org.jetbrains.jps.incremental.dependencies.resolution.")) {
         systemProperties.putIfAbsent(key, value as String)
       }
-    })
+    }
 
     systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = context.options.useCompiledClassesFromProjectOutput.toString()
 
