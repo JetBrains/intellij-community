@@ -183,12 +183,18 @@ internal class DefaultIjentSessionProvider(override val epCoroutineScope: Corout
   }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun doBootstrapOverShellSession(shellProcess: Process, communicationCoroutineScope: CoroutineScope) =
   withContext(Dispatchers.IO) {
-    val stderrLogger = launch {
+    // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
+    // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
+    // a delay.
+    val stderrLoggerScope = GlobalScope
+
+    val stderrLogger = stderrLoggerScope.launch {
       val line = StringBuilder()
       try {
-        while (isActive) {
+        while (true) {
           readLineWithoutBuffering(shellProcess.errorStream, line)
           LOG.debug { "IJent bootstrap shell session stderr: $line" }
           line.clear()
@@ -208,8 +214,20 @@ private suspend fun doBootstrapOverShellSession(shellProcess: Process, communica
       }
     }
 
-    val (remoteIjentPath, targetPlatform) = bootstrapOverShellSession(shellProcess.outputStream, shellProcess.inputStream)
-    stderrLogger.cancel()
+    val (remoteIjentPath, targetPlatform) =
+      try {
+        bootstrapOverShellSession(shellProcess.outputStream, shellProcess.inputStream)
+      }
+      finally {
+        stderrLoggerScope.launch {
+          try {
+            delay(5.seconds)  // A random timeout.
+          }
+          finally {
+            stderrLogger.cancel()
+          }
+        }
+      }
     exitCodeAwaiter.cancel()
 
     try {
