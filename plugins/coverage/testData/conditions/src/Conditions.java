@@ -211,4 +211,11 @@ public class Conditions {
   String ternaryOr(boolean a, boolean b) {
     return a || b ? "1" : "2";
   }
+
+  void doWhileCycle(int n) {
+    int i = 0;
+    do {
+      System.out.println(i);
+    } while (i++ < n);
+  }
 }

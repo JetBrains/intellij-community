@@ -211,4 +211,11 @@ class KtConditions {
   fun ternaryOr(a: Boolean, b: Boolean): String {
     return if (a || b) "1" else "2"
   }
+
+  fun doWhileCycle(n: Int) {
+    var i = 0
+    do {
+      println(i)
+    } while (i++ < n)
+  }
 }

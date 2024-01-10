@@ -64,6 +64,8 @@ public class ConditionsTest extends TestCase {
     conditions.ternaryOperatorFull(false);
 
     conditions.ternaryOr(false, true);
+
+    conditions.doWhileCycle(3);
   }
 
   public void testKotlin() {
@@ -129,5 +131,7 @@ public class ConditionsTest extends TestCase {
     conditions.ternaryOperatorFull(false);
 
     conditions.ternaryOr(false, true);
+
+    conditions.doWhileCycle(3);
   }
 }

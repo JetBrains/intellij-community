@@ -6,6 +6,7 @@ import com.intellij.coverage.SwitchCoverageExpression
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -102,9 +103,8 @@ private fun KtExpression.breakIntoConditions(): List<ConditionCoverageExpression
 }
 
 private fun KtExpression.isReversedCondition(): Boolean {
-    val parent = this.parent ?: return false
-    return parent is KtDoWhileExpression ||
-            isLeftInOrExpression()
+    val insideDoWhile = parentOfType<KtDoWhileExpression>()?.condition?.let { it in parents(true) } == true
+    return insideDoWhile || isLeftInOrExpression()
 }
 
 private fun KtExpression.isLeftInOrExpression(): Boolean {

@@ -298,3 +298,15 @@ Hits: 1
         true hits: 1
         false hits: 0
 
+Line 216 coverage: FULL
+Hits: 1
+
+Line 218 coverage: FULL
+Hits: 4
+
+Line 219 coverage: FULL
+Hits: 4
+    i++ < n
+        true hits: 3
+        false hits: 1
+
