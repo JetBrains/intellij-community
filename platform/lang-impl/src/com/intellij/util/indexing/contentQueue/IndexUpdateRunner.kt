@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.ReadAction
@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.max
 
 @ApiStatus.Internal
 class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
@@ -288,9 +289,10 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
 
     /**
-     * Number of indexing threads. Writing threads are counted separately, because they are "mostly waiting IO" threads.
+     * Number of indexing threads. In ideal scenario writing threads are 100% busy, so we are taking them into account.
      */
-    private val INDEXING_THREADS_NUMBER: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
+    private val INDEXING_THREADS_NUMBER: Int = max(
+      UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - IndexUpdateWriter.TOTAL_WRITERS_NUMBER, 1)
 
     /**
      * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
