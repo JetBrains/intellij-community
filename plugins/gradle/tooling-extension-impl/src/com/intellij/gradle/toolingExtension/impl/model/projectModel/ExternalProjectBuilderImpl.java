@@ -6,6 +6,7 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSour
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -73,7 +74,7 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setIdentityPath(projectIdentityPath);
     externalProject.setVersion(wrap(project.getVersion()));
     externalProject.setDescription(project.getDescription());
-    externalProject.setBuildDir(project.getBuildDir());
+    externalProject.setBuildDir(GradleProjectUtil.getBuildDirectory(project));
     externalProject.setBuildFile(project.getBuildFile());
     externalProject.setGroup(wrap(project.getGroup()));
     externalProject.setProjectDir(project.getProjectDir());

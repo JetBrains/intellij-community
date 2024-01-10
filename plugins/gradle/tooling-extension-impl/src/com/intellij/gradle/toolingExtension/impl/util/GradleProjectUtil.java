@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier;
 
+import java.io.File;
+
 public final class GradleProjectUtil {
 
   /**
@@ -25,5 +27,9 @@ public final class GradleProjectUtil {
 
   public static @NotNull ProjectIdentifier getProjectIdentifier(@NotNull Project project) {
     return new InternalProjectIdentifier(project.getRootDir(), project.getPath());
+  }
+
+  public static @NotNull File getBuildDirectory(@NotNull Project project) {
+    return project.getLayout().getBuildDirectory().getAsFile().get();
   }
 }

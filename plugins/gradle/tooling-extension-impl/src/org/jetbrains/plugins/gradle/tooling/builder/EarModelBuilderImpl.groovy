@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -62,7 +63,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
 
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)
-    def buildDirPath = project.getBuildDir().absolutePath
+    def buildDirPath = GradleProjectUtil.getBuildDirectory(project).absolutePath
 
     for (task in project.tasks) {
       if (task instanceof Ear) {

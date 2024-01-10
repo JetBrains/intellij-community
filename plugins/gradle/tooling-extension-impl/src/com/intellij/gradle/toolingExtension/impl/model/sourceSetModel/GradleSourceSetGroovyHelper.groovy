@@ -4,7 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
-import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -168,7 +168,7 @@ class GradleSourceSetGroovyHelper {
             resourcesDirectorySet.addGradleOutputDir(outDir)
           }
           if (resourcesDirectorySet.gradleOutputDirs.isEmpty()) {
-            resourcesDirectorySet.addGradleOutputDir(project.buildDir)
+            resourcesDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
           }
         }
       }
@@ -176,7 +176,7 @@ class GradleSourceSetGroovyHelper {
         resourcesDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
           sourceSet.output.resourcesDir,
           sourceSet.output.classesDir as File,
-          project.buildDir
+          GradleProjectUtil.getBuildDirectory(project)
         ))
       }
 
@@ -194,13 +194,13 @@ class GradleSourceSetGroovyHelper {
           javaDirectorySet.addGradleOutputDir(outDir)
         }
         if (javaDirectorySet.gradleOutputDirs.isEmpty()) {
-          javaDirectorySet.addGradleOutputDir(project.buildDir)
+          javaDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
         }
       }
       else {
         javaDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
           sourceSet.output.classesDir as File,
-          project.buildDir
+          GradleProjectUtil.getBuildDirectory(project)
         ))
       }
 
