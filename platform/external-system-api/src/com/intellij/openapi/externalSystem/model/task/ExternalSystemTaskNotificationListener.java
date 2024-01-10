@@ -27,7 +27,8 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
   @Deprecated(forRemoval = true)
-  void onStart(@NotNull ExternalSystemTaskId id);
+  default void onStart(@NotNull ExternalSystemTaskId id) {
+  }
 
   default void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
   }

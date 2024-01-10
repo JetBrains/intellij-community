@@ -6,12 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener.EP_NAME as EP
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.lang.Exception
 import kotlin.test.assertNull
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener.EP_NAME as EP
 
 interface GradleProcessOutputInterceptor {
     companion object {
@@ -58,7 +57,4 @@ private class GradleProcessOutputInterceptorImpl : GradleProcessOutputIntercepto
     override fun onCancel(id: ExternalSystemTaskId) = Unit
     override fun onEnd(id: ExternalSystemTaskId) = Unit
     override fun beforeCancel(id: ExternalSystemTaskId) = Unit
-
-    @Deprecated("Deprecated in Java")
-    override fun onStart(id: ExternalSystemTaskId) = Unit
 }
