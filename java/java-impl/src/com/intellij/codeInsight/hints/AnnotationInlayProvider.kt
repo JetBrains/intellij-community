@@ -205,10 +205,6 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     }
   }
 
-  companion object {
-    val ourKey: SettingsKey<Settings> = SettingsKey("annotation.hints")
-  }
-
   data class Settings(var showInferred: Boolean = false, var showExternal: Boolean = true)
 
 
@@ -254,3 +250,5 @@ class InsertAnnotationAction(
     }
   }
 }
+
+private val ourKey: SettingsKey<AnnotationInlayProvider.Settings> = SettingsKey("annotation.hints")
