@@ -97,10 +97,11 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testTryFinally() = doTest()
     fun testTypeCast() = doTest()
     fun testTypeTest() = doTest()
+    fun testUInt() = doTest()
+    fun testUsefulNull() = doTest()
     fun testWhen() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
-    fun testUInt() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {
         val fileName = "${getTestName(false)}.kt"

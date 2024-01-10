@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -591,6 +593,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         // var x1 : X = null
                         // var x2 = x1 -- let's suppress this
                         return true
+                    }
+                    if (kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) {
+                        // Do not report always-null when expected expression type is the same type parameter
+                        // as it's not possible to replace it with a null literal without an unchecked cast 
+                        val expectedType = expression.analyze(BodyResolveMode.FULL).get(BindingContext.EXPECTED_EXPRESSION_TYPE, expression)
+                        if (expectedType == kotlinType) return true
                     }
                     if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
                         // like (null as? X)
