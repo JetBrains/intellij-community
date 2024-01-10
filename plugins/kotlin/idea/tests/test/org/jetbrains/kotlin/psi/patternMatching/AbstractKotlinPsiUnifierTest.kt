@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import java.io.File
 
 abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() {
-    protected abstract fun KtElement.getMatches(file: KtFile): List<String>
+    protected abstract fun KtElement.getMatches(file: KtFile): List<TextRange>
 
     fun doTest(unused: String) {
         fun findPattern(file: KtFile): KtElement {
@@ -26,14 +26,25 @@ abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestC
             } as KtElement
         }
 
-        val file = myFixture.configureByFile(fileName()) as KtFile
         val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
 
+        val fileTextWithoutDirectives = dataFile().getTextWithoutDirectives() // contains markers
+        val file = myFixture.configureByText(fileName(), fileTextWithoutDirectives) as? KtFile ?: error("Failed to configure file")
+        val fileText = file.text // doesn't contain ignore-directives and markers
+
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), disableTestDirective) {
-            val actualText = findPattern(file).getMatches(file).joinToString("\n\n")
+            val actualText = findPattern(file)
+                .getMatches(file)
+                .joinToString(separator = "\n\n") { "$it\n${it.substring(fileText)}" }
             KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "${fileName()}.match"), actualText)
         }
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromTestName()
+
+    private fun File.getTextWithoutDirectives(): String {
+        val directives = setOf(IgnoreTests.DIRECTIVES.IGNORE_K1, IgnoreTests.DIRECTIVES.IGNORE_K2)
+
+        return readLines().filterNot { it.trim() in directives }.joinToString("\n")
+    }
 }

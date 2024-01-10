@@ -1,3 +1,4 @@
+(99,186)
 if (a + b > (0)) {
         println(a*(b))
     }
@@ -5,6 +6,7 @@ if (a + b > (0)) {
         println(a + b)
     }
 
+(241,328)
 if (a + (b) > 0) {
         println(a*b)
     }
