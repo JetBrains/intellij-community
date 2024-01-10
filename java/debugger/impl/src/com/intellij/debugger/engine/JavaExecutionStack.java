@@ -141,15 +141,6 @@ public class JavaExecutionStack extends XExecutionStack {
     }
   }
 
-  /**
-   * @deprecated Use {@link #createStackFrames(StackFrameProxyImpl)} instead.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy) {
-    return createStackFrames(stackFrameProxy).get(0);
-  }
-
   @NotNull
   public List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
     return createFrames(new StackFrameDescriptorImpl(stackFrameProxy, myTracker));

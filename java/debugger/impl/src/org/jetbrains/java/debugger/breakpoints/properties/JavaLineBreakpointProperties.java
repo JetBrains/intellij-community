@@ -82,15 +82,6 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     encodedInlinePosition = inlinePositionEncoded;
   }
 
-  /**
-   * @deprecated this method is only for backward compatibility,
-   *             use {@link #setEncodedInlinePosition(Integer)}
-   */
-  @Deprecated(forRemoval = true)
-  public void setLambdaOrdinal(Integer lambdaOrdinal) {
-    setEncodedInlinePosition(lambdaOrdinal);
-  }
-
   @Override
   public void loadState(@NotNull JavaLineBreakpointProperties state) {
     super.loadState(state);

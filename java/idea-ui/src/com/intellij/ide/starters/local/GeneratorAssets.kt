@@ -1,7 +1,6 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.ide.fileTemplates.FileTemplate
-import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.nio.file.attribute.PosixFilePermission
 
@@ -10,14 +9,6 @@ sealed class GeneratorAsset {
   abstract val relativePath: String
 
   abstract val permissions: Set<PosixFilePermission>
-
-  @get:ApiStatus.ScheduledForRemoval
-  @get:Deprecated(message = "Renamed. Use relativePath instead", replaceWith = ReplaceWith("relativePath"))
-  @Deprecated(
-    message = "Renamed. Use relativePath instead",
-    replaceWith = ReplaceWith("relativePath")
-  )
-  val targetFileName: String get() = relativePath
 }
 
 data class GeneratorTemplateFile(

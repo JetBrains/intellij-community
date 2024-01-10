@@ -38,7 +38,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -482,15 +481,6 @@ public final class RefactoringUtil {
   @Deprecated
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
     return CommonJavaRefactoringUtil.suggestUniqueVariableName(baseName, place, fieldToReplace);
-  }
-
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.convertInitializerToNormalExpression instead.
-   */
-  @Deprecated(forRemoval = true)
-  @Contract("null, _ -> null")
-  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) throws IncorrectOperationException {
-    return CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, forcedReturnType);
   }
 
   /**
