@@ -35,6 +35,7 @@ class ClassInfoCache(val project: Project, private val mySearchScope: GlobalSear
     private fun canBeShortenedPackages(clazz: PsiClass, targetPackageName: String): Boolean {
       val qualifiedName = clazz.qualifiedName ?: return false
       val actualPackageName = StringUtil.getPackageName(qualifiedName)
+      if (actualPackageName.endsWith(targetPackageName)) return true
       val actualPackageNames = actualPackageName.split(".")
       val targetPackageNames = targetPackageName.split(".")
       if (actualPackageNames.size != targetPackageNames.size) return false

@@ -45,6 +45,45 @@ public final class Log4j {
     )
   }
 
+  fun testLastPartLog4j2() {
+    LoggingTestUtils.addLog4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "Log4jk",
+      classText = """
+package com.example.loggingjava.java;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public final class Log4j {
+
+    private static final Logger logger = LogManager.getLogger();
+
+    public static void main(String[] args) {
+        System.out.println("1");
+        log4j();
+        log4j2(1);
+    }
+
+    private static void log4j2(int i) {
+        String message = "Second" + " Request {}" + i;
+        logger.error(message, i);
+    }
+
+    private static void log4j() {
+        logger.info("First request");
+    }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("19:50:03.422 [main] INFO gjava.java.Log4j - First request", LogicalPosition(21, 8)),
+        LogItem("19:50:03.430 [main] ERROR gjava.java.Log4j - Second Request 11", LogicalPosition(17, 8)),
+      )
+    )
+  }
+
   fun testSimpleSlf4j() {
     LoggingTestUtils.addSlf4J(myFixture)
     checkColumnFinderJava(
