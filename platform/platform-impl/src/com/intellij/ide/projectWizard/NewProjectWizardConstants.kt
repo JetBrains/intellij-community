@@ -18,7 +18,7 @@ object NewProjectWizardConstants {
     const val INTELLIJ: String = "IntelliJ"
     const val GRADLE: String = "Gradle"
     const val MAVEN: String = "Maven"
-    const val SBT: String = "SBT"
+    const val SBT: String = "sbt"
   }
 
   object Generators {
