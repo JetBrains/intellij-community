@@ -437,7 +437,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   @Experimental
   @Internal
-  fun unstubbedActions(): Sequence<AnAction> = actionPostInitRegistrar.unstubbedActions()
+  fun unstubbedActions(filter: (String) -> Boolean): Sequence<AnAction> = actionPostInitRegistrar.unstubbedActions(filter)
+
+  @Experimental
+  @Internal
+  fun groupIds(actionId: String): List<String> = actionPostInitRegistrar.groupIds(actionId)
 
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
@@ -1723,10 +1727,14 @@ private class PostInitActionRegistrar(
 
   fun actionsOrStubs(): Sequence<AnAction> = idToAction.values.asSequence()
 
-  fun unstubbedActions(): Sequence<AnAction> {
-    return idToAction.keys.asSequence().mapNotNull {
+  fun unstubbedActions(filter: (String) -> Boolean): Sequence<AnAction> {
+    return idToAction.keys.asSequence().filter(filter).mapNotNull {
       getAction(id = it, canReturnStub = false, actionRegistrar = this)
     }
+  }
+
+  fun groupIds(actionId: String): List<String> {
+    return state.idToDescriptor[actionId]?.groupIds ?: emptyList()
   }
 
   fun getBoundActions(): Set<String> = boundShortcuts.keys
@@ -1999,7 +2007,8 @@ private fun registerAction(actionId: String,
                            pluginId: PluginId?,
                            projectType: ProjectType?,
                            actionRegistrar: ActionRegistrar,
-                           oldIndex: Int = -1) {
+                           oldIndex: Int = -1,
+                           oldGroups: List<String>? = null) {
   val state = actionRegistrar.state
   if (state.prohibitedActionIds.contains(actionId)) {
     return
@@ -2034,6 +2043,9 @@ private fun registerAction(actionId: String,
   descriptor.index = if (oldIndex >= 0) oldIndex else state.registeredActionCount++
   if (pluginId != null) {
     descriptor.pluginId = pluginId
+  }
+  if (oldGroups != null) {
+    descriptor.groupIds = oldGroups
   }
 
   actionRegistrar.actionRegistered(actionId, action)
@@ -2156,7 +2168,8 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
                  pluginId = pluginId,
                  projectType = null,
                  actionRegistrar = actionRegistrar,
-                 oldIndex = oldIndex)
+                 oldIndex = oldIndex,
+                 oldGroups = actionItemDescriptor?.groupIds)
   return oldAction
 }
 
