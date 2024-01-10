@@ -131,7 +131,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
   private Supplier<? extends Dimension> myMinimumButtonSizeSupplier = Dimension::new;
-  private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   private ToolbarLayoutStrategy myLayoutStrategy;
   private int myOrientation;
@@ -294,7 +293,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     int componentCount = getComponentCount();
-    List<Rectangle> bounds = myLayoutStrategy.calculateBounds(new Dimension(width, height), this);
+    List<Rectangle> bounds = myLayoutStrategy.calculateBounds(this);
 
     int baseline = -1;
     for (int i = 0; i < componentCount; i++) {
@@ -706,12 +705,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
 
+  //todo get rid of this method #idea-326561
   /**
    * Calculates bounds of all the components in the toolbar
    */
   protected void calculateBounds(@NotNull Dimension size2Fit, @NotNull List<Rectangle> bounds) {
     bounds.clear();
-    bounds.addAll(myLayoutStrategy.calculateBounds(size2Fit, this));
+    bounds.addAll(myLayoutStrategy.calculateBounds(this));
   }
 
   private void calculateAutoPopupRect() {
@@ -745,48 +745,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected Dimension updatePreferredSize(Dimension preferredSize) {
-    final ArrayList<Rectangle> bounds = new ArrayList<>();
-    int forcedHeight;
-    if (getWidth() > 0 && myOrientation == SwingConstants.HORIZONTAL) {
-      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), bounds);
-      Rectangle union = null;
-      for (Rectangle bound : bounds) {
-        union = union == null ? bound : union.union(bound);
-      }
-      forcedHeight = union != null ? union.height : 0;
-    }
-    else {
-      calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds); // it doesn't take into account wrapping
-      forcedHeight = 0;
-    }
-    if (bounds.isEmpty()) return JBUI.emptySize();
-    int xLeft = Integer.MAX_VALUE;
-    int yTop = Integer.MAX_VALUE;
-    int xRight = Integer.MIN_VALUE;
-    int yBottom = Integer.MIN_VALUE;
-    for (int i = bounds.size() - 1; i >= 0; i--) {
-      final Rectangle each = bounds.get(i);
-      if (each.x == Integer.MAX_VALUE) continue;
-      xLeft = Math.min(xLeft, each.x);
-      yTop = Math.min(yTop, each.y);
-      xRight = Math.max(xRight, each.x + each.width);
-      yBottom = Math.max(yBottom, each.y + each.height);
-    }
-    final Dimension dimension = new Dimension(xRight - xLeft, Math.max(yBottom - yTop, forcedHeight));
-
-    boolean autoExpandNeeded = ContainerUtil.exists(bounds, r -> r.x == Integer.MAX_VALUE || r.y == Integer.MAX_VALUE);
-    if (autoExpandNeeded && myReservePlaceAutoPopupIcon && !isInsideNavBar()) {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        dimension.width += AllIcons.Ide.Link.getIconWidth();
-      }
-      else {
-        dimension.height += AllIcons.Ide.Link.getIconHeight();
-      }
-    }
-
-    JBInsets.addTo(dimension, getInsets());
-
-    return dimension;
+    return myLayoutStrategy.calcPreferredSize(this);
   }
 
   /**
@@ -841,28 +800,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return updatePreferredSize(minimumSize);
     }
 
-    List<Rectangle> bounds = new ArrayList<>();
-    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-    boolean autoExpandNeeded = ContainerUtil.exists(bounds, r -> r.x == Integer.MAX_VALUE || r.y == Integer.MAX_VALUE);
-    if (autoExpandNeeded) {
-      final Insets i = getInsets();
-      if (myForceShowFirstComponent && getComponentCount() > 0 && getComponent(0).isShowing()) {
-        Component c = getComponent(0);
-        Dimension firstSize = c.getPreferredSize();
-        if (myOrientation == SwingConstants.HORIZONTAL) {
-          return new Dimension(firstSize.width + AllIcons.Ide.Link.getIconWidth() + i.left + i.right,
-                               Math.max(firstSize.height, myMinimumButtonSize.height()) + i.top + i.bottom);
-        }
-        else {
-          return new Dimension(Math.max(firstSize.width, AllIcons.Ide.Link.getIconWidth()) + i.left + i.right,
-                               firstSize.height + myMinimumButtonSize.height() + i.top + i.bottom);
-        }
-      }
-      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height() + i.top + i.bottom);
-    }
-    else {
-      return minimumSize;
-    }
+    return myLayoutStrategy.calcMinimumSize(this);
   }
 
   protected @NotNull Color getSeparatorColor() {
@@ -970,8 +908,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (myMinimumButtonSizeSupplier == null) {
       return; // called from the superclass constructor through updateUI()
     }
-    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeSupplier.get(), true);
-    myLayoutStrategy.setMinimumButtonSize(myMinimumButtonSize);
+    JBDimension minimumButtonSize = JBDimension.create(myMinimumButtonSizeSupplier.get(), true);
+    myLayoutStrategy.setMinimumButtonSize(minimumButtonSize);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton button) {
@@ -979,8 +917,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {
         Dimension dimension = new Dimension();
-        dimension.width = Math.max(myMinimumButtonSize.width, ((JLabel)component).getIcon().getIconWidth());
-        dimension.height = Math.max(myMinimumButtonSize.height, ((JLabel)component).getIcon().getIconHeight());
+        dimension.width = Math.max(minimumButtonSize.width, ((JLabel)component).getIcon().getIconWidth());
+        dimension.height = Math.max(minimumButtonSize.height, ((JLabel)component).getIcon().getIconHeight());
         JBInsets.addTo(dimension, ((JLabel)component).getInsets());
         component.setPreferredSize(dimension);
       }

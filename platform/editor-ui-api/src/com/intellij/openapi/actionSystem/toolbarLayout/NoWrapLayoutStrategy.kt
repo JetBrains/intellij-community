@@ -2,14 +2,16 @@
 package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
-import org.intellij.lang.annotations.MagicConstant
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.SwingConstants
 
 class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustTheSameSize: Boolean) : ToolbarLayoutStrategy {
-  override fun calculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
+
+  private fun doCalculateBounds(toolbar: ActionToolbar): List<Rectangle> {
 
     val toolbarComponent = toolbar.component
     val componentsCount = toolbarComponent.componentCount
@@ -63,6 +65,24 @@ class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustT
     }
 
     return res
+  }
+
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
+    return doCalculateBounds(toolbar)
+  }
+
+  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
+    val bounds = doCalculateBounds(toolbar)
+    if (bounds.isEmpty()) return JBUI.emptySize()
+
+    val dimension = bounds.reduce { acc, rect -> acc.union(rect) }.size
+    JBInsets.addTo(dimension, toolbar.component.insets)
+
+    return dimension
+  }
+
+  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
+    return JBUI.emptySize()
   }
 }
 

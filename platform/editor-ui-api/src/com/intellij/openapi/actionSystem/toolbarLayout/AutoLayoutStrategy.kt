@@ -3,6 +3,8 @@ package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Insets
@@ -13,7 +15,29 @@ import kotlin.math.max
 
 class AutoLayoutStrategy(private val myOrientation: Int, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
 
-  override fun calculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
+  private val expandIcon = AllIcons.Ide.Link
+
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
+    return doCalculateBounds(toolbar.component.size, toolbar)
+  }
+
+  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
+    if (toolbar.component.componentCount == 0) return JBUI.emptySize()
+
+    val bounds = doCalculateBounds(Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), toolbar)
+    val size = bounds.filter { it.x != Int.MAX_VALUE }.reduce { acc, rect -> acc.union(rect) }.size
+    JBInsets.addTo(size, toolbar.component.insets)
+    return size
+  }
+
+  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
+    if (toolbar.component.componentCount == 0) return JBUI.emptySize()
+    val dimension = Dimension(expandIcon.iconWidth, expandIcon.iconHeight)
+    JBInsets.addTo(dimension, toolbar.component.insets)
+    return dimension
+  }
+
+  private fun doCalculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
 
     val component = toolbar.component
     val componentCount = component.componentCount
@@ -21,7 +45,7 @@ class AutoLayoutStrategy(private val myOrientation: Int, private val myNoGapMode
 
     val res = List(componentCount) { Rectangle() }
 
-    val autoButtonSize = AllIcons.Ide.Link.iconWidth
+    val autoButtonSize = expandIcon.iconWidth
     var full = false
 
     val widthToFit: Int = size2Fit.width - insets.left - insets.right

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Container
@@ -18,22 +19,42 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
   private val fallbackDelegate = NoWrapLayoutStrategy(myOrientation, myAdjustTheSameSize)
   private var myMinimumButtonSize : JBDimension = JBUI.emptySize()
 
-  override fun calculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
-
-    val component = toolbar.component
-    val componentsCount = component.componentCount
-    val insets: Insets = component.insets
-
-    val res = List(componentsCount) { Rectangle() }
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
 
     // We have to graceful handle case when toolbar was not laid out yet.
     // In this case we calculate bounds as it is a NOWRAP toolbar.
+    val component = toolbar.component
     if (component.width == 0 || component.height == 0) {
-      return fallbackDelegate.calculateBounds(size2Fit, toolbar)
+      return fallbackDelegate.calculateBounds(toolbar)
     }
 
+    return doCalculateBounds(component.size, toolbar)
+  }
+
+  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
+    val component = toolbar.component
+    // In case when toolbar was not laid out yet we calculate preferred size as it is a NOWRAP toolbar.
+    if (component.width == 0) return fallbackDelegate.calcPreferredSize(toolbar)
+
+    val bounds = doCalculateBounds(Dimension(component.width, Int.MAX_VALUE), toolbar)
+    val dimension = bounds.reduce { acc, rect -> acc.union(rect) }.size
+    JBInsets.addTo(dimension, toolbar.component.insets)
+
+    return dimension
+  }
+
+  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
+    return JBUI.emptySize()
+  }
+
+  private fun doCalculateBounds(size2Fit: Dimension, toolbar: ActionToolbar): List<Rectangle> {
+    val component = toolbar.component
+    val componentsCount = component.componentCount
+    val insets: Insets = component.insets
     val widthToFit: Int = size2Fit.width - insets.left - insets.right
     val heightToFit: Int = size2Fit.height - insets.top - insets.bottom
+
+    val res = List(componentsCount) { Rectangle() }
 
     if (myAdjustTheSameSize) {
       val maxWidth: Int = maxComponentPreferredWidth(component)

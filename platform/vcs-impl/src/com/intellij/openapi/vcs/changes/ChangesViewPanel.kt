@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -54,12 +55,14 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   private fun addToolbar(isHorizontal: Boolean) {
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
+      toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_AUTOLAYOUT_STRATEGY
       val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
       centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
+      toolbar.layoutStrategy = ToolbarLayoutStrategy.VERTICAL_AUTOLAYOUT_STRATEGY
       val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.LEFT
       centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToLeft(toolbar.component)
