@@ -34,12 +34,6 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              private val maxFileSizeInBytes: Int,
                                              val sendLogsOnIdeClose: Boolean = false,
                                              val isCharsEscapingRequired: Boolean = true) {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use primary constructor instead")
-  constructor(recorderId: String,
-              version: Int,
-              sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
-              maxFileSize: String = "200KB") : this(recorderId, version, sendFrequencyMs, parseFileSize(maxFileSize))
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
