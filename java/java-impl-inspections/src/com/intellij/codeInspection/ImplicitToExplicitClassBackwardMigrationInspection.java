@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -51,14 +48,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       }
 
       private boolean isInfoMode() {
-        Project project = holder.getProject();
-        PsiFile file = holder.getFile();
-        InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-        HighlightDisplayKey toolKey = HighlightDisplayKey.find(SHORT_NAME);
-        if (toolKey == null) {
-          return false;
-        }
-        return profile.getErrorLevel(toolKey, file) == HighlightDisplayLevel.DO_NOT_SHOW;
+        return InspectionProjectProfileManager.isInformationLevel(SHORT_NAME, holder.getFile());
       }
     };
   }
