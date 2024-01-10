@@ -916,11 +916,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public void assertTimeConsuming() {
-    assertIsNonDispatchThread();
-  }
-
-  @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     return getThreadingSupport().tryRunReadAction(action);
   }

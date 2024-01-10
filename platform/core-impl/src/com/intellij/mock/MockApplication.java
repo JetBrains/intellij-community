@@ -351,10 +351,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertTimeConsuming() {
-  }
-
-  @Override
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;

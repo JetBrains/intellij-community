@@ -148,13 +148,6 @@ public interface ApplicationEx extends Application {
   void assertIsDispatchThread(@Nullable JComponent component);
 
   /**
-   * @deprecated Use {@link #assertIsNonDispatchThread()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  void assertTimeConsuming();
-
-  /**
    * Tries to acquire the read lock and run the {@code action}.
    *
    * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
