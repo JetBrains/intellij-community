@@ -147,6 +147,12 @@ fun KtDeclaration.isExpectDeclaration(): Boolean =
         else -> containingClassOrObject?.isExpectDeclaration() == true
     }
 
+fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
+    hasActualModifier() -> true
+    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
+    else -> false
+}
+
 fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
     deleteChildRange(leftParenthesis, lastChild)

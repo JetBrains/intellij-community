@@ -242,8 +242,6 @@
   <!-- Go to declaration -->
   <extensions defaultExtensionNs="com.intellij">
 
-    <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
-
     <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler"/>
 
     <gotoTargetRendererProvider

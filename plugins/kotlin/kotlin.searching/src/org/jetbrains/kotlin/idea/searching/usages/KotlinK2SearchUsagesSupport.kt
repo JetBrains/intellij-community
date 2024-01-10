@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.is
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
+import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -79,7 +80,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
-        return emptySet()
+        return declaration.findAllActualForExpect( runReadAction { module?.let { it.moduleTestsWithDependentsScope } ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
     }
 
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {

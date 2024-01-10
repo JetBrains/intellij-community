@@ -7,32 +7,37 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
+import org.jetbrains.kotlin.types.Variance
 
 @Service(Service.Level.PROJECT)
 internal class KotlinSearchEverywherePsiRenderer(project: Project) :
     SearchEverywherePsiRenderer(KotlinPluginDisposable.getInstance(project)) {
     companion object {
-        private val RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
-            parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
-            modifiers = emptySet()
-            startFromName = false
-        }
-
         fun getInstance(project: Project): KotlinSearchEverywherePsiRenderer = project.service()
     }
 
     override fun getElementText(element: PsiElement?): String {
         if (element !is KtNamedFunction) return super.getElementText(element)
-        val descriptor = element.resolveToDescriptorIfAny() ?: return ""
-        return buildString {
-            descriptor.extensionReceiverParameter?.let { append(RENDERER.renderType(it.type)).append('.') }
-            append(element.name)
-            descriptor.valueParameters.joinTo(this, prefix = "(", postfix = ")") { RENDERER.renderType(it.type) }
+        return analyze(element) {
+            val declarationSymbol = element.getSymbol() as? KtFunctionLikeSymbol ?: return@analyze super.getElementText(element)
+            buildString {
+                declarationSymbol.receiverParameter?.let {
+                    append(it.type.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+                    append('.')
+                }
+                append(element.name)
+                declarationSymbol.valueParameters.joinTo(this, prefix = "(", postfix = ")") {
+                    it.returnType.render(
+                        KtTypeRendererForSource.WITH_SHORT_NAMES,
+                        position = Variance.INVARIANT
+                    )
+                }
+            }
         }
     }
 }

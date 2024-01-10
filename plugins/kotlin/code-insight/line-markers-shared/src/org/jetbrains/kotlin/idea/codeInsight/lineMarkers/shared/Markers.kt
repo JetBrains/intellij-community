@@ -23,9 +23,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceI
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import javax.swing.Icon
 
@@ -208,12 +206,6 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
             ActualExpectedPsiElementCellRenderer(onlyModuleNames = navigatableExpectedDeclarations.hasUniqueModuleNames())
         )
     }
-}
-
-fun KtDeclaration.isEffectivelyActualDeclaration(checkConstructor: Boolean = true): Boolean = when {
-    hasActualModifier() -> true
-    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
-    else -> false
 }
 
 fun KtDeclaration.isExpectDeclaration(): Boolean {

@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.goto
 
 import com.intellij.ide.actions.SearchEverywhereClassifier
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -22,13 +22,13 @@ class KotlinSearchEverywhereClassifier : SearchEverywhereClassifier {
         index: Int,
         isSelected: Boolean,
         cellHasFocus: Boolean
-    ): Component? = value.safeAs<PsiElement>()?.unwrapped?.safeAs<KtNamedDeclaration>()?.let {
-        KotlinSearchEverywherePsiRenderer.getInstance(it.project).getListCellRendererComponent(
-            list,
-            it,
-            index,
-            isSelected,
-            isSelected
-        )
+    ): Component? = PSIPresentationBgRendererWrapper.toPsi(value)?.unwrapped?.safeAs<KtNamedDeclaration>()?.let {
+      KotlinSearchEverywherePsiRenderer.getInstance(it.project).getListCellRendererComponent(
+        list,
+        it,
+        index,
+        isSelected,
+        isSelected
+      )
     }
 }
