@@ -786,15 +786,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
         }
 
-        testClass<AbstractCustomHighlightUsageHandlerTest>("HighlightExitPointsTestGenerated") {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("org.jetbrains.kotlin.idea.highlighter.HighlightExitPointsTestGenerated") {
             model("exitPoints")
         }
 
-        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinHighlightUsagesTestGenerated") {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("org.jetbrains.kotlin.idea.highlighter.KotlinHighlightUsagesTestGenerated") {
             model("highlightUsages")
         }
 
-        testClass<AbstractKotlinReceiverUsageHighlightingTest>("KotlinReceiverUsageHighlightingTestGenerated") {
+        testClass<AbstractKotlinReceiverUsageHighlightingTest>("org.jetbrains.kotlin.idea.highlighter.KotlinReceiverUsageHighlightingTestGenerated") {
             model("receiverUsageHighlighting")
         }
 

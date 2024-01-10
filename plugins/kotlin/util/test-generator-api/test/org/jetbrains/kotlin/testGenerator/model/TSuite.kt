@@ -27,6 +27,12 @@ class TSuiteImpl(override val abstractTestClass: Class<*>, override val generate
     override val models = mutableListOf<TModel>()
     override val annotations = mutableListOf<TAnnotation>()
     override val imports = mutableListOf<String>()
+
+    init {
+      check(generatedClassName.indexOf('.') > 0) {
+          "package name is missed: generatedClassName should be a fully qualified name"
+      }
+    }
 }
 
 inline fun <reified T: Any> MutableTGroup.testClass(
