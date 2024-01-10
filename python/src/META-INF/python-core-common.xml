@@ -397,10 +397,6 @@
     <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
                  description="Possibility to write await outside of function"/>
 
-    <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false"
-                 description="Possibility to write await outside of function"/>
-
     <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
@@ -675,6 +671,10 @@
                     interface="com.jetbrains.python.console.PyConsoleCustomizer"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.pyDebugAsyncioCustomizer"
+                    interface="com.jetbrains.python.debugger.PyDebugAsyncioCustomizer"
+                    dynamic="true"/>
+
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"
@@ -929,5 +929,6 @@
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">
     <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
+    <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
   </extensions>
 </idea-plugin>
