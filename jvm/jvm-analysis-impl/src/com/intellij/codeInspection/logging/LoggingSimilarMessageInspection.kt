@@ -52,7 +52,6 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       val calls = collectCalls(node).toMutableSet()
       if (calls.isEmpty()) return true
       val groupedCalls: List<List<UCallExpression>> = calls.groupBy { it.receiver?.tryResolve().toUElementOfType<UVariable>() }
-        .toMutableMap()
         .values.map { group ->
           group.groupBy { it.methodName }.values
         }.flatten()
@@ -65,23 +64,37 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
         var currentGroups: Set<List<MessageLog>> = setOf(group)
         //prefilter
         if (group.size > 5) {
-          val minLength = group
+          var firstIsTaken = true
+          var minLength: Int? = group
                             .mapNotNull { it.parts }
                             .filter { it.isNotEmpty() && it[0].isConstant && it[0].text != null && it[0].text?.isNotBlank() == true }
-                            .minOfOrNull { it[0].text?.length ?: 0 } ?: return true
-          if (minLength == 0) return true
+                            .minOfOrNull { it[0].text?.length ?: 0 }
+
+
+          if (minLength == null || minLength == 0) {
+            firstIsTaken = false
+            minLength = group
+                          .mapNotNull { it.parts }
+                          .filter { it.isNotEmpty() && it.last().isConstant && it.last().text != null && it.last().text?.isNotBlank() == true }
+                          .minOfOrNull { it.last().text?.length ?: 0 }
+          }
+
+          if (minLength == null || minLength == 0) {
+            return true
+          }
 
           currentGroups = group
             .groupBy {
               val parts = it.parts ?: return@groupBy ""
               if (parts.isEmpty()) return@groupBy ""
-              val part0 = parts[0]
+              val part0 = if(firstIsTaken) parts[0] else parts.last()
               if (!part0.isConstant || part0.text == null || part0.text.length < minLength) return@groupBy ""
               part0.text.substring(0, minLength)
             }
             .values
             .toSet()
         }
+
         for (currentGroup in currentGroups) {
           val alreadyHasWarning = mutableSetOf<Int>()
           for (firstIndex in 0..currentGroup.lastIndex) {
@@ -239,16 +252,22 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
   val secondIterator = PartHolderIterator(second)
   var intersection = 0
   while (firstIterator.hasNext() && secondIterator.hasNext()) {
+    //example: "something {} something", `{}` is skipped here
     if (!firstIterator.isText()) {
       firstIterator.move()
       continue
     }
 
+    //example: "something {} something", `{}` is skipped here
     if (!secondIterator.isText()) {
       secondIterator.move()
       continue
     }
 
+    //example:
+    //1:"{} some message {}"
+    //2: "{} some message {}"
+    //it is possible that these parts are from placeholders, but it is confusing, that's why it needs to be highlighted
     if (firstIterator.current() == secondIterator.current()) {
       intersection += firstIterator.current()?.length ?: 0
       firstIterator.move()
@@ -256,6 +275,10 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
       continue
     }
 
+    //example:
+    //"Message: {}"
+    //"Message: 1{}"
+    //Parts "Message: " are similar and can be confused
     if (firstIterator.isFirst() && secondIterator.isFirst()) {
       if (firstIterator.current()?.startsWith(secondIterator.current() ?: "") == true) {
         val delta = secondIterator.current()?.length ?: 0
@@ -276,6 +299,11 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
       return false
     }
 
+
+    //example:
+    //"{} - response"
+    //"{}1 - response"
+    //Parts " - response: " are similar and can be confused
     if (firstIterator.isLast() && secondIterator.isLast()) {
       if (firstIterator.current()?.endsWith(secondIterator.current() ?: "") == true) {
         val delta = secondIterator.current()?.length ?: 0
@@ -296,9 +324,12 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
       return false
     }
 
-    //There can be not only included staff, but intersection.
+    //There can be not only included parts, but intersections of these parts.
     //This intersection is skipped deliberately because it can be used in real logs
 
+    //Example:
+    //"{} something {}"
+    //"{} some{}"
     if (secondIterator.previousUnknown()) {
       var delta = firstIterator.current()?.indexOf(secondIterator.current() ?: "") ?: -1
       if (delta != -1) {

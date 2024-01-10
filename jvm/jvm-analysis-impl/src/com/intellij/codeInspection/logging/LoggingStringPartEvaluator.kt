@@ -109,9 +109,9 @@ internal class LoggingStringPartEvaluator {
 
     private fun isNotAssignment(localVariable: ULocalVariable): Boolean {
       val containingUMethod = localVariable.getContainingUMethod() ?: return false
-      val sourcePsi = containingUMethod.javaPsi
+      val sourcePsi = containingUMethod.sourcePsi ?: return false
       val project = sourcePsi.project
-      return CachedValuesManager.getManager(project).getCachedValue(sourcePsi, CachedValueProvider {
+      val reassignedVariables = CachedValuesManager.getManager(project).getCachedValue(sourcePsi, CachedValueProvider {
         val visitor = object : AbstractUastVisitor() {
           val used: MutableSet<ULocalVariable> = mutableSetOf()
           override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
@@ -130,7 +130,8 @@ internal class LoggingStringPartEvaluator {
         val method = sourcePsi.toUElement()
         method?.accept(visitor)
         return@CachedValueProvider CachedValueProvider.Result.create(visitor.used, PsiModificationTracker.MODIFICATION_COUNT)
-      }).contains(localVariable).not()
+      })
+      return reassignedVariables.contains(localVariable).not()
     }
 
     private fun isString(element: UExpression): Boolean {

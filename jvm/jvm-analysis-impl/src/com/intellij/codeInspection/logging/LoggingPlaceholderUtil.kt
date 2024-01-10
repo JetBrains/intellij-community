@@ -109,6 +109,12 @@ private val AKKA_PLACEHOLDERS = object : LoggerTypeSearcher {
   }
 }
 
+private val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
+  override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType {
+    return PlaceholderLoggerType.LOG4J_OLD_STYLE
+  }
+}
+
 internal class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
 
 internal interface LoggerTypeSearcher {
@@ -125,11 +131,11 @@ private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpressio
 
 internal val LOGGER_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_LOGGER, "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER)
+  .register(CallMatcher.instanceCall(LoggingUtil.IDEA_LOGGER, "trace", "debug", "info", "warn", "error"), IDEA_PLACEHOLDERS)
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
   .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log"), LOG4J_HOLDER)
   .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOG_BUILDER, "log"), LOG4J_LOG_BUILDER_HOLDER)
-  .register(CallMatcher.instanceCall(LoggingUtil.AKKA_LOGGING, "debug", "error", "format", "info", "log", "warning"),
-            AKKA_PLACEHOLDERS)
+  .register(CallMatcher.instanceCall(LoggingUtil.AKKA_LOGGING, "debug", "error", "format", "info", "log", "warning"), AKKA_PLACEHOLDERS)
 
 
 private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
@@ -137,7 +143,10 @@ private const val ADD_ARGUMENT = "addArgument"
 private const val SET_MESSAGE = "setMessage"
 
 internal fun findMessageSetterStringArg(node: UCallExpression,
-                                        loggerType: LoggerTypeSearcher): UExpression? {
+                                        loggerType: LoggerTypeSearcher?): UExpression? {
+  if (loggerType == null) {
+    return null
+  }
   if (loggerType != SLF4J_BUILDER_HOLDER) {
     return null
   }
