@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
@@ -54,8 +55,8 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     }
 
     override fun beforeChanged(event: VersionedStorageChange) {
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        val facetChanges = event.getChanges(FacetEntity::class.java) + event.getChanges(KotlinSettingsEntity::class.java)
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val facetChanges = event.getChanges<FacetEntity>() + event.getChanges<KotlinSettingsEntity>()
         if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
 
         val storageBefore = event.storageBefore

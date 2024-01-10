@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,7 +40,7 @@ class KotlinBundledUsageDetector(private val project: Project, private val cs: C
                 return
             }
 
-            val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
+            val changes = event.getChanges<LibraryEntity>().ifEmpty { return }
 
             cs.launch {
                 val isDistUsedInLibraries = changes.asSequence()

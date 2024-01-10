@@ -9,6 +9,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 
 class ModuleModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
@@ -18,7 +19,7 @@ class ModuleModificationTracker(project: Project) :
     }
 
     override fun changed(event: VersionedStorageChange) {
-        event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        event.getChanges<ModuleEntity>().ifEmpty { return }
         incModificationCount()
     }
 

@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -67,7 +68,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     init {
         cs.launch {
             WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
-                val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
+                val hasChanges = event.getChanges<FacetEntity>().any { change ->
                     change.facetTypes.any { it == KotlinFacetType.ID }
                 }
                 if (hasChanges) {

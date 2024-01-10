@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -64,8 +65,8 @@ internal class SdkInfoCacheImpl(project: Project) :
 
     override fun changed(event: VersionedStorageChange) {
         val storageBefore = event.storageBefore
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        val sdkChanges = event.getChanges(SdkEntity::class.java)
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val sdkChanges = event.getChanges<SdkEntity>()
 
         if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
 

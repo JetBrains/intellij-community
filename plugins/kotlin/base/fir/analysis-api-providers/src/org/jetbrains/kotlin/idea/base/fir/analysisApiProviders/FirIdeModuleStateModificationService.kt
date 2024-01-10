@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
-import java.util.regex.Pattern
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -48,11 +47,13 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificat
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
-import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.utils.alwaysTrue
+import java.util.regex.Pattern
 
 private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\\d*)\\.jar")
 
@@ -197,15 +198,15 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 
     private fun VersionedStorageChange.contentRootChanges(modules: MutableSet<Module>) {
-        getChanges(ContentRootEntity::class.java).mapNotNullTo(modules) {
+        getChanges<ContentRootEntity>().mapNotNullTo(modules) {
             getChangedModule(it.oldEntity, it.newEntity)
         }
 
-        getChanges(SourceRootEntity::class.java).mapNotNullTo(modules) {
+        getChanges<SourceRootEntity>().mapNotNullTo(modules) {
             getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
         }
 
-        getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(modules) {
+        getChanges<JavaSourceRootPropertiesEntity>().mapNotNullTo(modules) {
             getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
         }
     }
@@ -220,7 +221,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     )
 
     private fun VersionedStorageChange.facetChanges(modules: MutableSet<Module>) {
-        getChanges(FacetEntity::class.java).mapNotNullTo(modules) {
+        getChanges<FacetEntity>().mapNotNullTo(modules) {
             getChangedModule(
                 oldEntity = it.oldEntity,
                 newEntity = it.newEntity,
@@ -248,7 +249,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 
     private fun handleLibraryChanges(event: VersionedStorageChange) {
-        val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
+        val libraryEntities = event.getChanges<LibraryEntity>().ifEmpty { return }
         for (change in libraryEntities) {
             when (change) {
                 is EntityChange.Added -> {}
@@ -274,8 +275,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
      * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
      */
     private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
-        val moduleEntities = event.getChanges(ModuleEntity::class.java)
-        val moduleSettingChanges: List<EntityChange<JavaModuleSettingsEntity>> = event.getChanges(JavaModuleSettingsEntity::class.java)
+        val moduleEntities = event.getChanges<ModuleEntity>()
+        val moduleSettingChanges: List<EntityChange<JavaModuleSettingsEntity>> = event.getChanges<JavaModuleSettingsEntity>()
 
         fun <T : WorkspaceEntity> MutableSet<Module>.processEntities(changes: List<EntityChange<T>>, toModule: (T) -> ModuleEntity?) {
             for (change: EntityChange<T> in changes) {

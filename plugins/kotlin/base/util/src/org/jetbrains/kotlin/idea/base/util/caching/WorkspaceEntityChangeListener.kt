@@ -65,8 +65,8 @@ abstract class ModuleEntityChangeListener(project: Project, afterChangeApplied: 
 
     override fun handleEvent(event: VersionedStorageChange) {
         val storageBefore = event.storageBefore
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        val moduleSettingChanges = event.getChanges(JavaModuleSettingsEntity::class.java)
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val moduleSettingChanges = event.getChanges<JavaModuleSettingsEntity>()
 
         val outdatedEntities = (moduleChanges.asSequence()
             .mapNotNull(EntityChange<ModuleEntity>::oldEntity) +
@@ -106,3 +106,6 @@ abstract class SdkEntityChangeListener(project: Project, afterChangeApplied: Boo
 fun SdkEntity.findSdkBridge(storage: EntityStorage): Sdk? =
     storage.sdkMap.getDataByEntity(this)
 
+
+inline fun <reified T : WorkspaceEntity> VersionedStorageChange.getChanges(): List<EntityChange<T>> =
+    getChanges(T::class.java)

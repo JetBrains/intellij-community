@@ -28,6 +28,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -275,7 +276,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun changed(event: VersionedStorageChange) {
-                event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+                event.getChanges<ModuleEntity>().ifEmpty { return }
 
                 invalidate(writeAccessRequired = true)
             }

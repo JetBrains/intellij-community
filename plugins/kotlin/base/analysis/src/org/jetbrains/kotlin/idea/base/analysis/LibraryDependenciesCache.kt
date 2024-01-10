@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -501,8 +502,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun beforeChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val sdkChanges = event.getChanges(SdkEntity::class.java)
+            val moduleChanges = event.getChanges<ModuleEntity>()
+            val sdkChanges = event.getChanges<SdkEntity>()
 
             if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
 

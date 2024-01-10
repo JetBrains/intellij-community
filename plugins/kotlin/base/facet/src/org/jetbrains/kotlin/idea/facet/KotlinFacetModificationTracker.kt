@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
@@ -23,8 +24,8 @@ class KotlinFacetModificationTracker(project: Project) :
     }
 
     override fun changed(event: VersionedStorageChange) {
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        val facetChanges = event.getChanges(FacetEntity::class.java) + event.getChanges(KotlinSettingsEntity::class.java)
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val facetChanges = event.getChanges<FacetEntity>() + event.getChanges<KotlinSettingsEntity>()
         if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
 
         for (facetChange in facetChanges) {

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -115,7 +116,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter
-        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        val changes = event.getChanges<ModuleEntity>().ifEmpty { return }
 
         val stableNameProvider = StableModuleNameProvider.getInstance(project)
 

@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -180,9 +181,9 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
 
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
-            val moduleSettingChanges = event.getChanges(JavaModuleSettingsEntity::class.java)
+            val moduleChanges = event.getChanges<ModuleEntity>()
+            val sourceRootChanges = event.getChanges<SourceRootEntity>()
+            val moduleSettingChanges = event.getChanges<JavaModuleSettingsEntity>()
 
             if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty() && moduleSettingChanges.isEmpty()) {
                 return
@@ -270,8 +271,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun modelChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val sdkChanges = event.getChanges(SdkEntity::class.java)
+            val moduleChanges = event.getChanges<ModuleEntity>()
+            val sdkChanges = event.getChanges<SdkEntity>()
 
             if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
 
