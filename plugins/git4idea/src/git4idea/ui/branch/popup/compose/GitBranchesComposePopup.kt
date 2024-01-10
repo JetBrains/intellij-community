@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 
 package git4idea.ui.branch.popup.compose
@@ -227,14 +227,14 @@ private fun BranchesWithActions(
       // TODO: write it cleaner, since now calculation requires a lot of attention on indexes
       if (local.isNotEmpty()) {
         val selectedIndex = local.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: 0
-        columnState.selectedKeys = listOf(local[selectedIndex])
+        columnState.selectedKeys = setOf(local[selectedIndex])
         // select local branch taking header into account
         columnState.scrollToItem(actions.size + 1 + selectedIndex + 1)
         return@LaunchedEffect
       }
       if (remote.isNotEmpty()) {
         val selectedIndex = remote.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: return@LaunchedEffect
-        columnState.selectedKeys = listOf(remote[selectedIndex])
+        columnState.selectedKeys = setOf(remote[selectedIndex])
         // select remote branch taking local branches and headers into account
         val indexToSelect = if (local.isEmpty()) {
           actions.size + 1 + selectedIndex + 1
@@ -382,7 +382,7 @@ internal fun BranchPopupItemBox(
     .onHover { hovered ->
       if (hovered) {
         coroutineScope.launch {
-          columnState.selectedKeys = listOf(key)
+          columnState.selectedKeys = setOf(key)
           columnState.lastActiveItemIndex = listIndex
         }
       }
