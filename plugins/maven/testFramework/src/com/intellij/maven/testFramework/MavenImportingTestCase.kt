@@ -36,7 +36,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -110,7 +109,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   val isWorkspaceImport: Boolean
     get() = isImportToWorkspaceModelEnabled(project)
 
-  fun supportModuleGroups(): Boolean {
+  private fun supportModuleGroups(): Boolean {
     return !isWorkspaceImport
   }
 
@@ -163,12 +162,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun assertRootProjects(vararg expectedNames: String?) {
     val rootProjects = projectsManager.getProjectsTree().rootProjects
-    val actualNames = ContainerUtil.map(rootProjects) { it: MavenProject -> it.mavenId.artifactId }
+    val actualNames = rootProjects.map { it.mavenId.artifactId }
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
   protected val projectsTree: MavenProjectsTree
-    protected get() = projectsManager.getProjectsTree()
+    get() = projectsManager.getProjectsTree()
 
   protected fun assertModuleOutput(moduleName: String, output: String?, testOutput: String?) {
     val e = getCompilerExtension(moduleName)
@@ -178,13 +177,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected val projectsManager: MavenProjectsManager
-    protected get() = myProjectsManager!!
+    get() = myProjectsManager!!
 
   protected fun assertProjectOutput(module: String) {
     assertTrue(getCompilerExtension(module)!!.isCompilerOutputPathInherited())
   }
 
-  protected fun getCompilerExtension(module: String): CompilerModuleExtension? {
+  private fun getCompilerExtension(module: String): CompilerModuleExtension? {
     val m = getRootManager(module)
     return CompilerModuleExtension.getInstance(m.getModule())
   }
@@ -250,7 +249,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), *expectedDeps)
   }
 
-  protected fun assertModuleModuleDepScope(moduleName: String, depName: String, scope: DependencyScope?) {
+  protected fun assertModuleModuleDepScope(moduleName: String, depName: String, scope: DependencyScope) {
     val dep = getModuleModuleDep(moduleName, depName)
     assertEquals(scope, dep.getScope())
   }
@@ -319,22 +318,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertEquals("Unexpected version", version, coords.version)
   }
 
-  protected fun assertModuleGroupPath(moduleName: String, vararg expected: String) {
-    assertModuleGroupPath(moduleName, false, *expected)
-  }
-
-  protected fun assertModuleGroupPath(moduleName: String, groupWasManuallyAdded: Boolean, vararg expected: String) {
-    val moduleGroupsSupported = supportModuleGroups() || groupWasManuallyAdded && supportsKeepingManualChanges()
-    val path = ModuleManager.getInstance(project).getModuleGroupPath(getModule(moduleName)!!)
-    if (!moduleGroupsSupported || expected.size == 0) {
-      assertNull(path)
-    }
-    else {
-      assertNotNull(path)
-      assertOrderedElementsAreEqual(listOf(*path!!), *expected)
-    }
-  }
-
   protected fun getModule(name: String): Module {
     val m = ReadAction.compute<Module?, RuntimeException> { ModuleManager.getInstance(project).findModuleByName(name) }
     assertNotNull("Module $name not found", m)
@@ -353,7 +336,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return getRootManager(moduleName).getContentEntries()
   }
 
-  fun getRootManager(module: String): ModuleRootManager {
+  private fun getRootManager(module: String): ModuleRootManager {
     return ModuleRootManager.getInstance(getModule(module))
   }
 
@@ -414,12 +397,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Obsolete
   // use importProjectAsync()
-  protected fun importProject(file: VirtualFile) {
-    importProjects(file)
-  }
-
-  @Obsolete
-  // use importProjectAsync()
   protected fun importProjects(vararg files: VirtualFile) {
     doImportProjects(listOf(*files), true)
   }
@@ -445,16 +422,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
                                  disabledProfiles: List<String>, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    readProjects(files, disabledProfiles, *profiles)
+    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
     }
-  }
-
-  private fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
-    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
   }
 
   protected fun initProjectsManager(enableEventHandling: Boolean) {
@@ -528,8 +501,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
   }
 
-  protected open fun performPostImportTasks() {}
-
   @Throws(Exception::class)
   protected fun executeGoal(relativePath: String?, goal: String) {
     val dir = projectRoot.findFileByRelativePath(relativePath!!)
@@ -542,7 +513,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Maven execution failed", tryAcquire)
   }
 
-  protected fun removeFromLocalRepository(relativePath: String?) {
+  protected fun removeFromLocalRepository(relativePath: String) {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().shutdown(true)
     }

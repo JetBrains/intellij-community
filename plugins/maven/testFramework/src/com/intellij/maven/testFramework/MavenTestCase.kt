@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.execution.junit.FileComparisonData
@@ -39,7 +38,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -173,8 +171,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     if (wslMsId == null) return
     val distributions = WslDistributionManager.getInstance().installedDistributions
     if (distributions.isEmpty()) throw IllegalStateException("no WSL distributions configured!")
-    myWSLDistribution = distributions.stream().filter { it: WSLDistribution -> wslMsId == it.msId }.findFirst()
-      .orElseThrow { IllegalStateException("Distribution $wslMsId was not found") }
+    myWSLDistribution = distributions.firstOrNull { it.msId == wslMsId }
+                        ?: throw IllegalStateException("Distribution $wslMsId was not found")
     var jdkPath = System.getProperty("wsl.jdk.path")
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64"
@@ -198,7 +196,7 @@ abstract class MavenTestCase : UsefulTestCase() {
                                 message: String,
                                 details: Array<String>,
                                 t: Throwable?): Set<Action> {
-        val intercept = t != null && (StringUtil.notNullize(t.message).contains("The network name cannot be found") &&
+        val intercept = t != null && ((t.message ?: "").contains("The network name cannot be found") &&
                                       message.contains("Couldn't read shelf information") ||
                                       "JDK annotations not found" == t.message && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category)
         return if (intercept) Action.NONE else Action.ALL
@@ -207,13 +205,13 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun getWslSdk(jdkPath: String): Sdk {
-    val sdk = ContainerUtil.find(ProjectJdkTable.getInstance().allJdks) { it: Sdk -> jdkPath == it.homePath }
+    val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
     val jdkTable = ProjectJdkTable.getInstance()
     for (existingSdk in jdkTable.allJdks) {
       if (existingSdk === sdk) return sdk
     }
     val newSdk = JavaSdk.getInstance().createJdk("Wsl JDK For Tests", jdkPath)
-    WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(newSdk, myProject!!) }
+    WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(newSdk, testRootDisposable) }
     return newSdk
   }
 
@@ -241,7 +239,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       ThrowableRunnable { doTearDownFixtures() },
       ThrowableRunnable { deleteDirOnTearDown(myDir) },
       ThrowableRunnable {
-        if (myWSLDistribution != null) {
+        if (myWSLDistribution != null && basePath != null) {
           deleteDirOnTearDown(File(basePath))
         }
       },
@@ -397,8 +395,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     try {
       return WriteCommandAction.writeCommandAction(myProject).compute<Module, IOException> {
         val f = createProjectSubFile("$name/$name.iml")
-        val module = getInstance(myProject!!).newModule(
-          f!!.path, type.id)
+        val module = getInstance(myProject!!).newModule(f.path, type.id)
         PsiTestUtil.addContentRoot(module, f.parent)
         module
       }
@@ -412,10 +409,10 @@ abstract class MavenTestCase : UsefulTestCase() {
 
 
   protected fun createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-    return createPomFile(myProjectRoot, xml).also { myProjectPom = it }!!
+    return createPomFile(myProjectRoot, xml).also { myProjectPom = it }
   }
 
-  protected fun createModulePom(relativePath: String?,
+  protected fun createModulePom(relativePath: String,
                                 @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
@@ -440,7 +437,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(myProjectRoot, xml, true)
   }
 
-  protected fun createProfilesXmlOldStyle(relativePath: String?, xml: String): VirtualFile {
+  protected fun createProfilesXmlOldStyle(relativePath: String, xml: String): VirtualFile {
     return createProfilesFile(createProjectSubDir(relativePath), xml, true)
   }
 
@@ -448,7 +445,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(myProjectRoot, xml, false)
   }
 
-  protected fun createProfilesXml(relativePath: String?, xml: String): VirtualFile {
+  protected fun createProfilesXml(relativePath: String, xml: String): VirtualFile {
     return createProfilesFile(createProjectSubDir(relativePath), xml, false)
   }
 
@@ -456,7 +453,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(myProjectRoot, content)
   }
 
-  protected fun createFullProfilesXml(relativePath: String?, content: String): VirtualFile {
+  protected fun createFullProfilesXml(relativePath: String, content: String): VirtualFile {
     return createProfilesFile(createProjectSubDir(relativePath), content)
   }
 
@@ -468,20 +465,20 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun createProjectSubDirs(vararg relativePaths: String?) {
+  protected fun createProjectSubDirs(vararg relativePaths: String) {
     for (path in relativePaths) {
       createProjectSubDir(path)
     }
   }
 
-  protected fun createProjectSubDir(relativePath: String?): VirtualFile {
+  protected fun createProjectSubDir(relativePath: String): VirtualFile {
     val f = File(projectPath, relativePath)
     f.mkdirs()
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
   }
 
   @Throws(IOException::class)
-  protected fun createProjectSubFile(relativePath: String?): VirtualFile {
+  protected fun createProjectSubFile(relativePath: String): VirtualFile {
     val f = File(projectPath, relativePath)
     f.parentFile.mkdirs()
     f.createNewFile()
@@ -489,7 +486,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   @Throws(IOException::class)
-  protected fun createProjectSubFile(relativePath: String?, content: String?): VirtualFile {
+  protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
     setFileContent(file, content, false)
     return file
@@ -756,7 +753,7 @@ abstract class MavenTestCase : UsefulTestCase() {
              """.trimIndent() + xml + "</project>"
     }
 
-    fun assumeTestCanBeReusedForPreimport(aClass: Class<*>, testName: String?) {
+    fun assumeTestCanBeReusedForPreimport(aClass: Class<*>, testName: String) {
       if (!preimportTestMode) return
       try {
         var annotation = aClass.getDeclaredAnnotation(InstantImportCompatible::class.java)
