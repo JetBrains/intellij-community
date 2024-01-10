@@ -36,16 +36,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   private ExternalAnnotator<?, ?> myExternalAnnotator;
 
   /**
-   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public AnnotationHolderImpl(@NotNull AnnotationSession session) {
-    this(session, false);
-    PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
-  }
-
-  /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal

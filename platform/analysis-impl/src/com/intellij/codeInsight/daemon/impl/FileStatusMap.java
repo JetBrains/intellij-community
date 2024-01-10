@@ -220,14 +220,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #getFileDirtyScope(Document, PsiFile, int)}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, int passId) {
-    return getFileDirtyScope(document, PsiDocumentManager.getInstance(myProject).getPsiFile(document), passId);
-  }
-
-  /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
