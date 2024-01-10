@@ -600,7 +600,9 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(indent).append(expression.getExpression()).append("\n");
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
-      String key = i < expression.getCases().size() ? expression.getCases().get(i) : Integer.toString(switchData.getKeys()[i]);
+      String key = expression.getCases() != null && i < expression.getCases().size()
+                   ? expression.getCases().get(i)
+                   : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
       buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");

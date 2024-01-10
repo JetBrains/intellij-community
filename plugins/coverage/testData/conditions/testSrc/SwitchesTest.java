@@ -34,6 +34,17 @@ public class SwitchesTest extends TestCase {
     switches.stringSwitchSameHashCode("BB");
     switches.stringSwitchSameHashCode("C");
 
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(3);
+    switches.tableSwitch(3);
+    switches.tableSwitch(3);
+    switches.tableSwitch(2);
+    switches.tableSwitch(2);
+    switches.tableSwitch(1);
+
   }
 
   public void testKotlin() {
@@ -71,5 +82,16 @@ public class SwitchesTest extends TestCase {
     switches.stringSwitchSameHashCode("C");
     switches.stringSwitchSameHashCode("D");
     switches.stringSwitchSameHashCode("E");
+
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(4);
+    switches.tableSwitch(3);
+    switches.tableSwitch(3);
+    switches.tableSwitch(3);
+    switches.tableSwitch(2);
+    switches.tableSwitch(2);
+    switches.tableSwitch(1);
   }
 }

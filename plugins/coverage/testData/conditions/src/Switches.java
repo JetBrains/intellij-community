@@ -117,16 +117,16 @@ public class Switches {
 
   void stringSwitch(String s) {
     switch (s) {
-      case "A": {
-        System.out.println("Case A");
+      case "C": {
+        System.out.println("Case C");
         break;
       }
       case "B": {
         System.out.println("Case B");
         break;
       }
-      case "C": {
-        System.out.println("Case C");
+      case "A": {
+        System.out.println("Case A");
         break;
       }
       case "D": {
@@ -177,6 +177,27 @@ public class Switches {
       }
       default: {
         System.out.println("Default");
+        break;
+      }
+    }
+  }
+
+  void tableSwitch(int x) {
+    switch (x) {
+      case 4: {
+        System.out.println("Case 4");
+        break;
+      }
+      case 3: {
+        System.out.println("Case 3");
+        break;
+      }
+      case 2: {
+        System.out.println("Case 2");
+        break;
+      }
+      case 1: {
+        System.out.println("Case 1");
         break;
       }
     }

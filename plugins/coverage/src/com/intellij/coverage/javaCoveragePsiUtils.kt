@@ -4,9 +4,12 @@ package com.intellij.coverage
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 
-data class SwitchCoverageExpression(val expression: String, val cases: List<String>, val hasDefault: Boolean)
+// when a case list is null, it means that the order of cases may be unstable,
+// so it is better to rely on keys from the report
+data class SwitchCoverageExpression(val expression: String, val cases: List<String>?, val hasDefault: Boolean)
 data class ConditionCoverageExpression(val expression: String, val isReversed: Boolean)
 
 internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverageExpression> {
@@ -31,8 +34,11 @@ internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverag
   })
   return switchBlocks.mapNotNull { block ->
     val expression = block.expression?.withoutParentheses()?.text ?: return@mapNotNull null
-    val cases = extractCaseLabels(block).mapNotNull { if (it is PsiExpression) it.withoutParentheses() else it }.map(PsiElement::getText)
-    SwitchCoverageExpression(expression, cases, hasDefaultLabel(block))
+    val cases = extractCaseLabels(block).mapNotNull { if (it is PsiExpression) it.withoutParentheses() else it }
+      // we know for sure that switch by string works correctly in Java
+      // is we see at least one string literal, we can keep string labels
+      .takeIf { cases -> cases.any { it.children.singleOrNull()?.elementType == JavaTokenType.STRING_LITERAL } }
+    SwitchCoverageExpression(expression, cases?.map(PsiElement::getText), hasDefaultLabel(block))
   }
 }
 

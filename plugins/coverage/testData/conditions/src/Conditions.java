@@ -131,7 +131,7 @@ public class Conditions {
   }
 
   void andAnd1(boolean a, boolean b, boolean c) {
-    if (a && b && c) { // TODO expression here is incorrect
+    if (a && b && c) {
       System.out.println("All true");
     }
     else {

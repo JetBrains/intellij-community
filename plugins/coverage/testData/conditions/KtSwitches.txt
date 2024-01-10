@@ -91,15 +91,15 @@ Hits: 1
 Line 56 coverage: PARTIAL
 Hits: 1
     s
-        case "A": 1
-        case "B": 0
-        case "C": 0
-        case "D": 0
-        case "E": 0
-        case "F": 0
-        case "G": 0
+        case 65: 1
+        case 66: 0
+        case 67: 0
+        case 68: 0
+        case 69: 0
+        case 70: 0
+        case 71: 0
 
-Line 57 coverage: FULL
+Line 59 coverage: FULL
 Hits: 1
 
 Line 68 coverage: FULL
@@ -110,9 +110,9 @@ Hits: 1
 Line 75 coverage: FULL
 Hits: 4
     s
-        case "A": 1
-        case "B": 1
-        case "C": 1
+        case 65: 1
+        case 66: 1
+        case 67: 1
         default: 1
 
 Line 76 coverage: FULL
@@ -142,5 +142,26 @@ Line 88 coverage: FULL
 Hits: 1
 
 Line 89 coverage: FULL
+Hits: 1
+
+Line 94 coverage: PARTIAL
+Hits: 10
+    x
+        case 1: 1
+        case 2: 2
+        case 3: 3
+        case 4: 4
+        default: 0
+
+Line 95 coverage: FULL
+Hits: 4
+
+Line 96 coverage: FULL
+Hits: 3
+
+Line 97 coverage: FULL
+Hits: 2
+
+Line 98 coverage: FULL
 Hits: 1
 

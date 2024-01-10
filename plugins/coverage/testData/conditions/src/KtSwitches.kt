@@ -54,9 +54,9 @@ class KtSwitches {
 
   fun stringSwitch(s: String?) {
     when (s) {
-      "A" -> println("Case A")
-      "B" -> println("Case B")
       "C" -> println("Case C")
+      "B" -> println("Case B")
+      "A" -> println("Case A")
       "D" -> println("Case D")
       "E" -> println("Case E")
       "F" -> println("Case F")
@@ -87,6 +87,15 @@ class KtSwitches {
       "C" -> println("Case C")
       "D" -> println("Case D")
       else -> println("Default")
+    }
+  }
+
+  fun tableSwitch(x: Int) {
+    when (x) {
+      4 -> println("Case 4")
+      3 -> println("Case 3")
+      2 -> println("Case 2")
+      1 -> println("Case 1")
     }
   }
 }

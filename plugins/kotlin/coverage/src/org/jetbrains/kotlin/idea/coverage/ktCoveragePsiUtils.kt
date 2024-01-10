@@ -24,10 +24,8 @@ internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverag
     })
     return expressions.mapNotNull { switchExpression ->
         val expression = switchExpression.subjectExpression?.withoutParentheses()?.text ?: return@mapNotNull null
-        val cases = extractCaseLabels(switchExpression)
-            .mapNotNull { if (it is KtExpression) it.withoutParentheses() else it }
-            .map(PsiElement::getText)
-        SwitchCoverageExpression(expression, cases, hasDefaultLabel(switchExpression))
+        // 'when string' expression has indeterminate case order in Kotlin
+        SwitchCoverageExpression(expression, null, hasDefaultLabel(switchExpression))
     }
 }
 
@@ -120,9 +118,6 @@ private fun getEnclosingParent(psiFile: PsiFile, range: TextRange): PsiElement? 
     val elementAt = psiFile.findElementAt(range.startOffset) ?: return null
     return elementAt.parents(false).firstOrNull { it.textRange.contains(range) }
 }
-
-private fun extractCaseLabels(expression: KtWhenExpression): List<PsiElement> =
-    expression.entries.filterNot(KtWhenEntry::isElse).flatMap { it.conditions.toList() }
 
 private fun hasDefaultLabel(switchBlock: KtWhenExpression): Boolean =
     switchBlock.entries.any(KtWhenEntry::isElse)
