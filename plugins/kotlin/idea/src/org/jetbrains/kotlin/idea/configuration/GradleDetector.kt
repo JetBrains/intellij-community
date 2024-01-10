@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 
 val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
@@ -20,14 +18,4 @@ class GradleDetector : BuildSystemTypeDetector {
         }
         return null
     }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Moved to the 'org.jetbrains.kotlin.idea.base.util' package.",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.base.util.isGradleModule()")
-)
-fun Module.isGradleModule(): Boolean {
-    return ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
 }

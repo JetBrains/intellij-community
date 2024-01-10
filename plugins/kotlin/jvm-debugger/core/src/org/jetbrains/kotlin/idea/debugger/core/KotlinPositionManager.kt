@@ -579,19 +579,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use 'ClassNameProvider' directly")
-    fun originalClassNamesForPosition(position: SourcePosition): List<String> {
-        return runReadAction {
-            val classNameProvider = ClassNameProvider(
-                debugProcess.project,
-                debugProcess.searchScope,
-                ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
-            )
-            classNameProvider.getCandidates(position)
-        }
-    }
-
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
         if (position.file !is KtFile) {
             throw NoDataException.INSTANCE

@@ -62,13 +62,6 @@ class ProjectInfo(
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
     private val moduleInfos = moduleManager.modules.associateWith { module -> ModuleInfo(module, this) }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use .forEachModule instead. This method is error prone and has to be called before 'module(..)' in order to run")
-    fun allModules(body: ModuleInfo.() -> Unit) {
-        assert(allModulesAsserter == null)
-        allModulesAsserter = body
-    }
-
     fun forEachModule(body: ModuleInfo.() -> Unit) {
         moduleInfos.values.forEach { moduleInfo ->
             moduleInfo.run(body)

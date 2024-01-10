@@ -221,22 +221,6 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
 
-@Suppress("DEPRECATION_ERROR")
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use detectPlatformKindByPlugin() instead",
-    replaceWith = ReplaceWith("detectPlatformKindByPlugin(moduleNode)"),
-    level = DeprecationLevel.ERROR
-)
-fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind<*>? {
-    return when (moduleNode.kotlinGradleProjectDataOrFail.platformPluginId) {
-        "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.DEFAULT]
-        "kotlin-platform-js" -> TargetPlatformKind.JavaScript
-        "kotlin-platform-common" -> TargetPlatformKind.Common
-        else -> null
-    }
-}
-
 internal fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
