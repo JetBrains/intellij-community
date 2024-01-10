@@ -1684,12 +1684,6 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text, char mnemonic) {
-    // implemented method is deprecated, so, it just calls non-deprecated overloading one
-    addButtonToLowerPane(runnable, text);
-  }
-
-  @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
                                         @Nullable @NlsContexts.Command String commandName,
                                         @NotNull @NlsContexts.DialogMessage String cannotMakeString,
