@@ -32,7 +32,6 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
@@ -235,33 +234,6 @@ public final class MavenImportUtil {
     if (isTestModule(moduleName)) {
       return StringUtil.trimEnd(moduleName, TEST_SUFFIX);
     }
-    return moduleName;
-  }
-
-  /**
-   * @deprecated only used for experimental tree importer. Not used in Workpsace import
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static String getModuleName(@NotNull MavenProject project,
-                                      @NotNull MavenProjectsTree projectsTree,
-                                      @NotNull Map<MavenProject, String> moduleNameMap) {
-    String moduleName = moduleNameMap.get(project);
-    if (moduleName != null) return moduleName;
-    moduleName = project.getMavenId().getArtifactId();
-    if (moduleName == null) {
-      return "";
-    }
-    if (project.getParentId() != null) {
-      MavenProject parentProject = projectsTree.findProject(project.getParentId());
-      if (parentProject != null) {
-        String parentName = getModuleName(parentProject, projectsTree, moduleNameMap);
-        if (StringUtil.isNotEmpty(parentName)) {
-          moduleName = parentName + "." + moduleName;
-        }
-      }
-    }
-    moduleNameMap.put(project, moduleName);
     return moduleName;
   }
 

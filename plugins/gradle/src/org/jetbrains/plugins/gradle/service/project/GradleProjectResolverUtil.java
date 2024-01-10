@@ -319,15 +319,6 @@ public final class GradleProjectResolverUtil {
     return externalProjectId.substring(i + 1);
   }
 
-  /**
-   * @deprecated Use getGradleIdentityPathOrNull instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static String getGradlePath(final Module module) {
-    return getGradleIdentityPathOrNull(module);
-  }
-
   @Nullable
   public static String getGradleIdentityPathOrNull(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
@@ -937,16 +928,6 @@ public final class GradleProjectResolverUtil {
 
   private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
     Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
-
-  /**
-   * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(DataNode, LibraryData)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
-                                                        @Nullable DataNode<ProjectData> ideProject,
-                                                        @NotNull final LibraryData library) {
-    return linkProjectLibrary(ideProject, library);
-  }
 
   public static boolean linkProjectLibrary(
     @Nullable DataNode<ProjectData> ideProject,
