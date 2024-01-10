@@ -71,6 +71,8 @@ internal object CallableWeigher {
         signature: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
     ) {
+        if (context.isPositionInsideImportOrPackageDirective) return
+
         val isFunctionalVariableCall = signature.symbol is KtVariableLikeSymbol && lookupElement.`object` is FunctionCallLookupObject
         lookupElement.callableWeight = getCallableMetadata(context, signature, symbolOrigin, isFunctionalVariableCall)
     }

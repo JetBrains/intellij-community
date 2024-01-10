@@ -188,11 +188,6 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/InImportExtension/");
     }
 
-    @TestMetadata("InImportExtensionNoAttributes")
-    public void testInImportExtensionNoAttributes() throws Exception {
-        runTest("../testData/basic/multifile/InImportExtensionNoAttributes/");
-    }
-
     @TestMetadata("InImportHighOrderTopLevelFun")
     public void testInImportHighOrderTopLevelFun() throws Exception {
         runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
