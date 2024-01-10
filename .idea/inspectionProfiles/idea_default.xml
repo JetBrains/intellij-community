@@ -2001,7 +2001,7 @@
       </replaceConfiguration>
       <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" description="`lifetime` has higher priority as variable and shadows `lifetime` of nested scopes. It leads to subscription leaks.&#10;Just renaming it to `lt` helps a lot." text="class $Name$($Param1$: $T1$, $Param2$: $T2$, $Param3$: $T3$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="Name" within="" contains="" />
+        <constraint name="Name" script="&quot;import org.jetbrains.kotlin.psi.KtClass&#10;&#10;def cls = __context__ as KtClass&#10;!(&quot;Lifetimed&quot; in cls.superTypeList?.entries?.text ?: [])&quot;" within="" contains="" />
         <constraint name="Param1" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
         <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
