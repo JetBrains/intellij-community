@@ -385,6 +385,9 @@
     <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="false"
                  description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
 
+    <registryKey key="maven.legacy.import.available" defaultValue="false"
+                 description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

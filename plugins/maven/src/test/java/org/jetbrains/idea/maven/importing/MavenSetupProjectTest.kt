@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
@@ -170,6 +171,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
   @Test
   fun `test workspace import forcibly enabled once per project`() = runBlocking {
+    Registry.get("maven.legacy.import.available").setValue(true, testRootDisposable)
     val projectInfo = generateProject("A")
 
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
