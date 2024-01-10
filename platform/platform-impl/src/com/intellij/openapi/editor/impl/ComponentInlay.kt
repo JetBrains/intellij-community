@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
@@ -69,7 +70,9 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
           editor.removeUserData(INLAYS_CONTAINER)
         }
       }
-      inlaysContainer.add(inlay)
+      if (!AppMode.isRemoteDevHost()) {
+        inlaysContainer.add(inlay)
+      }
       Disposer.register(inlaysContainer, inlay)
       inlay.whenDisposed {
         // auto-dispose container when last inlay removed

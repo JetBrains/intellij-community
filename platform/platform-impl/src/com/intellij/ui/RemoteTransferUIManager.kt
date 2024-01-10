@@ -1,12 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.client.ClientAppSession
+import com.intellij.openapi.editor.ComponentInlayRenderer
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.util.*
 import javax.swing.JComponent
 
@@ -14,6 +21,7 @@ object RemoteTransferUIManager {
   private val becontrolizationForbidKey = Key.create<Boolean>("lux.localComponents.forbidBeControlization")
   private val wellBeControlizableKey = Key.create<Boolean>("lux.localComponents.wellBeControlizable")
   private val forceDirectTransferKey = Key.create<Boolean>("lux.force.direct.transfer")
+  private val focusInlayOnShowKey = Key.create<Boolean>("lux.block.inlay.focus.on.show")
   private val becontrolizaitionExceptionKey = "lux.localComponents.becontrolizationException"
 
   private fun _forbidBeControlizationInLux(comp: Any, registryKey: String) {
@@ -86,5 +94,31 @@ object RemoteTransferUIManager {
       component.getUserData(forceDirectTransferKey) == true
     else
       component.getUserData(forceDirectTransferKey) == true
+  }
+
+  @JvmStatic
+  fun focusWhenShown(project: Project, component: JComponent) {
+    if (!AppMode.isRemoteDevHost()) {
+      return
+    }
+
+    component.addHierarchyListener(object : HierarchyListener {
+      override fun hierarchyChanged(e: HierarchyEvent?) {
+        if (!component.isShowing) return
+        IdeFocusManager.getInstance(project).requestFocus(component, false)
+        component.removeHierarchyListener(this)
+      }
+    })
+  }
+
+  @JvmStatic
+  fun markFocusOnShowForInlay(component: JComponent) {
+    component.putUserData(focusInlayOnShowKey, true)
+  }
+
+  @JvmStatic
+  fun isFocusWhenShown(inlay: Inlay<*>): Boolean {
+    val component = (inlay.renderer as? ComponentInlayRenderer<*>)?.component as? JComponent ?: return false
+    return component.getUserData(focusInlayOnShowKey) == true
   }
 }
