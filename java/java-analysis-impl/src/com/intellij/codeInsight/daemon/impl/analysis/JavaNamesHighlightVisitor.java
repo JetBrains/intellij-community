@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;
@@ -43,7 +42,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
     // both PsiJavaFile and PsiCodeFragment must match
-    return file instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
+    return file instanceof PsiImportHolder;
   }
 
   @Override
