@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
+import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
  * See also [IjentChildPtyProcessAdapter].
  */
 @ApiStatus.Experimental
-class IjentChildProcessAdapter(coroutineScope: CoroutineScope, private val ijentChildProcess: IjentChildProcess) : Process() {
+class IjentChildProcessAdapter(coroutineScope: CoroutineScope, private val ijentChildProcess: IjentChildProcess) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
     ijentChildProcess,
