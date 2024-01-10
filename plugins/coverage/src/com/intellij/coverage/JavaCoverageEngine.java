@@ -55,10 +55,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.rt.coverage.data.JumpData;
-import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.rt.coverage.data.*;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.testIntegration.TestFramework;
@@ -543,7 +540,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     catch (Exception e) {
       LOG.error(e);
-      return CoverageBundle.message("hits.title", lineData.getHits());
+      return createDefaultHitsMessage(lineData);
     }
   }
 
@@ -551,8 +548,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                   List<ConditionCoverageExpression> conditions,
                                                   List<SwitchCoverageExpression> switches) {
     StringBuilder buf = new StringBuilder();
-    String defaultResult = CoverageBundle.message("hits.title", lineData.getHits());
-    buf.append(defaultResult).append("\n");
+    buf.append(CoverageBundle.message("hits.title", lineData.getHits())).append("\n");
     int idx = 0;
     int hits = 0;
 
@@ -560,7 +556,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       for (JumpData jumpData : lineData.getJumps()) {
         if (idx >= conditions.size()) {
           LOG.info("Cannot map coverage report data with PSI: there are more branches in report then in PSI");
-          return defaultResult;
+          return createDefaultHitsMessage(lineData);
         }
         ConditionCoverageExpression expression = conditions.get(idx++);
         addJumpDataInfo(buf, jumpData, expression);
@@ -572,7 +568,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       for (SwitchData switchData : lineData.getSwitches()) {
         if (idx >= switches.size()) {
           LOG.info("Cannot map coverage report data with PSI: there are more switches in report then in PSI");
-          return defaultResult;
+          return createDefaultHitsMessage(lineData);
         }
         SwitchCoverageExpression expression = switches.get(idx++);
         addSwitchDataInfo(buf, switchData, expression, lineData.getStatus());
@@ -612,6 +608,12 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (expression.getHasDefault() || defaultCausesLinePartiallyCovered || defaultHits > 0) {
       buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
     }
+  }
+
+  private static @NotNull String createDefaultHitsMessage(@NotNull LineData lineData) {
+    BranchData branchData = lineData.getBranchData();
+    if (branchData == null) return CoverageBundle.message("hits.title", lineData.getHits());
+    return CoverageBundle.message("branch.coverage.message", lineData.getHits(), branchData.getCoveredBranches(), branchData.getTotalBranches()) + "\n";
   }
 
   @Override

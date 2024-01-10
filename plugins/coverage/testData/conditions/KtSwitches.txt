@@ -107,6 +107,8 @@ Hits: 1
 
 Line 69 coverage: PARTIAL
 Hits: 1
+Covered 1/2 branches
+
 Line 75 coverage: FULL
 Hits: 4
     s
@@ -129,6 +131,8 @@ Hits: 1
 
 Line 84 coverage: FULL
 Hits: 5
+Covered 5/5 branches
+
 Line 85 coverage: FULL
 Hits: 1
 
