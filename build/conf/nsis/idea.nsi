@@ -1565,8 +1565,8 @@ Function un.ConfirmDeleteSettings
   Goto feedback_web_page
 build_tools:
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" "$(confirm_delete_rider_build_tools)"
-  ; do not show feedback web page checkbox for EAP builds.
 feedback_web_page:
+  ; do not show feedback web page checkbox for EAP builds.
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page_exists
 feedback_web_page_exists:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
