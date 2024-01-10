@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
@@ -79,8 +79,8 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     return readPom
   }
 
-  private fun calculateTimestamp(mavenProject: MavenProject): MavenProjectTimestamp {
-    return ReadAction.compute<MavenProjectTimestamp, RuntimeException> {
+  private suspend fun calculateTimestamp(mavenProject: MavenProject): MavenProjectTimestamp {
+    return readAction {
       val pomTimestamp = getFileTimestamp(mavenProject.file)
       val parent = tree.findParent(mavenProject)
       val parentLastReadStamp = parent?.lastReadStamp ?: -1
@@ -95,13 +95,13 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
 
       val profilesHashCode = explicitProfiles.hashCode()
       MavenProjectTimestamp(pomTimestamp,
-                                                                                parentLastReadStamp,
-                                                                                profilesTimestamp,
-                                                                                userSettingsTimestamp,
-                                                                                globalSettingsTimestamp,
-                                                                                profilesHashCode.toLong(),
-                                                                                jvmConfigTimestamp,
-                                                                                mavenConfigTimestamp)
+                            parentLastReadStamp,
+                            profilesTimestamp,
+                            userSettingsTimestamp,
+                            globalSettingsTimestamp,
+                            profilesHashCode.toLong(),
+                            jvmConfigTimestamp,
+                            mavenConfigTimestamp)
     }
   }
 
