@@ -55,7 +55,6 @@ class JpsBootstrapMain(args: Array<String>?) {
   private var jarFileTarget: Path? = null
   private var mainArgsToRun: List<String>? = null
   private val additionalSystemProperties: Properties
-  private val additionalSystemPropertiesFromPropertiesFile: Properties
   private val onlyDownloadJdk: Boolean
   private val onlyPrepareArgfileForJar: Boolean
   private val debugOption: Boolean
@@ -94,15 +93,26 @@ class JpsBootstrapMain(args: Array<String>?) {
       javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET))
       jarFileTarget = cmdline.getOptionValue(OPT_JAR_TARGET)?.let { Path.of(it) }
     }
-    additionalSystemProperties = cmdline.getOptionProperties("D")
-    additionalSystemPropertiesFromPropertiesFile = Properties()
+
+    val systemPropertiesFromPropertiesFile = Properties()
     if (cmdline.hasOption(OPT_PROPERTIES_FILE)) {
       val propertiesFile = Path.of(cmdline.getOptionValue(OPT_PROPERTIES_FILE))
       Files.newBufferedReader(propertiesFile).use { reader ->
         info("Loading properties from $propertiesFile")
-        additionalSystemPropertiesFromPropertiesFile.load(reader)
+        systemPropertiesFromPropertiesFile.load(reader)
       }
     }
+
+    val cmdlineSystemProperties = cmdline.getOptionProperties("D")
+    val defaultSystemProperties = JpsBootstrapUtil.getDefaultSystemPropertiesIfMissing(
+      cmdlineSystemProperties,
+      systemPropertiesFromPropertiesFile,
+    )
+
+    additionalSystemProperties = Properties()
+    additionalSystemProperties.putAll(systemPropertiesFromPropertiesFile)
+    additionalSystemProperties.putAll(cmdlineSystemProperties)
+    additionalSystemProperties.putAll(defaultSystemProperties)
 
     val verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE)
     setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && verboseEnv.toBooleanChecked()))
@@ -139,10 +149,7 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   @Throws(Throwable::class)
   private fun main() {
-    JpsBootstrapUtil.loadJpsBuildsystemProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties,
-    )
+    JpsBootstrapUtil.loadJpsSystemProperties(additionalSystemProperties)
 
     val jdkHome = downloadJdk()
     if (onlyDownloadJdk) {
@@ -237,7 +244,6 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (underTeamCity) {
       systemProperties.putAll(JpsBootstrapUtil.teamCitySystemProperties)
     }
-    systemProperties.putAll(additionalSystemPropertiesFromPropertiesFile)
     systemProperties.putAll(additionalSystemProperties)
     systemProperties.putIfAbsent("file.encoding", "UTF-8") // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true")
