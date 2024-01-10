@@ -98,6 +98,17 @@ public final class DfaPsiUtil {
 
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
+      if (fromAnnotation.getNullability() == Nullability.NULLABLE &&
+          owner instanceof PsiMethod method) {
+        PsiType type = method.getReturnType();
+        PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
+        if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
+            annotationOwner instanceof PsiType && annotationOwner != type) {
+          // Nullable from type hierarchy: should check the instantiation, as it could be more concrete
+          Nullability fromType = getNullabilityFromType(resultType, owner);
+          if (fromType != null) return fromType;
+        }
+      }
       return fromAnnotation.getNullability();
     }
 
@@ -117,13 +128,8 @@ public final class DfaPsiUtil {
       }
     }
 
-    Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) {
-      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
-        return Nullability.UNKNOWN;
-      }
-      return fromType;
-    }
+    Nullability fromType = getNullabilityFromType(resultType, owner);
+    if (fromType != null) return fromType;
 
     if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {
       PsiField field = PropertyUtil.getFieldOfGetter(method);
@@ -133,6 +139,18 @@ public final class DfaPsiUtil {
     }
 
     return Nullability.UNKNOWN;
+  }
+
+  @Nullable
+  private static Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
+    Nullability fromType = getTypeNullability(resultType);
+    if (fromType != Nullability.UNKNOWN) {
+      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+        return Nullability.UNKNOWN;
+      }
+      return fromType;
+    }
+    return null;
   }
 
   private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
