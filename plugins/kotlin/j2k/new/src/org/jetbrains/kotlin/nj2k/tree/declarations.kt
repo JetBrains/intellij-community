@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
-import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 

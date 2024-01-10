@@ -7,7 +7,6 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.j2k.ast.*
-import java.util.*
 
 
 class SwitchConverter(private val codeConverter: CodeConverter) {

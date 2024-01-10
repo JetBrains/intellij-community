@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.j2k.usageProcessing.UsageProcessingExpressionConvert
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.expressions.OperatorConventions.*
-import java.lang.IllegalArgumentException
-import java.util.*
 
 class Converter private constructor(
     private val elementToConvert: PsiElement,

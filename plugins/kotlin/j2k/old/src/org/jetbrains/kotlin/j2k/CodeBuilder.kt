@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.ast.SpacesInheritance
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import java.util.*
 import kotlin.math.max
 
 fun <T> CodeBuilder.buildList(generators: Collection<() -> T>, separator: String, prefix: String = "", suffix: String = ""): CodeBuilder {

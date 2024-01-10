@@ -12,10 +12,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
 
 class NewJ2kPostProcessor : PostProcessor {
     companion object {

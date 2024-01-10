@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.j2k.usageProcessing.MemberIntoObjectProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.ToObjectWithOnlyMethodsProcessing
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.SpecialNames
-import java.util.*
 
 enum class AccessorKind {
     GETTER,
