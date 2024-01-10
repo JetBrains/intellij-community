@@ -850,7 +850,7 @@ private fun createMacAwareMenuBar(frame: JFrame,
       createMacMenuBar(coroutineScope = coroutineScope,
                        component = component,
                        frame = frame,
-                       mainMenuActionGroupProvider = { mainMenuActionGroup ?: getAndWrapMainMenuActionGroup() })
+                       mainMenuActionGroupProvider = { mainMenuActionGroup ?: IdeMainMenuActionGroup() })
     }
     else {
       val menuBar = IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = mainMenuActionGroup)

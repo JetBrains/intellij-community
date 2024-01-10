@@ -201,7 +201,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
     }
   }
 
-  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: getAndWrapMainMenuActionGroup()
+  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: IdeMainMenuActionGroup()
 
   override fun getMenuCount(): Int {
     @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")

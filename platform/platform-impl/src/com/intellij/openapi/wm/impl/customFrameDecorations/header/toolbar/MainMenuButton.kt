@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.IdeMainMenuActionGroup
 import com.intellij.platform.ide.menu.collectGlobalMenu
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -35,12 +35,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
+
+private val LOG = logger<MainMenuButton>()
+
+private const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
 @ApiStatus.Internal
 class MainMenuButton(coroutineScope: CoroutineScope) {
@@ -164,7 +169,8 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
   }
 
   fun showPopup(context: DataContext, actionToShow: AnAction? = null) {
-    val mainMenu = getMainMenuGroup()
+    @Suppress("SSBasedInspection")
+    val mainMenu = runBlocking { IdeMainMenuActionGroup() } ?: return
     val popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               ActionPlaces.MAIN_MENU)
@@ -176,7 +182,7 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
     if (actionToShow != null) {
       for (listStep in popup.listStep.values) {
         listStep as PopupFactoryImpl.ActionItem
-        if (listStep.action.unwrap() === actionToShow.unwrap()) {
+        if (listStep.action === actionToShow) {
           SwingUtilities.invokeLater {
             // Wait popup showing
             popup.selectAndExpandValue(listStep)
@@ -287,38 +293,3 @@ private fun createMenuButton(action: AnAction): ActionButton {
   button.setLook(HeaderToolbarButtonLook(iconSize = { JBUI.CurrentTheme.Toolbar.burgerMenuButtonIconSize() }))
   return button
 }
-
-internal fun getMainMenuGroup(): ActionGroup {
-  val mainMenuGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU)
-  mainMenuGroup as ActionGroup
-  return DefaultActionGroup(
-    mainMenuGroup.getChildren(null).mapNotNull { child ->
-      if (child is ActionGroup) {
-        // Wrap action groups to force them to be popup groups,
-        // otherwise they end up as separate items in the burger menu (IDEA-294669).
-        ActionGroupPopupWrapper(child)
-      }
-      else {
-        LOG.error("A top-level child of the main menu is not an action group: $child")
-        null
-      }
-    }
-  )
-}
-
-private class ActionGroupPopupWrapper(val wrapped: ActionGroup) : ActionGroupWrapper(wrapped) {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.isPopupGroup = true
-  }
-}
-
-private fun AnAction.unwrap(): AnAction =
-  if (this is ActionGroupPopupWrapper)
-    this.wrapped
-  else
-    this
-
-private const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
-
-private val LOG = logger<MainMenuButton>()
