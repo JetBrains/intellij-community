@@ -1,54 +1,34 @@
 package com.jetbrains.python.validation
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.highlighting.PyHighlighter
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
 class PyVariableAnnotator : PyAnnotator() {
 
   override fun visitPyTargetExpression(node: PyTargetExpression) {
-    if (node.isNonLocalOrGlobal() || node.isQualified) return
-
-    val scopeOwner = ScopeUtil.getScopeOwner(node)
-    if (node.parent is PyAssignmentStatement && scopeOwner is PyFunction) {
-      node.nameElement?.let { addHighlightingAnnotation(it, PyHighlighter.PY_LOCAL_VARIABLE) }
-    }
+    if (!node.isLocalVariable()) return
+    node.nameElement?.let { addHighlightingAnnotation(it, PyHighlighter.PY_LOCAL_VARIABLE) }
   }
 
   override fun visitPyReferenceExpression(node: PyReferenceExpression) {
-    PyResolveUtil.resolveLocally(node)
-      .filterIsInstance(PyTargetExpression::class.java)
-      .forEach { expression ->
-        if (ScopeUtil.getScopeOwner(expression) is PyFunction && !expression.isNonLocalOrGlobal()) {
-          addHighlightingAnnotation(node.node, PyHighlighter.PY_LOCAL_VARIABLE)
-        }
-      }
-  }
-
-  private fun PyQualifiedExpression.isNonLocalOrGlobal(): Boolean {
-    val qName = this.asQualifiedName()
-    val scopeOwner = ScopeUtil.getScopeOwner(this)
-
-    if (qName != null && scopeOwner is PyFunction) {
-      val scopesToLookUp = mutableListOf(scopeOwner)
-
-      scopesToLookUp.addAll(PsiTreeUtil.findChildrenOfType(scopeOwner, PyFunction::class.java))
-      scopesToLookUp.forEach { scope ->
-        if (PyResolveUtil.resolveLocally(scope, qName.toString()).containsNonLocalOrGlobal()) {
-          return true
-        }
-      }
+    if (PyResolveUtil.resolveLocally(node).any { it is PyTargetExpression && it.isLocalVariable() }) {
+      addHighlightingAnnotation(node.node, PyHighlighter.PY_LOCAL_VARIABLE)
     }
-    return false
   }
 
-  private fun Collection<PsiElement>.containsNonLocalOrGlobal(): Boolean =
-    this.filterIsInstance(PyTargetExpression::class.java)
-      .any { expression -> expression.parent.isNonLocalOrGlobal() }
-
-  private fun PsiElement.isNonLocalOrGlobal(): Boolean =
-    this is PyNonlocalStatement || this is PyGlobalStatement
+  private fun PyTargetExpression.isLocalVariable(): Boolean {
+    if (isQualified) return false
+    val name = referencedName ?: return false
+    if (name == PyNames.UNDERSCORE) return false
+    val scopeOwner = ScopeUtil.getScopeOwner(this)
+    if (scopeOwner !is PyFunction) return false
+    val scope = ControlFlowCache.getScope(scopeOwner)
+    return !(scope.isNonlocal(name) || scope.isGlobal(name))
+  }
 }
