@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build;
 
-import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 
 import java.net.URL;
@@ -13,6 +13,9 @@ public final class IdeaProjectLoaderUtil {
   private static final String ULTIMATE_REPO_MARKER_FILE = ".ultimate.root.marker";
   private static final String COMMUNITY_REPO_MARKER_FILE = "intellij.idea.community.main.iml";
 
+  /**
+   * @param klass must be a class inside of idea home directory, the one with <code>file</code> protocol. Jar files in maven directory aren't accepted.
+   */
   public static Path guessUltimateHome(Class<?> klass) {
     final Path start = getSomeRoot(klass);
     Path home = start;
@@ -32,6 +35,9 @@ public final class IdeaProjectLoaderUtil {
                                        ", marker file '" + ULTIMATE_REPO_MARKER_FILE + "'");
   }
 
+  /**
+   * @param klass must be a class inside of idea home directory, the one with <code>file</code> protocol. Jar files in maven directory aren't accepted.
+   */
   public static BuildDependenciesCommunityRoot guessCommunityHome(Class<?> klass) {
     final Path start = getSomeRoot(klass);
     Path home = start;
@@ -64,7 +70,13 @@ public final class IdeaProjectLoaderUtil {
       return Path.of(communityHome).normalize();
     }
 
-    return getPathFromClass(klass);
+    var path = getPathFromClass(klass);
+    if (!path.toString().endsWith("class")) {
+      throw new IllegalArgumentException(
+        String.format("To guess idea home, you must provide class that resides in .class file inside of idea home dir. " +
+                      "But provided %s resides in %s", klass, path));
+    }
+    return path;
   }
 
   private static Path getPathFromClass(Class<?> klass) {
@@ -72,7 +84,6 @@ public final class IdeaProjectLoaderUtil {
     if (classFileURL == null) {
       throw new IllegalStateException("Could not get .class file location from class " + klass.getName());
     }
-
-    return URLUtil.urlToFile(classFileURL).toPath().toAbsolutePath();
+    return Path.of(UrlClassLoader.urlToFilePath(classFileURL.getPath()));
   }
 }
