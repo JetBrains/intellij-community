@@ -2,16 +2,29 @@
 
 package org.jetbrains.kotlin.idea.completion.test
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtureTestCase() {
     abstract fun getPlatform(): TargetPlatform
+
+    override fun setUp() {
+        super.setUp()
+        CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = arrayOf("excludedPackage", "somePackage.ExcludedClass")
+    }
+
+    override fun tearDown() {
+        runAll(
+            { CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = emptyArray() },
+            { super.tearDown() }
+        )
+    }
 
     protected open fun complete(completionType: CompletionType, invocationCount: Int): Array<LookupElement>? =
         myFixture.complete(completionType, invocationCount)
