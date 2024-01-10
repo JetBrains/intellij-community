@@ -455,7 +455,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
 
-    jvmArgs.addAll(0, computeVmOptions(isEAP = true, customJvmMemoryOptions = null))
+    jvmArgs.addAll(0, computeVmOptions(isEAP = true, bundledRuntime = context.bundledRuntime, customJvmMemoryOptions = null))
 
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 

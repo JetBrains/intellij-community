@@ -7,23 +7,34 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @Suppress("SpellCheckingInspection")
-private fun getCommonVmOptions(): List<String> = listOf(
-  "-XX:+UseG1GC",
-  "-XX:SoftRefLRUPolicyMSPerMB=50",
-  "-XX:CICompilerCount=2",
-  "-XX:+HeapDumpOnOutOfMemoryError",
-  "-XX:-OmitStackTraceInFastThrow",
-  "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
-  "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend", // temporary workaround for crashes in С2 (JBR-4509)
-  "-ea",
-  "-Dsun.io.useCanonCaches=false",
-  "-Dsun.java2d.metal=true",
-  "-Djbr.catch.SIGABRT=true",
-  "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-  "-Djdk.attach.allowAttachSelf=true",
-  "-Djdk.module.illegalAccess.silent=true",
-  "-Dkotlinx.coroutines.debug=off"
-)
+private fun addCommonVmOptions(is21: Boolean): List<String> {
+  val common = listOf(
+    "-XX:SoftRefLRUPolicyMSPerMB=50",
+    "-XX:+HeapDumpOnOutOfMemoryError",
+    "-XX:-OmitStackTraceInFastThrow",
+    "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
+    "-ea",
+    "-Dsun.io.useCanonCaches=false",
+    "-Dsun.java2d.metal=true",
+    "-Djbr.catch.SIGABRT=true",
+    "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+    "-Djdk.attach.allowAttachSelf=true",
+    "-Djdk.module.illegalAccess.silent=true",
+    "-Dkotlinx.coroutines.debug=off"
+  )
+  if (is21) {
+    return common + listOf(
+      "-XX:-TieredCompilation",
+    )
+  }
+  else {
+    // temporary workaround for crashes in С2 (JBR-4509)
+    return common + listOf(
+      "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
+      "-XX:CICompilerCount=2",
+    )
+  }
+}
 
 /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
@@ -45,9 +56,12 @@ object VmOptionsGenerator {
     var additionalVmOptions = context.productProperties.additionalVmOptions
     val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
     if (customPluginRepositoryUrl != null) {
-      additionalVmOptions = additionalVmOptions.add("-D$CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY=$customPluginRepositoryUrl")  
+      additionalVmOptions = additionalVmOptions.add("-D$CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY=$customPluginRepositoryUrl")
     }
-    return computeVmOptions(context.applicationInfo.isEAP, context.productProperties.customJvmMemoryOptions, additionalVmOptions)
+    return computeVmOptions(isEAP = context.applicationInfo.isEAP,
+                            bundledRuntime = context.bundledRuntime,
+                            customJvmMemoryOptions = context.productProperties.customJvmMemoryOptions,
+                            additionalVmOptions = additionalVmOptions)
   }
 
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
@@ -65,6 +79,7 @@ object VmOptionsGenerator {
 }
 
 internal fun computeVmOptions(isEAP: Boolean,
+                              bundledRuntime: BundledRuntime,
                               customJvmMemoryOptions: Map<String, String>?,
                               additionalVmOptions: List<String>? = null): List<String> {
   val result = ArrayList<String>()
@@ -76,7 +91,7 @@ internal fun computeVmOptions(isEAP: Boolean,
     memory.forEach({ (k, v) -> result.add(k + v) })
   }
 
-  result.addAll(getCommonVmOptions())
+  result.addAll(addCommonVmOptions(is21 = !bundledRuntime.build.startsWith("17.")))
 
   if (additionalVmOptions != null) {
     result.addAll(additionalVmOptions)
