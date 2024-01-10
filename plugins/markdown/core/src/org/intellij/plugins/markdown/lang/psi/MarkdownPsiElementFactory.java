@@ -51,8 +51,16 @@ public final class MarkdownPsiElementFactory {
                                                   @Nullable String language,
                                                   @NotNull String text,
                                                   @Nullable String indent) {
-    text = StringUtil.isEmpty(text) ? "" : "\n" + text;
-    String content = "```" + StringUtil.notNullize(language) + text + "\n" + StringUtil.notNullize(indent) + "```";
+    String content = new StringBuilder()
+      .append("```")
+      .append(StringUtil.notNullize(language))
+      .append("\n")
+      .append(text)
+      .append("\n")
+      .append(StringUtil.notNullize(indent))
+      .append("```")
+      .toString();
+
     final MarkdownFile file = createFile(project, content);
 
     return (MarkdownCodeFence)file.getFirstChild();
