@@ -10,7 +10,6 @@ import org.gradle.api.java.archives.Manifest
 import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration
@@ -21,8 +20,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
+import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFileName
 /**
  * @author Vladislav.Soroka
  */

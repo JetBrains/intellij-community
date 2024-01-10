@@ -4,7 +4,6 @@ package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.tooling.model.ProjectIdentifier;
@@ -49,7 +48,7 @@ public final class GradleTaskCache {
         .withGroup(Messages.TASK_CACHE_GET_GROUP)
         .withTitle("Task model aren't found")
         .withText(
-          "Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
+          "Tasks for " + project.getDisplayName() + " wasn't collected. " +
           "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
         )
         .withStackTrace()
@@ -67,7 +66,7 @@ public final class GradleTaskCache {
       context.getMessageReporter().createMessage()
         .withGroup(Messages.TASK_CACHE_SET_GROUP)
         .withTitle("Task model redefinition")
-        .withText("Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
+        .withText("Tasks for " + project.getDisplayName() + " was already collected.")
         .withStackTrace()
         .withKind(Message.Kind.INTERNAL)
         .reportMessage(project);

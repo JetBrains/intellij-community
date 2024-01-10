@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil.getIdeaModuleName;
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getProjectIdentityPath;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil.getProjectIdentityPath;
 
 /**
  * @author Vladislav.Soroka

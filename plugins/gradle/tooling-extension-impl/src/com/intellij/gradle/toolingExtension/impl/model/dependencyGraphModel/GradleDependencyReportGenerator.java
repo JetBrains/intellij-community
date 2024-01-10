@@ -20,8 +20,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getProjectName;
-
 public class GradleDependencyReportGenerator {
 
   private final AtomicLong nextId = new AtomicLong();
@@ -115,7 +113,7 @@ public class GradleDependencyReportGenerator {
     AbstractDependencyNode node;
     if (componentId instanceof ProjectComponentIdentifier) {
       ProjectComponentIdentifier projectId = (ProjectComponentIdentifier)componentId;
-      String projectName = getProjectName(projectId);
+      String projectName = projectId.getProjectName();
       String projectPath = projectId.getProjectPath();
       node = new ProjectDependencyNodeImpl(id, projectName, projectPath);
     }

@@ -3,7 +3,6 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicy
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import org.gradle.api.Project;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,7 +28,7 @@ public class GradleDependencyDownloadPolicyCache {
     ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
     GradleDependencyDownloadPolicy policy = policies.get(projectIdentifier);
     if (policy == null) {
-      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(project);
+      String projectDisplayName = project.getDisplayName();
       context.getMessageReporter().createMessage()
         .withGroup(Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP)
         .withTitle("Gradle dependency download policy aren't found")
@@ -46,7 +45,7 @@ public class GradleDependencyDownloadPolicyCache {
     ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
     GradleDependencyDownloadPolicy oldPolicy = policies.put(projectIdentifier, policy);
     if (oldPolicy != null) {
-      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(project);
+      String projectDisplayName = project.getDisplayName();
       context.getMessageReporter().createMessage()
         .withGroup(Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP)
         .withTitle("Gradle dependency download policy redefinition")

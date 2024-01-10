@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.isConfigurationCanBeResolved;
-
 public class GradleDependencyReportTask extends DefaultTask {
 
   private List<String> configurations;
@@ -50,7 +48,7 @@ public class GradleDependencyReportTask extends DefaultTask {
     GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     List<DependencyScopeNode> graph = new ArrayList<>();
     for (Configuration configuration : configurations) {
-      if (isConfigurationCanBeResolved(configuration, true)) {
+      if (configuration.isCanBeResolved()) {
         graph.add(generator.buildDependencyGraph(configuration, getProject()));
       }
     }

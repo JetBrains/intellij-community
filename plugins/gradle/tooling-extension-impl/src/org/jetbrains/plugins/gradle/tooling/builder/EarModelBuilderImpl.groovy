@@ -12,7 +12,6 @@ import org.gradle.api.java.archives.Manifest
 import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.plugins.ear.Ear
 import org.gradle.plugins.ear.EarPlugin
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.ear.EarConfiguration
@@ -25,8 +24,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
+import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFileName
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveGetProperty
 

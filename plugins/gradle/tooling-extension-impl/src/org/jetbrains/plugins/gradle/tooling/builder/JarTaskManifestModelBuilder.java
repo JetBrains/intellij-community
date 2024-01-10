@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.java.archives.Attributes;
@@ -52,7 +52,7 @@ public class JarTaskManifestModelBuilder extends AbstractModelBuilderService {
 
   private static String identityPath(Project project) {
     // composite builds
-    String identityPath = GradleNegotiationUtil.getProjectIdentityPath(project);
+    String identityPath = GradleProjectUtil.getProjectIdentityPath(project);
     return (identityPath == null || ":".equals(identityPath)) ? project.getPath() : identityPath;
   }
 }

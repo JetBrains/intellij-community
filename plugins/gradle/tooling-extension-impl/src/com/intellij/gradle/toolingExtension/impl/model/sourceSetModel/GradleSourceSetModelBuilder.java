@@ -4,7 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.gradle.api.Project;
@@ -32,7 +32,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile;
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.dynamicCheckInstanceOf;
 
 @ApiStatus.Internal
@@ -219,7 +219,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   }
 
   private static boolean isJarDescendant(Jar task) {
-    Class<?> type = GradleNegotiationUtil.getTaskIdentityType(task);
+    Class<?> type = GradleTaskUtil.getTaskIdentityType(task);
     return type != null && !type.equals(Jar.class);
   }
 

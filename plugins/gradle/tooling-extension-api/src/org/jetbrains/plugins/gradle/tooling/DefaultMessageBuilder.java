@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
-import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.gradle.api.Project;
@@ -95,7 +94,7 @@ public final class DefaultMessageBuilder implements MessageBuilder {
       title = myGroup;
     }
     if (myProject != null) {
-      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(myProject);
+      String projectDisplayName = myProject.getDisplayName();
       title = projectDisplayName + ": " + title;
     }
     return title;
