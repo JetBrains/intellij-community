@@ -71,15 +71,6 @@ public abstract class FileIndentOptionsProvider {
     return true;
   }
 
-  /**
-   * @deprecated Use {@link #notifyIndentOptionsChanged(Project, VirtualFile)} or {@link #notifyIndentOptionsChanged(Project)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
-  }
-
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
   }

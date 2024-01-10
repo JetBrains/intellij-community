@@ -141,11 +141,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     return if (window == null) key else "$key#${window.id}"
   }
 
-  @Suppress("OVERRIDE_DEPRECATION", "removal")
-  override fun getContainerFor(c: Component): DockContainer? {
-    return getContainerFor(c) { true }
-  }
-
   @Contract("null, _ -> null")
   override fun getContainerFor(c: Component?, filter: Predicate<in DockContainer>): DockContainer? {
     if (c == null) {
@@ -209,8 +204,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window = JDialog(ComponentUtil.getWindow(mouseEvent.component))
       window.isUndecorated = true
       this.content = content
-      @Suppress("DEPRECATION")
-      startDragContainer = getContainerFor(mouseEvent.component)
+      startDragContainer = getContainerFor(mouseEvent.component) { true }
       val buffer = ImageUtil.toBufferedImage(content.previewImage)
       val requiredSize = 220.0
       val width = buffer.getWidth(null).toDouble()

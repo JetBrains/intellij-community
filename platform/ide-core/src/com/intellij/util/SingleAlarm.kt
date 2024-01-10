@@ -3,7 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import org.jetbrains.annotations.ApiStatus
 
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
@@ -12,11 +11,6 @@ class SingleAlarm @JvmOverloads constructor(
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
 ) : Alarm(threadToUse, parentDisposable) {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use main constructor", replaceWith = ReplaceWith("SingleAlarm(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)"))
-  constructor(task: Runnable, delay: Int, modalityState: ModalityState, parentDisposable: Disposable)
-    : this(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)
-
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(task = task,
            delay = delay,

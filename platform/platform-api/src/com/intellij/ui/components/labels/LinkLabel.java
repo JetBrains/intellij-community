@@ -101,11 +101,11 @@ public class LinkLabel<T> extends JLabel {
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
   @Deprecated(forRemoval = true)
-  public LinkLabel(@NlsContexts.LinkLabel String text,
-                   @Nullable Icon icon,
-                   @Nullable LinkListener<T> aListener,
-                   @Nullable T aLinkData,
-                   @Nullable String aVisitedLinksKey) {
+  private LinkLabel(@NlsContexts.LinkLabel String text,
+                    @Nullable Icon icon,
+                    @Nullable LinkListener<T> aListener,
+                    @Nullable T aLinkData,
+                    @Nullable String aVisitedLinksKey) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
     // Note: Ideally, we should be focusable by default in all cases, however,

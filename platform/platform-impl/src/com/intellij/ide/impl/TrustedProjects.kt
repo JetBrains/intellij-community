@@ -22,21 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
-fun confirmOpeningOrLinkingUntrustedProject(
-  projectRoot: Path,
-  project: Project,
-  @NlsContexts.DialogTitle title: String,
-  @NlsContexts.DialogMessage message: String,
-  @NlsContexts.Button trustButtonText: String,
-  @NlsContexts.Button distrustButtonText: String,
-  @NlsContexts.Button cancelButtonText: String
-): Boolean = TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
-  projectRoot, project, title, message, trustButtonText, distrustButtonText, cancelButtonText
-)
-
-@Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
 @Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
 fun confirmLoadingUntrustedProject(
   project: Project,

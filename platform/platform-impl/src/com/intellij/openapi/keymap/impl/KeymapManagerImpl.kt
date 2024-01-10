@@ -6,7 +6,6 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.*
@@ -197,12 +196,6 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private fun getActiveKeymapName(child : Element?) : String {
     val value = child?.getAttributeValue(NAME_ATTRIBUTE)
     return if (!value.isNullOrBlank()) value else DefaultKeymap.getInstance().defaultKeymapName
-  }
-
-  @Suppress("OverridingDeprecatedMember", "removal")
-  override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
-    pollQueue()
-    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, listener)
   }
 
   private fun pollQueue() {

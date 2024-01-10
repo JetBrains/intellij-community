@@ -27,16 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public interface GotoActionAliasMatcher {
   ExtensionPointName<GotoActionAliasMatcher> EP_NAME = ExtensionPointName.create("com.intellij.gotoActionAliasMatcher");
 
-  /**
-   * Returns true if the name argument is synonym for specified action.
-   * @deprecated Use {@link #matchAction(AnAction, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default boolean match(@NotNull AnAction action, @NotNull String name) {
-    return false;
-  }
-
   default MatchMode matchAction(@NotNull AnAction action, @NotNull String pattern) {
-    return match(action, pattern) ? MatchMode.NAME : MatchMode.NONE;
+    return MatchMode.NONE;
   }
 }

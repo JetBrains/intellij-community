@@ -506,25 +506,3 @@ private object RunBlockingUnderReadActionMarker
     CoroutineContext.Key<RunBlockingUnderReadActionMarker> {
   override val key: CoroutineContext.Key<*> get() = this
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed. Don't use",
-  replaceWith = ReplaceWith("indicatorRunBlockingCancellable(indicator, action)"),
-  level = DeprecationLevel.ERROR,
-)
-@RequiresBlockingContext
-fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  @Suppress("DEPRECATION")
-  return indicatorRunBlockingCancellable(indicator, action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Method was renamed",
-  replaceWith = ReplaceWith("coroutineToIndicator(action)"),
-  level = DeprecationLevel.ERROR,
-)
-suspend fun <T> runUnderIndicator(action: () -> T): T {
-  return coroutineToIndicator(action)
-}

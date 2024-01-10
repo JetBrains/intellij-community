@@ -73,7 +73,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
    * @deprecated Use plain {@link JSeparator} instead
    */
   @Deprecated(forRemoval = true)
-  public static @NotNull Component createSeparator(@Nullable @NlsContexts.Separator String text) {
+  private static @NotNull Component createSeparator(@Nullable @NlsContexts.Separator String text) {
     TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(JBUI.Borders.emptyLeft(2));
     separator.setOpaque(false);

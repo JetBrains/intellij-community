@@ -2,7 +2,6 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +34,6 @@ public abstract class KeymapManager {
     }
     return instance;
   }
-
-  /**
-   * @deprecated use {@link KeymapManagerListener#TOPIC} instead
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead

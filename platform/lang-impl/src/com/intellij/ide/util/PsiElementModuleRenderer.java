@@ -24,14 +24,6 @@ public /*final*/ class PsiElementModuleRenderer extends DefaultListCellRenderer 
     myTextWithIconProvider = provider;
   }
 
-  /**
-   * @deprecated don't inherit from this class, implement {@link ModuleRendererFactory#getModuleTextWithIcon} instead
-   */
-  @Deprecated(forRemoval = true)
-  public PsiElementModuleRenderer() {
-    this(new DefaultModuleRendererFactory()::getModuleTextWithIcon);
-  }
-
   @Override
   public Component getListCellRendererComponent(
     JList list,
