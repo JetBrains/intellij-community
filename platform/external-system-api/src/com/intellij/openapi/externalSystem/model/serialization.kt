@@ -21,14 +21,20 @@ private class DataClassResolver(private val log: Logger) {
     .toSet()
 
   private fun getClassLoadersToSearch(hostObject: DataNode<*>?): Set<ClassLoader> {
-    val services = hostObject?.let { projectDataManager!!.findService(hostObject.key) }
-    if (services.isNullOrEmpty()) {
+    if (null == hostObject) {
+      return managerClassLoaders
+    }
+    projectDataManager!!
+
+    val services = projectDataManager.findService(hostObject.key) + projectDataManager.findWorkspaceService(hostObject.key)
+    if (services.isEmpty()) {
       return managerClassLoaders
     }
 
-    val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
+    val serviceClassLoaders = services.map { it.javaClass.classLoader }
+    val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + serviceClassLoaders.size)
     set.addAll(managerClassLoaders)
-    services.mapTo(set) { it.javaClass.classLoader }
+    set.addAll(serviceClassLoaders)
     return set
   }
 

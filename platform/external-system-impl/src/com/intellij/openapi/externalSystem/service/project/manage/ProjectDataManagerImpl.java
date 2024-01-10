@@ -48,6 +48,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
   }
 
+  @Override
   @NotNull
   public List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key) {
     List<WorkspaceDataService<?>> result = new ArrayList<>(

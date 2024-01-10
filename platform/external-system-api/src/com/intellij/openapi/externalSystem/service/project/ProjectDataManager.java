@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +46,11 @@ public interface ProjectDataManager {
                       @NotNull IdeModifiableModelsProvider modelsProvider);
 
 
-  @Nullable
+  @NotNull
   List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key);
+
+  @NotNull
+  List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key);
 
   void ensureTheDataIsReadyToUse(@Nullable DataNode dataNode);
 
