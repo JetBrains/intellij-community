@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile;
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
 public class GradleSourceSetCachedFinder {
 
@@ -68,15 +67,10 @@ public class GradleSourceSetCachedFinder {
   }
 
   private static @NotNull ArtifactsMap createArtifactsMap(@NotNull ModelBuilderContext context) {
-    Gradle gradle = context.getGradle();
     Map<String, SourceSet> artifactsMap = new HashMap<>();
     Map<String, String> sourceSetOutputDirsToArtifactsMap = new HashMap<>();
-    List<Project> projects = new ArrayList<>(gradle.getRootProject().getAllprojects());
-    boolean isCompositeBuildsSupported = isIsNewDependencyResolutionApplicable() ||
-                                         GradleVersionUtil.isCurrentGradleAtLeast("3.1");
-    if (isCompositeBuildsSupported) {
-      projects.addAll(exposeIncludedBuilds(gradle));
-    }
+
+    List<Project> projects = collectAllProjects(context.getGradle());
     for (Project project : projects) {
       SourceSetContainer sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project);
       if (sourceSetContainer == null || sourceSetContainer.isEmpty()) continue;
@@ -88,18 +82,23 @@ public class GradleSourceSetCachedFinder {
           File archivePath = getTaskArchiveFile(jarTask);
           if (archivePath != null) {
             artifactsMap.put(archivePath.getPath(), sourceSet);
-            if (isIsNewDependencyResolutionApplicable()) {
-              for (File file : sourceSet.getOutput().getClassesDirs().getFiles()) {
-                sourceSetOutputDirsToArtifactsMap.put(file.getPath(), archivePath.getPath());
-              }
-              File resourcesDir = Objects.requireNonNull(sourceSet.getOutput().getResourcesDir());
-              sourceSetOutputDirsToArtifactsMap.put(resourcesDir.getPath(), archivePath.getPath());
+            for (File file : sourceSet.getOutput().getClassesDirs().getFiles()) {
+              sourceSetOutputDirsToArtifactsMap.put(file.getPath(), archivePath.getPath());
             }
+            File resourcesDir = Objects.requireNonNull(sourceSet.getOutput().getResourcesDir());
+            sourceSetOutputDirsToArtifactsMap.put(resourcesDir.getPath(), archivePath.getPath());
           }
         }
       }
     }
     return new ArtifactsMap(artifactsMap, sourceSetOutputDirsToArtifactsMap);
+  }
+
+  private static @NotNull List<Project> collectAllProjects(@NotNull Gradle gradle) {
+    List<Project> projects = new ArrayList<>();
+    projects.addAll(gradle.getRootProject().getAllprojects());
+    projects.addAll(exposeIncludedBuilds(gradle));
+    return projects;
   }
 
   private static @NotNull List<Project> exposeIncludedBuilds(@NotNull Gradle gradle) {
