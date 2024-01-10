@@ -67,8 +67,8 @@ public class PyDataViewDialog extends DialogWrapper {
     final JBCheckBox colored = new JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"));
     final JBCheckBox resize = new JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"));
 
-    resize.setSelected(PyDataView.Companion.isAutoResizeEnabled(myProject));
-    colored.setSelected(PyDataView.Companion.isColoringEnabled(myProject));
+    resize.setSelected(PyDataView.isAutoResizeEnabled(myProject));
+    colored.setSelected(PyDataView.isColoringEnabled(myProject));
 
     colored.addActionListener(new ActionListener() {
       @Override

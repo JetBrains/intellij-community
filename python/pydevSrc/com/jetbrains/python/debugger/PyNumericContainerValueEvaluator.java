@@ -16,7 +16,7 @@ public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
   @Override
   protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {
     List<PyNumericContainerPopupCustomizer> providers = PyNumericContainerPopupCustomizer.EP_NAME.getExtensionList();
-    for (PyNumericContainerPopupCustomizer provider : providers) {
+    for (var provider : providers) {
       if (provider.showFullValuePopup(debugProcess, debugValue)) {
         break;
       }
