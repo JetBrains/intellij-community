@@ -36,7 +36,8 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
                             session: LocalInspectionToolSession): PsiElementVisitor {
     val project = holder.project
     if (!(JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.SLF4J_LOGGER) ||
-          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER))) {
+          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER) ||
+          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.IDEA_LOGGER))) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
