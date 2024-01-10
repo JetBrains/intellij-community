@@ -19,4 +19,7 @@ class KotlinConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
 
     @Test
     fun `test kotlin all conditions`() = assertHints("KtAllConditions")
+
+    @Test
+    fun `test kotlin nullability`() = assertHints("KtNullability")
 }

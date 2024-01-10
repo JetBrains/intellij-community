@@ -62,19 +62,28 @@ internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCo
         }
 
         override fun visitBinaryExpression(expression: KtBinaryExpression) {
-            if (expression.isBoolOperator() && expression !in expressions) {
-                expression.left?.also { expressions.add(it) }
+            if (expression !in expressions) {
+                if (expression.isBoolOperator()) {
+                    expression.left?.also { expressions.add(it) }
+                } else if (expression.operationToken == KtTokens.ELVIS) {
+                    expressions.add(expression)
+                }
             }
             super.visitBinaryExpression(expression)
         }
+
+        override fun visitSafeQualifiedExpression(expression: KtSafeQualifiedExpression) {
+            expressions.add(expression)
+            super.visitSafeQualifiedExpression(expression)
+        }
     })
-    return expressions.flatMap(KtExpression::breakIntoConditions)
+    return expressions
+        .flatMap(KtExpression::breakIntoConditions)
 }
 
 private open class RangePsiVisitor(private val range: TextRange) : KtTreeVisitorVoid() {
     override fun visitElement(element: PsiElement) {
-        if (element.textOffset >= range.endOffset) return
-        if (element.textOffset + element.textLength <= range.startOffset) return
+        if (!element.textRange.intersects(range)) return
         super.visitElement(element)
     }
 }
@@ -92,14 +101,22 @@ private fun KtBinaryExpression.isBoolOperator(): Boolean {
     return token == KtTokens.OROR || token == KtTokens.ANDAND
 }
 
-private fun KtExpression.breakIntoConditions(): List<ConditionCoverageExpression> {
+private fun KtExpression.breakIntoConditions(parentIsBoolOperator: Boolean = true): List<ConditionCoverageExpression> {
     val expression = this.withoutParentheses() ?: return emptyList()
-    if (expression is KtBinaryExpression && expression.isBoolOperator()) {
-        return (expression.left?.breakIntoConditions() ?: emptyList()) +
-                (expression.right?.breakIntoConditions() ?: emptyList())
-    } else {
-        return listOf(ConditionCoverageExpression(expression.text, this.isReversedCondition()))
-    }
+    return if (expression is KtBinaryExpression && expression.isBoolOperator()) {
+        (expression.left?.breakIntoConditions(true) ?: emptyList()) +
+                (expression.right?.breakIntoConditions(true) ?: emptyList())
+    } else if (expression is KtBinaryExpression && expression.operationToken == KtTokens.ELVIS) {
+        (expression.left?.breakIntoConditions(false) ?: emptyList()) +
+                listOf(ConditionCoverageExpression("${expression.left?.text} != null", false)) +
+                (expression.right?.breakIntoConditions(false) ?: emptyList())
+    } else if (expression is KtSafeQualifiedExpression) {
+        (expression.receiverExpression.breakIntoConditions(false)) +
+                listOf(ConditionCoverageExpression("${expression.receiverExpression.text} != null", false)) +
+                (expression.selectorExpression?.breakIntoConditions(false) ?: emptyList())
+    } else if (parentIsBoolOperator) {
+        listOf(ConditionCoverageExpression(expression.text, this.isReversedCondition()))
+    } else emptyList()
 }
 
 private fun KtExpression.isReversedCondition(): Boolean {

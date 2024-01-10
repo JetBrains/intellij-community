@@ -1,0 +1,69 @@
+Line 1 coverage: FULL
+Hits: 2
+
+Line 2 coverage: FULL
+Hits: 4
+
+Line 3 coverage: FULL
+Hits: 2
+
+Line 5 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 2
+        false hits: 0
+
+Line 6 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 0
+        false hits: 2
+
+Line 8 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 0
+        false hits: 2
+    a ?: b != null
+        true hits: 2
+        false hits: 0
+
+Line 9 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 0
+        false hits: 2
+    a ?: b != null
+        true hits: 0
+        false hits: 2
+
+Line 11 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 2
+        false hits: 0
+
+Line 12 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 0
+        false hits: 2
+
+Line 14 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 2
+        false hits: 0
+    a?.f() != null
+        true hits: 2
+        false hits: 0
+
+Line 15 coverage: PARTIAL
+Hits: 2
+    a != null
+        true hits: 2
+        false hits: 0
+    a?.g() != null
+        true hits: 0
+        false hits: 2
+
