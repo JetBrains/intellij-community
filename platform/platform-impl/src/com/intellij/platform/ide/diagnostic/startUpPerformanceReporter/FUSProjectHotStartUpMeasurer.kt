@@ -316,25 +316,24 @@ object FUSProjectHotStartUpMeasurer {
     reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
   }
 
-  fun reportNoMoreEditorsOnStartup(project: Project, startUpContextElementToPass: CoroutineContext.Element?) {
-    if (startUpContextElementToPass != MyMarker) {
-      return
-    }
-    val durationMillis = System.nanoTime()
-    val noEditorStageData = PrematureEditorStageData.NoEditors(project)
-    computeLocked {
-      return@computeLocked when {
-        this is Stage.IdeStarterStarted && prematureEditorData == null -> {
-          this.copy(prematureEditorData = noEditorStageData)
+  suspend fun reportNoMoreEditorsOnStartup(project: Project) {
+    onProperContext {
+      val durationMillis = System.nanoTime()
+      val noEditorStageData = PrematureEditorStageData.NoEditors(project)
+      computeLocked {
+        return@computeLocked when {
+          this is Stage.IdeStarterStarted && prematureEditorData == null -> {
+            this.copy(prematureEditorData = noEditorStageData)
+          }
+          this is Stage.FrameVisible && prematureEditorData == null -> {
+            this.copy(prematureEditorData = noEditorStageData)
+          }
+          this is Stage.FrameInteractive -> {
+            Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
+            Stage.Stopped
+          }
+          else -> Stage.Stopped
         }
-        this is Stage.FrameVisible && prematureEditorData == null -> {
-          this.copy(prematureEditorData = noEditorStageData)
-        }
-        this is Stage.FrameInteractive -> {
-          Stage.EditorStage(noEditorStageData, settingsExist).log(getDurationFromStart(durationMillis))
-          Stage.Stopped
-        }
-        else -> Stage.Stopped
       }
     }
   }

@@ -65,6 +65,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -164,7 +165,6 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun doRun(outOfLoadingScope: CoroutineScope,
                             task: FrameAllocatorTask,
                             deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
@@ -196,34 +196,27 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
       val toolWindowInitJob = scheduleInitFrame(rawProjectDeferred = rawProjectDeferred,
                                                 reopeningEditorJob = reopeningEditorJob,
                                                 deferredProjectFrameHelper = deferredProjectFrameHelper)
-      val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
+      val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
-      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(startUpContextElementToPass) {
         val project = rawProjectDeferred.await()
+        try {
+          coroutineScope {
+            launch(rootTask()) {
+              val frameHelper = deferredProjectFrameHelper.await()
+              frameHelper.installDefaultProjectStatusBarWidgets(project)
+              frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+            }
 
-        launch(rootTask()) {
-          val frameHelper = deferredProjectFrameHelper.await()
-          frameHelper.installDefaultProjectStatusBarWidgets(project)
-          frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+            reopeningEditorJob.join()
+            postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                            fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+                            toolWindowInitJob = toolWindowInitJob,
+                            project = project)
+          }
         }
-
-        reopeningEditorJob.join()
-        val postOpen: suspend CoroutineScope.() -> Unit = {
-          postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
-                          fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
-                          toolWindowInitJob = toolWindowInitJob,
-                          project = project)
-        }
-        if (startUpContextElementToPass != null) {
-          withContext(startUpContextElementToPass, postOpen)
-        }
-        else {
-          postOpen()
-        }
-      }.invokeOnCompletion {
-        rawProjectDeferred.invokeOnCompletion { cause ->
-          if (cause == null) FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(rawProjectDeferred.getCompleted(),
-                                                                                       startUpContextElementToPass)
+        finally {
+          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(project)
         }
       }
 
