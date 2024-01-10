@@ -83,7 +83,7 @@ abstract class LineStatusMarkerRendererWithPopup(
   }
 
   private inner class LineStatusGutterMarkerRendererWithPopup : ActiveLineStatusGutterMarkerRenderer() {
-    override fun getPaintedRanges(): List<Range>? = rangesSource.getRanges().orEmpty()
+    override fun getPaintedRanges(): List<Range>? = if (shouldPaintGutter()) rangesSource.getRanges().orEmpty() else null
 
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       val ranges = getPaintedRanges() ?: return
