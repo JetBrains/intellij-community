@@ -38,13 +38,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
 
     result.configurations.addAll(collectConfigurations(project.configurations, false))
     result.configurations.addAll(collectConfigurations(project.buildscript.configurations, true))
-
-    if (GradleVersionUtil.isCurrentGradleOlderThan("8.2")){
-      def convention = project.convention
-      convention.plugins.each { key, value ->
-        result.conventions.add(new DefaultGradleConvention(key, getType(value)))
-      }
-    }
+    result.conventions.addAll(collectConventions(project))
 
     def extensions = project.extensions
     extensions.extraProperties.properties.each { name, value ->
@@ -138,6 +132,18 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     } catch (NoSuchMethodException | SecurityException | ClassCastException ignored) {
       return Collections.emptyList()
     }
+  }
+
+  private static @NotNull List<DefaultGradleConvention> collectConventions(@NotNull Project project) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) {
+      return Collections.emptyList()
+    }
+    def result = new ArrayList<DefaultGradleConvention>()
+    //noinspection GrDeprecatedAPIUsage
+    project.convention.plugins.each { key, value ->
+      result.add(new DefaultGradleConvention(key, getType(value)))
+    }
+    return result
   }
 
   static String getType(object) {
