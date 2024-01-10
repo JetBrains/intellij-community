@@ -31,6 +31,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,32 +50,25 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY;
 
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
+  public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
+    AsyncPromise<Result> promise = new AsyncPromise<>();
     Tracer.Span jpsRunnerStart = Tracer.start("jps runner");
     context.putUserData(JPS_BUILD_DATA_KEY, new MyJpsBuildData());
-    SimpleMessageBusConnection fileGeneratedTopicConnection;
     if (context.isCollectionOfGeneratedFilesEnabled()) {
-      fileGeneratedTopicConnection = project.getMessageBus().simpleConnect();
+      SimpleMessageBusConnection fileGeneratedTopicConnection = project.getMessageBus().simpleConnect();
       fileGeneratedTopicConnection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
           context.fileGenerated(outputRoot, relativePath);
         }
       });
+      promise.onProcessed(result -> {
+        fileGeneratedTopicConnection.disconnect();
+      });
     }
-    else {
-      fileGeneratedTopicConnection = null;
-    }
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(Arrays.asList(tasks));
     ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(), () -> {
-      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, callback, () -> {
-        if (fileGeneratedTopicConnection != null) {
-          fileGeneratedTopicConnection.disconnect();
-        }
-      })) {
+      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, promise)) {
         runModulesResourcesBuildTasks(project, context, notificationCollector, taskMap);
         runModulesBuildTasks(project, context, notificationCollector, taskMap);
         runFilesBuildTasks(project, notificationCollector, taskMap);
@@ -82,6 +77,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       }
     });
     jpsRunnerStart.complete();
+    return promise;
   }
 
   @Override
@@ -318,22 +314,16 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
   private static final class MyNotificationCollector implements AutoCloseable {
     @NotNull private final ProjectTaskContext myContext;
-    @Nullable private final ProjectTaskNotification myTaskNotification;
-    @NotNull private final Runnable myOnFinished;
+    private final AsyncPromise<Result> myPromise;
     private boolean myCollectingStopped;
 
     private final Set<MyCompileStatusNotification> myNotifications = new ReferenceOpenHashSet<>();
     private int myErrors;
-    private int myWarnings;
     private boolean myAborted;
 
-
-    private MyNotificationCollector(@NotNull ProjectTaskContext context,
-                                    @Nullable ProjectTaskNotification taskNotification,
-                                    @NotNull Runnable onFinished) {
+    private MyNotificationCollector(@NotNull ProjectTaskContext context, @NotNull AsyncPromise<Result> promise) {
       myContext = context;
-      myTaskNotification = taskNotification;
-      myOnFinished = onFinished;
+      myPromise = promise;
     }
 
     @Override
@@ -346,14 +336,13 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     private void notifyFinished() {
       if (myCollectingStopped && myNotifications.isEmpty()) {
-        if (myTaskNotification != null) {
-          myTaskNotification.finished(new ProjectTaskResult(myAborted, myErrors, myWarnings));
-        }
-        myOnFinished.run();
+        myPromise.setResult(myAborted ? TaskRunnerResults.ABORTED : 
+                            myErrors > 0 ? TaskRunnerResults.FAILURE : 
+                            TaskRunnerResults.SUCCESS);
       }
     }
 
-    synchronized private void appendJpsBuildResult(boolean aborted, int errors, int warnings,
+    synchronized private void appendJpsBuildResult(boolean aborted, int errors,
                                                    @NotNull CompileContext compileContext,
                                                    @NotNull MyCompileStatusNotification notification) {
       final boolean notificationRemoved = myNotifications.remove(notification);
@@ -361,7 +350,6 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
         LOG.error("Multiple invocation of the same callback");
       }
       myErrors += errors;
-      myWarnings += warnings;
       if (aborted) myAborted = true;
       MyJpsBuildData jpsBuildData = (MyJpsBuildData)JPS_BUILD_DATA_KEY.get(myContext);
       jpsBuildData.add(compileContext);
@@ -393,7 +381,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     @Override
     public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
       if (finished.compareAndSet(false, true)) {
-        myCollector.appendJpsBuildResult(aborted, errors, warnings, compileContext, this);
+        myCollector.appendJpsBuildResult(aborted, errors, compileContext, this);
         mySpan.complete();
       } else {
         // can be invoked by CompileDriver for rerun action
