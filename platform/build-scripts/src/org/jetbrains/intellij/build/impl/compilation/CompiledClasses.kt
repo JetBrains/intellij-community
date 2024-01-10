@@ -55,6 +55,10 @@ internal object CompiledClasses {
       messages.error("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
+    if (options.pathToCompiledClassesArchive != null && options.pathToCompiledClassesArchivesMetadata != null) {
+      messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
+                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
+    }
     if (options.forceRebuild && options.incrementalCompilation) {
       messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, " +
                        "so 'incremental compilation' option will be ignored")
