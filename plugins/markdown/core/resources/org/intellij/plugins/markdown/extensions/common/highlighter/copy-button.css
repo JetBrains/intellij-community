@@ -8,10 +8,12 @@
 }
 
 .code-fence-highlighter-copy-button-icon {
+  visibility: hidden;
   max-width: 1em;
 }
 
 .code-fence:hover .code-fence-highlighter-copy-button-icon {
+  visibility: visible;
   /*noinspection CssUnknownTarget*/
   content: url("copy-button-copy-icon.png");
 }
