@@ -36,14 +36,14 @@ public class RenameJavaImplicitClassProcessor extends RenamePsiFileProcessor {
                                          @NotNull final PsiElement element,
                                          @Nullable PsiElement nameSuggestionContext,
                                          @Nullable Editor editor) {
-    return new MyPsiFileRenameDialog(project, element, nameSuggestionContext, editor);
+    return new RenameJavaImplicitClassRenameDialog(project, element, nameSuggestionContext, editor);
   }
 
-  public static class MyPsiFileRenameDialog extends PsiFileRenameDialog {
+  public static class RenameJavaImplicitClassRenameDialog extends PsiFileRenameDialog {
     @Nullable
     private final String myExtension;
 
-    private MyPsiFileRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    private RenameJavaImplicitClassRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
       super(project, element, nameSuggestionContext, editor);
       myExtension = Optional.ofNullable(((PsiJavaFile)element).getVirtualFile())
         .map(file -> file.getExtension())

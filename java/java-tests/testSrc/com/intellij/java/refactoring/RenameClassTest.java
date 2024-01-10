@@ -134,9 +134,9 @@ public class RenameClassTest extends LightMultiFileTestCase {
       assertOrderedEquals(names, "ImplicitClass");
 
       UiInterceptors.register(new UiInterceptors.UiInterceptor<>
-        (RenameJavaImplicitClassProcessor.MyPsiFileRenameDialog.class) {
+        (RenameJavaImplicitClassProcessor.RenameJavaImplicitClassRenameDialog.class) {
         @Override
-        protected void doIntercept(@NotNull RenameJavaImplicitClassProcessor.MyPsiFileRenameDialog component) {
+        protected void doIntercept(@NotNull RenameJavaImplicitClassProcessor.RenameJavaImplicitClassRenameDialog component) {
           Disposer.register(myFixture.getTestRootDisposable(), component.getDisposable());
           if (component.getNameSuggestionsField().getFocusableComponent() instanceof EditorTextField field) {
             field.setText("ImplicitClass2");
