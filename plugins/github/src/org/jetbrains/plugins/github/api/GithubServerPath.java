@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import git4idea.remote.hosting.GitHostingUrlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,14 +75,6 @@ public final class GithubServerPath implements ServerPath {
   @Nullable
   public String getSuffix() {
     return mySuffix;
-  }
-
-  /**
-   * @deprecated use an util method directly
-   */
-  @Deprecated(forRemoval = true)
-  public boolean matches(@NotNull String gitRemoteUrl) {
-    return GitHostingUrlUtil.match(toURI(), gitRemoteUrl);
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path

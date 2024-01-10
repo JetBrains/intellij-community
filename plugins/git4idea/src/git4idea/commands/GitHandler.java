@@ -370,16 +370,6 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
-  /**
-   * Use {@link #getExecutable()} and {@link GitExecutable#convertFilePath(File)}
-   *
-   * @deprecated Do not use, each ENV may have its own escaping rules.
-   */
-  @Deprecated(forRemoval = true)
-  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
-    myCustomEnv.put(name, myExecutable.convertFilePath(file));
-  }
-
   public boolean containsCustomEnvironmentVariable(@NotNull @NonNls String key) {
     return myCustomEnv.containsKey(key);
   }
@@ -587,26 +577,6 @@ public abstract class GitHandler {
     finally {
       logTime();
     }
-  }
-
-  /**
-   * add error to the error list
-   *
-   * @param ex an error to add to the list
-   * @deprecated remove together with {@link GitHandlerUtil}
-   */
-  @Deprecated(forRemoval = true)
-  public void addError(VcsException ex) {
-    myErrors.add(ex);
-  }
-
-  /**
-   * @return unmodifiable list of errors.
-   * @deprecated remove together with {@link GitHandlerUtil}
-   */
-  @Deprecated(forRemoval = true)
-  public List<VcsException> errors() {
-    return Collections.unmodifiableList(myErrors);
   }
   //endregion
 }
