@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
+import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
@@ -14,7 +15,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.internal.JavaToolchain
-import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
@@ -42,8 +42,7 @@ class GradleSourceSetGroovyHelper {
     @NotNull ModelBuilderContext context
   ) {
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
-    def ideaPluginModule = ideaPlugin?.model?.module
+    def ideaPluginModule = GradleIdeaPluginUtil.getIdeaModule(project)
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
@@ -73,20 +72,12 @@ class GradleSourceSetGroovyHelper {
       testSourceSets = project.testing.suites.collect { it.getSources() }
     }
 
-    if (ideaPluginModule) {
-      generatedSourceDirs =
-        ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
-      ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
-      ideaResourceDirs = ideaPluginModule.hasProperty("resourceDirs") ? new LinkedHashSet<>(ideaPluginModule.resourceDirs) : []
-      if (is74OrBetter) {
-        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSources.files)
-        ideaTestResourceDirs = new LinkedHashSet<>(ideaPluginModule.testResources.files)
-      }
-      else {
-        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
-        ideaTestResourceDirs =
-          ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
-      }
+    if (ideaPluginModule != null) {
+      generatedSourceDirs = GradleIdeaPluginUtil.getGeneratedSourceDirectories(ideaPluginModule)
+      ideaSourceDirs = GradleIdeaPluginUtil.getSourceDirectories(ideaPluginModule)
+      ideaResourceDirs = GradleIdeaPluginUtil.getResourceDirectories(ideaPluginModule)
+      ideaTestSourceDirs = GradleIdeaPluginUtil.getTestSourceDirectories(ideaPluginModule)
+      ideaTestResourceDirs = GradleIdeaPluginUtil.getTestResourceDirectories(ideaPluginModule)
     }
 
     def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)

@@ -8,6 +8,16 @@ import java.lang.reflect.Method;
 
 public final class GradleReflectionUtil {
 
+  public static boolean hasMethod(@NotNull Object target, @NotNull String methodName, Class<?>... parameterTypes) {
+    try {
+      target.getClass().getMethod(methodName, parameterTypes);
+      return true;
+    }
+    catch (NoSuchMethodException | SecurityException e) {
+      return false;
+    }
+  }
+
   public static <T> T reflectiveGetProperty(@NotNull Object target, @NotNull String propertyName, @NotNull Class<T> aClass) {
     try {
       Method getProperty = target.getClass().getMethod(propertyName);
@@ -22,8 +32,8 @@ public final class GradleReflectionUtil {
 
   public static <T> T reflectiveCall(@NotNull Object target, @NotNull String methodName, @NotNull Class<T> aClass) {
     try {
-      Method getProperty = target.getClass().getMethod(methodName);
-      Object value = getProperty.invoke(target);
+      Method method = target.getClass().getMethod(methodName);
+      Object value = method.invoke(target);
       return aClass.cast(value);
     } catch (Exception e) {
       throw new RuntimeException(e);

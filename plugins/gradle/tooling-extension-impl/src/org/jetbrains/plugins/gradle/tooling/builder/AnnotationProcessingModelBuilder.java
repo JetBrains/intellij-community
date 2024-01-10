@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
@@ -101,7 +102,9 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       return true;
     }
     if (module != null) {
-      return module.getTestSourceDirs().containsAll(sourceSet.getAllJava().getSrcDirs());
+      Set<File> testSourceDirectories = GradleIdeaPluginUtil.getTestSourceDirectories(module);
+      Set<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs();
+      return testSourceDirectories.containsAll(sourceDirectories);
     }
     return false;
   }
