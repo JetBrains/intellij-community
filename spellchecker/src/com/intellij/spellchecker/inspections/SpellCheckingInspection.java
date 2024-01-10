@@ -12,7 +12,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.*;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -73,6 +73,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+    var scope = buildAllowedScopes();
 
     return new PsiElementVisitor() {
       @Override
@@ -84,51 +85,55 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
           return;
         }
 
-        // Extract parser definition from element
         final Language language = element.getLanguage();
-        final IElementType elementType = node.getElementType();
-        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+        var strategy = getSpellcheckingStrategy(element, language);
+        if(strategy == null)
+          return;
 
-        // Handle selected options
-        if (parserDefinition != null) {
-          if (parserDefinition.getStringLiteralElements().contains(elementType)) {
-            if (!processLiterals) {
-              return;
-            }
-          }
-          else if (parserDefinition.getCommentTokens().contains(elementType)) {
-            if (!processComments) {
-              return;
-            }
-          }
-          else if (!processCode) {
-            return;
-          }
-        }
+        if(!strategy.elementFitsScope(element, scope))
+          return;
 
         PsiFile containingFile = holder.getFile();
         if (Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
           return;
         }
 
-        tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
+        tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)), scope);
       }
     };
+  }
+
+  private Set<SpellCheckingScope> buildAllowedScopes() {
+    var result = new HashSet<SpellCheckingScope>();
+    if(processLiterals)
+      result.add(SpellCheckingScope.Literals);
+    if(processComments)
+      result.add(SpellCheckingScope.Comments);
+    if(processCode)
+      result.add(SpellCheckingScope.Code);
+    return result;
   }
 
   /**
    * Splits element text in tokens according to spell checker strategy of given language
    *
    * @param element  Psi element
+   * @param allowedScopes
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(final @NotNull PsiElement element, final @NotNull Language language, TokenConsumer consumer) {
+  public static void tokenize(@NotNull final PsiElement element,
+                              @NotNull final Language language,
+                              TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
     SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if (factoryByLanguage == null) {
       return;
     }
-    Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+    tokenize(factoryByLanguage, element, consumer, allowedScopes);
+  }
+
+  private static void tokenize(SpellcheckingStrategy strategy, PsiElement element, TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
+    var tokenizer = strategy.getTokenizer(element, allowedScopes);
     //noinspection unchecked
     tokenizer.tokenize(element, consumer);
   }
@@ -238,5 +243,11 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
     }
+  }
+
+  public enum SpellCheckingScope {
+    Comments,
+    Literals,
+    Code,
   }
 }

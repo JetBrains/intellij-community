@@ -185,7 +185,7 @@ public abstract class SpellCheckerDictionaryGenerator {
           addSeenWord(seenNames, word, language);
         });
       }
-    });
+    }, null);
   }
 
   protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {

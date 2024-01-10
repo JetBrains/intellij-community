@@ -3,15 +3,20 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
@@ -22,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Defines spellchecking support for a custom language.
@@ -49,6 +55,10 @@ public class SpellcheckingStrategy {
 
   private static final SpellCheckerQuickFix[] BATCH_FIXES =
     new SpellCheckerQuickFix[]{SaveTo.getSaveToLevelFix(DictionaryLevel.APP), SaveTo.getSaveToLevelFix(DictionaryLevel.PROJECT)};
+
+  public Tokenizer getTokenizer(PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
+    return getTokenizer(element);
+  }
 
   /**
    * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
@@ -80,6 +90,30 @@ public class SpellcheckingStrategy {
       return TEXT_TOKENIZER;
     }
     return EMPTY_TOKENIZER;
+  }
+
+  public boolean elementFitsScope(@NotNull PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
+
+    final Language language = element.getLanguage();
+    final IElementType elementType = element.getNode().getElementType();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+
+    if (parserDefinition != null) {
+      if (parserDefinition.getStringLiteralElements().contains(elementType)) {
+        if (!scope.contains(SpellCheckingInspection.SpellCheckingScope.Literals)) {
+          return false;
+        }
+      }
+      else if (parserDefinition.getCommentTokens().contains(elementType)) {
+        if (!scope.contains(SpellCheckingInspection.SpellCheckingScope.Comments)) {
+          return false;
+        }
+      }
+      else if (!scope.contains(SpellCheckingInspection.SpellCheckingScope.Code)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
