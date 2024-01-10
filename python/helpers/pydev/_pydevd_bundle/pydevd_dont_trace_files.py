@@ -72,7 +72,6 @@ DONT_TRACE = {
     'pydevd.py': PYDEV_FILE,
     'pydevd_additional_thread_info.py': PYDEV_FILE,
     'pydevd_additional_thread_info_regular.py': PYDEV_FILE,
-    'pydevd_asyncio_utils.py': PYDEV_FILE,
     'pydevd_breakpointhook.py': PYDEV_FILE,
     'pydevd_breakpoints.py': PYDEV_FILE,
     'pydevd_bytecode_utils.py': PYDEV_FILE,
@@ -107,7 +106,6 @@ DONT_TRACE = {
     'pydevd_ipython_console_output.py': PYDEV_FILE,
     'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
-    'pydevd_nest_asyncio.py': PYDEV_FILE,
     'pydevd_pandas.py': PYDEV_FILE,
     'pydevd_pep_669_tracing.py': PYDEV_FILE,
     'pydevd_pep_669_tracing_wrapper.py': PYDEV_FILE,
@@ -141,6 +139,10 @@ DONT_TRACE = {
     'test_common.py': PYDEV_FILE,
     'test_pandas.py': PYDEV_FILE,
     'test_pydev_pandas.py': PYDEV_FILE,
+    'pydevd_nest_asyncio.py': PYDEV_FILE,
+    'pydevd_asyncio_constants.py': PYDEV_FILE,
+    'pydevd_asyncio_provider.py': PYDEV_FILE,
+    'pydevd_asyncio_utils.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

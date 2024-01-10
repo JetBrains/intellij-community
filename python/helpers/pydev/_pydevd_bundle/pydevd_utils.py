@@ -17,11 +17,11 @@ except:
 
 import inspect
 from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV, IS_PY311
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
+from _pydevd_bundle.pydevd_asyncio_provider import eval_async_expression_in_context
 from array import array
 from collections import deque
 
@@ -638,7 +638,7 @@ def is_current_thread_main_thread():
 
 
 def eval_expression(expression, globals, locals):
-    if IS_ASYNCIO_DEBUGGER_ENV:
+    if eval_async_expression_in_context is not None:
         return eval_async_expression_in_context(expression, globals, locals, False)
     else:
         return eval(expression, globals, locals)

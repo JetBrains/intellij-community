@@ -76,7 +76,6 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.python.actions.PyExecuteInConsole.requestFocus;
 import static com.jetbrains.python.actions.PyExecuteInConsole.selectConsoleTab;
-import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
 import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
@@ -659,9 +658,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);
     }
 
-    if (RegistryManager.getInstance().is("python.debug.asyncio.repl")) {
-      environmentController.putFixedValue(ASYNCIO_ENV, "True");
-    }
+    PyDebugAsyncioCustomizer.Companion.getInstance().enableAsyncioMode(environmentController);
 
     if (RegistryManager.getInstance().is("python.debug.low.impact.monitoring.api")) {
       environmentController.putFixedValue(USE_LOW_IMPACT_MONITORING, "True");

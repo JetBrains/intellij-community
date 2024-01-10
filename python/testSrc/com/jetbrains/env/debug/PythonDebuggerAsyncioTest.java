@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
 
 public class PythonDebuggerAsyncioTest extends PyEnvTestCase {
 
@@ -23,6 +22,8 @@ public class PythonDebuggerAsyncioTest extends PyEnvTestCase {
   }
 
   private static class AsyncioPyDebuggerTask extends PyDebuggerTask {
+    private static final String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
+
     private static final String RELATIVE_PATH = "/debug";
 
     private static final String SIMPLE_SCRIPT_NAME = "test_asyncio_debugger.py";
