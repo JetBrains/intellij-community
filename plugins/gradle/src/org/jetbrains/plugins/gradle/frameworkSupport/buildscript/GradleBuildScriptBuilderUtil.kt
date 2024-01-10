@@ -32,18 +32,6 @@ fun getJunit5Version(): String {
   return "5.10.0"
 }
 
-fun isJavaLibraryPluginSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
-}
-
-fun isImplementationScopeSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
-}
-
-fun isRuntimeOnlyScopeSupported(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.isGradleAtLeast("3.4")
-}
-
 fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.isGradleAtLeast("4.9")
 }

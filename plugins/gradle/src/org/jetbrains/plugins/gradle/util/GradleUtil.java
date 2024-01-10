@@ -360,6 +360,7 @@ public final class GradleUtil {
     return modelsProvider.findIdeModule(moduleData);
   }
 
+  @SuppressWarnings("unused") // used externally
   public static @NotNull GradleVersion getGradleVersion(Project project, PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
@@ -369,6 +370,7 @@ public final class GradleUtil {
     return GradleVersion.current();
   }
 
+  @SuppressWarnings("unused") // used externally
   public static @NotNull GradleVersion getGradleVersion(Project project, String filePath) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     if (manager instanceof GradleManager gradleManager) {
@@ -384,6 +386,7 @@ public final class GradleUtil {
     return GradleVersion.current();
   }
 
+  @SuppressWarnings("unused") // used externally
   public static boolean isSupportedImplementationScope(@NotNull GradleVersion gradleVersion) {
     return GradleVersionUtil.isGradleAtLeast(gradleVersion, "3.4");
   }

@@ -49,7 +49,6 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
@@ -555,10 +554,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     else {
       assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
     }
-  }
-
-  protected boolean isJavaLibraryPluginSupported() {
-    return GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(getCurrentGradleVersion());
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {

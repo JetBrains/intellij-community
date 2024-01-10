@@ -480,8 +480,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
 
-    String mainCompileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
-    String utilCompileConfiguration = isJavaLibraryPluginSupported() ? "utilImplementation" : "utilCompile";
     createProjectSubFile("project-a/build.gradle", script(it -> {
       it.withIdeaPlugin()
         .withJavaPlugin()
@@ -495,8 +493,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
           "    }",
           "}",
           "configurations {",
-          "  " + mainCompileConfiguration + " {",
-          "    extendsFrom " + utilCompileConfiguration,
+          "  implementation {",
+          "    extendsFrom utilImplementation",
           "  }",
           "}",
           "jar {",

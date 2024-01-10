@@ -102,7 +102,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     if (useCompileClasspathPackaging) {
       // use jars instead of class folders for everything on the compile classpath
       // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_classes_usage
-      if (isJavaLibraryPluginSupported() && isGradleOlderThan("5.6.1")) {
+      if (isGradleOlderThan("5.6.1")) {
         return;
       }
       settings.setVmOptions("-Dorg.gradle.java.compile-classpath-packaging=true");
@@ -570,7 +570,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                          include 'api'
                          include 'modules:X'
                          include 'modules:Y'""");
-    String compileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
     importProject(
       "configure(subprojects - project(':modules')) {\n" +
       "    group 'server'\n" +
@@ -601,7 +600,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "def webProjects = [project(':modules:X'), project(':modules:Y')]\n" +
       "configure(webProjects) {\n" +
       "    dependencies {\n" +
-      "        " + compileConfiguration + " project(path: ':api', configuration: 'webappConf')\n" +
+      "        implementation project(path: ':api', configuration: 'webappConf')\n" +
       "    }\n" +
       "}"
     );
@@ -1170,10 +1169,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleLibDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    if (!isJavaLibraryPluginSupported()) {
-      assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
-      assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
-    }
     if (isGradleOlderThan("7.0")) {
       assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
       assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
@@ -1749,7 +1744,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                          include 'project2'
                          """);
 
-    String testCompileConfiguration = isJavaLibraryPluginSupported() ? "testImplementation" : "testCompile";
     importProject(
       createBuildScriptBuilder()
         .subprojects(it -> { it.withMavenCentral(); })
@@ -1757,7 +1751,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           it.withJavaPlugin()
             .addPrefix("configurations {",
                        "  testOutput",
-                       "  testOutput.extendsFrom (" + testCompileConfiguration + ")",
+                       "  testOutput.extendsFrom (testImplementation)",
                        "}")
             .addDependency("testOutput", it.code("sourceSets.test.output"))
             .addTestImplementationDependency("junit:junit:4.11");

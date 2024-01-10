@@ -35,8 +35,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addApiDependency(string(dependency), sourceSet)
 
   override fun addApiDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isJavaLibraryPluginSupported(gradleVersion)) "api" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("api", dependency, sourceSet)
   }
 
   override fun addCompileOnlyDependency(dependency: String, sourceSet: String?) =
@@ -49,16 +48,14 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addImplementationDependency(string(dependency), sourceSet)
 
   override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isImplementationScopeSupported(gradleVersion)) "implementation" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("implementation", dependency, sourceSet)
   }
 
   override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?) =
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
   override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isRuntimeOnlyScopeSupported(gradleVersion)) "runtimeOnly" else "runtime"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("runtimeOnly", dependency, sourceSet)
   }
 
   override fun addTestImplementationDependency(dependency: String) =
@@ -111,10 +108,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withPlugin("java")
 
   override fun withJavaLibraryPlugin() =
-    if (isJavaLibraryPluginSupported(gradleVersion))
-      withPlugin("java-library")
-    else
-      withJavaPlugin()
+    withPlugin("java-library")
 
   override fun withIdeaPlugin() =
     withPlugin("idea")

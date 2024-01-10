@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
 import org.junit.jupiter.api.Test
 
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
@@ -169,43 +170,28 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
   fun `test compile-implementation dependency scope`() {
-    assertBuildScript(
-      GradleVersion.current() to ("""
-        dependencies {
-            implementation 'my-dep'
-            runtimeOnly 'my-runtime-dep'
-            testImplementation 'my-test-dep'
-            testRuntimeOnly 'my-runtime-dep'
-        }
-      """.trimIndent() to """
-        dependencies {
-            implementation("my-dep")
-            runtimeOnly("my-runtime-dep")
-            testImplementation("my-test-dep")
-            testRuntimeOnly("my-runtime-dep")
-        }
-      """.trimIndent()),
-
-      GradleVersion.version("3.0") to ("""
-        dependencies {
-            compile 'my-dep'
-            runtime 'my-runtime-dep'
-            testCompile 'my-test-dep'
-            testRuntime 'my-runtime-dep'
-        }
-      """.trimIndent() to """
-        dependencies {
-            compile("my-dep")
-            runtime("my-runtime-dep")
-            testCompile("my-test-dep")
-            testRuntime("my-runtime-dep")
-        }
-      """.trimIndent())
-    ) {
-      addImplementationDependency("my-dep")
-      addRuntimeOnlyDependency("my-runtime-dep")
-      addTestImplementationDependency("my-test-dep")
-      addTestRuntimeOnlyDependency("my-runtime-dep")
+    for (gradleVersion in SUPPORTED_GRADLE_VERSIONS) {
+      assertBuildScript(GradleVersion.version(gradleVersion) to ("""
+          dependencies {
+              implementation 'my-dep'
+              runtimeOnly 'my-runtime-dep'
+              testImplementation 'my-test-dep'
+              testRuntimeOnly 'my-runtime-dep'
+          }
+        """.trimIndent() to """
+          dependencies {
+              implementation("my-dep")
+              runtimeOnly("my-runtime-dep")
+              testImplementation("my-test-dep")
+              testRuntimeOnly("my-runtime-dep")
+          }
+        """.trimIndent())
+      ) {
+        addImplementationDependency("my-dep")
+        addRuntimeOnlyDependency("my-runtime-dep")
+        addTestImplementationDependency("my-test-dep")
+        addTestRuntimeOnlyDependency("my-runtime-dep")
+      }
     }
   }
 

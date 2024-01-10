@@ -26,12 +26,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -63,9 +61,6 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 
     WriteCommandAction.writeCommandAction(project, file)
                       .withName(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text")).run(() -> {
-      GradleVersion gradleVersion = GradleUtil.getGradleVersion(project, file);
-      String scope = GradleUtil.isSupportedImplementationScope(gradleVersion) ? "implementation" : "compile";
-
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
       List<GrMethodCall> closableBlocks = PsiTreeUtil.getChildrenOfTypeAsList(file, GrMethodCall.class);
       GrCall dependenciesBlock = ContainerUtil.find(closableBlocks, call -> {
@@ -76,7 +71,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
       if (dependenciesBlock == null) {
         StringBuilder buf = new StringBuilder();
         for (MavenId mavenId : ids) {
-          buf.append(String.format("%s '%s'\n", scope, getMavenArtifactKey(mavenId)));
+          buf.append(String.format("implementation '%s'\n", getMavenArtifactKey(mavenId)));
         }
         dependenciesBlock = (GrCall)factory.createStatementFromText("dependencies{\n" + buf + "}");
         file.add(dependenciesBlock);
@@ -86,7 +81,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
         if (closableBlock != null) {
           for (MavenId mavenId : ids) {
             closableBlock.addStatementBefore(
-              factory.createStatementFromText(String.format("%s '%s'\n", scope, getMavenArtifactKey(mavenId))), null);
+              factory.createStatementFromText(String.format("implementation '%s'\n", getMavenArtifactKey(mavenId))), null);
           }
         }
       }

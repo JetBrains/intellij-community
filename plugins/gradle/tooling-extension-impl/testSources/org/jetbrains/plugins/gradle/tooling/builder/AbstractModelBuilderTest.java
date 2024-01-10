@@ -29,7 +29,6 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
@@ -114,18 +113,11 @@ public abstract class AbstractModelBuilderTest {
     testDir = new File(ourTempDir, methodName);
     FileUtil.ensureExists(testDir);
 
-    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
-    String compileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion) ? "implementation" : "compile";
-    String testCompileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion)
-                                      ? "testImplementation" : "testCompile";
-    String integrationTestCompileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion)
-                                                 ? "integrationTestImplementation"
-                                                 : "integrationTestCompile";
     try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
       String text = StreamUtil.readText(new InputStreamReader(buildScriptStream, StandardCharsets.UTF_8));
-      text = text.replaceAll("<<compile>>", compileConfiguration);
-      text = text.replaceAll("<<testCompile>>", testCompileConfiguration);
-      text = text.replaceAll("<<integrationTestCompile>>", testCompileConfiguration);
+      text = text.replaceAll("<<compile>>", "implementation");
+      text = text.replaceAll("<<testCompile>>", "testImplementation");
+      text = text.replaceAll("<<integrationTestCompile>>", "integrationTestImplementation");
       FileUtil.writeToFile(new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME), text, StandardCharsets.UTF_8);
     }
 
@@ -139,6 +131,7 @@ public abstract class AbstractModelBuilderTest {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
     final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
