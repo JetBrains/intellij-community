@@ -53,12 +53,7 @@ public final class SelectionReverter extends Reverter {
 
   @Override
   protected void doRevert() {
-    Block b = myCalculator.getSelectionFor(myLeftRevision, new Progress() {
-      @Override
-      public void processed(int percentage) {
-        // should be already processed.
-      }
-    });
+    Block b = myCalculator.getSelectionFor(myLeftRevision, Progress.EMPTY);
 
     Document d = myGateway.getDocument(myRightEntry.getPath());
 
