@@ -242,6 +242,8 @@
     <module name="kotlin.run-configurations.testng"/>
     <module name="kotlin.run-configurations.jvm"/>
 
+    <module name="kotlin.fir.fir-low-level-api-ide-impl"/>
+
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.code-insight-groovy"/>
