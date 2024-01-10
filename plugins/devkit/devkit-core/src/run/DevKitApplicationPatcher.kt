@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.RunConfigurationExtension
@@ -46,6 +46,21 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
+    if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
+      if (javaParameters.jdk?.versionString?.contains("17") == true) {
+        vmParameters.addAll("-XX:CICompilerCount=2")
+      }
+      else {
+        vmParameters.addAll("-XX:-TieredCompilation")
+      }
+    }
+
+    vmParameters.addAll(
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+    )
+
     if (!isDev) {
       return
     }
@@ -58,13 +73,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
-    vmParameters.addAll(
-      "-XX:+UseG1GC",
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:MaxJavaStackTraceDepth=10000",
-      "-ea",
-      "-XX:CICompilerCount=2"
-    )
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
     productClassifier = when (productClassifier) {
