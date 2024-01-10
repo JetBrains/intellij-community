@@ -37,13 +37,20 @@ class OnboardingController private constructor(){
   fun startImport(cancelCallback: (() -> Unit)? = null,
                   @NlsContexts.DialogTitle title: String? = null,
                   isModal: Boolean = true,
-                  skipImportAction: () -> Unit = { startWizard(cancelCallback, title, isModal) }) {
+                  skipImportAction: (() -> Unit)? = null) {
 
     if(!dialog.isShowing || !dialog.isVisible) {
       dialog = createDialog()
     }
 
-    val controller = ImportSettingsController.createController(dialog, skipImportAction)
+    val skipAction: () -> Unit = skipImportAction ?:
+      WizardProvider.getInstance().getWizardService()?.let {
+      { startWizard(cancelCallback, title, isModal) }
+    } ?: run {
+      { dialogClose() }
+    }
+
+    val controller = ImportSettingsController.createController(dialog, skipAction)
 
     cancelImportCallback = cancelCallback
     controller.goToProductChooserPage()

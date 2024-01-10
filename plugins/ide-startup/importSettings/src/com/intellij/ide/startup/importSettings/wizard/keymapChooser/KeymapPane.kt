@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import java.awt.font.TextAttribute
 import javax.swing.JLabel
 
@@ -32,6 +33,7 @@ class KeymapPane(val keymap: Keymap) {
   private fun update() {
     namelist.forEach { it.isVisible = active }
     pane.border = RoundedLineBorder(if (active) SELECTED_BORDER_COLOR else BORDER_COLOR)
+    pane.background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
   }
 
   val pane = panel {

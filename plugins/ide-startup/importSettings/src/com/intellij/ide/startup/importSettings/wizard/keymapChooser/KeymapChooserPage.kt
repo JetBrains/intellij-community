@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.wizard.keymapChooser
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
@@ -71,59 +72,25 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
     activeKeymap = pages[0]
     activePane(activeKeymap)
 
-    contentPage = JPanel(GridBagLayout()).apply {
-      val gbc = GridBagConstraints()
-      gbc.gridx = 0
-      gbc.gridy = 0
-      gbc.weightx = 1.0
-      gbc.weighty = 0.0
-      gbc.fill = GridBagConstraints.HORIZONTAL
-      isOpaque = false
-
-      add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
-
-      gbc.fill = GridBagConstraints.BOTH
-      gbc.gridy = 1
-      gbc.weighty = 2.0
-      add(centralPane, gbc)
-
-      gbc.fill = GridBagConstraints.HORIZONTAL
-      gbc.gridy = 2
-      gbc.weighty = 0.0
-      add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
-
-
-      val backAction = controller.goBackAction?.let {
-        controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
-          it.invoke()
-        }
+    val backAction = controller.goBackAction?.let {
+      controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
+        it.invoke()
       }
-
-      val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
-        keymapService.chosen(activeKeymap.keymap.id)
-        controller.goToPluginPage()
-      }
-
-      val buttons: List<JButton> = backAction?.let {
-        if (SystemInfo.isMac) {
-          listOf(backAction, continueAction)
-        }
-        else listOf(continueAction, backAction)
-      } ?: listOf(continueAction)
-
-
-      val buttonPane = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
-        add(DialogWrapper.layoutButtonsPanel(buttons))
-        border = JBUI.Borders.empty(3, 0, 3, 15)
-      }
-
-      gbc.fill = GridBagConstraints.HORIZONTAL
-      gbc.gridy = 3
-      gbc.weighty = 0.0
-
-      add(buttonPane, gbc)
     }
 
+    val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
+      keymapService.chosen(activeKeymap.keymap.id)
+      controller.goToPluginPage()
+    }
+
+    val buttons: List<JButton> = backAction?.let {
+      if (SystemInfo.isMac) {
+        listOf(backAction, continueAction)
+      }
+      else listOf(continueAction, backAction)
+    } ?: listOf(continueAction)
+
+    contentPage = WizardPagePane(centralPane, buttons)
   }
 
   private fun activePane(keymap: KeymapPane)  {

@@ -8,12 +8,6 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
-class WizardMockData : WizardProvider {
-  override fun getWizardService(): WizardService {
-    return WizardServiceTest()
-  }
-}
-
 class WizardServiceTest : WizardService {
   override fun getKeymapService(): KeymapService {
     return TestKeymapService()

@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.openapi.components.service
+import com.intellij.util.SystemProperties
 import com.jetbrains.rd.util.reactive.*
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -12,6 +13,14 @@ interface WizardProvider {
   }
 
   fun getWizardService(): WizardService? = null
+}
+
+class WizardProviderImpl : WizardProvider {
+  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
+
+  override fun getWizardService(): WizardService? {
+    return if (shouldUseMockData) WizardServiceTest() else null
+  }
 }
 
 interface WizardService {
