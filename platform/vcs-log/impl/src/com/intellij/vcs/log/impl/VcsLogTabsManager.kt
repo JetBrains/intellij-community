@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ModalityState
@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.ContentUtilEx
-import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -75,9 +74,10 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     ToolWindowManager.getInstance(project).invokeLater {
       if (logManager.isDisposed) return@invokeLater
 
-      val toolWindow = getToolWindow(project).alsoIfNull {
+      val toolWindow = getToolWindow(project) ?: run {
         LOG.error("Could not find tool window by id ${ChangesViewContentManager.TOOLWINDOW_ID}")
-      } ?: return@invokeLater
+        return@invokeLater
+      }
 
       if (toolWindow.isVisible) {
         futureToolWindow.complete(toolWindow)

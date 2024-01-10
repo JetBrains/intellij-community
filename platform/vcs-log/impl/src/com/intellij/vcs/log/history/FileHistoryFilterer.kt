@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.Disposable
@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
-import com.intellij.util.alsoIfNull
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
@@ -379,11 +378,11 @@ private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHa
       }
       catch (_: UnsupportedOperationException) {
         val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-        val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.alsoIfNull {
+        val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root) ?: run {
           @Suppress("HardCodedStringLiteral")
           throw VcsException("Could not find vcs for $root")
         }
-        VcsCachingHistory.collect(vcs!!, filePath, revisionNumber) { revision ->
+        VcsCachingHistory.collect(vcs, filePath, revisionNumber) { revision ->
           consumer(createCommitMetadataWithPath(revision))
         }
       }
