@@ -471,16 +471,7 @@ public class HtmlParsing {
   }
 
   protected boolean isSingleTag(@NotNull HtmlTagInfo tagInfo) {
-    return isSingleTag(tagInfo.getNormalizedName(), tagInfo.getOriginalName());
-  }
-
-  /**
-   * @deprecated Override {@link #isSingleTag(HtmlTagInfo)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  protected boolean isSingleTag(@NotNull String tagName, @SuppressWarnings("unused") @NotNull String originalTagName) {
-    return HtmlUtil.isSingleHtmlTag(tagName, true);
+    return HtmlUtil.isSingleHtmlTag(tagInfo.getNormalizedName(), true);
   }
 
   protected boolean isEndTagRequired(@NotNull HtmlTagInfo tagInfo) {
