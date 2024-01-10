@@ -49,19 +49,20 @@ class PyDataView(private val project: Project) : DumbAware {
     addEmptyContent()
 
     project.messageBus.connect()
-      .subscribe<ToolWindowManagerListener>(ToolWindowManagerListener.TOPIC,
-                                            object : ToolWindowManagerListener {
-                                              override fun stateChanged(toolWindowManager: ToolWindowManager) {
-                                                val window = toolWindowManager.getToolWindow(DATA_VIEWER_ID)
-                                                if (window == null) {
-                                                  return
-                                                }
-                                                if (toolWindow.isAvailable && toolWindow.type == ToolWindowType.FLOATING && !toolWindow.isVisible) {
-                                                  toolWindow.isShowStripeButton = false
-                                                  toolWindow.contentManager.removeAllContents(true)
-                                                }
-                                              }
-                                            })
+      .subscribe<ToolWindowManagerListener>(
+        ToolWindowManagerListener.TOPIC,
+        object : ToolWindowManagerListener {
+          override fun stateChanged(toolWindowManager: ToolWindowManager) {
+            val window = toolWindowManager.getToolWindow(DATA_VIEWER_ID)
+            if (window == null) {
+              return
+            }
+            if (toolWindow.isAvailable && toolWindow.type == ToolWindowType.FLOATING && !toolWindow.isVisible) {
+              toolWindow.isShowStripeButton = false
+              toolWindow.contentManager.removeAllContents(true)
+            }
+          }
+        })
   }
 
   private fun addEmptyContent() {
@@ -256,8 +257,13 @@ class PyDataView(private val project: Project) : DumbAware {
     const val AUTO_RESIZE = "python.debugger.dataview.autoresize"
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
-    fun isAutoResizeEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(AUTO_RESIZE, true)
-    fun isColoringEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(COLORED_BY_DEFAULT, true)
+    @JvmStatic
+    fun isAutoResizeEnabled(project: Project): Boolean = PropertiesComponent.getInstance(project).getBoolean(AUTO_RESIZE, true)
+
+    @JvmStatic
+    fun isColoringEnabled(project: Project): Boolean = PropertiesComponent.getInstance(project).getBoolean(COLORED_BY_DEFAULT, true)
+
+    @JvmStatic
     fun setColoringEnabled(project: Project, value: Boolean) {
       PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
     }
