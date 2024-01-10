@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -13,7 +12,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 internal class ImportMemberIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
+    AbstractKotlinModCommandWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
 
     class Context(
@@ -48,8 +48,8 @@ internal class ImportMemberIntention :
         return computeContext(element, symbol)
     }
 
-    override fun apply(element: KtNameReferenceExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+    override fun apply(element: KtNameReferenceExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        context.analyzeContext.shortenCommand.invokeShortening()
     }
 }
 

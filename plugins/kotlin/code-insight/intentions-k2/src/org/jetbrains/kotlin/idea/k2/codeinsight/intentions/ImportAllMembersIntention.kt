@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
@@ -16,7 +15,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
+    AbstractKotlinModCommandWithContext<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
     HighPriorityAction {
 
     class Context(
@@ -50,8 +50,13 @@ internal class ImportAllMembersIntention :
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
     context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtExpression): Boolean =
+        element.actualReference?.resolveToSymbol() is KtNamedClassOrObjectSymbol
+
+    context(KtAnalysisSession)
     override fun prepareContext(element: KtExpression): Context? {
-        val target = element.actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
+        val actualReference = element.actualReference
+        val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
         val classId = target.classIdIfNonLocal ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
             (target.classKind == KtClassKind.OBJECT ||
@@ -91,8 +96,8 @@ internal class ImportAllMembersIntention :
         return Context(classId.asSingleFqName(), shortenCommand)
     }
 
-    override fun apply(element: KtExpression, context: Context, project: Project, editor: Editor?) {
-        val shortenCommand = context.shortenCommand
+    override fun apply(element: KtExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        val shortenCommand = context.analyzeContext.shortenCommand
         val file = shortenCommand.targetFile.element ?: return
         removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
         shortenCommand.invokeShortening()
