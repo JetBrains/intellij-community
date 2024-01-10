@@ -23,11 +23,8 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -566,6 +563,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test
+  @Ignore("Temporary disabled until we use settings controller during settings migration")
   fun `settingsController - internal storage - read old data`() = runBlocking<Unit>(Dispatchers.Default) {
     clearCacheStore()
 
@@ -602,6 +600,7 @@ internal class ApplicationStoreTest {
                                       @JvmField val map: Map<String, Set<String>> = HashMap())
 
   @Test
+  @Ignore("Temporary disabled until we use settings controller during settings migration")
   fun `settingsController - internal storage - serialize map`() = runBlocking<Unit>(Dispatchers.Default) {
     clearCacheStore()
     @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
