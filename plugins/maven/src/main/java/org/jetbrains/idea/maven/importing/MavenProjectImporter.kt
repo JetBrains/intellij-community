@@ -60,7 +60,7 @@ interface MavenProjectImporter {
       }
     }
 
-    class PostImportingTaskMarker(private val importingActivity: StructuredIdeActivity) {
+    class PostImportingTaskMarker(importingActivity: StructuredIdeActivity) {
       private val activityId = MavenImportCollector.ACTIVITY_ID.with(importingActivity)
       private var startedNano = 0L
 
@@ -117,16 +117,10 @@ interface MavenProjectImporter {
     private val importingInProgress = AtomicInteger()
 
     @JvmStatic
-    fun isImportingInProgress(): Boolean {
-      return importingInProgress.get() > 0
-    }
-
-    @JvmStatic
-    fun isImportToWorkspaceModelEnabled(project: Project?): Boolean {
+    fun isImportToWorkspaceModelEnabled(project: Project): Boolean {
       val property = System.getProperty("maven.import.to.workspace.model")
       if ("true" == property) return true
       if ("false" == property) return false
-      if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
     }
   }
