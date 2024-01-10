@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
-class PyVariableAnnotator : PyAnnotator() {
+class PyLocalVariableAnnotator : PyAnnotator() {
 
   override fun visitPyTargetExpression(node: PyTargetExpression) {
     if (!node.isLocalVariable()) return

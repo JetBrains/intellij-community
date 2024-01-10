@@ -728,7 +728,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyVariableAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
 
     <!--stdlib-->
