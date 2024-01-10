@@ -3,8 +3,12 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
+private val pluginIdsToIgnoreK2KotlinCompatibility: List<String> =
+  System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.map { it.trim() }.orEmpty()
+
 internal fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
   return plugin.epNameToExtensions["org.jetbrains.kotlin.supportsKotlinK2Mode"]?.isNotEmpty() == true
+         || plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility
 }
 
 internal fun isKotlinPluginK2Mode(): Boolean {
