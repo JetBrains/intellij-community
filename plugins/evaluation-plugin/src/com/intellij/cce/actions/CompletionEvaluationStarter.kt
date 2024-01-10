@@ -19,9 +19,12 @@ import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.util.progress.sleepCancellable
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -57,6 +60,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     protected fun loadProject(projectPath: String): Project = try {
       println("Open and load project $projectPath. Operation may take a few minutes.")
       val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
+      waitForInvokeLaterActivities()
       println("Project loaded!")
       project
     }
@@ -79,6 +83,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         println(".idea directory is missing. Project will be imported")
         val importedProject = ProjectUtil.openOrImport(project.toPath(), null, false)
         assert(importedProject != null) { ".idea directory is missing and project can't be imported" }
+        waitForInvokeLaterActivities()
         return importedProject!!
       }
       val existing = ProjectManager.getInstance().openProjects.firstOrNull { proj ->
@@ -87,6 +92,13 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       if (existing != null) return existing
 
       return ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
+    }
+
+    private fun waitForInvokeLaterActivities() {
+      println("Waiting all invoked later activities...")
+      repeat(10) {
+        ApplicationManager.getApplication().invokeAndWait({ sleepCancellable(1000) }, ModalityState.any())
+      }
     }
   }
 
