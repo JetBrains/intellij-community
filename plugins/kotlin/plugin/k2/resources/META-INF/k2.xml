@@ -251,6 +251,8 @@
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
 
+    <module name="kotlin.jvm-decompiler"/>
+
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.live-templates-shared"/>
