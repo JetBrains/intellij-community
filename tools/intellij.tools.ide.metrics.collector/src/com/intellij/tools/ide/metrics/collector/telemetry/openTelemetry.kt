@@ -72,8 +72,8 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
     .map { betweenSpanProcessor.process(it) }
     .filterNotNull()
     .groupBy { it.name }
-  val fromSpanMetrics = spanToMetricMap[fromSpanName].alsoIfNull { throw IllegalStateException("Spans $fromSpanName is null") }!!
-  val toSpanMetrics = spanToMetricMap[toSpanName].alsoIfNull { throw IllegalStateException("Spans $toSpanName is null") }!!
+  val fromSpanMetrics = spanToMetricMap[fromSpanName] ?: throw IllegalStateException("Spans $fromSpanName is null")
+  val toSpanMetrics = spanToMetricMap[toSpanName] ?: throw IllegalStateException("Spans $toSpanName is null")
   assert(toSpanMetrics.size >= fromSpanMetrics.size) {
     "Size of toSpans (${toSpanMetrics.size}) must be >= size of fromSpans(${fromSpanMetrics.size})"
   }
