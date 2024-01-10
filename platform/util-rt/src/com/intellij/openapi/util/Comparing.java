@@ -124,15 +124,6 @@ public final class Comparing {
   }
 
   /**
-   * @deprecated use {@link Byte#compare(byte, byte)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static int compare(byte o1, byte o2) {
-    return Byte.compare(o1, o2);
-  }
-
-  /**
    * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
    */
   @Deprecated
@@ -146,24 +137,6 @@ public final class Comparing {
   @Deprecated
   public static int compare(int o1, int o2) {
     return Integer.compare(o1, o2);
-  }
-
-  /**
-   * @deprecated use {@link Long#compare(long, long)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static int compare(long o1, long o2) {
-    return Long.compare(o1, o2);
-  }
-
-  /**
-   * @deprecated use {@link Double#compare(double, double)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static int compare(double o1, double o2) {
-    return Double.compare(o1, o2);
   }
 
   public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {

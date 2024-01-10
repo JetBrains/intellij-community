@@ -1066,14 +1066,6 @@ public final class JBUI {
         return insets("ToolWindow.Header.toolbarLeftRightInsets", insets(0, 12, 0, 8));
       }
 
-      /**
-       * @deprecated obsolete UI
-       */
-      @Deprecated(forRemoval = true)
-      public static int tabVerticalPadding() {
-        return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
-      }
-
       public static int underlineHeight() {
         return uiIntValue("ToolWindow.HeaderTab.underlineHeight", Math.round(DefaultTabs.UNDERLINE_HEIGHT.getUnscaled())).get();
       }

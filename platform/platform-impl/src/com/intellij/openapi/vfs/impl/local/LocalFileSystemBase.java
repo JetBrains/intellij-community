@@ -626,7 +626,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
     String path = FileUtilRt.toSystemDependentName(file.getPath());
-    FileUtil.setReadOnlyAttribute(path, !writableFlag);
+    boolean readOnlyFlag = !writableFlag;
+    try {
+      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
+    }
+    catch (IOException e) {
+      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
+    }
     if (FileUtil.canWrite(path) != writableFlag) {
       throw new IOException("Failed to change read-only flag for " + path);
     }

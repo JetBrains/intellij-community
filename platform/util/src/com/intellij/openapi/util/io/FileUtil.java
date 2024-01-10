@@ -1066,18 +1066,6 @@ public class FileUtil extends FileUtilRt {
     return NioFiles.isWritable(Paths.get(path));
   }
 
-  /** @deprecated use {@link NioFiles#setReadOnly} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) {
-    try {
-      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
-    }
-    catch (IOException e) {
-      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
-    }
-  }
-
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
