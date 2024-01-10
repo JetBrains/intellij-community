@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.suggestion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantState.Status
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.UserDataHolderBase
@@ -33,7 +34,7 @@ internal interface InlineCompletionVariantsProvider : Disposable {
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult)
+  fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> UpdateResult): Boolean
 }
 
 internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
@@ -99,13 +100,14 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return IntRange(nonEmptyResults, potentiallyNonEmptyResults)
   }
 
-  override fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult) {
+  override fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
     // TODO logging
     // TODO logging of typed completely
+    lateinit var currentVariantResult: UpdateResult
     for ((index, state) in variantsStates.withIndex()) {
-      if (state.isInvalidated()) {
+      if (state.isInvalidated() || state.status == Status.COMPLETED_EMPTY) {
         continue
       }
 
@@ -115,29 +117,40 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
         index,
         isCurrentlyDisplaying = index == currentVariant.index
       )
-      when (val updated = updater(snapshot)) {
-        is InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed -> {
+      val updated = updater(snapshot)
+      if (currentVariant.index == index) {
+        currentVariantResult = updated
+      }
+      when (updated) {
+        is UpdateResult.Changed -> {
           val newSnapshot = updated.snapshot
           if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) { // TODO describe in docs
+            val oldText = state.elements.joinToString("") { it.text }
+            val newText = newSnapshot.elements.joinToString("") { it.text }
+            variantChanged(index, oldText, newText)
+
             state.elements.clear()
             state.elements.addAll(newSnapshot.elements)
             newSnapshot.data.copyUserDataTo(state.data)
-            updateCurrentVariant()
           }
           else {
-            state.invalidate() // TODO describe it in docs
+            invalidate(index) // TODO describe it in docs
           }
         }
-        InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Invalidated -> {
-          state.invalidate()
+        UpdateResult.Invalidated -> {
+          invalidate(index)
         }
-        InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same -> Unit
+        UpdateResult.Same -> Unit
       }
     }
 
-    if (variantsStates[currentVariant.index].isInvalidated()) {
-      currentVariantInvalidated()
+    when (currentVariantResult) {
+      is UpdateResult.Changed -> updateCurrentVariant()
+      UpdateResult.Invalidated -> currentVariantInvalidated()
+      UpdateResult.Same -> Unit
     }
+
+    return !variantsStates[currentVariant.index].isInvalidated()
   }
 
   override fun dispose() = Unit
@@ -151,7 +164,15 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
 
   @RequiresEdt
   @RequiresBlockingContext
-  protected abstract fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
+  protected abstract fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  protected abstract fun variantChanged(variantIndex: Int, oldText: String, newText: String)
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  protected abstract fun variantInvalidated(variantIndex: Int)
 
   @RequiresEdt
   protected abstract fun dataChanged()
@@ -192,6 +213,13 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       }
     }
     return !state.isInvalidated()
+  }
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  private fun invalidate(variantIndex: Int) {
+    variantInvalidated(variantIndex)
+    variantsStates[variantIndex].invalidate()
   }
 
   @RequiresEdt
@@ -288,10 +316,10 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     }
 
     disposeCurrentVariant()
+    beforeVariantSwitched(fromIndex, index, !force)
     val variant = getVariant(index, force)
     check(variant.index == index)
     currentVariant = variant
-    afterVariantSwitched(fromIndex, index, !force)
     dataChanged()
     return variant
   }
@@ -303,6 +331,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     dataChanged()
   }
 
+  @RequiresEdt
   @RequiresBlockingContext
   protected fun forceNextVariant() {
     val nextIndex = currentVariant.index + 1
@@ -313,17 +342,12 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   private fun isPossibleToShow(index: Int): Boolean {
     validateIndex(index)
     val state = variantsStates[index]
-    // TODO not 0
     return (index == currentVariant.index && !state.status.isCompleted()) || state.status.isPossibleToShow()
   }
 
   private fun validateIndex(index: Int) {
     check(index in variantsStates.indices)
   }
-  //
-  //private fun disposeCurrentVariant() {
-  //  Disposer.dispose(currentVariant)
-  //}
 
   /**
    * Finds the first index that satisfies [predicate]. It starts from [startIndex] and goes over the whole circle.
@@ -377,6 +401,11 @@ private class InlineCompletionVariantState(
     }
 
   var job: Job? = null
+    set(value) {
+      ThreadingAssertions.assertEventDispatchThread()
+      check(field == null)
+      field = value
+    }
 
   @RequiresBlockingContext
   fun invalidate() {

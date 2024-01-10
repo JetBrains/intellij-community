@@ -103,10 +103,10 @@ internal abstract class InlineCompletionSessionManager {
       }
     }
 
-    session.update { variant -> suggestionUpdater.update(event, variant) }
-    // TODO better if
-    return if (!session.context.isDisposed && session.context.state.elements.isNotEmpty()) {
-      UpdateSessionResult.Same
+    val success = session.update { variant -> suggestionUpdater.update(event, variant) }
+    return if (success) {
+      check(!session.context.isDisposed)
+      if (session.context.textToInsert().isEmpty()) UpdateSessionResult.Emptied else UpdateSessionResult.Same
     }
     else {
       UpdateSessionResult.Invalidated
@@ -137,14 +137,10 @@ internal abstract class InlineCompletionSessionManager {
       val newOffset: Int
     ) : UpdateSessionResult
 
-    // TODO logs
-    class AnotherVariant(
-      val newElements: List<InlineCompletionElement>,
-      val newOffset: Int
-    ) : UpdateSessionResult
-
     data object Same : UpdateSessionResult
 
     data object Invalidated : UpdateSessionResult
+
+    data object Emptied : UpdateSessionResult
   }
 }

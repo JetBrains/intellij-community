@@ -222,10 +222,9 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     val (invokedData, computedData) = state.assertInvokedComputedData()
     assertRequestId(invokedData, computedData)
     assertInvokedData(invokedData, Outcome.EXCEPTION, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
-    // Not really agree that the first one is [1, 1] and not [1, 2] but flow works like that and I do not see why. Not that important.
     assertComputedData(
       computedData,
-      length = listOf(1, 1),
+      length = listOf(1, 2),
       lines = listOf(1, 1),
       FinishType.ERROR,
       typingDuringShow = 0,

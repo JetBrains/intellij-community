@@ -66,6 +66,7 @@ interface InlineCompletionProvider {
    * startOffset, endOffset, and lookupElement.
    * @return The inline completion suggestion. Use [InlineCompletionSuggestion.empty] to return empty suggestion
    */
+  // TODO docs
   suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
   /**

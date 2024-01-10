@@ -95,6 +95,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
   }
 
   // TODO test data transportation
+  // TODO test variant snapshot values
 
   private abstract class InlineCompletionProviderBase(private vararg val variants: String) : InlineCompletionProvider {
     override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")

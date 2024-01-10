@@ -84,8 +84,10 @@ class InlineCompletionSession private constructor(
   }
 
   @RequiresEdt // TODO very confusing dependencies between VariantsProvider, Session, SessionManager and Handler
-  internal fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult) {
-    variantsProvider?.update(updater)
+  internal fun update(
+    updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
+  ): Boolean {
+    return checkNotNull(variantsProvider).update(updater)
   }
 
   companion object {

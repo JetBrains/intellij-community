@@ -255,19 +255,54 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
 
   @Test
   fun `test further empty elements do not switch variants`() = myFixture.testInlineCompletion {
-    //in
-  }
+    init(PlainTextFileType.INSTANCE)
+    registerSuggestion {
+      repeat(2) {
+        variant { emit(InlineCompletionGrayTextElement("Some variant $it")) }
+      }
+      repeat(3) {
+        variant { }
+      }
+      repeat(2) {
+        variant { emit(InlineCompletionGrayTextElement("Another variant $it")) }
+      }
+      repeat(3) {
+        variant { }
+      }
+    }
+    callInlineCompletion()
+    provider.computeNextElements(2)
 
-  // TODO test further empty elements do not switch variants
+    assertInlineRender("Some variant 0")
+    nextVariant()
+    assertInlineRender("Some variant 1")
+    nextVariant()
+    assertInlineRender("Some variant 0")
+    prevVariant()
+    assertInlineRender("Some variant 1")
+
+    provider.computeNextElements(2)
+    delay()
+
+    assertInlineRender("Some variant 1")
+    nextVariant()
+    assertInlineRender("Another variant 0")
+    nextVariant()
+    assertInlineRender("Another variant 1")
+    nextVariant()
+    assertInlineRender("Some variant 0")
+    prevVariant()
+    assertInlineRender("Another variant 1")
+
+    assertAllVariants("Another variant 1", "Some variant 0", "Some variant 1", "Another variant 0")
+
+    insert()
+    assertInlineHidden()
+    assertFileContent("Another variant 1<caret>")
+  }
 
   // TODO deprecated methods
   // TODO all builders
   // TODO test logs
   // TODO test UserDataHolder
-
-  //companion object {
-  //  @Parameters
-  //  @JvmStatic
-  //  fun data(): Array<Array<Unit>> = Array(100) { emptyArray() }
-  //}
 }

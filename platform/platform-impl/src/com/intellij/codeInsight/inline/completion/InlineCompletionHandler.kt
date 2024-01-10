@@ -32,7 +32,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.withIndex
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -239,11 +238,10 @@ class InlineCompletionHandler(
     cause: Throwable?,
     context: InlineCompletionContext
   ) {
-    trace(InlineCompletionEventType.Completion(cause, isActive))
     if (cause != null && !context.isDisposed) {
       hide(context, FinishType.ERROR)
-      return
     }
+    trace(InlineCompletionEventType.Completion(cause, isActive))
   }
 
   /**
@@ -329,11 +327,13 @@ class InlineCompletionHandler(
               hide(context, FinishType.TYPED)
             }
           }
-          is UpdateSessionResult.Same -> Unit
+          UpdateSessionResult.Same -> Unit
           UpdateSessionResult.Invalidated -> {
             hide(context, FinishType.INVALIDATED)
           }
-          is UpdateSessionResult.AnotherVariant -> TODO() // TODO
+          UpdateSessionResult.Emptied -> {
+            hide(context, FinishType.TYPED)
+          }
         }
       }
     }
@@ -358,16 +358,12 @@ class InlineCompletionHandler(
                 isEmpty.set(true)
               }
               .withIndex()
-              .onEach { (elementIndex, element) ->
+              .collect { (elementIndex, element) ->
                 ensureActive()
+                traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
                 // TODO make without coroutineToIndicator
                 coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
                 allVariantsEmpty.set(false)
-              }
-              .collect { (elementIndex, element) ->
-                // TODO simplify
-                ensureActive()
-                traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
               }
           }
 
@@ -383,8 +379,8 @@ class InlineCompletionHandler(
 
       override fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
         ThreadingAssertions.assertEventDispatchThread()
-        // TODO logging
         context.renderElement(element, context.expectedStartOffset)
+        trace(InlineCompletionEventType.Show(variantIndex, element, elementIndex))
       }
 
       override fun disposeCurrentVariant() {
@@ -392,9 +388,19 @@ class InlineCompletionHandler(
         context.clear()
       }
 
-      override fun afterVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
+      override fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
         ThreadingAssertions.assertEventDispatchThread()
         trace(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
+      }
+
+      override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
+        ThreadingAssertions.assertEventDispatchThread()
+        trace(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+      }
+
+      override fun variantInvalidated(variantIndex: Int) {
+        ThreadingAssertions.assertEventDispatchThread()
+        trace(InlineCompletionEventType.Invalidated(variantIndex))
       }
 
       override fun dataChanged() {
