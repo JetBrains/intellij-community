@@ -22,36 +22,41 @@ internal object CompiledClasses {
     val options = context.options
     val messages = context.messages
     if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
-      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                       "so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
+      val message = "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
+                    "so 'incremental compilation' option cannot be enabled"
+      if (options.isInDevelopmentMode) {
+        messages.warning(message)
+        options.incrementalCompilation = false
+      }
+      else {
+        messages.error(message)
+      }
     }
     if (options.pathToCompiledClassesArchive != null && PortableCompilationCache.IS_ENABLED) {
-      messages.warning("JPS Cache is enabled so the archive with compiled project output won't be used")
-      options.pathToCompiledClassesArchive = null
+      messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
     }
     if (options.pathToCompiledClassesArchivesMetadata != null && PortableCompilationCache.IS_ENABLED) {
-      messages.warning("JPS Cache is enabled " +
-                       "so the archive with the compiled project output metadata won't be used to fetch compile output")
-      options.pathToCompiledClassesArchivesMetadata = null
+      messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used")
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && PortableCompilationCache.IS_ENABLED) {
+      messages.error("JPS Cache is enabled " +
+                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
     if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
-      messages.warning("Paths to the compiled project output is specified, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
+      messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
+                     "so 'incremental compilation' option cannot be enabled")
     }
     if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
-      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                       "so the archive with compiled project output won't be used")
-      options.pathToCompiledClassesArchive = null
+      messages.error("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
+                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
     }
     if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
-      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
+      messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
+                       "so 'incremental compilation' option cannot be used")
     }
     if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
-      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                       "so the archive with the compiled project output metadata won't be used to fetch compile output")
-      options.pathToCompiledClassesArchivesMetadata = null
+      messages.error("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
+                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
     if (options.forceRebuild && options.incrementalCompilation) {
       messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, " +
@@ -59,9 +64,14 @@ internal object CompiledClasses {
       options.incrementalCompilation = false
     }
     if (options.forceRebuild && options.useCompiledClassesFromProjectOutput) {
-      messages.error(
-        "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' options are specified"
-      )
+      val message = "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' options are specified"
+      if (options.isInDevelopmentMode) {
+        messages.warning(message)
+        options.incrementalCompilation = false
+      }
+      else {
+        messages.error(message)
+      }
     }
     if (options.forceRebuild && context.options.pathToCompiledClassesArchive != null) {
       messages.error(

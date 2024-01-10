@@ -470,8 +470,6 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "idea.home.path" to context.paths.projectHome.toString(),
       "idea.config.path" to "${tempDir}/config",
       "idea.system.path" to "$ideaSystemPath",
-      "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
-      "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
       BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName" to System.getProperty("teamcity.buildConfName"),
