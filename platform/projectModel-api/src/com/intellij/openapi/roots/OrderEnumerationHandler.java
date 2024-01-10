@@ -61,16 +61,6 @@ public abstract class OrderEnumerationHandler {
   public boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
                                                @NotNull OrderRootType type,
                                                @NotNull Collection<String> urls) {
-    return addCustomRootsForLibrary(forOrderEntry, type, urls);
-  }
-
-  /**
-   * @deprecated override {@link #addCustomRootsForLibraryOrSdk(LibraryOrSdkOrderEntry, OrderRootType, Collection)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
-                                          @NotNull OrderRootType type,
-                                          @NotNull Collection<String> urls) {
     return false;
   }
 
