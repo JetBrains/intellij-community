@@ -55,7 +55,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.alsoIfNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -215,7 +214,12 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
                           toolWindowInitJob = toolWindowInitJob,
                           project = project)
         }
-        startUpContextElementToPass?.apply { withContext(this, postOpen) }.alsoIfNull { postOpen() }
+        if (startUpContextElementToPass != null) {
+          withContext(startUpContextElementToPass, postOpen)
+        }
+        else {
+          postOpen()
+        }
       }.invokeOnCompletion {
         rawProjectDeferred.invokeOnCompletion { cause ->
           if (cause == null) FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(rawProjectDeferred.getCompleted(),

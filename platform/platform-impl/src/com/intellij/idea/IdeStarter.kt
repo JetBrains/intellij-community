@@ -37,7 +37,6 @@ import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
-import com.intellij.util.alsoIfNull
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
 import java.nio.file.Path
@@ -77,12 +76,16 @@ open class IdeStarter : ModernApplicationStarter() {
         openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
       }
 
-      FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)?.also {
+      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)
+      if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
-        withContext(it, openProjectBlock)
-      }.alsoIfNull { openProjectBlock() }
+        withContext(starter, openProjectBlock)
+      }
+      else {
+        openProjectBlock()
+      }
 
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)

@@ -513,9 +513,8 @@ object ProjectUtil {
         forceOpenInNewFrame = true
       })?.also {
         return it
-      }.alsoIfNull {
-        FUSProjectHotStartUpMeasurer.resetProjectPath()
       }
+      FUSProjectHotStartUpMeasurer.resetProjectPath()
     }
 
     var result: Project? = null

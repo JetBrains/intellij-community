@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.alsoIfNull
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -117,9 +116,12 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Duration) {
-    splashBecameVisibleTime?.also {
+    if (splashBecameVisibleTime != null) {
       FIRST_UI_SHOWN_EVENT.log(getDurationFromStart(splashBecameVisibleTime).getValueForFUS(), UIResponseType.Splash)
-    }.alsoIfNull { FIRST_UI_SHOWN_EVENT.log(duration.getValueForFUS(), UIResponseType.Frame) }
+    }
+    else {
+      FIRST_UI_SHOWN_EVENT.log(duration.getValueForFUS(), UIResponseType.Frame)
+    }
   }
 
   fun reportWelcomeScreenShown() {
