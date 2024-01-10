@@ -104,11 +104,12 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         startOffset: Int,
         endOffset: Int,
         lineData: LineData?
-    ): String {
+    ): String? {
         if (file !is KtFile || lineData == null) return super.generateBriefReport(editor, file, lineNumber, startOffset, endOffset, lineData)
         val range = TextRange.create(startOffset, endOffset)
+        val conditions = getConditions(file, range)
         val switches = getSwitches(file, range)
-        return JavaCoverageEngine.createBriefReport(lineData, emptyList(), switches)
+        return JavaCoverageEngine.createBriefReport(lineData, conditions, switches)
     }
 
     override fun getModuleWithOutput(module: Module): Module? = findJvmModule(module)

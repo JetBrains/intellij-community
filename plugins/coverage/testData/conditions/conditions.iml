@@ -8,23 +8,24 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module-library" scope="TEST">
-          <library>
-            <CLASSES>
-              <root url="jar://$APPLICATION_HOME_DIR$/community/lib/junit.jar!/" />
-            </CLASSES>
-            <JAVADOC />
-            <SOURCES />
-          </library>
-        </orderEntry>
-        <orderEntry type="module-library" scope="TEST">
-          <library>
-            <CLASSES>
-              <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
-            </CLASSES>
-            <JAVADOC />
-            <SOURCES />
-          </library>
-        </orderEntry>
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/community/lib/junit.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

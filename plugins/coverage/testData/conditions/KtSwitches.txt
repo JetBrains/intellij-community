@@ -1,0 +1,146 @@
+Line 1 coverage: FULL
+Hits: 1
+
+Line 3 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 1
+        case 2: 0
+
+Line 4 coverage: FULL
+Hits: 1
+
+Line 10 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 0
+        case 2: 1
+
+Line 12 coverage: FULL
+Hits: 1
+
+Line 17 coverage: PARTIAL
+Hits: 1
+    x
+        case 1: 0
+        case 2: 0
+        default: 1
+
+Line 20 coverage: FULL
+Hits: 1
+
+Line 25 coverage: PARTIAL
+Hits: 2
+    x
+        case 1: 1
+        case 2: 1
+        default: 0
+
+Line 26 coverage: FULL
+Hits: 1
+
+Line 27 coverage: FULL
+Hits: 1
+
+Line 32 coverage: FULL
+Hits: 3
+    x
+        case 1: 1
+        case 2: 1
+        default: 1
+
+Line 33 coverage: FULL
+Hits: 1
+
+Line 34 coverage: FULL
+Hits: 1
+
+Line 35 coverage: FULL
+Hits: 1
+
+Line 40 coverage: PARTIAL
+Hits: 2
+    x
+        case 1: 1
+        case 2: 1
+        default: 0
+
+Line 41 coverage: FULL
+Hits: 1
+
+Line 42 coverage: FULL
+Hits: 1
+
+Line 48 coverage: FULL
+Hits: 4
+    x
+        case 1: 1
+        case 2: 1
+        case 3: 1
+        default: 1
+
+Line 49 coverage: FULL
+Hits: 1
+
+Line 50 coverage: FULL
+Hits: 1
+
+Line 51 coverage: FULL
+Hits: 1
+
+Line 56 coverage: PARTIAL
+Hits: 1
+    s
+        case "A": 1
+        case "B": 0
+        case "C": 0
+        case "D": 0
+        case "E": 0
+        case "F": 0
+        case "G": 0
+
+Line 57 coverage: FULL
+Hits: 1
+
+Line 68 coverage: FULL
+Hits: 1
+
+Line 69 coverage: PARTIAL
+Hits: 1
+Line 75 coverage: FULL
+Hits: 4
+    s
+        case "A": 1
+        case "B": 1
+        case "C": 1
+        default: 1
+
+Line 76 coverage: FULL
+Hits: 1
+
+Line 77 coverage: FULL
+Hits: 1
+
+Line 78 coverage: FULL
+Hits: 1
+
+Line 79 coverage: FULL
+Hits: 1
+
+Line 84 coverage: FULL
+Hits: 5
+Line 85 coverage: FULL
+Hits: 1
+
+Line 86 coverage: FULL
+Hits: 1
+
+Line 87 coverage: FULL
+Hits: 1
+
+Line 88 coverage: FULL
+Hits: 1
+
+Line 89 coverage: FULL
+Hits: 1
+

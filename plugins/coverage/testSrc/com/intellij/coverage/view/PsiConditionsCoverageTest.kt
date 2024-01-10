@@ -3,16 +3,19 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageLineMarkerRenderer
-import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageEngine
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.rt.coverage.data.ClassData
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.rt.coverage.data.LineData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,11 +24,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 @RunWith(JUnit4::class)
-class PsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
-
-  override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path =
-    Paths.get(PluginPathManager.getPluginHomePath("coverage") + "/testData/conditions")
-
+class PsiConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
   @Test
   fun `test conditions hints`() = assertHints("Conditions")
 
@@ -37,13 +36,19 @@ class PsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
 
   @Test
   fun `test all conditions`() = assertHints("AllConditions")
+}
 
+abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
 
-  private fun assertHints(className: String): Unit = runBlocking {
+  override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path =
+    Paths.get(PluginPathManager.getPluginHomePath("coverage") + "/testData/conditions")
+
+  protected fun assertHints(className: String): Unit = runBlocking {
     assertNoSuites()
+    val editor = openEditor(className)
     val suite = loadSuite()
     try {
-      val (editor, classData) = openEditor(className, suite)
+      val classData = suite.coverageData!!.getClassData(className)
 
       val actual = buildString {
         for (line in 1..editor.document.lineCount) {
@@ -57,14 +62,15 @@ class PsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
       assertEqualsFile(expectedFile, actual)
     }
     finally {
+      withContext(Dispatchers.EDT) { EditorFactory.getInstance().releaseEditor(editor) }
       closeSuite(suite)
-      assertNoSuites()
     }
+    assertNoSuites()
   }
 
-  private suspend fun openEditor(className: String, suite: CoverageSuitesBundle): Pair<EditorImpl, ClassData> {
+  private suspend fun openEditor(className: String): EditorImpl {
     openClass(myProject, className)
-    return findEditor(myProject, className) to suite.coverageData!!.getClassData(className)
+    return findEditor(myProject, className)
   }
 
   private fun loadSuite() = loadIJSuite(path = projectDirOrFile.resolve("conditions\$All_in_conditions.ic").toString())

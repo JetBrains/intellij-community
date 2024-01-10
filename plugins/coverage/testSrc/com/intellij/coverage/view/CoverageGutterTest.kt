@@ -18,7 +18,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
-import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.await
 import kotlinx.coroutines.Dispatchers
@@ -161,11 +160,11 @@ internal suspend fun findEditor(project: Project, className: String): EditorImpl
 }
 
 private fun findEditor(psiClass: PsiClass): EditorImpl {
-  val psiFile = psiClass.containingFile
+  val virtualFile = psiClass.containingFile.virtualFile
   return FileEditorManager.getInstance(psiClass.project).allEditors.asSequence()
     .filterIsInstance<TextEditor>()
     .map { it.editor }.filterIsInstance<EditorImpl>()
-    .filter { it.virtualFile.getPsiFile(psiClass.project) == psiFile }.first()
+    .filter { it.virtualFile == virtualFile }.first()
 }
 
 internal suspend fun openClass(project: Project, className: String) {
