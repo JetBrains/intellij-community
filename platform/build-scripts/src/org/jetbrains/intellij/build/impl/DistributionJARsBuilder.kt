@@ -524,7 +524,11 @@ private suspend fun buildPlatformSpecificPluginResources(plugins: Collection<Plu
                                                          targetDirs: Map<SupportedDistribution, Path>,
                                                          context: BuildContext) {
   plugins.asSequence()
-    .flatMap { it.platformResourceGenerators.entries.map { (dist, generator) -> Triple(dist, generator, it.directoryName) } }
+    .flatMap { plugin -> 
+      plugin.platformResourceGenerators.entries.flatMap { (dist, generators) -> 
+        generators.map { generator -> Triple(dist, generator, plugin.directoryName) }
+      }
+    }
     .mapNotNull { (dist, generator, dirName) -> targetDirs[dist]?.let { path -> generator to path.resolve(dirName) } }
     .forEach { (generator, pluginDir) ->
       spanBuilder("plugin")

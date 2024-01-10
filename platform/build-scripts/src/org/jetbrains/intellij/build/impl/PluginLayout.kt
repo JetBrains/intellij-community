@@ -4,11 +4,7 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.plus
+import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
@@ -74,7 +70,7 @@ class PluginLayout private constructor(val mainModule: String,
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
-  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, ResourceGenerator> = persistentMapOf()
+  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
     private set
 
   fun getMainJarName(): String = mainJarName
@@ -182,7 +178,9 @@ class PluginLayout private constructor(val mainModule: String,
     }
 
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
-      layout.platformResourceGenerators += SupportedDistribution(os, arch) to generator
+      val key = SupportedDistribution(os, arch)
+      val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator) 
+      layout.platformResourceGenerators += key to newValue
     }
 
     /**
