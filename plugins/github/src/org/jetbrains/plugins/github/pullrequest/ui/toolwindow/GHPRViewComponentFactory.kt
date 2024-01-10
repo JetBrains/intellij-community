@@ -119,6 +119,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
         EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> changeListVm
         tree.isShowing ->
           when {
+            GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> changesVm.repository
             GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId) -> tree.getPullRequestFiles()
             GHPRChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
             else -> null

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitBrowserC
 
 @ApiStatus.Experimental
 interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit>, GHPRCommitBrowserComponentController {
+  val repository: GitRepository
   val changeListVm: SharedFlow<Result<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
 }
@@ -40,6 +42,8 @@ internal class GHPRChangesViewModelImpl(
   private val dataProvider: GHPRDataProvider
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
+
+  override val repository: GitRepository = dataContext.repositoryDataService.repositoryMapping.gitRepository
 
   private val commitsResult: Flow<Result<List<GHCommit>>> = channelFlow {
     val disp = Disposer.newDisposable()
