@@ -78,7 +78,7 @@ class ExecutableNameColumn(
       ExecutionBundle.message("run.configurations.multilaunch.add.executable")) {
       init {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        border = JBUI.Borders.empty(5, 10, 5, 5)
+        border = JBUI.Borders.empty(5, 8, 5, 5)
         background = UIUtil.getTableBackground(false, true)
 
         addActionListener(::handleAdd)
@@ -150,7 +150,7 @@ class ExecutableNameColumn(
 
       init {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        border = JBUI.Borders.empty(5, 10, 5, 5)
+        border = JBUI.Borders.empty(5, 5, 5, 5)
         background = UIUtil.getTableBackground(false, true)
         foreground = UIUtil.getTableForeground(false, true)
         setComponent(namePanel)

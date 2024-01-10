@@ -181,7 +181,7 @@ class ConditionColumn(
     executableRow: ExecutableRow
   ) : DropDownDecorator() {
     init {
-      border = JBUI.Borders.empty(5, 10, 5, 5)
+      border = JBUI.Borders.empty(5, 8, 5, 5)
       background = UIUtil.getTableBackground(isSelected, hasFocus)
       foreground = UIUtil.getTableForeground(isSelected, hasFocus)
       if (isSelected) setSelectionIcon()
