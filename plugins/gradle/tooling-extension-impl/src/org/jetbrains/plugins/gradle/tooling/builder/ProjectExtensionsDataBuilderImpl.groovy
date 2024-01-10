@@ -10,7 +10,6 @@ import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.Message
@@ -23,8 +22,6 @@ import java.lang.reflect.Method
  */
 @CompileStatic
 class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
-
-  private static is35_OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("3.5")
 
   @Override
   boolean canBuild(String modelName) {
@@ -49,10 +46,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
 
     for (it in extensions.findAll()) {
       def extension = it as ExtensionContainer
-      List<String> keyList =
-        GradleVersionUtil.isCurrentGradleAtLeast("4.5")
-          ? extractKeys(extension)
-          : extractKeysViaReflection(extension)
+      List<String> keyList = extractKeys(extension)
 
       for (name in keyList) {
         def value = extension.findByName(name)
@@ -71,26 +65,6 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       result.add(schema.name)
     }
     return result
-  }
-
-  private static List<String> extractKeysViaReflection(ExtensionContainer convention) {
-    List<String> methods = ["getSchema", "getAsMap"]
-    Method m = null
-    for (def name : methods) {
-      try {
-        m = convention.class.getMethod(name)
-      } catch (NoSuchMethodException ignored) {
-      }
-      if (m != null) {
-        break
-      }
-    }
-
-    if (m != null) {
-      return (m.invoke(convention) as Map<String, Object>).keySet().asList() as List<String>
-    } else {
-      return Collections.emptyList()
-    }
   }
 
   @Override
@@ -147,7 +121,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   static String getType(object) {
-    if (is35_OrBetter && object instanceof HasPublicType) {
+    if (object instanceof HasPublicType) {
       return object.publicType.toString()
     }
     def clazz = object?.getClass()?.canonicalName

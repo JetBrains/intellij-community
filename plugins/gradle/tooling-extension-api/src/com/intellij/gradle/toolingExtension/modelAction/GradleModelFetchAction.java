@@ -84,9 +84,6 @@ public class GradleModelFetchAction {
       return Collections.emptySet();
     }
     GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
-    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "3.1")) {
-      return Collections.emptySet();
-    }
     Set<String> processedBuildsPaths = new HashSet<>();
     Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();

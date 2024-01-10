@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -19,7 +18,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -31,18 +29,14 @@ import java.util.Map;
 public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   private static final Logger LOG = Logger.getInstance(GradleOrderEnumeratorHandler.class);
   private final boolean myResolveModulePerSourceSet;
-  private final boolean myShouldProcessDependenciesRecursively;
 
   public GradleOrderEnumeratorHandler(@NotNull Module module) {
     String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
     if (rootProjectPath != null) {
       GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(rootProjectPath);
       myResolveModulePerSourceSet = settings != null && settings.isResolveModulePerSourceSet();
-      String gradleVersion = GradleLocalSettings.getInstance(module.getProject()).getGradleVersion(rootProjectPath);
-      myShouldProcessDependenciesRecursively = gradleVersion != null && GradleVersionUtil.isGradleOlderThan(gradleVersion, "2.5");
     }
     else {
-      myShouldProcessDependenciesRecursively = false;
       myResolveModulePerSourceSet = false;
     }
   }
@@ -86,7 +80,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   @Override
   public boolean shouldProcessDependenciesRecursively() {
-    return myShouldProcessDependenciesRecursively;
+    return false;
   }
 
   @Override

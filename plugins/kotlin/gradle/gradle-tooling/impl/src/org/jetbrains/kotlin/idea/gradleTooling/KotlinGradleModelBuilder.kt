@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -12,7 +11,6 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
@@ -80,14 +78,11 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
 
         const val kotlinPluginWrapper = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
 
-        private val propertyClassPresent = GradleVersionUtil.isCurrentGradleAtLeast("4.3")
-
         fun Task.getSourceSetName(): String = try {
             val method = javaClass.methods.firstOrNull { it.name.startsWith("getSourceSetName") && it.parameterTypes.isEmpty() }
-            val sourceSetName = method?.invoke(this)
-            when {
-                sourceSetName is String -> sourceSetName
-                propertyClassPresent && sourceSetName is Property<*> -> sourceSetName.get() as? String
+            when (val sourceSetName = method?.invoke(this)) {
+                is String -> sourceSetName
+                is Property<*> -> sourceSetName.get() as? String
                 else -> null
             }
         } catch (e: InvocationTargetException) {
@@ -113,12 +108,7 @@ class AndroidAwareGradleModelProvider<TModel>(
         projectModel: Model,
         modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
     ) {
-        val supportsParametrizedModels: Boolean = controller.findModel(BuildEnvironment::class.java)?.gradle?.gradleVersion?.let {
-            // Parametrized build models were introduced in 4.4. Make sure that gradle import does not fail on pre-4.4
-            GradleVersionUtil.isGradleAtLeast(it, "4.4")
-        } ?: false
-
-        val model = if (androidPluginIsRequestingVariantSpecificModels && supportsParametrizedModels) {
+        val model = if (androidPluginIsRequestingVariantSpecificModels) {
             controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }

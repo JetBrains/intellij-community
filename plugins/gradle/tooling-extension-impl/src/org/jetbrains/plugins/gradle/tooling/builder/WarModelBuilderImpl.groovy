@@ -29,8 +29,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
 
   private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
-  private static is4OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.0")
-  private static is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
+  private static final boolean is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
 
   @Override
   boolean canBuild(String modelName) {
@@ -97,18 +96,10 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         warModel.archivePath = getTaskArchiveFile(warTask)
 
         Manifest manifest = warTask.manifest
-        if (manifest != null) {
-          if(is4OrBetter) {
-            if(manifest instanceof ManifestInternal) {
-              ByteArrayOutputStream baos = new ByteArrayOutputStream()
-              manifest.writeTo(baos)
-              warModel.manifestContent = baos.toString(manifest.contentCharset)
-            }
-          } else {
-            def writer = new StringWriter()
-            manifest.writeTo(writer)
-            warModel.manifestContent = writer.toString()
-          }
+        if (manifest instanceof ManifestInternal) {
+          ByteArrayOutputStream baos = new ByteArrayOutputStream()
+          manifest.writeTo(baos)
+          warModel.manifestContent = baos.toString(manifest.contentCharset)
         }
         warModels.add(warModel)
       }

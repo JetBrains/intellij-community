@@ -29,18 +29,11 @@ import java.util.*;
 
 public class AnnotationProcessingModelBuilder extends AbstractModelBuilderService {
 
-  private static final boolean isAtLeastGradle3_4 = GradleVersionUtil.isCurrentGradleAtLeast("3.4");
-  private static final boolean isAtLeastGradle4_3 = isAtLeastGradle3_4 && GradleVersionUtil.isCurrentGradleAtLeast("4.3");
-  private static final boolean isAtLeastGradle4_5 = isAtLeastGradle4_3 && GradleVersionUtil.isCurrentGradleAtLeast("4.5");
-  private static final boolean isAtLeastGradle6_3 = isAtLeastGradle4_3 && GradleVersionUtil.isCurrentGradleAtLeast("6.3");
+  private static final boolean isAtLeastGradle6_3 = GradleVersionUtil.isCurrentGradleAtLeast("6.3");
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
     if (!canBuild(modelName)) {
-      return null;
-    }
-
-    if (!isAtLeastGradle3_4) {
       return null;
     }
 
@@ -67,22 +60,14 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
           final Set<File> files = path.getFiles();
           if (!files.isEmpty()) {
             List<String> annotationProcessorArgs = new ArrayList<>();
-            List<String> args = isAtLeastGradle4_5 ? options.getAllCompilerArgs() : options.getCompilerArgs();
+            List<String> args = options.getAllCompilerArgs();
             for (String arg : args) {
               if (arg.startsWith("-A")) {
                 annotationProcessorArgs.add(arg);
               }
             }
 
-            File generatedSourcesDirectory;
-            if (isAtLeastGradle6_3) {
-              generatedSourcesDirectory = options.getGeneratedSourceOutputDirectory().get().getAsFile();
-            } else if (isAtLeastGradle4_3) {
-              generatedSourcesDirectory = options.getAnnotationProcessorGeneratedSourcesDirectory();
-            } else {
-              generatedSourcesDirectory = null;
-            }
-
+            File generatedSourcesDirectory = getAnnotationProcessorGeneratedSourcesDirectory(options);
             String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
             sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(files, annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule)));
           }
@@ -95,6 +80,14 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
     }
 
     return null;
+  }
+
+  private static @Nullable File getAnnotationProcessorGeneratedSourcesDirectory(@NotNull CompileOptions options) {
+    if (isAtLeastGradle6_3) {
+      return options.getGeneratedSourceOutputDirectory().get().getAsFile();
+    }
+    //noinspection deprecation
+    return options.getAnnotationProcessorGeneratedSourcesDirectory();
   }
 
   private static boolean isTestSourceSet(@NotNull SourceSet sourceSet, @Nullable IdeaModule module) {

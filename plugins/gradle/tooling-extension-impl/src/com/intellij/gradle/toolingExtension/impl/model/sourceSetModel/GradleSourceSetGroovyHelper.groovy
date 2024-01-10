@@ -30,7 +30,6 @@ import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 class GradleSourceSetGroovyHelper {
 
-  private static final boolean is4OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("4.0")
   private static final boolean is67OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("6.7")
   private static final boolean is74OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("7.4")
   private static final boolean is80OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.0")
@@ -150,25 +149,16 @@ class GradleSourceSetGroovyHelper {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      if (is4OrBetter) {
-        if (sourceSet.output.resourcesDir) {
-          resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
-        }
-        else {
-          for (File outDir : sourceSet.output.classesDirs.files) {
-            resourcesDirectorySet.addGradleOutputDir(outDir)
-          }
-          if (resourcesDirectorySet.gradleOutputDirs.isEmpty()) {
-            resourcesDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
-          }
-        }
+      if (sourceSet.output.resourcesDir) {
+        resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
       }
       else {
-        resourcesDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
-          sourceSet.output.resourcesDir,
-          sourceSet.output.classesDir as File,
-          GradleProjectUtil.getBuildDirectory(project)
-        ))
+        for (File outDir : sourceSet.output.classesDirs.files) {
+          resourcesDirectorySet.addGradleOutputDir(outDir)
+        }
+        if (resourcesDirectorySet.gradleOutputDirs.isEmpty()) {
+          resourcesDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
+        }
       }
 
       def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ||
@@ -180,19 +170,11 @@ class GradleSourceSetGroovyHelper {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      if (is4OrBetter) {
-        for (File outDir : sourceSet.output.classesDirs.files) {
-          javaDirectorySet.addGradleOutputDir(outDir)
-        }
-        if (javaDirectorySet.gradleOutputDirs.isEmpty()) {
-          javaDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
-        }
+      for (File outDir : sourceSet.output.classesDirs.files) {
+        javaDirectorySet.addGradleOutputDir(outDir)
       }
-      else {
-        javaDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
-          sourceSet.output.classesDir as File,
-          GradleProjectUtil.getBuildDirectory(project)
-        ))
+      if (javaDirectorySet.gradleOutputDirs.isEmpty()) {
+        javaDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
       }
 
       javaDirectorySet.outputDir = new File(ideaOutDir, "classes")

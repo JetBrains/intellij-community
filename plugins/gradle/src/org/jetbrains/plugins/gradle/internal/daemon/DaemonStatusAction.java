@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.DynamicBundle;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.internal.id.IdGenerator;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.client.DaemonClientConnection;
@@ -18,7 +17,6 @@ import org.gradle.launcher.daemon.registry.DaemonStopEvents;
 import org.gradle.launcher.daemon.server.expiry.DaemonExpirationStatus;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,20 +105,7 @@ public class DaemonStatusAction extends DaemonAction {
         DaemonExpirationStatus expirationStatus = stopEvent.getStatus();
         String daemonExpirationStatus =
           expirationStatus != null ? expirationStatus.name().replace("_", " ").toLowerCase(DynamicBundle.getLocale()) : "";
-        Long stopEventPid;
-        if (GradleVersionUtil.isCurrentGradleOlderOrSameAs("3.0")) {
-          try {
-            Field pidField = stopEvent.getClass().getDeclaredField("pid");
-            pidField.setAccessible(true);
-            stopEventPid = pidField.getLong(stopEvent);
-          }
-          catch (Exception ignore) {
-            stopEventPid = -1L;
-          }
-        }
-        else {
-          stopEventPid = stopEvent.getPid();
-        }
+        Long stopEventPid = stopEvent.getPid();
         daemons.add(new DaemonState(stopEventPid,
                                     null,
                                     null,

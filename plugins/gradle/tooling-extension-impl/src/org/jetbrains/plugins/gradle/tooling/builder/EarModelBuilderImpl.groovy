@@ -37,10 +37,7 @@ import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.ref
 class EarModelBuilderImpl extends AbstractModelBuilderService {
 
   private static final String APP_DIR_PROPERTY = "appDirName"
-  // Manifest.writeTo(Writer) was deprecated since 2.14.1 version
-  // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
-  private static boolean is2_14_1_OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("2.14.1")
-  private static is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
+  private static final boolean is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
 
   @Override
   boolean canBuild(String modelName) {
@@ -120,20 +117,11 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
         earModel.archivePath = getTaskArchiveFile(earTask)
 
         Manifest manifest = earTask.manifest
-        if (manifest != null) {
-          if (is2_14_1_OrBetter) {
-            if (manifest instanceof ManifestInternal) {
-              OutputStream outputStream = new ByteArrayOutputStream()
-              writeToOutputStream(manifest, outputStream)
-              def contentCharset = (manifest as ManifestInternal).contentCharset
-              earModel.manifestContent = outputStream.toString(contentCharset)
-            }
-          }
-          else {
-            Writer writer = new StringWriter()
-            writeToWriter(manifest, writer)
-            earModel.manifestContent = writer.toString()
-          }
+        if (manifest instanceof ManifestInternal) {
+          OutputStream outputStream = new ByteArrayOutputStream()
+          writeToOutputStream(manifest, outputStream)
+          def contentCharset = (manifest as ManifestInternal).contentCharset
+          earModel.manifestContent = outputStream.toString(contentCharset)
         }
 
         earModels.add(earModel)
@@ -162,11 +150,6 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   @CompileDynamic
   private static Manifest writeToOutputStream(Manifest manifest, OutputStream outputStream) {
     return manifest.writeTo(outputStream)
-  }
-
-  @CompileDynamic
-  private static Manifest writeToWriter(Manifest manifest, StringWriter writer) {
-    return manifest.writeTo((Writer)writer)
   }
 
   private static void addPath(String buildDirPath,

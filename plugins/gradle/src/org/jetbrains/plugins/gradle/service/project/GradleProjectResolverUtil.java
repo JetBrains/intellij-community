@@ -385,12 +385,10 @@ public final class GradleProjectResolverUtil {
     if (libOrPluginsFile != null && "lib".equals(libOrPluginsFile.getName()) && libOrPluginsFile.getParentFile() != null) {
       File srcDir = new File(libOrPluginsFile.getParentFile(), "src");
 
-      if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "1.9")) {
-        int endIndex = libFile.getName().indexOf(gradleVersion.getVersion());
-        if (endIndex != -1) {
-          String srcDirChild = libFile.getName().substring("gradle-".length(), endIndex - 1);
-          srcDir = new File(srcDir, srcDirChild);
-        }
+      int endIndex = libFile.getName().indexOf(gradleVersion.getVersion());
+      if (endIndex != -1) {
+        String srcDirChild = libFile.getName().substring("gradle-".length(), endIndex - 1);
+        srcDir = new File(srcDir, srcDirChild);
       }
 
       if (srcDir.isDirectory()) {
