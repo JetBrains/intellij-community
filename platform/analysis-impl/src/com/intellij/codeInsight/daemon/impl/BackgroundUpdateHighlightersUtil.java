@@ -280,7 +280,7 @@ public final class BackgroundUpdateHighlightersUtil {
                                           int group,
                                           @NotNull PsiFile psiFile,
                                           @NotNull MarkupModelEx markup,
-                                          @Nullable HighlightersRecycler infosToRemove,
+                                          @Nullable HighlighterRecyclerPickup infosToRemove,
                                           @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                           @NotNull SeverityRegistrar severityRegistrar) {
     assert !info.isFileLevelAnnotation();
