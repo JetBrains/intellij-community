@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -113,8 +113,8 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
-    if (javaClass.isRecord) request.modifiers += JvmModifier.STATIC
+    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord ||
+                            request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (canCreateEnumConstant(javaClass)) {
       result += CreateEnumConstantAction(javaClass, request)
