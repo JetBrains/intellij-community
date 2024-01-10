@@ -158,37 +158,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<? extends Change> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<>(included), initialChangeList, executors, showVcsCommit, comment, customResultHandler,
-                         true);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<? extends Change> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler,
-                                      boolean cancelIfNoChanges) {
-    return commitChanges(project, null, included, initialChangeList, executors, showVcsCommit, null, comment, customResultHandler,
-                         cancelIfNoChanges);
-  }
-
   @NotNull
   private static Set<AbstractVcs> getVcsesForLocalChanges(@NotNull Project project, boolean showVcsCommit) {
     Set<AbstractVcs> affectedVcses = new HashSet<>();
@@ -203,31 +172,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     return affectedVcses;
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean commitChanges(@NotNull Project project,
-                                      @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
-                                      @NotNull Collection<?> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable AbstractVcs forceCommitInVcs,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler,
-                                      boolean cancelIfNoChanges) {
-    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
-    if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
-
-    if (cancelIfNoChanges && affectedVcses.isEmpty()) {
-      showNothingToCommitMessage(project);
-      return false;
-    }
-
-    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, customResultHandler);
   }
 
   public static boolean commitWithExecutor(@NotNull Project project,
