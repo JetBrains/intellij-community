@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -88,8 +87,6 @@ private suspend fun getCondaInterpreterOutput(project: Project,
                                               indicator: ProgressIndicator,
                                               command: String,
                                               targetConfig: TargetEnvironmentConfiguration?): Result<String> {
-  ThreadingAssertions.assertBackgroundThread()
-
   val targetEnvRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
 
   val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
