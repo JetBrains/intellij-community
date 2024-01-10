@@ -408,7 +408,6 @@ private class PropertyDetector(
     private class AccessorInfo(
         val method: PsiMethod,
         val field: PsiField?,
-        val kind: AccessorKind,
         val propertyName: String,
         val superProperty: SuperInfo.Property?
     )
@@ -416,7 +415,7 @@ private class PropertyDetector(
     private fun getGetterInfo(method: PsiMethod, superProperty: SuperInfo.Property?): AccessorInfo? {
         val propertyName = propertyNameByGetMethod(method) ?: return null
         val field = fieldFromGetterBody(method)
-        return AccessorInfo(method, field, AccessorKind.GETTER, propertyName, superProperty)
+        return AccessorInfo(method, field, propertyName, superProperty)
     }
 
     private fun getSetterInfo(method: PsiMethod, superProperty: SuperInfo.Property?, propertyNamesFromGetters: Set<String>): AccessorInfo? {
@@ -427,7 +426,7 @@ private class PropertyDetector(
 
         val propertyName = propertyNameBySetMethod(method, allowedPropertyNames) ?: return null
         val field = fieldFromSetterBody(method)
-        return AccessorInfo(method, field, AccessorKind.SETTER, propertyName, superProperty)
+        return AccessorInfo(method, field, propertyName, superProperty)
     }
 
     private fun superInfo(getOrSetMethod: PsiMethod): SuperInfo? {

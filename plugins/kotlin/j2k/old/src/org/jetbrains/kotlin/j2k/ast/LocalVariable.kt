@@ -5,12 +5,11 @@ package org.jetbrains.kotlin.j2k.ast
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
 class LocalVariable(
-        private val identifier: Identifier,
-        private val annotations: Annotations,
-        private val modifiers: Modifiers,
-        private val explicitType: Type?,
-        private val initializer: Expression,
-        private val isVal: Boolean
+    private val identifier: Identifier,
+    private val annotations: Annotations,
+    private val explicitType: Type?,
+    private val initializer: Expression,
+    private val isVal: Boolean
 ) : Element() {
 
     override fun generateCode(builder: CodeBuilder) {

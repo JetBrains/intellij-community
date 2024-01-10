@@ -155,16 +155,6 @@ open class Operator(private val operatorType: IElementType): Expression() {
 
     fun asString() = asString(operatorType)
 
-    fun acceptLineBreakBefore(): Boolean {
-        return when(operatorType) {
-            JavaTokenType.ANDAND,
-            JavaTokenType.OROR,
-            JavaTokenType.PLUS,
-            JavaTokenType.MINUS -> true
-            else -> false
-        }
-    }
-
     val precedence: Int
         get() = when (this.operatorType) {
             JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC -> 3

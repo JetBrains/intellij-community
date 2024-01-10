@@ -99,9 +99,6 @@ class TypeConverter(val converter: Converter) {
 
     fun variableNullability(variable: PsiVariable): Nullability = typeFlavorCalculator.variableNullability(variable)
 
-    fun variableReferenceNullability(variable: PsiVariable, reference: PsiReferenceExpression): Nullability
-            = typeFlavorCalculator.variableReferenceNullability(variable, reference)
-
     fun methodNullability(method: PsiMethod): Nullability
             = typeFlavorCalculator.methodNullability(method)
 

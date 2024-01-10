@@ -579,12 +579,11 @@ class Converter private constructor(
         for (parameter in method.parameterList.parameters) {
             if (parameter.hasWriteAccesses(referenceSearcher, method)) {
                 val variable = LocalVariable(
-                    parameter.declarationIdentifier(),
-                    Annotations.Empty,
-                    Modifiers.Empty,
-                    null,
-                    parameter.declarationIdentifier(),
-                    false
+                  parameter.declarationIdentifier(),
+                  Annotations.Empty,
+                  null,
+                  parameter.declarationIdentifier(),
+                  false
                 ).assignNoPrototype()
                 statementsToInsert.add(DeclarationStatement(listOf(variable)).assignNoPrototype())
             }

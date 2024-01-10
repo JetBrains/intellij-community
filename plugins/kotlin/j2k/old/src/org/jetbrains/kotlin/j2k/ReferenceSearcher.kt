@@ -60,11 +60,3 @@ fun PsiVariable.isInVariableInitializer(searcher: ReferenceSearcher, scope: PsiE
         parent is PsiVariable && parent.initializer == it
     } else false
 }
-
-object EmptyReferenceSearcher: ReferenceSearcher {
-    override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> = emptyList()
-    override fun hasInheritors(`class`: PsiClass) = false
-    override fun hasOverrides(method: PsiMethod) = false
-    override fun findUsagesForExternalCodeProcessing(element: PsiElement, searchJava: Boolean, searchKotlin: Boolean): Collection<PsiReference>
-            = emptyList()
-}

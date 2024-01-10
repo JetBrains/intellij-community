@@ -342,13 +342,6 @@ class CodeBuilder(private val topElement: PsiElement?, private var docConverter:
             }
         }
 
-        fun <T> List<T>.reversed(): List<T> {
-            return if (size <= 1)
-                this
-            else
-                this.asReversed()
-        }
-
         fun PsiElement.isCommentOrSpace() = this is PsiComment || this is PsiWhiteSpace
 
         fun PsiElement.isEndOfLineComment() = this is PsiComment && tokenType == JavaTokenType.END_OF_LINE_COMMENT

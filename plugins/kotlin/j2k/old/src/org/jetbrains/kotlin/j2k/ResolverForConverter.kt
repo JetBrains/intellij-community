@@ -8,7 +8,3 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 interface ResolverForConverter {
     fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor?
 }
-
-object EmptyResolverForConverter : ResolverForConverter {
-    override fun resolveToDescriptor(declaration: KtDeclaration) = null
-}

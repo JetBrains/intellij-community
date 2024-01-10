@@ -27,14 +27,6 @@ class MethodCallExpression(
                 dotPrototype: PsiElement? = null
         ): MethodCallExpression = build(receiver, methodName, argumentList, typeArguments, false, dotPrototype)
 
-        fun buildNullable(
-                receiver: Expression?,
-                methodName: String,
-                argumentList: ArgumentList = ArgumentList.withNoPrototype(),
-                typeArguments: List<Type> = emptyList(),
-                dotPrototype: PsiElement? = null
-        ): MethodCallExpression = build(receiver, methodName, argumentList, typeArguments, true, dotPrototype)
-
         fun build(
                 receiver: Expression?,
                 methodName: String,

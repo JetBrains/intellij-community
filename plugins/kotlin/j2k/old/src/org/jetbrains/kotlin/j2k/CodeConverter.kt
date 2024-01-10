@@ -24,9 +24,6 @@ class CodeConverter(
     fun withMethodReturnType(methodReturnType: PsiType?): CodeConverter
             = CodeConverter(converter, expressionConverter, statementConverter, methodReturnType)
 
-    fun withConverter(converter: Converter): CodeConverter
-            = CodeConverter(converter, expressionConverter, statementConverter, methodReturnType)
-
     fun convertBlock(block: PsiCodeBlock?, notEmpty: Boolean = true, statementFilter: (PsiStatement) -> Boolean = { true }): Block {
         if (block == null) return Block.Empty
 
@@ -66,12 +63,13 @@ class CodeConverter(
         val isVal = canChangeType(variable)
         val type = typeConverter.convertVariableType(variable)
         val explicitType = type.takeIf { settings.specifyLocalVariableTypeByDefault || converter.shouldDeclareVariableType(variable, type, isVal) }
-        return LocalVariable(variable.declarationIdentifier(),
-                             converter.convertAnnotations(variable),
-                             converter.convertModifiers(variable, isMethodInOpenClass = false, isInObject = false),
-                             explicitType,
-                             convertExpression(variable.initializer, variable.type),
-                             isVal).assignPrototype(variable)
+        return LocalVariable(
+            variable.declarationIdentifier(),
+            converter.convertAnnotations(variable),
+            explicitType,
+            convertExpression(variable.initializer, variable.type),
+            isVal
+        ).assignPrototype(variable)
     }
 
     fun canChangeType(variable: PsiLocalVariable) : Boolean {
