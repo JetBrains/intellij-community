@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.idea.IdeStarter
@@ -43,7 +44,11 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private suspend fun isProperContext(): Boolean {
-    return currentCoroutineContext()[MyMarker] != null
+    return currentCoroutineContext().isProperContext()
+  }
+
+  private fun CoroutineContext.isProperContext(): Boolean {
+    return this[MyMarker] != null
   }
 
   private suspend fun onProperContext(block: () -> Unit) {
@@ -301,8 +306,10 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  fun firstOpenedEditor(project: Project, file: VirtualFile, elementToPass: CoroutineContext.Element?) {
-    if (elementToPass != MyMarker) return
+  fun firstOpenedEditor(project: Project, file: VirtualFile) {
+    if (!currentThreadContext().isProperContext()) {
+      return
+    }
     service<MeasurerCoroutineService>().coroutineScope.launch(context = MyMarker) {
       reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
     }

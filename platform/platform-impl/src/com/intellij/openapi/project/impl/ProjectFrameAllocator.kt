@@ -424,10 +424,11 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
-    val elementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
-    AsyncEditorLoader.performWhenLoaded(editor) {
-      FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.project, composite.file, elementToPass)
-      composite.preferredFocusedComponent?.requestFocusInWindow()
+    blockingContext {
+      AsyncEditorLoader.performWhenLoaded(editor) {
+        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.project, composite.file)
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
     }
   }
 }
