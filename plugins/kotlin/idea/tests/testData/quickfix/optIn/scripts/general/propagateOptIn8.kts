@@ -8,6 +8,7 @@
 // ACTION: Opt in for 'UnstableApi' on 'foo'
 // ACTION: Propagate 'UnstableApi' opt-in requirement to 'foo'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApi
