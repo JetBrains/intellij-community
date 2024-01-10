@@ -7,7 +7,6 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
@@ -26,40 +25,32 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal1 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
-        return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("0", "1")))
-        }
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("0", "1")))
       }
     }
 
     val testProviderLocal2 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
-        return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("2")))
-        }
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("2")))
       }
     }
 
     val testProviderRemote3 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
-        return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("3")))
-        }
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("3")))
       }
     }
 
     val testProviderRemote4 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
-        return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("4")))
-        }
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("4")))
       }
     }
 
@@ -84,9 +75,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProvider = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
+      override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
         requests++
-        listOf(object : RepositoryArtifactData {
+        return listOf(object : RepositoryArtifactData {
           override fun getKey() = searchString
 
           override fun mergeWith(another: RepositoryArtifactData) = this
@@ -108,11 +99,11 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
 
   open class TestSearchProvider : DependencySearchProvider {
 
-    override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> {
+    override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
       TODO("Not yet implemented")
     }
 
-    override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
+    override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
       TODO("Not yet implemented")
     }
 

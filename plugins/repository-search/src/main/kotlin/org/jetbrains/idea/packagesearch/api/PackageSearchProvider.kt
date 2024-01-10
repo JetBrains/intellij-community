@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.future.future
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
@@ -44,15 +43,15 @@ class PackageSearchProvider(
   private val myClient = PackageSearchApiClient(config, engine)
     .also { client -> scope.coroutineContext[Job]?.invokeOnCompletion { client.close() } }
 
-  override fun fulltextSearch(searchString: String) = scope.future {
-    myClient.packagesByQuery(searchString)
+  override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
+    return myClient.packagesByQuery(searchString)
       .packages
       .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
       .map { convertApiStandardPackage2RepositoryArtifactData(it) }
   }
 
-  override fun suggestPrefix(groupId: String, artifactId: String) = scope.future {
-    myClient.suggestPackages(groupId, artifactId)
+  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+    return myClient.suggestPackages(groupId, artifactId)
       .packages
       .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
       .map { convertApiStandardPackage2RepositoryArtifactData(it) }

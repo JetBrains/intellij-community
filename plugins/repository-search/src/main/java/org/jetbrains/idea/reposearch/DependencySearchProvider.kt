@@ -1,14 +1,9 @@
-package org.jetbrains.idea.reposearch;
+package org.jetbrains.idea.reposearch
 
-import org.jetbrains.annotations.NotNull;
+interface DependencySearchProvider {
+  suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData>
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+  suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData>
 
-public interface DependencySearchProvider {
-  CompletableFuture<List<RepositoryArtifactData>> fulltextSearch(@NotNull String searchString);
-
-  CompletableFuture<List<RepositoryArtifactData>> suggestPrefix(@NotNull String groupId, @NotNull String artifactId);
-
-  boolean isLocal();
+  fun isLocal(): Boolean
 }
