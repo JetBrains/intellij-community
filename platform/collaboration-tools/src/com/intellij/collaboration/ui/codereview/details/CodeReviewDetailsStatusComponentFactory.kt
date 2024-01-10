@@ -6,6 +6,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
@@ -186,7 +187,10 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon = iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE)
+        icon = CodeReviewAvatarUtils.outlineCircleIcon(
+          iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE),
+          ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+        )
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
       }
 
