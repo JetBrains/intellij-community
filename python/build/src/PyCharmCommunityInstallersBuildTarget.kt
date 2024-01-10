@@ -27,7 +27,7 @@ object PyCharmCommunityInstallersBuildTarget {
           PyCharmBuildUtils.SKELETONS_COPY_STEP,
         ))
       }
-      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(PyCharmCommunityInstallersBuildTarget::class.java)
       val context = BuildContextImpl.createContext(
         communityHome = communityHome,
         projectHome = communityHome.communityRoot,
