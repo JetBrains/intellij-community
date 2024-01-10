@@ -39,10 +39,7 @@ class GHPullRequest(id: String,
                     val headRefOid: String,
                     val headRepository: HeadRepository?)
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, reviewRequests, reviewThreads,
-                       mergeable, viewerCanUpdate, viewerDidAuthor) {
-
-  @JsonIgnore
-  val reviews: List<GHPullRequestReview> = reviews.nodes
+                       reviews, mergeable, viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule

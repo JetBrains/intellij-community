@@ -61,6 +61,21 @@
       "key": "Review.Editor.Line.Status.Marker",
       "description": "Color of the line status markers in gutter and scrollbar for lines changed in review",
       "since": "[2023.3]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.Accepted",
+      "description": "Border color of a reviewer who accepted the changes",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.WaitForUpdates",
+      "description": "Border color of a reviewer who is waiting for response",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.NeedReview",
+      "description": "Border color of a reviewer who needs to start a review",
+      "since": "[2024.1]"
     }
   ]
 }

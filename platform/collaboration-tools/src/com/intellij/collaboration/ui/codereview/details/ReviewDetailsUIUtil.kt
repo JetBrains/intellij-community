@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
@@ -10,6 +11,7 @@ import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.Insets
 import javax.swing.Icon
 
@@ -31,6 +33,12 @@ object ReviewDetailsUIUtil {
     ReviewState.ACCEPTED -> CollaborationToolsBundle.message("review.details.status.reviewer.approved", reviewer)
     ReviewState.WAIT_FOR_UPDATES -> CollaborationToolsBundle.message("review.details.status.reviewer.wait.for.updates", reviewer)
     ReviewState.NEED_REVIEW -> CollaborationToolsBundle.message("review.details.status.reviewer.need.review", reviewer)
+  }
+
+  fun getReviewStateIconBorder(reviewState: ReviewState): Color = when (reviewState) {
+    ReviewState.ACCEPTED -> Avatar.Color.ACCEPTED_BORDER
+    ReviewState.WAIT_FOR_UPDATES -> Avatar.Color.WAIT_FOR_UPDATES_BORDER
+    ReviewState.NEED_REVIEW -> Avatar.Color.NEED_REVIEW_BORDER
   }
 
   @Suppress("UseDPIAwareInsets")

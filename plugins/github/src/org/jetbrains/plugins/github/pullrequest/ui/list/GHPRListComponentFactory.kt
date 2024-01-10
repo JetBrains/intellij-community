@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.list
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -17,15 +20,16 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.ListModel
 
 internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullRequestShort>) {
 
-  fun create(avatarIconsProvider: GHAvatarIconsProvider): JBList<GHPullRequestShort> {
+  fun create(avatarIconsProvider: GHAvatarIconsProvider, ghostUser: GHUser): JBList<GHPullRequestShort> {
     return ReviewListComponentFactory(listModel).create {
-      presentPR(avatarIconsProvider, it)
+      presentPR(avatarIconsProvider, it, ghostUser)
     }.also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
@@ -41,15 +45,23 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     }
   }
 
-  private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort) =
+  private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort, ghostUser: GHUser) =
     ReviewListItemPresentation.Simple(pr.title, "#" + pr.number, pr.createdAt,
-                                      createUserPresentation(avatarIconsProvider, pr.author),
+                                      author = createUserPresentation(avatarIconsProvider, pr.author),
                                       tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
                                                                         pr.labels.map(::getLabelPresentation)),
                                       mergeableStatus = getMergeableStatus(pr.mergeable),
                                       state = getStateText(pr.state, pr.isDraft),
                                       userGroup1 = getAssigneesPresentation(avatarIconsProvider, pr.assignees),
-                                      userGroup2 = getReviewersPresentation(avatarIconsProvider, pr.reviewRequests),
+                                      userGroup2 = getReviewersPresentation(
+                                        avatarIconsProvider,
+                                        GHReviewersUtils.getReviewsByReviewers(
+                                          pr.author,
+                                          pr.reviews,
+                                          pr.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer),
+                                          ghostUser
+                                        )
+                                      ),
                                       commentsCounter = ReviewListItemPresentation.CommentsCounter(
                                         pr.unresolvedReviewThreadsCount,
                                         GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
@@ -75,14 +87,18 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
   private fun getAssigneesPresentation(avatarIconsProvider: GHAvatarIconsProvider,
                                        assignees: List<GHUser>): NamedCollection<UserPresentation>? {
     return NamedCollection.create(GithubBundle.message("pull.request.assignees.popup", assignees.size),
-                                  assignees.map { user -> createUserPresentation(avatarIconsProvider, user) })
+                                  assignees.map { user -> createUserPresentation(avatarIconsProvider, user, null) })
   }
 
-  private fun getReviewersPresentation(avatarIconsProvider: GHAvatarIconsProvider,
-                                       reviewRequests: List<GHPullRequestReviewRequest>): NamedCollection<UserPresentation>? {
-    val reviewers = reviewRequests.mapNotNull { it.requestedReviewer }
-    return NamedCollection.create(GithubBundle.message("pull.request.reviewers.popup", reviewers.size),
-                                  reviewers.map { reviewer -> createUserPresentation(avatarIconsProvider, reviewer) })
+  private fun getReviewersPresentation(
+    avatarIconsProvider: GHAvatarIconsProvider,
+    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, ReviewState>
+  ): NamedCollection<UserPresentation>? {
+    val presentations = createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.ACCEPTED) +
+                        createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.WAIT_FOR_UPDATES) +
+                        createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.NEED_REVIEW)
+
+    return NamedCollection.create(GithubBundle.message("pull.request.reviewers.popup", presentations.size), presentations)
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
@@ -90,10 +106,26 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
   }
 
-  private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
-    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
+  private fun createUserPresentationByFilter(
+    avatarIconsProvider: GHAvatarIconsProvider,
+    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, ReviewState>,
+    reviewStateFilter: ReviewState
+  ): List<UserPresentation> {
+    return reviewsByReviewers
+      .filterValues { reviewState -> reviewState == reviewStateFilter }
+      .keys
+      .map { reviewer -> createUserPresentation(avatarIconsProvider, reviewer, reviewStateFilter) }
+  }
 
-  private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHPullRequestRequestedReviewer): UserPresentation {
-    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE))
+  private fun createUserPresentation(
+    avatarIconsProvider: GHAvatarIconsProvider,
+    user: GHPullRequestRequestedReviewer,
+    reviewState: ReviewState?
+  ): UserPresentation {
+    val avatarIcon = avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE)
+    val outlineColor = reviewState?.let { ReviewDetailsUIUtil.getReviewStateIconBorder(it) }
+    val outlinedAvatarIcon = CodeReviewAvatarUtils.outlineCircleIcon(avatarIcon, outlineColor)
+
+    return UserPresentation.Simple(user.shortName, user.name, outlinedAvatarIcon)
   }
 }

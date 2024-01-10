@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.avatar
 
+import com.intellij.ui.JBColor
+
 object Avatar {
 
   /**
@@ -33,5 +35,11 @@ object Avatar {
      * Account representation in settings and popups
      */
     const val ACCOUNT: Int = 40
+  }
+
+  object Color {
+    val ACCEPTED_BORDER: JBColor = JBColor.namedColor("Review.Avatar.Border.Status.Accepted", JBColor(0x5FB865, 0x57965C))
+    val WAIT_FOR_UPDATES_BORDER: JBColor = JBColor.namedColor("Review.Avatar.Border.Status.WaitForUpdates", JBColor(0xEC8F4C, 0xE08855))
+    val NEED_REVIEW_BORDER: JBColor = JBColor.namedColor("Review.Avatar.Border.Status.NeedReview", JBColor(0x818594, 0x6F737A))
   }
 }

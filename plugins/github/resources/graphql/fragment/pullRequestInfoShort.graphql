@@ -37,6 +37,11 @@ fragment pullRequestInfoShort on PullRequest {
       isOutdated
     }
   }
+  reviews(last: 100) {
+    nodes {
+      ...pullRequestReview
+    }
+  }
 
   mergeable
 

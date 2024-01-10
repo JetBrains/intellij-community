@@ -19,7 +19,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
@@ -31,6 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -77,7 +77,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val author = details.author
     val reviews = details.reviews
     val reviewers = details.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer)
-    getReviewsByReviewers(author, reviews, reviewers)
+    GHReviewersUtils.getReviewsByReviewers(author, reviews, reviewers, ghostUser)
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
   private val isApproved: SharedFlow<Boolean> = combine(reviewerReviews, mergeabilityState) { reviews, state ->
@@ -221,28 +221,6 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers + securityService.currentUser)
     dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
-  }
-
-  private fun getReviewsByReviewers(author: GHActor?,
-                                    reviews: List<GHPullRequestReview>,
-                                    reviewers: List<GHPullRequestRequestedReviewer>): MutableMap<GHPullRequestRequestedReviewer, ReviewState> {
-    val result = mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>()
-    reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state } // latest review state by reviewer
-      .forEach { (reviewer, reviewState) ->
-        if (reviewer != author) {
-          if (reviewState == GHPullRequestReviewState.APPROVED) {
-            result[reviewer] = ReviewState.ACCEPTED
-          }
-          if (reviewState == GHPullRequestReviewState.CHANGES_REQUESTED) {
-            result[reviewer] = ReviewState.WAIT_FOR_UPDATES
-          }
-        }
-      }
-
-    reviewers.forEach { requestedReviewer ->
-      result[requestedReviewer] = ReviewState.NEED_REVIEW
-    }
-    return result
   }
 
   private fun runAction(action: suspend () -> Unit) {

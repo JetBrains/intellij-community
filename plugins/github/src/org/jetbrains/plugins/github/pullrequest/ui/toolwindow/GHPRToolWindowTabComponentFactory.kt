@@ -45,9 +45,10 @@ internal class GHPRToolWindowTabComponentFactory(
   }
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
+    val ghostUser = projectVm.dataContext.securityService.ghostUser
     val listVm = projectVm.listVm
     val listModel = cs.scopedDelegatingListModel(listVm.listModel)
-    val list = GHPRListComponentFactory(listModel).create(listVm.avatarIconsProvider)
+    val list = GHPRListComponentFactory(listModel).create(listVm.avatarIconsProvider, ghostUser)
 
     GHPRStatisticsCollector.logListOpened(project)
     return GHPRListPanelFactory(project, listVm)

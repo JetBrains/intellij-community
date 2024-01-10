@@ -26,6 +26,7 @@ open class GHPullRequestShort(id: String,
                               @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
                               @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
                               @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
+                              @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>,
                               val mergeable: GHPullRequestMergeableState,
                               val viewerCanUpdate: Boolean,
                               val viewerDidAuthor: Boolean) : GHNode(id) {
@@ -43,6 +44,9 @@ open class GHPullRequestShort(id: String,
 
   @JsonIgnore
   val unresolvedReviewThreadsCount = reviewThreads.nodes.count { !it.isResolved && !it.isOutdated }
+
+  @JsonIgnore
+  val reviews: List<GHPullRequestReview> = reviews.nodes
 
   override fun toString(): String = "#$number $title"
 

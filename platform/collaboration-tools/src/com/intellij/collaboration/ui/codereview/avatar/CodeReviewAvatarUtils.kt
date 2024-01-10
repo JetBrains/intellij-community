@@ -14,7 +14,7 @@ import javax.swing.Icon
 
 object CodeReviewAvatarUtils {
   val OUTLINE_WIDTH: Int
-    get() = JBUI.scale(3)
+    get() = JBUI.scale(2)
 
   fun outlineCircleIcon(icon: Icon, outlineColor: Color?): Icon {
     val iconSize = icon.iconWidth
