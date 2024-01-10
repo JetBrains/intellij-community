@@ -186,6 +186,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
       val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
         this.homePath = homePathVfu
+        this.version = version
       } as SdkEntity.Builder
     }
 
