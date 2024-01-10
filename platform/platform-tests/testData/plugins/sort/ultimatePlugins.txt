@@ -67,6 +67,7 @@
 + -tslint-
 + -com-jetbrains-plugins-yeoman-
 + -intellij-prettierJS-
++ -com.intellij.angularjs-
 + -com-intellij-plugins-webcomponents-
 + -org-jetbrains-plugins-cidr-intelliLang-
 + -Error-prone plugin-

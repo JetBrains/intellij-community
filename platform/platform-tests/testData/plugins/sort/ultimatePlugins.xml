@@ -1080,12 +1080,20 @@
     <depends optional="true">-Docker-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.angularJS/META-INF/plugin.xml">
-    <id>-AngularJS-</id>
-    <name>Angular and AngularJS</name>
+    <id>-com.intellij.angularjs-</id>
+    <name>AngularJS</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.platform</depends>
     <depends optional="true">-com-intellij-css-</depends>
     <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-tslint-</depends>
+  </idea-plugin>
+  <idea-plugin url="file://out/intellij.angular/META-INF/plugin.xml">
+    <id>-AngularJS-</id>
+    <name>Angular</name>
+    <depends>-JavaScript-</depends>
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">-com-intellij-css-</depends>
     <depends optional="true">-tslint-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.astro/META-INF/plugin.xml">
