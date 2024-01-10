@@ -5,7 +5,7 @@ import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer

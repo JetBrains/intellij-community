@@ -9,8 +9,8 @@ import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
-import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
-import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.NlsSafe
