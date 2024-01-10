@@ -103,7 +103,6 @@ object KotlinPluginBuilder {
     "kotlin.run-configurations.junit-fe10",
     "kotlin.run-configurations.testng",
     "kotlin.formatter",
-    "kotlin.formatter.minimal",
     "kotlin.repl",
     "kotlin.git",
     "kotlin.base.injection",
@@ -198,6 +197,7 @@ object KotlinPluginBuilder {
     "kotlin.base.resources",
     "kotlin.base.code-insight.minimal",
     "kotlin.highlighting.minimal",
+    "kotlin.formatter.minimal"
     )
 
   private val LIBRARIES = persistentListOf(
