@@ -37,6 +37,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -604,7 +605,7 @@ internal class WorkspaceProjectImporter(
                                              prepareInBackground: (current: MutableEntityStorage) -> Unit,
                                              afterApplyInWriteAction: (storage: EntityStorage) -> Unit = {}) {
       val workspaceModel = WorkspaceModel.getInstance(project)
-      val prevStorageVersion = WorkspaceModel.getInstance(project).entityStorage.version
+      val prevStorageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
 
       var attempts = 0
       var durationInBackground = 0L
@@ -656,7 +657,7 @@ internal class WorkspaceProjectImporter(
                                    durationInWriteActionNano = durationInWriteAction,
                                    durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
-      val newStorageVersion = WorkspaceModel.getInstance(project).entityStorage.version
+      val newStorageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
       LOG.info("Project model updated to version ${newStorageVersion} (attempts: $attempts, previous version: $prevStorageVersion)")
     }
 

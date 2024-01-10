@@ -125,7 +125,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  val entityStore: VersionedEntityStorage = WorkspaceModel.getInstance(project).entityStorage
+  val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
 
   suspend fun loadModules(loadedEntities: List<ModuleEntity>,
                           unloadedEntities: List<ModuleEntity>,

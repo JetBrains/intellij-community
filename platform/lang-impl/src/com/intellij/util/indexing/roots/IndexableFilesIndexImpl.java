@@ -82,7 +82,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
   @NotNull
   private List<IndexableFilesIterator> doGetIndexingIterators() {
-    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {

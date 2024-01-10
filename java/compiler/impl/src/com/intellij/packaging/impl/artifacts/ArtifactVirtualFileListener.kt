@@ -28,6 +28,7 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.util.PathUtil
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -50,7 +51,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMillis {
     val artifactEntities = if (useQueryCacheWorkspaceModelApi()) {
       val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return@addMeasuredTimeMillis
-      val storage = project.workspaceModel.entityStorage.current
+      val storage = project.workspaceModel.currentSnapshot
       refs.map { it.resolve(storage)!! }
     }
     else {
@@ -81,12 +82,12 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
 
   private val parentPathToArtifactReferences: Map<String, List<EntityPointer<ArtifactEntity>>>
     get() {
-      val storage = project.workspaceModel.entityStorage.current
+      val storage = project.workspaceModel.currentSnapshot
       return (storage as ImmutableEntityStorage).cached(query)
     }
 
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
-    get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
+    get() = (getInstance(project) as WorkspaceModelImpl).entityStorage.cachedValue(parentPathsToArtifacts)
 
   private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMillis {
     if (VirtualFile.PROP_NAME == event.propertyName) {

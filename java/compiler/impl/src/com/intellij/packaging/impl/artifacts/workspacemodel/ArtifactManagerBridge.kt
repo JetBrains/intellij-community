@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.compiler.server.BuildManager
@@ -231,7 +231,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     artifactWithDiffs.forEach { it.setActualStorage() }
     artifactWithDiffs.clear()
 
-    val entityStorage = project.workspaceModel.entityStorage
+    val entityStorage = (project.workspaceModel as WorkspaceModelImpl).entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
@@ -292,7 +292,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
             .entities(ArtifactEntity::class.java)
             .mapNotNull {
               if (artifactsMap.getDataByEntity(it) == null) {
-                createArtifactBridge(it, workspaceModel.entityStorage, project)
+                createArtifactBridge(it, (workspaceModel as WorkspaceModelImpl).entityStorage, project)
               }
               else null
             }

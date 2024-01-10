@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
@@ -34,6 +34,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -88,7 +89,7 @@ class ModuleBridgesTest {
       val module = projectModel.createModule() as ModuleBridge
 
       assertTrue(moduleManager.modules.contains(module))
-      assertSame(WorkspaceModel.getInstance(project).entityStorage, module.entityStorage)
+      assertSame((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage, module.entityStorage)
 
       val contentRootUrl = temporaryDirectoryRule.newDirectoryPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
@@ -687,7 +688,7 @@ class ModuleBridgesTest {
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
-      val entityStore = WorkspaceModel.getInstance(project).entityStorage
+      val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
       assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
       assertEquals(1, entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).count())
 
@@ -715,7 +716,7 @@ class ModuleBridgesTest {
       contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
-    val entityStore = WorkspaceModel.getInstance(project).entityStorage
+    val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
     assertEquals(1, entityStore.current.entities(SourceRootEntity::class.java).count())
 

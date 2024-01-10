@@ -39,6 +39,7 @@ import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import junit.framework.TestCase
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -557,7 +558,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       val threads = List(10) {
         Callable {
-          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+          rootEntity!!.toElement(project, (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage)
         }
       }
 
@@ -580,7 +581,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       ArtifactsTestingState.testLevel = it + 1
       try {
-        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        rootEntity!!.toElement(project, (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage)
       } catch (e: IllegalStateException) {
         if (e.message?.contains("Exception on level") != true) {
           error("Unexpected exception")

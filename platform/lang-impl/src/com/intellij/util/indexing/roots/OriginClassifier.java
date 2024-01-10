@@ -31,7 +31,7 @@ final class OriginClassifier {
   public final Collection<VirtualFile> filesFromIndexableSetContributors = new SmartList<>();
 
   private OriginClassifier(Project project) {
-    entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
   }
 
   static OriginClassifier classify(@NotNull Project project, @NotNull Collection<VirtualFile> files) {

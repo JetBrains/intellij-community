@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.java.workspace.entities.*
@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
@@ -264,7 +265,7 @@ open class ArtifactBridge(
 
   fun setActualStorage() {
     if (entityStorage is VersionedEntityStorageOnBuilder) {
-      entityStorage = WorkspaceModel.getInstance(project).entityStorage
+      entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
     }
   }
 

@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -39,12 +38,6 @@ public interface WorkspaceModel {
    * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
    */
   public val currentSnapshot: ImmutableEntityStorage
-
-  /**
-   * Returns instance holding reference to the current snapshot of the storage and caches associated with it. If you just need to read
-   * the current state of the storage, use [currentSnapshot] property which is a shorthand for `entityStorage.current`.
-   */
-  public val entityStorage: VersionedEntityStorage
 
   /**
    * Flow of changes from workspace model. It has to be used for asynchronous event handling. To start receiving

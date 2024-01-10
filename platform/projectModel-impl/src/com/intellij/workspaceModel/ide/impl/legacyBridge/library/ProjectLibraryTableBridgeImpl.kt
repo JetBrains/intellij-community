@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -44,7 +44,7 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
           project = project,
           initialId = addChange.entity.symbolicId,
-          initialEntityStorage = WorkspaceModel.getInstance(project).entityStorage,
+          initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage,
           targetBuilder = builder
         )
       }
@@ -56,7 +56,7 @@ class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
-  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).entityStorage
+  private val entityStorage: VersionedEntityStorage = (WorkspaceModel.getInstance(parentProject) as WorkspaceModelImpl).entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 

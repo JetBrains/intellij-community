@@ -95,7 +95,7 @@ public final class ReincludedRootsUtil {
     private final List<VirtualFile> filesFromAdditionalLibraryRootsProviders = new ArrayList<>();
 
     private CustomizableRootsBuilder(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
-      entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+      entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       classifyFiles(project, files);
     }
 

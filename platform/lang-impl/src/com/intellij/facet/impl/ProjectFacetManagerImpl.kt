@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
 import com.intellij.facet.*
@@ -62,7 +62,7 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
 
   private fun createIndex(): MultiMap<FacetTypeId<*>, Module> {
     val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
-    WorkspaceModel.getInstance(myProject).entityStorage.current.facetMapping().forEach { _, facet ->
+    WorkspaceModel.getInstance(myProject).currentSnapshot.facetMapping().forEach { _, facet ->
       index.putValue(facet.typeId, facet.module)
     }
     return index

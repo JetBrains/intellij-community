@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.google.common.collect.HashBiMap
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
@@ -194,7 +195,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
   internal fun disposeOriginalLibrariesAndUpdateCopies() {
     if (copyToOriginal.isEmpty()) return
 
-    val storage = WorkspaceModel.getInstance(modifiableModel.project).entityStorage
+    val storage = (WorkspaceModel.getInstance(modifiableModel.project) as WorkspaceModelImpl).entityStorage
     copyToOriginal.forEach { (copyBridge, originBridge) ->
       // It's possible if we removed old library, its copy will be disposed [ModifiableModuleLibraryTableBridge.removeLibrary]
       // but original bridge will be disposed in during events handling. This method will be called the last thus both of them will be disposed

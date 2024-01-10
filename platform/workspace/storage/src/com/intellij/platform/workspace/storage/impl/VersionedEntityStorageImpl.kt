@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
@@ -122,6 +123,7 @@ private class ValuesCache {
   }
 }
 
+@ApiStatus.Internal
 public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
@@ -158,6 +160,7 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   }
 }
 
+@ApiStatus.Internal
 public class VersionedEntityStorageOnSnapshot(private val storage: ImmutableEntityStorage) : VersionedEntityStorage {
   private val valuesCache = ValuesCache()
 
@@ -180,6 +183,7 @@ public class VersionedEntityStorageOnSnapshot(private val storage: ImmutableEnti
     valuesCache.clearCachedValue(value, parameter)
 }
 
+@ApiStatus.Internal
 public class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
@@ -197,6 +201,7 @@ public class DummyVersionedEntityStorage(private val builder: MutableEntityStora
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
+@ApiStatus.Internal
 public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStorage) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
