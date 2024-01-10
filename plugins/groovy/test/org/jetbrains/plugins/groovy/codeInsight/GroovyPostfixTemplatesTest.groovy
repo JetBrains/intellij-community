@@ -42,10 +42,11 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     type textToType
     Lookup lookup = myFixture.getLookup()
     assertNotNull(lookup)
-    LookupElement item = lookup.getCurrentItem()
+    LookupElement item = lookup.items.find { it.lookupString.startsWith('.'+textToType) }
     assertNotNull item
     assertInstanceOf item, PostfixTemplateLookupElement.class
     assertInstanceOf((item as PostfixTemplateLookupElement).getPostfixTemplate(), expectedClass)
+    lookup.setCurrentItem(item)
     if (invokeRefactoring) {
       type ' '
       myFixture.checkResult result
