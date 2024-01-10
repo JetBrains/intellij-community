@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -29,10 +29,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private open class LibraryDependencyCandidatesAndSdkInfos(
@@ -205,15 +208,14 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private inner class LibraryDependenciesInnerCache :
         SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, doSelfInitialization = false, cleanOnLowMemory = true),
         LibraryInfoListener,
-        ModuleRootListener,
-        ProjectJdkTable.Listener {
+        ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
-            connection.subscribe(ModuleRootListener.TOPIC, this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
-            connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
+            connection.subscribe(WorkspaceModelTopics.CHANGED, SdkChangeListener())
+            connection.subscribe(ModuleRootListener.TOPIC, this)
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
@@ -221,14 +223,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 libraries.any { it in libraryInfos } || sourcesOnlyDependencies.any { it in libraryInfos }
 
             invalidateEntries({ k, v -> k in libraryInfos || v.haveOutdatedLibraries() })
-        }
-
-        override fun jdkRemoved(jdk: Sdk) {
-            invalidateEntries({ _, v -> v.sdk.any { it.sdk == jdk } })
-        }
-
-        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-            jdkRemoved(jdk)
         }
 
         override fun calculate(key: LibraryInfo): LibraryDependencies =
@@ -260,6 +254,16 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
 
+        inner class SdkChangeListener: SdkEntityChangeListener(project) {
+            override fun entitiesChanged(outdated: List<Sdk>) {
+                invalidateEntries(
+                    { _, value -> value.sdk.any { it.sdk in outdated } },
+                    // unable to check entities properly: an event could be not the last
+                    validityCondition = null
+                )
+            }
+        }
+
         @TestOnly
         @Suppress("deprecation_error")
         fun getCacheContentForTests() = cache
@@ -268,7 +272,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private inner class ModuleDependenciesCache :
         SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, doSelfInitialization = false),
         WorkspaceModelChangeListener,
-        ProjectJdkTable.Listener,
         LibraryInfoListener,
         ModuleRootListener {
 
@@ -276,7 +279,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         val connection = project.messageBus.connect(this)
         connection.subscribe(WorkspaceModelTopics.CHANGED, this)
         connection.subscribe(LibraryInfoListener.TOPIC, this)
-        connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         connection.subscribe(ModuleRootListener.TOPIC, this)
       }
 
@@ -484,39 +486,49 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         value.libraryDependencyCandidates.forEach { it.libraries.forEach { libraryInfo -> libraryInfo.checkValidity() } }
       }
 
-      override fun jdkRemoved(jdk: Sdk) {
-        invalidateEntries({ _, candidates -> candidates.sdkInfos.any { it.sdk == jdk } })
-      }
+        override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
 
-      override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        jdkRemoved(jdk)
-      }
+            // SDK could be changed (esp in tests) out of message bus subscription
+            val sdks = project.allSdks()
 
-      override fun rootsChanged(event: ModuleRootEvent) {
-        if (event.isCausedByWorkspaceModelChangesOnly) return
-
-        // SDK could be changed (esp in tests) out of message bus subscription
-        val sdks = project.allSdks()
-
-        invalidateEntries(
-          { _, candidates -> candidates.sdkInfos.any { it.sdk !in sdks } },
-          // unable to check entities properly: an event could be not the last
-          validityCondition = null
-        )
-      }
-
-      override fun beforeChanged(event: VersionedStorageChange) {
-        val storageBefore = event.storageBefore
-        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
-
-        val outdatedModules = mutableSetOf<Module>()
-        for (change in changes) {
-          val moduleEntity = change.oldEntity ?: continue
-          collectOutdatedModules(moduleEntity, storageBefore, outdatedModules)
+            invalidateEntries(
+                { _, candidates -> candidates.sdkInfos.any { it.sdk !in sdks } },
+                // unable to check entities properly: an event could be not the last
+                validityCondition = null
+            )
         }
 
-        invalidateKeys(outdatedModules)
-      }
+        override fun beforeChanged(event: VersionedStorageChange) {
+            val storageBefore = event.storageBefore
+            val moduleChanges = event.getChanges(ModuleEntity::class.java)
+            val sdkChanges = event.getChanges(SdkEntity::class.java)
+
+            if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
+
+            val outdatedModules = mutableSetOf<Module>()
+            for (change in moduleChanges) {
+                val moduleEntity = change.oldEntity ?: continue
+                collectOutdatedModules(moduleEntity, storageBefore, outdatedModules)
+            }
+
+            val outdatedSdks = mutableSetOf<Sdk>()
+            for (sdkChange in sdkChanges) {
+                val sdk = sdkChange.oldEntity?.findSdkBridge(storageBefore)
+                outdatedSdks.addIfNotNull(sdk)
+            }
+            if (outdatedModules.isNotEmpty()) {
+                invalidateKeys(outdatedModules)
+            }
+
+            if (outdatedSdks.isNotEmpty()) {
+                invalidateEntries(
+                    { _, candidates -> candidates.sdkInfos.any { it.sdk in outdatedSdks } },
+                    // unable to check entities properly: an event could be not the last
+                    validityCondition = null
+                )
+            }
+        }
 
       private fun collectOutdatedModules(moduleEntity: ModuleEntity, storage: EntityStorage, outdatedModules: MutableSet<Module>) {
         val module = moduleEntity.findModule(storage) ?: return

@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.idea.base.util.caching
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 
 abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : Any>(
     protected val project: Project,
@@ -90,3 +93,16 @@ abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied:
     override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
         entity.findLibraryBridge(storage)
 }
+
+abstract class SdkEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) :
+    WorkspaceEntityChangeListener<SdkEntity, Sdk>(project, afterChangeApplied) {
+    override val entityClass: Class<SdkEntity>
+        get() = SdkEntity::class.java
+
+    override fun map(storage: EntityStorage, entity: SdkEntity): Sdk? =
+        entity.findSdkBridge(storage)
+}
+
+fun SdkEntity.findSdkBridge(storage: EntityStorage): Sdk? =
+    storage.sdkMap.getDataByEntity(this)
+
