@@ -126,7 +126,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Nullable
   protected FileCoverageInfo collectBaseFileCoverage(@NotNull VirtualFile file,
-                                                     @NotNull final Annotator annotator,
+                                                     @NotNull final SimpleCoverageAnnotator.CoverageAnnotatorRunner annotator,
                                                      @NotNull final ProjectData projectData,
                                                      @NotNull final Map<String, String> normalizedFiles2Files) {
 
@@ -169,7 +169,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   protected DirCoverageInfo collectFolderCoverage(@NotNull final VirtualFile dir,
                                                   final @NotNull CoverageDataManager dataManager,
-                                                  final Annotator annotator,
+                                                  final CoverageAnnotatorRunner annotator,
                                                   final ProjectData projectInfo, boolean trackTestFolders,
                                                   @NotNull final ProjectFileIndex index,
                                                   @NotNull final CoverageEngine coverageEngine,
@@ -267,7 +267,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                           @NotNull final CoverageSuitesBundle suite,
                           final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
                           final Project project,
-                          final Annotator annotator) {
+                          final CoverageAnnotatorRunner annotator) {
     if (!contentRoot.isValid()) {
       return;
     }
@@ -313,7 +313,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
       // gather coverage from all content roots
       for (VirtualFile root : modulesContentRoots) {
-        annotate(root, suite, dataManager, data, project, new Annotator() {
+        annotate(root, suite, dataManager, data, project, new CoverageAnnotatorRunner() {
           @Override
           public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
             myDirCoverageInfos.put(dirPath, info);
@@ -468,7 +468,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return null;
   }
 
-  protected interface Annotator {
+  protected interface CoverageAnnotatorRunner {
     void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info);
 
     void annotateTestDirectory(final String dirPath, final DirCoverageInfo info);
