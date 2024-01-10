@@ -34,4 +34,6 @@ class JsonSmartKeysConfigurable : BeanConfigurable<Unit>(Unit), SearchableConfig
   override fun getId(): String {
     return "editor.preferences.jsonOptions"
   }
+
+  override fun getHelpTopic() = "reference.settings.editor.smart.keys.json"
 }

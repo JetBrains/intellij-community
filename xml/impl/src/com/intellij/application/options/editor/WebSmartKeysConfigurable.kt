@@ -83,6 +83,8 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
     return listOf(EP_NAME)
   }
+
+  override fun getHelpTopic() = "reference.settings.editor.smart.keys.web"
 }
 
 internal class WebSmartKeysConfigurableEP : ConfigurableEP<UnnamedConfigurable>()

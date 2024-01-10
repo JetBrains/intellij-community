@@ -87,4 +87,6 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
   companion object {
     internal const val ID = "Settings.Markdown.SmartKeys"
   }
+
+  override fun getHelpTopic() = "reference.settings.editor.smart.keys.markdown"
 }
