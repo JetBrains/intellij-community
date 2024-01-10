@@ -275,23 +275,6 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  /**
-   * @deprecated Use findParentRecursively instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable <T> DataNode<T> findParent(
-    @NotNull DataNode<?> node,
-    @NotNull Key<T> key,
-    @Nullable BooleanFunction<? super DataNode<T>> predicate
-  ) {
-    if (predicate == null) {
-      return findParentRecursively(node, key, null);
-    }
-    else {
-      return findParentRecursively(node, key, it -> predicate.fun(it));
-    }
-  }
-
   public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
