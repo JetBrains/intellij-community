@@ -8,7 +8,9 @@ internal interface SearchEverywhereMlItemIdProvider {
 }
 
 /**
- * The ID provider computes the order-based key. It means that the first element will have ID-1, next different one - ID-2, and so on.
+ * The ID provider computes the order-based key if such can be computed,
+ * it means that the first element will have ID - 1, next different one 2, and so on.
+ * If the key cannot be computed (due to unsupported element by any of the [ElementKeyForIdProvider] the id will be null.
  * @param onNullKey function executed when no key was computed for element. The element, for which there is no key, is passed as a parameter.
  */
 internal class SearchEverywhereMlOrderedItemIdProvider(private val onNullKey: (element: Any) -> Unit = {}) : SearchEverywhereMlItemIdProvider {
