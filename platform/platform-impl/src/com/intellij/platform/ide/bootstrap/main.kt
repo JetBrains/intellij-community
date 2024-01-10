@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -213,7 +214,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       lockSystemDirsJob.join()
       if (!ConfigImportHelper.isHeadlessAutomaticConfigImportAllowed()) {
         enableNewUi(logDeferred)
-      } else {
+      }
+      else {
         val log = logDeferred.await()
         importConfig(
           args = args,
@@ -252,7 +254,8 @@ fun CoroutineScope.startApplication(args: List<String>,
         val result = CompletableDeferred<Boolean>()
         isInitialStart = result
         result
-      } else {
+      }
+      else {
         null
       }
     }
@@ -504,7 +507,8 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
 
 private suspend fun importConfig(args: List<String>,
                                  targetDirectoryToImportConfig: Path,
-                                 log: Logger,                                 appStarter: AppStarter,
+                                 log: Logger,
+                                 appStarter: AppStarter,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
                                  headlessAutoImport: Boolean = false) {
   if (headlessAutoImport) {
@@ -514,7 +518,8 @@ private suspend fun importConfig(args: List<String>,
       try {
         ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log, true)
         log.info("Automatic config import completed")
-      } catch (e: UnsupportedOperationException) {
+      }
+      catch (e: UnsupportedOperationException) {
         log.info("Automatic config import is not possible", e)
       }
     }
@@ -632,7 +637,8 @@ private fun checkDirectory(directory: Path, kind: String, property: String, chec
     try {
       tempFile?.let { Files.deleteIfExists(tempFile) }
     }
-    catch (_: Exception) { }
+    catch (_: Exception) {
+    }
   }
 }
 
