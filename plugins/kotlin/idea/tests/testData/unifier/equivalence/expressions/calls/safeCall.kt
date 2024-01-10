@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun Any.s(): String = toString()
 
 fun foo() {

@@ -4,17 +4,16 @@ package org.jetbrains.kotlin.psi.patternMatching
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
-abstract class AbstractPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() {
+    protected abstract fun KtElement.getMatches(file: KtFile): List<String>
+
     fun doTest(unused: String) {
         fun findPattern(file: KtFile): KtElement {
             val selectionModel = myFixture.editor.selectionModel
@@ -28,13 +27,12 @@ abstract class AbstractPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() 
         }
 
         val file = myFixture.configureByFile(fileName()) as KtFile
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
 
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
-
-        val actualText =
-            findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.textRange.substring(file.getText()!!) }
-                .joinToString("\n\n")
-        KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "${fileName()}.match"), actualText)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), disableTestDirective) {
+            val actualText = findPattern(file).getMatches(file).joinToString("\n\n")
+            KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "${fileName()}.match"), actualText)
+        }
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromTestName()

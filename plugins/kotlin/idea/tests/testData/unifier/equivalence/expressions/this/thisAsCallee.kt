@@ -1,3 +1,4 @@
+// IGNORE_K2
 // DISABLE-ERRORS
 fun (String.() -> String).foo(x : String) {
     x.<selection>this</selection>()

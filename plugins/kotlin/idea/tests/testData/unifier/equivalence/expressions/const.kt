@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo() {
     val t = <selection>1</selection>
     t + 1

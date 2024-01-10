@@ -1,3 +1,4 @@
+// IGNORE_K2
 // ERROR: Unresolved reference: B
 package p.q.r
 

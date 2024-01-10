@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(n: Int, f: (Int) -> Int) {
     <selection>"test: $n, ${f(n)}"</selection>
     "test: ${n}, ${f(n)}"

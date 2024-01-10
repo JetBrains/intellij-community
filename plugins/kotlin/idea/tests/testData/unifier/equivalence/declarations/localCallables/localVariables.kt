@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo1(): Int <selection>{
     val a = 1
     var b = 2

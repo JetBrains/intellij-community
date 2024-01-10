@@ -1,3 +1,4 @@
+// IGNORE_K2
 var a = 1
 val b = <selection>a</selection> + 1
 

@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(f: (Int) -> Unit) {
     <selection>{ n: Int ->
         val a = n + 1

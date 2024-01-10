@@ -2391,7 +2391,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.nj2k.PartialConverterTestGenerated$Field
  * org.jetbrains.kotlin.nj2k.PartialConverterTestGenerated$Function
  * org.jetbrains.kotlin.parcelize.ide.test.ParcelizeK1CheckerTestGenerated
- * org.jetbrains.kotlin.psi.patternMatching.PsiUnifierTestGenerated$Equivalence
+ * org.jetbrains.kotlin.psi.patternMatching.KotlinPsiUnifierTestGenerated$Equivalence
  * org.jetbrains.kotlin.search.InheritorsSearchTestGenerated
  * org.jetbrains.kotlin.shortenRefs.ShortenRefsTestGenerated$Constructor
  * org.jetbrains.kotlin.shortenRefs.ShortenRefsTestGenerated$Imports

@@ -1,3 +1,4 @@
+// IGNORE_K2
 operator fun Int.contains(n: Int): Boolean = n < this
 
 fun foo(n: Int): Int {

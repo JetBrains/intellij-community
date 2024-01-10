@@ -138,7 +138,7 @@ import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenc
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1CheckerTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1QuickFixTest
-import org.jetbrains.kotlin.psi.patternMatching.AbstractPsiUnifierTest
+import org.jetbrains.kotlin.psi.patternMatching.AbstractK1PsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
 import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
@@ -360,7 +360,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kotlinAndJavaChecker/javaAgainstKotlin")
         }
 
-        testClass<AbstractPsiUnifierTest> {
+        testClass<AbstractK1PsiUnifierTest> {
             model("unifier")
         }
 

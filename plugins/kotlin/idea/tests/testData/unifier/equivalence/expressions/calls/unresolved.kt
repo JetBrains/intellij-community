@@ -1,3 +1,4 @@
+// IGNORE_K2
 // DISABLE-ERRORS
 fun foo() {
     <selection>bar(1, 2)</selection>

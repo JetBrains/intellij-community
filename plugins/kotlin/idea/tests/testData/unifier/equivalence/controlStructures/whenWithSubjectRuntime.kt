@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int, b: Int) {
     <selection>when((a)) {
         1 -> println(b)

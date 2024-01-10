@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun bar(vararg n: Int) {}
 
 fun foo() {

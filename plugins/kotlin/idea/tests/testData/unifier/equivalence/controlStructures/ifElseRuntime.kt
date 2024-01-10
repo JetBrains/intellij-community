@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int, b: Int) {
     if ((a) + b > 0) {
         println(a*b)

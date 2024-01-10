@@ -1,3 +1,4 @@
+// IGNORE_K2
 inline fun run(f: () -> Unit) = f()
 
 fun foo(a: Int) {
