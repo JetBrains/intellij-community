@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -39,6 +40,7 @@ import java.util.function.Function;
 public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
+  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
 
   private final Lock myLock = new ReentrantLock();
 
@@ -130,6 +132,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
 
+    syncMetrics.getOrStartSpan(Phase.DATA_SERVICES.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
 
     boolean importSucceeded = false;
@@ -202,8 +205,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
       dataServicesSpan.end();
+      syncMetrics.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
+      syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", project.getName()));
 
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
@@ -294,11 +299,9 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       for (ProjectDataService<?, ?> service : services) {
         final long importStartTime = System.currentTimeMillis();
         String dataServiceName = service.getClass().getSimpleName();
-        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "ProjectDataService", (span) -> {
-          span.setAttribute("data.service.name", dataServiceName);
-          ((ProjectDataService)service).importData(toImport, projectData, project,
-                                                   modifiableModelsProvider);
-        });
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, dataServiceName,
+                                                (span) -> ((ProjectDataService)service).importData(toImport, projectData, project,
+                                                                                                   modifiableModelsProvider));
         if (LOG.isDebugEnabled()) {
           final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
           LOG.debug(String.format("Service %s imported data in %d ms", dataServiceName, importTimeInMs));
@@ -464,6 +467,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
+        syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
         ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", parentSpan, (ignore) -> {
           if (activityId != null) {
             ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
@@ -472,6 +476,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
           modelsProvider.commit();
           final long timeInMs = System.currentTimeMillis() - startTime;
           if (activityId != null) {
+            syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
             ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
           }
           LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
