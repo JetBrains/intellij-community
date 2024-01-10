@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.associateArgumentNamesStartingAt
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 
 internal class AddNamesToFollowingArgumentsIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
+    AbstractKotlinModCommandWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
     class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
@@ -55,6 +55,7 @@ internal class AddNamesToFollowingArgumentsIntention :
             ?.let { call -> associateArgumentNamesStartingAt(call, element) }
             ?.let(::Context)
 
-    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
-        addArgumentNames(context.argumentNames.dereferenceValidKeys())
+    override fun apply(element: KtValueArgument, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+        addArgumentNames(context.analyzeContext.argumentNames.dereferenceValidKeys())
+    }
 }
