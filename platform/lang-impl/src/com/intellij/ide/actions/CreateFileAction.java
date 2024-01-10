@@ -2,11 +2,9 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +40,6 @@ import java.util.function.Supplier;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
   public CreateFileAction() {
-    super(ActionsBundle.messagePointer("action.NewFile.text"), IdeBundle.messagePointer("action.create.new.file.description"), () -> AllIcons.FileTypes.Text);
   }
 
   /**

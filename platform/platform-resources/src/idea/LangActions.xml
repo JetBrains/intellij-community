@@ -739,7 +739,7 @@
     </group>
 
     <group id="NewGroup" popup="true" searchable="false">
-      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text"/>
       <reference id="NewScratchFile"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
