@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -12,7 +11,8 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class RemoveSingleArgumentNameIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
+    AbstractKotlinModCommandWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
     /**
      * @property anchorArgumentPointer an argument after which the unnamed argument should be placed once the argument name is removed;
      * when the argument should be placed in the beginning of argument list, [anchorArgumentPointer] is null
@@ -42,13 +42,14 @@ internal class RemoveSingleArgumentNameIntention :
         return (element.parent as? KtValueArgumentList)?.parent is KtCallElement
     }
 
-    override fun apply(element: KtValueArgument, context: SingleArgumentContext, project: Project, editor: Editor?) {
+    override fun apply(element: KtValueArgument, context: AnalysisActionContext<SingleArgumentContext>, updater: ModPsiUpdater) {
         val argumentList = element.parent as? KtValueArgumentList ?: return
 
-        val newArguments = createArgumentWithoutName(element, context.isVararg, context.isArrayOfCall)
+        val analyzeContext = context.analyzeContext
+        val newArguments = createArgumentWithoutName(element, analyzeContext.isVararg, analyzeContext.isArrayOfCall)
         argumentList.removeArgument(element)
         newArguments.asReversed().forEach {
-            argumentList.addArgumentAfter(it, context.anchorArgumentPointer?.element)
+            argumentList.addArgumentAfter(it, analyzeContext.anchorArgumentPointer?.element)
         }
     }
 
