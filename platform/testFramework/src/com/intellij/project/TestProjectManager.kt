@@ -50,16 +50,6 @@ var totalCreatedProjectsCount = 0
 @TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(
-      message = "moved to LeakHunter",
-      replaceWith = ReplaceWith("LeakHunter.getCreationPlace(project)", "com.intellij.testFramework.LeakHunter")
-    )
-    @JvmStatic
-    fun getCreationPlace(project: Project): String {
-      return LeakHunter.getCreationPlace(project)
-    }
-
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
