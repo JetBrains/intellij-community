@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.sam.getAbstractMembers
+import org.jetbrains.kotlin.resolve.source.getPsi
 
 class AddFunModifierFix(
     element: KtClass,
@@ -68,7 +68,7 @@ class AddFunModifierFix(
             val referenceClassDescriptor = casted.a as? ClassDescriptor ?: return null
             if (referenceClassDescriptor.isFun || !referenceClassDescriptor.isSamInterface()) return null
 
-            val referenceClass = referenceClassDescriptor.psiElement as? KtClass ?: return null
+            val referenceClass = referenceClassDescriptor.source.getPsi() as? KtClass ?: return null
             val referenceClassName = referenceClass.name ?: return null
             return AddFunModifierFix(referenceClass, referenceClassName, referrerCall.createSmartPointer())
         }

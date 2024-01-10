@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -101,7 +100,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
         val classDescriptor = ktCallElement.resolveToClassDescriptor() ?: return null
-        val psiElement = classDescriptor.psiElement
+        val psiElement = classDescriptor.source.getPsi()
         if (psiElement is PsiClass) {
             // a usage Java annotation
             return findAttributeValueExpression(psiElement, name)

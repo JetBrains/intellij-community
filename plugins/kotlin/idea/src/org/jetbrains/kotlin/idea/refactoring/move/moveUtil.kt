@@ -23,7 +23,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.io.File
@@ -480,7 +480,7 @@ internal fun processInternalReferencesToUpdateOnPackageNameChange(
                 if (isExtension && containingDescriptor is ClassDescriptor) {
                     val dispatchReceiver = refExpr.getResolvedCall(bindingContext)?.dispatchReceiver
                     val implicitClass = (dispatchReceiver as? ImplicitClassReceiver)?.classDescriptor
-                    val psiClass = implicitClass?.psiElement
+                    val psiClass = implicitClass?.source?.getPsi()
                     if (psiClass is KtObjectDeclaration && psiClass.isCompanion()) {
                         return { ImplicitCompanionAsDispatchReceiverUsageInfo(it, psiClass) }
                     }
