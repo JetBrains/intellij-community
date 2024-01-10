@@ -26,7 +26,7 @@ class ModuleNode implements Comparable<ModuleNode> {
   @Nullable private final Module myModule;
   @NotNull private final Set<String> myDeclaredPackages;
   @NotNull private final Set<String> myRequiredPackages;
-  @NotNull private final Map<ModuleNode, Boolean> myDependencies = new TreeMap<>();
+  @NotNull private final Map<ModuleNode, Set<DependencyType>> myDependencies = new TreeMap<>();
   @NotNull private final Set<String> myExports = new TreeSet<>();
   @Nullable private final PsiJavaModule myDescriptor;
   @NotNull private final String myName;
@@ -73,7 +73,7 @@ class ModuleNode implements Comparable<ModuleNode> {
   }
 
   @NotNull
-  Map<ModuleNode, Boolean> getDependencies() {
+  Map<ModuleNode, Set<DependencyType>> getDependencies() {
     return myDependencies;
   }
 
@@ -155,5 +155,10 @@ class ModuleNode implements Comparable<ModuleNode> {
   @Nullable
   private static PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
     return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
+  }
+
+  enum DependencyType {
+    STATIC,
+    TRANSITIVE
   }
 }

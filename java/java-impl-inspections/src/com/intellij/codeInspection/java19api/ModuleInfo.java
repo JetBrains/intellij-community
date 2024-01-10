@@ -13,7 +13,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Set;
 
+import static com.intellij.codeInspection.java19api.ModuleNode.DependencyType.STATIC;
+import static com.intellij.codeInspection.java19api.ModuleNode.DependencyType.TRANSITIVE;
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
@@ -40,7 +43,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
   @NotNull
   private CharSequence requiresText() {
     StringBuilder text = new StringBuilder();
-    for (Map.Entry<ModuleNode, Boolean> dependency : node().getDependencies().entrySet()) {
+    for (Map.Entry<ModuleNode, Set<ModuleNode.DependencyType>> dependency : node().getDependencies().entrySet()) {
       if(dependency.getValue() == null) continue;
       final String dependencyName = dependency.getKey().getName();
       if (JAVA_BASE.equals(dependencyName)) continue;
@@ -48,7 +51,10 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
                                              part -> JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9));
 
       text.append(isBadSyntax ? "// " : " ").append(PsiKeyword.REQUIRES).append(' ');
-      if (Boolean.TRUE.equals(dependency.getValue())) {
+      if(dependency.getValue().contains(STATIC)) {
+        text.append(PsiKeyword.STATIC).append(' ');
+      }
+      if(dependency.getValue().contains(TRANSITIVE)) {
         text.append(PsiKeyword.TRANSITIVE).append(' ');
       }
       text.append(dependencyName).append(";\n");

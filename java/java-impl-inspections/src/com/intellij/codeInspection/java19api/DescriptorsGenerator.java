@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInspection.java19api.ModuleNode.DependencyType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -22,20 +24,22 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.java19api.ModuleNode.DependencyType.*;
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
 class DescriptorsGenerator {
   @SuppressWarnings("NonConstantLogger") private final Logger myLogger;
+  private static final String NONE_DECLARED_PACKAGES = "<none>";
   private final Project myProject;
   private final UniqueModuleNames myUniqueModuleNames;
 
@@ -112,7 +116,7 @@ class DescriptorsGenerator {
         packagesDeclaredInModules.computeIfAbsent(declaredPackage, key -> new HashSet<>()).add(moduleNode);
       }
       if (declaredPackages.isEmpty()) {
-        packagesDeclaredInModules.computeIfAbsent("<none>", key -> new HashSet<>()).add(moduleNode);
+        packagesDeclaredInModules.computeIfAbsent(NONE_DECLARED_PACKAGES, key -> new HashSet<>()).add(moduleNode);
       }
     }
     return packagesDeclaredInModules;
@@ -123,13 +127,12 @@ class DescriptorsGenerator {
     // get indexes
     final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myProject);
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
 
     // prepare caches
     final Set<ModuleNode> modules = packagesDeclaredInModules.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
     final Map<PsiJavaModule, ModuleNode> nodesByDescriptor = new HashMap<>();
     final Map<Module, ModuleNode> nodesByModule = new HashMap<>();
-    final Map<Library, Set<ModuleNode>> nodesByLibrary = new HashMap<>();
+    final Map<Library, ModuleNode> nodeByLibrary = new HashMap<>();
     for (ModuleNode module : modules) {
       if (module.getModule() != null) {
         nodesByModule.put(module.getModule(), module);
@@ -150,7 +153,8 @@ class DescriptorsGenerator {
             if (moduleOrderEntry.isExported()) { // use all transitive dependencies
               ModuleNode node = nodesByModule.get(moduleOrderEntry.getModule());
               if (node == null) continue;
-              module.getDependencies().put(node, true);
+              module.getDependencies().compute(node, (key, old) -> merge(old, Set.of(TRANSITIVE),
+                                                                         () -> EnumSet.noneOf(DependencyType.class)));
             }
             else {
               for (String aPackage : module.getRequiredPackages()) {
@@ -158,7 +162,7 @@ class DescriptorsGenerator {
                 for (ModuleNode node : nodes) {
                   if (module.getDependencies().containsKey(node)) continue;
                   if (!moduleOrderEntry.getModule().equals(node.getModule())) continue;
-                  module.getDependencies().put(node, false);
+                  module.getDependencies().computeIfAbsent(node, k -> Set.of());
                 }
                 final PsiPackage psiPackage = ReadAction.compute(() -> psiFacade.findPackage(aPackage));
                 if (psiPackage == null) continue;
@@ -168,7 +172,7 @@ class DescriptorsGenerator {
                   if (!indexedOrderEntries.contains(moduleOrderEntry)) continue;
                   final ModuleNode node = nodesByModule.get(moduleOrderEntry.getModule());
                   if (node == null) continue;
-                  module.getDependencies().put(node, false);
+                  module.getDependencies().computeIfAbsent(node, k -> Set.of());
                 }
               }
             }
@@ -176,21 +180,21 @@ class DescriptorsGenerator {
           else if (entry instanceof LibraryOrderEntry libraryOrderEntry && libraryOrderEntry.getLibrary() != null) {
             final Library library = libraryOrderEntry.getLibrary();
             if (library == null) continue;
-            Set<ModuleNode> cachedNode = nodesByLibrary.get(library);
-            if (cachedNode == null) {
-              cachedNode = findLibraryNodes(packagesDeclaredInModules, library, projectFileIndex, psiManager, nodesByDescriptor);
-            }
-            nodesByLibrary.put(library, cachedNode);
+            final ModuleNode cachedNode = nodeByLibrary.computeIfAbsent(library, lib -> findLibraryNode(packagesDeclaredInModules,
+                                                                                                        nodesByDescriptor, myProject, lib));
+            if (cachedNode == null) continue;
+            nodeByLibrary.put(library, cachedNode);
             if (libraryOrderEntry.isExported()) { // use all transitive libraries
-              cachedNode.forEach(node -> module.getDependencies().put(node, true));
+              module.getDependencies().compute(cachedNode, (key, old) -> merge(old, Set.of(TRANSITIVE),
+                                                                               () -> EnumSet.noneOf(DependencyType.class)));
             }
             else {
               for (String aPackage : module.getRequiredPackages()) { // check node by "Required Packages" (if necessary)
                 final Set<ModuleNode> nodes = packagesDeclaredInModules.getOrDefault(aPackage, Set.of());
                 for (ModuleNode node : nodes) {
                   if (module.getDependencies().containsKey(node)) continue;
-                  if (!cachedNode.contains(node)) continue;
-                  module.getDependencies().put(node, false);
+                  if (!cachedNode.equals(node)) continue;
+                  module.getDependencies().computeIfAbsent(node, k -> Set.of());
                 }
               }
             }
@@ -202,30 +206,23 @@ class DescriptorsGenerator {
     return modules;
   }
 
-  private static Set<ModuleNode> findLibraryNodes(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules,
-                                                  @NotNull Library library,
-                                                  @NotNull ProjectFileIndex projectFileIndex,
-                                                  @NotNull PsiManager psiManager,
-                                                  @NotNull Map<PsiJavaModule, ModuleNode> nodesByDescriptor) {
-    Set<ModuleNode> cachedNode = new HashSet<>();
-    final List<PsiJavaModule> descriptors = ReadAction.compute(() -> Arrays.stream(library.getFiles(OrderRootType.CLASSES))
-      .map(projectFileIndex::getClassRootForFile)
-      .filter(Objects::nonNull)
-      .map(JavaModuleNameIndex::descriptorFile).filter(Objects::nonNull)
-      .map(psiManager::findFile).filter(PsiJavaFile.class::isInstance)
-      .map(file -> ((PsiJavaFile)file).getModuleDeclaration())
-      .toList()
-    );
+  @Nullable
+  private static ModuleNode findLibraryNode(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules,
+                                            @NotNull Map<PsiJavaModule, ModuleNode> nodesByDescriptor,
+                                            @NotNull Project project,
+                                            @NotNull Library library) {
+    final VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
+    if (libraryFiles.length == 0) return null;
 
-    for (PsiJavaModule descriptor : descriptors) {
-      final ModuleNode node = nodesByDescriptor.computeIfAbsent(descriptor, d -> new ModuleNode(d));
-      cachedNode.add(node);
-      for (PsiPackageAccessibilityStatement export : descriptor.getExports()) {
-        final String packageName = export.getPackageName();
-        if (packageName != null) packagesDeclaredInModules.computeIfAbsent(packageName, l -> new HashSet<>()).add(node);
-      }
+    final PsiJavaModule descriptor = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(libraryFiles[0], project));
+    if (descriptor == null) return null;
+
+    final ModuleNode node = nodesByDescriptor.computeIfAbsent(descriptor, d -> new ModuleNode(d));
+    for (PsiPackageAccessibilityStatement export : descriptor.getExports()) {
+      final String packageName = export.getPackageName();
+      if (packageName != null) packagesDeclaredInModules.computeIfAbsent(packageName, l -> new HashSet<>()).add(node);
     }
-    return cachedNode;
+    return node;
   }
 
   @NotNull
@@ -297,6 +294,16 @@ class DescriptorsGenerator {
 
   private static @NlsContexts.Command String getCommandTitle() {
     return JavaRefactoringBundle.message("generate.module.descriptors.command.title");
+  }
+
+  @Nullable
+  private static <T> Set<T> merge(@Nullable Set<T> first, @Nullable Set<T> second, @NotNull Supplier<Set<T>> initializer) {
+    if (second == null || second.isEmpty()) return first;
+    if (first == null || first.isEmpty()) return second;
+    final Set<T> result = initializer.get();
+    result.addAll(first);
+    result.addAll(second);
+    return result;
   }
 
   private static class PackageNamesCache {
