@@ -27,6 +27,7 @@ internal object InterfaceExtensionImplementationClassResolver : ImplementationCl
       if (idString != "com.intellij.java" &&
           idString != "com.intellij.java.ide" &&
           idString != "com.intellij.java.frontend" &&
+          idString != "com.intellij.kotlin.frontend" &&
           idString != "org.jetbrains.android" &&
           idString != "com.intellij.kotlinNative.platformDeps" &&
           idString != "com.jetbrains.rider.android") {
