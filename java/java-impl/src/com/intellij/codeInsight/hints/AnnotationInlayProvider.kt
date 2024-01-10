@@ -25,6 +25,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SmartList
+import java.awt.Font
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
@@ -75,11 +76,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
               when {
                 // element is first in line
                 prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') && document != null -> {
-                  val width = EditorUtil.getPlainSpaceWidth(editor)
                   val line = document.getLineNumber(offset)
                   val startOffset = document.getLineStartOffset(line)
-                  val column = offset - startOffset
-                  val shifted = factory.inset(presentation, left = column * width)
+                  val shifted = factory.inset(presentation, left = EditorUtil.textWidth(editor, document.charsSequence, startOffset, offset, Font.PLAIN, 0))
 
                   sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
