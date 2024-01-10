@@ -684,7 +684,9 @@ private fun doUpdateAndShowResult(
   fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
 
   val updatesForEnabledPlugins = nonIgnored(pluginUpdates.allEnabled)
-  val updatesForPlugins = updatesForEnabledPlugins + nonIgnored(pluginUpdates.allDisabled)
+  // disabled plugins are excluded from updates, see IDEA-273418, TODO refactor
+  // probably it can lead to disabled plugins becoming incompatible without a notification in platform update dialog
+  val updatesForPlugins = updatesForEnabledPlugins // + nonIgnored(pluginUpdates.allDisabled)
   if (!showResults) {
     UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
     callback?.setDone()
