@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinUtils")
 
 package com.intellij.util
@@ -15,6 +15,15 @@ inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this
 
 inline fun <T> runIf(condition: Boolean, block: () -> T): T? = if (condition) block() else null
 
+@Deprecated("""
+  Unfortunately, this function provokes cryptic code, please do not use it.
+  
+  Consider these options instead:
+  * val result = my().chain() ?: return null
+  * val result = my().chain() ?: run { log.warn("..."); return null }
+  * val result = my().chain(); if (result == null) { log.warn("...") }
+  * my().chain() ?: log.warn("...")
+""")
 inline fun <T : Any> T?.alsoIfNull(block: () -> Unit): T? {
   if (this == null) {
     block()
