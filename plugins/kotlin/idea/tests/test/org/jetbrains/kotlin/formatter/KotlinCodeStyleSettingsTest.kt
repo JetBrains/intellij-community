@@ -34,8 +34,29 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
         it.kotlinCommonSettings.BRACE_STYLE = 10
     }
 
-    fun `test official code style scheme`() = doTestWithScheme(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyleScheme.xml")
-    fun `test obsolete code style scheme`() = doTestWithScheme(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyleScheme.xml")
+    fun `test write official code style scheme`() = doTestWithScheme(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyleScheme.xml")
+    fun `test write obsolete code style scheme`() = doTestWithScheme(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyleScheme.xml")
+
+    fun `test read official code style scheme`() = testRead(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyleScheme.xml")
+    fun `test read obsolete code style scheme`() = testRead(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyleScheme.xml")
+    // New default when empty is the official code style
+    fun `test empty code style scheme`() = testRead(KotlinStyleGuideCodeStyle.INSTANCE, "emptyCodeStyleScheme.xml")
+
+    private fun testRead(expected: KotlinPredefinedCodeStyle, fileName: String) {
+
+        doWithTemporarySettings {
+            val expectedSettings = CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getSettings(project))
+            expected.apply(expectedSettings)
+            val expectedCustomSettings = expectedSettings.kotlinCustomSettings
+            val expectedCommonSettings = expectedSettings.kotlinCommonSettings
+
+            val projectSettings = CodeStyle.getSettings(project)
+            val settingsElement = JDOMUtil.load(getTestFile(fileName).readText())
+            projectSettings.readExternal(settingsElement)
+            assertEquals(projectSettings.kotlinCustomSettings, expectedCustomSettings)
+            assertEquals(projectSettings.kotlinCommonSettings, expectedCommonSettings)
+        }
+    }
 
     private fun doTestWithScheme(codeStyle: KotlinPredefinedCodeStyle, fileName: String) {
         doWithTemporarySettings {
