@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.internal.daemon
 
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
+import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
+import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
@@ -70,6 +72,10 @@ class GradleDaemonServices {
     def daemonClientClassLoader = UrlClassLoader.build()
       .files(List.of(
         PathManager.getJarForClass(actionClass),
+
+        // jars required for Gradle runtime utils
+        PathManager.getJarForClass(GradleToolingExtensionClass),
+        PathManager.getJarForClass(GradleToolingExtensionImplClass),
 
         // jars required for i18n utils
         PathManager.getJarForClass(DynamicBundle),
