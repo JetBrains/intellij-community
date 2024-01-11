@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.TwoSideComponent
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
@@ -109,28 +108,30 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
     addManageAction()
     myPackages.setCellRenderer(MyTableRenderer())
 
-    if (myController.canInstallToUser()) {
-      myInstallToUser.isVisible = true
+    myInstallToUser.isVisible = myController.canInstallToUser()
+    if (myInstallToUser.isVisible) {
       myInstallToUser.isSelected = myController.isInstallToUserSelected
       myInstallToUser.text = myController.installToUserText
-    }
-    else {
-      myInstallToUser.isVisible = false
     }
   }
 
   override fun getDimensionServiceKey() = this::class.java.name + ".DimensionServiceKey"
 
   private fun createMainPanel(): JPanel {
-    val packagesPanel = JPanel(BorderLayout())
-    packagesPanel.add(JBScrollPane(myPackages), BorderLayout.CENTER)
-    packagesPanel.add(TwoSideComponent(myFilter,
-                                       ActionManager.getInstance().createActionToolbar("ManagePackagesDialog",
-                                                                                       DefaultActionGroup(createPackagesReloadButton()),
-                                                                                       true).apply {
-                                         targetComponent = myPackages
-                                         layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-                                       }.component), BorderLayout.NORTH)
+    val packagesToolbar = JPanel(BorderLayout()).apply {
+      add(myFilter, BorderLayout.CENTER)
+      add(ActionManager.getInstance().createActionToolbar("ManagePackagesDialog",
+                                                          DefaultActionGroup(createPackagesReloadAction()),
+                                                          true).apply {
+        targetComponent = myPackages
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      }.component, BorderLayout.LINE_END)
+    }
+
+    val packagesPanel = JPanel(BorderLayout()).apply {
+      add(JBScrollPane(myPackages), BorderLayout.CENTER)
+      add(packagesToolbar, BorderLayout.NORTH)
+    }
 
     val detailsPanel = panel {
       row { label(IdeBundle.message("editbox.plugin.description")) }
@@ -151,9 +152,10 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
       row { cell(myNotificationsAreaPlaceholder).resizableColumn().align(Align.FILL) }
       separator()
       row {
-        cell(myInstallButton)
-        cell(myManageButton)
-        cell(JButton(CommonBundle.getOkButtonText()).apply {
+        cell(JPanel()).resizableColumn()
+        cell(myInstallButton).align(AlignX.RIGHT)
+        cell(myManageButton).align(AlignX.RIGHT)
+        cell(JButton(CommonBundle.getCloseButtonText()).apply {
           addActionListener { doOKAction() }
         }).align(AlignX.RIGHT)
       }
@@ -163,7 +165,7 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
     }
   }
 
-  private fun createPackagesReloadButton(): AnAction {
+  private fun createPackagesReloadAction(): AnAction {
     return DumbAwareAction.create(IdeBundle.message("action.AnActionButton.text.reload.list.of.packages"), AllIcons.Actions.Refresh) {
       myPackages.setPaintBusy(true)
       val application = ApplicationManager.getApplication()
