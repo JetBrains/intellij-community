@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.DownloadResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.InstallationResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstaller
@@ -20,7 +21,7 @@ import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
-internal class WindowsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
+internal class WindowsInstaller(scope: CoroutineScope, project: Project) : UltimateInstaller(scope, project) {
   private val installationType = getInstallationType()
 
   override val postfix = when (installationType) {

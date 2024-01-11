@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.mac
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.DownloadResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.InstallationResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstaller
@@ -13,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 import kotlin.io.path.*
 
-internal class MacOsInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
+internal class MacOsInstaller(scope: CoroutineScope, project: Project) : UltimateInstaller(scope, project) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.dmg" else ".dmg"
   private val mountDirectory = updateTempDirectory.resolve("mount")
 

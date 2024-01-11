@@ -1505,6 +1505,8 @@
                        key="notification.group.browser.config.problems"/>
     <notificationGroup id="Failed to generate module descriptors" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.failed.to.generate.module.descriptors"/>
+    <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.advertiser.try.ultimate.installed"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>

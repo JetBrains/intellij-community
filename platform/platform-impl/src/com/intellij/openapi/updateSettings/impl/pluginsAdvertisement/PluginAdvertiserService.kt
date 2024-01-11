@@ -61,7 +61,7 @@ sealed interface PluginAdvertiserService {
     @Suppress("HardCodedStringLiteral")
     val ideaUltimate: SuggestedIde = SuggestedIde(
       name = "IntelliJ IDEA Ultimate",
-      productCode = "UI",
+      productCode = "IU",
       defaultDownloadUrl = "https://www.jetbrains.com/idea/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}",
       baseDownloadUrl = "https://download.jetbrains.com/idea/ideaIU"

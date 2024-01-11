@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.DownloadResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.InstallationResult
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstaller
@@ -14,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class LinuxInstaller(scope: CoroutineScope) : UltimateInstaller(scope) {
+internal class LinuxInstaller(scope: CoroutineScope, project: Project) : UltimateInstaller(scope, project) {
   override val postfix = if (CpuArch.isArm64()) "-aarch64.tar.gz" else ".tar.gz"
 
   override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
