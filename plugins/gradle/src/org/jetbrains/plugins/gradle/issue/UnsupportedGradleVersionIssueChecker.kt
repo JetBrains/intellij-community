@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleUtil
 
@@ -29,7 +30,10 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()
     var gradleVersionUsed: GradleVersion? = null
-    if (issueData.buildEnvironment != null) {
+    if (issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
+      gradleVersionUsed = issueData.error.gradleVersion
+    }
+    if (gradleVersionUsed == null && issueData.buildEnvironment != null) {
       gradleVersionUsed = GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
     }
 

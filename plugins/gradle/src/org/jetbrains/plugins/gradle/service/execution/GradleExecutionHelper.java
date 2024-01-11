@@ -7,7 +7,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,6 +49,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.properties.models.Property;
@@ -74,6 +74,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
+import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 
 public class GradleExecutionHelper {
 
@@ -807,51 +808,87 @@ public class GradleExecutionHelper {
                                                      @NotNull ExternalSystemTaskNotificationListener listener,
                                                      @Nullable CancellationToken cancellationToken,
                                                      @Nullable GradleExecutionSettings settings) {
-    BuildEnvironment buildEnvironment = null;
     Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GetBuildEnvironment")
       .startSpan();
     try (Scope ignore = span.makeCurrent()) {
-      ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
-      if (cancellationToken != null) {
-        modelBuilder.withCancellationToken(cancellationToken);
-      }
-      if (settings != null) {
-        final String javaHome = settings.getJavaHome();
-        if (javaHome != null && new File(javaHome).isDirectory()) {
-          modelBuilder.setJavaHome(new File(javaHome));
+      BuildEnvironment buildEnvironment = null;
+      try {
+        ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
+        if (cancellationToken != null) {
+          modelBuilder.withCancellationToken(cancellationToken);
         }
-      }
-      // do not use connection.getModel methods since it doesn't allow to handle progress events
-      // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
-      modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
-      modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
-      modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
-      modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
-
-      buildEnvironment = modelBuilder.get();
-      if (LOG.isDebugEnabled()) {
-        try {
-          String version = buildEnvironment.getGradle().getGradleVersion();
-          LOG.debug("Gradle version: " + version);
-          if (GradleVersionUtil.isGradleAtLeast(version, "2.6")) {
-            LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
-            LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
+        if (settings != null) {
+          final String javaHome = settings.getJavaHome();
+          if (javaHome != null && new File(javaHome).isDirectory()) {
+            modelBuilder.setJavaHome(new File(javaHome));
           }
         }
-        catch (Throwable t) {
-          LOG.debug(t);
-        }
+        // do not use connection.getModel methods since it doesn't allow to handle progress events
+        // and we can miss gradle tooling client side events like distribution download.
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+        modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
+        modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+        modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
+        modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
+
+        buildEnvironment = modelBuilder.get();
       }
-    }
-    catch (Throwable t) {
-      LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
+      catch (Throwable t) {
+        LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
+      }
+      if (buildEnvironment != null) {
+        checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
+      }
+      return buildEnvironment;
     }
     finally {
       span.end();
     }
-    return buildEnvironment;
+  }
+
+  private static void checkThatGradleBuildEnvironmentIsSupportedByIdea(@NotNull BuildEnvironment buildEnvironment) {
+    var gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    LOG.debug("Gradle version: " + gradleVersion);
+    if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
+      throw new UnsupportedGradleVersionByIdeaException(gradleVersion);
+    }
+    var javaHome = buildEnvironment.getJava().getJavaHome();
+    var jvmArguments = buildEnvironment.getJava().getJvmArguments();
+    LOG.debug("Gradle java home: " + javaHome);
+    LOG.debug("Gradle jvm arguments: " + jvmArguments);
+    if (isJavaHomeUnsupportedByIdea(javaHome.getPath())) {
+      throw new UnsupportedGradleJvmByIdeaException(gradleVersion);
+    }
+  }
+
+  public static class UnsupportedGradleVersionByIdeaException extends RuntimeException {
+
+
+    private final @NotNull GradleVersion myGradleVersion;
+
+    public UnsupportedGradleVersionByIdeaException(@NotNull GradleVersion gradleVersion) {
+      super("Unsupported Gradle version");
+      myGradleVersion = gradleVersion;
+    }
+
+    public @NotNull GradleVersion getGradleVersion() {
+      return myGradleVersion;
+    }
+  }
+
+  public static class UnsupportedGradleJvmByIdeaException extends RuntimeException {
+
+    private final @NotNull GradleVersion myGradleVersion;
+
+    public UnsupportedGradleJvmByIdeaException(@NotNull GradleVersion gradleVersion) {
+      super("Unsupported Gradle JVM version");
+      myGradleVersion = gradleVersion;
+    }
+
+    public @NotNull GradleVersion getGradleVersion() {
+      return myGradleVersion;
+    }
   }
 
   public static @NotNull Set<String> getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {

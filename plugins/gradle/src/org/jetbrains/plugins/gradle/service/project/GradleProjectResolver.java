@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +71,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
-import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
@@ -200,20 +200,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
-    GradleVersion gradleVersion = null;
+    if (buildEnvironment != null) {
+      resolverCtx.setBuildEnvironment(buildEnvironment);
+    }
+    final GradleVersion gradleVersion = ObjectUtils.doIfNotNull(buildEnvironment, it ->
+      GradleVersion.version(it.getGradle().getGradleVersion())
+    );
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    if (buildEnvironment != null) {
-      gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-      resolverCtx.setBuildEnvironment(buildEnvironment);
-      if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
-        throw new IllegalStateException("Unsupported Gradle version");
-      }
-      var javaHome = buildEnvironment.getJava().getJavaHome();
-      if (isJavaHomeUnsupportedByIdea(javaHome.getPath())) {
-        throw new IllegalStateException("Unsupported Gradle JVM version");
-      }
-    }
     final ProjectImportAction projectImportAction =
       useCustomSerialization
       ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode())

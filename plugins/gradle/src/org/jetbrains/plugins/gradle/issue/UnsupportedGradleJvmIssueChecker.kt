@@ -13,45 +13,56 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
 class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    val buildEnvironment = issueData.buildEnvironment ?: return null
-    val gradleVersion = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
-    val javaHome = buildEnvironment.java.javaHome
-    if (isJavaHomeUnsupportedByIdea(javaHome.path)) {
-      val title = GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title")
-      val description = DescriptionBuilder()
-      val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
-      description.addDescription(
-        GradleBundle.message(
-          "gradle.build.issue.gradle.jvm.unsupported.description",
-          ApplicationNamesInfo.getInstance().fullProductName,
-          oldestSupportedJavaVersion.feature
-        )
-      )
-      val gradleSettingsFix = GradleSettingsQuickFix(
-        issueData.projectPath, true,
-        GradleSettingsQuickFix.GradleJvmChangeDetector,
-        GradleBundle.message("gradle.settings.text.jvm.path")
-      )
-      val isAndroidStudio = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
-      val oldestCompatibleJavaVersion = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)
-      if (!isAndroidStudio && oldestCompatibleJavaVersion != null) {
-        description.addQuickFixPrompt(
-          GradleBundle.message("gradle.build.quick.fix.gradle.jvm", oldestCompatibleJavaVersion, gradleSettingsFix.id)
-        )
-      }
-      return object : BuildIssue {
-        override val title = title
-        override val description = description.toString()
-        override val quickFixes = listOf(gradleSettingsFix)
-        override fun getNavigatable(project: Project): Navigatable? = null
-      }
+    val gradleVersion: GradleVersion
+    if (issueData.error is GradleExecutionHelper.UnsupportedGradleJvmByIdeaException) {
+      gradleVersion = issueData.error.gradleVersion
     }
-    return null
+    else if (issueData.buildEnvironment != null) {
+      val javaHome = issueData.buildEnvironment.java.javaHome
+      if (!isJavaHomeUnsupportedByIdea(javaHome.path)) {
+        return null
+      }
+      val gradleVersionString = issueData.buildEnvironment.gradle.gradleVersion
+      gradleVersion = GradleVersion.version(gradleVersionString)
+    }
+    else {
+      return null
+    }
+
+    val title = GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title")
+    val description = DescriptionBuilder()
+    val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
+    description.addDescription(
+      GradleBundle.message(
+        "gradle.build.issue.gradle.jvm.unsupported.description",
+        ApplicationNamesInfo.getInstance().fullProductName,
+        oldestSupportedJavaVersion.feature
+      )
+    )
+    val gradleSettingsFix = GradleSettingsQuickFix(
+      issueData.projectPath, true,
+      GradleSettingsQuickFix.GradleJvmChangeDetector,
+      GradleBundle.message("gradle.settings.text.jvm.path")
+    )
+    val isAndroidStudio = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
+    val oldestCompatibleJavaVersion = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)
+    if (!isAndroidStudio && oldestCompatibleJavaVersion != null) {
+      description.addQuickFixPrompt(
+        GradleBundle.message("gradle.build.quick.fix.gradle.jvm", oldestCompatibleJavaVersion, gradleSettingsFix.id)
+      )
+    }
+    return object : BuildIssue {
+      override val title = title
+      override val description = description.toString()
+      override val quickFixes = listOf(gradleSettingsFix)
+      override fun getNavigatable(project: Project): Navigatable? = null
+    }
   }
 
   object Util {
