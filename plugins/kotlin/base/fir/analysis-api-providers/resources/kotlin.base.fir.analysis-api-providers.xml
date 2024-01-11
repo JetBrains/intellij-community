@@ -21,8 +21,6 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$LibraryUpdatesListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$JdkListener"
-              topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$NonWorkspaceModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$FileDocumentListener"

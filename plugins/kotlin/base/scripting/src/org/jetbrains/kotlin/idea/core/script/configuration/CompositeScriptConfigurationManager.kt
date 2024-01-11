@@ -6,14 +6,19 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -121,11 +126,29 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
 
     init {
         val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+        connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                val storageBefore = event.storageBefore
+                val storageAfter = event.storageAfter
+                val changes = event.getChanges<SdkEntity>().ifEmpty { return }
 
-        connection.subscribe(JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
-            override fun jdkAdded(jdk: Sdk) = updater.checkInvalidSdks()
-            override fun jdkNameChanged(jdk: Sdk, previousName: String) = updater.checkInvalidSdks()
-            override fun jdkRemoved(jdk: Sdk) = updater.checkInvalidSdks(remove = jdk)
+                val outdated: List<Sdk> = changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
+                    .mapNotNull { it.findSdkBridge(storageBefore) }
+                    .toList()
+
+                changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::newEntity)
+                    .mapNotNull { it.findSdkBridge(storageAfter) }
+                    .firstOrNull()?.let {
+                        updater.checkInvalidSdks()
+                        return
+                    }
+
+                if (outdated.isNotEmpty()) {
+                    updater.checkInvalidSdks(*outdated.toTypedArray())
+                }
+            }
         })
     }
 

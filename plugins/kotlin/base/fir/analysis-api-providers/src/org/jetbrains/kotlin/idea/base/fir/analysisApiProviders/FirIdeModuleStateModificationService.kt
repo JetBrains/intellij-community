@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -26,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificat
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
@@ -59,6 +60,12 @@ private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\
 
 @Service(Service.Level.PROJECT)
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
+
+    init {
+        val connection = project.messageBus.connect(this)
+        connection.subscribe(WorkspaceModelTopics.CHANGED, SdkChangeListener(project))
+    }
+
     /**
      * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file is being moved or deleted.
      *
@@ -112,8 +119,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         }
     }
 
-    internal class JdkListener(private val project: Project) : ProjectJdkTable.Listener {
-        override fun jdkRemoved(jdk: Sdk) {
+    internal class SdkChangeListener(project: Project): SdkEntityChangeListener(project) {
+        override fun entitiesChanged(outdated: List<Sdk>) {
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
             // fine-grained here because `KtSdkModules`s aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on
             // a module-level modification event may not work as expected with a `KtSdkModule`.

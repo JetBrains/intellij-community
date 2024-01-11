@@ -321,11 +321,20 @@ abstract class ScriptClassRootsUpdater(
         }
     }
 
-    internal fun checkInvalidSdks(remove: Sdk? = null) {
+    internal fun checkInvalidSdks(vararg remove: Sdk) {
         // sdks should be updated synchronously to avoid disposed roots usage
         do {
             val old = cache.get()
-            val actualSdks = old.sdks.rebuild(project, remove = remove)
+            val actualSdks =
+                if (remove.isEmpty()) {
+                    old.sdks.rebuild(project, null)
+                } else {
+                    var sdks = old.sdks
+                    for(sdk in remove) {
+                        sdks = sdks.rebuild(project, sdk)
+                    }
+                    sdks
+                }
             if (actualSdks == old.sdks) return
             val new = old.withUpdatedSdks(actualSdks)
         } while (!cache.compareAndSet(old, new))
