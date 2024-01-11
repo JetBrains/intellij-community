@@ -85,7 +85,6 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
       val viewer = combinedViewer ?: return
       buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-        mainUi.countDifferences(blockId, newContent.viewer)
         viewer.updateBlockContent(newContent)
         request.onAssigned(true)
       }

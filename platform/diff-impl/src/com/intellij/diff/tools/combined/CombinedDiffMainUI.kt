@@ -10,10 +10,7 @@ import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
-import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.tools.util.base.DiffViewerBase
-import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -89,8 +86,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   private val goToChangeAction = goToChangeFactory()
-
-  private val differencesLabel by lazy { MyDifferencesLabel(goToChangeAction) }
 
   init {
     Touchbar.setActions(mainPanel, touchbarActionGroup)
@@ -228,7 +223,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     return listOfNotNull(
       CombinedPrevBlockAction(context),
       CombinedPrevDifferenceAction(context),
-      differencesLabel,
       CombinedNextDifferenceAction(context),
       CombinedNextBlockAction(context),
       openInEditorAction,
@@ -286,37 +280,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       if (ourDisposable.isDisposed) return@invokeLaterIfNeeded
       clear()
     }
-  }
-
-  fun countDifferences(blockId: CombinedBlockId, viewer: DiffViewer) {
-    differencesLabel.countDifferences(blockId, viewer)
-  }
-
-  private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
-    DifferencesLabel(goToChangeAction, leftToolbar.component) {
-
-    private val loadedDifferences = hashMapOf<CombinedBlockId, Int>()
-
-    override fun getFileCount(): Int = combinedViewer?.getDiffBlocksCount() ?: 0
-    override fun getTotalDifferences(): Int = calculateTotalDifferences()
-
-    fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
-      loadedDifferences[blockId] = 1
-
-      if (childViewer is DiffViewerBase) {
-        val listener = object : DiffViewerListener() {
-          override fun onAfterRediff() {
-            loadedDifferences[blockId] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
-          }
-        }
-        childViewer.addListener(listener)
-
-
-        Disposer.register(childViewer, Disposable { childViewer.removeListener(listener) })
-      }
-    }
-
-    private fun calculateTotalDifferences(): Int = loadedDifferences.values.sum()
   }
 
   private inner class MyDiffToolChooser : DiffToolChooser(context.project) {
