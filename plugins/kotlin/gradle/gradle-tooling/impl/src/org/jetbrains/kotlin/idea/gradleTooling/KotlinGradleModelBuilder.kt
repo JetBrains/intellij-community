@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -245,9 +246,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
-        val isDownloadSources = System.getProperty("idea.gradle.download.sources").toBoolean()
-        if (!isDownloadSources && builderContext != null) {
-            downloadKotlinStdlibSources(project, builderContext)
+        if (builderContext != null) {
+            downloadKotlinStdlibSourcesIfNeeded(project, builderContext)
         }
 
         return KotlinGradleModelImpl(
@@ -263,7 +263,17 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         )
     }
 
-    private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
+    private fun downloadKotlinStdlibSourcesIfNeeded(project: Project, context: ModelBuilderContext) {
+        // If `idea.gradle.download.sources.force` is `true`, then sources will be downloaded anyway (so no need to do it again here)
+        // if it is `false`, then we have to skip any source downloading here
+        // So the only one valid case is if the force flag is absent
+        if (System.getProperty("idea.gradle.download.sources.force") != null) return
+
+        // Dependency download policy covers all other cases to determine whether sources are marked for download or not
+        val dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
+            .getDependencyDownloadPolicy(project)
+        if (dependencyDownloadPolicy.isDownloadSources()) return
+
         val kotlinStdlib = project.configurations.detachedConfiguration()
         project.configurations.forEachUsedKotlinLibrary {
             kotlinStdlib.dependencies.add(it)
