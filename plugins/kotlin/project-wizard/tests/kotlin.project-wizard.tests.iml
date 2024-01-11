@@ -39,5 +39,9 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.facet" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
   </component>
 </module>

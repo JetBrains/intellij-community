@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
@@ -9,19 +10,25 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModu
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
+import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDING_TIPS_NAME
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
@@ -29,9 +36,11 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathCo
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import java.nio.file.Paths
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
   AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
@@ -211,5 +220,40 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         userDefinedModuleFileLocation))
       return error(JavaUiBundle.message("module.name.location.dialog.message.error.module.file.location", moduleFileLocation))
     return null
+  }
+
+  private fun configureModuleBuilder(project: Project, builder: ModuleBuilder) {
+    val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+
+    builder.name = moduleName
+    builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
+    builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
+
+    if (context.isCreatingNewProject) {
+      // New project with a single module: set project JDK
+      context.projectJdk = sdk
+    }
+    else {
+      // New module in an existing project: set module JDK
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == sdk?.name
+      builder.moduleJdk = if (isSameSdk) null else sdk
+    }
+  }
+
+  private fun startJdkDownloadIfNeeded(module: Module) {
+    val sdkDownloadTask = sdkDownloadTask
+    if (sdkDownloadTask is JdkDownloadTask) {
+      // Download the SDK on project creation
+      module.project.service<JdkDownloadService>().downloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
+    }
+  }
+
+  fun setupProject(project: Project, builder: ModuleBuilder) {
+    configureModuleBuilder(project, builder)
+
+    val model = context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
+    val module = builder.commit(project, model)?.singleOrNull()
+
+    module?.let(::startJdkDownloadIfNeeded)
   }
 }

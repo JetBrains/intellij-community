@@ -48,11 +48,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Nullable
   private Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
+  private File contentRoot;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    contentRoot = createTempDirectoryWithSuffix("new").toFile();
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     myOldDefaultProjectSdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
@@ -183,7 +185,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void createWizard(@Nullable Project project) throws IOException {
-    setWizard(createWizard(project, createTempDirectoryWithSuffix("new").toFile()));
+    setWizard(createWizard(project, contentRoot));
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
@@ -220,6 +222,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       setSelectedTemplate(step, group, null);
       adjustSelectedStep(step, adjuster);
     });
+  }
+
+  protected File getContentRoot() {
+    return contentRoot;
   }
 
   protected T createWizard(Project project, File directory) {

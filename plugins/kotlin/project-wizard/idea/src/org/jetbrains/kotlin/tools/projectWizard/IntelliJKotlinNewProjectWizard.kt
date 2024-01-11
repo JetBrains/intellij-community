@@ -22,7 +22,6 @@ import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
@@ -43,12 +42,17 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         IntelliJNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
+        IntelliJKotlinNewProjectWizardData,
         BuildSystemKotlinNewProjectWizardData by parent {
 
-        private val useCompactProjectStructureProperty = propertyGraph.property(true)
+        init {
+            data.putUserData(IntelliJKotlinNewProjectWizardData.KEY, this)
+        }
+
+        override val useCompactProjectStructureProperty = propertyGraph.property(true)
             .bindBooleanStorage(USE_COMPACT_PROJECT_STRUCTURE_NAME)
 
-        var useCompactProject by useCompactProjectStructureProperty
+        override var useCompactProjectStructure by useCompactProjectStructureProperty
 
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
@@ -81,21 +85,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 searchForKotlinStdlibAndShowDialogIfFoundSeveral(project)
             } else null
 
-            if (context.isCreatingNewProject) {
-                context.projectJdk = sdk
-            }
-
-            KotlinNewProjectWizard.generateProject(
-                project = project,
-                projectPath = "$path/$name",
-                projectName = name,
-                isProject = context.isCreatingNewProject,
-                sdk = sdk,
-                buildSystemType = BuildSystemType.Jps,
-                addSampleCode = false,
-                useCompactProjectStructure = useCompactProject,
-                kotlinStdlib = kotlinStdlib
-            )
+            val builder = KotlinModuleBuilder(kotlinStdlib, context.isCreatingNewProject, useCompactProjectStructure)
+            setupProject(project, builder)
         }
 
         private fun searchForKotlinStdlibAndShowDialogIfFoundSeveral(project: Project): LibraryOrderEntry? {
@@ -148,7 +139,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
             }
             if (parent.addSampleCode) {
-                val sourceRootPath = if (parent.useCompactProject) "src" else "src/main/kotlin"
+                val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"
                 withKotlinSampleCode(sourceRootPath, null, shouldAddOnboardingTips())
             }
         }
