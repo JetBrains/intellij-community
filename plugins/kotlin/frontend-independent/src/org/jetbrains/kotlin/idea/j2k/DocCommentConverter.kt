@@ -12,13 +12,12 @@ interface DocCommentConverter {
 }
 
 object EmptyDocCommentConverter : DocCommentConverter {
-    override fun convertDocComment(docComment: PsiDocComment) = docComment.text
+    override fun convertDocComment(docComment: PsiDocComment): String = docComment.text
 }
-
 
 fun PsiDocTag.content(): String =
     children
-        .dropWhile { it?.node?.elementType == JavaDocTokenType.DOC_TAG_NAME }
+        .dropWhile { it.node?.elementType == JavaDocTokenType.DOC_TAG_NAME }
         .dropWhile { it is PsiWhiteSpace }
-        .filterNot { it?.node?.elementType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS }
+        .filterNot { it.node?.elementType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS }
         .joinToString("") { it.text }
