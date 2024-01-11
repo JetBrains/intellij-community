@@ -72,12 +72,12 @@ class MavenProjectReader(private val myProject: Project) {
                                     HashSet())
   }
 
-  private fun doReadProjectModel(generalSettings: MavenGeneralSettings,
-                                 projectPomDir: Path,
-                                 file: VirtualFile,
-                                 explicitProfiles: MavenExplicitProfiles,
-                                 recursionGuard: MutableSet<VirtualFile>,
-                                 locator: MavenProjectReaderProjectLocator): Pair<RawModelReadResult, MavenExplicitProfiles> {
+  private suspend fun doReadProjectModel(generalSettings: MavenGeneralSettings,
+                                         projectPomDir: Path,
+                                         file: VirtualFile,
+                                         explicitProfiles: MavenExplicitProfiles,
+                                         recursionGuard: MutableSet<VirtualFile>,
+                                         locator: MavenProjectReaderProjectLocator): Pair<RawModelReadResult, MavenExplicitProfiles> {
     var cachedModel = myCache[file]
     if (cachedModel == null) {
       cachedModel = doReadProjectModel(myProject, file, false)
@@ -140,14 +140,14 @@ class MavenProjectReader(private val myProject: Project) {
       .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles)
   }
 
-  private fun resolveInheritance(generalSettings: MavenGeneralSettings,
-                                 model: MavenModel,
-                                 projectPomDir: Path,
-                                 file: VirtualFile,
-                                 explicitProfiles: MavenExplicitProfiles,
-                                 recursionGuard: MutableSet<VirtualFile>,
-                                 locator: MavenProjectReaderProjectLocator,
-                                 problems: MutableCollection<MavenProjectProblem>): MavenModel {
+  private suspend fun resolveInheritance(generalSettings: MavenGeneralSettings,
+                                         model: MavenModel,
+                                         projectPomDir: Path,
+                                         file: VirtualFile,
+                                         explicitProfiles: MavenExplicitProfiles,
+                                         recursionGuard: MutableSet<VirtualFile>,
+                                         locator: MavenProjectReaderProjectLocator,
+                                         problems: MutableCollection<MavenProjectProblem>): MavenModel {
     var model = model
     if (recursionGuard.contains(file)) {
       problems.add(MavenProjectProblem.createProblem(
@@ -175,12 +175,12 @@ class MavenProjectReader(private val myProject: Project) {
       }
 
       val parentModelWithProblems =
-        object : MavenParentProjectFileProcessor<Pair<VirtualFile?, RawModelReadResult?>?>(myProject) {
+        object : MavenParentProjectFileAsyncProcessor<Pair<VirtualFile, RawModelReadResult>>(myProject) {
           override fun findManagedFile(id: MavenId): VirtualFile? {
             return locator.findProjectFile(id)
           }
 
-          override fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile?, RawModelReadResult?>? {
+          override suspend fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
             val parentModel = doReadProjectModel(myProject, parentFile, true).model
             val parentId = parentDesc[0]!!.parentId
             if (parentId != parentModel.mavenId) return null
@@ -188,13 +188,12 @@ class MavenProjectReader(private val myProject: Project) {
             return super.processRelativeParent(parentFile)
           }
 
-          override fun processSuperParent(parentFile: VirtualFile): Pair<VirtualFile?, RawModelReadResult?>? {
+          override suspend fun processSuperParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
             return null // do not process superPom
           }
 
-          override fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile?, RawModelReadResult?>? {
-            val result =
-              doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first
+          override suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
+            val result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first
             return Pair.create(parentFile, result)
           }
         }.process(generalSettings, file, parentDesc[0])
@@ -261,7 +260,7 @@ class MavenProjectReader(private val myProject: Project) {
                            var problems: MutableCollection<MavenProjectProblem>,
                            var alwaysOnProfiles: MutableSet<String>)
 
-  private fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
+  private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
     val problems = MavenProjectProblem.createProblemsList()
     val alwaysOnProfiles: MutableSet<String> = HashSet()
 
