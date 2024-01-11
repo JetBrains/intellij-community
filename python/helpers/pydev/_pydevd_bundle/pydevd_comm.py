@@ -291,6 +291,8 @@ class ReaderThread(PyDBDaemonThread):
             while not self.killReceived:
                 try:
                     r = self.sock.recv(1024)
+                except OSError:
+                    return
                 except:
                     if not self.killReceived:
                         traceback.print_exc()
