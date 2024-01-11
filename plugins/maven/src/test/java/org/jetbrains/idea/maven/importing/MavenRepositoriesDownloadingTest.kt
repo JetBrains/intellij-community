@@ -52,7 +52,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
       BufferedReader(InputStreamReader(conn.inputStream))
     }
     else {
-      BufferedReader(InputStreamReader(conn.errorStream))
+      return ""
     }
     return br.lines().collect(Collectors.joining())
   }
@@ -338,8 +338,10 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
     File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
 
-    sendGetRequest(myUrl)
     sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.pom")
+    sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.pom.sha1")
+    sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.jar")
+    sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.jar.sha1")
 
     importProjectAsync(pomContent)
     checks()
