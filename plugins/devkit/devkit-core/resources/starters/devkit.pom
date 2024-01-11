@@ -8,7 +8,7 @@
     <java.version>17</java.version>
     <kotlin.target>17</kotlin.target>
     <gradle.version>8.5</gradle.version>
-    <kotlin.version>1.9.21</kotlin.version>
+    <kotlin.version>1.9.22</kotlin.version>
     <gradle.intellij.version>1.16.1</gradle.intellij.version>
 
     <intellij.version>2023.1.5</intellij.version>
