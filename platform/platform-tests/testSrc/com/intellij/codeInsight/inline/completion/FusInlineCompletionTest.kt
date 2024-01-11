@@ -7,8 +7,8 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayT
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents.Outcome
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
@@ -335,7 +335,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
       }
     }
     val allInvokedData = events.filter { it.group.isInlineCompletion() && it.event.id == InlineCompletionUsageTracker.INVOKED_EVENT_ID }
-    val allComputedData = events.filter { it.group.isInlineCompletion() && it.event.id == InlineCompletionUsageTracker.COMPUTED_EVENT_ID }
+    val allComputedData = events.filter { it.group.isInlineCompletion() && it.event.id == InlineCompletionUsageTracker.SHOWN_EVENT_ID }
     assertEquals(2, allInvokedData.size)
     assertEquals(2, allComputedData.size)
     val (invokedData1, invokedData2) = allInvokedData.map { it.event.data }
@@ -412,7 +412,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
   }
 
   private fun assertRequestId(invokedData: Data, computedData: Data) {
-    assertEquals(invokedData[InvokedEvents.REQUEST_ID], computedData[ComputedEvents.REQUEST_ID])
+    assertEquals(invokedData[InvokedEvents.REQUEST_ID], computedData[ShownEvents.REQUEST_ID])
   }
 
   private fun assertInvokedData(
@@ -435,12 +435,12 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     switchingVariants: Int,
     selectedIndex: Int? = null
   ) {
-    assertEquals(length, computedData[ComputedEvents.LENGTH])
-    assertEquals(lines, computedData[ComputedEvents.LINES])
-    assertEquals(finishType.toString(), computedData[ComputedEvents.FINISH_TYPE])
-    assertEquals(typingDuringShow, computedData[ComputedEvents.TYPING_DURING_SHOW])
-    assertEquals(switchingVariants, computedData[ComputedEvents.SWITCHING_VARIANTS_TIMES])
-    assertEquals(selectedIndex, computedData[ComputedEvents.SELECTED_INDEX])
+    assertEquals(length, computedData[ShownEvents.LENGTH])
+    assertEquals(lines, computedData[ShownEvents.LINES])
+    assertEquals(finishType.toString(), computedData[ShownEvents.FINISH_TYPE])
+    assertEquals(typingDuringShow, computedData[ShownEvents.TYPING_DURING_SHOW])
+    assertEquals(switchingVariants, computedData[ShownEvents.SWITCHING_VARIANTS_TIMES])
+    assertEquals(selectedIndex, computedData[ShownEvents.SELECTED_INDEX])
   }
 
   private class LogsState(private val events: List<LogEvent>) {
@@ -452,7 +452,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
 
     private fun getInvokedData(): Data? = getData(InlineCompletionUsageTracker.INVOKED_EVENT_ID)
 
-    private fun getComputedData(): Data? = getData(InlineCompletionUsageTracker.COMPUTED_EVENT_ID)
+    private fun getComputedData(): Data? = getData(InlineCompletionUsageTracker.SHOWN_EVENT_ID)
 
     fun assertInvokedData(): Data = getInvokedData().also { assertNotNull(it) }!!
 

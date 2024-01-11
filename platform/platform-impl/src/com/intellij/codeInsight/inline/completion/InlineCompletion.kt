@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx

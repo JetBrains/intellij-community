@@ -23,7 +23,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inline.completion", 24)
 
   const val INVOKED_EVENT_ID = "invoked"
-  const val COMPUTED_EVENT_ID = "computed"
+  const val SHOWN_EVENT_ID = "shown"
 
   @ApiStatus.Internal
   object InvokedEvents {
@@ -76,9 +76,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
-  // TODO rename everywhere 'show' and make a better naming
   @ApiStatus.Internal
-  object ComputedEvents {
+  object ShownEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val PROVIDER = EventFields.Class("provider")
     val LINES = EventFields.IntList("lines")
@@ -111,19 +110,19 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   internal val SHOWN_EVENT: VarargEventId = GROUP.registerVarargEvent(
-    COMPUTED_EVENT_ID,
-    ComputedEvents.REQUEST_ID,
+    SHOWN_EVENT_ID,
+    ShownEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
-    ComputedEvents.PROVIDER,
-    ComputedEvents.LINES,
-    ComputedEvents.LENGTH,
-    ComputedEvents.TYPING_DURING_SHOW,
-    ComputedEvents.TIME_TO_SHOW,
-    ComputedEvents.SHOWING_TIME,
-    ComputedEvents.FINISH_TYPE,
-    ComputedEvents.SWITCHING_VARIANTS_TIMES,
-    ComputedEvents.SELECTED_INDEX
+    ShownEvents.PROVIDER,
+    ShownEvents.LINES,
+    ShownEvents.LENGTH,
+    ShownEvents.TYPING_DURING_SHOW,
+    ShownEvents.TIME_TO_SHOW,
+    ShownEvents.SHOWING_TIME,
+    ShownEvents.FINISH_TYPE,
+    ShownEvents.SWITCHING_VARIANTS_TIMES,
+    ShownEvents.SELECTED_INDEX
   )
 
   override fun getGroup() = GROUP
@@ -135,46 +134,46 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   class Listener : InlineCompletionEventAdapter {
     private val lock = ReentrantLock()
     private var invocationTracker: InlineCompletionInvocationTracker? = null
-    private var computationTracker: InlineCompletionComputationTracker? = null
+    private var showTracker: InlineCompletionShowTracker? = null
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
         requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
-      computationTracker = null // Just in case
+      showTracker = null // Just in case
     }
 
     override fun onComputed(event: InlineCompletionEventType.Computed) = lock.withLock {
-      if (computationTracker == null) {
-        computationTracker = invocationTracker!!.createComputationTracker()
+      if (showTracker == null) {
+        showTracker = invocationTracker!!.createShowTracker()
       }
       if (!event.element.text.isEmpty()) {
         invocationTracker?.hasSuggestions()
       }
       if (event.i == 0) {
-        computationTracker!!.firstComputed(event.variantIndex, event.element)
+        showTracker!!.firstComputed(event.variantIndex, event.element)
       }
       if (event.i != 0) {
-        computationTracker!!.nextComputed(event.variantIndex, event.element)
+        showTracker!!.nextComputed(event.variantIndex, event.element)
       }
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      computationTracker!!.lengthChanged(event.variantIndex, event.lengthChange)
+      showTracker!!.lengthChanged(event.variantIndex, event.lengthChange)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
-      computationTracker?.selected()
+      showTracker?.selected()
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      computationTracker?.canceled(event.finishType)
-      computationTracker = null
+      showTracker?.canceled(event.finishType)
+      showTracker = null
     }
 
     override fun onVariantSwitched(event: InlineCompletionEventType.VariantSwitched) {
-      computationTracker?.variantSwitched(event.toVariantIndex, event.explicit)
+      showTracker?.variantSwitched(event.toVariantIndex, event.explicit)
     }
 
     override fun onNoVariants(event: InlineCompletionEventType.NoVariants) {

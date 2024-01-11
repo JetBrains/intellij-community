@@ -39,7 +39,7 @@ internal class InlineCompletionInvocationTracker(
   private var language: Language? = null
   private var fileLanguage: Language? = null
 
-  fun createComputationTracker() = InlineCompletionComputationTracker(
+  fun createShowTracker() = InlineCompletionShowTracker(
     requestId,
     provider,
     invocationTime,

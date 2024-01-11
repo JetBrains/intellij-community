@@ -3,8 +3,8 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
@@ -13,7 +13,7 @@ import com.intellij.lang.Language
  * This tracker lives from the moment the inline completion appears on the screen until its end.
  * This tracker is not thread-safe.
  */
-internal class InlineCompletionComputationTracker(
+internal class InlineCompletionShowTracker(
   private val requestId: Long,
   private val provider: Class<out InlineCompletionProvider>,
   private val invocationTime: Long,
@@ -21,8 +21,8 @@ internal class InlineCompletionComputationTracker(
   private val fileLanguage: Language?,
 ) {
   private val data = mutableListOf<EventPair<*>>()
-  private var computedLogSent = false
-  private var computeStartTime = 0L
+  private var showLogSent = false
+  private var showStartTime = 0L
   private val variantStates = mutableListOf<VariantState>()
   private var switchingVariantsTimes = 0
   private var potentiallySelectedIndex: Int? = null
@@ -39,34 +39,34 @@ internal class InlineCompletionComputationTracker(
       error("First element for $variantIndex index was already computed.")
     }
     state.firstComputed = true
-    computeStartTime = System.currentTimeMillis()
-    data.add(ComputedEvents.REQUEST_ID.with(requestId))
+    showStartTime = System.currentTimeMillis()
+    data.add(ShownEvents.REQUEST_ID.with(requestId))
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    data.add(ComputedEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
-    data.add(ComputedEvents.PROVIDER.with(provider))
+    data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+    data.add(ShownEvents.PROVIDER.with(provider))
     nextComputed(variantIndex, element)
-    assert(!computedLogSent)
+    assert(!showLogSent)
   }
 
   fun nextComputed(variantIndex: Int, element: InlineCompletionElement) {
     val state = variantStates[variantIndex]
     assert(state.firstComputed) {
-      "Call firstShown firstly"
+      "Call firstComputed firstly"
     }
     state.lines += (element.text.lines().size - 1).coerceAtLeast(0)
     if (state.length == 0 && element.text.isNotEmpty()) {
       state.lines++ // first line
     }
     state.length += element.text.length
-    assert(!computedLogSent)
+    assert(!showLogSent)
   }
 
   // Usually, only typings (if providers don't override behaviour)
   fun lengthChanged(variantIndex: Int, change: Int) {
     assert(variantStates.any { it.firstComputed }) // TODO
     variantStates[variantIndex].lengthChange += change
-    assert(!computedLogSent)
+    assert(!showLogSent)
   }
 
   fun variantSwitched(toIndex: Int, explicit: Boolean) {
@@ -85,20 +85,20 @@ internal class InlineCompletionComputationTracker(
   }
 
   private fun finish(finishType: FinishType) {
-    if (computedLogSent) {
+    if (showLogSent) {
       return
     }
-    computedLogSent = true
-    data.add(ComputedEvents.LINES.with(variantStates.map { it.lines }))
-    data.add(ComputedEvents.LENGTH.with(variantStates.map { it.length }))
-    data.add(ComputedEvents.TYPING_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
-    data.add(ComputedEvents.SHOWING_TIME.with(System.currentTimeMillis() - computeStartTime))
-    data.add(ComputedEvents.FINISH_TYPE.with(finishType))
-    data.add(ComputedEvents.SWITCHING_VARIANTS_TIMES.with(switchingVariantsTimes))
+    showLogSent = true
+    data.add(ShownEvents.LINES.with(variantStates.map { it.lines }))
+    data.add(ShownEvents.LENGTH.with(variantStates.map { it.length }))
+    data.add(ShownEvents.TYPING_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
+    data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
+    data.add(ShownEvents.FINISH_TYPE.with(finishType))
+    data.add(ShownEvents.SWITCHING_VARIANTS_TIMES.with(switchingVariantsTimes))
 
     if (finishType == FinishType.SELECTED || finishType == FinishType.TYPED) {
       potentiallySelectedIndex?.let {
-        data.add(ComputedEvents.SELECTED_INDEX.with(it))
+        data.add(ShownEvents.SELECTED_INDEX.with(it))
       }
     }
 

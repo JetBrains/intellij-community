@@ -15,7 +15,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventListenerT
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ComputedEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
