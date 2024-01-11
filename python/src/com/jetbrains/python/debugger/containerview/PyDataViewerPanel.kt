@@ -191,7 +191,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
           this.debugValue = debugValue
         }
 
-        PyDataViewerCollector.logDataOpened(type, arrayChunk.columns, arrayChunk.rows)
+        PyDataViewerCollector.logDataOpened(type, arrayChunk.rows, arrayChunk.columns)
       }
       catch (e: IllegalArgumentException) {
         ApplicationManager.getApplication().invokeLater { setError(e.localizedMessage, modifier) } //NON-NLS
