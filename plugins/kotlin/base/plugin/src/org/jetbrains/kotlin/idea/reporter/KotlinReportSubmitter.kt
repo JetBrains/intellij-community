@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.reporter
 
@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -77,7 +77,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
         if (KotlinIdePlugin.hasPatchedVersion) {
             ReportMessages.GROUP
-                .createNotification(KotlinBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
+                .createNotification(KotlinBasePluginBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
                 .setImportant(false)
                 .notify(project)
             return true
