@@ -3,8 +3,10 @@
     "com": {
       "jetbrains": {
         "python": {
-          "expui": {
-            "python.svg": "icons/com/jetbrains/python/pythonFile.svg"
+          "psi": {
+            "expui": {
+              "python.svg": "icons/com/jetbrains/python/psi/pythonFile.svg"
+            }
           }
         }
       }

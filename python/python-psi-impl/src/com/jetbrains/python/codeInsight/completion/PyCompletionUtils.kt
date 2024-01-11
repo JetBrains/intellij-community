@@ -25,7 +25,8 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import one.util.streamex.StreamEx
 
 /**
@@ -67,7 +68,8 @@ fun addMethodToResult(result: CompletionResultSet,
                       builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
   if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
-  val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
+  val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(
+    PythonPsiApiIcons.Nodes.CyanDot)
   result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
@@ -84,7 +86,8 @@ fun addFunctionToResult(result: CompletionResultSet,
                         builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
   if (pyFile?.findTopLevelFunction(functionName) != null) return
 
-  val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
+  val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(
+    PythonPsiApiIcons.Nodes.CyanDot)
   result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
