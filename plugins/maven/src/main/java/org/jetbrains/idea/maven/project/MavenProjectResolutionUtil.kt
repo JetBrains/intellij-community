@@ -22,11 +22,11 @@ internal class MavenProjectResolutionUtil {
     @Throws(MavenProcessCanceledException::class)
     @Deprecated("Use {@link #resolveProject()}")
     fun resolveProjectSync(reader: MavenProjectReader,
-                           generalSettings: MavenGeneralSettings?,
+                           generalSettings: MavenGeneralSettings,
                            embedder: MavenEmbedderWrapper,
                            files: Collection<VirtualFile>,
                            explicitProfiles: MavenExplicitProfiles,
-                           locator: MavenProjectReaderProjectLocator?,
+                           locator: MavenProjectReaderProjectLocator,
                            progressReporter: RawProgressReporter,
                            eventHandler: MavenEventHandler,
                            workspaceMap: MavenWorkspaceMap?,
@@ -50,11 +50,11 @@ internal class MavenProjectResolutionUtil {
     @JvmStatic
     @Throws(MavenProcessCanceledException::class)
     suspend fun resolveProject(reader: MavenProjectReader,
-                               generalSettings: MavenGeneralSettings?,
+                               generalSettings: MavenGeneralSettings,
                                embedder: MavenEmbedderWrapper,
                                files: Collection<VirtualFile>,
                                explicitProfiles: MavenExplicitProfiles,
-                               locator: MavenProjectReaderProjectLocator?,
+                               locator: MavenProjectReaderProjectLocator,
                                progressReporter: RawProgressReporter,
                                eventHandler: MavenEventHandler,
                                workspaceMap: MavenWorkspaceMap?,
