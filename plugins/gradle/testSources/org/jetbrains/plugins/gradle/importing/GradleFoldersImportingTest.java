@@ -205,7 +205,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.2+")
   public void testSourceGeneratedFoldersWithIdeaPlugin() throws Exception {
     createDefaultDirs();
     importProject(
@@ -757,7 +756,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.1+")
   public void testMultipleSourcesConsistencyCompilerOutput() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("src/main/kotlin/A.kt", "class A {}");

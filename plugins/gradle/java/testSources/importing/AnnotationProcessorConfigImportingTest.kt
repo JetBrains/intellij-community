@@ -347,7 +347,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.3 <=> 8.1")
+  @TargetVersions("<=8.1")
   fun `test gradle-apt-plugin settings are imported`() {
     importProject(
       createBuildScriptBuilder()
@@ -381,7 +381,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
 
   @Test
-  @TargetVersions("3.4+")
   fun `test custom annotation processor configurations are imported`() {
     importProject(
       createBuildScriptBuilder()

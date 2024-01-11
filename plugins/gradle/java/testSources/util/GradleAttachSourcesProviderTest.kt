@@ -109,7 +109,6 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("!4.0")
   fun `test download sources from gradle sub module repository`() {
     createSettingsFile("include 'projectA', 'projectB' ")
     importProject(

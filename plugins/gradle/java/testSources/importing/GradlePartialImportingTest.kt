@@ -9,7 +9,6 @@ import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
 import java.util.function.Predicate
@@ -73,7 +72,6 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("3.3+")
   fun `test composite project partial re-import`() {
     createBuildFile("buildSrc") {
       withPlugin("groovy")

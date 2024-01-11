@@ -9,7 +9,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +53,6 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
     assertEquals("root", externalProject.getName());
   }
 
-  @TargetVersions("4.1+")
   @Test
   public void testModelBuilderFailure() throws Exception {
     createProjectSubFile("gradle.properties", "systemProp.idea.internal.failEsModelBuilder=true");

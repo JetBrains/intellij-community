@@ -171,7 +171,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureKotlinWithPluginsBlock() {
         val files = importProjectFromTestData()
 
@@ -241,7 +241,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureJvmWithBuildGradle() {
         val files = importProjectFromTestData()
 
@@ -265,7 +265,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureJvmWithBuildGradleKts() {
         val files = importProjectFromTestData()
 
@@ -385,7 +385,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureAllModulesInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -411,7 +411,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureAllModulesInJvmProjectKts() {
         val files = importProjectFromTestData()
 
@@ -437,7 +437,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureRootModuleInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -462,7 +462,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureRootModuleInJvmProjectKts() {
         val files = importProjectFromTestData()
 
@@ -487,7 +487,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureSubModuleInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -512,7 +512,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4 <=> 6.7.1")
+    @TargetVersions("<=6.7.1")
     fun testConfigureSubModuleInJvmProjectKts() {
         val files = importProjectFromTestData()
 

@@ -21,7 +21,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("2.4 <=> 4.10.3")
+  @TargetVersions("<5.0")
   fun `test intellij tests finding`() {
     val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
@@ -52,7 +52,6 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("4.0+")
   fun `test intellij tests finding new interface`() {
     val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()

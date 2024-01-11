@@ -230,7 +230,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
   
   @Test
-  @TargetVersions("2.0 <=> 6.9")
+  @TargetVersions("<=6.9")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
     createSettingsFile("""
                          include 'project1'
@@ -280,7 +280,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.0+")
   public void testProvidedDependencyScopeMerge() throws Exception {
     createSettingsFile("include 'web'\n" +
                        "include 'user'");
@@ -535,7 +534,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.3+") // org.gradle.api.artifacts.ConfigurationPublications was introduced since 3.3
   public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'server'
@@ -679,7 +677,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.4+")
   public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
@@ -1112,7 +1109,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.0 <=> 6.9")
+  @TargetVersions("<=6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
     createProjectSubFile("project1/build.gradle",
@@ -1155,7 +1152,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
     createSettingsFile("""
                          include 'project1'
@@ -1202,7 +1198,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput2() throws Exception {
     createSettingsFile("""
                          include 'project1'
@@ -1250,7 +1245,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput3() throws Exception {
     createSettingsFile("""
                          include 'project1'
@@ -1315,7 +1309,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
     createSettingsFile("""
                          include 'core'
@@ -1374,7 +1367,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.6+")
   public void testProjectSubstitutionsWithTransitiveDeps() throws Exception {
     createSettingsFile("""
                          include 'modA'
@@ -1448,7 +1440,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.12+")
   public void testCompileOnlyScope() throws Exception {
     importProject(
       createBuildScriptBuilder()
@@ -1474,7 +1465,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.12+")
   public void testCompileOnlyAndRuntimeScope() throws Exception {
     importProject(
       createBuildScriptBuilder()
@@ -1496,7 +1486,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.12+")
   public void testCompileOnlyAndCompileScope() throws Exception {
     createSettingsFile("include 'app'\n");
     TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
@@ -1528,7 +1517,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.4+")
   public void testJavaLibraryPluginConfigurations() throws Exception {
     createSettingsFile("""
                          include 'project1'
@@ -1574,7 +1562,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("2.12 <=> 6.9")
+  @TargetVersions("<=6.9")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
       createBuildScriptBuilder()
@@ -1603,7 +1591,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.0+")
   public void testProvidedTransitiveDependencies() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
@@ -1688,7 +1675,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 
-  @TargetVersions("2.5+")
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
     GradleSettings.getInstance(myProject).setDownloadSources(true);
@@ -1747,7 +1733,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertMergedModuleCompileLibDepScope("project", depName);
   }
 
-  @TargetVersions("4.0+")
   @Test
   public void testSourcesForDependencyWithMultipleArtifactsWithIvyLayout() throws Exception {
     GradleSettings.getInstance(myProject).setDownloadSources(true);

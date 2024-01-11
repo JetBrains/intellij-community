@@ -217,7 +217,6 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
   }
 
   @Test
-  @TargetVersions("3.1+")
   fun `test tasks debugging for composite build`() {
     createPrintArgsClass()
     createPrintArgsClass("module")

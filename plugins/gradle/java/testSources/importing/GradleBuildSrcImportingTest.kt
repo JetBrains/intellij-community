@@ -49,8 +49,8 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                             """.trimIndent())
     importProject("apply plugin: 'java'\n")
 
-    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "");
-    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar");
+    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "")
+    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar")
   }
 
 
@@ -240,7 +240,6 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("3.3+")
   fun `test buildSrc with included projects name duplication`() {
     createSettingsFile("""
       includeBuild('build1')

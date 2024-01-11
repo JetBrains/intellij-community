@@ -7,7 +7,6 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,7 +26,6 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
   }
 
   @Test
-  @TargetVersions("2.0+")
   public void testModelBuildScriptClasspathBuilder() {
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();

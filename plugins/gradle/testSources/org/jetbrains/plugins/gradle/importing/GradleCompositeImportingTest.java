@@ -47,8 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Vladislav.Soroka
  */
 public class GradleCompositeImportingTest extends GradleImportingTestCase {
+
   @Test
-  @TargetVersions("3.3+")
   public void testBasicCompositeBuild() throws Exception {
     //enableGradleDebugWithSuspend();
     createSettingsFile("""
@@ -141,7 +141,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithNestedModules() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
@@ -177,7 +176,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithNestedModulesSingleModulePerProject() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
@@ -205,7 +203,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("4.0+")
   public void testCompositeBuildWithGradleProjectDuplicates() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'app'
@@ -248,7 +245,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'app'
@@ -294,7 +290,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
     IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
@@ -393,7 +388,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.1+")
   public void testApiDependenciesAreImported() throws Exception {
     createSettingsFile("rootProject.name = \"project-b\"\n" +
                        "includeBuild 'project-a'");
@@ -494,7 +488,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.4+")
   public void testProjectWithCompositePluginDependencyImported() throws Exception {
     createSettingsFile("includeBuild('plugin'); includeBuild('consumer')");
     createProjectSubFile("plugin/settings.gradle", "rootProject.name = 'test-plugin'");
@@ -548,7 +541,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
     if (isGradleAtLeast("6.6")) {
       createSettingsFile("""
@@ -587,7 +579,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.1+")
   public void testScopeUpdateForSubstituteDependency() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'pA'
@@ -637,7 +628,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.3+")
   public void testIdeCompositeBuild() throws Exception {
     createSettingsFile("rootProject.name='rootProject'\n");
     // generate Gradle wrapper files for the test
@@ -738,17 +728,16 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("8.0-rc-3")
+  @TargetVersions("8.0+")
   public void testNestedCompositeBuildsWithDuplicateNames() throws Exception {
     createSettingsFile("""
- rootProject.name = 'root'
- includeBuild('doppelganger')
- includeBuild('nested')
-""");
-
+     rootProject.name = 'root'
+     includeBuild('doppelganger')
+     includeBuild('nested')
+    """);
     createProjectSubFile("nested/settings.gradle", """
       includeBuild('doppelganger')
-      """);
+    """);
     createProjectSubFile("doppelganger/settings.gradle", "include('module')");
     createProjectSubFile("doppelganger/module/build.gradle", "//empty");
     createProjectSubFile("nested/doppelganger/settings.gradle", "include('module')");
