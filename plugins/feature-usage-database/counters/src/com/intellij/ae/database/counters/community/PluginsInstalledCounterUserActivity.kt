@@ -4,6 +4,8 @@ package com.intellij.ae.database.counters.community
 import com.intellij.ae.database.core.activities.WritableDatabaseBackedCounterUserActivity
 import com.intellij.ae.database.core.baseEvents.fus.FusEventCatcher
 import com.intellij.ae.database.core.runUpdateEvent
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.openapi.extensions.PluginId
 import java.time.Instant
@@ -20,7 +22,7 @@ object PluginsInstalledCounterUserActivity : WritableDatabaseBackedCounterUserAc
   private val installedPlugins = ConcurrentHashMap.newKeySet<String>()
 
   internal suspend fun writeInstallation(pluginId: String, time: Instant) {
-    if (!InstalledPluginsState.getInstance().wasUpdated(PluginId.getId(pluginId))) {
+    if (!InstalledPluginsState.getInstance().wasUpdated(PluginId.getId(pluginId)) && !installedPlugins.contains(pluginId)) {
       installedPlugins.add(pluginId)
       submit(1, time)
     }
@@ -29,6 +31,19 @@ object PluginsInstalledCounterUserActivity : WritableDatabaseBackedCounterUserAc
   internal suspend fun writeUninstallation(pluginId: String) {
     if (installedPlugins.remove(pluginId)) {
       submit(-1)
+    }
+  }
+
+  internal fun writeUpdate(id: String) {
+    installedPlugins.add(id)
+  }
+}
+
+internal class MyDynamicPluginListener : DynamicPluginListener {
+  // we don't want to treat theme updates as new installations, workaround for IDEA-342821
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    if (isUpdate) {
+      PluginsInstalledCounterUserActivity.writeUpdate(pluginDescriptor.pluginId.idString)
     }
   }
 }
