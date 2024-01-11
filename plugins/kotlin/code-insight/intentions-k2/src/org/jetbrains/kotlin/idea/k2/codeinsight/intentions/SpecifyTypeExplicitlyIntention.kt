@@ -48,7 +48,8 @@ internal class SpecifyTypeExplicitlyIntention:
         return invokeContext(element)
     }
 
-    context(KtAnalysisSession) override fun invokeContext(element: KtCallableDeclaration): TypeInfo = getTypeInfo(element)
+    context(KtAnalysisSession)
+    override fun invokeContext(element: KtCallableDeclaration): TypeInfo = getTypeInfo(element)
 
     override fun apply(element: KtCallableDeclaration, context: AnalysisActionContext<TypeInfo>, updater: ModPsiUpdater) {
         updateType(element, context.analyzeContext, element.project, updater = updater)

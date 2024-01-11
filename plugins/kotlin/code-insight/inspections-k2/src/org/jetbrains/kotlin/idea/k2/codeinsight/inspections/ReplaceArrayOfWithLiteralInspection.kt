@@ -73,5 +73,6 @@ class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableInspection<K
         return true
     }
 
-    context(KtAnalysisSession) override fun isApplicableByAnalyze(element: KtCallExpression): Boolean = element.isArrayOfFunction()
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtCallExpression): Boolean = element.isArrayOfFunction()
 }
