@@ -2,14 +2,11 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -27,12 +24,7 @@ internal class SuggestedIdeBanner : JPanel() {
   private val downloadLink: ActionLink = ActionLink(
     "",
     ActionListener {
-      val downloadUrl = suggestedIde?.downloadUrl ?: return@ActionListener
-      if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-        ProjectManager.getInstance().defaultProject.service<UltimateInstallationService>().install(pluginId, downloadUrl)
-      } else {
-        FUSEventSource.PLUGINS_SEARCH.openDownloadPageAndLog(project = null, url = downloadUrl, pluginId = pluginId)
-      }
+      suggestedIde?.let { tryUltimate(pluginId, it, fusEventSource = FUSEventSource.PLUGINS_SEARCH) }
     }
   )
 

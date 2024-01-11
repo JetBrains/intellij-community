@@ -24,8 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -195,11 +193,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       for (suggestedIde in suggestedIdes) {
         panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)) {
           pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
-          if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-            project.service<UltimateInstallationService>().install(defaultDownloadUrl = suggestedIde.downloadUrl)
-          } else {
-            FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedIde.downloadUrl)
-          }
+          tryUltimate(pluginId = null, suggestedIde, project)
         }
       }
 

@@ -5,17 +5,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -75,11 +69,7 @@ private class OpenApiPluginSuggestion(val project: Project,
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedCommercialIde.name)) {
         val pluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
-        if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-          project.service<UltimateInstallationService>().install(pluginId, suggestedCommercialIde.downloadUrl)
-        } else {
-          FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedCommercialIde.downloadUrl, pluginId)
-        }
+        tryUltimate(pluginId, suggestedCommercialIde, project)
       }
     }
 

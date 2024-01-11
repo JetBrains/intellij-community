@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
@@ -58,27 +59,35 @@ sealed interface PluginAdvertiserService {
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")
-    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate",
-                                                  "https://www.jetbrains.com/idea/download/",
-                                                  "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}")
+    val ideaUltimate: SuggestedIde = SuggestedIde(
+      name = "IntelliJ IDEA Ultimate",
+      productCode = "UI",
+      defaultDownloadUrl = "https://www.jetbrains.com/idea/download/",
+      platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}",
+      baseDownloadUrl = "https://download.jetbrains.com/idea/ideaIU"
+    )
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    val pyCharmProfessional = SuggestedIde("PyCharm Professional",
-                                           "https://www.jetbrains.com/pycharm/download/",
-                                           "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}")
+    val pyCharmProfessional = SuggestedIde(
+      name = "PyCharm Professional",
+      productCode = "PY",
+      defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
+      platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",
+      baseDownloadUrl = "https://download.jetbrains.com/python/pycharm-professional"
+    )
 
     @Suppress("HardCodedStringLiteral")
-    internal val ides: Map<String, SuggestedIde> = linkedMapOf(
-      "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),
-      "RM" to SuggestedIde("RubyMine", "https://www.jetbrains.com/ruby/download/"),
-      "PY" to pyCharmProfessional,
-      "PS" to SuggestedIde("PhpStorm", "https://www.jetbrains.com/phpstorm/download/"),
-      "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
-      "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
-      "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
-      "RR" to SuggestedIde("RustRover", "https://www.jetbrains.com/rust/download/"),
-      "IU" to ideaUltimate
-    )
+    internal val ides: Map<String, SuggestedIde> = listOf(
+      SuggestedIde("WebStorm", "WS", "https://www.jetbrains.com/webstorm/download/"),
+      SuggestedIde("RubyMine", "RM", "https://www.jetbrains.com/ruby/download/"),
+      pyCharmProfessional,
+      SuggestedIde("PhpStorm", "PS", "https://www.jetbrains.com/phpstorm/download/"),
+      SuggestedIde("GoLand", "GO", "https://www.jetbrains.com/go/download/"),
+      SuggestedIde("CLion", "CL", "https://www.jetbrains.com/clion/download/"),
+      SuggestedIde("Rider", "RD", "https://www.jetbrains.com/rider/download/"),
+      SuggestedIde("RustRover", "RR", "https://www.jetbrains.com/rust/download/"),
+      ideaUltimate
+    ).associateBy { it.productCode }
 
     internal val marketplaceIdeCodes: Map<String, String> = linkedMapOf(
       "IU" to "idea",
@@ -412,11 +421,7 @@ open class PluginAdvertiserServiceImpl(
       ) to listOf(
         NotificationAction.createSimpleExpiring(
           IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
-          if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-            project.service<UltimateInstallationService>().install(defaultDownloadUrl = ideaUltimate.downloadUrl)
-          } else {
-            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
-          }
+          tryUltimate(pluginId = null, suggestedIde = ideaUltimate, project, FUSEventSource.NOTIFICATION)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
           FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
@@ -613,14 +618,31 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 data class SuggestedIde(
   @NlsContexts.DialogMessage
   val name: String,
+  val productCode: String,
   val defaultDownloadUrl: String,
-  val platformSpecificDownloadUrlTemplate: String? = null
+  val platformSpecificDownloadUrlTemplate: String? = null,
+  val baseDownloadUrl: String? = null
 ) {
   val downloadUrl: String
     get() {
       return platformSpecificDownloadUrlTemplate?.let { OsArchMapper.getDownloadUrl(it) }
              ?: defaultDownloadUrl
     }
+}
+
+fun tryUltimate(
+  pluginId: PluginId?,
+  suggestedIde: SuggestedIde,
+  project: Project? = null,
+  fusEventSource: FUSEventSource? = null,
+) {
+  if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
+    val existingProject = project ?: ProjectManager.getInstance().defaultProject
+    existingProject.service<UltimateInstallationService>().install(pluginId, suggestedIde)
+  } else {
+    val eventSource = fusEventSource ?: FUSEventSource.EDITOR
+    eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
+  }
 }
 
 private object OsArchMapper {
