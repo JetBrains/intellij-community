@@ -168,6 +168,7 @@
 
     "Button": {
       "arc": 8,
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonBorder",
       "startBackground": "Grey2",
       "endBackground": "Grey2",
       "startBorderColor": "Grey5",

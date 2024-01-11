@@ -29,6 +29,7 @@ internal class ComponentsTestAction : DumbAwareAction() {
 
     override fun createCenterPanel(): JComponent {
       val data = mapOf("JBOptionButton" to JBOptionButtonPanel().panel,
+                       "JButton" to JButtonPanel().panel,
                        "JTextField" to JTextFieldPanel().panel,
                        "JComboBox" to JComboBoxPanel().panel,
                        "JSpinner" to JSpinnerPanel().panel,
