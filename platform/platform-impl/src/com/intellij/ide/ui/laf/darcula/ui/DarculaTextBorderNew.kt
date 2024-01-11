@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
 import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -21,5 +22,13 @@ internal class DarculaTextBorderNew : DarculaTextBorder() {
     val isFocused = isFocused(c)
     val editable = c !is JTextComponent || c.isEditable
     paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), isFocused, c.isEnabled && editable)
+  }
+
+  override fun paintSearchArea(g: Graphics2D, r: Rectangle, c: JTextComponent, fillBackground: Boolean) {
+    JBInsets.removeFrom(r, getBorderInsets(c))
+    if (fillBackground) {
+      fillInsideComponentBorder(g, r, c.background)
+    }
+    paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), c.isEnabled && c.isEditable)
   }
 }

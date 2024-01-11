@@ -2,6 +2,7 @@
 package com.intellij.internal.ui.componentsTestAction
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,8 +23,19 @@ internal class JTextFieldPanel {
         putClientProperty("JComponent.outline", "warning")
       }
     }
+    row("Not editable:") {
+      textField().applyToComponent {
+        isEditable = false
+      }
+    }
     row("Disabled:") {
       textField().enabled(false)
+    }
+
+    group("SearchTextField") {
+      row("Editable:") {
+        cell(SearchTextField())
+      }
     }
   }
 }

@@ -167,6 +167,10 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     return DarculaUIUtil.getOutlineColor(enabled, focused);
   }
 
+  /**
+   * @deprecated Not supported for new UI themes
+   */
+  @Deprecated
   protected Insets paddings() {
     return DarculaUIUtil.paddings();
   }
