@@ -14,6 +14,7 @@ import com.intellij.execution.ExecutionListener
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -128,7 +129,7 @@ internal class RunConfigurationListener : ExecutionListener {
 
   private fun isAllowed(env: ExecutionEnvironment): Boolean {
     // todo: extension point
-    if (env.runProfile.javaClass.simpleName == "DatabaseScriptRunConfiguration") {
+    if ((env.runProfile.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId?.idString == "com.intellij.database") {
       return false
     }
 
