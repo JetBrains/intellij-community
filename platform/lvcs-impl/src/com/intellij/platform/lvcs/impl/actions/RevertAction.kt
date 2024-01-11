@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.RevisionSelection
-import com.intellij.platform.lvcs.impl.createReverter
+import com.intellij.platform.lvcs.impl.operations.createReverter
 
 class RevertAction : RevisionSelectionAction() {
 

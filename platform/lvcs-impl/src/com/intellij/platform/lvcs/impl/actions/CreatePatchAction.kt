@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.RevisionSelection
-import com.intellij.platform.lvcs.impl.getChanges
+import com.intellij.platform.lvcs.impl.diff.getChanges
 
 class CreatePatchAction : RevisionSelectionAction() {
 

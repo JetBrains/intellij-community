@@ -3,7 +3,6 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.RevisionsCollector
-import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
@@ -12,6 +11,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.lvcs.impl.diff.createDiffData
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -49,13 +49,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
     val revisionSelection = selection.toRevisionSelection(scope) ?: return null
-    val differences = if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) {
-      listOf(Difference(revisionSelection.leftEntry, revisionSelection.rightEntry, revisionSelection.rightRevision.isCurrent))
-    }
-    else {
-      revisionSelection.diff
-    }
-    return ActivityDiffDataWithDifferences(gateway, scope, revisionSelection, differences)
+    return createDiffData(gateway, scope, revisionSelection)
   }
 
   override fun isScopeFilterSupported(scope: ActivityScope): Boolean {
