@@ -16,7 +16,7 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
     }
 
     fun testEditorTabConfigurationOnFacetCreation() {
-        val facet   = getKotlinFacet()
+        val facet = getKotlinFacet()
         val editorContext: FacetEditorContext = MockFacetEditorContext(getKotlinFacet())
         FacetEditorImpl(editorContext, facet.configuration).let {
             it.getComponent()

@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.serialization
 
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.copyOf
-import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.workspaceModel.*
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -70,7 +67,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         set(value) {
             entity.compilerArguments = CompilerArgumentsSerializer.serializeToString(value)
             updateMergedArguments()
-            _compilerArguments = value
+            _compilerArguments = value?.unfrozen()
         }
 
     override val mergedCompilerArguments: CommonCompilerArguments?
@@ -106,7 +103,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         set(value) {
             entity.compilerSettings = value.toCompilerSettingsData()
             updateMergedArguments()
-            _compilerSettings = value
+            _compilerSettings = value?.unfrozen()
         }
 
 
@@ -118,12 +115,11 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             _dependsOnModuleNames = value
         }
 
-    private var _externalProjectId = entity.externalProjectId
+    // No caching here because it can be set directly to the entity during the import
     override var externalProjectId: String
-        get() = _externalProjectId
+        get() = entity.externalProjectId
         set(value) {
             entity.externalProjectId = value
-            _externalProjectId = value
         }
 
     override var externalSystemRunTasks: List<ExternalSystemRunTask>
@@ -206,26 +202,19 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.sourceSetNames = value.toMutableList()
         }
 
-    private var _targetPlatform: TargetPlatform? = null
     override var targetPlatform: TargetPlatform?
         get() {
-            if (_targetPlatform != null) {
-                return _targetPlatform
-            }
-
             val args = compilerArguments
             val deserializedTargetPlatform =
                 entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
             val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
-            if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
-                _targetPlatform = IdePlatformKind.platformByCompilerArguments(args)
-                return _targetPlatform
+            if (args != null && singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull()) {
+                return IdePlatformKind.platformByCompilerArguments(args)
             }
             return deserializedTargetPlatform
         }
         set(value) {
             entity.targetPlatform = value?.serializeComponentPlatforms() ?: ""
-            _targetPlatform = value
         }
 
     private var _testOutputPath: String? = entity.testOutputPath
