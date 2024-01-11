@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -18,6 +19,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = listOf(communityHome.resolve("python/resources"))
     customJvmMemoryOptions = persistentMapOf("-Xms" to "256m", "-Xmx" to "1500m")
+    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
     scrambleMainJar = false
     buildSourcesArchive = true
 
