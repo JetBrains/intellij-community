@@ -4,8 +4,12 @@ package com.jetbrains.python.codeInsight.intentions
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.TokenSet
@@ -28,40 +32,73 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
  *
  * @author Vasya Aksyonov
  */
-class PyInvertIfConditionIntention : PyBaseIntentionAction() {
+class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {
   private companion object {
     val insignificantTokenSet = TokenSet.create(TokenType.WHITE_SPACE, PyTokenTypes.END_OF_LINE_COMMENT)
     const val PYLINT_COMMENT_PREFIX = "# pylint:"
   }
 
-  init {
-    text = PyPsiBundle.message("INTN.invert.if.condition")
-  }
+  override fun getFamilyName(): String = PyPsiBundle.message("INTN.invert.if.condition")
 
-  override fun getFamilyName(): String = text
-
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    if (file !is PyFile) {
-      return false
+  override fun getPresentation(context: ActionContext, element: PsiElement): Presentation? {
+    if (context.file !is PyFile) {
+      return null
     }
 
-    val element = file.findElementAt(editor.caretModel.offset) ?: return false
+    val conditionalExpression = element.parentsOfType<PyConditionalExpression>().firstOrNull()
 
+    if (conditionalExpression != null &&
+        conditionalExpression.condition != null &&
+        conditionalExpression.falsePart != null &&
+        isValidConditionExpression(conditionalExpression.condition!!)) return super.getPresentation(context, element)
+
+    val ifStatement = element.parentsOfType<PyIfStatement>().firstOrNull()
+
+    return if (ifStatement != null && ifStatement.elifParts.isEmpty() &&
+               isAvailableForIfStatement(element, ifStatement) &&
+                ifStatement.ifPart.condition?.let(::isValidConditionExpression) != false) super.getPresentation(context, element) else null
+  }
+
+
+  override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {
     val conditionalExpression = element.parentsOfType<PyConditionalExpression>().firstOrNull()
     if (conditionalExpression != null) {
-      return conditionalExpression.condition != null &&
-             conditionalExpression.falsePart != null &&
-             isValidConditionExpression(conditionalExpression.condition!!)
+      invertConditional(context.project, context.file, conditionalExpression)
+      return
     }
 
     val ifStatement = element.parentsOfType<PyIfStatement>().firstOrNull()
     if (ifStatement != null) {
-      return ifStatement.elifParts.isEmpty() &&
-             isAvailableForIfStatement(element, ifStatement) &&
-             ifStatement.ifPart.condition?.let(::isValidConditionExpression) ?: true
+      val elsePart = ifStatement.elsePart
+      if (elsePart != null) {
+        invertIfStatementComplete(context.project, context.file, ifStatement)
+        return
+      }
+
+      val terminableStatement = ifStatement.findTerminableParent()
+      if (terminableStatement == null) {
+        invertIfStatementIncomplete(context.project, updater, context.file, ifStatement)
+        return
+      }
+
+      val ifIsTerminated = ifStatement.ifPart.statementList.isTerminated
+      if (!ifIsTerminated && ifStatement.parent.lastSignificantChild != ifStatement) {
+        invertIfStatementIncomplete(context.project, updater, context.file, ifStatement)
+        return
+      }
+
+      if (ifIsTerminated && ifStatement.parentStatementListContainer.let {
+          !it.isTerminableStatement && !it.statementList.isTerminated
+        }) {
+        invertIfStatementIncomplete(context.project, updater, context.file, ifStatement)
+        return
+      }
+
+      invertIfStatementFollowup(context.project, context.file, ifStatement, terminableStatement)
+      return
     }
 
-    return false
+    throw IncorrectOperationException("Is not a condition")
   }
 
   private fun isAvailableForIfStatement(element: PsiElement, statement: PyIfStatement): Boolean {
@@ -85,49 +122,6 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
 
     val elsePart = statement.elsePart
     return elsePart == null || !parents.contains(elsePart.statementList)
-  }
-
-  override fun doInvoke(project: Project, editor: Editor, file: PsiFile) {
-    val element = file.findElementAt(editor.caretModel.offset) ?: return
-
-    val conditionalExpression = element.parentsOfType<PyConditionalExpression>().firstOrNull()
-    if (conditionalExpression != null) {
-      invertConditional(project, file, conditionalExpression)
-      return
-    }
-
-    val ifStatement = element.parentsOfType<PyIfStatement>().firstOrNull()
-    if (ifStatement != null) {
-      val elsePart = ifStatement.elsePart
-      if (elsePart != null) {
-        invertIfStatementComplete(project, file, ifStatement)
-        return
-      }
-
-      val terminableStatement = ifStatement.findTerminableParent()
-      if (terminableStatement == null) {
-        invertIfStatementIncomplete(project, editor, file, ifStatement)
-        return
-      }
-
-      val ifIsTerminated = ifStatement.ifPart.statementList.isTerminated
-      if (!ifIsTerminated && ifStatement.parent.lastSignificantChild != ifStatement) {
-        invertIfStatementIncomplete(project, editor, file, ifStatement)
-        return
-      }
-
-      if (ifIsTerminated && ifStatement.parentStatementListContainer.let {
-          !it.isTerminableStatement && !it.statementList.isTerminated
-        }) {
-        invertIfStatementIncomplete(project, editor, file, ifStatement)
-        return
-      }
-
-      invertIfStatementFollowup(project, file, ifStatement, terminableStatement)
-      return
-    }
-
-    throw IncorrectOperationException("Is not a condition")
   }
 
   private fun invertConditional(project: Project, file: PsiFile, expression: PyConditionalExpression) {
@@ -159,7 +153,7 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
     switchInlineComments(statement)
   }
 
-  private fun invertIfStatementIncomplete(project: Project, editor: Editor, file: PsiFile, statement: PyIfStatement) {
+  private fun invertIfStatementIncomplete(project: Project, updater: ModPsiUpdater, file: PsiFile, statement: PyIfStatement) {
     val level = LanguageLevel.forElement(file)
     val generator = PyElementGenerator.getInstance(project)
 
@@ -189,8 +183,8 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
 
     // Highlighting placeholder
     val passStatementRange = newStatement.ifPart.statementList.statements[0].textRange
-    editor.caretModel.primaryCaret.setSelection(passStatementRange.startOffset, passStatementRange.endOffset)
-    editor.caretModel.primaryCaret.moveToOffset(passStatementRange.endOffset)
+    updater.select(TextRange(passStatementRange.startOffset, passStatementRange.endOffset))
+    updater.moveCaretTo(passStatementRange.endOffset)
   }
 
   private fun invertIfStatementFollowup(
