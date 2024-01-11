@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     fun foo() {
         println(this)

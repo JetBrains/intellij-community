@@ -603,6 +603,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/qualifiedName.kt");
                 }
 
+                @TestMetadata("qualifiedNameNoReceiver.kt")
+                public void testQualifiedNameNoReceiver() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/qualifiedNameNoReceiver.kt");
+                }
+
                 @TestMetadata("simpleNameRuntime.kt")
                 public void testSimpleNameRuntime() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/simpleNameRuntime.kt");

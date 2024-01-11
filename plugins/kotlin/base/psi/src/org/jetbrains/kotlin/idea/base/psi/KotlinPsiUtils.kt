@@ -259,3 +259,6 @@ fun getCallElement(argument: KtValueArgument): KtCallElement? {
         argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
     }
 }
+
+val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null

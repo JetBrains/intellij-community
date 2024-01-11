@@ -41,9 +41,6 @@ tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
     }
 }
 
-val PsiElement.isInsideKtTypeReference: Boolean
-    get() = getNonStrictParentOfType<KtTypeReference>() != null
-
 fun createKeywordElement(
     keyword: String,
     tail: String = "",

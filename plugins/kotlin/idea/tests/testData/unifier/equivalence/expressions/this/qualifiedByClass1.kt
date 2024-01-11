@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     inner class B {
         inner class C {
@@ -20,5 +19,6 @@ class A {
     fun foo() {
         this
         this@A
+        (this@A)
     }
 }
