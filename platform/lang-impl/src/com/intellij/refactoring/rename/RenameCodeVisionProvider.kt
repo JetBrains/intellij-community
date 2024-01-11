@@ -81,7 +81,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
       }
     }
     file.accept(visitor)
-    visitor.renamedElement?.let { editor.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
+    visitor.renamedElement?.let { file.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
   }
 
   override val name: String
