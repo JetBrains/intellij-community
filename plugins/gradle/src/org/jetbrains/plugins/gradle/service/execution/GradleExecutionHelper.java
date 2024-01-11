@@ -372,7 +372,7 @@ public class GradleExecutionHelper {
 
     setupArguments(operation, tasksAndArguments, settings);
 
-    setupEnvironment(operation, settings, id, listener, buildEnvironment);
+    setupEnvironment(operation, settings);
 
     setupJavaHome(operation, settings);
 
@@ -625,23 +625,8 @@ public class GradleExecutionHelper {
 
   private static void setupEnvironment(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable BuildEnvironment buildEnvironment
+    @NotNull GradleExecutionSettings settings
   ) {
-    String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
-    boolean isEnvironmentCustomizationSupported = gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "3.5");
-    if (!isEnvironmentCustomizationSupported) {
-      if (!settings.isPassParentEnvs() || !settings.getEnv().isEmpty()) {
-        listener.onTaskOutput(taskId, String.format(
-          "The version of Gradle you are using%s does not support the environment variables customization feature. " +
-          "Support for this is available in Gradle 3.5 and all later versions.\n",
-          gradleVersion == null ? "" : (" (" + gradleVersion + ")")), false);
-      }
-      return;
-    }
-
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
       ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
     TargetEnvironmentConfiguration environmentConfiguration =
