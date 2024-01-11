@@ -13,16 +13,9 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.TypeUtils
 
 interface JavaDataFlowAnalyzerFacade {
-
     fun variableNullability(variable: PsiVariable, context: PsiElement): Nullability
 
     fun methodNullability(method: PsiMethod): Nullability
-
-    object Default : JavaDataFlowAnalyzerFacade {
-        override fun methodNullability(method: PsiMethod): Nullability = Nullability.Default
-
-        override fun variableNullability(variable: PsiVariable, context: PsiElement): Nullability = Nullability.Default
-    }
 }
 
 

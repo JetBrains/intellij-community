@@ -15,9 +15,4 @@ interface JavaToKotlinConverterServices {
 
 interface SuperMethodsSearcher {
     fun findDeepestSuperMethods(method: PsiMethod): Collection<PsiMethod>
-
-    object Default : SuperMethodsSearcher {
-        // use simple findSuperMethods by default because findDeepestSuperMethods requires some service from IDEA
-        override fun findDeepestSuperMethods(method: PsiMethod) = method.findSuperMethods().asList()
-    }
 }
