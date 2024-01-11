@@ -134,6 +134,6 @@ public abstract class XDebuggerUtil {
   public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
 
   public static boolean areInlineBreakpointsEnabled() {
-    return Registry.is(INLINE_BREAKPOINTS_KEY) && PlatformUtils.isIntelliJ();
+    return Registry.is(INLINE_BREAKPOINTS_KEY) && (PlatformUtils.isIntelliJ() || PlatformUtils.isRider());
   }
 }
