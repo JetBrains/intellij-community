@@ -79,7 +79,7 @@ class TerminalPromptController(
 
   private fun computePromptText(directory: String): @NlsSafe String {
     return if (directory != SystemProperties.getUserHome()) {
-      FileUtil.getLocationRelativeToUserHome(directory)
+      FileUtil.getLocationRelativeToUserHome(directory, false)
     }
     else "~"
   }
