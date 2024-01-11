@@ -204,6 +204,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     needRestart |= !applyEnableDisablePlugins(pluginEnabler, parent);
     myDynamicPluginsToUninstall.clear();
+    myUninstalled.clear();
     myDiff.clear();
 
     if (needRestart) {
@@ -677,7 +678,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired);
-        appendDependsAfterInstall();
+        appendDependsAfterInstall(success, restartRequired);
         if (installedDescriptor == null && descriptor instanceof PluginNode && myDownloaded != null && myDownloaded.ui != null) {
           ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
           if (component != null) {
@@ -765,7 +766,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myInstalling = installing;
   }
 
-  private void appendDependsAfterInstall() {
+  private void appendDependsAfterInstall(boolean success, boolean restartRequired) {
     if (myDownloaded == null || myDownloaded.ui == null) {
       return;
     }
@@ -776,14 +777,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         continue;
       }
 
-      appendOrUpdateDescriptor(descriptor, true);
+      appendOrUpdateDescriptor(descriptor, restartRequired);
 
       String id = pluginId.getIdString();
 
       for (Map.Entry<PluginId, List<ListPluginComponent>> entry : myMarketplacePluginComponentMap.entrySet()) {
         if (id.equals(entry.getKey().getIdString())) {
           for (ListPluginComponent component : entry.getValue()) {
-            component.hideProgress(true, true);
+            component.hideProgress(success, restartRequired);
           }
           break;
         }
@@ -805,8 +806,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor,
-                                boolean restartNeeded) {
+  void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     if (!PluginManagerCore.isPluginInstalled(id)) {
       appendOrUpdateDescriptor(descriptor);
@@ -835,8 +835,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     else {
       ListPluginComponent component = myDownloaded.ui.findComponent(id);
       if (component != null) {
-        myInstalledPanel.setSelection(component);
-        component.enableRestart();
+        if (restartNeeded) {
+          myInstalledPanel.setSelection(component);
+          component.enableRestart();
+        }
         return;
       }
 
