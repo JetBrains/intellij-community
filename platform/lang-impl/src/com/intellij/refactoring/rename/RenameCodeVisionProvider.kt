@@ -25,12 +25,12 @@ import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
 import org.jetbrains.annotations.Nls
 
-class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
+class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val ID: String = "Rename refactoring"
   }
 
-  override fun precomputeOnUiThread(editor: Editor) = editor.project?.let { editor.virtualFile?.findPsiFile(it) }
+  override fun precomputeOnUiThread(editor: Editor) {}
 
   class RenameCodeVisionEntry(
     val project: Project,
@@ -51,25 +51,27 @@ class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
     }
   }
 
-  override fun computeCodeVision(editor: Editor, uiData: PsiFile?): CodeVisionState {
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
 
-    val refactoring = uiData?.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
-    if (refactoring != null) {
-      if (refactoring is SuggestedRenameData) {
-        return runBlockingCancellable {
-          readAction {
+    return runBlockingCancellable {
+      readAction {
+        val file = editor.virtualFile?.findPsiFile(project) ?: return@readAction CodeVisionState.READY_EMPTY
+        val refactoring = file.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
+
+        if (refactoring != null) {
+          if (refactoring is SuggestedRenameData) {
             val text = RefactoringBundle.message("rename.code.vision.text")
             val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
-            CodeVisionState.Ready(listOf(
+            return@readAction CodeVisionState.Ready(listOf(
               refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
             ))
           }
         }
+
+        return@readAction CodeVisionState.READY_EMPTY
       }
     }
-
-    return CodeVisionState.READY_EMPTY
   }
 
   override fun preparePreview(editor: Editor, file: PsiFile) {
