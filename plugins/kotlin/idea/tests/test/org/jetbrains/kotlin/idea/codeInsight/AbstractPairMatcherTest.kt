@@ -2,19 +2,18 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinPairMatcher
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
+import java.io.File
 
-@RunWith(JUnit38ClassRunner::class)
-class KotlinPairMatcherTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractPairMatcherTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
 
-    private fun doTest(testData: String) {
-        var docText = testData
+    protected fun doTest(path: String) {
+        var docText = FileUtil.loadFile(File(path))
         val startPos = docText.indexOf("<start>")
         if (startPos == -1) {
             throw IllegalArgumentException("<start> marker not found in testdata")
@@ -28,17 +27,5 @@ class KotlinPairMatcherTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(KotlinFileType.INSTANCE, docText)
         val pos = KotlinPairMatcher().getCodeConstructStart(myFixture.file, bracePos)
         assertEquals(startPos, pos)
-    }
-
-    fun testClass() {
-        doTest("/* Doc comment */ <start>class Foo : Bar, Baz <brace>{ fun xyzzy() { } }")
-    }
-
-    fun testFun() {
-        doTest("/* Doc comment */ <start>fun xyzzy(x: Int, y: String): Any <brace>{ }")
-    }
-
-    fun testFor() {
-        doTest("fun xyzzy() { for (x in 0..1)<start><brace>{ } }")
     }
 }

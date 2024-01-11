@@ -507,6 +507,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
 
+        testClass<AbstractPairMatcherTest> {
+            model("codeInsight/pairMatcher", pattern = KT_OR_KTS)
+        }
+
         testClass<AbstractK1IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }

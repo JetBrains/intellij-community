@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
+import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.quickDoc.AbstractFirRenderingKDocTest
@@ -42,6 +43,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
         testClass<AbstractKotlinFirBreadcrumbsTest> {
             model("../../../idea/tests/testData/codeInsight/breadcrumbs", pattern = KT_OR_KTS)
+        }
+        testClass<AbstractKotlinFirPairMatcherTest> {
+            model("../../../idea/tests/testData/codeInsight/pairMatcher")
         }
         testClass<AbstractKotlinFirUnwrapRemoveTest> {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeExpression", testMethodName = "doTestExpressionRemover")
