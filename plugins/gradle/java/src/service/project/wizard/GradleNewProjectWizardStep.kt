@@ -48,7 +48,6 @@ import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
@@ -347,31 +346,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
     return validateIdeaGradleCompatibility(withDialog, gradleVersion)
            ?: validateJdkCompatibility(gradleVersion, withDialog)
-           ?: validateGradleDslCompatibility(gradleVersion, withDialog)
            ?: validateLanguageCompatibility(this, gradleVersion, withDialog)
-  }
-
-  private fun ValidationInfoBuilder.validateGradleDslCompatibility(gradleVersion: GradleVersion, withDialog: Boolean): ValidationInfo? {
-    val oldestCompatibleGradle = "4.0"
-    if (gradleDsl == GradleDsl.KOTLIN && gradleVersion.isGradleOlderThan(oldestCompatibleGradle)) {
-      return validationWithDialog(
-        withDialog = withDialog,
-        message = GradleBundle.message(
-          "gradle.project.settings.kotlin.dsl.unsupported",
-          gradleVersion.version
-        ),
-        dialogTitle = GradleBundle.message(
-          "gradle.project.settings.kotlin.dsl.unsupported.title",
-          context.isCreatingNewProjectInt
-        ),
-        dialogMessage = GradleBundle.message(
-          "gradle.project.settings.kotlin.dsl.unsupported.message",
-          oldestCompatibleGradle,
-          gradleVersion.version
-        )
-      )
-    }
-    return null
   }
 
   protected fun ValidationInfoBuilder.validationWithDialog(
