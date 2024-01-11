@@ -68,11 +68,6 @@
                 anchor="left" doNotActivateOnStart="true" canCloseContents="true"
                 factoryClass="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowFactory"/>
 
-    <diff.actions.ShowDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
-
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
 
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
@@ -168,7 +163,6 @@
 
     <group id="Github.PullRequest.Changes.Toolbar">
       <reference id="Diff.ShowDiff"/>
-      <reference id="Github.PullRequest.Review.Submit"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
     </group>
@@ -219,14 +213,6 @@
            popup="true">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
                     relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
-                    anchor="before"/>
-    </group>
-    <group id="Github.PullRequest.Combined.Diff.Thread.View.Options"
-           class="org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewThreadsToggleAction"
-           icon="AllIcons.Actions.Show"
-           popup="true">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
-                    relative-to-action="Vcs.ShowDiffChangedLines"
                     anchor="before"/>
     </group>
   </actions>
