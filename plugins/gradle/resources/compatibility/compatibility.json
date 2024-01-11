@@ -15,7 +15,11 @@
       "Gradle 7.2 and Java 17 are partially compatible:",
       "https://github.com/gradle/gradle/issues/16857",
 
-      "Idea stops Java 7 supporting for Gradle JVM since 2023.2"
+      "Since 2023.2, IntelliJ Idea stops Java 7 supporting for Gradle JVM",
+      "https://youtrack.jetbrains.com/issue/IDEA-322594",
+
+      "Since 2024.1, IntelliJ Idea stops supporting Gradle versions that older than 4.5",
+      "https://youtrack.jetbrains.com/issue/IDEA-342292"
     ]
   },
   {
