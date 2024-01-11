@@ -15,9 +15,6 @@ import kotlinx.coroutines.launch
 
 internal interface InlineCompletionVariantsProvider : Disposable {
 
-  @RequiresEdt // TODO maybe we do not need that
-  fun currentVariant(): InlineCompletionPresentableVariant
-
   @RequiresEdt
   @RequiresBlockingContext
   fun useNextVariant(): InlineCompletionPresentableVariant
@@ -27,10 +24,7 @@ internal interface InlineCompletionVariantsProvider : Disposable {
   fun usePrevVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
-  fun getVariantsNumber(): Int
-
-  @RequiresEdt
-  fun estimateNonEmptyVariantsNumber(): IntRange
+  fun captureVariants(): List<InlineCompletionVariant.Snapshot>
 
   @RequiresEdt
   @RequiresBlockingContext
@@ -55,11 +49,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     prepareVariant(index = 0, force = true)
   }
 
-  override fun currentVariant(): InlineCompletionPresentableVariant {
-    ThreadingAssertions.assertEventDispatchThread()
-    return currentVariant
-  }
-
   override fun useNextVariant(): InlineCompletionPresentableVariant {
     ThreadingAssertions.assertEventDispatchThread()
     val index = currentVariant.index
@@ -74,49 +63,22 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return useVariant(prevIndex, force = false)
   }
 
-  override fun getVariantsNumber(): Int {
-    return variantsStates.size
-  }
-
-  override fun estimateNonEmptyVariantsNumber(): IntRange {
+  override fun captureVariants(): List<InlineCompletionVariant.Snapshot> {
     ThreadingAssertions.assertEventDispatchThread()
-
-    var nonEmptyResults = 0
-    var potentiallyNonEmptyResults = 0
-
-    for (state in variantsStates) {
-      when (state.status) {
-        Status.NOT_STARTED, Status.IN_PROGRESS_EMPTY -> {
-          potentiallyNonEmptyResults++
-        }
-        Status.IN_PROGRESS_NON_EMPTY, Status.COMPLETED_NON_EMPTY -> {
-          potentiallyNonEmptyResults++
-          nonEmptyResults++
-        }
-        Status.COMPLETED_EMPTY, Status.INVALIDATED -> Unit
-      }
-    }
-
-    return IntRange(nonEmptyResults, potentiallyNonEmptyResults)
+    return variantsStates.indices.map { getSnapshot(it) }
   }
 
   override fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
-    // TODO logging
-    // TODO logging of typed completely
     lateinit var currentVariantResult: UpdateResult
+
     for ((index, state) in variantsStates.withIndex()) {
       if (state.isInvalidated() || state.status == Status.COMPLETED_EMPTY) {
         continue
       }
 
-      val snapshot = InlineCompletionVariant.Snapshot(
-        state.data,
-        state.elements,
-        index,
-        isCurrentlyDisplaying = index == currentVariant.index
-      )
+      val snapshot = getSnapshot(index)
       val updated = updater(snapshot)
       if (currentVariant.index == index) {
         currentVariantResult = updated
@@ -178,6 +140,12 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   protected abstract fun dataChanged()
 
   @RequiresEdt
+  protected fun currentVariant(): InlineCompletionPresentableVariant {
+    ThreadingAssertions.assertEventDispatchThread()
+    return currentVariant
+  }
+
+  @RequiresEdt
   @RequiresBlockingContext
   protected fun elementComputed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -213,6 +181,23 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       }
     }
     return !state.isInvalidated()
+  }
+
+  @RequiresEdt
+  private fun getSnapshot(index: Int): InlineCompletionVariant.Snapshot {
+    val state = variantsStates[index]
+    return InlineCompletionVariant.Snapshot(
+      state.data,
+      state.elements,
+      index,
+      index == currentVariant.index,
+      when (state.status) {
+        Status.NOT_STARTED -> InlineCompletionVariant.Snapshot.State.UNTOUCHED
+        Status.IN_PROGRESS_EMPTY, Status.IN_PROGRESS_NON_EMPTY -> InlineCompletionVariant.Snapshot.State.IN_PROGRESS
+        Status.COMPLETED_EMPTY, Status.COMPLETED_NON_EMPTY -> InlineCompletionVariant.Snapshot.State.COMPUTED
+        Status.INVALIDATED -> InlineCompletionVariant.Snapshot.State.INVALIDATED
+      }
+    )
   }
 
   @RequiresEdt

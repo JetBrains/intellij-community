@@ -55,6 +55,14 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     callInlineCompletion()
     provider.computeNextElement()
 
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..3,
+      activeIndex = 0,
+      ExpectedVariant.inProgress("First"),
+      ExpectedVariant.untouched(),
+      ExpectedVariant.untouched()
+    )
+
     assertInlineElements { gray("First") }
 
     nextVariant()
@@ -63,6 +71,14 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     assertInlineElements { gray("First") }
     prevVariant()
     assertInlineElements { gray("First") }
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..3,
+      activeIndex = 0,
+      ExpectedVariant.inProgress("First"),
+      ExpectedVariant.untouched(),
+      ExpectedVariant.untouched()
+    )
 
     provider.computeNextElements(number = 4)
     assertInlineElements { gray("First"); gray("Second") }
@@ -81,6 +97,14 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
 
     prevVariant()
     assertInlineElements { gray("Fifth") }
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 3..3,
+      activeIndex = 2,
+      ExpectedVariant.computed("First", "Second"),
+      ExpectedVariant.computed("Third", "Fourth"),
+      ExpectedVariant.inProgress("Fifth")
+    )
 
     nextVariant()
     assertInlineElements { gray("First"); gray("Second") }
@@ -145,6 +169,8 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     }
 
     provider.assertComputed()
+
+    assertSessionSnapshot(1..1, 0, ExpectedVariant.computed("Only", "One", "Variant"))
   }
 
   @Test
@@ -227,8 +253,17 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     nextVariant()
     assertInlineRender("1")
 
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..2,
+      activeIndex = 5,
+      *Array(5) { ExpectedVariant.empty() },
+      ExpectedVariant.inProgress("1"),
+      ExpectedVariant.untouched()
+    )
+
     provider.computeNextElements(3)
     provider.assertComputed()
+
     assertInlineRender("11")
 
     nextVariant()
@@ -237,6 +272,14 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     assertInlineRender("11")
     prevVariant()
     assertInlineRender("22")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 2..2,
+      activeIndex = 6,
+      *Array(5) { ExpectedVariant.empty() },
+      ExpectedVariant.computed("1", "1"),
+      ExpectedVariant.computed("2", "2")
+    )
   }
 
   @Test
@@ -280,6 +323,15 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     assertInlineRender("Some variant 0")
     prevVariant()
     assertInlineRender("Some variant 1")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 2..7,
+      activeIndex = 1,
+      ExpectedVariant.computed("Some variant 0"),
+      ExpectedVariant.computed("Some variant 1"),
+      *Array(3) { ExpectedVariant.empty() },
+      *Array(5) { ExpectedVariant.untouched() }
+    )
 
     provider.computeNextElements(2)
     delay()

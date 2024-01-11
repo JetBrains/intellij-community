@@ -48,6 +48,12 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
     assertInlineElements { gray("ond "); gray(" third") }
     assertFileContent("first sec<caret>")
 
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..1,
+      activeIndex = 0,
+      ExpectedVariant.computed("ond ", " third")
+    )
+
     for (c in "ond  ") {
       typeChar(c)
     }
@@ -133,6 +139,16 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
       "ain(args: Array<String>)"
     )
 
+    assertSessionSnapshot(
+      nonEmptyVariants = 3..3,
+      activeIndex = 1,
+      ExpectedVariant.computed("ain(", "args: Array<String>)"),
+      ExpectedVariant.computed("inus(", "p1: Int, p2: Int)"),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.computed("ax(p1: Int, p2: Int)")
+    )
+
     typeChar('a')
     assertAllVariants("in(args: Array<String>)", "x(p1: Int, p2: Int)")
     prevVariant()
@@ -184,6 +200,9 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
 
     typeChars("before")
     assertInlineElements { skip("("); gray("after") }
+
+    assertSessionSnapshot(1..1, 0, ExpectedVariant.computed("(", "after"))
+
     typeChar('(')
     assertInlineHidden()
     assertFileContent("before(<caret>(")
@@ -217,8 +236,25 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
     provider.computeNextElements(5)
     typeChars("12")
     assertAllVariants("3456", "35")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 2..2,
+      activeIndex = 0,
+      ExpectedVariant.computed("34", "56"),
+      ExpectedVariant.inProgress("35"),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.invalidated()
+    )
+
     typeChars("34")
     assertAllVariants("56")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..1,
+      activeIndex = 0,
+      ExpectedVariant.computed("56"),
+      *Array(3) { ExpectedVariant.invalidated() }
+    )
 
     provider.computeNextElements(6, await = false)
     delay()
@@ -279,6 +315,13 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
     delay()
     assertAllVariants("45678")
 
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..1,
+      activeIndex = 0,
+      ExpectedVariant.computed("4", "5678"),
+      ExpectedVariant.invalidated()
+    )
+
     insert()
     assertInlineHidden()
     assertFileContent("12345678<caret>")
@@ -302,6 +345,13 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
 
     typeChar('4')
     assertAllVariants("5678")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 1..1,
+      activeIndex = 1,
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.computed("5678")
+    )
   }
 
   @Test
@@ -341,6 +391,8 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
       yield()
     }
     InlineCompletionHandler.unRegisterTestHandler()
+
+    assertSessionIsNotActive()
 
     // Lookup doesn't change anything
     fillLookup("1", "2", "3")
@@ -384,6 +436,18 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
 
     typeChar('4')
     assertAllVariants("444", "555", "567", "333")
+
+    assertSessionSnapshot(
+      nonEmptyVariants = 4..4,
+      activeIndex = 1,
+      ExpectedVariant.computed("333"),
+      ExpectedVariant.computed("444"),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.invalidated(),
+      ExpectedVariant.computed("555"),
+      ExpectedVariant.computed("567")
+    )
 
     typeChar('5')
     assertAllVariants("55", "67")

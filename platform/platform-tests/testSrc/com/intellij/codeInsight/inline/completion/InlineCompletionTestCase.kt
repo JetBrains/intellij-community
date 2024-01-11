@@ -6,9 +6,11 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +23,8 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
 
   protected suspend fun InlineCompletionLifecycleTestDSL.assertAllVariants(vararg expected: String) {
     withContext(Dispatchers.EDT) {
-      val session = checkNotNull(InlineCompletionSession.getOrNull(fixture.editor))
-      val sizeRange = checkNotNull(session.estimateNonEmptyVariantsNumber())
+      val session = assertNotNull(InlineCompletionSession.getOrNull(fixture.editor))
+      val sizeRange = assertNotNull(session.capture()?.nonEmptyVariantsRange)
       val size = sizeRange.first
       assertEquals(expected.size, size)
 
@@ -33,6 +35,32 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
       }
       assertInlineRender(firstVariant)
     }
+  }
+
+  protected suspend fun assertSessionSnapshot(nonEmptyVariants: IntRange, activeIndex: Int, vararg variants: ExpectedVariant) {
+    val snapshot = withContext(Dispatchers.EDT) {
+      val session = assertNotNull(InlineCompletionSession.getOrNull(myFixture.editor))
+      assertTrue(session.isActive())
+      assertNotNull(session.capture())
+    }
+
+    assertEquals(variants.size, snapshot.variants.size)
+    assertEquals(variants.size, snapshot.variantsNumber)
+    assertEquals(nonEmptyVariants, snapshot.nonEmptyVariantsRange)
+    snapshot.variants.withIndex().forEach { (index, actualVariant) ->
+      val expectedVariant = variants[index]
+      assertEquals(index, actualVariant.index)
+      assertEquals(activeIndex == index, actualVariant.isActive)
+      assertEquals(expectedVariant.elements, actualVariant.elements.map { it.text })
+    }
+
+    val activeVariant = snapshot.activeVariant
+    assertSame(snapshot.variants[activeVariant.index], activeVariant)
+    assertEquals(activeIndex, activeVariant.index)
+  }
+
+  protected fun assertSessionIsNotActive() {
+    assertFalse(assertNotNull(InlineCompletionSession.getOrNull (myFixture.editor)).isActive())
   }
 
   protected suspend fun InlineCompletionLifecycleTestDSL.typeChars(chars: String) {
@@ -46,6 +74,11 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
     CompletionContributor.EP.point.registerExtension(extension, testRootDisposable)
   }
 
+  protected fun <T : Any> assertNotNull(value: T?): T {
+    UsefulTestCase.assertNotNull(value)
+    return value!!
+  }
+
   protected class SimpleCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
       variants.forEach { variant ->
@@ -55,6 +88,23 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
 
     companion object {
       var variants = emptyList<String>()
+    }
+  }
+
+  protected class ExpectedVariant(
+    val elements: List<String>,
+    val state: InlineCompletionVariant.Snapshot.State
+  ) {
+    companion object {
+      fun untouched() = ExpectedVariant(emptyList(), InlineCompletionVariant.Snapshot.State.UNTOUCHED)
+
+      fun empty() = ExpectedVariant(emptyList(), InlineCompletionVariant.Snapshot.State.COMPUTED)
+
+      fun computed(vararg elements: String) = ExpectedVariant(elements.toList(), InlineCompletionVariant.Snapshot.State.COMPUTED)
+
+      fun inProgress(vararg elements: String) = ExpectedVariant(elements.toList(), InlineCompletionVariant.Snapshot.State.IN_PROGRESS)
+
+      fun invalidated() = ExpectedVariant(emptyList(), InlineCompletionVariant.Snapshot.State.INVALIDATED)
     }
   }
 }

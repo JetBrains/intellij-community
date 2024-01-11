@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 // TODO return full info: raw indices, actual indices, what is currently shown
+// TODO docs
 class InlineCompletionSession private constructor(
   editor: Editor,
   val provider: InlineCompletionProvider,
@@ -34,6 +35,18 @@ class InlineCompletionSession private constructor(
   }
 
   @RequiresEdt
+  fun isActive(): Boolean {
+    return variantsProvider != null && !context.isDisposed
+  }
+
+  @RequiresEdt
+  fun capture(): Snapshot? {
+    ThreadingAssertions.assertEventDispatchThread()
+    val variants = variantsProvider?.captureVariants() ?: return null
+    return Snapshot(variants)
+  }
+
+  @RequiresEdt
   @RequiresBlockingContext
   @ApiStatus.Experimental
   fun useNextVariant() {
@@ -47,19 +60,6 @@ class InlineCompletionSession private constructor(
   fun usePrevVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.usePrevVariant()
-  }
-
-  @RequiresEdt
-  @ApiStatus.Experimental
-  fun getVariantsNumber(): Int? {
-    return variantsProvider?.getVariantsNumber()
-  }
-
-  @RequiresEdt
-  @ApiStatus.Experimental
-  fun estimateNonEmptyVariantsNumber(): IntRange? {
-    ThreadingAssertions.assertEventDispatchThread()
-    return variantsProvider?.estimateNonEmptyVariantsNumber()
   }
 
   override fun dispose() = Unit
@@ -89,6 +89,24 @@ class InlineCompletionSession private constructor(
     updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
   ): Boolean {
     return checkNotNull(variantsProvider).update(updater)
+  }
+
+  class Snapshot @ApiStatus.Internal constructor(val variants: List<InlineCompletionVariant.Snapshot>) {
+
+    val activeVariant: InlineCompletionVariant.Snapshot = variants.first { it.isActive }
+
+    val variantsNumber: Int
+      get() = variants.size
+
+    val nonEmptyVariantsRange: IntRange = run {
+      val forSure = variants.count { !it.isEmpty() }
+      val potential = variants.count {
+        !it.isEmpty()
+        || it.state == InlineCompletionVariant.Snapshot.State.IN_PROGRESS
+        || it.state == InlineCompletionVariant.Snapshot.State.UNTOUCHED
+      }
+      IntRange(forSure, potential)
+    }
   }
 
   companion object {

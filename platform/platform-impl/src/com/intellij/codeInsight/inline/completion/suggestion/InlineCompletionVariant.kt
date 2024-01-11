@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.annotations.ApiStatus
 
 interface InlineCompletionVariant {
 
@@ -13,14 +14,26 @@ interface InlineCompletionVariant {
 
   val elements: Flow<InlineCompletionElement>
 
-  class Snapshot internal constructor(
+  // TODO docs
+  class Snapshot @ApiStatus.Internal constructor(
     val data: UserDataHolderBase,
     val elements: List<InlineCompletionElement>,
     val index: Int,
-    val isCurrentlyDisplaying: Boolean
+    val isActive: Boolean,
+    val state: State
   ) {
+
+    fun isEmpty(): Boolean = elements.isEmpty()
+
     fun copy(elements: List<InlineCompletionElement>): Snapshot {
-      return Snapshot(data, elements, index, isCurrentlyDisplaying)
+      return Snapshot(data, elements, index, isActive, state)
+    }
+
+    enum class State {
+      UNTOUCHED,
+      IN_PROGRESS,
+      COMPUTED,
+      INVALIDATED
     }
   }
 

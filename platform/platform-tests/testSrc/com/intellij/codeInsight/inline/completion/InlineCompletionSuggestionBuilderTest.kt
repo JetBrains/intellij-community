@@ -5,9 +5,12 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayT
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -73,7 +76,10 @@ internal class InlineCompletionSuggestionBuilderTest : InlineCompletionTestCase(
     delay()
     val context = assertContextExists()
     assertTrue(context.textToInsert().isNotEmpty())
-    assertEquals(variants, InlineCompletionSession.getOrNull(fixture.editor)?.getVariantsNumber())
+    val actualVariantsNumber = withContext(Dispatchers.EDT) {
+      InlineCompletionSession.getOrNull(fixture.editor)?.capture()?.variantsNumber
+    }
+    assertEquals(variants, actualVariantsNumber)
 
     val allVariants = collectVariants(variants)
     assertEquals(List(variants) { it.toString() }.sorted(), allVariants.sorted())
