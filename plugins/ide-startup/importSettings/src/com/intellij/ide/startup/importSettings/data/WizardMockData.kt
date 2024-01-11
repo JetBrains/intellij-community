@@ -48,7 +48,7 @@ class PluginServiceImpl : PluginService {
                             "An interactive viewer for log files with customizible highlighting, filtration and navigation to source code.")
   private val listOf = listOf(
     pl1,
-    WizardPluginImpl(AllIcons.TransferSettings.Vscode, "Ideolog", ""),
+    WizardPluginImpl(AllIcons.TransferSettings.Vscode, "Ideolog"),
     p2,
     WizardPluginImpl(AllIcons.TransferSettings.RecentProjects, "Heap Allocation Viewer",
                      "Highlights local object allocations, boxing, delegates and closure creations points"),
@@ -59,7 +59,7 @@ class PluginServiceImpl : PluginService {
     WizardPluginImpl(AllIcons.TransferSettings.RecentProjects, "Heap Allocation Viewer",
                      "Highlights local object allocations, boxing, delegates and closure creations points"),
     p3,
-    WizardPluginImpl(AllIcons.TransferSettings.Vsmac, "Ideolog", ""),
+    WizardPluginImpl(AllIcons.TransferSettings.Vsmac, "Ideolog"),
     p4,
     WizardPluginImpl(AllIcons.TransferSettings.PluginsAndFeatures, "Ideolog",
                      "An interactive viewer for log files with customizible highlighting, filtration and navigation to source code."),
@@ -87,7 +87,7 @@ class TestPluginImportProgress(lifetime: Lifetime) : TestImportProgress(lifetime
 
 class WizardPluginImpl(override val icon: Icon,
                        override val name: String,
-                       override val description: String,
+                       override val description: String? = null,
                        override val id: String = UUID.randomUUID().toString(),
                        override val state: IProperty<WizardPlugin.State> = Property(WizardPlugin.State.UNCHECKED)) : WizardPlugin {
 

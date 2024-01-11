@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.WizardService
 import com.intellij.ide.startup.importSettings.wizard.keymapChooser.KeymapChooserPage
+import com.intellij.ide.startup.importSettings.wizard.pluginChooser.PluginChooserPage
 
 interface WizardController : BaseController {
   companion object {
@@ -34,8 +35,8 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   }
 
   override fun goToPluginPage() {
-    //val page = PluginChooserPage(this)
-
+    val page = PluginChooserPage(this)
+    dialog.changePage(page)
   }
 
 }

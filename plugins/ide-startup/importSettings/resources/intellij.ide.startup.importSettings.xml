@@ -2,7 +2,7 @@
   <actions>
     <!--suppress PluginXmlI18n -->
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
-    <action id="ChooseKeymapAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ChooseKeymapAction" text="[INTERNAL] 5 Transfer: ChooseKeymapAction" internal="true"/>
+    <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.wizard.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
     <!--suppress PluginXmlCapitalization -->
     <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.TransferSettingsDemoAction"

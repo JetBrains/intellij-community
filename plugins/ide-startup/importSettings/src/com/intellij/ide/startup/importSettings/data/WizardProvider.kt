@@ -69,7 +69,7 @@ interface WizardPlugin {
   val id: String
   val icon: Icon
   val name: String
-  val description: String
+  val description: String?
 
   val state: IProperty<State>
 }
