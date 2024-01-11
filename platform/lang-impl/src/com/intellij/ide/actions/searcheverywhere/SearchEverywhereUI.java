@@ -664,6 +664,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     };
 
+    myUsagePreviewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+
     updatePreviewVisibility();
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
