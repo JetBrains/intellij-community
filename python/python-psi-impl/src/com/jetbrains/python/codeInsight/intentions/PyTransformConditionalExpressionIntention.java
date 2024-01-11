@@ -1,14 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -24,38 +24,23 @@ import org.jetbrains.annotations.NotNull;
  * else:
  *    x = b
  */
-public final class PyTransformConditionalExpressionIntention extends PyBaseIntentionAction {
+public final class PyTransformConditionalExpressionIntention extends PsiUpdateModCommandAction<PsiElement> {
+
+  PyTransformConditionalExpressionIntention() {
+    super(PsiElement.class);
+  }
+
   @Override
   @NotNull
   public String getFamilyName() {
     return PyPsiBundle.message("INTN.transform.into.if.else.statement");
   }
 
-  @Override
-  @NotNull
-  public String getText() {
-    return PyPsiBundle.message("INTN.transform.into.if.else.statement");
-  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
-    PyAssignmentStatement expression =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyAssignmentStatement.class);
-    if (expression != null && expression.getAssignedValue() instanceof PyConditionalExpression) {
-      return true;
-    }
-    return false;
-  }
-
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PyAssignmentStatement assignmentStatement =
-          PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyAssignmentStatement.class);
-    assert assignmentStatement != null;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyAssignmentStatement assignmentStatement =
+      PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     final PyExpression assignedValue =
       assignmentStatement.getAssignedValue();
     if (assignedValue instanceof PyConditionalExpression expression) {
@@ -66,14 +51,29 @@ public final class PyTransformConditionalExpressionIntention extends PyBaseInten
         final PyExpression leftHandSideExpression = assignmentStatement.getLeftHandSideExpression();
         if (leftHandSideExpression != null) {
           final String targetText = leftHandSideExpression.getText();
-          final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+          final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
           final String text = "if " + condition.getText() + ":\n\t" + targetText + " = " + truePartText
-                        + "\nelse:\n\t" + targetText + " = " + falsePart.getText();
-          final PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyIfStatement.class, text);
+                              + "\nelse:\n\t" + targetText + " = " + falsePart.getText();
+          final PyIfStatement ifStatement =
+            elementGenerator.createFromText(LanguageLevel.forElement(expression), PyIfStatement.class, text);
           assignmentStatement.replace(ifStatement);
         }
       }
     }
   }
 
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof PyFile)) {
+      return null;
+    }
+
+    PyAssignmentStatement expression =
+      PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+    if (expression != null && expression.getAssignedValue() instanceof PyConditionalExpression) {
+      return super.getPresentation(context, element);
+    }
+    return null;
+  }
 }
