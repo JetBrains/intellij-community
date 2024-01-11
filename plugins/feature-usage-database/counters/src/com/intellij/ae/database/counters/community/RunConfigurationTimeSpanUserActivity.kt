@@ -131,8 +131,8 @@ internal class RunConfigurationListener : ExecutionListener {
     if (env.runProfile.javaClass.simpleName == "DatabaseScriptRunConfiguration") {
       return false
     }
-    return env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) }
-           || env.executor is DefaultDebugExecutor || env.executor.id.contains("debug", true)
+
+    return true
   }
 }
 
