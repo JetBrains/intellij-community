@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -28,40 +28,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class PyDemorganIntention extends PyBaseIntentionAction {
-  @NotNull
-  @Override
-  public String getText() {
-    return PyPsiBundle.message("INTN.NAME.demorgan.law");
+public final class PyDemorganIntention extends PsiUpdateModCommandAction<PsiElement> {
+  PyDemorganIntention() {
+    super(PsiElement.class);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return PyPsiBundle.message("INTN.NAME.demorgan.law");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
     }
 
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                      PyBinaryExpression.class);
+    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     if (expression != null) {
       final PyElementType op = expression.getOperator();
       if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
-        return true;
+        return super.getPresentation(context, element);
       }
     }
-    return false;
+    return null;
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                      PyBinaryExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     assert expression != null;
     final PyElementType op = expression.getOperator();
     assert op != null;

@@ -1,19 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,7 +31,10 @@ import java.util.List;
  *      "but \"this\" includes far too much" "\n"
  *      "whitespace at the start")
  */
-public final class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction {
+public final class PyConvertTripleQuotedStringIntention extends PsiUpdateModCommandAction<PsiElement> {
+  PyConvertTripleQuotedStringIntention() {
+    super(PsiElement.class);
+  }
 
   @Override
   @NotNull
@@ -38,39 +42,31 @@ public final class PyConvertTripleQuotedStringIntention extends PyBaseIntentionA
     return PyPsiBundle.message("INTN.triple.quoted.string");
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return PyPsiBundle.message("INTN.triple.quoted.string");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
     }
 
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset), PyStringLiteralExpression.class);
+    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (pyString != null) {
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(pyString, PyDocStringOwner.class);
       if (docStringOwner != null) {
-        if (docStringOwner.getDocStringExpression() == pyString) return false;
+        if (docStringOwner.getDocStringExpression() == pyString) return null;
       }
       for (StringNodeInfo info : extractStringNodesInfo(pyString)) {
-        if (info.isTripleQuoted() && info.isTerminated() && info.getNode().getTextRange().contains(caretOffset)) {
-          return true;
+        if (info.isTripleQuoted() && info.isTerminated() && info.getNode().getTextRange().contains(context.offset())) {
+          return super.getPresentation(context, element);
         }
       }
     }
-    return false;
+    return null;
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                           PyStringLiteralExpression.class);
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
     if (pyString != null) {
       final StringBuilder result = new StringBuilder();
       final List<StringNodeInfo> nodeInfos = extractStringNodesInfo(pyString);
