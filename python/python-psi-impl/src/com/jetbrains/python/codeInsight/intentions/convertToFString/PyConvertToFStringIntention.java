@@ -15,16 +15,15 @@
  */
 package com.jetbrains.python.codeInsight.intentions.convertToFString;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.intentions.PyBaseIntentionAction;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,12 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public final class PyConvertToFStringIntention extends PyBaseIntentionAction {
+public final class PyConvertToFStringIntention extends PsiUpdateModCommandAction<PsiElement> {
+  PyConvertToFStringIntention() {
+    super(PsiElement.class);
+  }
+
+
   @Nls
   @NotNull
   @Override
@@ -43,32 +47,25 @@ public final class PyConvertToFStringIntention extends PyBaseIntentionAction {
     return PyPsiBundle.message("INTN.convert.to.fstring.literal");
   }
 
-  @NotNull
+
   @Override
-  public String getText() {
-    return getFamilyName();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile) || LanguageLevel.forElement(context.file()).isOlderThan(LanguageLevel.PYTHON36)) return null;
+
+    final BaseConvertToFStringProcessor processor = findSuitableProcessor(element);
+    if (processor != null && processor.isRefactoringAvailable()) return super.getPresentation(context, element);
+    return null;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || LanguageLevel.forElement(file).isOlderThan(LanguageLevel.PYTHON36)) return false;
-
-    final BaseConvertToFStringProcessor processor = findSuitableProcessor(editor, file);
-    return processor != null && processor.isRefactoringAvailable();
-  }
-
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final BaseConvertToFStringProcessor processor = findSuitableProcessor(editor, file);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final BaseConvertToFStringProcessor processor = findSuitableProcessor(element);
     assert processor != null;
     processor.doRefactoring();
   }
 
   @Nullable
-  private static BaseConvertToFStringProcessor findSuitableProcessor(@NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
-    if (anchor == null) return null;
-
+  private static BaseConvertToFStringProcessor findSuitableProcessor(@NotNull PsiElement anchor) {
     final PyBinaryExpression binaryExpr = PsiTreeUtil.getParentOfType(anchor, PyBinaryExpression.class);
     if (binaryExpr != null && binaryExpr.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression pyString = as(binaryExpr.getLeftExpression(), PyStringLiteralExpression.class);
