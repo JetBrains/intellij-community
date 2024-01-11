@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -331,9 +332,9 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
           expression instanceof PsiTypeCastExpression) {
         return false;
       }
-      if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiCallExpression)) {
-        PsiElement element = ((PsiReferenceExpression)expression).resolve();
-        if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
+      if (expression instanceof PsiReferenceExpression ref && !(expression.getParent() instanceof PsiCallExpression)) {
+        PsiElement element = ref.resolve();
+        if (element instanceof PsiField field && !field.hasModifierProperty(PsiModifier.FINAL)) {
           return false;
         }
 

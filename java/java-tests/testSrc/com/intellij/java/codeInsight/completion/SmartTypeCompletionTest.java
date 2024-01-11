@@ -460,6 +460,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayAccessIndex() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary(reason = "Need to resolve java.lang.String")
   public void testThrowExceptionConstructor() { doTest('\n'); }
 
   public void testJavadocThrows() { doTest(); }

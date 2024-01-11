@@ -4,6 +4,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -112,20 +113,23 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   }
 
   protected void performIntroduce(BaseExpressionToFieldHandler.Settings settings) {
-    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-      if (getLocalVariable() != null) {
-        final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
-        fieldRunnable.run();
-        updateVariable(fieldRunnable.getField());
-      }
-      else {
-        final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-          new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(), myOccurrences,
-                                                                  getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
-        convertToFieldRunnable.run();
-        updateVariable(convertToFieldRunnable.getField());
-      }
-    });
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(
+      () -> DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> {
+        if (getLocalVariable() != null) {
+          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings,
+                                                           myOccurrences);
+          fieldRunnable.run();
+          updateVariable(fieldRunnable.getField());
+        }
+        else {
+          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(), myOccurrences,
+                                                                    getAnchorElementIfAll(), getAnchorElement(), myEditor,
+                                                                    getParentClass());
+          convertToFieldRunnable.run();
+          updateVariable(convertToFieldRunnable.getField());
+        }
+      }));
   }
 }

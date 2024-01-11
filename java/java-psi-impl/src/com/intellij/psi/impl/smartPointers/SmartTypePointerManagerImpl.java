@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -27,7 +28,7 @@ public final class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   @Override
   @NotNull
   public SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
-    final SmartTypePointer pointer = type.accept(new SmartTypeCreatingVisitor());
+    final SmartTypePointer pointer = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> type.accept(new SmartTypeCreatingVisitor()));
     return pointer != null ? pointer : NULL_POINTER;
   }
 

@@ -417,6 +417,7 @@ public class Normal8CompletionTest extends NormalCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void test_intersection_type_members() {
     myFixture.configureByText("a.java", "import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}");
     myFixture.completeBasic();

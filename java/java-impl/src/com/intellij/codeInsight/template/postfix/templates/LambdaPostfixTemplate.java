@@ -2,12 +2,13 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class LambdaPostfixTemplate extends JavaEditablePostfixTemplate {
+public class LambdaPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public LambdaPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("lambda", "() -> $EXPR$", "() -> expr",
           Collections.emptySet(), LanguageLevel.JDK_1_8, true, provider);

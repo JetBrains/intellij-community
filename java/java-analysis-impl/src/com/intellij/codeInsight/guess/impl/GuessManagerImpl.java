@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -36,6 +37,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +297,8 @@ public final class GuessManagerImpl extends GuessManager {
 
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
-    ClassInheritorsSearch.search(refClass).forEach(new PsiElementProcessorAdapter<>(processor));
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+      () -> ClassInheritorsSearch.search(refClass).forEach(new PsiElementProcessorAdapter<>(processor)));
     if (processor.isOverflow()) return;
 
     for (PsiClass derivedClass : processor.getCollection()) {
@@ -425,27 +428,33 @@ public final class GuessManagerImpl extends GuessManager {
     PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
     if (place == null) return Collections.emptyList();
 
-    List<PsiType> result = null;
-    if (!ControlFlowAnalyzer.inlinerMayInferPreciseType(place)) {
-      GuessTypeVisitor visitor = tryGuessingTypeWithoutDfa(place, honorAssignments);
-      if (!visitor.isDfaNeeded()) {
-        result = visitor.mySpecificType == null ?
-                 Collections.emptyList() : Collections.singletonList(DfaPsiUtil.tryGenerify(expr, visitor.mySpecificType));
+    DumbService dumbService = DumbService.getInstance(myProject);
+    PsiType type = dumbService.computeWithAlternativeResolveEnabled(() -> {
+      if (!ControlFlowAnalyzer.inlinerMayInferPreciseType(place)) {
+        GuessTypeVisitor visitor = tryGuessingTypeWithoutDfa(place, honorAssignments);
+        if (!visitor.isDfaNeeded()) return visitor.mySpecificType;
       }
+      return getTypeFromDataflow(expr, honorAssignments);
+    });
+    return dumbService.computeWithAlternativeResolveEnabled(() -> postFilter(expr, type));
+  }
+
+  @NotNull
+  private static List<PsiType> flattenAndGenerify(@NotNull PsiExpression expr, PsiType psiType) {
+    if (psiType instanceof PsiIntersectionType intersection) {
+      return ContainerUtil.mapNotNull(intersection.getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));
     }
-    if (result == null) {
-      PsiType psiType = getTypeFromDataflow(expr, honorAssignments);
-      if (psiType instanceof PsiIntersectionType intersection) {
-        result = ContainerUtil.mapNotNull(intersection.getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));
-      }
-      else if (psiType != null) {
-        result = Collections.singletonList(DfaPsiUtil.tryGenerify(expr, psiType));
-      }
-      else {
-        result = Collections.emptyList();
-      }
+    else if (psiType != null) {
+      return Collections.singletonList(DfaPsiUtil.tryGenerify(expr, psiType));
     }
-    result = ContainerUtil.filter(result, t -> {
+    else {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  private static List<PsiType> postFilter(@NotNull PsiExpression expr, PsiType type) {
+    List<PsiType> result = ContainerUtil.filter(flattenAndGenerify(expr, type), t -> {
       PsiClass typeClass = PsiUtil.resolveClassInType(t);
       return typeClass == null || PsiUtil.isAccessible(typeClass, expr, null);
     });

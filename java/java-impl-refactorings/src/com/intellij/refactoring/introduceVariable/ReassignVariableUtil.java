@@ -11,6 +11,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -132,7 +133,7 @@ public final class ReassignVariableUtil {
           scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
-    if (scope == null) return proc;
+    if (scope == null || DumbService.isDumb(scope.getProject())) return proc;
     PsiScopesUtil.treeWalkUp(proc, declaration, scope);
     return proc;
   }

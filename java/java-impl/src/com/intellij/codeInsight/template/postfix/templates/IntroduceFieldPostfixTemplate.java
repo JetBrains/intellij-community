@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpressionSelector {
+public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpressionSelector implements DumbAware {
   public IntroduceFieldPostfixTemplate() {
     super("field", "myField = expr", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }

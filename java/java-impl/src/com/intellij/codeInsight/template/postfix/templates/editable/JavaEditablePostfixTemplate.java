@@ -69,7 +69,8 @@ public class JavaEditablePostfixTemplate
 
   @Override
   protected List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-    if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
+    DumbService dumbService = DumbService.getInstance(context.getProject());
+    if (dumbService.isDumb() && !DumbService.isDumbAware(this)) return Collections.emptyList();
     if (!PsiUtil.getLanguageLevel(context).isAtLeast(myMinimumLanguageLevel)) {
       return Collections.emptyList();
     }
@@ -83,8 +84,9 @@ public class JavaEditablePostfixTemplate
     }
 
 
-    return ContainerUtil.filter(expressions, Conditions.and(e -> PSI_ERROR_FILTER.value(e)
-                                                                 && e instanceof PsiExpression && e.getTextRange().getEndOffset() == offset, getExpressionCompositeCondition()));
+    return dumbService.computeWithAlternativeResolveEnabled(() -> ContainerUtil.filter(expressions, Conditions.and(
+      e -> PSI_ERROR_FILTER.value(e) && e instanceof PsiExpression && e.getTextRange().getEndOffset() == offset,
+      getExpressionCompositeCondition())));
   }
 
   @NotNull

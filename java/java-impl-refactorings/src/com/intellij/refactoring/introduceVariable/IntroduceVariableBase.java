@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -324,7 +325,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
 
-    final PsiType originalType = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr);
+    DumbService dumbService = DumbService.getInstance(project);
+    final PsiType originalType =
+      dumbService.computeWithAlternativeResolveEnabled(() -> CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr));
     if (originalType == null || LambdaUtil.notInferredType(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
       showErrorMessage(project, editor, message);
@@ -401,7 +404,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
         else {
           SlowOperations.allowSlowOperations(
-            () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce));
+            () -> dumbService.runWithAlternativeResolveEnabled(
+              () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce)));
         }
       }
 
@@ -915,7 +919,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (parent == null) return null;
       PsiType type = expression.getType();
       PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiStatement.class);
-      ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, expression, type);
+      ChainCallExtractor extractor = DumbService.getInstance(expression.getProject())
+        .computeWithAlternativeResolveEnabled(() -> ChainCallExtractor.findExtractor(lambda, expression, type));
       if (extractor == null) return null;
       PsiParameter parameter = lambda.getParameterList().getParameters()[0];
       if (!ReferencesSearch.search(parameter).forEach((Processor<PsiReference>)ref ->

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,10 +87,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     Ref<PsiType[]> mainTypes = new Ref<>();
     Ref<PsiType[]> allTypes = new Ref<>();
-    Runnable calculateTypes = () -> ReadAction.run(() -> {
+    Runnable calculateTypes = () -> ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
       mainTypes.set(getTypesForMain());
       allTypes.set(getTypesForAll(true));
-    });
+    }));
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(calculateTypes, JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
     }
@@ -365,9 +367,9 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
     if (defaultType == null) return;
-    ReadAction.nonBlocking(() -> {
+    ReadAction.nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;
-    }).finishOnUiThread(ModalityState.nonModal(), stat -> {
+    })).finishOnUiThread(ModalityState.nonModal(), stat -> {
       if (stat == null) return;
       StatisticsManager.getInstance().incUseCount(stat);
     }).submit(NonUrgentExecutor.getInstance());

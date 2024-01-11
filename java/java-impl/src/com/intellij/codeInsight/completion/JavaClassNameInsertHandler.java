@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -84,7 +85,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       context.setAddCompletionChar(false);
     }
 
-    PsiTypeLookupItem.addImportForItem(context, psiClass);
+    PsiClass finalPsiClass = psiClass;
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> PsiTypeLookupItem.addImportForItem(context, finalPsiClass));
     if (!context.getOffsetMap().containsOffset(refEnd)) {
       return;
     }
@@ -214,7 +216,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-      return !isArrayTypeExpected((PsiExpression)prevElement.getParent());
+      return !DumbService.getInstance(position.getProject())
+        .computeWithAlternativeResolveEnabled(() -> isArrayTypeExpected((PsiExpression)prevElement.getParent()));
     }
 
     return false;

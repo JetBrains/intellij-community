@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -296,18 +297,20 @@ final class VariableExtractor {
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
-
-    PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
-      .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
-    Project project = expression.getProject();
-    NullabilityAnnotationInfo nullabilityAnnotationInfo =
-      NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
-    NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
-    if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
-        // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
-        // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
-        ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
-      return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+    if (!DumbService.isDumb(expression.getProject())) {
+      // NullableNotNullManager doesn't work well in dumb mode
+      PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
+        .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
+      Project project = expression.getProject();
+      NullabilityAnnotationInfo nullabilityAnnotationInfo =
+        NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
+      NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
+      if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
+          // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
+          // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
+          ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
+        return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+      }
     }
     return type.annotate(TypeAnnotationProvider.EMPTY);
   }

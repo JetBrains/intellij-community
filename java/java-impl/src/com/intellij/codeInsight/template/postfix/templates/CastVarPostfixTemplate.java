@@ -11,6 +11,8 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -27,7 +29,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
-public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
+public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   private static final String TYPE_VAR = "typeVar";
   private static final @NonNls String VAR_NAME = "varName";
 
@@ -60,14 +62,21 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
   }
 
   private static void fill(@NotNull Template template, PsiType @NotNull [] suggestedTypes, @NotNull PsiElement context) {
-    Set<LookupElement> itemSet = new LinkedHashSet<>();
-    for (PsiType type : suggestedTypes) {
-      itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
-    }
+    Set<LookupElement> itemSet =
+      DumbService.getInstance(context.getProject()).computeWithAlternativeResolveEnabled(() -> createLookupItems(suggestedTypes));
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], context.getProject()) : null;
 
     Expression expr = new ConstantNode(result).withLookupItems(itemSet.size() > 1 ? itemSet : Collections.emptyList());
 
     template.addVariable(TYPE_VAR, expr, expr, true);
+  }
+
+  @NotNull
+  private static Set<LookupElement> createLookupItems(PsiType @NotNull [] suggestedTypes) {
+    Set<LookupElement> itemSet = new LinkedHashSet<>();
+    for (PsiType type : suggestedTypes) {
+      itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
+    }
+    return itemSet;
   }
 }

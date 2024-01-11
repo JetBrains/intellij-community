@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -149,7 +150,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-    if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
+    if (!DumbService.isDumb(myParentClass.getProject()) && TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
     initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);

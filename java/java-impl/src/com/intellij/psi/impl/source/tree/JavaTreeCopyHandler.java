@@ -4,6 +4,8 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,13 +37,14 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
           elementType == JavaElementType.REFERENCE_EXPRESSION ||
           elementType == JavaElementType.METHOD_REF_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = SourceTreeToPsiMap.treeToPsiNotNull(element);
+        Project project = ref.getProject();
         PsiClass refClass = element.getCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY);
         if (refClass != null) {
           element.putCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY, null);
 
           PsiManager manager = refClass.getManager();
-          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(refClass.getProject());
-          PsiElement refElement = ref.resolve();
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+          PsiElement refElement = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(ref::resolve);
           try {
             if (refClass != refElement && !manager.areElementsEquivalent(refClass, refElement)) {
               if (((CompositeElement)element).findChildByRole(ChildRole.QUALIFIER) == null) {
@@ -64,7 +67,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
           if (refMember != null) {
             LOG.assertTrue(ref instanceof PsiReferenceExpression);
             element.putCopyableUserData(JavaTreeGenerator.REFERENCED_MEMBER_KEY, null);
-            PsiElement refElement = ref.resolve();
+            PsiElement refElement = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(ref::resolve);
             if (refMember != refElement && !refMember.getManager().areElementsEquivalent(refMember, refElement)) {
               PsiClass containingClass = refMember.getContainingClass();
               if (containingClass != null) {
@@ -190,7 +193,8 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
     IElementType originalType = original.getElementType();
     if (originalType == JavaElementType.REFERENCE_EXPRESSION) {
       PsiJavaCodeReferenceElement javaRefElement = SourceTreeToPsiMap.treeToPsiNotNull(original);
-      JavaResolveResult resolveResult = javaRefElement.advancedResolve(false);
+      JavaResolveResult resolveResult = DumbService.getInstance(javaRefElement.getProject()).computeWithAlternativeResolveEnabled(
+        () -> javaRefElement.advancedResolve(false));
       PsiElement target = resolveResult.getElement();
       if (target instanceof PsiClass &&
           (original.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION ||
@@ -208,7 +212,8 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
         kind = ((PsiJavaCodeReferenceElementImpl)original).getKindEnum(((PsiJavaCodeReferenceElementImpl)original).getContainingFile());
       switch (kind) {
         case CLASS_NAME_KIND, CLASS_OR_PACKAGE_NAME_KIND, CLASS_IN_QUALIFIED_NEW_KIND -> {
-          PsiElement target = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(original).resolve();
+          PsiJavaCodeReferenceElement element = SourceTreeToPsiMap.treeToPsiNotNull(original);
+          PsiElement target = DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(element::resolve);
           if (target instanceof PsiClass) {
             ref.putCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY, (PsiClass)target);
           }

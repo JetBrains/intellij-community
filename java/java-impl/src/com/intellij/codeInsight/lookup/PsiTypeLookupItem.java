@@ -7,6 +7,8 @@ import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -216,14 +218,17 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
                                                 int bracketsCount,
                                                 boolean diamond,
                                                 InsertHandler<PsiTypeLookupItem> importFixer) {
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
+    if (type instanceof PsiClassType classType) {
+      PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
 
       if (psiClass != null) {
         String name = psiClass.getName();
         if (name != null) {
-          PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
+          Project project = psiClass.getProject();
+          DumbService service = DumbService.getInstance(project);
+          PsiResolveHelper helper = JavaPsiFacade.getInstance(project).getResolveHelper();
+          PsiClass resolved = service.computeWithAlternativeResolveEnabled(() -> helper.resolveReferencedClass(name, context));
           String[] allStrings;
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
             // inner class name should be shown qualified if it's not accessible by single name

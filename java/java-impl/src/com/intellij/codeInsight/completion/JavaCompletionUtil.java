@@ -43,10 +43,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairFunction;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -660,7 +657,7 @@ public final class JavaCompletionUtil {
     Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
     PsiReference reference = file.findReferenceAt(startOffset);
-    if (reference != null && manager.areElementsEquivalent(psiClass, reference.resolve())) {
+    if (reference != null && manager.areElementsEquivalent(psiClass, resolve(project, reference))) {
       return endOffset;
     }
 
@@ -745,12 +742,19 @@ public final class JavaCompletionUtil {
   }
 
   @Nullable
+  private static PsiElement resolve(Project project, PsiReference reference) {
+    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(reference::resolve);
+  }
+
+  @Nullable
   static PsiElement resolveReference(PsiReference psiReference) {
-    if (psiReference instanceof PsiPolyVariantReference) {
-      ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
-      if (results.length == 1) return results[0].getElement();
-    }
-    return psiReference.resolve();
+    return DumbService.getInstance(psiReference.getElement().getProject()).computeWithAlternativeResolveEnabled(() -> {
+      if (psiReference instanceof PsiPolyVariantReference) {
+        ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
+        if (results.length == 1) return results[0].getElement();
+      }
+      return psiReference.resolve();
+    });
   }
 
   @Nullable

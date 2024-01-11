@@ -20,10 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.indexing.DumbModeAccessType;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,47 +29,29 @@ import static com.intellij.openapi.util.Conditions.and;
 
 public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
-  private static final Condition<PsiElement> SWITCH_TYPE = expression -> {
-    if (!(expression instanceof PsiExpression)) return false;
+  private static final Condition<PsiElement> SWITCH_TYPE = e -> {
+    if (!(e instanceof PsiExpression expression)) return false;
 
-    final PsiType type = getType((PsiExpression)expression);
+    return DumbService.getInstance(expression.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      final PsiType type = expression.getType();
 
-    if (type == null) return false;
-    if (PsiTypes.intType().isAssignableFrom(type)) return true;
-    if (type instanceof PsiClassType) {
-      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
+      if (type == null) return false;
+      if (PsiTypes.intType().isAssignableFrom(type)) return true;
+      if (type instanceof PsiClassType classType) {
+        if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
 
-      final PsiClass psiClass = getClassType(expression.getProject(), (PsiClassType)type);
-      if (psiClass != null && psiClass.isEnum()) return true;
-    }
+        final PsiClass psiClass = classType.resolve();
+        if (psiClass != null && psiClass.isEnum()) return true;
+      }
 
-    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      PsiFile containingFile = expression.getContainingFile();
-      if (containingFile instanceof PsiJavaFile) {
-        LanguageLevel level = ((PsiJavaFile)containingFile).getLanguageLevel();
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && expression.getContainingFile() instanceof PsiJavaFile javaFile) {
+        LanguageLevel level = javaFile.getLanguageLevel();
         if (level.isAtLeast(LanguageLevel.JDK_1_7)) return true;
       }
-    }
 
-    return false;
+      return false;
+    });
   };
-
-  @Contract(pure = true)
-  private static @Nullable PsiType getType(@NotNull PsiExpression expression) {
-    if (!DumbService.isDumb(expression.getProject())) {
-      return expression.getType();
-    }
-    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(expression::getType);
-  }
-
-  @Contract(pure = true)
-  private static @Nullable PsiClass getClassType(@NotNull Project project, @NotNull PsiClassType type) {
-    if (!DumbService.isDumb(project)) {
-      return type.resolve();
-    }
-
-    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(type::resolve);
-  }
 
   public SwitchStatementPostfixTemplate() {
     super("switch", "switch(expr)", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, selectorTopmost(SWITCH_TYPE));

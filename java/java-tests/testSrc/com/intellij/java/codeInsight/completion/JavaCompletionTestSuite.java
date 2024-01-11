@@ -4,10 +4,13 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
+import com.intellij.java.codeInsight.template.postfix.templates.*;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import java.util.List;
 
 /**
  * To run a separate test from this suite with needed IndexingMode in an IDE, comment in {@link #suite()}
@@ -32,8 +35,10 @@ public class JavaCompletionTestSuite extends TestSuite {
     System.setProperty("intellij.build.test.groups", "JAVA_TESTS");
     TestCaseLoader myTestCaseLoader = new TestCaseLoader(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME);
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
-    for (Class<?> aClass : myTestCaseLoader.getClasses()) {
-      if (!aClass.getSimpleName().contains("Completion")) continue;
+    List<Class<?>> classes = myTestCaseLoader.getClasses();
+    for (Class<?> aClass : classes) {
+      if (!aClass.getSimpleName().contains("Completion") && 
+          !PostfixTemplateTestCase.class.isAssignableFrom(aClass)) continue;
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       // Exclude feature suggester tests
