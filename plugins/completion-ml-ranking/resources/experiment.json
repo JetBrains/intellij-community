@@ -46,14 +46,14 @@
     },
     {
       "number": 15,
-      "description": "Full Line - Inline independent DROP UNKNOWN RED CODE",
+      "description": "Full Line - ONNX",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 16,
-      "description": "Full Line - Inline with trigger model",
+      "description": "Full Line - ONNX + trigger/filter model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -81,7 +81,28 @@
     },
     {
       "number": 22,
-      "description": "Full Line - Inline independent",
+      "description": "Full Line - Llama 1536ctx",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 23,
+      "description": "Full Line - Llama 1536ctx drop initialization on type",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 24,
+      "description": "Full Line - RAG",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 25,
+      "description": "Full Line - disable stash by newline",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -97,7 +118,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [13, 15, 16, 15, 16, 22, 22, 13],
+      "includeGroups": [15, 15, 16, 16, 22, 22, 24, 24],
       "shouldLogElementFeatures": true
     },
     {
@@ -121,7 +142,7 @@
     {
       "id": "javascript",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ],
+      "includeGroups": [ 13, 13, 22, 22, 23, 23, 25, 25 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -175,7 +196,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
+      "includeGroups": [ 13, 13, 22, 22, 23, 23, 25, 25 ],
       "shouldLogElementFeatures": false
     }
   ]
