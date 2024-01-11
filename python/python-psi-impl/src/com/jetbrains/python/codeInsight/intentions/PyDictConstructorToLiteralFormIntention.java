@@ -1,16 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -21,7 +23,33 @@ import org.jetbrains.annotations.NotNull;
  * dict(foo) -> no transformation
  * dict(**foo) -> no transformation
  */
-public final class PyDictConstructorToLiteralFormIntention extends PyBaseIntentionAction {
+public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModCommandAction<PsiElement> {
+  PyDictConstructorToLiteralFormIntention() {
+    super(PsiElement.class);
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext actionContext, @NotNull PsiElement element) {
+    if (!(actionContext.file() instanceof PyFile)) {
+      return null;
+    }
+
+    PyCallExpression expression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+
+    if (expression != null && expression.isCalleeText("dict")) {
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(actionContext.project(), actionContext.file());
+      PyType type = context.getType(expression);
+      if (type != null && type.isBuiltin()) {
+        PyExpression[] argumentList = expression.getArguments();
+        for (PyExpression argument : argumentList) {
+          if (!(argument instanceof PyKeywordArgument)) return null;
+        }
+        return super.getPresentation(actionContext, element);
+      }
+    }
+    return null;
+  }
+
   @Override
   @NotNull
   public String getFamilyName() {
@@ -29,39 +57,10 @@ public final class PyDictConstructorToLiteralFormIntention extends PyBaseIntenti
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return PyPsiBundle.message("INTN.convert.dict.constructor.to.dict.literal");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PyCallExpression expression =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
-
-    if (expression != null && expression.isCalleeText("dict")) {
-      final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-      PyType type = context.getType(expression);
-      if (type != null && type.isBuiltin()) {
-        PyExpression[] argumentList = expression.getArguments();
-        for (PyExpression argument : argumentList) {
-          if (!(argument instanceof PyKeywordArgument)) return false;
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyCallExpression expression =
-          PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
     if (expression != null) {
       replaceDictConstructor(expression, elementGenerator);
     }
