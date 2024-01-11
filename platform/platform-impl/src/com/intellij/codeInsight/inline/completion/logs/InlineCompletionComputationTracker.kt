@@ -24,13 +24,15 @@ internal class InlineCompletionComputationTracker(
   private var computedLogSent = false
   private var computeStartTime = 0L
   private val variantStates = mutableListOf<VariantState>()
-  private var typingDuringComputation = 0
-  private var variantsNavigationRange = IntRange(0, 0)
   private var switchingVariantsTimes = 0
+  private var potentiallySelectedIndex: Int? = null
 
-  // TODO discuss semantics
   fun firstComputed(variantIndex: Int, element: InlineCompletionElement) {
     extendVariantsNumber(variantIndex + 1)
+
+    if (potentiallySelectedIndex == null) {
+      potentiallySelectedIndex = variantIndex // It's the first variant that will be shown to a user
+    }
 
     val state = variantStates[variantIndex]
     if (state.firstComputed) {
@@ -60,17 +62,15 @@ internal class InlineCompletionComputationTracker(
     assert(!computedLogSent)
   }
 
-  // TODO track only one variant
-  fun truncateTyping(truncateTyping: Int) {
+  // Usually, only typings (if providers don't override behaviour)
+  fun lengthChanged(variantIndex: Int, change: Int) {
     assert(variantStates.any { it.firstComputed }) // TODO
-    typingDuringComputation += truncateTyping
+    variantStates[variantIndex].lengthChange += change
     assert(!computedLogSent)
   }
 
-  fun variantSwitched(fromIndex: Int, toIndex: Int, explicit: Boolean) {
-    val minIndex = minOf(fromIndex, toIndex, variantsNavigationRange.first)
-    val maxIndex = maxOf(fromIndex, toIndex, variantsNavigationRange.last)
-    variantsNavigationRange = IntRange(minIndex, maxIndex)
+  fun variantSwitched(toIndex: Int, explicit: Boolean) {
+    potentiallySelectedIndex = toIndex
     if (explicit) {
       switchingVariantsTimes++
     }
@@ -89,27 +89,32 @@ internal class InlineCompletionComputationTracker(
       return
     }
     computedLogSent = true
-    val fromIndex = minOf(variantsNavigationRange.first, variantStates.size)
-    val toIndex = minOf(variantsNavigationRange.last + 1, variantStates.size)
-    val interestingVariants = variantStates.subList(fromIndex, toIndex).filter { it.firstComputed }
-    data.add(ComputedEvents.LINES.with(interestingVariants.map { it.lines }))
-    data.add(ComputedEvents.LENGTH.with(interestingVariants.map { it.length }))
-    data.add(ComputedEvents.TYPING_DURING_SHOW.with(typingDuringComputation))
+    data.add(ComputedEvents.LINES.with(variantStates.map { it.lines }))
+    data.add(ComputedEvents.LENGTH.with(variantStates.map { it.length }))
+    data.add(ComputedEvents.TYPING_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
     data.add(ComputedEvents.SHOWING_TIME.with(System.currentTimeMillis() - computeStartTime))
     data.add(ComputedEvents.FINISH_TYPE.with(finishType))
     data.add(ComputedEvents.SWITCHING_VARIANTS_TIMES.with(switchingVariantsTimes))
+
+    if (finishType == FinishType.SELECTED || finishType == FinishType.TYPED) {
+      potentiallySelectedIndex?.let {
+        data.add(ComputedEvents.SELECTED_INDEX.with(it))
+      }
+    }
+
     InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
   }
 
   private fun extendVariantsNumber(atLeast: Int) {
     while (variantStates.size < atLeast) {
-      variantStates += VariantState(0, 0, false)
+      variantStates += VariantState(0, 0, 0, false)
     }
   }
 
   private data class VariantState(
     var length: Int,
     var lines: Int,
+    var lengthChange: Int,
     var firstComputed: Boolean
   )
 }

@@ -112,7 +112,7 @@ internal class InlineCompletionInvocationTracker(
       InvokedEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
       InvokedEvents.OUTCOME.with(
         when {
-          // fixed order TODO !!!!
+          // fixed order
           exception -> InvokedEvents.Outcome.EXCEPTION
           canceled -> InvokedEvents.Outcome.CANCELED
           hasSuggestions == true -> InvokedEvents.Outcome.SHOW

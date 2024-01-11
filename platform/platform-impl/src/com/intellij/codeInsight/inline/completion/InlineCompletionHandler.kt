@@ -171,7 +171,6 @@ class InlineCompletionHandler(
         withContext(Dispatchers.EDT) {
           coroutineToIndicator {
             trace(InlineCompletionEventType.NoVariants)
-            hide(context, FinishType.EMPTY)
           }
         }
         return@runCatching
@@ -187,14 +186,7 @@ class InlineCompletionHandler(
         }
       }
 
-      withContext(Dispatchers.EDT) {
-        if (context.state.elements.isEmpty()) {
-          coroutineToIndicator {
-            hide(context, FinishType.EMPTY) // TODO maybe another type
-          }
-        }
-      }
-
+      // TODO remove
 
       //withContext(Dispatchers.EDT) {
       //  variant.elements.flowOn(Dispatchers.Default)
@@ -240,6 +232,9 @@ class InlineCompletionHandler(
   ) {
     if (cause != null && !context.isDisposed) {
       hide(context, FinishType.ERROR)
+    }
+    if (!context.isDisposed && context.state.elements.isEmpty()) {
+      hide(context, FinishType.EMPTY)
     }
     trace(InlineCompletionEventType.Completion(cause, isActive))
   }
@@ -371,8 +366,13 @@ class InlineCompletionHandler(
             traceAsync(InlineCompletionEventType.VariantComputed(variantIndex))
           }
 
-          if ((!isSuccess || isEmpty.get()) && allVariantsEmpty.get() && variantIndex < variants.size - 1) {
-            coroutineToIndicator { forceNextVariant() }
+          if ((!isSuccess || isEmpty.get()) && allVariantsEmpty.get()) {
+            if (variantIndex < variants.size - 1) {
+              coroutineToIndicator { forceNextVariant() }
+            }
+            else {
+              traceAsync(InlineCompletionEventType.NoVariants)
+            }
           }
         }
       }

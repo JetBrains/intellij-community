@@ -14,22 +14,23 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.reflect.KClass
 import kotlin.test.assertNotEquals
-import kotlin.time.Duration.Companion.minutes
 
 private typealias Data = Map<String, Any>
 
 @RunWith(JUnit4::class)
 internal class FusInlineCompletionTest : InlineCompletionTestCase() {
 
-  // TODO take out to common base class
   private lateinit var provider: GradualMultiSuggestInlineCompletionProvider
 
   private fun registerSuggestion(suggestionBuilder: suspend InlineCompletionSuggestionBuilder.() -> Unit) {
@@ -55,8 +56,6 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     }
     val invokedData = state.assertInvokedData()
     state.assertNoComputedData()
-
-    // TODO
     assertInvokedData(invokedData, Outcome.NO_SUGGESTIONS, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
   }
 
@@ -90,8 +89,8 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertInvokedData(invokedData, Outcome.SHOW, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
     assertComputedData(
       computedData,
-      length = listOf(6, 21),
-      lines = listOf(1, 3),
+      length = listOf(6, 21, 2),
+      lines = listOf(1, 3, 1),
       FinishType.ESCAPE_PRESSED,
       typingDuringShow = 0,
       switchingVariants = 2
@@ -127,7 +126,8 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
       lines = listOf(1, 1),
       FinishType.SELECTED,
       typingDuringShow = 0,
-      switchingVariants = 1
+      switchingVariants = 1,
+      selectedIndex = 1
     )
   }
 
@@ -159,7 +159,8 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
       lines = listOf(1),
       FinishType.SELECTED,
       typingDuringShow = 0,
-      switchingVariants = 0
+      switchingVariants = 0,
+      selectedIndex = 0
     )
   }
 
@@ -188,11 +189,12 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertInvokedData(invokedData, Outcome.CANCELED, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
     assertComputedData(
       computedData,
-      length = listOf(2),
-      lines = listOf(1),
+      length = listOf(2, 1),
+      lines = listOf(1, 1),
       FinishType.SELECTED,
       typingDuringShow = 0,
-      switchingVariants = 0
+      switchingVariants = 0,
+      selectedIndex = 0
     )
   }
 
@@ -207,6 +209,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         variant {
           emit(InlineCompletionGrayTextElement("2"))
           emit(InlineCompletionGrayTextElement("3"))
+          withContext(Dispatchers.EDT) { }
           throw IllegalStateException("expected error")
         }
         variant {
@@ -259,10 +262,9 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
       callInlineCompletion()
       delay()
     }
-    val (invokedData, computedData) = state.assertInvokedComputedData()
-    assertRequestId(invokedData, computedData)
-    assertInvokedData(invokedData, Outcome.CANCELED, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
-    assertComputedData(computedData, emptyList(), emptyList(), FinishType.EMPTY, 0, 0)
+    val invokedData = state.assertInvokedData()
+    state.assertNoComputedData()
+    assertInvokedData(invokedData, Outcome.NO_SUGGESTIONS, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
   }
 
   @Test
@@ -282,6 +284,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
       prevVariant()
       nextVariant()
       nextVariant()
+      assertInlineRender("one\ntwo")
       insert()
     }
     val (invokedData, computedData) = state.assertInvokedComputedData()
@@ -289,18 +292,19 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertInvokedData(invokedData, Outcome.SHOW, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
     assertComputedData(
       computedData,
-      length = listOf(7),
-      lines = listOf(2),
+      length = listOf(0, 0, 0, 0, 0, 7),
+      lines = listOf(0, 0, 0, 0, 0, 2),
       FinishType.SELECTED,
       typingDuringShow = 0,
-      switchingVariants = 0
+      switchingVariants = 0,
+      selectedIndex = 5
     )
   }
 
   @Test
   fun `test several events`() {
     val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
-      myFixture.testInlineCompletion(timeout = 10.minutes) {
+      myFixture.testInlineCompletion {
         init(PlainTextFileType.INSTANCE)
         registerSuggestion {
           variant { emit(InlineCompletionGrayTextElement("one")) }
@@ -314,7 +318,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         registerSuggestion {
           variant { emit(InlineCompletionGrayTextElement("1")) }
           variant { emit(InlineCompletionGrayTextElement("22")) }
-          variant { emit(InlineCompletionGrayTextElement("333")) }
+          variant { emit(InlineCompletionGrayTextElement("333\n")) }
           variant { emit(InlineCompletionGrayTextElement("4444")) }
         }
         typeChar(' ')
@@ -327,12 +331,13 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         nextVariant()
         insert()
         assertFileContent(" 22<caret>")
+        delay()
       }
     }
     val allInvokedData = events.filter { it.group.isInlineCompletion() && it.event.id == InlineCompletionUsageTracker.INVOKED_EVENT_ID }
     val allComputedData = events.filter { it.group.isInlineCompletion() && it.event.id == InlineCompletionUsageTracker.COMPUTED_EVENT_ID }
-    assertEquals(allInvokedData.size, 2)
-    assertEquals(allComputedData.size, 2)
+    assertEquals(2, allInvokedData.size)
+    assertEquals(2, allComputedData.size)
     val (invokedData1, invokedData2) = allInvokedData.map { it.event.data }
     val (computedData1, computedData2) = allComputedData.map { it.event.data }
     assertRequestId(invokedData1, computedData1)
@@ -342,28 +347,69 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertInvokedData(invokedData1, Outcome.SHOW, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
     assertComputedData(
       computedData1,
-      length = listOf(3),
-      lines = listOf(1),
+      length = listOf(3, 3),
+      lines = listOf(1, 1),
       FinishType.ESCAPE_PRESSED,
       typingDuringShow = 0,
       switchingVariants = 0
     )
 
-    // TODO
     assertInvokedData(invokedData2, Outcome.CANCELED, GradualMultiSuggestInlineCompletionProvider::class, DocumentChange::class)
     assertComputedData(
       computedData2,
-      length = listOf(1, 2, 3),
-      lines = listOf(1, 1, 1),
+      length = listOf(1, 2, 4),
+      lines = listOf(1, 1, 2),
       FinishType.SELECTED,
       typingDuringShow = 0,
-      switchingVariants = 4
+      switchingVariants = 4,
+      selectedIndex = 1
     )
   }
 
-  // TODO overtyping
-  // TODO several events
-  // TODO typing during computation
+  @Test
+  fun `test over typing`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("two"))
+          }
+          variant { }
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+          variant {
+            emit(InlineCompletionGrayTextElement("two "))
+            emit(InlineCompletionGrayTextElement("one"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(6)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        assertFileContent("one three<caret>")
+      }
+    }
+
+    val (invokedData, computedData) = state.assertInvokedComputedData()
+    assertRequestId(invokedData, computedData)
+    assertInvokedData(invokedData, Outcome.SHOW, GradualMultiSuggestInlineCompletionProvider::class, DirectCall::class)
+    assertComputedData(
+      computedData,
+      length = listOf(7, 0, 9, 7),
+      lines = listOf(1, 0, 1, 1),
+      FinishType.SELECTED,
+      typingDuringShow = 6,
+      switchingVariants = 0,
+      selectedIndex = 2
+    )
+  }
 
   private fun assertRequestId(invokedData: Data, computedData: Data) {
     assertEquals(invokedData[InvokedEvents.REQUEST_ID], computedData[ComputedEvents.REQUEST_ID])
@@ -386,13 +432,15 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     lines: List<Int>,
     finishType: FinishType,
     typingDuringShow: Int,
-    switchingVariants: Int
+    switchingVariants: Int,
+    selectedIndex: Int? = null
   ) {
     assertEquals(length, computedData[ComputedEvents.LENGTH])
     assertEquals(lines, computedData[ComputedEvents.LINES])
     assertEquals(finishType.toString(), computedData[ComputedEvents.FINISH_TYPE])
     assertEquals(typingDuringShow, computedData[ComputedEvents.TYPING_DURING_SHOW])
     assertEquals(switchingVariants, computedData[ComputedEvents.SWITCHING_VARIANTS_TIMES])
+    assertEquals(selectedIndex, computedData[ComputedEvents.SELECTED_INDEX])
   }
 
   private class LogsState(private val events: List<LogEvent>) {

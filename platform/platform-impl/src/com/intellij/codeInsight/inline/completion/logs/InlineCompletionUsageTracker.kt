@@ -18,9 +18,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
-// TODO add chosen variant index
-// TODO add how many times navigation
-// TODO add docs which suggestion info is sent
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inline.completion", 24)
@@ -39,7 +36,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     enum class Outcome {
       EXCEPTION,
       CANCELED,
-      SHOW,
+      SHOW, // Only if a suggestion is computed entirely
       NO_SUGGESTIONS
     }
 
@@ -79,20 +76,21 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
-  // TODO rename everywhere 'show'
+  // TODO rename everywhere 'show' and make a better naming
   @ApiStatus.Internal
   object ComputedEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val PROVIDER = EventFields.Class("provider")
     val LINES = EventFields.IntList("lines")
     val LENGTH = EventFields.IntList("length")
-    val TYPING_DURING_SHOW = EventFields.Int("typing_during_show")
+    val TYPING_DURING_SHOW = EventFields.Int("typing_during_show") // TODO name
 
     val TIME_TO_SHOW = EventFields.Long("time_to_show")
     val SHOWING_TIME = EventFields.Long("showing_time")
     val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type")
 
-    val SWITCHING_VARIANTS_TIMES = EventFields.Int("switching_variants_times")
+    val SWITCHING_VARIANTS_TIMES = EventFields.Int("switching_variants_times") // TODO name
+    val SELECTED_INDEX = EventFields.Int("selected_index") // TODO
 
     enum class FinishType {
       SELECTED,
@@ -124,7 +122,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ComputedEvents.TIME_TO_SHOW,
     ComputedEvents.SHOWING_TIME,
     ComputedEvents.FINISH_TYPE,
-    ComputedEvents.SWITCHING_VARIANTS_TIMES
+    ComputedEvents.SWITCHING_VARIANTS_TIMES,
+    ComputedEvents.SELECTED_INDEX
   )
 
   override fun getGroup() = GROUP
@@ -143,10 +142,13 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
-      computationTracker = invocationTracker!!.createComputationTracker()
+      computationTracker = null // Just in case
     }
 
     override fun onComputed(event: InlineCompletionEventType.Computed) = lock.withLock {
+      if (computationTracker == null) {
+        computationTracker = invocationTracker!!.createComputationTracker()
+      }
       if (!event.element.text.isEmpty()) {
         invocationTracker?.hasSuggestions()
       }
@@ -159,7 +161,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      computationTracker!!.truncateTyping(event.overtypedLength)
+      computationTracker!!.lengthChanged(event.variantIndex, event.lengthChange)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
@@ -168,10 +170,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
       computationTracker?.canceled(event.finishType)
+      computationTracker = null
     }
 
     override fun onVariantSwitched(event: InlineCompletionEventType.VariantSwitched) {
-      computationTracker?.variantSwitched(event.fromVariantIndex, event.toVariantIndex, event.explicit)
+      computationTracker?.variantSwitched(event.toVariantIndex, event.explicit)
     }
 
     override fun onNoVariants(event: InlineCompletionEventType.NoVariants) {

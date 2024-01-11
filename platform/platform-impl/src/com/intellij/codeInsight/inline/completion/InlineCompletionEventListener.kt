@@ -17,6 +17,7 @@ sealed class InlineCompletionEventType {
     val provider: Class<out InlineCompletionProvider>
   ) : InlineCompletionEventType()
 
+  // TODO explain semantics: either no variants, either all are empty. Maybe change name
   data object NoVariants : InlineCompletionEventType()
 
   class Completion @ApiStatus.Internal constructor(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
@@ -54,16 +55,15 @@ sealed class InlineCompletionEventType {
 
   class Change @ApiStatus.Internal constructor(
     override val variantIndex: Int,
-    val lengthDiff: Int
+    val lengthChange: Int
   ) : PerVariantEventType() {
 
     @Deprecated(message = "") // TODO
     val overtypedLength: Int
-      get() = lengthDiff
+      get() = lengthChange
   }
 
   // TODO docs
-  // TODO make logs of it
   class Invalidated @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 
   class Empty @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()

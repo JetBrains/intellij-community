@@ -7,7 +7,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
-import org.jetbrains.annotations.ApiStatus
 
 // TODO docs
 // TODO renaming
@@ -48,7 +47,7 @@ interface InlineCompletionSuggestion {
   }
 
   // TODO take out from here
-  class VariantSnapshot @ApiStatus.Internal constructor(
+  class VariantSnapshot internal constructor(
     val data: UserDataHolderBase,
     val elements: List<InlineCompletionElement>,
     val index: Int,

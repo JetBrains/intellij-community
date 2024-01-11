@@ -86,6 +86,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       variantSwitched(0, 1, false),
       empty(1),
       variantComputed(1),
+      noVariants(),
       hide(FinishType.EMPTY, false),
       completion(null, true)
     )
@@ -502,7 +503,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
 
       fun change(variantIndex: Int, lengthDiff: Int) = assert<InlineCompletionEventType.Change> { event ->
         assertEquals(variantIndex, event.variantIndex)
-        assertEquals(lengthDiff, event.lengthDiff)
+        assertEquals(lengthDiff, event.lengthChange)
       }
 
       fun invalidated(variantIndex: Int) = assert<InlineCompletionEventType.Invalidated> { event ->

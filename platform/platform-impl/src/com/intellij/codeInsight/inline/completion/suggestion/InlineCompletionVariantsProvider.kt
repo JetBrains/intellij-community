@@ -335,7 +335,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   @RequiresBlockingContext
   protected fun forceNextVariant() {
     val nextIndex = currentVariant.index + 1
-    check(nextIndex in variantsStates.indices)
+    validateIndex(nextIndex)
     useVariant(index = nextIndex, force = true)
   }
 
