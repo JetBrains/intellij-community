@@ -81,7 +81,7 @@ public class WindowsDefenderChecker {
    */
   public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
-      LOG.debug("JNA is not loaded");
+      LOG.debug("isRealTimeProtectionEnabled: JNA is not loaded");
       return null;
     }
 
@@ -91,7 +91,7 @@ public class WindowsDefenderChecker {
 
       var avQuery = new WbemcliUtil.WmiQuery<>("Root\\SecurityCenter2", "AntivirusProduct", AntivirusProduct.class);
       var avResult = avQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug("results: " + avResult.getResultCount());
+      if (LOG.isDebugEnabled()) LOG.debug(avQuery.getWmiClassName() + ": " + avResult.getResultCount());
       for (var i = 0; i < avResult.getResultCount(); i++) {
         var name = avResult.getValue(AntivirusProduct.DisplayName, i);
         if (LOG.isDebugEnabled()) LOG.debug("DisplayName[" + i + "]: " + name + " (" + name.getClass().getName() + ')');
@@ -104,9 +104,9 @@ public class WindowsDefenderChecker {
         }
       }
 
-      var statusQuery  = new WbemcliUtil.WmiQuery<>("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus", MpComputerStatus.class);
+      var statusQuery = new WbemcliUtil.WmiQuery<>("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus", MpComputerStatus.class);
       var statusResult = statusQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug("results: " + statusResult.getResultCount());
+      if (LOG.isDebugEnabled()) LOG.debug(statusQuery.getWmiClassName() + ": " + statusResult.getResultCount());
       if (statusResult.getResultCount() != 1) return false;
       var rtProtection = statusResult.getValue(MpComputerStatus.RealTimeProtectionEnabled, 0);
       if (LOG.isDebugEnabled()) LOG.debug("RealTimeProtectionEnabled: " + rtProtection + " (" + rtProtection.getClass().getName() + ')');
@@ -149,7 +149,7 @@ public class WindowsDefenderChecker {
 
   public final @NotNull List<Path> filterDevDrivePaths(@NotNull List<Path> paths) {
     if (!JnaLoader.isLoaded()) {
-      LOG.debug("JNA is not loaded");
+      LOG.debug("filterDevDrivePaths: JNA is not loaded");
       return paths;
     }
 
