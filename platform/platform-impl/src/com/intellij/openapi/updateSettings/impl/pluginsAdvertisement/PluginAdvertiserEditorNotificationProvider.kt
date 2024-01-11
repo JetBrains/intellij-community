@@ -33,6 +33,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -300,13 +302,17 @@ internal class AdvertiserInfoUpdateService(
   private val project: Project,
   private val coroutineScope: CoroutineScope
 ) {
-  private val firstRequestTs: Instant = Instant.now()
+  private val future: Instant = Instant.now().plusSeconds(30)
 
   fun scheduleAdvertiserUpdate(file: VirtualFile) {
     val fileName = file.name
     coroutineScope.launch {
-      if (Instant.now().isBefore(firstRequestTs.plusSeconds(30))) {
-        delay(30.seconds) // no hurry, let's think that the network is really slow anyway
+      val now = Instant.now()
+      if (now.isBefore(future)) {
+        val remainingSeconds = future.minus(now.epochSecond, ChronoUnit.SECONDS).epochSecond
+        if (remainingSeconds > 1) {
+          delay(remainingSeconds.seconds) // no hurry, let's think that the network is really slow anyway
+        }
       }
 
       MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()

@@ -27,6 +27,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.*
 import com.intellij.util.ui.IoErrorText
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -216,8 +218,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val limitedDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+  private val mutex: Mutex = Mutex()
 
   val marketplaceTagsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
     getAllPluginsTags()
@@ -547,24 +548,28 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
+  private var jetbrainsPluginsIds: Set<PluginId>? = null // guarded by mutex
+
   @RequiresBackgroundThread
-  private fun loadJetBrainsMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
-    return runCatching {
-      readOrUpdateFile(
+  private fun loadJetBrainsMarketplacePlugins(indicator: ProgressIndicator? = null) {
+    if (jetbrainsPluginsIds != null) return
+
+    try {
+      jetbrainsPluginsIds = readOrUpdateFile(
         Path.of(PathManager.getPluginTempPath(), MarketplaceUrls.JB_PLUGINS_XML_IDS_FILENAME),
         MarketplaceUrls.getJBPluginsXmlIdsUrl(),
         indicator,
         IdeBundle.message("progress.downloading.available.plugins"),
         ::parseXmlIds,
       )
-    }.getOrElse {
-      LOG.infoOrDebug("Cannot get the list of JetBrains plugins from Marketplace", it)
-      emptySet()
+    }
+    catch (e: Throwable) {
+      LOG.infoOrDebug("Cannot get the list of JetBrains plugins from Marketplace", e)
     }
   }
 
   internal suspend fun updatePluginIdsAndExtensionData() {
-    withContext(limitedDispatcher) {
+    mutex.withLock {
       loadJetBrainsMarketplacePlugins()
       loadExtensionsForIdes()
     }
