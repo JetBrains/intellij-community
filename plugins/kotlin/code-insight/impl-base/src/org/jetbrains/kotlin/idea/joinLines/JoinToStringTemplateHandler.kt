@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.joinLines
 
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
-import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -34,12 +34,12 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
             parent = parent.parent
         }
 
-        var rightText = ConvertToStringTemplateIntention.Holder.buildText(binaryExpr.right, false)
+        var rightText = unescape(binaryExpr.right as KtStringTemplateExpression)
         var left = binaryExpr.left
         while (left is KtBinaryExpression && left.joinable()) {
             val leftLeft = (left as? KtBinaryExpression)?.left ?: break
             if (leftLeft.getLineCount() < lineCount - 1) break
-            rightText = ConvertToStringTemplateIntention.Holder.buildText(left.right, false) + rightText
+            rightText = unescape(left.right as KtStringTemplateExpression) + rightText
             left = left.left
         }
 
@@ -64,8 +64,18 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
         }
     }
 
+    private fun unescape(expr: KtStringTemplateExpression): String {
+        val expressionText = expr.text
+        return if (expressionText.startsWith("\"\"\"") && expressionText.endsWith("\"\"\"")) {
+            val unquoted = expressionText.substring(3, expressionText.length - 3)
+            StringUtil.escapeStringCharacters(unquoted)
+        } else {
+            StringUtil.unquoteString(expressionText)
+        }
+    }
+
     private fun createStringTemplate(left: KtStringTemplateExpression, rightText: String): KtStringTemplateExpression {
-        val leftText = ConvertToStringTemplateIntention.Holder.buildText(left, false)
+        val leftText = unescape(left)
         return KtPsiFactory(left.project).createExpression("\"$leftText$rightText\"") as KtStringTemplateExpression
     }
 

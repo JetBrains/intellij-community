@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.joinLines
 
@@ -8,8 +8,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
+import org.jetbrains.kotlin.idea.codeinsight.utils.replaceWithExpressionBodyPreservingComments
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MergeIfsUtils
-import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -29,8 +30,7 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
         val statement = block.statements.singleOrNull() ?: return CANNOT_JOIN
 
         val parent = block.parent
-        val useExpressionBodyInspection = UseExpressionBodyInspection(convertEmptyToUnit = false)
-        val oneLineReturnFunction = (parent as? KtDeclarationWithBody)?.takeIf { useExpressionBodyInspection.isActiveFor(it) }
+        val oneLineReturnFunction = (parent as? KtDeclarationWithBody)?.takeIf { it.isConvertableToExpressionBody() }
         if (parent !is KtContainerNode && parent !is KtWhenEntry && oneLineReturnFunction == null) return CANNOT_JOIN
 
         if (block.node.getChildren(KtTokens.COMMENTS).isNotEmpty()) return CANNOT_JOIN // otherwise we will loose comments
@@ -54,7 +54,7 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
         }
 
         val resultExpression = if (oneLineReturnFunction != null) {
-            useExpressionBodyInspection.simplify(oneLineReturnFunction, false)
+            oneLineReturnFunction.replaceWithExpressionBodyPreservingComments()
             oneLineReturnFunction.bodyExpression ?: return CANNOT_JOIN
         } else {
             block.replace(statement)
