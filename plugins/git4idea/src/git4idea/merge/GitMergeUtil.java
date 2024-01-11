@@ -53,6 +53,12 @@ public final class GitMergeUtil {
   static final int YOURS_REVISION_NUM = 2; // file content on the local branch: "Yours"
   static final int THEIRS_REVISION_NUM = 3; // remote file content: "Theirs"
 
+  private static final byte[][] MERGE_MARKERS = new byte[][]{
+    new byte[]{0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c},       // <<<<<<<
+    new byte[]{0x0a, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d}, // \n=======
+    new byte[]{0x0a, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e}  // \n>>>>>>>
+  };
+
   /**
    * A private constructor for utility class
    */
@@ -80,6 +86,18 @@ public final class GitMergeUtil {
     FilePath theirsPath = getBlobPathInRevision(project, root, path, blobs.getThird(), theirsRevision);
 
 
+    if (originalRevision != null && hasMergeConflictMarkers(originalContent)) {
+      // If the 'recursive' or 'ort' merge strategies are used, BASE content might be a result of an incomplete automatic merge.
+      // Such content causes poor results for an automatic merge by IDE.
+      // Try to replace it with a better base version.
+      try {
+        originalContent = GitFileUtils.getFileContent(project, root, originalRevision.asString(), VcsFileUtil.relativePath(root, path));
+      }
+      catch (VcsException e) {
+        LOG.info("Couldn't load a better base revision for " + path + " from " + originalRevision.asString() + ": " + e.getMessage());
+      }
+    }
+
     MergeData mergeData = new MergeData();
 
     mergeData.ORIGINAL = originalContent;
@@ -99,9 +117,9 @@ public final class GitMergeUtil {
 
 
   private static @Nullable GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
-                                                                        @NotNull VirtualFile root,
-                                                                        @Nullable VcsRevisionNumber yoursRevision,
-                                                                        @Nullable VcsRevisionNumber theirsRevision) {
+                                                              @NotNull VirtualFile root,
+                                                              @Nullable VcsRevisionNumber yoursRevision,
+                                                              @Nullable VcsRevisionNumber theirsRevision) {
     if (yoursRevision == null || theirsRevision == null) return null;
     try {
       return GitHistoryUtils.getMergeBase(project, root, yoursRevision.asString(), theirsRevision.asString());
@@ -110,6 +128,14 @@ public final class GitMergeUtil {
       LOG.warn(e);
       return null;
     }
+  }
+
+  private static boolean hasMergeConflictMarkers(byte @NotNull [] content) {
+    for (byte[] marker : MERGE_MARKERS) {
+      boolean found = ArrayUtil.indexOf(content, marker, 0) != -1;
+      if (!found) return false;
+    }
+    return true;
   }
 
   private static @Nullable GitRevisionNumber resolveMergeHead(@NotNull Project project, @NotNull VirtualFile root) {
