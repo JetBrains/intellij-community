@@ -268,7 +268,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
-    if (!Registry.get("floating.codeToolbar.showIntentionsUnderPopup").asBoolean()) return null;
     if (!myEditor.getSelectionModel().hasSelection()) return null;
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
@@ -506,8 +505,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
-      boolean isIntegrated = !Registry.is("floating.codeToolbar.hideIntentionsButton");
-      if (isIntegrated && floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
+      if (floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
         setVisible(false);
       }
     }
