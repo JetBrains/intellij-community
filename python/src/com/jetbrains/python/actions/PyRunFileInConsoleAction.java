@@ -17,7 +17,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

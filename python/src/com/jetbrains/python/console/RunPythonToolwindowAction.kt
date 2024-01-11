@@ -7,9 +7,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.ToolWindowManager
 import com.jetbrains.python.actions.executeCodeInConsole
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 
-class RunPythonToolwindowAction : AnAction(PythonIcons.Python.PythonConsoleToolWindow), DumbAware {
+class RunPythonToolwindowAction : AnAction(
+  PythonIcons.Python.PythonConsoleToolWindow), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project

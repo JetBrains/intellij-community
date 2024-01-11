@@ -12,7 +12,7 @@ import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 import javax.swing.JPanel
 

@@ -7,7 +7,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PipBasedPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {

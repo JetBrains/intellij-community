@@ -4,11 +4,6 @@ package com.jetbrains.python.requirements
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
 
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
 

@@ -8,7 +8,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.jetbrains.python.module.PythonModuleType;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -28,7 +28,7 @@ import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.debugger.PyDebugProcess
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 import javax.swing.JComponent

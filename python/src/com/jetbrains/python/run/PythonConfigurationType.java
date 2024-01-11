@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

@@ -86,7 +86,7 @@ import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;

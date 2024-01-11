@@ -4,7 +4,7 @@ package com.jetbrains.python.testing.tox;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.jetbrains.python.PyBundle;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

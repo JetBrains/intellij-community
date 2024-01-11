@@ -12,7 +12,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.newProject.welcome.PyWelcomeGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

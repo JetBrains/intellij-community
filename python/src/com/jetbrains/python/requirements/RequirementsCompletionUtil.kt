@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 
 fun completePackageNames(project: Project, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager

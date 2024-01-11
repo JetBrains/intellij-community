@@ -44,7 +44,7 @@ import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
 import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component

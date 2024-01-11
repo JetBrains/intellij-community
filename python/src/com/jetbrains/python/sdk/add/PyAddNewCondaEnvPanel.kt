@@ -27,7 +27,7 @@ import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon

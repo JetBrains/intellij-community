@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 

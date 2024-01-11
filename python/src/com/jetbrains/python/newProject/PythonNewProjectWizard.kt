@@ -30,7 +30,7 @@ import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.pythonSdk
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.nio.file.Path
 
 /**

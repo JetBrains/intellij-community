@@ -7,7 +7,7 @@ import com.jetbrains.python.packaging.conda.CondaPackageManager
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {

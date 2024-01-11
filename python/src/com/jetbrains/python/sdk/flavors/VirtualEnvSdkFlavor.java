@@ -15,7 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.BasePySdkExtKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -61,7 +61,7 @@ import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent

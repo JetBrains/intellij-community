@@ -18,7 +18,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

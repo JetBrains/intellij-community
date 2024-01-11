@@ -552,7 +552,7 @@
                      enabledByDefault="true"
                      implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageInspection"/>
     <toolWindow id="Python Packages" anchor="bottom"
-                icon="PythonIcons.Python.PythonPackages"
+                icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
@@ -900,7 +900,7 @@
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </action>
 
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="com.jetbrains.python.icons.PythonIcons.Python.Debug.StepIntoMyCode">
       <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3" relative-to-action="StepInto" anchor="after"/>

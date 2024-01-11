@@ -24,7 +24,7 @@ import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.target.TargetPanelExtension
 import com.jetbrains.python.sdk.add.target.addBrowseFolderListener
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.Nls
 import java.awt.Component

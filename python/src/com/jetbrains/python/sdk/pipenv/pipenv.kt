@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.NlsSafe
@@ -49,11 +48,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.pathValidation.PlatformAndRoot
-import com.jetbrains.python.pathValidation.ValidationRequest
-import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File

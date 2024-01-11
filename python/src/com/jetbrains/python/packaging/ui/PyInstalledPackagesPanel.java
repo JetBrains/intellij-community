@@ -25,7 +25,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

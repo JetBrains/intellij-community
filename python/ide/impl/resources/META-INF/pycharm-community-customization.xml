@@ -61,7 +61,7 @@
                         serviceImplementation="com.jetbrains.python.PyIdeCommonFragmentsBuilder"/>
 
     <!-- Console -->
-    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
+    <toolWindow id="Python Console" anchor="bottom" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>

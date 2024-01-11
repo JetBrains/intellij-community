@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.jetbrains.python.PyBundle;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.JComponent
 
 private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatureListItem>,

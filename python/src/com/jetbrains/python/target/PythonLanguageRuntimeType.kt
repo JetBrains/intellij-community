@@ -11,7 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.Icon

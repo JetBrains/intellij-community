@@ -25,7 +25,7 @@ import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.PyUtil;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

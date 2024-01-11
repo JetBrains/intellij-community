@@ -27,7 +27,7 @@ import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import java.util.function.Consumer

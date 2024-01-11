@@ -40,7 +40,7 @@ import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import com.jetbrains.python.ui.pyModalBlocking
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
