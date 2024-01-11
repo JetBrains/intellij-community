@@ -75,7 +75,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
             parentDisposable,
           )
         }
-        JvmProjectResolver().resolveProject(project)
         println("Project loaded!")
 
         try {

@@ -23,7 +23,5 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="commons-text" level="project" />
     <orderEntry type="module" module-name="intellij.platform.inspect" />
-    <orderEntry type="module" module-name="intellij.maven" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>
 </module>

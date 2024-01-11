@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,18 +21,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator
-import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.function.Predicate
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 object ProjectApplicationUtils {
-
-  private val logger = LoggerFactory.getLogger(javaClass)
 
   /**
    * Rewritten from {@link com.intellij.codeInspection.InspectionApplicationBase}.
@@ -89,7 +84,7 @@ object ProjectApplicationUtils {
     for (configurator in CommandLineInspectionProjectConfigurator.EP_NAME.extensionList) {
       val context = ConfiguratorContextImpl(projectPath)
       if (configurator.isApplicable(context)) {
-        logger.info("Applying configurator ${configurator.name} to configure project environment $projectPath.")
+        LOG.info("Applying configurator ${configurator.name} to configure project environment $projectPath.")
         configurator.configureEnvironment(context)
       }
     }
@@ -100,16 +95,16 @@ object ProjectApplicationUtils {
     configurator: CommandLineInspectionProjectConfigurator,
     context: ConfiguratorContext
   ) {
-    logger.info("Resolving project ${project.name}...")
-    logger.info("Applying configurator ${configurator.name} to resolve project ${project.name}...")
+    LOG.info("Resolving project ${project.name}...")
+    LOG.info("Applying configurator ${configurator.name} to resolve project ${project.name}...")
     configurator.preConfigureProject(project, context)
     configurator.configureProject(project, context)
     waitForInvokeLaterActivities()
-    logger.info("Project ${project.name} was successfully resolved with configurator ${configurator.name}!")
+    LOG.info("Project ${project.name} was successfully resolved with configurator ${configurator.name}!")
   }
 
   private fun closeProject(project: Project) {
-    logger.info("Closing project $project...")
+    LOG.info("Closing project $project...")
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     ApplicationManager.getApplication().invokeAndWait {
@@ -118,7 +113,7 @@ object ProjectApplicationUtils {
   }
 
   private suspend fun waitAllStartupActivitiesPassed(project: Project): Unit = suspendCoroutine {
-    logger.info("Waiting all startup activities passed $project...")
+    LOG.info("Waiting all startup activities passed $project...")
     StartupManager.getInstance(project).runAfterOpened { it.resume(Unit) }
     waitForInvokeLaterActivities()
   }
@@ -128,7 +123,7 @@ object ProjectApplicationUtils {
    * No loop coses empty analyzer output as some project opening activities are not finished yet.
    */
   private fun waitForInvokeLaterActivities() {
-    logger.info("Waiting all invoked later activities...")
+    LOG.info("Waiting all invoked later activities...")
     repeat(10) {
       ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
     }
@@ -137,14 +132,12 @@ object ProjectApplicationUtils {
 
 
 class ConversionListenerImpl : ConversionListener {
-  private val logger = LoggerFactory.getLogger(javaClass)
-
   override fun conversionNeeded() {
-    logger.info("Conversion is needed for project.")
+    LOG.info("Conversion is needed for project.")
   }
 
   override fun successfullyConverted(backupDir: Path) {
-    logger.info("Project successfully converted.")
+    LOG.info("Project successfully converted.")
   }
 
   override fun error(message: String) {
@@ -162,15 +155,14 @@ class ConfiguratorContextImpl(
   private val filesFilter: Predicate<Path> = Predicate { true },
   private val virtualFilesFilter: Predicate<VirtualFile> = Predicate { true }
 ) : ConfiguratorContext {
-  private val logger = LoggerFactory.getLogger(javaClass)
   override fun getProgressIndicator() = indicator
   override fun getLogger() = object : CommandLineInspectionProgressReporter {
     override fun reportError(message: String) {
-      logger.warn("ERROR: $message")
+      LOG.warn("ERROR: $message")
     }
 
     override fun reportMessage(minVerboseLevel: Int, message: String) {
-      logger.info("PROGRESS: $message")
+      LOG.info("PROGRESS: $message")
     }
   }
 
@@ -179,27 +171,4 @@ class ConfiguratorContextImpl(
   override fun getVirtualFilesFilter(): Predicate<VirtualFile> = virtualFilesFilter
 }
 
-class JvmProjectResolver {
-  private val logger = LoggerFactory.getLogger(javaClass)
-
-  fun resolveProject(project: Project) {
-    logger.info("Started to resolve project ${project.name}.")
-    val configurator = getProjectConfigurator(project)
-    val projectPath = project.basePath?.let { Path.of(it) }
-                      ?: throw RuntimeException("Undefined base path for project ${project.name}")
-    val context = ConfiguratorContextImpl(projectPath)
-
-    ProjectApplicationUtils.resolveProject(project, configurator, context)
-  }
-
-  private fun getProjectConfigurator(project: Project): CommandLineInspectionProjectConfigurator {
-    return if (MavenProjectsManager.getInstance(project).isMavenizedProject) {
-      logger.info("Project ${project.name} considered to be maven")
-      MavenCommandLineInspectionProjectConfigurator()
-    }
-    else {
-      logger.info("Project ${project.name} considered to be gradle")
-      GradleCommandLineProjectConfigurator()
-    }
-  }
-}
+private val LOG = logger<ProjectApplicationUtils>()
