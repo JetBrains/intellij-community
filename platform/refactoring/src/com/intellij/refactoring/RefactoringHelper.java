@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * Allows performing cleanup operations after refactoring is done e.g., optimize imports 
  */
@@ -26,6 +28,14 @@ public interface RefactoringHelper<T> {
    * otherwise {@link #prepareOperation(UsageInfo[])} is used instead
    */
   default T prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
+    return prepareOperation(usages);
+  }
+
+  /**
+   * Is used when refactoring provides {@link BaseRefactoringProcessor#getBeforeData()} with all elements,
+   * otherwise {@link #prepareOperation(UsageInfo[])} is used instead
+   */
+  default T prepareOperation(UsageInfo @NotNull [] usages, List<@NotNull PsiElement> elements) {
     return prepareOperation(usages);
   }
 

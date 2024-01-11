@@ -93,6 +93,10 @@ public class MoveClassTest extends LightMultiFileTestCase {
     doTest(new String[]{"p2.F2"}, "p1");
   }
 
+  public void testWithoutReference() {
+    doTest(new String[]{"pack1.X"}, "pack2");
+  }
+
   public void testQualifiedRef() {
     doTest(new String[]{"p1.Test"}, "p2");
   }

@@ -505,10 +505,16 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
         RefactoringEventData data = ReadAction.compute(() -> getBeforeData());
-        PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         for (final RefactoringHelper helper : RefactoringHelper.EP_NAME.getExtensionList()) {
-          Object operation = ReadAction.compute(() -> primaryElement != null ? helper.prepareOperation(writableUsageInfos, primaryElement) 
-                                                                             : helper.prepareOperation(writableUsageInfos));
+          Object operation = ReadAction.compute(() -> {
+            if (data != null) {
+              PsiElement primaryElement = data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY);
+              if (primaryElement != null) return helper.prepareOperation(writableUsageInfos, primaryElement);
+              PsiElement[] elements = data.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY);
+              if (elements != null) return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(elements, e -> e != null));
+            }
+            return helper.prepareOperation(writableUsageInfos);
+          });
           preparedData.put(helper, operation);
         }
       };

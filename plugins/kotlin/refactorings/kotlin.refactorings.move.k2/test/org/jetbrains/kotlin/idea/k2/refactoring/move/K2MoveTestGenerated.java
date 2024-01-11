@@ -333,6 +333,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/typeRefWithArguments/typeRefWithArguments.test");
     }
 
+    @TestMetadata("kotlin/moveFile/withoutUsages/withoutUsages.test")
+    public void testKotlin_moveFile_withoutUsages_WithoutUsages() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/withoutUsages/withoutUsages.test");
+    }
+
     @TestMetadata("kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test")
     public void testKotlin_moveMethod_moveToClass_companionHasReference_CompanionHasReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test");

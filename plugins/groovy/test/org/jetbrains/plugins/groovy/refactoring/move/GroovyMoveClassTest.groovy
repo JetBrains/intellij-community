@@ -65,6 +65,10 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
     doTest("p2", "p1.C1")
   }
 
+  void testWithoutReference() {
+    doTest("p2", "p1.X")
+  }
+
   boolean perform(VirtualFile root, String newPackageName, String... classNames) {
     final PsiClass[] classes = new PsiClass[classNames.length]
     for (int i = 0; i < classes.length; i++) {

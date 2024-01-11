@@ -15,8 +15,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,12 +40,13 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
 
   @Override
   public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
-    Set<PsiJavaFile> files = prepareOperation(usages);
-    PsiFile containingFile = primaryElement.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      files.add((PsiJavaFile)containingFile);
-    }
-    return files;
+    return prepareOperation(usages, List.of(primaryElement));
+  }
+
+  @Override
+  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, List<@NotNull PsiElement> elements) {
+    Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
+    return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }
 
   @Override

@@ -16,14 +16,14 @@ public class MoveToPackageTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass bClass = myFixture.addClass("package foo;\nimport bar.A;\npublic final class B extends A {}");
     myFixture.configureByText("A.java", "package bar;\n import foo.B;\npublic sealed class A permits <caret>B {}");
     invokeFix("Move to package 'bar'");
-    assertEquals("package bar;\nimport bar.A;\npublic final class B extends A {}", bClass.getContainingFile().getText());
+    assertEquals("package bar;\n\npublic final class B extends A {}", bClass.getContainingFile().getText());
   }
 
   public void testNestedClass() {
     PsiClass bClass = myFixture.addClass("package foo;\nimport bar.A;\npublic class B { public static final class C extends A {} }");
     myFixture.configureByText("A.java", "package bar;\n import foo.B;\npublic sealed class A permits <caret>B.C {}");
     invokeFix("Move to package 'bar'");
-    assertEquals("package bar;\nimport bar.A;\npublic class B { public static final class C extends A {} }",
+    assertEquals("package bar;\n\npublic class B { public static final class C extends A {} }",
                  bClass.getContainingFile().getText());
   }
 
