@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 package com.intellij.platform.ide.bootstrap
@@ -321,8 +321,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  scheduleEnableCoroutineDumpAndJstack()
-
   launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
@@ -343,6 +341,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
     }
   }
+
+  scheduleEnableCoroutineDumpAndJstack()
 }
 
 private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
@@ -371,12 +371,8 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
   launch {
     span("coroutine debug probes init") {
       try {
-        if (System.getProperty("idea.enable.coroutine.dump.using.classloader", "false").toBoolean()) {
-          DebugProbesImpl.install()
-        }
-        else {
-          enableCoroutineDump()
-        }
+        DebugProbesImpl.enableCreationStackTraces = false
+        DebugProbesImpl.install()
       }
       catch (ignore: NoClassDefFoundError) {
         // if for some reason, the class loader has ByteBuddy in the classpath

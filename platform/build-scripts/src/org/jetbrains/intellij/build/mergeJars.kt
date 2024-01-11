@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
@@ -353,7 +353,7 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
-  //set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
+  set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   return java.util.Set.copyOf(set)
 }
 
@@ -406,7 +406,7 @@ private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeMa
          !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
 
-         //!name.startsWith("kotlinx/coroutines/repackaged/") &&
+         !name.startsWith("kotlinx/coroutines/repackaged/") &&
 
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

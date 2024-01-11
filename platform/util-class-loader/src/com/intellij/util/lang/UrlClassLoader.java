@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -146,7 +146,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     isSystemClassLoader = builder.isSystemClassLoader;
 
-    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump.using.classloader", "false"));
+    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump.using.classloader", "true"));
     classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
