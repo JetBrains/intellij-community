@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.trace
@@ -14,7 +14,7 @@ public fun EntityStorage.assertConsistency() {
 internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace { "Checking consistency of $this" }
 
-  entitiesByType.assertConsistency(this)
+  entitiesByType.assertConsistency()
   // Rules:
   //  1) Refs should not have links without a corresponding entity
   //    1.1) For abstract containers: EntityId has the class of ConnectionId
