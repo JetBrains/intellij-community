@@ -339,5 +339,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>

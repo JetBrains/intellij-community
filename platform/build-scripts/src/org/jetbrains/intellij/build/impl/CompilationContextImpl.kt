@@ -2,12 +2,16 @@
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
+import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -193,6 +197,9 @@ class CompilationContextImpl private constructor(
       spanBuilder("define JDK").useWithScope {
         defineJavaSdk(context)
       }
+      spanBuilder("enabled coroutines dump").useWithScope {
+        context.enableCoroutinesDump()
+      }
       spanBuilder("prepare for build").useWithScope {
         context.prepareForBuild()
       }
@@ -324,6 +331,21 @@ class CompilationContextImpl private constructor(
       pathToReport += "=>$targetDirectoryPath"
     }
     messages.artifactBuilt(pathToReport)
+  }
+
+  private fun enableCoroutinesDump() {
+    try {
+      enableCoroutineDump()
+      JBR.getJstack()?.includeInfoFrom {
+        """
+          $COROUTINE_DUMP_HEADER
+          ${dumpCoroutines()}
+        """.trimIndent()
+      }
+    }
+    catch (e: NoClassDefFoundError) {
+      messages.warning("Cannot enable coroutines dump, JetBrains Runtime is required: ${e.message}")
+    }
   }
 }
 
