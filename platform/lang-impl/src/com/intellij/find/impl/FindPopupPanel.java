@@ -1630,7 +1630,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setBorder(JBUI.Borders.empty(3));
     return toolbar;
   }
@@ -1665,7 +1665,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     return toolbar;
   }

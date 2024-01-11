@@ -5,7 +5,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 
-const val RIGHT_ALIGN_KEY = "RIGHT_ALIGN"
+public const val RIGHT_ALIGN_KEY = "RIGHT_ALIGN"
 
 /**
  * Calculate the maximum preferred width of the components in the given parent container.

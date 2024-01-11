@@ -573,7 +573,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
-    myOptionsToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    myOptionsToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myOptionsToolbar.setForceMinimumSize(true);
     myOptionsToolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 

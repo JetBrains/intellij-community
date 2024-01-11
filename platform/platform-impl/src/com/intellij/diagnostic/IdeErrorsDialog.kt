@@ -215,7 +215,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null)
     val toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
-    toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.border = JBUI.Borders.empty()
     (toolbar as ActionToolbarImpl).setForceMinimumSize(true)
     toolbar.setTargetComponent(myCountLabel)

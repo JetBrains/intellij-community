@@ -140,6 +140,8 @@ public interface ActionToolbar {
    */
   void setMinimumButtonSize(@NotNull Dimension size);
 
+  @NotNull Dimension getMinimumButtonSize();
+
   /**
    * Sets the toolbar orientation.
    *

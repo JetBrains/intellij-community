@@ -100,12 +100,12 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
     context.putUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, leftToolbar)
-    leftToolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    leftToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     leftToolbar.targetComponent = mainPanel
     leftToolbarWrapper = Centerizer(leftToolbar.component, Centerizer.TYPE.VERTICAL)
 
     rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightToolbarGroup, true)
-    rightToolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    rightToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     rightToolbar.targetComponent = mainPanel
 
     rightToolbarWrapper = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)

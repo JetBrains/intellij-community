@@ -27,7 +27,7 @@ public final class TitleWithToolbar extends JPanel {
     ActionGroup group = (ActionGroup)actionManager.getAction(actionGroupId);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, group, true);
     actionToolbar.setTargetComponent(targetComponent);
-    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     JLabel label = new JLabel(title.startsWith("<html>") ? title : UIUtil.replaceMnemonicAmpersand(title));
     label.setLabelFor(targetComponent);

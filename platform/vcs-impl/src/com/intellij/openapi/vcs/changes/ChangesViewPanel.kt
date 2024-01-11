@@ -53,16 +53,15 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   }
 
   private fun addToolbar(isHorizontal: Boolean) {
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_AUTOLAYOUT_STRATEGY
       val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
       centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      toolbar.layoutStrategy = ToolbarLayoutStrategy.VERTICAL_AUTOLAYOUT_STRATEGY
       val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.LEFT
       centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToLeft(toolbar.component)

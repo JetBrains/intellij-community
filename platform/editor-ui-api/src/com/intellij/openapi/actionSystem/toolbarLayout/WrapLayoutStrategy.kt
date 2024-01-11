@@ -2,22 +2,16 @@
 package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.Component
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.Insets
-import java.awt.Rectangle
+import java.awt.*
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustTheSameSize: Boolean): ToolbarLayoutStrategy {
+class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): ToolbarLayoutStrategy {
 
-  private val fallbackDelegate = NoWrapLayoutStrategy(myOrientation, myAdjustTheSameSize)
-  private var myMinimumButtonSize : JBDimension = JBUI.emptySize()
+  private val fallbackDelegate = NoWrapLayoutStrategy(myAdjustTheSameSize)
 
   override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
 
@@ -53,6 +47,8 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
     val insets: Insets = component.insets
     val widthToFit: Int = size2Fit.width - insets.left - insets.right
     val heightToFit: Int = size2Fit.height - insets.top - insets.bottom
+    val minimumButtonSize = toolbar.minimumButtonSize
+    val orientation = toolbar.orientation
 
     val res = List(componentsCount) { Rectangle() }
 
@@ -61,7 +57,7 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
       val maxHeight: Int = maxComponentPreferredHeight(component)
       var xOffset = 0
       var yOffset = 0
-      if (myOrientation == SwingConstants.HORIZONTAL) {
+      if (orientation == SwingConstants.HORIZONTAL) {
         // Lay components out
 
         val maxRowWidth: Int = getMaxRowWidth(component, widthToFit, maxWidth)
@@ -81,7 +77,7 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
         // Lay components out
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
 
-        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * myMinimumButtonSize.height() / 3).toDouble()).toInt()
+        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * minimumButtonSize.height / 3).toDouble()).toInt()
         for (i in 0 until componentsCount) {
           if (yOffset + maxHeight > maxRowHeight) { // place component at new row
             yOffset = 0
@@ -96,7 +92,7 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
       }
     }
     else {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
+      if (orientation == SwingConstants.HORIZONTAL) {
         // Calculate row height
         var rowHeight = 0
         val dims = arrayOfNulls<Dimension>(componentsCount) // we will use this dimensions later
@@ -110,7 +106,7 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
         var xOffset = 0
         var yOffset = 0
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        val maxRowWidth: Int = getMaxRowWidth(component, widthToFit, myMinimumButtonSize.width())
+        val maxRowWidth: Int = getMaxRowWidth(component, widthToFit, minimumButtonSize.width)
 
         for (i in 0 until componentsCount) {
           val d = dims[i]
@@ -139,7 +135,7 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
         var xOffset = 0
         var yOffset = 0
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * myMinimumButtonSize.height() / 3).toDouble()).toInt()
+        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * minimumButtonSize.height / 3).toDouble()).toInt()
         for (i in 0 until componentsCount) {
           val d = dims[i]
           if (yOffset + d!!.height > maxRowHeight) { // place component at new row
@@ -158,17 +154,13 @@ class WrapLayoutStrategy(private val myOrientation: Int, private val myAdjustThe
     return res
   }
 
-  override fun setMinimumButtonSize(size: JBDimension) {
-    myMinimumButtonSize = size
-  }
-
   private fun getMaxRowWidth(parent: Container, widthToFit: Int, maxWidth: Int): Int {
     val componentCount: Int = parent.componentCount
     // Calculate max size of a row. It's not possible to make more than 3 row toolbar
     var maxRowWidth = max(widthToFit.toDouble(), (componentCount * maxWidth / 3).toDouble()).toInt()
     for (i in 0 until componentCount) {
       val component: Component = parent.getComponent(i)
-      if (component is JComponent && component.getClientProperty(RIGHT_ALIGN_KEY) === java.lang.Boolean.TRUE) {
+      if (component is JComponent && component.getClientProperty(RIGHT_ALIGN_KEY) == true) {
         maxRowWidth -= getChildPreferredSize(parent, i).width
       }
     }

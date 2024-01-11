@@ -13,7 +13,6 @@ import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -829,7 +828,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame)
     val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_TOOLBAR)!!
     val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
     toolBar.targetComponent = null
-    toolBar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_WRAP_STRATEGY
+    toolBar.layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
     PopupHandler.installPopupMenu(toolBar.component, "MainToolbarPopupActions", "MainToolbarPopup")
     return toolBar.component
   }

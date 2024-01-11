@@ -109,7 +109,7 @@ public class ScopePanel extends JPanel {
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setTargetComponent(myToolbar);
     myToolbar.setForceMinimumSize(true);
-    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     final GridBagLayout layout = new GridBagLayout();
     final GridBag constraint = new GridBag();

@@ -84,7 +84,7 @@ class CombinedSimpleDiffHeader(project: Project,
 
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
-    toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
     toolbar.component.border = JBUI.Borders.empty()
 

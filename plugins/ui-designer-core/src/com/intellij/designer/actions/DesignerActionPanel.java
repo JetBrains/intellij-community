@@ -78,7 +78,7 @@ public class DesignerActionPanel implements DataProvider {
   protected JComponent createToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
     ActionToolbar actionToolbar = actionManager.createActionToolbar(TOOLBAR, myActionGroup, true);
-    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_WRAP_STRATEGY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.WRAP_STRATEGY);
 
     JComponent toolbar = actionToolbar.getComponent();
     toolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));

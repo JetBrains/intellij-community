@@ -170,7 +170,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
           component.remove(it)
         }
         toolbar.targetComponent = null
-        toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         component.add(toolbar.component, layoutConstraints)
       }
     }

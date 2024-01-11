@@ -148,7 +148,7 @@ public final class ExistingTemplatesComponent {
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)actionManager.createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
     toolbar.setTargetComponent(patternTree);
-    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setForceMinimumSize(true);
     toolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 

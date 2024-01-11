@@ -49,7 +49,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     setSkipWindowAdjustments(true)
     setReservePlaceAutoPopupIcon(false)
     isOpaque = false
-    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     transparentComponent.hideComponent()
 

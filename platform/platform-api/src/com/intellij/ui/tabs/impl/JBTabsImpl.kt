@@ -3148,7 +3148,7 @@ private fun createToolbar(group: ActionGroup, targetComponent: JComponent, actio
   toolbar.targetComponent = targetComponent
   toolbar.component.border = JBUI.Borders.empty()
   toolbar.component.isOpaque = false
-  toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+  toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   return toolbar
 }
 

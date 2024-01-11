@@ -445,7 +445,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
-    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     final JComponent toolbarComponent = actionToolbar.getComponent();
     actionToolbar.setTargetComponent(toolbarComponent);
     toolbarComponent.setBorder(null);

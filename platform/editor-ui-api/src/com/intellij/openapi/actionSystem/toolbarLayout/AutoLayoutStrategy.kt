@@ -13,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class AutoLayoutStrategy(private val myOrientation: Int, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
+class AutoLayoutStrategy(private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
 
   private val expandIcon = AllIcons.Ide.Link
 
@@ -51,7 +51,7 @@ class AutoLayoutStrategy(private val myOrientation: Int, private val myNoGapMode
     val widthToFit: Int = size2Fit.width - insets.left - insets.right
     val heightToFit: Int = size2Fit.height - insets.top - insets.bottom
 
-    if (myOrientation == SwingConstants.HORIZONTAL) {
+    if (toolbar.orientation == SwingConstants.HORIZONTAL) {
       var eachX = 0
       var maxHeight = heightToFit
       for (i in 0 until componentCount) {

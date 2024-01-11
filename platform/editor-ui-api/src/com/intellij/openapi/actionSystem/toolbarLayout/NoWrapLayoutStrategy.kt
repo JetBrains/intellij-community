@@ -9,7 +9,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.SwingConstants
 
-class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustTheSameSize: Boolean) : ToolbarLayoutStrategy {
+class NoWrapLayoutStrategy(private val myAdjustTheSameSize: Boolean) : ToolbarLayoutStrategy {
 
   private fun doCalculateBounds(toolbar: ActionToolbar): List<Rectangle> {
 
@@ -18,6 +18,7 @@ class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustT
     val width = toolbarComponent.width
     val height = toolbarComponent.height
     val insets: Insets = toolbarComponent.insets
+    val orientation = toolbar.orientation
 
     val res = List(componentsCount) { Rectangle() }
 
@@ -26,7 +27,7 @@ class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustT
       val maxHeight: Int = maxComponentPreferredHeight(toolbarComponent)
 
       var offset = 0
-      if (myOrientation == SwingConstants.HORIZONTAL) {
+      if (orientation == SwingConstants.HORIZONTAL) {
         for (i in 0 until componentsCount) {
           val r: Rectangle = res[i]
           r.setBounds(insets.left + offset, insets.top + (height - maxHeight) / 2, maxWidth, maxHeight)
@@ -42,7 +43,7 @@ class NoWrapLayoutStrategy(private val myOrientation: Int, private val myAdjustT
       }
     }
     else {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
+      if (orientation == SwingConstants.HORIZONTAL) {
         val maxHeight: Int = maxComponentPreferredHeight(toolbarComponent)
         var offset = 0
         for (i in 0 until componentsCount) {

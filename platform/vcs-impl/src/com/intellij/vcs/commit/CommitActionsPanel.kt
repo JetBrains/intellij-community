@@ -20,7 +20,6 @@ import java.awt.event.KeyEvent.VK_ENTER
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.KeyStroke.getKeyStroke
 
 private fun JBOptionButton.getBottomInset(): Int =
@@ -47,7 +46,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
       component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
       setReservePlaceAutoPopupIcon(false)
-      layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
       component.isOpaque = false
       component.border = null
@@ -60,7 +59,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   ).apply {
     component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
     setReservePlaceAutoPopupIcon(false)
-    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     component.isOpaque = false
     component.border = null

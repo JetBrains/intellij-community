@@ -208,7 +208,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     };
 
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
-    myLayoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY;
+    myLayoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY;
 
     mySecondaryActions = new DefaultActionGroup() {
       @Override
@@ -465,8 +465,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
+      Dimension minimumSize = isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
       mySecondaryActionsButton =
-        new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
+        new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, minimumSize) {
           @Override
           protected String getShortcutText() {
             String shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
@@ -545,10 +546,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                 .derive(StartupUiUtil.getLabelFont()));
       actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
-  }
-
-  private @NotNull Dimension getMinimumButtonSize() {
-    return isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
   private @NotNull Border getActionButtonBorder() {
@@ -894,6 +891,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     revalidate();
   }
 
+  @Override
+  public @NotNull Dimension getMinimumButtonSize() {
+    return myMinimumButtonSizeSupplier.get();
+  }
+
   public @NotNull Supplier<? extends @NotNull Dimension> getMinimumButtonSizeSupplier() {
     return myMinimumButtonSizeSupplier;
   }
@@ -903,7 +905,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return; // called from the superclass constructor through updateUI()
     }
     JBDimension minimumButtonSize = JBDimension.create(myMinimumButtonSizeSupplier.get(), true);
-    myLayoutStrategy.setMinimumButtonSize(minimumButtonSize);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton button) {
@@ -1264,7 +1265,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return ActionToolbarImpl.this.getDataContext();
       }
     };
-    popupToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    popupToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -1509,7 +1510,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
       setMinimumButtonSize(JBUI.emptySize());
-      setLayoutStrategy(myOrientation == SwingConstants.HORIZONTAL ? ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY : ToolbarLayoutStrategy.VERTICAL_NOWRAP_STRATEGY);
+      setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
     }
@@ -1525,7 +1526,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
-      setLayoutStrategy(myOrientation == SwingConstants.HORIZONTAL ? ToolbarLayoutStrategy.HORIZONTAL_AUTOLAYOUT_STRATEGY : ToolbarLayoutStrategy.VERTICAL_AUTOLAYOUT_STRATEGY);
+      setLayoutStrategy(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY);
       setLayoutSecondaryActions(true);
     }
   }

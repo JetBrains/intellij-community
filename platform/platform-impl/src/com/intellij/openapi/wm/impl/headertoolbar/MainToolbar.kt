@@ -497,7 +497,7 @@ private fun schemaChanged() {
 
 private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
 
-  private val delegate : ToolbarLayoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+  private val delegate : ToolbarLayoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   private val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
 
   override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {

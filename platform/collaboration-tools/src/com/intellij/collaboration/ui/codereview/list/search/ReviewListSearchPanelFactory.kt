@@ -101,7 +101,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
         DefaultActionGroup(FilterPopupMenuAction(quickFilters, filterListener)),
         true
       ).apply {
-        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         component.isOpaque = false
         component.border = null
         targetComponent = null

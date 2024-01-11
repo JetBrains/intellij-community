@@ -134,7 +134,7 @@ private fun createRunActionToolbar(): ActionToolbar {
   ).apply {
     targetComponent = null
     setReservePlaceAutoPopupIcon(false)
-    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     if (this is ActionToolbarImpl) {
       isOpaque = false
       setMinimumButtonSize {

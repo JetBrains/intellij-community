@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -125,7 +124,7 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
                                                           DefaultActionGroup(createPackagesReloadAction()),
                                                           true).apply {
         targetComponent = myPackages
-        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
       }.component, BorderLayout.LINE_END)
     }
 

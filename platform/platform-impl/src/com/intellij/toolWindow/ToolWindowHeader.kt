@@ -138,7 +138,7 @@ abstract class ToolWindowHeader internal constructor(
     }
 
     toolbar.targetComponent = toolbar.component
-    toolbar.layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
@@ -267,7 +267,7 @@ abstract class ToolWindowHeader internal constructor(
       with(toolbarWest as ActionToolbarImpl) {
         targetComponent = this
         setForceMinimumSize(true)
-        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         setReservePlaceAutoPopupIcon(false)
         isOpaque = false
         border = JBUI.Borders.empty()

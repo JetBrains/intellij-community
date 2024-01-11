@@ -402,7 +402,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
 
     (this as? ActionToolbarImpl)?.setForceMinimumSize(true) // for `BoxLayout`
     setReservePlaceAutoPopupIcon(false)
-    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     component.isOpaque = false
     component.border = null

@@ -163,7 +163,7 @@ internal class SingleContentLayout(
           content.component
         ).apply {
           setReservePlaceAutoPopupIcon(false)
-          layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+          layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         }
       }
     }
@@ -364,7 +364,7 @@ internal class SingleContentLayout(
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
       popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
       }.component
 
       layout = HorizontalTabLayoutWithHiddenControl {

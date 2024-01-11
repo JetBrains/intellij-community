@@ -105,7 +105,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     fsGroup.add(newScriptAction);
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("PlaybackDbgExtra", fsGroup, true);
-    tb.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    tb.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
 

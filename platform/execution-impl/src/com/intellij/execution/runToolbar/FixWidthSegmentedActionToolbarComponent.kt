@@ -88,7 +88,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
   }
 
   private inner class MyLayoutStrategy: ToolbarLayoutStrategy {
-    private val fallbackLayout = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+    private val fallbackLayout = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
       val container = toolbar.component

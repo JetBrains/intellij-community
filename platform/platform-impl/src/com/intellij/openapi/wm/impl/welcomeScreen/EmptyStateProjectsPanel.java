@@ -91,7 +91,7 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
         }
       }
     };
-    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
     actionToolbar.setTargetComponent(actionToolbar.getComponent());

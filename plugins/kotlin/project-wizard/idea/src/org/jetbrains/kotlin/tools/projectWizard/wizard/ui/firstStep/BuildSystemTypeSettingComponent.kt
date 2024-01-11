@@ -91,7 +91,7 @@ class BuildSystemTypeSettingComponent(
         horizontal: Boolean
     ) : ActionToolbarImplWrapper(place, actionGroup, horizontal) {
         init {
-            layoutStrategy = if (horizontal) ToolbarLayoutStrategy.HORIZONTAL_WRAP_STRATEGY else ToolbarLayoutStrategy.VERTICAL_WRAP_STRATEGY
+            layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
         }
 
         override fun createToolbarButton(

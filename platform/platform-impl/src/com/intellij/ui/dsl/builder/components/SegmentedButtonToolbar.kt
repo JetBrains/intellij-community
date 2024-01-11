@@ -44,7 +44,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     setForceMinimumSize(true)
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
     setMinimumButtonSize(Dimension(0, 0))
-    layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_WRAP_STRATEGY
+    layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 

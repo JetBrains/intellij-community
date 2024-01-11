@@ -128,7 +128,7 @@ class ActionGroupPanel(
       val actionGroup = DefaultActionGroup(*createActions())
       val toolbar = ActionManager.getInstance().createActionToolbar("ActionGroupPanel", actionGroup, true).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutStrategy = ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         targetComponent = tree
       }
       addToRight(toolbar.component)

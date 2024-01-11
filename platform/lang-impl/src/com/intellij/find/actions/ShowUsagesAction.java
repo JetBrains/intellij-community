@@ -944,7 +944,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       ActionToolbar scopeChooserToolbar =
         ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
       scopeChooserToolbar.setTargetComponent(table);
-      scopeChooserToolbar.setLayoutStrategy(ToolbarLayoutStrategy.HORIZONTAL_NOWRAP_STRATEGY);
+      scopeChooserToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
       ((ActionToolbarImpl) scopeChooserToolbar).setForceMinimumSize(true);
       JComponent component = scopeChooserToolbar.getComponent();
       component.setBorder(JBUI.Borders.empty());
