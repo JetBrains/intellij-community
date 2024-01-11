@@ -123,7 +123,6 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   @TestOnly
   fun getUnloadedEntitiesCacheFilePath(): Path = unloadedEntitiesCacheFile
 
-  @OptIn(ExperimentalTime::class)
   override fun loadCache(): MutableEntityStorage? {
     val (cache, time) = measureTimedValue {
       cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
