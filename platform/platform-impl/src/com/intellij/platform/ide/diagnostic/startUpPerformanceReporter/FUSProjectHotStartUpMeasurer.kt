@@ -68,12 +68,6 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  private suspend fun onProperContextLocked(block: Stage.() -> Stage) {
-    if (isProperContext()) {
-      computeLocked(block)
-    }
-  }
-
   /**
    * Might happen before [getStartUpContextElementIntoIdeStarter]
    */
@@ -147,8 +141,9 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun reportProjectType(projectsType: ProjectsType) {
-    onProperContextLocked {
-      return@onProperContextLocked when {
+    if (!isProperContext()) return
+    computeLocked {
+      return@computeLocked when {
         this is Stage.IdeStarterStarted && projectType == ProjectsType.Unknown -> this.copy(projectType = projectsType)
         else -> Stage.Stopped
       }
@@ -170,8 +165,9 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   suspend fun resetProjectPath() {
-    onProperContextLocked {
-      return@onProperContextLocked when {
+    if (!isProperContext()) return
+    computeLocked {
+      return@computeLocked when {
         this is Stage.IdeStarterStarted && settingsExist != null -> this.copy(settingsExist = null)
         else -> Stage.Stopped
       }
@@ -278,9 +274,10 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private suspend fun reportFirstEditor(project: Project, file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
+    if (!isProperContext()) return
     val durationMillis = System.nanoTime()
     withContext(Dispatchers.Default) {
-      onProperContextLocked {
+      computeLocked {
         fun getEditorStorageData(): PrematureEditorStageData {
           val isMarkupLoaded = (file is VirtualFileWithId) && synchronized(markupResurrectedFileIds) {
             markupResurrectedFileIds.contains(file.id)
@@ -289,7 +286,7 @@ object FUSProjectHotStartUpMeasurer {
           return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
         }
 
-        return@onProperContextLocked when {
+        return@computeLocked when {
           this is Stage.IdeStarterStarted && prematureEditorData == null -> {
             this.copy(prematureEditorData = getEditorStorageData())
           }
