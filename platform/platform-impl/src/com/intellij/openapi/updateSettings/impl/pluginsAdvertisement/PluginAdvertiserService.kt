@@ -18,7 +18,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
@@ -633,12 +632,11 @@ data class SuggestedIde(
 fun tryUltimate(
   pluginId: PluginId?,
   suggestedIde: SuggestedIde,
-  project: Project? = null,
+  project: Project,
   fusEventSource: FUSEventSource? = null,
 ) {
   if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
-    val existingProject = project ?: ProjectManager.getInstance().defaultProject
-    existingProject.service<UltimateInstallationService>().install(pluginId, suggestedIde)
+    project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
   } else {
     val eventSource = fusEventSource ?: FUSEventSource.EDITOR
     eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
