@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -8,13 +8,14 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -60,8 +61,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   private static final String PATH = "path";
   private static final String ALTERNATIVE_PATH_ENABLED_ATTR = "alternative-path-enabled";
 
-  private Module myModule;
-  private String myModuleName;
+  private @Nullable ModulePointer myModulePointer;
 
   public String VM_PARAMETERS;
   public String PROGRAM_PARAMETERS;
@@ -328,7 +328,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     Element module = element.getChild(MODULE);
     if (module != null) {
-      myModuleName = module.getAttributeValue(NAME);
+      String moduleName = module.getAttributeValue(NAME);
+      myModulePointer = ModulePointerManager.getInstance(getProject()).create(moduleName);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
     final Element altElement = element.getChild(ALTERNATIVE_PATH_ELEMENT);
@@ -346,14 +347,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
-    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<>() {
-      @Override
-      public String compute() {
-        final Module module = getModule();
-        return module != null ? module.getName()
-                              : myModuleName != null ? myModuleName : "";
-      }
-    }));
+    String moduleName = myModulePointer != null ? myModulePointer.getModuleName() : "";
+    moduleElement.setAttribute(NAME, moduleName);
     element.addContent(moduleElement);
     DefaultJDOMExternalizer.writeExternal(this, element);
     if (!StringUtil.isEmptyOrSpaces(ALTERNATIVE_JRE_PATH)) {
@@ -366,17 +361,15 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   }
 
   public @Nullable Module getModule() {
-    if (myModule == null && myModuleName != null && !getProject().isDisposed()) {
-      myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
+    if (myModulePointer != null) {
+      return myModulePointer.getModule();
     }
-    if (myModule != null && myModule.isDisposed()) {
-      myModule = null;
-    }
-    return myModule;
+
+    return null;
   }
 
   public void setModule(Module module) {
-    myModule = module;
+    myModulePointer = ModulePointerManager.getInstance(getProject()).create(module);
   }
 
   private static @Nullable String getPluginId(Module plugin) {
