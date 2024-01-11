@@ -301,12 +301,13 @@ abstract class DumbService {
    */
   fun withAlternativeResolveEnabled(runnable: Runnable) {
     val isDumb = isDumb
+    val old = isAlternativeResolveEnabled
     if (isDumb) isAlternativeResolveEnabled = true
     try {
       runnable.run()
     }
     finally {
-      if (isDumb) isAlternativeResolveEnabled = false
+      if (isDumb) isAlternativeResolveEnabled = old
     }
   }
 
@@ -317,12 +318,13 @@ abstract class DumbService {
    */
   fun <T, E : Throwable?> computeWithAlternativeResolveEnabled(runnable: ThrowableComputable<T, E>): T {
     val isDumb = isDumb
+    val old = isAlternativeResolveEnabled
     if (isDumb) isAlternativeResolveEnabled = true
     return try {
       runnable.compute()
     }
     finally {
-      if (isDumb) isAlternativeResolveEnabled = false
+      if (isDumb) isAlternativeResolveEnabled = old
     }
   }
 
@@ -333,12 +335,13 @@ abstract class DumbService {
    */
   fun <E : Throwable?> runWithAlternativeResolveEnabled(runnable: ThrowableRunnable<E>) {
     val isDumb = isDumb
+    val old = isAlternativeResolveEnabled
     if (isDumb) isAlternativeResolveEnabled = true
     try {
       runnable.run()
     }
     finally {
-      if (isDumb) isAlternativeResolveEnabled = false
+      if (isDumb) isAlternativeResolveEnabled = old
     }
   }
 
