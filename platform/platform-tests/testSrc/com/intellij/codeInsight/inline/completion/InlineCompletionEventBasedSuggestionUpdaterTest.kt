@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayT
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.build
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
@@ -24,7 +25,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
     val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
       override fun onDocumentChange(
         event: InlineCompletionEvent.DocumentChange,
-        variant: InlineCompletionSuggestion.VariantSnapshot
+        variant: InlineCompletionVariant.Snapshot
       ): UpdateResult {
         val newElements = variant.elements + variant.elements
         variant.data.putUserData(key, newElements.size)
@@ -60,7 +61,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
     val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
       override fun onLookupEvent(
         event: InlineCompletionEvent.InlineLookupEvent,
-        variant: InlineCompletionSuggestion.VariantSnapshot
+        variant: InlineCompletionVariant.Snapshot
       ): UpdateResult {
         val item = event.event.item
         return if (event !is InlineCompletionEvent.LookupChange || item == null) {

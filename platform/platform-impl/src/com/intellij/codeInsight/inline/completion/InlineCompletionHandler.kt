@@ -10,6 +10,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionContex
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
@@ -321,7 +322,7 @@ class InlineCompletionHandler(
   @RequiresEdt
   @RequiresBlockingContext
   private fun getVariantsComputer(
-    variants: List<InlineCompletionSuggestion.Variant>,
+    variants: List<InlineCompletionVariant>,
     context: InlineCompletionContext,
     scope: CoroutineScope
   ): InlineCompletionVariantsComputer {

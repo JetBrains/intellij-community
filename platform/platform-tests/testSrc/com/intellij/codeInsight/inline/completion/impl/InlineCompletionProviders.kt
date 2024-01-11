@@ -7,10 +7,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionProviderID
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
-import com.intellij.codeInsight.inline.completion.suggestion.build
+import com.intellij.codeInsight.inline.completion.suggestion.*
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
@@ -52,10 +49,10 @@ internal class GradualMultiSuggestInlineCompletionProvider(
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     val suggestion = InlineCompletionSuggestion.build(suggestionBuilder)
     return object : InlineCompletionSuggestion {
-      override suspend fun getVariants(): List<InlineCompletionSuggestion.Variant> {
+      override suspend fun getVariants(): List<InlineCompletionVariant> {
         val variants = suggestion.getVariants()
         return variants.map { variant ->
-          object : InlineCompletionSuggestion.Variant {
+          object : InlineCompletionVariant {
             override val data: UserDataHolderBase
               get() = variant.data
 
@@ -105,7 +102,7 @@ internal class ExceptionInlineCompletionProvider : InlineCompletionProvider {
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     return object : InlineCompletionSuggestion {
-      override suspend fun getVariants(): List<InlineCompletionSuggestion.Variant> {
+      override suspend fun getVariants(): List<InlineCompletionVariant> {
         throw IllegalStateException("expected error")
       }
     }

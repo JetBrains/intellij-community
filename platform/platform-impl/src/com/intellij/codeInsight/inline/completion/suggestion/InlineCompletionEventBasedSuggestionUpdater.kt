@@ -5,7 +5,6 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion.VariantSnapshot
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -16,13 +15,13 @@ interface InlineCompletionEventBasedSuggestionUpdater {
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun update(event: InlineCompletionEvent, variant: VariantSnapshot): UpdateResult
+  fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult
 
   @ApiStatus.Experimental // TODO naming?
   fun updateWhenAwaitingVariants(event: InlineCompletionEvent): Boolean
 
   sealed interface UpdateResult {
-    class Changed(val snapshot: VariantSnapshot) : UpdateResult
+    class Changed(val snapshot: InlineCompletionVariant.Snapshot) : UpdateResult
 
     data object Same : UpdateResult
 
@@ -31,7 +30,7 @@ interface InlineCompletionEventBasedSuggestionUpdater {
 
   interface Adapter : InlineCompletionEventBasedSuggestionUpdater {
 
-    override fun update(event: InlineCompletionEvent, variant: VariantSnapshot): UpdateResult {
+    override fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return when (event) {
         is InlineCompletionEvent.DocumentChange -> onDocumentChange(event, variant)
         is InlineCompletionEvent.DirectCall -> onDirectCall(event, variant)
@@ -46,31 +45,31 @@ interface InlineCompletionEventBasedSuggestionUpdater {
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: VariantSnapshot): UpdateResult {
+    fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return UpdateResult.Invalidated
     }
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: VariantSnapshot): UpdateResult {
+    fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return UpdateResult.Same
     }
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: VariantSnapshot): UpdateResult {
+    fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return UpdateResult.Same
     }
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onCustomEvent(event: InlineCompletionEvent, variant: VariantSnapshot): UpdateResult.Same {
+    fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult.Same {
       return UpdateResult.Same
     }
   }
 
   open class Default : Adapter {
-    override fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: VariantSnapshot): UpdateResult {
+    override fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       if (!isValidTyping(event.typing, variant)) {
         return UpdateResult.Invalidated
       }
@@ -78,7 +77,7 @@ interface InlineCompletionEventBasedSuggestionUpdater {
       return UpdateResult.Changed(variant.copy(elements = truncated))
     }
 
-    private fun isValidTyping(typing: TypingEvent, variant: VariantSnapshot): Boolean {
+    private fun isValidTyping(typing: TypingEvent, variant: InlineCompletionVariant.Snapshot): Boolean {
       if (typing !is TypingEvent.OneSymbol) {
         return false
       }

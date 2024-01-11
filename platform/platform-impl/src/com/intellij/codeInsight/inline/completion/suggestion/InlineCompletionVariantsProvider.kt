@@ -34,11 +34,11 @@ internal interface InlineCompletionVariantsProvider : Disposable {
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> UpdateResult): Boolean
+  fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
 }
 
 internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
-  variants: List<InlineCompletionSuggestion.Variant>
+  variants: List<InlineCompletionVariant>
 ) : InlineCompletionVariantsProvider {
 
   init {
@@ -100,7 +100,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return IntRange(nonEmptyResults, potentiallyNonEmptyResults)
   }
 
-  override fun update(updater: (InlineCompletionSuggestion.VariantSnapshot) -> UpdateResult): Boolean {
+  override fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
     // TODO logging
@@ -111,7 +111,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
         continue
       }
 
-      val snapshot = InlineCompletionSuggestion.VariantSnapshot(
+      val snapshot = InlineCompletionVariant.Snapshot(
         state.data,
         state.elements,
         index,

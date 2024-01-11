@@ -7,7 +7,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -33,7 +33,7 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
   // Back compatibility
   override fun onDocumentChange(
     event: InlineCompletionEvent.DocumentChange,
-    variant: InlineCompletionSuggestion.VariantSnapshot
+    variant: InlineCompletionVariant.Snapshot
   ): UpdateResult {
     return when {
       variant.isCurrentlyDisplaying -> {
@@ -121,12 +121,13 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
 // TODO
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
 
-  private val suggestionUpdater = InlineCompletionEventBasedSuggestionUpdater.Default()
+  private val suggestionUpdater
+    get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
 
   override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
     val event = InlineCompletionEvent.DocumentChange(typing, context.editor)
     val elements = context.state.elements.map { it.element }
-    val variant = InlineCompletionSuggestion.VariantSnapshot(context, elements, -1, true)
+    val variant = InlineCompletionVariant.Snapshot(context, elements, -1, true)
     return when (val result = suggestionUpdater.update(event, variant)) {
       is UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
       UpdateResult.Invalidated -> null

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion.Variant
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -27,8 +27,8 @@ abstract class InlineCompletionSuggestion : UserDataHolderBase(), InlineCompleti
 
   abstract val suggestionFlow: Flow<InlineCompletionElement>
 
-  final override suspend fun getVariant(): Variant {
-    return Variant.build(this, suggestionFlow)
+  final override suspend fun getVariant(): InlineCompletionVariant {
+    return InlineCompletionVariant.build(this, suggestionFlow)
   }
 
   @Deprecated(

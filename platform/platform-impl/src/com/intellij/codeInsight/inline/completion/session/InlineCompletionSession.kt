@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsProvider
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionJob
 import com.intellij.openapi.Disposable
@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
+// TODO return full info: raw indices, actual indices, what is currently shown
 class InlineCompletionSession private constructor(
   editor: Editor,
   val provider: InlineCompletionProvider,
@@ -85,7 +86,7 @@ class InlineCompletionSession private constructor(
 
   @RequiresEdt // TODO very confusing dependencies between VariantsProvider, Session, SessionManager and Handler
   internal fun update(
-    updater: (InlineCompletionSuggestion.VariantSnapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
+    updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
   ): Boolean {
     return checkNotNull(variantsProvider).update(updater)
   }
