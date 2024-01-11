@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -27,7 +28,27 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * @see InlineCompletionElementManipulator
  */
 @Deprecated(message = "TODO") // TODO
-interface InlineCompletionOvertyper {
+interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+
+  // Back compatibility
+  override fun onDocumentChange(
+    event: InlineCompletionEvent.DocumentChange,
+    variant: InlineCompletionSuggestion.VariantSnapshot
+  ): UpdateResult {
+    return when {
+      variant.isCurrentlyDisplaying -> {
+        val context = InlineCompletionContext.getOrNull(event.editor) ?: return UpdateResult.Invalidated
+        if (variant.elements != context.state.elements.map { it.element }) {
+          return UpdateResult.Invalidated // Unexpected case
+        }
+        return when (val overtyped = overtype(context, event.typing)) {
+          null -> UpdateResult.Invalidated
+          else -> UpdateResult.Changed(variant.copy(overtyped.elements))
+        }
+      }
+      else -> UpdateResult.Invalidated
+    }
+  }
 
   /**
    * Updates [context] with respect to new typing [typing]. If [context] can be updated,
@@ -106,11 +127,10 @@ open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter(
     val event = InlineCompletionEvent.DocumentChange(typing, context.editor)
     val elements = context.state.elements.map { it.element }
     val variant = InlineCompletionSuggestion.VariantSnapshot(context, elements, -1, true)
-    val result = suggestionUpdater.update(event, variant)
-    return when (result) {
-      is InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
-      InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Invalidated -> null
-      InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same -> UpdatedElements(elements, 0)
+    return when (val result = suggestionUpdater.update(event, variant)) {
+      is UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
+      UpdateResult.Invalidated -> null
+      UpdateResult.Same -> UpdatedElements(elements, 0)
     }
   }
 }

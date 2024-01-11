@@ -309,26 +309,10 @@ class InlineCompletionHandler(
     return object : InlineCompletionSessionManager() {
       override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
         ThreadingAssertions.assertEventDispatchThread()
-
-        val context = session.context
         when (result) {
-          is UpdateSessionResult.Changed -> {
-            trace(InlineCompletionEventType.Change(-1, result.overtypedLength)) // TODO correct index
-            editor.inlayModel.execute(true) {
-              context.clear()
-              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }
-            }
-            if (context.textToInsert().isEmpty()) {
-              hide(context, FinishType.TYPED)
-            }
-          }
-          UpdateSessionResult.Same -> Unit
-          UpdateSessionResult.Invalidated -> {
-            hide(context, FinishType.INVALIDATED)
-          }
-          UpdateSessionResult.Emptied -> {
-            hide(context, FinishType.TYPED)
-          }
+          UpdateSessionResult.Invalidated -> hide(session.context, FinishType.INVALIDATED)
+          UpdateSessionResult.Emptied -> hide(session.context, FinishType.TYPED)
+          UpdateSessionResult.Succeeded -> Unit
         }
       }
     }
