@@ -42,8 +42,8 @@ interface IndexChangeProgressListener {
 class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
 
-  private val luceneIndices = HashMap<String, MavenIndex>()
-  private val inMemoryIndices = HashMap<String, MavenGAVIndex>()
+  private val luceneIndices = ConcurrentHashMap<String, MavenIndex>()
+  private val inMemoryIndices = ConcurrentHashMap<String, MavenGAVIndex>()
   private val gavUpdatingIndixes = ConcurrentHashMap<MavenGAVIndex, Boolean>()
   private val mutex = Mutex()
   private val luceneUpdateStatusMap = ConcurrentHashMap<String, MavenIndexUpdateState>()
@@ -254,7 +254,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   }
 
-  private fun <T : Any> collectGarbage(validIndices: Set<Any>, indices: HashMap<String, T>, action: (T) -> Unit = {}) {
+  private fun <T : Any> collectGarbage(validIndices: Set<Any>, indices: MutableMap<String, T>, action: (T) -> Unit = {}) {
     val iterator = indices.iterator()
     while (iterator.hasNext()) {
       val idx = iterator.next()
