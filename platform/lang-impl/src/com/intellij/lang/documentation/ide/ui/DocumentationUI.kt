@@ -34,9 +34,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
@@ -140,7 +138,7 @@ internal class DocumentationUI(
 
   private suspend fun handlePage(page: DocumentationPage) {
     val presentation = page.request.presentation
-    page.contentFlow.collectLatestUndispatched {
+    page.contentFlow.collectLatest {
       handleContent(presentation, it)
     }
   }
