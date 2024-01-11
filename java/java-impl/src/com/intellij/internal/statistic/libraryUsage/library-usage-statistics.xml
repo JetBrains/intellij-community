@@ -10,6 +10,7 @@
   <technology name="allure1" root="ru.yandex.qatools.allure"/>
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
+  <technology name="android" root="android"/>
   <technology name="apache-bval" root="org.apache.bval"/>
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
