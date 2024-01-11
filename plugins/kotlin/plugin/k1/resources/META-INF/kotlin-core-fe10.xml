@@ -14,6 +14,14 @@
             qualifiedName="org.jetbrains.kotlin.quickFixContributor"
             interface="org.jetbrains.kotlin.idea.quickfix.QuickFixContributor"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
+            interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -314,6 +322,13 @@
   <!-- dataflow -->
   <extensions defaultExtensionNs="com.intellij">
     <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
+  </extensions>
+
+  <!-- slicer -->
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
   </extensions>
 
 </idea-plugin>

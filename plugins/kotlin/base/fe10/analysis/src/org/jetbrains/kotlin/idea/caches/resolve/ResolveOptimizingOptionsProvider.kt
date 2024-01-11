@@ -11,7 +11,7 @@ interface ResolveOptimizingOptionsProvider {
     fun getOptimizingOptions(project: Project, descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): OptimizingOptions?
 
     companion object {
-        private val EP_NAME = ExtensionPointName.create<ResolveOptimizingOptionsProvider>("org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider")
+        val EP_NAME = ExtensionPointName.create<ResolveOptimizingOptionsProvider>("org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider")
 
         fun getOptimizingOptions(project: Project, descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): OptimizingOptions? {
             return EP_NAME.extensions.firstNotNullOfOrNull { extension ->

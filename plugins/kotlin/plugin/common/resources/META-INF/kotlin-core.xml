@@ -50,16 +50,8 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
-            interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.classImportFilter"
-            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
@@ -512,9 +504,6 @@
 
     <searchEverywhereClassifier implementation="org.jetbrains.kotlin.idea.goto.KotlinSearchEverywhereClassifier"/>
 
-    <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
-
-
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
 
@@ -537,9 +526,6 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
     <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
 
-
-    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
-    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
 
     <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
 
