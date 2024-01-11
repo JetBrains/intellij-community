@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -17,19 +17,19 @@ import java.util.*
 
 object MavenJDOMUtil {
   @JvmStatic
-  fun read(file: VirtualFile, handler: ErrorHandler?): Element? {
+  suspend fun read(file: VirtualFile, handler: ErrorHandler?): Element? {
     val app = ApplicationManager.getApplication()
     if (app == null || app.isDisposed) {
       return null
     }
-    val text = ReadAction.compute<String, RuntimeException> {
-      if (!file.isValid) return@compute null
+    val text = readAction {
+      if (!file.isValid) return@readAction null
       try {
-        return@compute VfsUtilCore.loadText(file)
+        VfsUtilCore.loadText(file)
       }
       catch (e: IOException) {
         handler?.onReadError(e)
-        return@compute null
+        null
       }
     }
 

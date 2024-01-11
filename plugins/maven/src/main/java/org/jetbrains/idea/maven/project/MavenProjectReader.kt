@@ -23,7 +23,6 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil.read
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -100,10 +99,10 @@ class MavenProjectReader(private val myProject: Project) {
     return Pair.create(RawModelReadResult(model, problems, alwaysOnProfiles), applied.activatedProfiles)
   }
 
-  private fun addSettingsProfiles(generalSettings: MavenGeneralSettings,
-                                  model: MavenModel,
-                                  alwaysOnProfiles: MutableSet<String>,
-                                  problems: MutableCollection<MavenProjectProblem>) {
+  private suspend fun addSettingsProfiles(generalSettings: MavenGeneralSettings,
+                                          model: MavenModel,
+                                          alwaysOnProfiles: MutableSet<String>,
+                                          problems: MutableCollection<MavenProjectProblem>) {
     if (mySettingsProfilesCache == null) {
       val settingsProfiles: MutableList<MavenProfile> = ArrayList()
       val settingsProblems = MavenProjectProblem.createProblemsList()
@@ -296,11 +295,11 @@ class MavenProjectReader(private val myProject: Project) {
     return RawModelReadResult(result, problems, alwaysOnProfiles)
   }
 
-  private fun readMavenProjectModel(file: VirtualFile,
-                                    headerOnly: Boolean,
-                                    problems: MutableCollection<MavenProjectProblem>,
-                                    alwaysOnProfiles: MutableSet<String>,
-                                    isAutomaticVersionFeatureEnabled: Boolean): RawModelReadResult {
+  private suspend fun readMavenProjectModel(file: VirtualFile,
+                                            headerOnly: Boolean,
+                                            problems: MutableCollection<MavenProjectProblem>,
+                                            alwaysOnProfiles: MutableSet<String>,
+                                            isAutomaticVersionFeatureEnabled: Boolean): RawModelReadResult {
     val result = MavenModel()
     val xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX)
     if (xmlProject == null || "project" != xmlProject.name) {
@@ -336,7 +335,7 @@ class MavenProjectReader(private val myProject: Project) {
     return RawModelReadResult(result, problems, alwaysOnProfiles)
   }
 
-  private fun calculateParentVersion(
+  private suspend fun calculateParentVersion(
     xmlProject: Element?,
     problems: MutableCollection<MavenProjectProblem>,
     file: VirtualFile,
@@ -410,10 +409,10 @@ class MavenProjectReader(private val myProject: Project) {
     return MavenResource(directory, false, null, emptyList(), emptyList())
   }
 
-  private fun collectProfiles(projectFile: VirtualFile,
-                              xmlProject: Element,
-                              problems: MutableCollection<MavenProjectProblem>,
-                              alwaysOnProfiles: MutableSet<String>): List<MavenProfile> {
+  private suspend fun collectProfiles(projectFile: VirtualFile,
+                                      xmlProject: Element,
+                                      problems: MutableCollection<MavenProjectProblem>,
+                                      alwaysOnProfiles: MutableSet<String>): List<MavenProfile> {
     val result: MutableList<MavenProfile> = ArrayList()
     collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM)
 
@@ -431,13 +430,13 @@ class MavenProjectReader(private val myProject: Project) {
     return result
   }
 
-  private fun collectProfilesFromSettingsXmlOrProfilesXml(profilesFile: VirtualFile,
-                                                          rootElementName: String,
-                                                          wrapRootIfNecessary: Boolean,
-                                                          profilesSource: String,
-                                                          result: MutableList<MavenProfile>,
-                                                          alwaysOnProfiles: MutableSet<String>,
-                                                          problems: MutableCollection<MavenProjectProblem>) {
+  private suspend fun collectProfilesFromSettingsXmlOrProfilesXml(profilesFile: VirtualFile,
+                                                                  rootElementName: String,
+                                                                  wrapRootIfNecessary: Boolean,
+                                                                  profilesSource: String,
+                                                                  result: MutableList<MavenProfile>,
+                                                                  alwaysOnProfiles: MutableSet<String>,
+                                                                  problems: MutableCollection<MavenProjectProblem>) {
     var rootElement = readXml(profilesFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES)
     if (rootElement == null) return
 
@@ -562,12 +561,12 @@ class MavenProjectReader(private val myProject: Project) {
     }
   }
 
-  private fun readXml(file: VirtualFile,
-                      problems: MutableCollection<MavenProjectProblem>,
-                      type: MavenProjectProblem.ProblemType): Element? {
+  private suspend fun readXml(file: VirtualFile,
+                              problems: MutableCollection<MavenProjectProblem>,
+                              type: MavenProjectProblem.ProblemType): Element? {
     getInstance().fileRead(file)
 
-    return read(file, object : MavenJDOMUtil.ErrorHandler {
+    return MavenJDOMUtil.read(file, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {
         MavenLog.LOG.warn("Cannot read the pom file: $e")
         problems.add(MavenProjectProblem.createProblem(file.path, e!!.message, type, false))

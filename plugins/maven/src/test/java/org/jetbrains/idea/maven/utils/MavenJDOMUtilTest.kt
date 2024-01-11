@@ -13,43 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.utils;
+package org.jetbrains.idea.maven.utils
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Element;
-import com.intellij.maven.testFramework.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase
+import kotlinx.coroutines.runBlocking
+import java.io.IOException
 
-import java.io.IOException;
-
-public class MavenJDOMUtilTest extends MavenTestCase {
-  public void testReadingValuesWithComments() throws Exception {
-    assertEquals("aaa", readValue("<root><foo>aaa<!--a--></foo></root>", "foo"));
-    assertEquals("aaa", readValue("<root><foo>\n" +
-                                  "aaa<!--a--></foo></root>", "foo"));
-    assertEquals("aaa", readValue("<root><foo>aaa<!--a-->\n" +
-                                  "</foo></root>", "foo"));
+class MavenJDOMUtilTest : MavenTestCase() {
+  fun testReadingValuesWithComments() = runBlocking {
+    assertEquals("aaa", readValue("<root><foo>aaa<!--a--></foo></root>", "foo"))
+    assertEquals("aaa", readValue("""
+  <root><foo>
+  aaa<!--a--></foo></root>
+  """.trimIndent(), "foo"))
+    assertEquals("aaa", readValue("""
+  <root><foo>aaa<!--a-->
+  </foo></root>
+  """.trimIndent(), "foo"))
     assertEquals("aaa", readValue("""
                                     <root><foo>
                                     aaa
                                     <!--a-->
-                                    </foo></root>""", "foo"));
+                                    </foo></root>
+                                    """.trimIndent(), "foo"))
   }
 
-  private String readValue(String xml, String valuePath) throws IOException {
-    VirtualFile f = createProjectSubFile("foo.xml", xml);
+  private suspend fun readValue(xml: String, valuePath: String): String? {
+    val f = createProjectSubFile("foo.xml", xml)
 
-    Element el = MavenJDOMUtil.read(f, new MavenJDOMUtil.ErrorHandler() {
-      @Override
-      public void onReadError(IOException e) {
-        throw new RuntimeException(e);
+    val el = MavenJDOMUtil.read(f, object : MavenJDOMUtil.ErrorHandler {
+      override fun onReadError(e: IOException?) {
+        throw RuntimeException(e)
       }
 
-      @Override
-      public void onSyntaxError() {
-        fail("syntax error");
+      override fun onSyntaxError() {
+        fail("syntax error")
       }
-    });
+    })
 
-    return MavenJDOMUtil.findChildValueByPath(el, valuePath);
+    return MavenJDOMUtil.findChildValueByPath(el, valuePath)
   }
 }
