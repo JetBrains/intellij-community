@@ -199,8 +199,8 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
       val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
       serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(startUpContextElementToPass) {
-        val project = rawProjectDeferred.await()
         try {
+          val project = rawProjectDeferred.await()
           coroutineScope {
             launch(rootTask()) {
               val frameHelper = deferredProjectFrameHelper.await()
@@ -216,7 +216,7 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
           }
         }
         finally {
-          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(project)
+          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup()
         }
       }
 
@@ -420,13 +420,13 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
   val editor = (composite.selectedEditor as? TextEditor)?.editor
   if (editor == null) {
-    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.project, composite.file)
+    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file)
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
     blockingContext {
       AsyncEditorLoader.performWhenLoaded(editor) {
-        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.project, composite.file)
+        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
         composite.preferredFocusedComponent?.requestFocusInWindow()
       }
     }
@@ -543,7 +543,7 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
-      FUSProjectHotStartUpMeasurer.openedReadme(project, readme)
+      FUSProjectHotStartUpMeasurer.openedReadme(readme)
     }
   }
 }

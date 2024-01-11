@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -273,7 +272,7 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  private suspend fun reportFirstEditor(project: Project, file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
+  private suspend fun reportFirstEditor(file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
     if (!isProperContext()) return
     val durationMillis = System.nanoTime()
     withContext(Dispatchers.Default) {
@@ -283,7 +282,7 @@ object FUSProjectHotStartUpMeasurer {
             markupResurrectedFileIds.contains(file.id)
           }
           val fileType = ReadAction.nonBlocking<FileType> { return@nonBlocking file.fileType }.executeSynchronously()
-          return PrematureEditorStageData.FirstEditor(project, sourceOfSelectedEditor, fileType, isMarkupLoaded)
+          return PrematureEditorStageData.FirstEditor(sourceOfSelectedEditor, fileType, isMarkupLoaded)
         }
 
         return@computeLocked when {
@@ -303,27 +302,27 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  fun firstOpenedEditor(project: Project, file: VirtualFile) {
+  fun firstOpenedEditor(file: VirtualFile) {
     if (!currentThreadContext().isProperContext()) {
       return
     }
     service<MeasurerCoroutineService>().coroutineScope.launch(context = MyMarker) {
-      reportFirstEditor(project, file, SourceOfSelectedEditor.TextEditor)
+      reportFirstEditor(file, SourceOfSelectedEditor.TextEditor)
     }
   }
 
-  suspend fun firstOpenedUnknownEditor(project: Project, file: VirtualFile) {
-    reportFirstEditor(project, file, SourceOfSelectedEditor.UnknownEditor)
+  suspend fun firstOpenedUnknownEditor(file: VirtualFile) {
+    reportFirstEditor(file, SourceOfSelectedEditor.UnknownEditor)
   }
 
-  suspend fun openedReadme(project: Project, readmeFile: VirtualFile) {
-    reportFirstEditor(project, readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
+  suspend fun openedReadme(readmeFile: VirtualFile) {
+    reportFirstEditor(readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
   }
 
-  suspend fun reportNoMoreEditorsOnStartup(project: Project) {
+  suspend fun reportNoMoreEditorsOnStartup() {
     onProperContext {
       val durationMillis = System.nanoTime()
-      val noEditorStageData = PrematureEditorStageData.NoEditors(project)
+      val noEditorStageData = PrematureEditorStageData.NoEditors
       computeLocked {
         return@computeLocked when {
           this is Stage.IdeStarterStarted && prematureEditorData == null -> {
@@ -367,7 +366,7 @@ object FUSProjectHotStartUpMeasurer {
         val eventData = data.getEventData().add(DURATION.with(duration.getValueForFUS())).let { pairs ->
           settingsExist?.let { pairs.add(HAS_SETTINGS.with(settingsExist)) } ?: pairs
         }
-        CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data.project, eventData)
+        CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(eventData)
       }
     }
 
@@ -381,11 +380,9 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private sealed interface PrematureEditorStageData {
-    val project: Project
     fun getEventData(): PersistentList<EventPair<*>>
 
     data class FirstEditor(
-      override val project: Project,
       val sourceOfSelectedEditor: SourceOfSelectedEditor,
       val fileType: FileType,
       val isMarkupLoaded: Boolean
@@ -400,7 +397,7 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
 
-    data class NoEditors(override val project: Project) : PrematureEditorStageData {
+    data object NoEditors : PrematureEditorStageData {
       override fun getEventData(): PersistentList<EventPair<*>> {
         return persistentListOf(NO_EDITORS_TO_OPEN_FIELD.with(true))
       }
