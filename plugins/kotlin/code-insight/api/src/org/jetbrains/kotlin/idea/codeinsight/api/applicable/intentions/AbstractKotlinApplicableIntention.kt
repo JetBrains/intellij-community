@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 /**
  * Applies a fix to the PSI with [apply] if the intention is applicable via [isApplicableByPsi] and [isApplicableByAnalyze].
  *
- * If [apply] needs to use the Analysis API, inherit from [AbstractKotlinApplicableIntentionWithContext] instead.
+ * If [apply] needs to use the Analysis API, inherit from [AbstractKotlinModCommandWithContext] instead.
  */
 @Deprecated("Use AbstractKotlinApplicableModCommandIntention")
 abstract class AbstractKotlinApplicableIntention<ELEMENT : KtElement>(
