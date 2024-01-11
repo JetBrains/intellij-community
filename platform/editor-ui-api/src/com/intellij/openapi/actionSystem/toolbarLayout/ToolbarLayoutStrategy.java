@@ -35,5 +35,6 @@ public interface ToolbarLayoutStrategy {
 
   Dimension calcMinimumSize(@NotNull ActionToolbar toolbar);
 
+  //todo should be immutable #idea-326561
   default void setMinimumButtonSize(@NotNull JBDimension size) {}
 }

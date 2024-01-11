@@ -128,7 +128,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private final Throwable myCreationTrace = new Throwable("toolbar creation trace");
 
-  /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
   private Supplier<? extends Dimension> myMinimumButtonSizeSupplier = Dimension::new;
 
@@ -643,7 +642,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void doLayout() {
     if (!isValid()) {
-      calculateBounds(getSize(), myComponentBounds);
+      calculateBounds();
       calculateAutoPopupRect();
     }
     final int componentCount = getComponentCount();
@@ -668,7 +667,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void validate() {
     if (!isValid()) {
-      calculateBounds(getSize(), myComponentBounds);
+      calculateBounds();
       calculateAutoPopupRect();
       super.validate();
     }
@@ -704,14 +703,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return height;
   }
 
-
-  //todo get rid of this method #idea-326561
-  /**
-   * Calculates bounds of all the components in the toolbar
-   */
-  protected void calculateBounds(@NotNull Dimension size2Fit, @NotNull List<Rectangle> bounds) {
-    bounds.clear();
-    bounds.addAll(myLayoutStrategy.calculateBounds(this));
+  private void calculateBounds() {
+    myComponentBounds.clear();
+    myComponentBounds.addAll(myLayoutStrategy.calculateBounds(this));
   }
 
   private void calculateAutoPopupRect() {
@@ -819,7 +813,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return image;
   }
 
-  protected static boolean isSeparator(Component component) {
+  public static boolean isSeparator(Component component) {
     return component instanceof MySeparator;
   }
 
