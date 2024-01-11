@@ -14,12 +14,15 @@ import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.isConsistent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
+import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,9 +32,10 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @OptIn(FlowPreview::class)
@@ -94,7 +98,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     doCacheSaving()
   }
 
-  private fun doCacheSaving() {
+  private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTimeMillis {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val unloadedStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
@@ -103,11 +107,16 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      val (time, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
-      WorkspaceModelFusLogger.logCacheSave(time, size ?: -1)
+
+      // Make sure we don't save the cache that is broken
+      val assertConsistencyDuration = measureTime { storage.assertConsistency() }
+
+      val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
+      WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
       //todo check that where are no entities in the storage instead
       if (unloadedStorage != ImmutableEntityStorage.empty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
+        unloadedStorage.assertConsistency()
         cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)
       }
       else {
@@ -159,6 +168,23 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     fun forceEnableCaching(disposable: Disposable) {
       forceEnableCaching = true
       Disposer.register(disposable) { forceEnableCaching = false }
+    }
+
+    private val saveWorkspaceModelCachesTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val saveWorkspaceModelCachesTimeCounter = meter.counterBuilder("workspaceModel.do.save.caches.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          saveWorkspaceModelCachesTimeCounter.record(saveWorkspaceModelCachesTimeMs.get())
+        },
+        saveWorkspaceModelCachesTimeCounter
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
 }
