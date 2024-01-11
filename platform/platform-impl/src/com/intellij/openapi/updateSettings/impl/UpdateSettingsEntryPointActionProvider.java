@@ -105,7 +105,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         List<PluginDownloader> downloaders = new ArrayList<>();
         try {
           for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!UpdateChecker.isIgnored(descriptor)) {
+            if (!UpdateChecker.isIgnored(descriptor) && /* IDEA-273418 */ !PluginManagerCore.isDisabled(descriptor.getPluginId())) {
               downloaders.add(PluginDownloader.createDownloader(descriptor));
             }
           }
