@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -32,10 +32,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinError;
-import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.platform.win32.*;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
@@ -250,21 +247,29 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
 
-      var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-      var apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-      var cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
-      try {
-        var result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
-        if (!WinError.S_OK.equals(result)) {
-          LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+      if (toSelect == null) {
+        var res = Shell32.INSTANCE.ShellExecute(null, "explore", dir, null, null, WinUser.SW_NORMAL);
+        if (res.intValue() <= 32) {
+          var err = Kernel32.INSTANCE.GetLastError();
+          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + ": " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
           openViaExplorerCall(dir, toSelect);
         }
       }
-      finally {
-        if (apIdl != null) {
+      else {
+        var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+        var apIdl = new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)};
+        var cIdl = new WinDef.UINT(apIdl.length);
+        try {
+          var res = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+          if (!WinError.S_OK.equals(res)) {
+            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()) + ": " + Kernel32Util.formatMessage(res));
+            openViaExplorerCall(dir, toSelect);
+          }
+        }
+        finally {
+          Shell32Ex.INSTANCE.ILFree(pIdl);
           Shell32Ex.INSTANCE.ILFree(apIdl[0]);
         }
-        Shell32Ex.INSTANCE.ILFree(pIdl);
       }
     });
   }
