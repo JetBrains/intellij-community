@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.extensions.python
+package com.jetbrains.python.extensions
 
-import com.jetbrains.python.extensions.inherits
+import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.TypeEvalContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
+ * @author Ilya.Kazakevich
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python.extensions")
-fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String ): Boolean = inherits(evalContext, parentNames.toHashSet())
+fun PyClass.inherits(evalContext: TypeEvalContext, parentNames: Set<String>): Boolean =
+  this.getAncestorTypes(evalContext).filterNotNull().mapNotNull(PyClassLikeType::getClassQName).any(parentNames::contains)
+
+fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String): Boolean = this.inherits(evalContext, parentNames.toHashSet())
+
+fun PyClass.inherits(evalContext: TypeEvalContext?, parentNames: FQNamesProvider): Boolean =
+  this.getAncestorClasses(evalContext).any(parentNames::isNameMatches)

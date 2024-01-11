@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.extensions
+package com.jetbrains.python.extensions
 
-import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.psi.PyPsiFacade
 
 /**
- * @return list of values in case they are comma separated
+ * @author Ilya.Kazakevich
  */
-fun RegistryValue.asList(): List<String> = this.asString().split(",")
+
+fun PsiFileSystemItem.getQName(): QualifiedName?  {
+  val name = PyPsiFacade.getInstance(this.project).findShortestImportableName(this.virtualFile, this) ?: return null
+  return QualifiedName.fromDottedString(name)
+}

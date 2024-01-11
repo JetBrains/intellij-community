@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.BeanBinding
 import com.jetbrains.python.testing.PyAbstractTestConfiguration
 import com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 import com.jetbrains.python.testing.PyTestSharedForm
-import com.jetbrains.reflection.getProperties
+import com.jetbrains.python.reflection.getProperties
 
 class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionConfigurationFactory)
   : PyAbstractTestConfiguration(project, factory) {

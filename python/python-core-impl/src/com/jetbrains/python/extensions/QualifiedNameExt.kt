@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.extensions
+package com.jetbrains.python.extensions
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -20,14 +20,9 @@ import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PySdkUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
+
 interface ContextAnchor {
   val sdk: Sdk?
   val project: Project
@@ -38,11 +33,6 @@ interface ContextAnchor {
   }
 }
 
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
 class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
   override val sdk: Sdk? = module.getSdk()
   override val project: Project = module.project
@@ -54,11 +44,16 @@ class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
   }
 }
 
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
+class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
+  override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
+  override fun getRoots(): Array<VirtualFile> {
+    val manager = ProjectRootManager.getInstance(project)
+    return super.getRoots() + manager.contentRoots + manager.contentSourceRoots
+  }
+}
+
+
 data class QNameResolveContext(
   val contextAnchor: ContextAnchor,
   /**
@@ -77,21 +72,9 @@ data class QNameResolveContext(
   val allowInaccurateResult: Boolean = false
 )
 
-
 /**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
+ * @return qname part relative to root
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
-fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
-  return getElementAndResolvableName(context, stopOnFirstFail)?.element
-}
-
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
 fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
   if (Collections.indexOfSubList(components, root.components) == -1) {
     return null
@@ -100,31 +83,22 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
 }
 
 /**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
+ * Resolves qname of any symbol to appropriate PSI element.
+ * Shortcut for [getElementAndResolvableName]
+ * @see [getElementAndResolvableName]
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
-class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : com.jetbrains.python.extensions.ContextAnchor {
-  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
-  override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
-  override fun getRoots(): Array<VirtualFile> {
-    val manager = ProjectRootManager.getInstance(project)
-    return super.getRoots() + manager.contentRoots + manager.contentSourceRoots
-  }
+fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
+  return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
 
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
+
 data class NameAndElement(val name: QualifiedName, val element: PsiElement)
 
 /**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
+ * Resolves qname of any symbol to PSI element popping tail until element becomes resolved or only one time if stopOnFirstFail
+ * @return element and longest name that was resolved successfully.
+ * @see [resolveToElement]
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
 fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 

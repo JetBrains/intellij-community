@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
-import com.jetbrains.extensions.getSdk
+import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.getNamedArgument
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex

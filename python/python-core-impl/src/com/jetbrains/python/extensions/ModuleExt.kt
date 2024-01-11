@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.jetbrains.python.extensions
 
-/**
- * Extension methods for various classes.
- * Methods are transparent for Kotlin, while in Java you must use following pattern: class MyClass has extensions in MyClassExtKt.
- * @author Ilya.Kazakevich
- */
-package com.jetbrains.extensions;
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
+
+
+fun Module.getSdk(): Sdk? = ModuleRootManager.getInstance(this).sdk

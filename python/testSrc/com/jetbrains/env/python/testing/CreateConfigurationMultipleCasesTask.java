@@ -18,7 +18,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.jetbrains.extensions.TargetWithVariantExtKt;
+import com.jetbrains.python.extensions.TargetWithVariantExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;

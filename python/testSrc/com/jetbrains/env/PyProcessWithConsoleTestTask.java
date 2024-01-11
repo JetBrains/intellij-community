@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.extensions.ModuleExtKt;
+import com.jetbrains.python.extensions.ModuleExtKt;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

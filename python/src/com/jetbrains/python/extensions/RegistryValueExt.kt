@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.extensions.python
+package com.jetbrains.python.extensions
 
-import com.jetbrains.python.extensions.inherits
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.types.TypeEvalContext
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.util.registry.RegistryValue
 
 /**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
+ * @return list of values in case they are comma separated
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python.extensions")
-fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String ): Boolean = inherits(evalContext, parentNames.toHashSet())
+fun RegistryValue.asList(): List<String> = this.asString().split(",")

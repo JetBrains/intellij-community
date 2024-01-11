@@ -4,7 +4,7 @@ package com.jetbrains.python.codeInsight.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.extensions.getQName
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyFile
 
 /**

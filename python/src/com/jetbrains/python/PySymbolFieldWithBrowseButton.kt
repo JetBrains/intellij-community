@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package com.jetbrains
+package com.jetbrains.python
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
@@ -31,15 +31,11 @@ import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
-import com.jetbrains.extensions.ContextAnchor
-import com.jetbrains.extensions.QNameResolveContext
-import com.jetbrains.extensions.getQName
-import com.jetbrains.extensions.python.toPsi
-import com.jetbrains.extensions.resolveToElement
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyGotoSymbolContributor
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.PyTreeChooserDialog
+import com.jetbrains.python.extensions.ContextAnchor
+import com.jetbrains.python.extensions.QNameResolveContext
+import com.jetbrains.python.extensions.getQName
+import com.jetbrains.python.extensions.toPsi
+import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyTypedElement

@@ -40,8 +40,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
-import com.jetbrains.extensions.*
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.extensions.*
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -53,10 +53,10 @@ import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.reflection.DelegationProperty
-import com.jetbrains.reflection.Properties
-import com.jetbrains.reflection.Property
-import com.jetbrains.reflection.getProperties
+import com.jetbrains.python.reflection.DelegationProperty
+import com.jetbrains.python.reflection.Properties
+import com.jetbrains.python.reflection.Property
+import com.jetbrains.python.reflection.getProperties
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut

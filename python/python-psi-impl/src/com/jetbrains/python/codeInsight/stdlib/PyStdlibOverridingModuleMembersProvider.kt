@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extensions.getQName
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCustomMember
 import com.jetbrains.python.psi.PyFile

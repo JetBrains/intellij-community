@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
-import com.jetbrains.extensions.ModuleExtKt;
+import com.jetbrains.python.extensions.ModuleExtKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
