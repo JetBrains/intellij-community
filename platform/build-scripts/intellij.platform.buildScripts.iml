@@ -385,5 +385,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>
