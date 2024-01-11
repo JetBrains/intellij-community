@@ -59,7 +59,10 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     if (readPom) {
       val oldProjectId = if (mavenProject.isNew) null else mavenProject.mavenId
       val oldParentId = mavenProject.parentId
-      val readChanges = blockingContext { mavenProject.read(generalSettings, explicitProfiles, reader, tree.projectLocator) }
+      val readChanges = blockingContext {
+        val readerResult = reader.readProject(generalSettings, mavenProject.file, explicitProfiles, tree.projectLocator)
+        mavenProject.set(readerResult, generalSettings, true, false, true)
+      }
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 
       if (Comparing.equal(oldParentId, mavenProject.parentId)) {

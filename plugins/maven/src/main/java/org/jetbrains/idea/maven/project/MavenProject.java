@@ -659,13 +659,6 @@ public class MavenProject {
       .orElse(null);
   }
 
-  public @NotNull MavenProjectChanges read(@NotNull MavenGeneralSettings generalSettings,
-                                           @NotNull MavenExplicitProfiles profiles,
-                                           @NotNull MavenProjectReader reader,
-                                           @NotNull MavenProjectReaderProjectLocator locator) {
-    return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
-  }
-
   public void resetCache() {
     // todo a bit hacky
     synchronized (myState) {
