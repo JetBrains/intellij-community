@@ -178,8 +178,8 @@ envs {
 
   createPython("python3.11",
                python311version,
-               ["black == 23.1.0"],
-               "python3.11\nblack",
+               ["black == 23.1.0", "joblib"],
+               "python3.11\nblack\njoblib",
                true)
 
   createPython("python3.12",
