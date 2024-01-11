@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
 import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -26,6 +27,8 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment;
+import org.jetbrains.plugins.gradle.tooling.telemetry.GradleOpenTelemetry;
+import org.jetbrains.plugins.gradle.tooling.telemetry.GradleTracingContext;
 
 import java.io.Serializable;
 import java.util.*;
@@ -43,10 +46,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private final boolean myIsPreviewMode;
   private boolean myUseProjectsLoadedPhase;
+  private @Nullable GradleTracingContext myTracingContext = null;
 
   private transient @Nullable AllModels myAllModels = null;
   private transient @Nullable GradleBuild myGradleBuild = null;
   private transient @Nullable ModelConverter myModelConverter = null;
+  private transient @Nullable GradleOpenTelemetry myTelemetry = null;
 
   public ProjectImportAction(boolean isPreviewMode) {
     myIsPreviewMode = isPreviewMode;
@@ -79,6 +84,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     myUseProjectsLoadedPhase = false;
   }
 
+  public void setTracingContext(@NotNull GradleTracingContext tracingContext) {
+    myTracingContext = tracingContext;
+  }
+
   @NotNull
   protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
     return ModelConverter.NOP;
@@ -93,9 +102,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
         onExecuteStart(controller);
       }
-      AllModels allModels = doExecute(controller, converterExecutor, isProjectsLoadedAction);
+      AllModels allModels = getTelemetry().callWithSpan("doExecute",
+                                                       span -> doExecute(controller, converterExecutor, isProjectsLoadedAction));
       if (!isProjectsLoadedAction && myAllModels != null) {
-        onExecuteEnd();
+        onExecuteEnd(allModels);
       }
       return allModels;
     }
@@ -115,6 +125,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
    * This method will be called only once, before the first invocation of the method.
    */
   private void onExecuteStart(@NotNull BuildController controller) {
+    if (isTracingEnabled()) {
+      getTelemetry().start(myTracingContext);
+    }
     long startTime = System.currentTimeMillis();
     myGradleBuild = controller.getBuildModel();
     AllModels allModels = new AllModels(myGradleBuild);
@@ -131,8 +144,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
    * After last execution of the {@link #doExecute(BuildController, ExecutorService, boolean)}.
    * This method will be called only once, after the last invocation of the method.
    */
-  private void onExecuteEnd() {
-
+  private void onExecuteEnd(@NotNull AllModels allModels) {
+    byte[] trace = getTelemetry().shutdown();
+    allModels.setOpenTelemetryTrace(trace);
   }
 
   private @Nullable AllModels doExecute(
@@ -150,6 +164,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       modelProviders,
       myModelConverter,
       converterExecutor,
+      getTelemetry(),
       myIsPreviewMode,
       isProjectsLoadedAction
     );
@@ -220,12 +235,24 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     return myModelProviders;
   }
 
+  private boolean isTracingEnabled() {
+    return myTracingContext != null;
+  }
+
+  private @NotNull GradleOpenTelemetry getTelemetry() {
+    if (myTelemetry == null) {
+      myTelemetry = new GradleOpenTelemetry();
+    }
+    return myTelemetry;
+  }
+
   // Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
   //       Performance logging related methods are thread safe.
   public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<>();
     private final Map<String, Long> performanceTrace = new ConcurrentHashMap<>();
     private transient Map<String, String> myBuildsKeyPrefixesMapping;
+    private byte[] openTelemetryTrace = ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
     public AllModels(@NotNull GradleBuild mainBuild) {
       super(DefaultBuild.convertGradleBuild(mainBuild));
@@ -276,6 +303,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     public Map<String, Long> getPerformanceTrace() {
       return performanceTrace;
+    }
+
+    public byte[] getOpenTelemetryTrace() {
+      return openTelemetryTrace;
+    }
+
+    public void setOpenTelemetryTrace(byte[] openTelemetryTrace) {
+      this.openTelemetryTrace = openTelemetryTrace;
     }
 
     @Override

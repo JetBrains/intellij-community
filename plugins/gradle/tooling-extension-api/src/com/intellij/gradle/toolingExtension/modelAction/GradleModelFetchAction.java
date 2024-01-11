@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.modelAction;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import io.opentelemetry.api.trace.Span;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
+import org.jetbrains.plugins.gradle.tooling.telemetry.GradleOpenTelemetry;
 
 import java.io.File;
 import java.util.*;
@@ -37,6 +39,7 @@ public class GradleModelFetchAction {
   private final @NotNull Set<ProjectImportModelProvider> myModelProviders;
   private final @NotNull ModelConverter myModelConverter;
   private final @NotNull ExecutorService myModelConverterExecutor;
+  private final @NotNull GradleOpenTelemetry myTelemetry;
 
   private final boolean myIsPreviewMode;
   private final boolean myIsProjectsLoadedAction;
@@ -46,6 +49,7 @@ public class GradleModelFetchAction {
     @NotNull Set<ProjectImportModelProvider> modelProviders,
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,
+    @NotNull GradleOpenTelemetry telemetry,
     boolean isPreviewMode,
     boolean isProjectsLoadedAction
   ) {
@@ -54,6 +58,7 @@ public class GradleModelFetchAction {
     myModelProviders = modelProviders;
     myModelConverter = modelConverter;
     myModelConverterExecutor = modelConverterExecutor;
+    myTelemetry = telemetry;
 
     myIsPreviewMode = isPreviewMode;
     myIsProjectsLoadedAction = isProjectsLoadedAction;
@@ -63,9 +68,10 @@ public class GradleModelFetchAction {
     GradleBuild mainGradleBuild = controller.getBuildModel();
 
     //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
-    Set<GradleBuild> nestedBuilds = getNestedBuilds(controller, mainGradleBuild);
+    Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span -> getNestedBuilds(controller, mainGradleBuild));
+    assert nestedBuilds != null;
 
-    addModels(controller, mainGradleBuild);
+    myTelemetry.runWithSpan("MainBuildAddModels", span -> addModels(controller, mainGradleBuild));
     for (GradleBuild includedBuild : nestedBuilds) {
       if (!myIsProjectsLoadedAction) {
         myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
@@ -153,15 +159,21 @@ public class GradleModelFetchAction {
 
   private void addModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
     try {
-      forEachModelFetchPhase((__, modelProviders) -> {
-        for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-          for (ProjectImportModelProvider modelProvider : modelProviders) {
-            addProjectModels(controller, gradleProject, modelProvider);
+      forEachModelFetchPhase((phase, modelProviders) -> {
+        myTelemetry.runWithSpan("AddProjectModels", span -> {
+          span.setAttribute("phase", phase.name());
+          for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+            for (ProjectImportModelProvider modelProvider : modelProviders) {
+              addProjectModels(controller, gradleProject, modelProvider);
+            }
           }
-        }
-        for (ProjectImportModelProvider modelProvider : modelProviders) {
-          addBuildModels(controller, gradleBuild, modelProvider);
-        }
+        });
+        myTelemetry.runWithSpan("AddBuildModels", span -> {
+          span.setAttribute("phase", phase.name());
+          for (ProjectImportModelProvider modelProvider : modelProviders) {
+            addBuildModels(controller, gradleBuild, modelProvider);
+          }
+        });
       });
     }
     catch (Exception e) {
@@ -179,20 +191,23 @@ public class GradleModelFetchAction {
   ) {
     Set<String> obtainedModels = new HashSet<>();
     long startTime = System.currentTimeMillis();
-    modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
-      @Override
-      public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
-        obtainedModels.add(clazz.getName());
-        addProjectModel(gradleProject, object, clazz);
-      }
+    myTelemetry.runWithSpan(modelProvider.getName(), span -> {
+      modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
+        @Override
+        public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
+          obtainedModels.add(clazz.getName());
+          addProjectModel(gradleProject, object, clazz, span);
+        }
+      });
+      span.setAttribute("models", obtainedModels.size());
+      myAllModels.logPerformance(
+        "Ran extension " + modelProvider.getName() +
+        " during " + modelProvider.getPhase() +
+        " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
+        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
+        System.currentTimeMillis() - startTime
+      );
     });
-    myAllModels.logPerformance(
-      "Ran extension " + modelProvider.getName() +
-      " during " + modelProvider.getPhase() +
-      " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
-      " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-      System.currentTimeMillis() - startTime
-    );
   }
 
   private void addBuildModels(
@@ -202,18 +217,20 @@ public class GradleModelFetchAction {
   ) {
     Set<String> obtainedModels = new HashSet<>();
     long startTime = System.currentTimeMillis();
-    modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
-      @Override
-      public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
-        obtainedModels.add(clazz.getName());
-        addProjectModel(projectModel, object, clazz);
-      }
+    myTelemetry.runWithSpan(modelProvider.getName(), span -> {
+      modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
+        @Override
+        public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
+          obtainedModels.add(clazz.getName());
+          addProjectModel(projectModel, object, clazz, span);
+        }
 
-      @Override
-      public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
-        obtainedModels.add(clazz.getName());
-        addBuildModel(buildModel, object, clazz);
-      }
+        @Override
+        public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
+          obtainedModels.add(clazz.getName());
+          addBuildModel(buildModel, object, clazz, span);
+        }
+      });
     });
     myAllModels.logPerformance(
       "Ran extension " + modelProvider.getName() +
@@ -224,16 +241,30 @@ public class GradleModelFetchAction {
     );
   }
 
-  private void addProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
+  private void addProjectModel(@NotNull ProjectModel projectModel,
+                               @NotNull Object object,
+                               @NotNull Class<?> clazz,
+                               @NotNull Span parentSpan) {
     myModelConverterExecutor.execute(() -> {
-      Object converted = myModelConverter.convert(object);
+      Object converted = myTelemetry.callWithSpan("ProjectModelConverter", parentSpan, span -> {
+        span.setAttribute("model.class", clazz.getName());
+        return myModelConverter.convert(object);
+      });
+      assert converted != null;
       myAllModels.addModel(converted, clazz, projectModel);
     });
   }
 
-  private void addBuildModel(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
+  private void addBuildModel(@NotNull BuildModel buildModel,
+                             @NotNull Object object,
+                             @NotNull Class<?> clazz,
+                             @NotNull Span parentSpan) {
     myModelConverterExecutor.execute(() -> {
-      Object converted = myModelConverter.convert(object);
+      Object converted = myTelemetry.callWithSpan("BuildModelConverter", parentSpan, span -> {
+        span.setAttribute("model.class", clazz.getName());
+        return myModelConverter.convert(object);
+      });
+      assert converted != null;
       myAllModels.addModel(converted, clazz, buildModel);
     });
   }

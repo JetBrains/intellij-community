@@ -208,6 +208,8 @@
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
     <registryKey key="gradle.output.sync.progress.events" defaultValue="true"
                  description="Send progress information like files download during project import to `Build Output`"/>
+    <registryKey key="gradle.daemon.opentelemetry.enabled" defaultValue="false"
+                 description="Enable performance trace collection in the Gradle daemon"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
