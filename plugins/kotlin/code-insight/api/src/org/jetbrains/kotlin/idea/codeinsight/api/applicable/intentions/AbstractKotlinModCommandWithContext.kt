@@ -24,6 +24,8 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
 ) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
     KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
 
+    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean = skipProcessingFurtherElementsAfter(element)
+
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
      *
@@ -91,9 +93,7 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
      * @param element a non-physical PSI
      *
      */
-    open fun apply(element: ELEMENT, context: AnalysisActionContext<CONTEXT>, updater: ModPsiUpdater) {
-        apply(element, context.analyzeContext, context.actionContext.project, editor = null)
-    }
+    abstract fun apply(element: ELEMENT, context: AnalysisActionContext<CONTEXT>, updater: ModPsiUpdater)
 
     final override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
         throw UnsupportedOperationException("apply(ELEMENT, CONTEXT, Project, Editor?) should not be invoked")
