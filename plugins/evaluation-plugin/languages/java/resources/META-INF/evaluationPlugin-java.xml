@@ -4,5 +4,6 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaMultiLineEvaluationVisitor"/>
     <setupSdkStep implementation="com.intellij.cce.evaluation.SetupJDKStep"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.JavaLineCompletionVisitorFactory"/>
   </extensions>
 </idea-plugin>
