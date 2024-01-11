@@ -47,7 +47,7 @@ public class VcsFileUtilTest {
     FilePath homePath = VcsUtil.getFilePath("C:\\home\\path", true);
     assertEquals("C:/home/path", homePath.getPath());
     assertEquals("C:/home", homePath.getParentPath().getPath());
-    assertEquals("C:", homePath.getParentPath().getParentPath().getPath());
+    assertEquals("C:/", homePath.getParentPath().getParentPath().getPath());
     assertNull(homePath.getParentPath().getParentPath().getParentPath());
 
     FilePath wslHomePath = VcsUtil.getFilePath("\\\\wsl$\\ubuntu\\home", true);
@@ -72,6 +72,7 @@ public class VcsFileUtilTest {
     FilePath homePath = VcsUtil.getFilePath("/home/path", true);
     assertEquals("/home/path", homePath.getPath());
     assertEquals("/home", homePath.getParentPath().getPath());
-    assertNull("", homePath.getParentPath().getParentPath());
+    assertEquals("/", homePath.getParentPath().getParentPath().getPath());
+    assertNull(homePath.getParentPath().getParentPath().getParentPath());
   }
 }

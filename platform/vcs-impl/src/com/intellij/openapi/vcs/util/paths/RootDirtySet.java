@@ -43,17 +43,17 @@ public class RootDirtySet {
     if (myEverythingDirty) return;
 
     String path = filePath.getPath();
-    if (isParentOf(path, myRoot, myCaseSensitive)) {
+    if (getParentPrefixOf(path, myRoot, myCaseSensitive) != -1) {
       markEverythingDirty();
       return;
     }
 
-    if (!isParentOf(myRoot, path, myCaseSensitive)) {
+    int startIndex = getParentPrefixOf(myRoot, path, myCaseSensitive);
+    if (startIndex == -1) {
       LOG.error(new Throwable(String.format("Invalid dirty path for root %s: %s", myRoot, path)));
       return;
     }
 
-    int startIndex = myRoot.length() + 1;
     markDirtyRelative(path, startIndex);
   }
 
@@ -131,7 +131,8 @@ public class RootDirtySet {
 
   public boolean belongsTo(@NotNull FilePath filePath) {
     String path = filePath.getPath();
-    if (!isParentOf(myRoot, path, myCaseSensitive)) {
+    int startIndex = getParentPrefixOf(myRoot, path, myCaseSensitive);
+    if (startIndex == -1) {
       return false;
     }
 
@@ -142,7 +143,6 @@ public class RootDirtySet {
       return false; // myEverythingDirty == false
     }
 
-    int startIndex = myRoot.length() + 1;
     int index = startIndex;
     int lastPrefixHash = 0;
 
@@ -232,15 +232,24 @@ public class RootDirtySet {
     return sortedPaths;
   }
 
-  private static boolean isParentOf(@NotNull String ancestor, @NotNull String path, boolean caseSensitive) {
+  private static int getParentPrefixOf(@NotNull String ancestor, @NotNull String path, boolean caseSensitive) {
     if (caseSensitive) {
-      if (!path.startsWith(ancestor)) return false;
+      if (!path.startsWith(ancestor)) return -1;
     }
     else {
-      if (!StringUtil.startsWithIgnoreCase(path, ancestor)) return false;
+      if (!StringUtil.startsWithIgnoreCase(path, ancestor)) return -1;
     }
 
-    return ancestor.length() == path.length() ||
-           path.charAt(ancestor.length()) == '/';
+    if (ancestor.length() == path.length() ||
+        path.charAt(ancestor.length()) == '/') {
+      return ancestor.length() + 1;
+    }
+
+    // "/" and "C:/" roots
+    if (!ancestor.isEmpty() && ancestor.charAt(ancestor.length() - 1) == '/') {
+      return ancestor.length();
+    }
+
+    return -1;
   }
 }

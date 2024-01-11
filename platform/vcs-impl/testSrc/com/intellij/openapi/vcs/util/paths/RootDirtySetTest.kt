@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator.NATURAL
 import com.intellij.testFramework.junit5.TestApplication
@@ -9,6 +10,7 @@ import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -16,7 +18,7 @@ class RootDirtySetTest {
   @Test
   fun testEmpty() {
     val dirty = RootDirtySet("/root".filePath, true)
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertFalse(dirty.belongsTo("/root".filePath))
     assertFalse(dirty.belongsTo("/root/test/file.txt".filePath))
     assertCollectFilePathsEmpty(dirty)
@@ -28,7 +30,7 @@ class RootDirtySetTest {
     val dirty = RootDirtySet("/root".filePath, true)
     dirty.markDirty("/root".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertTrue(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
     assertCollectFilePathsIs(dirty, "/root")
@@ -38,9 +40,9 @@ class RootDirtySetTest {
   @Test
   fun testDirtyRoot2() {
     val dirty = RootDirtySet("/root".filePath, true)
-    dirty.markDirty("".filePath)
+    dirty.markDirty("/".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertTrue(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
     assertCollectFilePathsIs(dirty, "/root")
@@ -52,14 +54,193 @@ class RootDirtySetTest {
     val dirty = RootDirtySet("/root".filePath, true)
     dirty.markDirty("/root/file1.txt".filePath)
     dirty.markDirty("/root/file2.txt".filePath)
-    dirty.markDirty("".filePath)
+    dirty.markDirty("/".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertTrue(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
     assertCollectFilePathsIs(dirty, "/root")
     assertInternalSizeFits(dirty, 3, 5)
   }
+
+  @Test
+  fun testDirtyFsRoot1() {
+    Assumptions.assumeTrue(SystemInfo.isUnix)
+    val dirty = RootDirtySet("/".filePath, true)
+    dirty.markDirty("/root".filePath)
+
+    assertFalse(dirty.belongsTo("/".filePath))
+    assertTrue(dirty.belongsTo("/root".filePath))
+    assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "/root")
+    assertInternalSizeFits(dirty, 1, 3)
+  }
+
+  @Test
+  fun testDirtyFsRoot2() {
+    Assumptions.assumeTrue(SystemInfo.isUnix)
+    val dirty = RootDirtySet("/".filePath, true)
+    dirty.markDirty("/".filePath)
+
+    assertTrue(dirty.belongsTo("/".filePath))
+    assertTrue(dirty.belongsTo("/root".filePath))
+    assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "/")
+    assertInternalSizeFits(dirty, 1, 2)
+  }
+
+  @Test
+  fun testDirtyFsRoot3() {
+    Assumptions.assumeTrue(SystemInfo.isUnix)
+    val dirty = RootDirtySet("/".filePath, true)
+    dirty.markDirty("/root/test".filePath)
+
+    assertFalse(dirty.belongsTo("/".filePath))
+    assertFalse(dirty.belongsTo("/root".filePath))
+    assertTrue(dirty.belongsTo("/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "/root/test")
+    assertInternalSizeFits(dirty, 1, 4)
+  }
+
+  @Test
+  fun testDirtyFsRootWin1() {
+    Assumptions.assumeTrue(SystemInfo.isWindows)
+    val dirty = RootDirtySet("E:/".filePath, true)
+    dirty.markDirty("E:/root".filePath)
+
+    assertFalse(dirty.belongsTo("E:/".filePath))
+    assertTrue(dirty.belongsTo("E:/root".filePath))
+    assertTrue(dirty.belongsTo("E:/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "E:/root")
+    assertInternalSizeFits(dirty, 1, 3)
+  }
+
+  @Test
+  fun testDirtyFsRootWin2() {
+    Assumptions.assumeTrue(SystemInfo.isWindows)
+    val dirty = RootDirtySet("E:/".filePath, true)
+    dirty.markDirty("E:/".filePath)
+
+    assertTrue(dirty.belongsTo("E:/".filePath))
+    assertTrue(dirty.belongsTo("E:/root".filePath))
+    assertTrue(dirty.belongsTo("E:/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "E:/")
+    assertInternalSizeFits(dirty, 1, 2)
+  }
+
+  @Test
+  fun testDirtyFsRootWin3() {
+    Assumptions.assumeTrue(SystemInfo.isWindows)
+    val dirty = RootDirtySet("E:/".filePath, true)
+    dirty.markDirty("E:/root/test".filePath)
+
+    assertFalse(dirty.belongsTo("E:/".filePath))
+    assertFalse(dirty.belongsTo("E:/root".filePath))
+    assertTrue(dirty.belongsTo("E:/root/test/file.txt".filePath))
+    assertCollectFilePathsIs(dirty, "E:/root/test")
+    assertInternalSizeFits(dirty, 1, 4)
+  }
+
+  @Test
+  fun testWrongRootThrows1() {
+    Assumptions.assumeTrue(SystemInfo.isUnix)
+    val dirty = RootDirtySet("/root2".filePath, true)
+
+    dirty.markDirty("/root2/test/misc".filePath)
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/ro/".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root/test".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root21".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root21/test".filePath)
+    }
+
+    dirty.markDirty("/".filePath)
+  }
+
+  @Test
+  fun testWrongRootThrows2() {
+    Assumptions.assumeTrue(SystemInfo.isUnix)
+    val dirty = RootDirtySet("/root2".filePath, true)
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/ro/".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root/test".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root21".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("/root21/test".filePath)
+    }
+
+    dirty.markDirty("/".filePath)
+  }
+
+  @Test
+  fun testWrongRootThrowsWin1() {
+    Assumptions.assumeTrue(SystemInfo.isWindows)
+    val dirty = RootDirtySet("E:/root2".filePath, true)
+
+    dirty.markDirty("E:/root2/test/misc".filePath)
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/ro/".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root/test".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root21".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root21/test".filePath)
+    }
+
+    dirty.markDirty("E:/".filePath)
+  }
+
+  @Test
+  fun testWrongRootThrowsWin2() {
+    Assumptions.assumeTrue(SystemInfo.isWindows)
+    val dirty = RootDirtySet("E:/root2".filePath, true)
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/ro/".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root/test".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root21".filePath)
+    }
+
+    assertThrows(Throwable::class.java) {
+      dirty.markDirty("E:/root21/test".filePath)
+    }
+
+    dirty.markDirty("E:/".filePath)
+  }
+
 
   @Test
   fun testDirtyFiles1() {
@@ -69,7 +250,7 @@ class RootDirtySetTest {
     dirty.markDirty("/root/dir/sub/file2.txt".filePath)
     dirty.markDirty("/root/dir2/sub/file1.txt".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertFalse(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
@@ -91,7 +272,7 @@ class RootDirtySetTest {
     dirty.markDirty("/root/dir2/sub/file1.txt".filePath)
     dirty.markDirty("/root".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertTrue(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
@@ -107,9 +288,9 @@ class RootDirtySetTest {
     dirty.markDirty("/root/dir/sub/file1.txt".filePath)
     dirty.markDirty("/root/dir/sub/file2.txt".filePath)
     dirty.markDirty("/root/dir2/sub/file1.txt".filePath)
-    dirty.markDirty("".filePath)
+    dirty.markDirty("/".filePath)
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertTrue(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
@@ -128,7 +309,7 @@ class RootDirtySetTest {
       dirty.markDirty("/root/dir2/sub/sub2/file1.txt_$i".filePath)
     }
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertFalse(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
@@ -156,7 +337,7 @@ class RootDirtySetTest {
       dirty.markDirty("/root/dir2/sub/sub3/file1.txt_$i".filePath)
     }
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertFalse(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
@@ -180,7 +361,7 @@ class RootDirtySetTest {
       dirty.markDirty("/root/dir2/sub/sub$i/file1.txt".filePath)
     }
 
-    assertFalse(dirty.belongsTo("".filePath))
+    assertFalse(dirty.belongsTo("/".filePath))
     assertFalse(dirty.belongsTo("/root".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file1.txt".filePath))
     assertTrue(dirty.belongsTo("/root/dir/sub/file2.txt".filePath))
