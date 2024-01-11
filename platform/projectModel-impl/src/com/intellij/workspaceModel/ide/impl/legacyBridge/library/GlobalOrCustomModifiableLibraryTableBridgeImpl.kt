@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -78,7 +78,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
 
   override fun commit() {
     GlobalWorkspaceModel.getInstance().updateModel("${libraryTableId.level} library table commit") {
-      it.addDiff(diff)
+      it.applyChangesFrom(diff)
     }
     libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }

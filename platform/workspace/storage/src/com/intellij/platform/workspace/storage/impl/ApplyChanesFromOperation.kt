@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
+import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import java.util.*
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
+internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   internal val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
@@ -25,19 +25,19 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
   }
 
-  fun addDiff() {
+  fun applyChangesFrom() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
 
     if (LOG.isTraceEnabled) {
       target.assertConsistency()
       diff.assertConsistency()
-      LOG.trace("Before starting addDiff no consistency issues were found")
+      LOG.trace("Before starting applyChangesFrom no consistency issues were found")
     }
 
     for ((entityId, change) in diffLog.shake()) {
       when (change) {
         is ChangeEntry.AddEntity -> {
-          LOG.trace { "addDiff: newEntity" }
+          LOG.trace { "applyChangesFrom: newEntity" }
 
           checkSymbolicId(change.entityData, null)
 
@@ -73,7 +73,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           target.indexes.updateIndices(change.entityData.createEntityId(), targetEntityData, diff)
         }
         is ChangeEntry.RemoveEntity -> {
-          LOG.trace { "addDiff: remove entity. ${change.id}" }
+          LOG.trace { "applyChangesFrom: remove entity. ${change.id}" }
           val sourceEntityId = change.id.asThis()
 
           // This sourceEntityId is definitely not presented in replaceMap as a key, so we can just remove this entity from target
@@ -89,7 +89,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           }
         }
         is ChangeEntry.ReplaceEntity -> {
-          LOG.trace { "addDiff: replace entity" }
+          LOG.trace { "applyChangesFrom: replace entity" }
           replaceOperation(entityId, change)
         }
       }
@@ -121,7 +121,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         else {
           if (!connectionId.canRemoveParent()) {
             val message = "Cannot restore dependency. $connectionId, $sourceParentId.id"
-            LOG.error(message, AddDiffException(message))
+            LOG.error(message, ApplyChangesFromException(message))
           }
           null
         }
@@ -323,7 +323,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         // target child doesn't have a parent anymore
         if (!connectionId.canRemoveParent() && connectionId !in newParents) {
           val message = "Cannot restore some dependencies; $connectionId"
-          LOG.error(message, AddDiffException(message))
+          LOG.error(message, ApplyChangesFromException(message))
         }
         else {
           val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
@@ -349,7 +349,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           else {
             if (!connectionId.canRemoveParent()) {
               val message = "Cannot restore some dependencies; $connectionId"
-              LOG.error(message, AddDiffException(message))
+              LOG.error(message, ApplyChangesFromException(message))
             }
             val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
             target.createReplaceEventsForUpdates(modifications, connectionId)
@@ -396,13 +396,13 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
                                   Existing entity data: $existingEntityData
                                   New entity data: $entityData
                                   """.trimIndent()
-          LOG.error(message, AddDiffException(message))
+          LOG.error(message, ApplyChangesFromException(message))
         }
       }
     }
   }
 
   companion object {
-    private val LOG = logger<AddDiffOperation>()
+    private val LOG = logger<ApplyChanesFromOperation>()
   }
 }

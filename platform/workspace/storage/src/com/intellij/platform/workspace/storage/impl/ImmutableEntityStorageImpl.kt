@@ -144,10 +144,10 @@ internal class MutableEntityStorageImpl(
    * This log collects the log of operations, not the log of state changes.
    * This means, that if we remove child entity, we'll record only remove event without "modify" event for its parent.
    *
-   * This change log affects addDiff operation and [collectChanges] return result
+   * This change log affects [applyChangesFrom] operation and [collectChanges] return result
    *
    * There is no particular reason not to store the list of "state" changes here. However, this will require a lot of work in order
-   *   to record all changes on the storage and update [addDiff] method to work in the new way.
+   *   to record all changes on the storage and update [applyChangesFrom] method to work in the new way.
    */
   internal val changeLog = WorkspaceBuilderChangeLog()
 
@@ -178,7 +178,7 @@ internal class MutableEntityStorageImpl(
   internal var upgradeEngine: ((ReplaceBySourceAsTree) -> Unit)? = null
 
   @set:TestOnly
-  internal var upgradeAddDiffEngine: ((AddDiffOperation) -> Unit)? = null
+  internal var upgradeApplyChangesFromEngine: ((ApplyChanesFromOperation) -> Unit)? = null
 
   // --------------- Replace By Source stuff -----------
 
@@ -668,14 +668,14 @@ internal class MutableEntityStorageImpl(
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
-  override fun addDiff(diff: MutableEntityStorage) = addDiffTimeMs.addMeasuredTimeMillis {
+  override fun applyChangesFrom(builder: MutableEntityStorage) = applyChangesFromTimeMs.addMeasuredTimeMillis {
     try {
       lockWrite()
-      diff as MutableEntityStorageImpl
-      applyDiffProtection(diff)
-      val addDiffOperation = AddDiffOperation(this, diff)
-      upgradeAddDiffEngine?.invoke(addDiffOperation)
-      addDiffOperation.addDiff()
+      builder as MutableEntityStorageImpl
+      applyChangesFromProtection(builder)
+      val applyChangesFromOperation = ApplyChanesFromOperation(this, builder)
+      upgradeApplyChangesFromEngine?.invoke(applyChangesFromOperation)
+      applyChangesFromOperation.applyChangesFrom()
     }
     finally {
       unlockWrite()
@@ -710,16 +710,16 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  private fun applyDiffProtection(diff: AbstractEntityStorage) {
-    LOG.trace { "Applying addDiff. Builder: $diff" }
-    if (diff.storageIsAlreadyApplied) {
-      LOG.error("Builder is already applied.\n Info: \n${diff.applyInfo}")
+  private fun applyChangesFromProtection(builder: AbstractEntityStorage) {
+    LOG.trace { "Applying applyChangesFrom. Builder: $builder" }
+    if (builder.storageIsAlreadyApplied) {
+      LOG.error("Builder is already applied.\n Info: \n${builder.applyInfo}")
     }
     else {
-      diff.storageIsAlreadyApplied = true
+      builder.storageIsAlreadyApplied = true
       if (LOG.isTraceEnabled) {
-        diff.applyInfo = buildString {
-          appendLine("Applying builder using addDiff. Previous stack trace >>>>")
+        builder.applyInfo = buildString {
+          appendLine("Applying builder using applyChangesFrom. Previous stack trace >>>>")
           appendLine(ExceptionUtil.currentStackTrace())
           appendLine("<<<<")
         }
@@ -842,7 +842,7 @@ internal class MutableEntityStorageImpl(
     private val collectChangesTimeMs: AtomicLong = AtomicLong()
     private val hasSameEntitiesTimeMs: AtomicLong = AtomicLong()
     private val toSnapshotTimeMs: AtomicLong = AtomicLong()
-    private val addDiffTimeMs: AtomicLong = AtomicLong()
+    private val applyChangesFromTimeMs: AtomicLong = AtomicLong()
     private val getMutableExternalMappingTimeMs: AtomicLong = AtomicLong()
     private val getMutableVFUrlIndexTimeMs: AtomicLong = AtomicLong()
 
@@ -860,7 +860,7 @@ internal class MutableEntityStorageImpl(
       val collectChangesTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.collect.changes.ms").buildObserver()
       val hasSameEntitiesTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.has.same.entities.ms").buildObserver()
       val toSnapshotTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.to.snapshot.ms").buildObserver()
-      val addDiffTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.add.diff.ms").buildObserver()
+      val applyChangesFromTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.apply.changes.from.ms").buildObserver()
       val getMutableExternalMappingTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.mutable.ext.mapping.ms").buildObserver()
       val getMutableVFUrlIndexTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.mutable.vfurl.index.ms").buildObserver()
 
@@ -879,14 +879,14 @@ internal class MutableEntityStorageImpl(
           collectChangesTimeCounter.record(collectChangesTimeMs.get())
           hasSameEntitiesTimeCounter.record(hasSameEntitiesTimeMs.get())
           toSnapshotTimeCounter.record(toSnapshotTimeMs.get())
-          addDiffTimeCounter.record(addDiffTimeMs.get())
+          applyChangesFromTimeCounter.record(applyChangesFromTimeMs.get())
           getMutableExternalMappingTimeCounter.record(getMutableExternalMappingTimeMs.get())
           getMutableVFUrlIndexTimeCounter.record(getMutableVFUrlIndexTimeMs.get())
         },
         instancesCountCounter, getEntitiesTimeCounter, getReferrersTimeCounter, resolveTimeCounter,
         getEntitiesBySourceTimeCounter, addEntityTimeCounter,
         putEntityTimeCounter, modifyEntityTimeCounter, removeEntityTimeCounter, replaceBySourceTimeCounter,
-        collectChangesTimeCounter, hasSameEntitiesTimeCounter, toSnapshotTimeCounter, addDiffTimeCounter,
+        collectChangesTimeCounter, hasSameEntitiesTimeCounter, toSnapshotTimeCounter, applyChangesFromTimeCounter,
         getMutableExternalMappingTimeCounter, getMutableVFUrlIndexTimeCounter
       )
     }

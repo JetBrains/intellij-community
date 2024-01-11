@@ -64,7 +64,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * * `@Child ChildEntity?` indicating that there are zero or one child entities of the given type, or
  * * `List<@Child ChildEntity>` indicating that there are zero, one, or more child entities of the given type.
  * 
- * If `ChildEntity` is [@Abstract][Abstract], [addDiff][MutableEntityStorage.addDiff] operation won't try to merge changes in children of
+ * If `ChildEntity` is [@Abstract][Abstract], [applyChangesFrom][MutableEntityStorage.applyChangesFrom] operation won't try to merge changes in children of
  * a parent entity, but always replace the whole list of children.
  * 
  * The property referring to the parent entity may have a type

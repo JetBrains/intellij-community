@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.util.SystemInfo
@@ -101,7 +101,7 @@ class VirtualFileIndexTest {
     assertEquals(entityB.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
     assertTrue(builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
@@ -127,7 +127,7 @@ class VirtualFileIndexTest {
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertTrue(diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertTrue(builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
@@ -163,7 +163,7 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlC, virtualFile.first().url)
     assertNotEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     virtualFile = builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id)

@@ -262,12 +262,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val sourcesToUpdate = removeDuplicatingEntities(buildersWithLoadedState, serializers)
     val loadedBuilders = buildersWithLoadedState.mapNotNull { if (!it.unloaded) it.builder else null }
-    builder.addDiff(squash(loadedBuilders))
+    builder.applyChangesFrom(squash(loadedBuilders))
     val unloadedBuilders = buildersWithLoadedState.mapNotNull { if (it.unloaded) it.builder else null }
     if (unloadedBuilders.isNotEmpty()) {
-      unloadedEntityBuilder.addDiff(squash(unloadedBuilders))
+      unloadedEntityBuilder.applyChangesFrom(squash(unloadedBuilders))
     }
-    orphanageBuilder.addDiff(squash(buildersWithLoadedState.map { it.orphanage }))
+    orphanageBuilder.applyChangesFrom(squash(buildersWithLoadedState.map { it.orphanage }))
 
     return@addMeasuredTimeMillis sourcesToUpdate
   }
@@ -465,7 +465,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     // To avoid a huge impact on performance metrics, we turn off consistency check for this particular case.
     // However, in general, this place should be refactored: instead of returning builders, we should return entities themselves.
     ConsistencyCheckingDisabler.withDisabled {
-      builders.forEach { builder -> target.addDiff(builder) }
+      builders.forEach { builder -> target.applyChangesFrom(builder) }
     }
     return target
   }

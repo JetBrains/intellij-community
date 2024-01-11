@@ -58,7 +58,7 @@ class ReferencesInStorageTest {
       this.childChild = emptyList()
     }
     diff.addEntity(childEntity)
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     builder.assertConsistency()
 
     val child = builder.singleChild()
@@ -146,7 +146,7 @@ class ReferencesInStorageTest {
     }
     diff.removeEntity(parent)
     diff.assertConsistency()
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     builder.assertConsistency()
     assertEquals(listOf(oldChild), builder.entities(XChildEntity::class.java).toList())
     assertEquals(listOf(oldParent), builder.entities(XParentEntity::class.java).toList())

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -95,18 +95,18 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) {
       if (targetBuilder != null) {
         if (targetBuilder !== diff) {
-          targetBuilder.addDiff(diff)
+          targetBuilder.applyChangesFrom(diff)
         }
       }
       else {
         if (originalLibrary.project != null) {
           WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
-            it.addDiff(diff)
+            it.applyChangesFrom(diff)
           }
         }
         else {
           GlobalWorkspaceModel.getInstance().updateModel("Library model commit") {
-            it.addDiff(diff)
+            it.applyChangesFrom(diff)
           }
         }
       }

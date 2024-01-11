@@ -96,7 +96,7 @@ public interface WorkspaceModel {
    *   won't be applied and this method will return false. In this case client should get a newer version of snapshot builder, apply changes
    *   and try to call [replaceProjectModel].
    *   Keep in mind that you may not need to start the full builder update process (e.g. gradle sync) and the newer version of the builder
-   *   can be updated using [MutableEntityStorage.addDiff] or [MutableEntityStorage.replaceBySource], but you have to be
+   *   can be updated using [MutableEntityStorage.applyChangesFrom] or [MutableEntityStorage.replaceBySource], but you have to be
    *   sure that the changes will be applied to the new builder correctly.
    *
    * The calculation of changes will be performed during [BuilderSnapshot.getStorageReplacement]. This method only replaces the project model

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
@@ -52,7 +52,7 @@ class SymbolicIdIndexTest {
     assertNull(builder.indexes.symbolicIdIndex.getIdsByEntry(secondSymbolicId))
     assertEquals(secondEntity.id, diff.indexes.symbolicIdIndex.getIdsByEntry(secondSymbolicId))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     assertEquals(entity.id, builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
     assertEquals(secondEntity.id, builder.indexes.symbolicIdIndex.getIdsByEntry(secondSymbolicId))
   }
@@ -73,7 +73,7 @@ class SymbolicIdIndexTest {
     assertEquals(entity.id, builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
     assertNull(diff.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     assertNull(builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
   }
 
@@ -98,7 +98,7 @@ class SymbolicIdIndexTest {
     assertEquals(newEntity.id, diff.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId))
     assertEquals(entity.id, builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
 
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
     assertNull(builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
     assertEquals(newEntity.id, builder.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId))
   }

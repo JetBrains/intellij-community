@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -67,7 +67,7 @@ class AbstractEntitiesTest {
   }
 
   @Test
-  fun `children replace in addDiff`() {
+  fun `children replace in applyChangesFrom`() {
     val builder = MutableEntityStorage.create()
     val middleEntity = builder.addMiddleEntity()
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
@@ -83,7 +83,7 @@ class AbstractEntitiesTest {
       this.children = listOf(middleEntity, initialMiddleEntity)
     }
 
-    builder.addDiff(anotherBuilder)
+    builder.applyChangesFrom(anotherBuilder)
 
     val actualLeftEntity = assertOneElement(builder.entities(LeftEntity::class.java).toList())
     val children = actualLeftEntity.children.toList() as List<MiddleEntity>
@@ -117,7 +117,7 @@ class AbstractEntitiesTest {
       addLeftEntity(sequenceOf(middleEntity2, middleEntity1))
     }
 
-    builder.addDiff(anotherBuilder)
+    builder.applyChangesFrom(anotherBuilder)
 
     val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).last().children.toList()

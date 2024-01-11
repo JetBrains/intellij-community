@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
+import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.RepetitionInfo
 import java.util.*
 import kotlin.test.*
 
-class AddDiffTest {
+class ApplyChangesFromTest {
   private lateinit var target: MutableEntityStorageImpl
   private var shaker = -1L
 
@@ -28,10 +28,10 @@ class AddDiffTest {
 
   private val externalMappingName = ExternalMappingKey.create<Any>("test.checking.external.mapping")
 
-  private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
+  private fun MutableEntityStorage.applyChanges(anotherBuilder: MutableEntityStorage): EntityStorage {
     val builder = createBuilderFrom(this)
-    builder.upgradeAddDiffEngine = { it.shaker = shaker }
-    builder.addDiff(anotherBuilder)
+    builder.upgradeApplyChangesFromEngine = { it.shaker = shaker }
+    builder.applyChangesFrom(anotherBuilder)
     val storage = builder.toSnapshot() as ImmutableEntityStorageImpl
     storage.assertConsistency()
     return storage
@@ -43,7 +43,7 @@ class AddDiffTest {
     target = createEmptyBuilder()
     // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
     shaker = Random(info.currentRepetition.toLong()).nextLong()
-    target.upgradeAddDiffEngine = { it.shaker = shaker }
+    target.upgradeApplyChangesFromEngine = { it.shaker = shaker }
   }
 
   @RepeatedTest(10)
@@ -53,7 +53,7 @@ class AddDiffTest {
                                   SampleEntitySource("test"))
     target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
   }
 
@@ -65,7 +65,7 @@ class AddDiffTest {
                                                 SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.removeEntity(entity.from(source))
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals(entity2, storage.singleSampleEntity())
   }
 
@@ -77,7 +77,7 @@ class AddDiffTest {
     source.modifyEntity(entity.from(source)) {
       stringProperty = "changed"
     }
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals("changed", storage.singleSampleEntity().stringProperty)
   }
 
@@ -92,7 +92,7 @@ class AddDiffTest {
     target.assertConsistency()
     source.assertConsistency()
     source.removeEntity(entity.from(source))
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals(entity2, storage.singleSampleEntity())
   }
 
@@ -106,7 +106,7 @@ class AddDiffTest {
     source.modifyEntity(entity.from(source)) {
       stringProperty = "changed"
     }
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals(emptyList(), storage.entities(SampleEntity::class.java).toList())
   }
 
@@ -125,7 +125,7 @@ class AddDiffTest {
       this.childProperty = "new property"
     }
 
-    val res = target.applyDiff(source) as ImmutableEntityStorageImpl
+    val res = target.applyChanges(source) as ImmutableEntityStorageImpl
     res.assertConsistency()
 
     assertOneElement(res.entities(XParentEntity::class.java).toList())
@@ -142,7 +142,7 @@ class AddDiffTest {
     }
     source.removeEntity(entity.from(source))
     source.assertConsistency()
-    val storage = target.applyDiff(source)
+    val storage = target.applyChanges(source)
     assertEquals(emptyList(), storage.entities(SampleEntity::class.java).toList())
   }
 
@@ -157,7 +157,7 @@ class AddDiffTest {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
 
-    source.addDiff(target)
+    source.applyChangesFrom(target)
     source.assertConsistency()
 
     val resultingStorage = source.toSnapshot()
@@ -183,7 +183,7 @@ class AddDiffTest {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
 
-    source.addDiff(target)
+    source.applyChangesFrom(target)
     source.assertConsistency()
 
     val resultingStorage = source.toSnapshot()
@@ -213,7 +213,7 @@ class AddDiffTest {
       this.parentEntity = pparent
     }
 
-    source.addDiff(target)
+    source.applyChangesFrom(target)
     source.assertConsistency()
 
     val resultingStorage = source.toSnapshot()
@@ -235,7 +235,7 @@ class AddDiffTest {
     }
     source.removeEntity(parent)
 
-    source.applyDiff(target)
+    source.applyChanges(target)
   }
 
   @RepeatedTest(10)
@@ -254,7 +254,7 @@ class AddDiffTest {
       parentEntity = parent
     }
 
-    source.applyDiff(target)
+    source.applyChanges(target)
   }
 
   @RepeatedTest(10)
@@ -269,7 +269,7 @@ class AddDiffTest {
     target.removeEntity(parent.from(target))
     source.removeEntity(parent)
 
-    source.applyDiff(target)
+    source.applyChanges(target)
   }
 
   @RepeatedTest(10)
@@ -285,7 +285,7 @@ class AddDiffTest {
 
     source.removeEntity(parent)
 
-    source.applyDiff(target)
+    source.applyChanges(target)
   }
 
   @RepeatedTest(10)
@@ -296,8 +296,8 @@ class AddDiffTest {
     target.addNamedEntity("Name")
     source.addNamedEntity("Name")
 
-    assertThrowsLogError<AddDiffException> {
-      source.applyDiff(target)
+    assertThrowsLogError<ApplyChangesFromException> {
+      source.applyChanges(target)
     }
   }
 
@@ -312,8 +312,8 @@ class AddDiffTest {
       this.myName = "Name"
     }
 
-    assertThrowsLogError<AddDiffException> {
-      source.applyDiff(target)
+    assertThrowsLogError<ApplyChangesFromException> {
+      source.applyChanges(target)
     }
   }
 
@@ -331,7 +331,7 @@ class AddDiffTest {
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     val externalMapping = target.getExternalMapping(externalMappingName) as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
@@ -354,7 +354,7 @@ class AddDiffTest {
     target.removeEntity(entity)
     val freezed = target.toSnapshot().toBuilder()
 
-    freezed.addDiff(newBuilder)
+    freezed.applyChangesFrom(newBuilder)
 
     assertEquals(1, freezed.entities(ParentEntity::class.java).toList().size)
     val requestedEntity = freezed.entities(ParentEntity::class.java).single()
@@ -372,7 +372,7 @@ class AddDiffTest {
       this.entitySource = AnotherSource
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -394,7 +394,7 @@ class AddDiffTest {
       stringProperty = "Prop2"
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -421,7 +421,7 @@ class AddDiffTest {
       this.stringProperty = "Updated"
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -441,7 +441,7 @@ class AddDiffTest {
       optionalParent = parent
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
@@ -460,7 +460,7 @@ class AddDiffTest {
       this.optionalChildren += child
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
@@ -479,7 +479,7 @@ class AddDiffTest {
       this.optionalParent = parent
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
@@ -502,7 +502,7 @@ class AddDiffTest {
                                   SampleEntitySource("test"))
     source.removeEntity(toBeRemoved.from(source))
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     assertOneElement(target.entities(SampleEntity::class.java).toList())
   }
@@ -527,7 +527,7 @@ class AddDiffTest {
 
     source.removeEntity(childEntity.from(source))
 
-    val res = initial.applyDiff(source)
+    val res = initial.applyChanges(source)
 
     assertTrue(res.entities(XChildWithOptionalParentEntity::class.java).toList().isEmpty())
     val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
@@ -551,7 +551,7 @@ class AddDiffTest {
       this.optionalChildren = emptyList()
     }
 
-    val res = initial.applyDiff(source)
+    val res = initial.applyChanges(source)
 
     assertEquals(2, res.entities(XChildWithOptionalParentEntity::class.java).toList().size)
     val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
@@ -569,7 +569,7 @@ class AddDiffTest {
       )
     }
 
-    val result = target.applyDiff(source)
+    val result = target.applyChanges(source)
 
     assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
   }
@@ -586,7 +586,7 @@ class AddDiffTest {
       )
     }
 
-    val result = target.applyDiff(source)
+    val result = target.applyChanges(source)
 
     assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
   }
@@ -602,7 +602,7 @@ class AddDiffTest {
       )
     }
 
-    val result = target.applyDiff(source)
+    val result = target.applyChanges(source)
 
     assertEquals(1, result.entities(ParentMultipleEntity::class.java).single().children.size)
   }
@@ -625,7 +625,7 @@ class AddDiffTest {
       this.child = OoChildEntity("ccc", MySource)
     }
 
-    snapshot.toBuilder().addDiff(builder)
+    snapshot.toBuilder().applyChangesFrom(builder)
   }
 
   @RepeatedTest(10)
@@ -642,7 +642,7 @@ class AddDiffTest {
     }
     builder.removeEntity(newChild)
 
-    snapshot.toBuilder().addDiff(builder)
+    snapshot.toBuilder().applyChangesFrom(builder)
   }
 
   @RepeatedTest(10)
@@ -656,7 +656,7 @@ class AddDiffTest {
       this.entitySource = AnotherSource
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -678,7 +678,7 @@ class AddDiffTest {
       this.parentEntity = parentEntity1
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -701,7 +701,7 @@ class AddDiffTest {
     // The child was not removed
     assertTrue(source.entities(XChildWithOptionalParentEntity::class.java).any())
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -724,7 +724,7 @@ class AddDiffTest {
     // The child was removed
     assertTrue(source.entities(XChildWithOptionalParentEntity::class.java).none())
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -746,7 +746,7 @@ class AddDiffTest {
     // The previous child was not removed because it has optional parent
     assertEquals(2, source.entities(OoChildWithNullableParentEntity::class.java).toList().size)
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -769,7 +769,7 @@ class AddDiffTest {
     // The previous child was not removed because it has optional parent
     assertEquals(2, source.entities(OoChildWithNullableParentEntity::class.java).toList().size)
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -792,7 +792,7 @@ class AddDiffTest {
       this.anotherChild = OoChildWithNullableParentEntity(MySource)
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -807,7 +807,7 @@ class AddDiffTest {
     val source = createBuilderFrom(target)
     source.removeEntity(entity.from(source))
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -824,7 +824,7 @@ class AddDiffTest {
       )
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -844,7 +844,7 @@ class AddDiffTest {
       )
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 
@@ -873,7 +873,7 @@ class AddDiffTest {
       )
     }
 
-    target.addDiff(source)
+    target.applyChangesFrom(source)
 
     target.assertConsistency()
 

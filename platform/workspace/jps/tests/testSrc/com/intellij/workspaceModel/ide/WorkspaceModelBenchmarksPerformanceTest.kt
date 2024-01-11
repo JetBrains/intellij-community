@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
@@ -509,7 +510,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @Test
-  fun `addDiff operation`(testInfo: TestInfo) {
+  fun `applyChangesFrom operation`(testInfo: TestInfo) {
     val builders = List(1000) {
       val builder = MutableEntityStorage.create()
 
@@ -553,7 +554,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
       builders.zip(newBuilders).forEach { (initial, update) ->
-        initial.addDiff(update)
+        initial.applyChangesFrom(update)
       }
     }
       .warmupIterations(0)

@@ -175,7 +175,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       sourcesToSave.removeAll(reloadingResult.affectedSources)
 
       if ((reloadingResult.orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-        EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
+        EntitiesOrphanage.getInstance(project).update { it.applyChangesFrom(reloadingResult.orphanageBuilder) }
       }
     }
   }
@@ -298,7 +298,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       childActivity = childActivity?.endAndStart("applying entities from global storage")
       val mutableStorage = MutableEntityStorage.create()
       GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
-      builder.addDiff(mutableStorage)
+      builder.applyChangesFrom(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
@@ -343,7 +343,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       addUnloadedModuleEntities(unloadedBuilder)
 
       EntitiesOrphanage.getInstance(project).update {
-        it.addDiff(projectEntities.orphanageBuilder)
+        it.applyChangesFrom(projectEntities.orphanageBuilder)
       }
       childActivity?.end()
       childActivity = null
@@ -367,7 +367,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private fun addUnloadedModuleEntities(diff: MutableEntityStorage) {
     if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
       WorkspaceModel.getInstance(project).updateUnloadedEntities("Add new unloaded modules") { updater ->
-        updater.addDiff(diff)
+        updater.applyChangesFrom(diff)
       }
     }
   }

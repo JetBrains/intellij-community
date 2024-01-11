@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -120,7 +120,7 @@ class WorkspaceEntityEqualityTest {
   fun `equality for entity from event and from updated snapshot after dummy modification`() {
     builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
-    builderTwo.addDiff(builderOne)
+    builderTwo.applyChangesFrom(builderOne)
     val entityInEvent = builderTwo.collectChanges()[SampleEntity::class.java]!!.single().newEntity!!
     val snapshot = builderTwo.toSnapshot()
     val entityInSnapshot = snapshot.singleSampleEntity()

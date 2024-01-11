@@ -86,7 +86,7 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
-                 description="Enable additional checks after replaceBySource and addDiff"/>
+                 description="Enable additional checks after replaceBySource and applyChangesFrom"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
                  description="Enable workspace model consistency checking after every update"/>
 

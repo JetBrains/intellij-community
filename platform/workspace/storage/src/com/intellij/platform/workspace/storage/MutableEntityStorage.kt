@@ -80,11 +80,11 @@ import com.intellij.platform.workspace.storage.impl.currentStackTrace
  * the storage.
  * 
  * ## Batch operations
- * Besides operation with individual entities, [MutableEntityStorage] supports two batch operations: [addDiff] and [replaceBySource].
+ * Besides operation with individual entities, [MutableEntityStorage] supports two batch operations: [applyChangesFrom] and [replaceBySource].
  * 
  * ### Add Diff
  * Each instance of [MutableEntityStorage] records changes made in it: addition, modification and removal of entities. Such changes made
- * in one instance may be applied to a different instance by calling [addDiff] function.
+ * in one instance may be applied to a different instance by calling [applyChangesFrom] function.
  *
  * **Use cases**:
  *
@@ -92,12 +92,12 @@ import com.intellij.platform.workspace.storage.impl.currentStackTrace
  *
  *   Example: When configuration of a project is read from `*.iml` files, the IDE creates a separate empty [MutableEntityStorage] for each
  *   file, and run tasks which parse an `*.iml` file and load entities from it to the corresponding storage concurrently.
- *   When the tasks finish, their results are merged into the single storage via [addDiff].
+ *   When the tasks finish, their results are merged into the single storage via [applyChangesFrom].
  *
  * - **Accumulating changes.**
  *
  *   Example: This fits the case the user performs modifications in the "Project Structure" dialog. We don't want the changes to be
- *   applied immediately, so we accumulate changes in a builder and then add them to the main storage using the [addDiff] command when
+ *   applied immediately, so we accumulate changes in a builder and then add them to the main storage using the [applyChangesFrom] command when
  *   the user presses "apply" button.
  *
  * This is not a full list of use cases. You can use this operation based on your needs.
@@ -171,12 +171,12 @@ public interface MutableEntityStorage : EntityStorage {
   public fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
-   * Merges changes from [diff] to this storage. 
-   * It's supposed that [diff] was created either via [MutableEntityStorage.create] function, or via [MutableEntityStorage.from] with the 
+   * Merges changes from [builder] to this storage.
+   * It's supposed that [builder] was created either via [MutableEntityStorage.create] function, or via [MutableEntityStorage.from] with the
    * same base storage as this one. 
    * Calling the function for a mutable storage with a different base storage may lead to unpredictable results.
    */
-  public fun addDiff(diff: MutableEntityStorage)
+  public fun applyChangesFrom(builder: MutableEntityStorage)
 
   /**
    * Returns an existing or create a new mapping with the given [identifier].
@@ -191,7 +191,7 @@ public interface MutableEntityStorage : EntityStorage {
   public companion object {
     private val LOG = logger<MutableEntityStorage>()
     /**
-     * Creates an empty mutable storage. It may be populated with new entities and passed to [addDiff] or [replaceBySource].  
+     * Creates an empty mutable storage. It may be populated with new entities and passed to [applyChangesFrom] or [replaceBySource].
      */
     @JvmStatic
     public fun create(): MutableEntityStorage = from(ImmutableEntityStorage.empty())
@@ -226,7 +226,7 @@ public sealed class EntityChange<T : WorkspaceEntity> {
   /**
    * Describes an entity which was added to the storage, directly (via [MutableEntityStorage.addEntity]) or indirectly (as a child of another
    * added entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource], 
-   * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
+   * [applyChangesFrom][MutableEntityStorage.applyChangesFrom]), or after modification of a reference from a parent entity).
    */
   public data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T?
@@ -238,7 +238,7 @@ public sealed class EntityChange<T : WorkspaceEntity> {
   /**
    * Describes an entity which was removed from the storage, directly (via [MutableEntityStorage.removeEntity]) or indirectly (as a child of 
    * another removed entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource],
-   * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
+   * [applyChangesFrom][MutableEntityStorage.applyChangesFrom]), or after modification of a reference from a parent entity).
    */
   public data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.external
 
 import com.google.common.collect.HashBiMap
@@ -144,7 +144,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
     if (target.entityDataById(id) == null) return null
 
-    // It's possible that before addDiff there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
+    // It's possible that before 'applyChangesFrom' there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
     val sourceId = replaceMap.inverse()[id.asThis()]
     return if (sourceId != null) null else id
   }

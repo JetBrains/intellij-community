@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -119,7 +119,7 @@ class MutableStorageTest {
     builder2.modifyEntity(entity) {
       entitySource = AnotherSource
     }
-    builder3.addDiff(builder2)
+    builder3.applyChangesFrom(builder2)
     assertEquals(MySource, snapshot.entities(SampleEntity2::class.java).single().entitySource)
   }
 

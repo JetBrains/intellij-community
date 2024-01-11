@@ -572,12 +572,12 @@ class ModifiableRootModelBridgeImpl(
     val diff = collectChangesAndDispose() ?: return
     val moduleDiff = module.diff
     if (moduleDiff != null) {
-      moduleDiff.addDiff(diff)
+      moduleDiff.applyChangesFrom(diff)
       postCommit()
     }
     else {
       WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
-        it.addDiff(diff)
+        it.applyChangesFrom(diff)
       }
       postCommit()
     }

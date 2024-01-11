@@ -189,7 +189,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         if (LOG.isTraceEnabled()) {
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
         }
-        builder.addDiff(storageBuilder);
+        builder.applyChangesFrom(storageBuilder);
         return null;
       });
 

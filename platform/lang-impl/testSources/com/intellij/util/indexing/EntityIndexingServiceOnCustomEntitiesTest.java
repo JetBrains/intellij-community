@@ -389,7 +389,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(EntityStorageKt.toSnapshot(entityStorage));
     consumer.accept(preliminaryBuilder);
     workspaceModel.updateProjectModel("EntityIndexingServiceTest", storage -> {
-      storage.addDiff(preliminaryBuilder);
+      storage.applyChangesFrom(preliminaryBuilder);
       return Unit.INSTANCE;
     });
   }

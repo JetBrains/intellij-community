@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
@@ -126,11 +126,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     prepareForCommit()
     facetManager.model.facetsChanged()
     if (moduleDiff != null) {
-      moduleDiff.addDiff(diff)
+      moduleDiff.applyChangesFrom(diff)
     }
     else {
       WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel("Facet model commit") {
-        it.addDiff(diff)
+        it.applyChangesFrom(diff)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
@@ -191,7 +191,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     val workspaceModel = myProject.workspaceModel
     val diff = MutableEntityStorage.from(workspaceModel.currentSnapshot)
     resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff)
-    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff)} }
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.applyChangesFrom(diff)} }
     assertTrue(library.getFiles(annotationsRootType).isNotEmpty())
   }
 
@@ -216,7 +216,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     val workspaceModel = myProject.workspaceModel
     val diff = MutableEntityStorage.from(workspaceModel.currentSnapshot)
     resolver.resolve(myProject, library,  AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff)
-    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff)} }
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.applyChangesFrom(diff)} }
 
     assertThat(library.getUrls(annotationsRootType).single())
       .endsWith("myGroup/myArtifact/1.0-an1/myArtifact-1.0-an1-annotations.zip!/")
@@ -242,7 +242,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     val workspaceModel = myProject.workspaceModel
     val diff1= MutableEntityStorage.from(workspaceModel.currentSnapshot)
     resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff1)
-    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff1)} } // first write operation
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.applyChangesFrom(diff1)} } // first write operation
 
     val modifiableModel = library.modifiableModel
     modifiableModel.addRoot("file:///fake.source", OrderRootType.SOURCES)
@@ -251,7 +251,7 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     val diff2 = MutableEntityStorage.from(workspaceModel.currentSnapshot) as MutableEntityStorageInstrumentation
     resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff2)
     assertFalse(diff2.hasChanges())
-    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff2)} } // third write operation
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.applyChangesFrom(diff2)} } // third write operation
 
     assertTrue("Last library update should not cause root change events", libraryRootsChangedCounter < 3)
   }

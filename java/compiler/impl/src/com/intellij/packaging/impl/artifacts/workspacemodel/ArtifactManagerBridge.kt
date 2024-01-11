@@ -209,7 +209,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
 
     project.workspaceModel.updateProjectModel("Commit artifact manager") {
-      it.addDiff(artifactModel.diff)
+      it.applyChangesFrom(artifactModel.diff)
     }
 
     modificationTracker.incModificationCount()

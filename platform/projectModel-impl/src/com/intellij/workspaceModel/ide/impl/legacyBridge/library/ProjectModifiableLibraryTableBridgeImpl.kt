@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.diagnostic.logger
@@ -106,7 +106,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   override fun commit() {
     prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
-      it.addDiff(diff)
+      it.applyChangesFrom(diff)
     }
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }

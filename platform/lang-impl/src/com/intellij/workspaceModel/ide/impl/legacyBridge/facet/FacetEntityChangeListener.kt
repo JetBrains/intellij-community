@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -150,7 +149,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
           is EntityChange.Removed -> {
             val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.oldEntity)
             val manager = getFacetManager(moduleEntity) ?: return@forEach
-            // Mapping to facet isn't saved in manager.model after addDiff. But you can get an object from the older version of the store
+            // Mapping to facet isn't saved in manager.model after 'applyChangesFrom'. But you can get an object from the older version of the store
             manager.model.facetsChanged()
             val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: return@forEach
             Disposer.dispose(facet)

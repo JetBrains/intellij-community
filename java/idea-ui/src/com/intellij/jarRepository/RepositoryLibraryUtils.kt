@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.configurationStore.deserialize
@@ -298,7 +298,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     withContext(Dispatchers.EDT) {
       WriteAction.run<Throwable> {
         workspaceModel.updateProjectModel("RepositoryLibraryUtils update") {
-          it.addDiff(builder)
+          it.applyChangesFrom(builder)
         }
       }
     }

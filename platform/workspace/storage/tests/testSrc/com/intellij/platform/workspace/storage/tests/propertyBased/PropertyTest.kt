@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.StorageIndexes
-import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
+import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
@@ -44,11 +44,11 @@ class PropertyTest {
   }
 
   @Test
-  fun testAddDiff() {
+  fun testApplyChangesFrom() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(AddDiff.create(workspace))
+        env.executeCommands(ApplyChangesFrom.create(workspace))
         workspace.assertConsistency()
       }
     }
@@ -61,7 +61,7 @@ class PropertyTest {
   fun `add diff generates same changelog simple test`() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
-        env.executeCommands(AddDiffCheckChangelog.create(null))
+        env.executeCommands(ApplyChangesFromCheckChangelog.create(null))
       }
     }
   }
@@ -74,16 +74,16 @@ class PropertyTest {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(AddDiffCheckChangelog.create(workspace))
+        env.executeCommands(ApplyChangesFromCheckChangelog.create(workspace))
         workspace.assertConsistency()
       }
     }
   }
 }
 
-private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCommand {
+private class ApplyChangesFrom(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to perform addDiff")
+    env.logMessage("Trying to perform applyChangesFrom")
     val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify diff:")
@@ -96,24 +96,24 @@ private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCom
     */
 
     try {
-      storage.addDiff(another)
-      env.logMessage("addDiff finished")
+      storage.applyChangesFrom(another)
+      env.logMessage("applyChangesFrom finished")
       env.logMessage("---------------------------")
     }
-    catch (e: AddDiffException) {
-      env.logMessage("Cannot perform addDiff: ${e.message}. Fallback to previous state")
+    catch (e: ApplyChangesFromException) {
+      env.logMessage("Cannot perform applyChangesFrom: ${e.message}. Fallback to previous state")
       (storage as MutableEntityStorageImpl).restoreFromBackup(backup)
     }
   }
 
   companion object {
-    fun create(workspace: MutableEntityStorage): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
+    fun create(workspace: MutableEntityStorage): Generator<ApplyChangesFrom> = Generator.constant(ApplyChangesFrom(workspace))
   }
 }
 
-private class AddDiffCheckChangelog(val preBuilder: MutableEntityStorageImpl?) : ImperativeCommand {
+private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorageImpl?) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to perform addDiff")
+    env.logMessage("Trying to perform applyChangesFrom")
     val storage = preBuilder ?: run {
       val storage = createEmptyBuilder()
       env.logMessage("Prepare empty builder:")
@@ -126,24 +126,24 @@ private class AddDiffCheckChangelog(val preBuilder: MutableEntityStorageImpl?) :
     env.executeCommands(getEntityManipulation(another))
 
     try {
-      var addDiffEngineStolen: AddDiffOperation? = null
+      var applyChangesFromEngineStolen: ApplyChanesFromOperation? = null
       storage.changeLog.clear()
-      storage.upgradeAddDiffEngine = { addDiffEngineStolen = it }
-      storage.addDiff(another)
+      storage.upgradeApplyChangesFromEngine = { applyChangesFromEngineStolen = it }
+      storage.applyChangesFrom(another)
 
       val actualChangelog = storage.changeLog.changeLog.let { HashMap(it) }
 
       // Since the target builder may have different ids, we take the changelog from diff and change all events to have the same IDs as in
       //   storage. We change ids in place, so this is a destructive operation for [another] builder.
-      val updatedChangelog = updateWithReplaceMap(addDiffEngineStolen!!.replaceMap, another.changeLog.changeLog.let { HashMap(it) })
+      val updatedChangelog = updateWithReplaceMap(applyChangesFromEngineStolen!!.replaceMap, another.changeLog.changeLog.let { HashMap(it) })
 
       assertEquals(updatedChangelog, actualChangelog)
 
-      env.logMessage("addDiff finished")
+      env.logMessage("applyChangesFrom finished")
       env.logMessage("---------------------------")
     }
-    catch (e: AddDiffException) {
-      env.logMessage("Cannot perform addDiff: ${e.message}.")
+    catch (e: ApplyChangesFromException) {
+      env.logMessage("Cannot perform applyChangesFrom: ${e.message}.")
     }
   }
 
@@ -198,7 +198,7 @@ private class AddDiffCheckChangelog(val preBuilder: MutableEntityStorageImpl?) :
   }
 
   companion object {
-    fun create(preBuilder: MutableEntityStorageImpl?): Generator<AddDiffCheckChangelog> = Generator.constant(AddDiffCheckChangelog(preBuilder))
+    fun create(preBuilder: MutableEntityStorageImpl?): Generator<ApplyChangesFromCheckChangelog> = Generator.constant(ApplyChangesFromCheckChangelog(preBuilder))
   }
 }
 
