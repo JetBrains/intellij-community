@@ -9,8 +9,6 @@
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
     <extensionPoint name="workspaceModel.preUpdateHandler" interface="com.intellij.platform.backend.workspace.WorkspaceModelPreUpdateHandler"
                     dynamic="true"/>
-    <extensionPoint name="workspaceModel.cache.version" interface="com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion"
-                    dynamic="true"/>
     <extensionPoint name="workspace.bridgeInitializer" interface="com.intellij.platform.backend.workspace.BridgeInitializer"
                     dynamic="true"/>
   </extensionPoints>

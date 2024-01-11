@@ -1,27 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
-import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
@@ -95,59 +88,6 @@ class WorkspaceCacheTest {
     assertTrue(cache.getUnloadedEntitiesCacheFilePath().exists())
   }
 
-  @Test
-  fun `custom version provider`() {
-    val projectData = prepareProject()
-
-    val project = loadProject(projectData.projectDir)
-
-    ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionOne), project)
-
-    ApplicationManager.getApplication().invokeAndWait {
-      ApplicationManager.getApplication().runWriteAction {
-        WorkspaceModel.getInstance(project).updateProjectModel {
-          it addEntity ModuleEntity("MyTestModule", emptyList(), MySource)
-        }
-      }
-    }
-
-    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
-
-    val project2 = loadProject(projectData.projectDir)
-
-    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
-    assertTrue(modules.any { it.name == "MyTestModule" })
-  }
-
-  @Test
-  @Ignore("WorkspaceModelCacheVersion is no longer used")
-  fun `custom version provider with changed version`() {
-    val projectData = prepareProject()
-
-    val project = loadProject(projectData.projectDir)
-
-    val pointDisposable = Disposer.newDisposable()
-    ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionOne), pointDisposable)
-
-    ApplicationManager.getApplication().invokeAndWait {
-      ApplicationManager.getApplication().runWriteAction {
-        WorkspaceModel.getInstance(project).updateProjectModel {
-          it addEntity ModuleEntity("MyTestModule", emptyList(), MySource)
-        }
-      }
-    }
-
-    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
-
-    Disposer.dispose(pointDisposable)
-    val anotherPointDisposable = Disposer.newDisposable(project, "Point disposable")
-    ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionTwo), anotherPointDisposable)
-    val project2 = loadProject(projectData.projectDir)
-
-    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
-    assertFalse(modules.any { it.name == "MyTestModule" })
-  }
-
   private fun prepareProject(): LoadedProjectData {
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
@@ -169,18 +109,6 @@ class WorkspaceCacheTest {
     return project
   }
 
-  private object VersionOne : WorkspaceModelCacheVersion {
-    override fun getId(): String = "test"
-
-    override fun getVersion(): String = "1"
-  }
-
-  private object VersionTwo : WorkspaceModelCacheVersion {
-    override fun getId(): String = "test"
-
-    override fun getVersion(): String = "2"
-  }
-
   companion object {
     @JvmField
     @ClassRule
@@ -196,8 +124,5 @@ class WorkspaceCacheTest {
     private fun cacheFileName(): String {
       return "test_caching_" + RandomStringUtils.randomAlphabetic(5) + ".data"
     }
-
-    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>(
-      "com.intellij.workspaceModel.cache.version")
   }
 }

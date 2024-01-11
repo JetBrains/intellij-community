@@ -81,7 +81,6 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
-    <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
 
     <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
