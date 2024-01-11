@@ -102,6 +102,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         elementsProvider
       )
     }
+
+    if (closePopup) {
+      MissingKeyProviderCollector.report(sessionId)
+    }
   }
 
   fun onSearchFinished(project: Project?,
