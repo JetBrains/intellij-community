@@ -10,14 +10,16 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
- * Resolves [reference] to symbol and returns static scope for the obtained symbol. Note that if the symbol is [KtTypeAliasSymbol],
- * `null` is returned. See KT-34281 for more details.
+ * Resolves [reference] to symbol and returns static scope for the obtained symbol.
+ * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol], `null` is returned.
+ * See KT-34281 for more details.
  */
 context(KtAnalysisSession)
 internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
@@ -25,7 +27,16 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
-            is KtSymbolWithMembers -> KtScopeWithKind(symbol.getStaticMemberScope(), KtScopeKind.StaticMemberScope(scopeIndex), token)
+            is KtSymbolWithMembers -> {
+                val scope = if (symbol is KtNamedClassOrObjectSymbol && symbol.classKind.isObject) {
+                    symbol.getMemberScope()
+                } else {
+                    symbol.getStaticMemberScope()
+                }
+
+                KtScopeWithKind(scope, KtScopeKind.StaticMemberScope(scopeIndex), token)
+            }
+
             is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KtScopeKind.PackageMemberScope(scopeIndex), token)
             else -> null
         }

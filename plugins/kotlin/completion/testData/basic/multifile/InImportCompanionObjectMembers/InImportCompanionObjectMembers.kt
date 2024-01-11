@@ -3,7 +3,6 @@ package first
 
 import second.One.Companion.<caret>
 
-// IGNORE_K2
 //EXIST: {"lookupString":"someVal","typeText":"Int","icon":"org/jetbrains/kotlin/idea/icons/field_value.svg","attributes":"","allLookupStrings":"getSomeVal, someVal","itemText":"someVal"}
 //EXIST: {"lookupString":"someFun","tailText":"()","typeText":"Unit","icon":"Method","attributes":"","allLookupStrings":"someFun","itemText":"someFun"}
 //EXIST: {"lookupString":"equals","tailText":"(other: Any?)","typeText":"Boolean","icon":"Method","attributes":"","allLookupStrings":"equals","itemText":"equals"}
