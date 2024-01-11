@@ -115,7 +115,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     if (qName == null) return;
     final FileTemplateBase template = manager.getTemplate(qName);
     if (template == null) {
-      LOG.error("Template is missing: " + qName);
+      LOG.warn("Template is missing: " + qName);
       return;
     }
     template.setFileName(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_FILE_NAME)));
