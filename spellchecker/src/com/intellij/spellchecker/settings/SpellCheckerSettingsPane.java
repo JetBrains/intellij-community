@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.spellchecker.DictionaryLevel;
+import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -77,8 +77,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
         myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
       }
     });
-    myDictionariesComboBox.addItem(DictionaryLevel.APP.getName());
-    myDictionariesComboBox.addItem(DictionaryLevel.PROJECT.getName());
+    DictionaryLayersProvider.Companion.getAllLayers(project).forEach(it -> myDictionariesComboBox.addItem(it.getName()));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 

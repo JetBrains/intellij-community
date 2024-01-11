@@ -141,7 +141,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   private static void addBatchDescriptor(PsiElement element,
                                          @NotNull TextRange textRange,
                                          @NotNull ProblemsHolder holder) {
-    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes();
+    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes(element);
     ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, false);
     holder.registerProblem(problemDescriptor);
   }

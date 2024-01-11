@@ -14,7 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.spellchecker.DictionaryLevel;
+import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -52,9 +53,6 @@ public class SpellcheckingStrategy {
   };
 
   public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<>(PlainTextSplitter.getInstance());
-
-  private static final SpellCheckerQuickFix[] BATCH_FIXES =
-    new SpellCheckerQuickFix[]{SaveTo.getSaveToLevelFix(DictionaryLevel.APP), SaveTo.getSaveToLevelFix(DictionaryLevel.PROJECT)};
 
   public Tokenizer getTokenizer(PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
     return getTokenizer(element);
@@ -145,7 +143,7 @@ public class SpellcheckingStrategy {
 
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
     if (settings.isUseSingleDictionaryToSave()) {
-      result.add(new SaveTo(typo, DictionaryLevel.getLevelByName(settings.getDictionaryToSave())));
+      result.add(new SaveTo(typo, Objects.requireNonNull(DictionaryLayersProvider.Companion.getLayer(element.getProject(), settings.getDictionaryToSave()))));
       return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
 
@@ -153,8 +151,10 @@ public class SpellcheckingStrategy {
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public static SpellCheckerQuickFix[] getDefaultBatchFixes() {
-    return BATCH_FIXES;
+  public static SpellCheckerQuickFix[] getDefaultBatchFixes(PsiElement element) {
+    return DictionaryLayersProvider.Companion.getAllLayers(element.getProject())
+      .stream().map(it -> new SaveTo(it))
+      .toArray(SpellCheckerQuickFix[]::new);
   }
 
   public boolean isMyContext(@NotNull PsiElement element) {

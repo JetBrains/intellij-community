@@ -6,8 +6,9 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.spellchecker.DictionaryLevel;
+import com.intellij.spellchecker.ProjectDictionaryLayer;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
@@ -20,11 +21,12 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
   public static final String TEST_TXT = "test.txt";
 
   private void doTest(String word, VirtualFile file) {
-    final SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
+    var project = getProject();
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     try {
       assertTrue(manager.hasProblem(word));
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> manager
-        .acceptWordAsCorrect$intellij_spellchecker(word, file, getProject(), DictionaryLevel.PROJECT), getName(), null);
+      CommandProcessor.getInstance().executeCommand(project, () -> manager
+        .acceptWordAsCorrect$intellij_spellchecker(word, file, project, new ProjectDictionaryLayer(project)), getName(), null);
       assertFalse(manager.hasProblem(word));
     }
     finally {
@@ -72,20 +74,21 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
 
   public void testUndoRedo() {
     final VirtualFile file = myFixture.configureByText(TEST_TXT, TYPPO).getVirtualFile();
-    final UndoManager instance = UndoManager.getInstance(getProject());
+    final Project project = getProject();
+    final UndoManager instance = UndoManager.getInstance(project);
     ((UndoManagerImpl)instance).dropHistoryInTests(); // to make sure it's empty
-    final SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
 
     assertTrue(manager.hasProblem(TYPPO));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> manager
-      .acceptWordAsCorrect$intellij_spellchecker(TYPPO, file, getProject(), DictionaryLevel.PROJECT), getName(), null);
+    CommandProcessor.getInstance().executeCommand(project, () -> manager
+      .acceptWordAsCorrect$intellij_spellchecker(TYPPO, file, project, new ProjectDictionaryLayer(project)), getName(), null);
     assertFalse(manager.hasProblem(TYPPO));
 
-    instance.undo(FileEditorManager.getInstance(getProject()).getSelectedEditor(file));
+    instance.undo(FileEditorManager.getInstance(project).getSelectedEditor(file));
 
     assertTrue(manager.hasProblem(TYPPO));
 
-    instance.redo(FileEditorManager.getInstance(getProject()).getSelectedEditor(file));
+    instance.redo(FileEditorManager.getInstance(project).getSelectedEditor(file));
     assertFalse(manager.hasProblem(TYPPO));
   }
 }

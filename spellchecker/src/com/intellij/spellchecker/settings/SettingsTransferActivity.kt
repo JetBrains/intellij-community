@@ -3,7 +3,8 @@ package com.intellij.spellchecker.settings
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.spellchecker.DictionaryLevel
+import com.intellij.spellchecker.ApplicationDictionaryLayer
+import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.state.ProjectDictionaryState
 
 internal class SettingsTransferActivity : ProjectActivity {
@@ -12,9 +13,9 @@ internal class SettingsTransferActivity : ProjectActivity {
     if (settings.isSettingsTransferred) {
       return
     }
-    if (settings.isUseSingleDictionaryToSave && DictionaryLevel.PROJECT.getName() == settings.dictionaryToSave &&
+    if (settings.isUseSingleDictionaryToSave && ProjectDictionaryLayer.name == settings.dictionaryToSave &&
         project.getService(ProjectDictionaryState::class.java).projectDictionary.words.isEmpty()) {
-      settings.dictionaryToSave = DictionaryLevel.APP.getName()
+      settings.dictionaryToSave = ApplicationDictionaryLayer.name
     }
     settings.isSettingsTransferred = true
   }
