@@ -11,7 +11,6 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
@@ -81,7 +80,7 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter, EditorDiffViewer {
+public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorDiffViewer {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull protected final UnifiedDiffPanel myPanel;
@@ -901,11 +900,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   @Override
   protected StatusPanel getStatusPanel() {
     return myStatusPanel;
-  }
-
-  @Override
-  public int getTotalDifferences() {
-    return getNonSkippedDiffChanges().size();
   }
 
   @RequiresEdt

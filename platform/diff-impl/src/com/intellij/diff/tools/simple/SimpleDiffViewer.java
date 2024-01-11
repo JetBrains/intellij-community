@@ -7,7 +7,6 @@ import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
@@ -49,7 +48,7 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
+public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull protected final StatusPanel myStatusPanel;
@@ -379,11 +378,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @Override
   protected StatusPanel getStatusPanel() {
     return myStatusPanel;
-  }
-
-  @Override
-  public int getTotalDifferences() {
-    return getNonSkippedDiffChanges().size();
   }
 
   @NotNull
