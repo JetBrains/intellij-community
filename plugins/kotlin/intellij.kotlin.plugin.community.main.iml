@@ -104,9 +104,9 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />
-    <orderEntry type="module" module-name="kotlin.j2k.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.migration" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.common" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.new" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" exported="" />

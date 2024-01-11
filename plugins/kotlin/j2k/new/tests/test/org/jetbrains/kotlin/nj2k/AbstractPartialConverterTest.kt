@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.j2k.ConverterSettings
 
@@ -11,7 +10,7 @@ abstract class AbstractPartialConverterTest : AbstractNewJavaToKotlinConverterSi
     override fun fileToKotlin(text: String, settings: ConverterSettings, project: Project): String {
         val file = createJavaFile(text)
         val element = myFixture.elementAtCaret
-        return NewJavaToKotlinConverter(project, module, settings, IdeaJavaToKotlinServices).filesToKotlin(
+        return NewJavaToKotlinConverter(project, module, settings).filesToKotlin(
             listOf(file),
             NewJ2kPostProcessor(),
             EmptyProgressIndicator()

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 
 import com.intellij.psi.PsiVariable
-import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.tree.JKVariable
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKType

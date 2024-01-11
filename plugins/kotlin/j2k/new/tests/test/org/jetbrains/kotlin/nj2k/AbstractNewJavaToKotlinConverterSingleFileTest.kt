@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
@@ -51,7 +50,7 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
 
     override fun fileToKotlin(text: String, settings: ConverterSettings, project: Project): String {
         val file = createJavaFile(text)
-        return NewJavaToKotlinConverter(project, module, settings, IdeaJavaToKotlinServices)
+        return NewJavaToKotlinConverter(project, module, settings)
             .filesToKotlin(listOf(file), NewJ2kPostProcessor()).results.single()
     }
 

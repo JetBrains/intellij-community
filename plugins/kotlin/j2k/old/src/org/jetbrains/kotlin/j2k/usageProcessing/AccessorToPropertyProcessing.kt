@@ -85,7 +85,6 @@ class AccessorToPropertyProcessing(val accessorMethod: PsiMethod, val accessorKi
                     assignment.left!!.references
                 }
             }
-
         }
     }
 }

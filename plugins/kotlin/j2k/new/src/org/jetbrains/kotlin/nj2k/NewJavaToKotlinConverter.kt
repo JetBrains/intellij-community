@@ -27,14 +27,10 @@ import org.jetbrains.kotlin.resolve.ImportPath
 class NewJavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,
-    val settings: ConverterSettings,
-    val oldConverterServices: JavaToKotlinConverterServices
+    val settings: ConverterSettings
 ) : JavaToKotlinConverter() {
-    val converterServices = object : NewJavaToKotlinServices {
-        override val oldServices = oldConverterServices
-    }
-
     val phasesCount = J2KConversionPhase.values().size
+    val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
@@ -99,7 +95,7 @@ class NewJavaToKotlinConverter(
         }
 
         val importStorage = JKImportStorage(languageVersion)
-        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, converterServices, importStorage, bodyFilter, forInlining)
+        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
         val saveImports = inputElements.all { element ->
@@ -119,8 +115,7 @@ class NewJavaToKotlinConverter(
             }
         }
 
-        val externalCodeProcessing =
-            NewExternalCodeProcessing(oldConverterServices.referenceSearcher, inConversionContext)
+        val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, inConversionContext)
 
         val context = NewJ2kConverterContext(
             symbolProvider,

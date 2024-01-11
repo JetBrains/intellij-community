@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
-import org.jetbrains.kotlin.j2k.getContainingClass
+import org.jetbrains.kotlin.j2k.ReferenceSearcher
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -52,14 +52,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class JavaToJKTreeBuilder(
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory,
-    converterServices: NewJavaToKotlinServices,
+    private val referenceSearcher: ReferenceSearcher,
     private val importStorage: JKImportStorage,
     private val bodyFilter: ((PsiElement) -> Boolean)?,
     private val forInlining: Boolean
 ) {
     private val expressionTreeMapper = ExpressionTreeMapper()
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
-    private val referenceSearcher = converterServices.oldServices.referenceSearcher
     private val formattingCollector = FormattingCollector()
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? =

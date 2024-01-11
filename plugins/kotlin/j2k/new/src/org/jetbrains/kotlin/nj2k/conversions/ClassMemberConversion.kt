@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData

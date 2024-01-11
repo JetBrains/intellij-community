@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType

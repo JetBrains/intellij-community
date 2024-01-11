@@ -430,7 +430,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
         }
 
         if (target is PsiMethod) {
-            val specialMethod = SpecialMethod.match(target, arguments.size, converter.services)
+            val specialMethod = SpecialMethod.match(target, arguments.size, converter)
             if (specialMethod != null) {
                 val lPar = expression.argumentList.lPar()
                 val rPar = expression.argumentList.rPar()
@@ -823,7 +823,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
 
         val callParams = if (needThis) parameters.drop(1) else parameters
 
-        val specialMethod = method?.let { SpecialMethod.match(it, callParams.size, converter.services) }
+        val specialMethod = method?.let { SpecialMethod.match(it, callParams.size, converter) }
         val statement: Statement
         when {
             expression.isConstructor -> {

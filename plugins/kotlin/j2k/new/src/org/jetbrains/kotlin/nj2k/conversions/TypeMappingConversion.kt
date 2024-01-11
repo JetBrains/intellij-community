@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.toKotlinMutableTypesMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext

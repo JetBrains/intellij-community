@@ -431,7 +431,7 @@ private class PropertyDetector(
 
     private fun superInfo(getOrSetMethod: PsiMethod): SuperInfo? {
         //TODO: multiple
-        val superMethod = converter.services.superMethodsSearcher.findDeepestSuperMethods(getOrSetMethod).firstOrNull() ?: return null
+        val superMethod = converter.superMethodsSearcher.findDeepestSuperMethods(getOrSetMethod).firstOrNull() ?: return null
 
         val containingClass = superMethod.containingClass!!
         return when {

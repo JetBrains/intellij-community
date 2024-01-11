@@ -6,17 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
-interface ReferenceSearcher {
-    fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference>
-    fun hasInheritors(`class`: PsiClass): Boolean
-    fun hasOverrides(method: PsiMethod): Boolean
-
-    fun findUsagesForExternalCodeProcessing(element: PsiElement, searchJava: Boolean, searchKotlin: Boolean): Collection<PsiReference>
-}
-
-fun ReferenceSearcher.findVariableUsages(variable: PsiVariable, scope: PsiElement): Collection<PsiReferenceExpression>
-        = findLocalUsages(variable, scope).filterIsInstance<PsiReferenceExpression>()
-
 fun ReferenceSearcher.findMethodCalls(method: PsiMethod, scope: PsiElement): Collection<PsiMethodCallExpression> {
     return findLocalUsages(method, scope).mapNotNull {
         if (it is PsiReferenceExpression) {
@@ -50,9 +39,6 @@ fun PsiField.isVar(searcher: ReferenceSearcher): Boolean {
     }
     return true
 }
-
-fun PsiVariable.hasWriteAccesses(searcher: ReferenceSearcher, scope: PsiElement?): Boolean
-        = if (scope != null) searcher.findVariableUsages(this, scope).any { PsiUtil.isAccessedForWriting(it) } else false
 
 fun PsiVariable.isInVariableInitializer(searcher: ReferenceSearcher, scope: PsiElement?): Boolean {
     return if (scope != null) searcher.findVariableUsages(this, scope).any {

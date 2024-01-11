@@ -65,6 +65,7 @@ fun PsiElement.getContainingMethod(): PsiMethod? {
     return null
 }
 
+@Suppress("unused") // used from a 3rd-party plugin
 fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
@@ -112,8 +113,6 @@ fun PsiMember.isImported(file: PsiJavaFile): Boolean {
     }
 }
 
-fun PsiExpression.isNullLiteral() = this is PsiLiteralExpression && type == PsiTypes.nullType()
-
 // TODO: set origin for facade classes in library
 fun isFacadeClassFromLibrary(element: PsiElement?) = element is KtLightClass && element.kotlinOrigin == null
 
@@ -146,15 +145,4 @@ val toKotlinTypesMap: Map<String, String> = mapOf(
     CommonClassNames.JAVA_UTIL_MAP to StandardNames.FqNames.map.asString(),
     CommonClassNames.JAVA_UTIL_MAP_ENTRY to StandardNames.FqNames.mapEntry.asString(),
     java.util.ListIterator::class.java.canonicalName to StandardNames.FqNames.listIterator.asString()
-
-)
-
-val toKotlinMutableTypesMap: Map<String, String> = mapOf(
-    CommonClassNames.JAVA_UTIL_ITERATOR to StandardNames.FqNames.mutableIterator.asString(),
-    CommonClassNames.JAVA_UTIL_LIST to StandardNames.FqNames.mutableList.asString(),
-    CommonClassNames.JAVA_UTIL_COLLECTION to StandardNames.FqNames.mutableCollection.asString(),
-    CommonClassNames.JAVA_UTIL_SET to StandardNames.FqNames.mutableSet.asString(),
-    CommonClassNames.JAVA_UTIL_MAP to StandardNames.FqNames.mutableMap.asString(),
-    CommonClassNames.JAVA_UTIL_MAP_ENTRY to StandardNames.FqNames.mutableMapEntry.asString(),
-    java.util.ListIterator::class.java.canonicalName to StandardNames.FqNames.mutableListIterator.asString()
 )

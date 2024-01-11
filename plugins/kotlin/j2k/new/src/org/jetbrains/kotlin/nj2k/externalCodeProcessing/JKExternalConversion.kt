@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.j2k.AccessorKind
-import org.jetbrains.kotlin.j2k.usageProcessing.AccessorToPropertyProcessing
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
@@ -38,7 +35,32 @@ internal class AccessorToPropertyKotlinExternalConversion(
     override val usage: PsiElement
 ) : JKExternalConversion() {
     override fun apply() {
-        AccessorToPropertyProcessing.processUsage(usage, name, accessorKind)
+        val nameExpr = usage as? KtSimpleNameExpression ?: return
+        val callExpr = nameExpr.parent as? KtCallExpression ?: return
+
+        val arguments = callExpr.valueArguments
+        val factory = KtPsiFactory(nameExpr.project)
+        val propertyNameExpr = factory.createSimpleName(name)
+
+        if (accessorKind == AccessorKind.GETTER) {
+            if (arguments.size != 0) return // incorrect call
+            callExpr.replace(propertyNameExpr)
+            return
+        }
+
+        val value = arguments.singleOrNull()?.getArgumentExpression() ?: return
+        val assignment = factory.createExpression("a = b") as KtBinaryExpression
+        assignment.right!!.replace(value)
+        val qualifiedExpression = callExpr.parent as? KtQualifiedExpression
+
+        if (qualifiedExpression != null && qualifiedExpression.selectorExpression == callExpr) {
+            callExpr.replace(propertyNameExpr)
+            assignment.left!!.replace(qualifiedExpression)
+            qualifiedExpression.replace(assignment)
+        } else {
+            assignment.left!!.replace(propertyNameExpr)
+            callExpr.replace(assignment)
+        }
     }
 }
 

@@ -504,10 +504,10 @@ enum class SpecialMethod(private val qualifiedClassName: String?, val methodName
     companion object {
         private val valuesByName = values().groupBy { it.methodName }
 
-        fun match(method: PsiMethod, argumentCount: Int, services: JavaToKotlinConverterServices): SpecialMethod? {
+        fun match(method: PsiMethod, argumentCount: Int, converter: Converter): SpecialMethod? {
             val candidates = valuesByName[method.name] ?: return null
             return candidates
-                    .firstOrNull { it.matches(method, services.superMethodsSearcher) }
+                    .firstOrNull { it.matches(method, converter.superMethodsSearcher) }
                     ?.takeIf { it.parameterCount == null || it.parameterCount == argumentCount } // if parameterCount is specified we should make sure that argument count is correct
         }
     }

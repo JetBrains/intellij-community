@@ -36,8 +36,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
-import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
+import org.jetbrains.kotlin.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -137,13 +136,11 @@ class JavaToKotlinAction : AnAction() {
                 val converter =
                     if (forceUsingOldJ2k) OldJavaToKotlinConverter(
                         project,
-                        settings,
-                        IdeaJavaToKotlinServices
+                        settings
                     ) else J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).createJavaToKotlinConverter(
                         project,
                         module,
-                        settings,
-                        IdeaJavaToKotlinServices
+                        settings
                     )
                 converterResult = converter.filesToKotlin(
                     javaFiles,

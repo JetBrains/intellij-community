@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceData
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -246,8 +245,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
         J2kConverterExtension.extension(useNewJ2k).createJavaToKotlinConverter(
             project,
             targetModule,
-            ConverterSettings.defaultSettings,
-            IdeaJavaToKotlinServices
+            ConverterSettings.defaultSettings
         )
 
     val inputElements = toList().filterIsInstance<PsiElement>()

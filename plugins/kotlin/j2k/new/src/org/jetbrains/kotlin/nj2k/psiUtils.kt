@@ -156,3 +156,14 @@ internal fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: (
     }
     return result!!
 }
+
+fun PsiElement.getContainingClass(): PsiClass? {
+    var context = context
+    while (context != null) {
+        val _context = context
+        if (_context is PsiClass) return _context
+        if (_context is PsiMember) return _context.containingClass
+        context = _context.context
+    }
+    return null
+}

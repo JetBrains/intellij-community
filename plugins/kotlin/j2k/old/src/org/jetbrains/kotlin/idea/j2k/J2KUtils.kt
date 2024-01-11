@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.j2k
 
@@ -19,7 +19,7 @@ fun PsiElement.j2kText(settings: ConverterSettings = defaultSettings): String? =
 
 fun PsiElement.convertToKotlin(settings: ConverterSettings = defaultSettings): Result? {
     if (language != JavaLanguage.INSTANCE) return null
-    val j2kConverter = OldJavaToKotlinConverter(project, settings, IdeaJavaToKotlinServices)
+    val j2kConverter = OldJavaToKotlinConverter(project, settings)
     return j2kConverter.elementsToKotlin(listOf(this))
 }
 

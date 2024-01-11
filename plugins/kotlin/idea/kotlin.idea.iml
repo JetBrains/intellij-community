@@ -70,10 +70,10 @@
     <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.j2k.common" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
     <orderEntry type="module" module-name="kotlin.j2k.new" />
     <orderEntry type="module" module-name="kotlin.formatter" />
-    <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />

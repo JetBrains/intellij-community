@@ -4,14 +4,9 @@ package org.jetbrains.kotlin.j2k.ast
 
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.Nullability
 
 fun Type.isUnit(): Boolean = this is UnitType
-
-enum class Nullability {
-    Nullable,
-    NotNull,
-    Default
-}
 
 fun Nullability.isNullable(settings: ConverterSettings) = when(this) {
     Nullability.Nullable -> true

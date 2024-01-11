@@ -8,7 +8,6 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -59,7 +58,7 @@ abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKot
             psiFile
         }
 
-        val converter = NewJavaToKotlinConverter(project, module, ConverterSettings.defaultSettings, IdeaJavaToKotlinServices)
+        val converter = NewJavaToKotlinConverter(project, module, ConverterSettings.defaultSettings)
         val (results, externalCodeProcessor) =
             WriteCommandAction.runWriteCommandAction(project, Computable {
                 PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()

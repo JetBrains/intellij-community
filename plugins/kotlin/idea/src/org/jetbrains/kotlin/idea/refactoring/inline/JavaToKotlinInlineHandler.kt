@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.codeInliner.PropertyUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
@@ -175,8 +174,7 @@ class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val
             val converter = NewJavaToKotlinConverter(
                 javaMember.project,
                 javaMember.module,
-                ConverterSettings.defaultSettings,
-                IdeaJavaToKotlinServices
+                ConverterSettings.defaultSettings
             )
 
             val declaration = converter.convertToKotlinNamedDeclaration(

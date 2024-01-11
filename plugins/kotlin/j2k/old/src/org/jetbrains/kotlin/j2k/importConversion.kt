@@ -84,7 +84,7 @@ private fun Converter.convertStaticImportOnDemand(fqName: FqName, target: PsiEle
                     // cannot import on demand from object, generate imports for all members
                     return importFromObject.declarations
                             .mapNotNull {
-                                val descriptor = services.resolverForConverter.resolveToDescriptor(it) ?: return@mapNotNull null
+                                val descriptor = resolverForConverter.resolveToDescriptor(it) ?: return@mapNotNull null
                                 if (descriptor.hasJvmStaticAnnotation() || descriptor is PropertyDescriptor && descriptor.isConst)
                                     descriptor.name
                                 else

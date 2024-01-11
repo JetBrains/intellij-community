@@ -33,7 +33,7 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableC
     }
 
     private fun hasInheritors(psiClass: PsiClass): Boolean =
-        context.converter.converterServices.oldServices.referenceSearcher.hasInheritors(psiClass)
+        context.converter.referenceSearcher.hasInheritors(psiClass)
 
     private fun JKMethod.process() {
         val psiMethod = psi<PsiMethod>() ?: return
@@ -68,7 +68,7 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableC
     }
 
     private fun hasOverrides(psiMethod: PsiMethod): Boolean =
-        context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(psiMethod)
+        context.converter.referenceSearcher.hasOverrides(psiMethod)
 
     private fun JKField.process() {
         val containingClass = parentOfType<JKClass>() ?: return

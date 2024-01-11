@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.j2k.ast.Nullability
-import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
-import org.jetbrains.kotlin.j2k.ast.Nullability.Nullable
+import org.jetbrains.kotlin.j2k.Nullability
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe

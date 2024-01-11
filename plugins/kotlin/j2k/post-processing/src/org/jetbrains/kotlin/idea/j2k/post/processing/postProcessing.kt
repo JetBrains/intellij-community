@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 
 class NewJ2kPostProcessor : PostProcessor {
     companion object {
@@ -111,3 +114,16 @@ internal abstract class ElementsBasedPostProcessing : GeneralPostProcessing {
 }
 
 internal data class NamedPostProcessingGroup(val description: String, val processings: List<GeneralPostProcessing>)
+
+fun JKPostProcessingTarget.elements(): List<PsiElement> = when (this) {
+    is JKPieceOfCodePostProcessingTarget -> runReadAction {
+        val range = rangeMarker.range ?: return@runReadAction emptyList()
+        file.elementsInRange(range)
+    }
+    is JKMultipleFilesPostProcessingTarget -> files
+}
+
+private fun JKPostProcessingTarget.files(): List<KtFile> = when (this) {
+    is JKPieceOfCodePostProcessingTarget -> listOf(file)
+    is JKMultipleFilesPostProcessingTarget -> files
+}

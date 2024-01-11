@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k
+package org.jetbrains.kotlin.j2k
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.fileTypes.FileType
@@ -14,7 +14,13 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.j2k.ReferenceSearcher
+
+interface ReferenceSearcher {
+    fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference>
+    fun hasInheritors(`class`: PsiClass): Boolean
+    fun hasOverrides(method: PsiMethod): Boolean
+    fun findUsagesForExternalCodeProcessing(element: PsiElement, searchJava: Boolean, searchKotlin: Boolean): Collection<PsiReference>
+}
 
 object IdeaReferenceSearcher : ReferenceSearcher {
     override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =

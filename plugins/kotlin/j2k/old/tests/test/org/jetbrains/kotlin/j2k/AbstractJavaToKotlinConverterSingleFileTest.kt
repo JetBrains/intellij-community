@@ -10,8 +10,6 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
-import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -120,7 +118,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     protected open fun fileToKotlin(text: String, settings: ConverterSettings, project: Project): String {
         val file = createJavaFile(text)
-        val converter = OldJavaToKotlinConverter(project, settings, IdeaJavaToKotlinServices)
+        val converter = OldJavaToKotlinConverter(project, settings)
         return converter.filesToKotlin(listOf(file), J2kPostProcessor(formatCode = true)).results.single()
     }
 

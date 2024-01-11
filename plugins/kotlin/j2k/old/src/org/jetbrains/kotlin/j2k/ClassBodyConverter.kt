@@ -10,11 +10,6 @@ import org.jetbrains.kotlin.j2k.usageProcessing.ToObjectWithOnlyMethodsProcessin
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.SpecialNames
 
-enum class AccessorKind {
-    GETTER,
-    SETTER
-}
-
 enum class ClassKind {
     FINAL_CLASS,
     OPEN_CLASS,

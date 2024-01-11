@@ -19,7 +19,7 @@ class InternalDeclarationConversion(context: NewJ2kConverterContext) : Recursive
         val containingClassVisibility = containingClass?.visibility
             ?: element.psi<PsiMember>()
                 ?.containingClass
-                ?.visibility(context.converter.oldConverterServices.referenceSearcher, null)
+                ?.visibility(context.converter.referenceSearcher, null)
                 ?.visibility
         val defaultVisibility = if (context.converter.settings.publicByDefault) PUBLIC else INTERNAL
 

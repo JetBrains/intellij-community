@@ -37,7 +37,7 @@ private class ForToForeachConverter(
     private val typeFactory: JKTypeFactory
 ) {
     private val referenceSearcher: ReferenceSearcher
-        get() = context.converter.converterServices.oldServices.referenceSearcher
+        get() = context.converter.referenceSearcher
 
     fun convert(loop: JKJavaForLoopStatement): JKForInStatement? {
         val initializer = loop.initializers.singleOrNull() ?: return null

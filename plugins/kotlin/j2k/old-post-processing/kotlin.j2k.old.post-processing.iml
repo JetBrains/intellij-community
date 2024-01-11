@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.idea" />
-    <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
@@ -25,5 +24,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="kotlin.j2k.common" />
+    <orderEntry type="module" module-name="kotlin.j2k.old" />
   </component>
 </module>

@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInspection.dataFlow.DfaUtil
+import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -12,12 +14,20 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.TypeUtils
 
-interface JavaDataFlowAnalyzerFacade {
-    fun variableNullability(variable: PsiVariable, context: PsiElement): Nullability
+private object JavaDataFlowAnalyzerFacade {
+    fun variableNullability(context: PsiElement): Nullability {
+        return NullabilityUtil.getExpressionNullability(context as? PsiExpression ?: return Nullability.Default, true).toJ2KNullability()
+    }
 
-    fun methodNullability(method: PsiMethod): Nullability
+    fun methodNullability(method: PsiMethod): Nullability =
+        DfaUtil.inferMethodNullability(method).toJ2KNullability()
+
+    private fun com.intellij.codeInsight.Nullability.toJ2KNullability() = when (this) {
+        com.intellij.codeInsight.Nullability.UNKNOWN -> Nullability.Default
+        com.intellij.codeInsight.Nullability.NOT_NULL -> Nullability.NotNull
+        com.intellij.codeInsight.Nullability.NULLABLE -> Nullability.Nullable
+    }
 }
-
 
 class TypeConverter(val converter: Converter) {
     private val typesBeingConverted = HashSet<PsiType>()
@@ -26,9 +36,9 @@ class TypeConverter(val converter: Converter) {
         override val referenceSearcher: ReferenceSearcher
             get() = converter.referenceSearcher
         override val javaDataFlowAnalyzerFacade: JavaDataFlowAnalyzerFacade
-            get() = converter.services.javaDataFlowAnalyzerFacade
+            get() = JavaDataFlowAnalyzerFacade
         override val resolverForConverter: ResolverForConverter
-            get() = converter.services.resolverForConverter
+            get() = converter.resolverForConverter
 
         override fun inConversionScope(element: PsiElement): Boolean = converter.inConversionScope(element)
     })
@@ -99,14 +109,14 @@ class TypeConverter(val converter: Converter) {
             = typeFlavorCalculator.variableMutability(variable)
 }
 
-interface TypeFlavorConverterFacade {
+private interface TypeFlavorConverterFacade {
     val referenceSearcher: ReferenceSearcher
     val javaDataFlowAnalyzerFacade: JavaDataFlowAnalyzerFacade
     val resolverForConverter: ResolverForConverter
     fun inConversionScope(element: PsiElement): Boolean
 }
 
-class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
+private class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
 
     fun variableNullability(variable: PsiVariable): Nullability
             = nullabilityFlavor.forVariableType(variable, true)
@@ -274,7 +284,7 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
             assert(reference.resolve() == variable)
             val dataFlowUtil = converter.javaDataFlowAnalyzerFacade
 
-            return dataFlowUtil.variableNullability(variable, reference).takeIf { it != default } ?:
+            return dataFlowUtil.variableNullability(reference).takeIf { it != default } ?:
                    variableNullability(variable)
         }
 

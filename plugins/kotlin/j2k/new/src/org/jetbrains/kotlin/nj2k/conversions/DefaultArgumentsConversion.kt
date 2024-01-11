@@ -19,7 +19,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                 || hasOtherModifier(OtherModifier.OVERRIDE)
                 || hasOtherModifier(OtherModifier.NATIVE)
                 || hasOtherModifier(OtherModifier.SYNCHRONIZED)
-                || psi<PsiMethod>()?.let { context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(it) } == true
+                || psi<PsiMethod>()?.let { context.converter.referenceSearcher.hasOverrides(it) } == true
                 || hasAnnotations
                 || name.value.canBeGetterOrSetterName()
 

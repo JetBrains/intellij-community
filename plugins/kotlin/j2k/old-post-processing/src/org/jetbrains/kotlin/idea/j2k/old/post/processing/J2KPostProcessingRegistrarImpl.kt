@@ -25,12 +25,12 @@ import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention.Hol
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
-import org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar
-import org.jetbrains.kotlin.idea.j2k.J2kPostProcessing
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.j2k.J2KPostProcessingRegistrar
+import org.jetbrains.kotlin.j2k.J2kPostProcessing
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType

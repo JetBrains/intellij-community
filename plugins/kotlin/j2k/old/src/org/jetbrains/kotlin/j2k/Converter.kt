@@ -9,6 +9,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.ast.Annotation
 import org.jetbrains.kotlin.j2k.ast.Enum
@@ -24,7 +25,7 @@ class Converter private constructor(
     private val elementToConvert: PsiElement,
     val settings: ConverterSettings,
     val inConversionScope: (PsiElement) -> Boolean,
-    val services: JavaToKotlinConverterServices,
+    searcher: ReferenceSearcher,
     private val commonState: CommonState
 ) {
 
@@ -38,23 +39,27 @@ class Converter private constructor(
     val typeConverter: TypeConverter = TypeConverter(this)
     val annotationConverter: AnnotationConverter = AnnotationConverter(this)
 
-    val referenceSearcher: ReferenceSearcher = CachingReferenceSearcher(services.referenceSearcher)
+    val referenceSearcher: ReferenceSearcher = CachingReferenceSearcher(searcher)
 
     val propertyDetectionCache = PropertyDetectionCache(this)
 
+    internal val resolverForConverter = ResolverForConverter
+    internal val superMethodsSearcher = SuperMethodsSearcher
+    private val docCommentConverter = IdeaDocCommentConverter
+
     companion object {
         fun create(
-            elementToConvert: PsiElement, settings: ConverterSettings, services: JavaToKotlinConverterServices,
+            elementToConvert: PsiElement, settings: ConverterSettings, referenceSearcher: ReferenceSearcher,
             inConversionScope: (PsiElement) -> Boolean, usageProcessingsCollector: (UsageProcessing) -> Unit
         ): Converter {
             return Converter(
                 elementToConvert, settings, inConversionScope,
-                services, CommonState(usageProcessingsCollector)
+                referenceSearcher, CommonState(usageProcessingsCollector)
             )
         }
     }
 
-    private fun withCommonState(state: CommonState) = Converter(elementToConvert, settings, inConversionScope, services, state)
+    private fun withCommonState(state: CommonState) = Converter(elementToConvert, settings, inConversionScope, referenceSearcher, state)
 
     private fun createDefaultCodeConverter() = CodeConverter(this, DefaultExpressionConverter(), DefaultStatementConverter(), null)
 
@@ -81,7 +86,7 @@ class Converter private constructor(
             { usageProcessings ->
                 unfoldDeferredElements(usageProcessings)
 
-                val builder = CodeBuilder(elementToConvert, services.docCommentConverter)
+                val builder = CodeBuilder(elementToConvert, docCommentConverter)
                 builder.append(element)
                 Result(builder.resultText, builder.importsToAdd)
             },

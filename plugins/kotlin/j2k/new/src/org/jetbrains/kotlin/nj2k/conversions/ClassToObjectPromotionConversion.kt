@@ -68,6 +68,6 @@ class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : Recurs
 
     private fun JKClass.hasInheritors(): Boolean {
         val psi = psi<PsiClass>() ?: return false
-        return context.converter.converterServices.oldServices.referenceSearcher.hasInheritors(psi)
+        return context.converter.referenceSearcher.hasInheritors(psi)
     }
 }

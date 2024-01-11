@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.util.getParameterDescriptor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.j2k.ast.Nullability
-import org.jetbrains.kotlin.j2k.ast.Nullability.Default
-import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability
+import org.jetbrains.kotlin.j2k.Nullability.Default
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
