@@ -340,4 +340,32 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  @TestFor(issues = "PY-36882")
+  public void testNoErrorMessagesWithJoblib() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_joblib.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForPause();
+        resume();
+        waitForPause();
+        resume();
+        waitForTerminate();
+        assertFalse(output().contains("Traceback"));
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("joblib");
+      }
+    });
+  }
 }
