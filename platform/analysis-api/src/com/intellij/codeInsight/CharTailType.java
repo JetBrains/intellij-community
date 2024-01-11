@@ -3,15 +3,13 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Mark as internal until deprecated static fields are not removed from {@link TailType},
- * use {@link TailTypes#charType(char)} instead to avoid possible deadlock.
+ * Use {@link TailTypes#charType(char)} factory method instead of constructor to avoid possible deadlock
+ * until deprecated static fields are not removed from {@link TailType},
  */
-@ApiStatus.Internal
 public class CharTailType extends TailType {
   private final char myChar;
   private final boolean myOverwrite;
