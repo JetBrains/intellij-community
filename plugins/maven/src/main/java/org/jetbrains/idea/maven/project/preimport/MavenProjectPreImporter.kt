@@ -420,8 +420,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val sources = ArrayList<String>()
     val testSources = ArrayList<String>()
 
-    val sourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.sourceDirectory", "src/main/java")
-    val testSourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.testSourceDirectory", "src/test/java")
+    val sourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.sourceDirectory", "src/main/java")!!
+    val testSourceDirectory = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.testSourceDirectory", "src/test/java")!!
 
 
     sources.add(sourceDirectory)

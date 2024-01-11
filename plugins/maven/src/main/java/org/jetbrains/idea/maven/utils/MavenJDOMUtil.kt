@@ -1,198 +1,188 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.utils;
+package org.jetbrains.idea.maven.utils
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
-import org.jdom.Element;
-import org.jdom.IllegalNameException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.encoding.EncodingRegistry
+import com.intellij.psi.impl.source.parsing.xml.XmlBuilder
+import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver
+import org.jdom.Element
+import org.jdom.IllegalNameException
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.*;
-
-public final class MavenJDOMUtil {
-  @Nullable
-  public static Element read(final VirtualFile file, @Nullable final ErrorHandler handler) {
-
-    Application app = ApplicationManager.getApplication();
-    if (app == null || app.isDisposed()) {
-      return null;
+object MavenJDOMUtil {
+  @JvmStatic
+  fun read(file: VirtualFile, handler: ErrorHandler?): Element? {
+    val app = ApplicationManager.getApplication()
+    if (app == null || app.isDisposed) {
+      return null
     }
-    String text
-      = ReadAction.compute(() -> {
-      if (!file.isValid()) return null;
-
+    val text = ReadAction.compute<String, RuntimeException> {
+      if (!file.isValid) return@compute null
       try {
-        return VfsUtilCore.loadText(file);
+        return@compute VfsUtilCore.loadText(file)
       }
-      catch (IOException e) {
-        if (handler != null) handler.onReadError(e);
-        return null;
+      catch (e: IOException) {
+        handler?.onReadError(e)
+        return@compute null
       }
-    });
+    }
 
-    return text == null ? null : doRead(text, handler);
+    return if (text == null) null else doRead(text, handler)
   }
 
-  @Nullable
-  public static Element read(byte[] bytes, @Nullable ErrorHandler handler) {
-    return doRead(CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset()), handler);
+  @JvmStatic
+  fun read(bytes: ByteArray, handler: ErrorHandler?): Element? {
+    return doRead(CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().defaultCharset), handler)
   }
 
-  @Nullable
-  private static Element doRead(String text, final ErrorHandler handler) {
-    final LinkedList<Element> stack = new LinkedList<>();
+  private fun doRead(text: String, handler: ErrorHandler?): Element? {
+    val stack = LinkedList<Element>()
 
-    final Element[] result = {null};
-    XmlBuilderDriver driver = new XmlBuilderDriver(text);
-    XmlBuilder builder = new XmlBuilder() {
-      @Override
-      public void doctype(@Nullable CharSequence publicId, @Nullable CharSequence systemId, int startOffset, int endOffset) {
+    val result = arrayOf<Element?>(null)
+    val driver = XmlBuilderDriver(text)
+    val builder: XmlBuilder = object : XmlBuilder {
+      override fun doctype(publicId: CharSequence?, systemId: CharSequence?, startOffset: Int, endOffset: Int) {
       }
 
-      @Override
-      public ProcessingOrder startTag(CharSequence localName, String namespace, int startoffset, int endoffset, int headerEndOffset) {
-        String name = localName.toString();
-        if (StringUtil.isEmptyOrSpaces(name)) return ProcessingOrder.TAGS;
-
-        Element newElement;
-        try {
-          newElement = new Element(name);
+      override fun startTag(localName: CharSequence,
+                            namespace: String,
+                            startoffset: Int,
+                            endoffset: Int,
+                            headerEndOffset: Int): XmlBuilder.ProcessingOrder {
+        val name = localName.toString()
+        if (name.isBlank()) return XmlBuilder.ProcessingOrder.TAGS
+        val newElement = try {
+          Element(name)
         }
-        catch (IllegalNameException e) {
-          newElement = new Element("invalidName");
+        catch (e: IllegalNameException) {
+          Element("invalidName")
         }
 
-        Element parent = stack.isEmpty() ? null : stack.getLast();
+        val parent = if (stack.isEmpty()) null else stack.last
         if (parent == null) {
-          result[0] = newElement;
+          result[0] = newElement
         }
         else {
-          parent.addContent(newElement);
+          parent.addContent(newElement)
         }
-        stack.addLast(newElement);
+        stack.addLast(newElement)
 
-        return ProcessingOrder.TAGS_AND_TEXTS;
+        return XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS
       }
 
-      @Override
-      public void endTag(CharSequence localName, String namespace, int startoffset, int endoffset) {
-        String name = localName.toString();
-        if (StringUtil.isEmptyOrSpaces(name)) return;
+      override fun endTag(localName: CharSequence, namespace: String, startoffset: Int, endoffset: Int) {
+        val name = localName.toString()
+        if (name.isBlank()) return
 
-        for (Iterator<Element> itr = stack.descendingIterator(); itr.hasNext(); ) {
-          Element element = itr.next();
+        val itr = stack.descendingIterator()
+        while (itr.hasNext()) {
+          val element = itr.next()
 
-          if (element.getName().equals(name)) {
-            while (stack.removeLast() != element) {}
-            break;
+          if (element.name == name) {
+            while (stack.removeLast() !== element) {
+            }
+            break
           }
         }
       }
 
-      @Override
-      public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
-        stack.getLast().addContent(JDOMUtil.legalizeText(text.toString()));
+      override fun textElement(text: CharSequence, physical: CharSequence, startoffset: Int, endoffset: Int) {
+        stack.last.addContent(JDOMUtil.legalizeText(text.toString()))
       }
 
-      @Override
-      public void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset) {
+      override fun attribute(name: CharSequence, value: CharSequence, startoffset: Int, endoffset: Int) {
       }
 
-      @Override
-      public void entityRef(CharSequence ref, int startOffset, int endOffset) {
+      override fun entityRef(ref: CharSequence, startOffset: Int, endOffset: Int) {
       }
 
-      @Override
-      public void error(@NotNull String message, int startOffset, int endOffset) {
-        if (handler != null) handler.onSyntaxError();
+      override fun error(message: String, startOffset: Int, endOffset: Int) {
+        handler?.onSyntaxError()
       }
-    };
+    }
 
-    driver.build(builder);
-    return result[0];
+    driver.build(builder)
+    return result[0]
   }
 
-  @Nullable
-  public static Element findChildByPath(@Nullable Element element, String path) {
-    int i = 0;
-    while (element != null) {
-      int dot = path.indexOf('.', i);
+  @JvmStatic
+  fun findChildByPath(element: Element?, path: String): Element? {
+    var el = element
+    var i = 0
+    while (el != null) {
+      val dot = path.indexOf('.', i)
       if (dot == -1) {
-        return element.getChild(path.substring(i));
+        return el.getChild(path.substring(i))
       }
 
-      element = element.getChild(path.substring(i, dot));
-      i = dot + 1;
+      el = el.getChild(path.substring(i, dot))
+      i = dot + 1
     }
 
-    return null;
+    return null
   }
 
-  public static String findChildValueByPath(@Nullable Element element, String path, String defaultValue) {
-    Element child = findChildByPath(element, path);
-    if (child == null) return defaultValue;
-    String childValue = child.getTextTrim();
-    return childValue.isEmpty() ? defaultValue : childValue;
+  @JvmStatic
+  @JvmOverloads
+  fun findChildValueByPath(element: Element?, path: String, defaultValue: String? = null): String? {
+    val child = findChildByPath(element, path)
+    if (child == null) return defaultValue
+    val childValue = child.textTrim
+    return if (childValue.isEmpty()) defaultValue else childValue
   }
 
-  public static String findChildValueByPath(@Nullable Element element, String path) {
-    return findChildValueByPath(element, path, null);
+  @JvmStatic
+  fun hasChildByPath(element: Element?, path: String): Boolean {
+    return findChildByPath(element, path) != null
   }
 
-  public static boolean hasChildByPath(@Nullable Element element, String path) {
-    return findChildByPath(element, path) != null;
+  @JvmStatic
+  fun findChildrenByPath(element: Element?, path: String, subPath: String): List<Element> {
+    return collectChildren(findChildByPath(element, path), subPath)
   }
 
-  public static List<Element> findChildrenByPath(@Nullable Element element, String path, String subPath) {
-    return collectChildren(findChildByPath(element, path), subPath);
-  }
-
-  public static List<String> findChildrenValuesByPath(@Nullable Element element, String path, String childrenName) {
-    List<String> result = new ArrayList<>();
-    for (Element each : findChildrenByPath(element, path, childrenName)) {
-      String value = each.getTextTrim();
+  @JvmStatic
+  fun findChildrenValuesByPath(element: Element?, path: String, childrenName: String): List<String> {
+    val result: MutableList<String> = ArrayList()
+    for (each in findChildrenByPath(element, path, childrenName)) {
+      val value = each.textTrim
       if (!value.isEmpty()) {
-        result.add(value);
+        result.add(value)
       }
     }
-    return result;
+    return result
   }
 
-  private static List<Element> collectChildren(@Nullable Element container, String subPath) {
-    if (container == null) return Collections.emptyList();
+  private fun collectChildren(container: Element?, subPath: String): List<Element> {
+    if (container == null) return emptyList()
 
-    int firstDot = subPath.indexOf('.');
+    val firstDot = subPath.indexOf('.')
 
     if (firstDot == -1) {
-      return container.getChildren(subPath);
+      return container.getChildren(subPath)
     }
 
-    String childName = subPath.substring(0, firstDot);
-    String pathInChild = subPath.substring(firstDot + 1);
+    val childName = subPath.substring(0, firstDot)
+    val pathInChild = subPath.substring(firstDot + 1)
 
-    List<Element> result = new ArrayList<>();
+    val result: MutableList<Element> = ArrayList()
 
-    for (Element each : container.getChildren(childName)) {
-      Element child = findChildByPath(each, pathInChild);
-      if (child != null) result.add(child);
+    for (each in container.getChildren(childName)) {
+      val child = findChildByPath(each, pathInChild)
+      if (child != null) result.add(child)
     }
-    return result;
+    return result
   }
 
-  public interface ErrorHandler {
-    void onReadError(IOException e);
+  interface ErrorHandler {
+    fun onReadError(e: IOException?)
 
-    void onSyntaxError();
+    fun onSyntaxError()
   }
 }
