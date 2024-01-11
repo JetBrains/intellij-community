@@ -42,6 +42,12 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons/com/jetbrains/python/parser",
       )
 
+      "intellij.python.sdk" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PythonSdkIcons",
+        packageName = "com.jetbrains.python.sdk.icons",
+        iconDirectory = "icons/com/jetbrains/python/sdk",
+      )
+
       "intellij.python.psi" -> IntellijIconClassGeneratorModuleConfig(
         className = "PythonPsiApiIcons",
         packageName = "com.jetbrains.python.psi.icons",

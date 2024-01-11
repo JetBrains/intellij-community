@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import org.toml.lang.psi.TOML_STRING_LITERALS
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.ext.name
@@ -29,7 +29,7 @@ class PyprojectMetadataCompletionContributor : CompletionContributor() {
 
     if (TOML_STRING_LITERALS.contains(parent.elementType)  && parent.parentOfType<TomlKeyValue>()?.key?.name == "build-backend") {
       knownBackends.map {
-        LookupElementBuilder.create(it).withIcon(PythonIcons.Python.Python)
+        LookupElementBuilder.create(it).withIcon(PythonSdkIcons.Python)
       }
       .forEach { result.addElement(it) }
     }

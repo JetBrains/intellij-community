@@ -19,6 +19,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetTyp
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return PythonSdkIcons.Python;
   }
 
   public static class PythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {

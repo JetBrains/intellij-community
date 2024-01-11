@@ -29,8 +29,8 @@ import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.icons.PythonIcons
 import java.nio.file.Path
 
 /**
@@ -42,7 +42,7 @@ class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = PYTHON
 
-  override val icon = PythonIcons.Python.Python
+  override val icon = PythonSdkIcons.Python
 
   override val ordinal = 600
 

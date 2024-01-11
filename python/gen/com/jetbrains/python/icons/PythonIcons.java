@@ -60,7 +60,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Polars = load("icons/com/jetbrains/pythonCore/python/polars.svg", 1700660876, 2);
     /** 16x16 */ public static final @NotNull Icon Pycharm = load("icons/com/jetbrains/pythonCore/python/pycharm.svg", -2022691497, 0);
     /** 16x16 */ public static final @NotNull Icon Pypy = load("icons/com/jetbrains/pythonCore/python/pypy.svg", 186053200, 0);
-    /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/pythonCore/python/python.svg", 1245484644, 8);
     /** 16x16 */ public static final @NotNull Icon PythonClosed = load("icons/com/jetbrains/pythonCore/python/pythonClosed.svg", -663368800, 0);
     /** 16x16 */ public static final @NotNull Icon PythonConsole = load("icons/com/jetbrains/pythonCore/python/pythonConsole.svg", 2125468440, 0);
     /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/pythonCore/python/pythonConsoleToolWindow.svg", 1833337589, 2);

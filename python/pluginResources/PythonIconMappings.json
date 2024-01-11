@@ -3,28 +3,36 @@
     "com": {
       "jetbrains": {
         "python": {
-          "expui": {
-            "debug": {
-              "specialVar.svg": "icons/com/jetbrains/python/debug/specialVar.svg",
-              "stepIntoMyCode.svg": "icons/com/jetbrains/python/debug/StepIntoMyCode.svg"
-            },
-            "anaconda.svg": "icons/com/jetbrains/python/anaconda.svg",
-            "attachDebugger.svg": "icons/com/jetbrains/python/attachDebugger.svg",
-            "commandQueue.svg": "icons/com/jetbrains/python/commandQueue.svg",
-            "condaEnv.svg": "icons/com/jetbrains/python/condaenv.svg",
-            "executeCurrentStatement.svg": "icons/com/jetbrains/python/executeCurrentStatement.svg",
-            "function.svg": "icons/com/jetbrains/python/function.svg",
-            "python.svg": "icons/com/jetbrains/python/python.svg",
-            "pythonClosed.svg": "icons/com/jetbrains/python/pythonClosed.svg",
-            "pythonConsole.svg": "icons/com/jetbrains/python/pythonConsole.svg",
-            "pythonConsoleToolWindow.svg": "icons/com/jetbrains/python/pythonConsoleToolWindow.svg",
-            "pythonPackages.svg": "icons/com/jetbrains/python/pythonPackages.svg",
-            "pythonTests.svg": "icons/com/jetbrains/python/pythonTests.svg",
-            "remoteInterpreter.svg": "icons/com/jetbrains/python/RemoteInterpreter.svg",
-            "sciView.svg": "icons/com/jetbrains/python/DataView.svg",
-            "ssh.svg": "icons/com/jetbrains/python/ssh.svg",
-            "templateRoot.svg": "icons/com/jetbrains/python/templateRoot.svg",
-            "virtualEnv.svg": "icons/com/jetbrains/python/virtualenv.svg"
+          "sdk": {
+            "expui": {
+              "python.svg": "icons/com/jetbrains/python/sdk/python.svg"
+            }
+          }
+        },
+        "pythonCore": {
+          "python": {
+            "expui": {
+              "debug": {
+                "specialVar.svg": "icons/com/jetbrains/pythonCore/python/debug/specialVar.svg",
+                "stepIntoMyCode.svg": "icons/com/jetbrains/pythonCore/python/debug/StepIntoMyCode.svg"
+              },
+              "anaconda.svg": "icons/com/jetbrains/pythonCore/python/anaconda.svg",
+              "attachDebugger.svg": "icons/com/jetbrains/pythonCore/python/attachDebugger.svg",
+              "commandQueue.svg": "icons/com/jetbrains/pythonCore/python/commandQueue.svg",
+              "condaEnv.svg": "icons/com/jetbrains/pythonCore/python/condaenv.svg",
+              "executeCurrentStatement.svg": "icons/com/jetbrains/pythonCore/python/executeCurrentStatement.svg",
+              "function.svg": "icons/com/jetbrains/pythonCore/python/function.svg",
+              "pythonClosed.svg": "icons/com/jetbrains/pythonCore/python/pythonClosed.svg",
+              "pythonConsole.svg": "icons/com/jetbrains/pythonCore/python/pythonConsole.svg",
+              "pythonConsoleToolWindow.svg": "icons/com/jetbrains/pythonCore/python/pythonConsoleToolWindow.svg",
+              "pythonPackages.svg": "icons/com/jetbrains/pythonCore/python/pythonPackages.svg",
+              "pythonTests.svg": "icons/com/jetbrains/pythonCore/python/pythonTests.svg",
+              "remoteInterpreter.svg": "icons/com/jetbrains/pythonCore/python/RemoteInterpreter.svg",
+              "sciView.svg": "icons/com/jetbrains/pythonCore/python/DataView.svg",
+              "ssh.svg": "icons/com/jetbrains/pythonCore/python/ssh.svg",
+              "templateRoot.svg": "icons/com/jetbrains/pythonCore/python/templateRoot.svg",
+              "virtualEnv.svg": "icons/com/jetbrains/pythonCore/python/virtualenv.svg"
+            }
           }
         }
       }

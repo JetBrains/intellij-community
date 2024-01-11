@@ -87,6 +87,7 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -1274,7 +1275,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonIcons.Python.Python, null, true,
+      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonSdkIcons.Python, null, true,
                              new XDebugProcessStarter() {
                                @Override
                                @NotNull

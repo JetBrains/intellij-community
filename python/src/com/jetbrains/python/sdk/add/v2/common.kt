@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.setup
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.icons.PythonIcons
-import icons.PythonSdkIcons
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 

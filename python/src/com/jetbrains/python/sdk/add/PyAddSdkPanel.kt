@@ -39,8 +39,8 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import com.jetbrains.python.ui.pyModalBlocking
-import com.jetbrains.python.icons.PythonIcons
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -66,7 +66,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override fun complete(): Unit = Unit
 
   abstract override val panelName: String
-  override val icon: Icon = PythonIcons.Python.Python
+  override val icon: Icon = PythonSdkIcons.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null

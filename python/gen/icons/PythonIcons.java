@@ -3,6 +3,7 @@ package icons;
 
 import com.intellij.ui.IconManager;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public final class PythonIcons {
      * @deprecated moved to {@link  com.jetbrains.python.icons.PythonIcons}
      */
     @ApiStatus.ScheduledForRemoval
-    @Deprecated(forRemoval = true) public static final @NotNull Icon Python = com.jetbrains.python.icons.PythonIcons.Python.Python;
+    @Deprecated(forRemoval = true) public static final @NotNull Icon Python = PythonSdkIcons.Python;
 
     /**
      * @deprecated moved to {@link  com.jetbrains.python.icons.PythonIcons}

@@ -7,7 +7,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PipBasedPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import javax.swing.Icon
 
 class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
@@ -20,11 +20,11 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   override fun getCompletionGroupTitle() = PyBundle.message("python.run.anything.pip.provider")
 
   override fun getIcon(value: String): Icon {
-    return PythonIcons.Python.Python
+    return PythonSdkIcons.Python
   }
 
   override fun getHelpIcon(): Icon {
-    return PythonIcons.Python.Python
+    return PythonSdkIcons.Python
   }
 
   override fun getDefaultCommands(): Sequence<String> {

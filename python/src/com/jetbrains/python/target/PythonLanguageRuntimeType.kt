@@ -11,7 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -20,7 +20,7 @@ class PythonLanguageRuntimeType : LanguageRuntimeType<PythonLanguageRuntimeConfi
   override val displayName: @NlsSafe String = "Python"
 
   override val icon: Icon
-    get() = PythonIcons.Python.Python
+    get() = PythonSdkIcons.Python
 
   override val configurableDescription: @Nls String
     get() = PyBundle.message("python.language.configure.label")

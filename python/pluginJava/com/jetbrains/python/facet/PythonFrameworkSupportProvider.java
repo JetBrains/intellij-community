@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.jetbrains.python.module.PythonModuleType;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public final class PythonFrameworkSupportProvider extends FrameworkSupportProvid
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return PythonSdkIcons.Python;
   }
 
   @NotNull

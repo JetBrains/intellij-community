@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
 
   public PyRunFileInConsoleAction() {
     super(PyBundle.messagePointer("acton.run.file.in.python.console.title"),
-          PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
+          PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonSdkIcons.Python);
   }
 
   @Override

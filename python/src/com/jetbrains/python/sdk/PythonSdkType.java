@@ -43,6 +43,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.icons.PythonIcons;
@@ -107,7 +108,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return PythonSdkIcons.Python;
   }
 
   @NotNull

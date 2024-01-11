@@ -21,12 +21,14 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
@@ -39,7 +41,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,7 +51,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.exists
@@ -126,7 +130,7 @@ class PythonNewEnvironmentDialogNavigator {
 internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
   when (sdk) {
     is PyDetectedSdk -> {
-      icon = IconLoader.getTransparentIcon(PythonIcons.Python.Python)
+      icon = IconLoader.getTransparentIcon(PythonSdkIcons.Python)
       append(sdk.homePath!!)
       append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
@@ -136,7 +140,7 @@ internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
       append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     else -> {
-      icon = PythonIcons.Python.Python
+      icon = PythonSdkIcons.Python
       append(sdk.versionString!!)
       append(" " + sdk.homePath!!, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }

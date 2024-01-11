@@ -13,6 +13,7 @@ import com.jetbrains.python.newProject.welcome.PyWelcomeGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
   @Nullable
   @Override
   public Icon getLogo() {
-    return PythonIcons.Python.Python;
+    return PythonSdkIcons.Python;
   }
 
   @Override
