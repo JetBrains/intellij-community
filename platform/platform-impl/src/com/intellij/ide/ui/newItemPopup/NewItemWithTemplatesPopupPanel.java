@@ -1,23 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
-import com.intellij.accessibility.TextFieldWithListAccessibleContext;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -43,19 +43,37 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
     myTemplatesListModel = new MyListModel(templatesList);
     myTemplatesList = createTemplatesList(myTemplatesListModel, renderer);
+    myTemplatesList.getAccessibleContext().setAccessibleName(IdeBundle.message("action.create.new.class.templates.list.accessible.name"));
 
     JTextField textField = getTextField();
-    if (textField instanceof JBExtendableTextFieldWithMixedAccessibleContext) {
-      ((JBExtendableTextFieldWithMixedAccessibleContext)textField).myListContext = myTemplatesList.getAccessibleContext();
-    }
 
-    ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
-    ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
+    if (!ScreenReader.isActive()) {
+      ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
+      ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
+    }
+    else {
+      setFocusCycleRoot(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+      textField.addKeyListener(new KeyListener() {
+        @Override
+        public void keyTyped(KeyEvent e) { }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e != null && (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP)) {
+            textField.transferFocus();
+          }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) { }
+      });
+    }
 
     JBScrollPane scrollPane = new JBScrollPane(myTemplatesList);
     scrollPane.setBorder(JBUI.Borders.empty());
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    templatesListHolder = new Box(BoxLayout.Y_AXIS);
+    templatesListHolder = new JBBox(BoxLayout.Y_AXIS);
 
     Border lineBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor());
     JBEmptyBorder topMarginBorder = JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth());
@@ -104,15 +122,10 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
     list.addMouseListener(mouseListener);
     list.setCellRenderer(renderer);
-    list.setFocusable(false);
+    list.setFocusable(ScreenReader.isActive());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
+    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, !ScreenReader.isActive());
     return list;
-  }
-
-  @Override
-  protected ExtendableTextField createNonCustomizedTextField() {
-    return new JBExtendableTextFieldWithMixedAccessibleContext();
   }
 
   protected final class MyListModel extends AbstractListModel<T> {
@@ -143,15 +156,6 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     @Override
     public T getElementAt(int index) {
       return myItems.get(index);
-    }
-  }
-
-  private static final class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
-    private AccessibleContext myListContext;
-
-    @Override
-    protected AccessibleContext getOriginalAccessibleContext() {
-      return new TextFieldWithListAccessibleContext(this, myListContext);
     }
   }
 }
