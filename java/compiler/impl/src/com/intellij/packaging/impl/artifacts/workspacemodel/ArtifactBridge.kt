@@ -16,6 +16,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -265,7 +266,7 @@ open class ArtifactBridge(
 
   fun setActualStorage() {
     if (entityStorage is VersionedEntityStorageOnBuilder) {
-      entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
+      entityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
     }
   }
 

@@ -18,6 +18,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.backend.workspace.useQueryCacheWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
@@ -28,7 +29,6 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -87,7 +87,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     }
 
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
-    get() = (getInstance(project) as WorkspaceModelImpl).entityStorage.cachedValue(parentPathsToArtifacts)
+    get() = getInstance(project).internal.entityStorage.cachedValue(parentPathsToArtifacts)
 
   private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMillis {
     if (VirtualFile.PROP_NAME == event.propertyName) {

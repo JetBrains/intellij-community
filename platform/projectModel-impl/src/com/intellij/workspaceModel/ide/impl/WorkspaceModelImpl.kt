@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
@@ -36,12 +37,12 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 @ApiStatus.Internal
-open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModel, Disposable {
+open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal, Disposable {
   @Volatile
   var loadedFromCache = false
     protected set
 
-  val entityStorage: VersionedEntityStorageImpl
+  final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>()

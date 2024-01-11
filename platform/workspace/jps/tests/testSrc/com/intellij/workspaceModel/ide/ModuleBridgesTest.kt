@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.*
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -34,7 +35,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -89,7 +89,7 @@ class ModuleBridgesTest {
       val module = projectModel.createModule() as ModuleBridge
 
       assertTrue(moduleManager.modules.contains(module))
-      assertSame((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage, module.entityStorage)
+      assertSame(WorkspaceModel.getInstance(project).internal.entityStorage, module.entityStorage)
 
       val contentRootUrl = temporaryDirectoryRule.newDirectoryPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
@@ -688,7 +688,7 @@ class ModuleBridgesTest {
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
-      val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
+      val entityStore = WorkspaceModel.getInstance(project).internal.entityStorage
       assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
       assertEquals(1, entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).count())
 
@@ -716,7 +716,7 @@ class ModuleBridgesTest {
       contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
-    val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage
+    val entityStore = WorkspaceModel.getInstance(project).internal.entityStorage
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
     assertEquals(1, entityStore.current.entities(SourceRootEntity::class.java).count())
 

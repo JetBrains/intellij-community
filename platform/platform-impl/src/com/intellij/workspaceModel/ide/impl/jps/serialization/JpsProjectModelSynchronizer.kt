@@ -32,6 +32,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
@@ -160,12 +161,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
       // Update builder of unloaded entities
       if ((reloadingResult.unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-        WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { builder ->
+        WorkspaceModel.getInstance(project).internal.updateUnloadedEntities(description) { builder ->
           builder.replaceBySource(affectedEntityFilter, reloadingResult.unloadedEntityBuilder.toSnapshot())
         }
       }
 
-      val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
+      val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities)
       WorkspaceModel.getInstance(project).updateProjectModel(description) { updater ->
         val storage = reloadingResult.builder.toSnapshot()
         updater.replaceBySource(affectedEntityFilter, storage)
@@ -330,11 +331,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         || entitySource is DummyParentEntitySource
       }
       if ((projectEntities.unloadedEntitiesBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-        WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { updater ->
+        WorkspaceModel.getInstance(project).internal.updateUnloadedEntities(description) { updater ->
           updater.replaceBySource(sourceFilter, projectEntities.unloadedEntitiesBuilder)
         }
       }
-      val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
+      val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities)
       WorkspaceModel.getInstance(project).updateProjectModel(description) { updater ->
         updater.replaceBySource(sourceFilter, projectEntities.builder)
         childActivity = childActivity?.endAndStart("unloaded modules loading")
@@ -366,7 +367,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun addUnloadedModuleEntities(diff: MutableEntityStorage) {
     if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
-      WorkspaceModel.getInstance(project).updateUnloadedEntities("Add new unloaded modules") { updater ->
+      WorkspaceModel.getInstance(project).internal.updateUnloadedEntities("Add new unloaded modules") { updater ->
         updater.applyChangesFrom(diff)
       }
     }
@@ -408,7 +409,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return@addMeasuredTimeMillis
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
       sourcesToSave.clear()
@@ -424,7 +425,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
     }
     val moduleSources = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.entitySource }
-    val unloadedModuleSources = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(
+    val unloadedModuleSources = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.entities(
       ModuleEntity::class.java).map { it.entitySource }
     synchronized(sourcesToSave) {
       // trigger save for modules.xml
@@ -437,7 +438,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   @TestOnly
   fun markAllEntitiesAsDirty() {
     val allSources = WorkspaceModel.getInstance(project).currentSnapshot.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource } +
-                     WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.mapTo(
+                     WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities.entitiesBySource { true }.mapTo(
                        HashSet()) { it.entitySource }
     synchronized(sourcesToSave) {
       sourcesToSave.addAll(allSources)

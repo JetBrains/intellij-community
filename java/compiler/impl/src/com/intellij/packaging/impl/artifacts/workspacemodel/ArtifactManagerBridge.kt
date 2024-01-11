@@ -23,6 +23,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -231,7 +232,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     artifactWithDiffs.forEach { it.setActualStorage() }
     artifactWithDiffs.clear()
 
-    val entityStorage = (project.workspaceModel as WorkspaceModelImpl).entityStorage
+    val entityStorage = project.workspaceModel.internal.entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
@@ -292,7 +293,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
             .entities(ArtifactEntity::class.java)
             .mapNotNull {
               if (artifactsMap.getDataByEntity(it) == null) {
-                createArtifactBridge(it, (workspaceModel as WorkspaceModelImpl).entityStorage, project)
+                createArtifactBridge(it, workspaceModel.internal.entityStorage, project)
               }
               else null
             }

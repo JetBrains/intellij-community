@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
@@ -605,7 +606,7 @@ internal class WorkspaceProjectImporter(
                                              prepareInBackground: (current: MutableEntityStorage) -> Unit,
                                              afterApplyInWriteAction: (storage: EntityStorage) -> Unit = {}) {
       val workspaceModel = WorkspaceModel.getInstance(project)
-      val prevStorageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
+      val prevStorageVersion = WorkspaceModel.getInstance(project).internal.entityStorage.version
 
       var attempts = 0
       var durationInBackground = 0L
@@ -618,7 +619,7 @@ internal class WorkspaceProjectImporter(
           attempts++
           val beforeBG = System.nanoTime()
 
-          val snapshot = workspaceModel.getBuilderSnapshot()
+          val snapshot = workspaceModel.internal.getBuilderSnapshot()
           val builder = snapshot.builder
           prepareInBackground(builder)
           durationInBackground += System.nanoTime() - beforeBG
@@ -629,7 +630,7 @@ internal class WorkspaceProjectImporter(
               updated = true
             }
             else {
-              updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+              updated = workspaceModel.internal.replaceProjectModel(snapshot.getStorageReplacement())
               durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
             }
             if (updated) afterApplyInWriteAction(workspaceModel.currentSnapshot)
@@ -657,7 +658,7 @@ internal class WorkspaceProjectImporter(
                                    durationInWriteActionNano = durationInWriteAction,
                                    durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
-      val newStorageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
+      val newStorageVersion = WorkspaceModel.getInstance(project).internal.entityStorage.version
       LOG.info("Project model updated to version ${newStorageVersion} (attempts: $attempts, previous version: $prevStorageVersion)")
     }
 

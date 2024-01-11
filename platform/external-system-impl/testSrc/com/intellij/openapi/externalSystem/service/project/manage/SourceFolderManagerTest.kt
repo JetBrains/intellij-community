@@ -12,10 +12,10 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import junit.framework.TestCase
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -90,7 +90,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     manager.addSourceFolder(secondModule, secondFolderUrl, JavaSourceRootType.SOURCE)
 
     var notificationsCount = 0
-    val version = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
+    val version = WorkspaceModel.getInstance(project).internal.entityStorage.version
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         notificationsCount++
@@ -99,7 +99,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     LocalFileSystem.getInstance().refresh(false)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
     TestCase.assertTrue(notificationsCount == 1)
-    TestCase.assertTrue(version + 1 == (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version)
+    TestCase.assertTrue(version + 1 == WorkspaceModel.getInstance(project).internal.entityStorage.version)
   }
 
   private fun createModuleWithContentRoot(dir: File, moduleName: String = "topModule"): Module {

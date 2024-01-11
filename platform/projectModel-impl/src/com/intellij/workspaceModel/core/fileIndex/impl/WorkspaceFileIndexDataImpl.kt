@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeNanosec
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
@@ -62,7 +63,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private fun registerAllEntities(storageKind: EntityStorageKind) {
     val (storage, contributors) = when (storageKind) {
       EntityStorageKind.MAIN -> WorkspaceModel.getInstance(project).currentSnapshot to contributors
-      EntityStorageKind.UNLOADED -> WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities to contributorsForUnloaded 
+      EntityStorageKind.UNLOADED -> WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities to contributorsForUnloaded
     }
     val registrar = StoreFileSetsRegistrarImpl(storageKind)
 

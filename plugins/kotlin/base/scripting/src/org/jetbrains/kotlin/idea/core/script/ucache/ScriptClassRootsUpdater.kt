@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
@@ -293,14 +294,14 @@ abstract class ScriptClassRootsUpdater(
     ) {
         if (project.isDisposed) return
 
-        val builderSnapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
+        val builderSnapshot = WorkspaceModel.getInstance(project).internal.getBuilderSnapshot()
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
         val replacement = builderSnapshot.getStorageReplacement()
 
         runInEdt(ModalityState.nonModal()) {
             val replaced = runWriteAction {
                 if (project.isDisposed) false
-                else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)
+                else WorkspaceModel.getInstance(project).internal.replaceProjectModel(replacement)
             }
             if (!replaced) {
                 // initiate update once again

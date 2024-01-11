@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.*
@@ -9,13 +9,14 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
@@ -53,13 +54,13 @@ class WorkspaceModelTest {
   @Test
   fun `async model update`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.getBuilderSnapshot()
+    val builderSnapshot = model.internal.getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
 
     val updated = runWriteActionAndWait {
-      model.replaceProjectModel(replacement)
+      model.internal.replaceProjectModel(replacement)
     }
 
     assertTrue(updated)
@@ -71,7 +72,7 @@ class WorkspaceModelTest {
   @Test
   fun `async model update with fail`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.getBuilderSnapshot()
+    val builderSnapshot = model.internal.getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
@@ -83,7 +84,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).replaceProjectModel(replacement)
+      WorkspaceModel.getInstance(projectModel.project).internal.replaceProjectModel(replacement)
     }
 
     assertFalse(updated)

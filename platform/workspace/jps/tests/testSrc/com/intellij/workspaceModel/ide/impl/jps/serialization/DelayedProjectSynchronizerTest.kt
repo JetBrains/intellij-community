@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -94,7 +95,7 @@ class DelayedProjectSynchronizerTest {
   private fun checkSerializersConsistency(project: Project) {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
     serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage,
                                  VirtualFileUrlManager.getInstance(project))
   }

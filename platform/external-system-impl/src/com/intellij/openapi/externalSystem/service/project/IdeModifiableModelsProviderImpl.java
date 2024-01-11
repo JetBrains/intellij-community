@@ -22,11 +22,11 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
 import com.intellij.platform.workspace.storage.EntityStorageKt;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.VersionedEntityStorage;
 import com.intellij.util.containers.ClassMap;
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
@@ -213,7 +213,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   public MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
-    VersionedEntityStorage storage = ((WorkspaceModelImpl)WorkspaceModel.getInstance(myProject)).getEntityStorage();
+    VersionedEntityStorage storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(myProject)).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
     var initialStorage = storage.getCurrent();
     return diff = MutableEntityStorage.from(EntityStorageKt.toSnapshot(initialStorage));

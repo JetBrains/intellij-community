@@ -12,9 +12,9 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.util.DisposeAwareRunnable
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
@@ -61,7 +61,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
             context.message("Import of the maven project has been finished", line)
             projectTrackerSettings.autoReloadType = currentAutoReloadType
             DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
-            val storageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage.version
+            val storageVersion = WorkspaceModel.getInstance(project).internal.entityStorage.version
             val storage = WorkspaceModel.getInstance(project).currentSnapshot
             //val sourceRoots = storage.entities(SourceRootEntity::class.java).map { it.url.url }.toList()
             context.message("Entity storage version: $storageVersion, snapshot: $storage", line)

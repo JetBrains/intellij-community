@@ -16,6 +16,7 @@ import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -44,7 +45,7 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
           project = project,
           initialId = addChange.entity.symbolicId,
-          initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).entityStorage,
+          initialEntityStorage = WorkspaceModel.getInstance(project).internal.entityStorage,
           targetBuilder = builder
         )
       }
@@ -56,7 +57,7 @@ class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
-  private val entityStorage: VersionedEntityStorage = (WorkspaceModel.getInstance(parentProject) as WorkspaceModelImpl).entityStorage
+  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).internal.entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 

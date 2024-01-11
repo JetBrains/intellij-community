@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
@@ -13,6 +13,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -95,7 +96,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
   private fun doCacheSaving() {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val unloadedStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    val unloadedStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
       invalidateProjectCache()
     }
