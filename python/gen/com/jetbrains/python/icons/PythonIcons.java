@@ -15,12 +15,6 @@ public final class PythonIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonIcons.class.getClassLoader(), cacheKey, flags);
   }
 
-  public static final class Appengine {
-    /** 16x16 */ public static final @NotNull Icon AppEngine = load("icons/com/jetbrains/pythonCore/appengine/appEngine.svg", 1881327878, 0);
-    /** 13x13 */ public static final @NotNull Icon AppEngineToolWindow = load("icons/com/jetbrains/pythonCore/appengine/appEngineToolWindow.svg", -527211811, 2);
-    /** 16x16 */ public static final @NotNull Icon Required = load("icons/com/jetbrains/pythonCore/appengine/required.svg", -1582376496, 0);
-  }
-
   public static final class Chameleon {
     /** 16x16 */ public static final @NotNull Icon Chameleon = load("icons/com/jetbrains/pythonCore/chameleon/chameleon.svg", 1927144371, 0);
   }
