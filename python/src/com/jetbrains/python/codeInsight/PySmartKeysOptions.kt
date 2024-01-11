@@ -24,4 +24,6 @@ class PySmartKeysOptions : BeanConfigurable<PyCodeInsightSettings>(PyCodeInsight
   override fun getId(): String {
     return "editor.preferences.pyOptions"
   }
+
+  override fun getHelpTopic() = "reference.settings.editor.smart.keys.python"
 }
