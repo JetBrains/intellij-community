@@ -540,7 +540,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
-    if (isGradleOlderThan("3.4") || isGradleNewerThan("4.5")) {
+    if (isGradleOlderThan("3.4") || isGradleAtLeast("4.5")) {
       assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
     }
     else {
@@ -549,7 +549,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void assertMergedModuleCompileModuleDepScope(String moduleName, String depName) {
-    if (isGradleOlderThan("3.4") || isGradleNewerThan("4.5")) {
+    if (isGradleOlderThan("3.4") || isGradleAtLeast("4.5")) {
       assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
     }
     else {
