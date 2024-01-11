@@ -255,6 +255,10 @@
       "description": "Corner radius for combo boxes and spinners"
     },
     {
+      "key": "Component.arrowAreaWidth",
+      "description": "Width of area with arrows in components like ComboBox, Spinner, OptionButton"
+    },
+    {
       "key": "Component.borderColor",
       "description": "Border for a text field, combo box, or spinner"
     },

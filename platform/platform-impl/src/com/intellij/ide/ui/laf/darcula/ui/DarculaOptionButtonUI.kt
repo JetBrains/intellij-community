@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isDefaultButton
-import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getArrowButtonPreferredSize
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.BasicOptionButtonUI
@@ -79,7 +78,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   override fun unconfigureArrowButton(): Unit = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
 
   override val arrowButtonPreferredSize: Dimension
-    get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
+    get() = Dimension(JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + arrowButton.insets.right, optionButton.preferredSize.height)
 
   override val showPopupXOffset: Int get() = scale(if (ExperimentalUI.isNewUI()) 3 + JBUI.CurrentTheme.Popup.borderWidth().toInt() else 3)
 

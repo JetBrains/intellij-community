@@ -341,8 +341,10 @@ public final class JBUI {
 
   @SuppressWarnings("UnregisteredNamedColor")
   public static final class CurrentTheme {
+
     public static final class Component {
       public static final Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA, 0x466D94);
+      public static final JBValue ARROW_AREA_WIDTH = new JBValue.UIInteger("Component.arrowAreaWidth", 23);
     }
 
     public static final class ActionButton {
@@ -1257,7 +1259,7 @@ public final class JBUI {
           return insets("MainToolbar.SplitDropdown.leftPartMargin", insets(3, 7));
         }
         @NotNull public static Insets rightPartMargin() {
-          return insets("MainToolbar.SplitDropdown.rightPartMargin", JBUI.insets(3));
+          return insets("MainToolbar.SplitDropdown.rightPartMargin", insets(3));
         }
       }
 

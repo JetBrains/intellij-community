@@ -223,6 +223,7 @@
 
     "Component": {
       "arc": "8",
+      "arrowAreaWidth": "28",
       "borderColor": "Grey9",
       "focusedBorderColor": "Grey14",
       "errorFocusColor": "Red4",

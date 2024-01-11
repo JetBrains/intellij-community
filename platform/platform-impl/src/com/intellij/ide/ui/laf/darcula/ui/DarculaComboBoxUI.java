@@ -21,7 +21,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -108,13 +107,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     return true;
-  }
-
-  private static int getArrowSegmentWidth(@Nullable JComboBox<?> comboBox) {
-    return comboBox != null
-           && comboBox.getUI() instanceof DarculaComboBoxUI ui
-           && ui.isNewBorderSupported(comboBox)
-           ? ARROW_SEGMENT_WIDTH.get() : ARROW_BUTTON_WIDTH.get();
   }
 
   private KeyListener editorKeyListener;
@@ -268,10 +260,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
-  static @NotNull Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
-    Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
+  private static @NotNull Dimension getArrowButtonPreferredSize(@NotNull JComboBox<?> comboBox) {
+    Insets i = comboBox.getInsets();
     int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.ComboBox.minimumSize().height) + i.top + i.bottom;
-    return new Dimension(getArrowSegmentWidth(comboBox) + i.right, height);
+    return new Dimension(JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.right, height);
   }
 
   static Shape getArrowShape(Component button) {
@@ -658,7 +650,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public Dimension getMinimumSize(JComponent c) {
     Dimension minSize = super.getMinimumSize(c);
     Insets i = c.getInsets();
-    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + getArrowSegmentWidth(comboBox) + i.left + i.right;
+    minSize.width = JBUI.CurrentTheme.ComboBox.minimumSize().width + JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.left + i.right;
     return getSizeWithButton(minSize, editor != null ? editor.getMinimumSize() : null);
   }
 
