@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
@@ -127,7 +128,13 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     Path targetFile = myHostClasspathDirectory.resolve(path.getFileName());
     try {
       FileTime originalFileTimestamp = Files.getLastModifiedTime(path);
-      FileTime targetFileTimestamp = Files.exists(targetFile) ? Files.getLastModifiedTime(targetFile) : null;
+      FileTime targetFileTimestamp;
+      try {
+        targetFileTimestamp = Files.getLastModifiedTime(targetFile);
+      }
+      catch (FileNotFoundException ignored) {
+        targetFileTimestamp = null;
+      }
       if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {
         FileUtil.copyFileOrDir(path.toFile(), targetFile.toFile());
       }
