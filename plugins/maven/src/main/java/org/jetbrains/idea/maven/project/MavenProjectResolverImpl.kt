@@ -16,10 +16,10 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.MavenProjectResolver.MavenProjectResolutionResult
 import org.jetbrains.idea.maven.server.MavenConfigParseException
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.utils.ParallelRunner
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.ParallelRunner
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -152,6 +152,9 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     }
     val snapshot = mavenProjectCandidate.snapshot
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
+
+    MavenLog.LOG.debug(
+      "Dependency resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${mavenProjectCandidate.dependencies.size}")
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {

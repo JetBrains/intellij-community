@@ -31,6 +31,9 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
 
   fun getDependencies(importData: MavenProjectImportData): MavenModuleImportDataWithDependencies {
     val mavenProject = importData.mavenProject
+
+    MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
+
     val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
     val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
 
