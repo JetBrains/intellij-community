@@ -562,7 +562,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
-    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     testJavaProject(gradleVersion) {
       appendText("build.gradle", """
         |import java.util.concurrent.atomic.AtomicBoolean;
@@ -601,7 +600,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
-    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     val extension = object : GradleOperationHelperExtension {
       override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,

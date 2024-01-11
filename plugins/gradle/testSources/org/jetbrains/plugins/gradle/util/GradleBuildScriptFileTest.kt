@@ -18,9 +18,7 @@ class GradleBuildScriptFileTest : GradleImportingTestCase() {
 
     assertModuleBuildScript("project", "build.gradle")
     assertModuleBuildScript("project.project1", "project1/build.gradle")
-    if (isGradleAtLeast("4.0")) {
-      assertModuleBuildScript("project.project2", "project2/build.gradle.kts")
-    }
+    assertModuleBuildScript("project.project2", "project2/build.gradle.kts")
   }
 
   private fun assertModuleBuildScript(moduleName: String, expectedRelativePath: String?) {

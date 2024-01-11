@@ -31,21 +31,6 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
     val extensionsMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
 
     val expectedExtensions = when {
-      isGradleOlderOrSameAs("2.7") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "sources" to "org.gradle.language.base.internal.DefaultProjectSourceSet",
-                               "binaries" to "org.gradle.platform.base.internal.DefaultBinaryContainer",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension")
-
-      isGradleOlderOrSameAs("2.8") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "binaries" to "org.gradle.platform.base.internal.DefaultBinaryContainer",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension")
-
       isGradleOlderOrSameAs("4.9") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",

@@ -282,29 +282,14 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         .addImplementationDependency("my.group.lib_2:runtime");
     }));
 
-    if (isGradleAtLeast("4.0")) {
-      assertModules("app", "app_main", "app_test",
-                    "app-runtime", "app-runtime_main", "app-runtime_test",
-                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
-                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
-    }
-    else {
-      assertModules("app", "app_main", "app_test",
-                    "runtime", "runtime_main", "runtime_test",
-                    "lib1", "my.group.lib_1-runtime", "my.group.lib_1-runtime_main", "my.group.lib_1-runtime_test",
-                    "lib2", "my.group.lib_2-runtime", "my.group.lib_2-runtime_main", "my.group.lib_2-runtime_test");
-    }
+    assertModules("app", "app_main", "app_test",
+                  "app-runtime", "app-runtime_main", "app-runtime_test",
+                  "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                  "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
 
-    if (isGradleAtLeast("4.0")) {
-      assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
-    }
-    else {
-      assertModuleModuleDepScope("app_main", "runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "my.group.lib_1-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "my.group.lib_2-runtime_main", COMPILE);
-    }
+    assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
+    assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+    assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
   }
 
 
@@ -367,35 +352,19 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
     String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
-    String myUtilsApiMainModuleName = isGradleAtLeast("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
-    if (isGradleAtLeast("4.0")) {
-      assertModules(
-        // non-gradle modules
-        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
-        // generated modules by gradle import
-        "adhoc",
-        "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "my-app-api_test",
-        "my-utils",
-        "org.sample-my-utils-api", myUtilsApiMainModuleName, "my-utils-api_test",
-        "string-utils", "string-utils_main", "string-utils_test",
-        "number-utils", "number-utils_main", "number-utils_test"
-      );
-    }
-    else {
-      assertModules(
-        // non-gradle modules
-        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
-        // generated modules by gradle import
-        "adhoc",
-        "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "api_test",
-        "my-utils",
-        "org.sample-api", myUtilsApiMainModuleName, "org.sample-api_test",
-        "string-utils", "string-utils_main", "string-utils_test",
-        "number-utils", "number-utils_main", "number-utils_test"
-      );
-    }
+    String myUtilsApiMainModuleName = "org.sample-my-utils-api_main";
+    assertModules(
+      // non-gradle modules
+      "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
+      // generated modules by gradle import
+      "adhoc",
+      "my-app", "my-app_main", "my-app_test",
+      myAppApiModuleName, myAppApiMainModuleName, "my-app-api_test",
+      "my-utils",
+      "org.sample-my-utils-api", myUtilsApiMainModuleName, "my-utils-api_test",
+      "string-utils", "string-utils_main", "string-utils_test",
+      "number-utils", "number-utils_main", "number-utils_test"
+    );
 
     String[] emptyModules =
       new String[]{

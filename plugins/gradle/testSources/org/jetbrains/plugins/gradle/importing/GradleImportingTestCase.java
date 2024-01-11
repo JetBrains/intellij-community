@@ -63,7 +63,6 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.Gradle
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -221,10 +220,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
-    var javaFeatureVersion = javaRuntimeVersion.feature;
-    var gradleBaseVersion = getCurrentGradleBaseVersion();
-    var message = "Skip integration tests running on JDK " + javaFeatureVersion + "(>9) for " + gradleBaseVersion + "(<3.0)";
-    Assume.assumeFalse(message, javaFeatureVersion > 9 && isGradleOlderThan("3.0"));
   }
 
   @NotNull
@@ -539,21 +534,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
-    if (isGradleOlderThan("3.4") || isGradleAtLeast("4.5")) {
-      assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
-    }
-    else {
-      assertModuleLibDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
-    }
+    assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
   }
 
   protected void assertMergedModuleCompileModuleDepScope(String moduleName, String depName) {
-    if (isGradleOlderThan("3.4") || isGradleAtLeast("4.5")) {
-      assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
-    }
-    else {
-      assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
-    }
+    assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {
@@ -580,10 +565,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isGradleNewerThan(@NotNull String ver) {
     return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
-  }
-
-  protected boolean isNewDependencyResolutionApplicable() {
-    return isGradleAtLeast("4.5") && getCurrentExternalProjectSettings().isResolveModulePerSourceSet();
   }
 
   protected String getExtraPropertiesExtensionFqn() {

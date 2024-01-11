@@ -117,13 +117,11 @@ class GradleTestEventTest : GradleExecutionTestCase() {
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
 
-      if (isGradleAtLeast("4.1")) {
-        executeTasks(":test --tests com.intellij.*", isRunAsTest = true)
-        assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
-        assertTestEventsDoesNotContain("org.example.TestCase", "testFail")
-        assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
-        assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
-      }
+      executeTasks(":test --tests com.intellij.*", isRunAsTest = true)
+      assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
+      assertTestEventsDoesNotContain("org.example.TestCase", "testFail")
+      assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
+      assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
     }
   }
 

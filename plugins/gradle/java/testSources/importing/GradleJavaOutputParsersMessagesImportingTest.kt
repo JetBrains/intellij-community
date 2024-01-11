@@ -139,14 +139,12 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               |  :compileTestJava
                               |  Could not resolve junit:junit:4.12 because no repositories are defined
                               """.trimMargin())
-    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
-    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
                                 """
-                                |Could not resolve all $files for configuration ':testCompileClasspath'.
+                                |Could not resolve all files for configuration ':testCompileClasspath'.
                                 |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
                                 |  Required by:
-                                |      $projectName
+                                |      project :
                                 |
                                 |Possible solution:
                                 | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
@@ -204,8 +202,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModules("project.test")
-    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
-    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     assertBuildViewTreeEquals("""
                               | -
                               | -failed
@@ -216,14 +212,14 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               |  Could not resolve junit:junit:99.99
                               """.trimMargin())
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
-                                """|Could not resolve all $files for configuration ':testCompileClasspath'.
+                                """|Could not resolve all files for configuration ':testCompileClasspath'.
                                    |> Could not resolve junit:junit:99.99.
                                    |  Required by:
-                                   |      $projectName
+                                   |      project :
                                    |   > No cached version of junit:junit:99.99 available for offline mode.
                                    |> Could not resolve junit:junit:99.99.
                                    |  Required by:
-                                   |      $projectName
+                                   |      project :
                                    |   > No cached version of junit:junit:99.99 available for offline mode.
                                    |
                                    |Possible solution:
@@ -298,23 +294,21 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               |  Could not resolve junit:junit:99.99
                               """.trimMargin()
     )
-    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
-    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
-                                """Could not resolve all $files for configuration ':testCompileClasspath'.
+                                """Could not resolve all files for configuration ':testCompileClasspath'.
                                 |> Could not find junit:junit:99.99.
                                 |  Searched in the following locations:
                                 |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
                                 |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
                                 |  Required by:
-                                |      $projectName
+                                |      project :
                                 |> Could not find junit:junit:99.99.
                                 |  Searched in the following locations:
                                 |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
                                 |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
                                 |  Required by:
-                                |      $projectName
+                                |      project :
                                 |
                                 |Possible solution:
                                 | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
