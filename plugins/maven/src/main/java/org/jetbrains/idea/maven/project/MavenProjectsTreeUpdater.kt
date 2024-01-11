@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -59,10 +58,9 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     if (readPom) {
       val oldProjectId = if (mavenProject.isNew) null else mavenProject.mavenId
       val oldParentId = mavenProject.parentId
-      val readChanges = blockingContext {
-        val readerResult = reader.readProject(generalSettings, mavenProject.file, explicitProfiles, tree.projectLocator)
-        mavenProject.set(readerResult, generalSettings, true, false, true)
-      }
+      val readerResult = reader.readProjectAsync(generalSettings, mavenProject.file, explicitProfiles, tree.projectLocator)
+      val readChanges = mavenProject.set(readerResult, generalSettings, true, false, true)
+
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 
       if (Comparing.equal(oldParentId, mavenProject.parentId)) {

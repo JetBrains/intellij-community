@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.model.MavenModel
 import java.nio.file.Path
 import java.rmi.ConnectException
 
-fun <R> withStoppedConnector(action: () -> R): R {
+suspend fun <R> withStoppedConnector(action: suspend () -> R): R {
   Disposer.newDisposable().use { disposable ->
     val factory = object : MavenServerManager.MavenServerConnectorFactoryImpl() {
       override fun create(project: Project,
@@ -29,7 +29,7 @@ fun <R> withStoppedConnector(action: () -> R): R {
   }
 }
 
-fun <R> withStoppedConnectorOnce(action: () -> R): R {
+suspend fun <R> withStoppedConnectorOnce(action: suspend () -> R): R {
   Disposer.newDisposable().use { disposable ->
     val factory = object : MavenServerManager.MavenServerConnectorFactoryImpl() {
       private var returnStoppedConnector = true

@@ -71,7 +71,7 @@ internal class MavenProjectResolutionUtil {
           if (projectData == null) {
             val file = detectPomFile(filesMap, result)
             if (file != null) {
-              val temp: MavenProjectReaderResult = reader.readProject(generalSettings, file, explicitProfiles, locator)
+              val temp: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
               temp.readingProblems.addAll(result.problems)
               temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts)
               readerResults.add(temp)
@@ -97,7 +97,7 @@ internal class MavenProjectResolutionUtil {
         MavenLog.LOG.info(e)
         MavenLog.printInTests(e) // print exception since we need to know if something wrong with our logic
         files.map {
-          val result: MavenProjectReaderResult = reader.readProject(generalSettings, it, explicitProfiles, locator)
+          val result: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, it, explicitProfiles, locator)
           val message = e.message
           if (message != null) {
             result.readingProblems.add(MavenProjectProblem.createStructureProblem(it.getPath(), message))

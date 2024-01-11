@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -36,10 +37,18 @@ class MavenProjectReader(private val myProject: Project) {
   private val myReadHelper: MavenProjectModelReadHelper = MavenUtil.createModelReadHelper(myProject)
   private var mySettingsProfilesCache: SettingsProfilesCache? = null
 
+  @Deprecated("Use async method", ReplaceWith("readProjectAsync(generalSettings, file, explicitProfiles, locator) }"))
   fun readProject(generalSettings: MavenGeneralSettings,
                   file: VirtualFile,
                   explicitProfiles: MavenExplicitProfiles,
                   locator: MavenProjectReaderProjectLocator): MavenProjectReaderResult {
+    return runBlockingMaybeCancellable { readProjectAsync(generalSettings, file, explicitProfiles, locator) }
+  }
+
+  suspend fun readProjectAsync(generalSettings: MavenGeneralSettings,
+                               file: VirtualFile,
+                               explicitProfiles: MavenExplicitProfiles,
+                               locator: MavenProjectReaderProjectLocator): MavenProjectReaderResult {
     val basedir = MavenUtil.getBaseDir(file)
 
     val readResult = doReadProjectModel(generalSettings, basedir, file, explicitProfiles, HashSet(), locator)

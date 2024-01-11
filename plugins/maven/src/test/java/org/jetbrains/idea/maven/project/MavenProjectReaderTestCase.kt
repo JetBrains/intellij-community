@@ -8,16 +8,16 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
 
 abstract class MavenProjectReaderTestCase : MavenTestCase() {
-  protected fun readProject(file: VirtualFile, vararg profiles: String): MavenModel {
+  protected suspend fun readProject(file: VirtualFile, vararg profiles: String): MavenModel {
     val readResult = readProject(file, NullProjectLocator(), *profiles)
     assertProblems(readResult)
     return readResult.mavenModel
   }
 
-  protected fun readProject(file: VirtualFile,
-                            locator: MavenProjectReaderProjectLocator?,
-                            vararg profiles: String): MavenProjectReaderResult {
-    val result = MavenProjectReader(project).readProject(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
+  protected suspend fun readProject(file: VirtualFile,
+                                    locator: MavenProjectReaderProjectLocator,
+                                    vararg profiles: String): MavenProjectReaderResult {
+    val result = MavenProjectReader(project).readProjectAsync(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
     return result
   }
 
