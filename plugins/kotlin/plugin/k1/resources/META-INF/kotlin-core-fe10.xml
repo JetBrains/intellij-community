@@ -259,7 +259,7 @@
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsCopyPasteProcessor"/>
 
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.conversion.copy.KotlinFilePasteProvider" order="first"/>
-    
+
     <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
   </extensions>
 
@@ -309,6 +309,11 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
             serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
+  </extensions>
+
+  <!-- dataflow -->
+  <extensions defaultExtensionNs="com.intellij">
+    <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
   </extensions>
 
 </idea-plugin>

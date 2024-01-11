@@ -547,8 +547,6 @@
 
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
 
-    <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
-
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
   </extensions>
 
