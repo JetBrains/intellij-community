@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -31,10 +32,7 @@ import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Point
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 import kotlin.properties.Delegates
@@ -83,6 +81,7 @@ abstract class FloatingToolbar(
       contentComponent.addKeyListener(KeyboardListener(), this@FloatingToolbar)
       selectionModel.addSelectionListener(EditorSelectionListener(), this@FloatingToolbar)
       document.addDocumentListener(DocumentChangeListener(), this@FloatingToolbar)
+      contentComponent.addFocusListener(this@FloatingToolbar, ContentComponentFocusListener())
     }
   }
 
@@ -320,6 +319,14 @@ abstract class FloatingToolbar(
       if (!shouldSurviveDocumentChange()) {
         scheduleHide()
       }
+    }
+  }
+
+  private inner class ContentComponentFocusListener : FocusListener {
+    override fun focusGained(e: FocusEvent?) {}
+
+    override fun focusLost(e: FocusEvent?) {
+      scheduleHide()
     }
   }
 
