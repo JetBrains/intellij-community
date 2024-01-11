@@ -13,11 +13,14 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   fun testSyncMessages() {
     importProject("")
     val expectedExecutionTree = when {
+      isGradleOlderThan("1.0") ->
+        "-\n" +
+        " -failed\n" +
+        "  Gradle isn't supported by IntelliJ IDEA"
       !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
         "-\n" +
         " -failed\n" +
-        "  Unsupported Gradle"
-      // sample assertion for deprecated Gradle version.
+        "  Gradle ${currentGradleVersion.version} isn't supported by IntelliJ IDEA"
       GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
         "-\n" +
         " -finished\n" +
