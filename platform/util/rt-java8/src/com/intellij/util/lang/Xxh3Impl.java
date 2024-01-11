@@ -200,6 +200,11 @@ public final class Xxh3Impl {
 
       return avalanche(acc);
     }
+    return hashLarge(input, access, off, length, seed);
+  }
+
+  // make JIT inline more happy - extract to separate method
+  private static <T> long hashLarge(T input, Access<T> access, int off, int length, long seed) {
     if (length <= 240) {
       // len_129to240_64b
       long acc = length * XXH_PRIME64_1;
