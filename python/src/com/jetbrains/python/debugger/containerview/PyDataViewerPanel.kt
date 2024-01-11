@@ -173,7 +173,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     PyDataViewerCollector.slicingApplied.log()
   }
 
-  fun apply(debugValue: PyDebugValue, modifier: Boolean) {
+  open fun apply(debugValue: PyDebugValue, modifier: Boolean) {
     errorLabel.visible(false)
     val type = debugValue.type
     val strategy = DataViewStrategy.getStrategy(type)
@@ -184,14 +184,14 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         doStrategyInitExecution(debugValue.frameAccessor, strategy)
+
+        // Currently does not support pandas dataframes.
         val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, format)
         ApplicationManager.getApplication().invokeLater {
           updateUI(arrayChunk, debugValue, strategy, modifier)
           isModified = modifier
           this.debugValue = debugValue
         }
-
-        PyDataViewerCollector.logDataOpened(type, arrayChunk.rows, arrayChunk.columns)
       }
       catch (e: IllegalArgumentException) {
         ApplicationManager.getApplication().invokeLater { setError(e.localizedMessage, modifier) } //NON-NLS
@@ -205,10 +205,11 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   @Throws(PyDebuggerException::class)
   protected open fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy) = Unit
 
-  protected open fun updateTabNameAndSliceField(chunk: ArrayChunk, originalDebugValue: PyDebugValue, modifier: Boolean) {
+  // Chunk currently could be null when we are trying to view, for example,  pandas dataframe.
+  protected open fun updateTabNameAndSliceField(chunk: ArrayChunk?, originalDebugValue: PyDebugValue, modifier: Boolean) {
     // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
-    val debugValue = chunk.value
-    val realName = if (debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
+    val debugValue = chunk?.value
+    val realName = if (debugValue == null || debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
     var shownName = realName
     if (modifier && originalVarName != shownName) {
       shownName = String.format(MODIFIED_VARIABLE_FORMAT, originalVarName)
@@ -226,7 +227,10 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     for (listener in listeners) {
       listener.onNameChanged(shownName)
     }
-    formatTextField.text = chunk.format
+
+    if (chunk != null) {
+      formatTextField.text = chunk.format
+    }
   }
 
   protected open fun updateUI(chunk: ArrayChunk, originalDebugValue: PyDebugValue,
