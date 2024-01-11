@@ -18,19 +18,13 @@ import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
@@ -63,14 +57,14 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
-    protected fun loadAndApply(projectPath: String, action: (Project) -> Unit): Unit {
+    protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
       val parentDisposable = Disposer.newDisposable()
       val project: Project?
 
       try {
         println("Open and load project $projectPath. Operation may take a few minutes.")
         project = runBlockingCancellable {
-          ProjectApplicationUtils.openProject(
+          ProjectOpeningUtils.openProject(
             File(projectPath).toPath(),
             parentDisposable,
           )
@@ -93,72 +87,9 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       }
     }
 
-    private fun getIdeaLogFile(): File {
-      val logPath = PathManager.getLogPath()
-      return File(Path.of(logPath).resolve("idea.log").toUri())
-    }
-
-    private fun File.hasEdtErrorMessage(startTime: LocalDateTime, endTime: LocalDateTime): Boolean {
-      // Consistent with com.intellij.openapi.application.impl.ApplicationImpl
-      val possibleErrors = listOf(
-        "Must not execute inside read action",
-        "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())",
-        "Read access is allowed from inside read-action (or EDT) only (see com.intellij.openapi.application.Application.runReadAction())",
-        "Write access is allowed inside write-action only (see Application.runWriteAction())",
-        "Access is allowed from Event Dispatch Thread (EDT) only",
-        "Access from Event Dispatch Thread (EDT) is not allowed",
-        "Read access is allowed from inside read-action (or EDT) only",
-        "Read access is not allowed",
-        "EventQueue.isDispatchThread()=false"
-      ).map { it.lowercase() }
-
-      return bufferedReader().use { br ->
-        br.lineSequence()
-          .map { Pair(it.getDataFromIdeaLogRow(), it) }
-          .filter { (d, _) ->
-            d?.let { d.isAfter(startTime) && d.isBefore(endTime) } ?: false
-          }
-          .any { (_, l) ->
-            if (possibleErrors.any { it in l.lowercase() }) {
-              return@use true
-            }
-            false
-          }
-      }
-    }
-
-    private fun String.getDataFromIdeaLogRow() = try {
-      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS")
-      val dateTime = LocalDateTime.parse(substringBefore("[").trim(), formatter)
-      dateTime
-    }
-    catch (e: DateTimeParseException) {
-      null
-    }
-
     private fun fatalError(msg: String): Nothing {
       System.err.println("Evaluation failed: $msg")
       exitProcess(1)
-    }
-
-    private fun openProjectHeadless(projectPath: String): Project {
-      val project = File(projectPath)
-      assert(project.exists()) { "File $projectPath does not exist" }
-
-      val projectDir = if (project.isDirectory) project else project.parentFile
-      val ideaDir = File(projectDir, Project.DIRECTORY_STORE_FOLDER)
-      if (!ideaDir.exists()) {
-        println(".idea directory is missing. Project will be imported")
-        val importedProject = ProjectUtil.openOrImport(project.toPath(), null, false)
-        assert(importedProject != null) { ".idea directory is missing and project can't be imported" }
-        return importedProject!!
-      }
-      val existing = ProjectManager.getInstance().openProjects.firstOrNull { proj ->
-        !proj.isDefault && ProjectUtil.isSameProject(project.toPath(), proj)
-      }
-      if (existing != null) return existing
-
-      return ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
     }
   }
 

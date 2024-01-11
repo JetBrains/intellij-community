@@ -26,7 +26,7 @@ import java.util.function.Predicate
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-object ProjectApplicationUtils {
+object ProjectOpeningUtils {
 
   /**
    * Rewritten from {@link com.intellij.codeInspection.InspectionApplicationBase}.
@@ -88,19 +88,6 @@ object ProjectApplicationUtils {
         configurator.configureEnvironment(context)
       }
     }
-  }
-
-  fun resolveProject(
-    project: Project,
-    configurator: CommandLineInspectionProjectConfigurator,
-    context: ConfiguratorContext
-  ) {
-    LOG.info("Resolving project ${project.name}...")
-    LOG.info("Applying configurator ${configurator.name} to resolve project ${project.name}...")
-    configurator.preConfigureProject(project, context)
-    configurator.configureProject(project, context)
-    waitForInvokeLaterActivities()
-    LOG.info("Project ${project.name} was successfully resolved with configurator ${configurator.name}!")
   }
 
   private fun closeProject(project: Project) {
@@ -171,4 +158,4 @@ class ConfiguratorContextImpl(
   override fun getVirtualFilesFilter(): Predicate<VirtualFile> = virtualFilesFilter
 }
 
-private val LOG = logger<ProjectApplicationUtils>()
+private val LOG = logger<ProjectOpeningUtils>()
