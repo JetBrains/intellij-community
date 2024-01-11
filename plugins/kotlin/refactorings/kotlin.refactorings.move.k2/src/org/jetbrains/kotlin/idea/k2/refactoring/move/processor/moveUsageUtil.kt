@@ -6,6 +6,7 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
@@ -121,7 +122,7 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     TextOccurrencesUtil.findNonCodeUsages(
         this,
         resolveScope,
-        fqName?.asString(),
+        fqName?.quoteIfNeeded()?.asString(),
         searchInCommentsAndStrings,
         searchForText,
         newName.asString(),
