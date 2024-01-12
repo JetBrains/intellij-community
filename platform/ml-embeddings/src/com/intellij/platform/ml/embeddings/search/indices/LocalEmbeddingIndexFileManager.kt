@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -92,7 +93,12 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     lock.read {
       ensureActive()
       if (!idsPath.exists() || !embeddingsPath.exists()) return@coroutineScope null
-      val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
+      val ids = try {
+        mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
+      }
+      catch (e: JsonProcessingException) {
+        return@coroutineScope null
+      }
       val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
       embeddingsPath.inputStream().buffered().use { input ->
         ids to ids.map {
