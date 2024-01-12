@@ -9,8 +9,7 @@ class Test {
         return null;
     }
 
-    @Nullable
-    private Collection<String> newMethod(boolean c, @NotNull Set<String> set) {
+    private @Nullable Collection<String> newMethod(boolean c, @NotNull Set<String> set) {
         if (c) {
             return new ArrayList<String>();
         }

@@ -13,8 +13,7 @@ public class Test {
         };
     }
 
-    @Nullable
-    private static String getString() {
+    private static @Nullable String getString() {
         if (new Random().nextBoolean()) {
           System.out.println();
             return "one";

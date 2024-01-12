@@ -10,8 +10,7 @@ public abstract class Test {
     System.out.println(integer);
   }
 
-    @NotNull
-    private static String renamed() {
+    private static @NotNull String renamed() {
         return "4" + "2";
     }
 }

@@ -20,8 +20,7 @@ class Test {
     return List.of(list, list2);
   }
 
-    @NotNull
-    private static List<String> getStrings() {
+    private static @NotNull List<String> getStrings() {
         List<String> list = new ArrayList<>();
         list.add("one");
         list.add("two");

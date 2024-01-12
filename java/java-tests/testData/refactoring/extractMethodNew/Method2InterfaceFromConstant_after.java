@@ -3,8 +3,7 @@ import org.jetbrains.annotations.NotNull;
 interface I {
     String FOO = newMethod();
 
-    @NotNull
-    static String newMethod() {
+    static @NotNull String newMethod() {
         return "hello";
     }
 }

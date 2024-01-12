@@ -10,8 +10,7 @@ class K {
         return 1;
     }
 
-    @Nullable
-    private Object newMethod(Object o) {
+    private @Nullable Object newMethod(Object o) {
         if (o == null) return null;
         o = new Object();
         return o;

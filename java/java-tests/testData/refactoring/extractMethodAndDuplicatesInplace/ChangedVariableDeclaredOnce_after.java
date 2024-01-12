@@ -7,8 +7,7 @@ public class Test {
         System.out.println(s);
     }
 
-    @NotNull
-    private static String getString() {
+    private static @NotNull String getString() {
         String s = "42";
         return s;
     }

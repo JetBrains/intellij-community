@@ -12,8 +12,7 @@ class DoIfWhile {
         return null;
     }
 
-    @Nullable
-    private String newMethod(boolean b, int x) {
+    private @Nullable String newMethod(boolean b, int x) {
         /*comment*/
         if (b) {
             String s = bar(x);

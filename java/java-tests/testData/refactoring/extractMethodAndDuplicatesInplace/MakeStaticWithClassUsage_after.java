@@ -6,8 +6,7 @@ class X {
         r.run();
     }
 
-    @NotNull
-    private static Runnable getRunnable() {
+    private static @NotNull Runnable getRunnable() {
         Runnable r = new Runnable() {
             @Override
             public void run() {

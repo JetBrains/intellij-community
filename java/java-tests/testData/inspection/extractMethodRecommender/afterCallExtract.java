@@ -36,8 +36,7 @@ class Test {
     }
   }
 
-    @NotNull
-    private static String getString(Object o) {
+    private static @NotNull String getString(Object o) {
         String s;
         if (o instanceof String s2 && s2.length() == 1) {
           s = "1";
