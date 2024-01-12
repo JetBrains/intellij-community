@@ -16,7 +16,7 @@
   </description>
 
   <content>
-    <module name="intellij.vcs.github/tracker"/>
+    <module name="intellij.vcs.github.community/tracker"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
