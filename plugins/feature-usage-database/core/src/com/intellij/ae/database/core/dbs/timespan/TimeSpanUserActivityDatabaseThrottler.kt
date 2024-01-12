@@ -25,9 +25,9 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
   private val updaterJob: Job? = if (runBackgroundUpdater) startBackgroundUpdater(cs) else null
 
   init {
-    cs.launch {
+    /*cs.launch {
       submitDanglingEvents()
-    }
+    }*/
 
     database.executeBeforeConnectionClosed { isFinal ->
       if (isFinal) {
