@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -20,6 +21,35 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
       return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
     }
+  }
+}
+
+abstract class SwitchInlineCompletionVariantAction protected constructor(
+  direction: Direction
+) : EditorAction(Handler(direction)), HintManagerImpl.ActionToIgnore {
+
+  class Next : SwitchInlineCompletionVariantAction(Direction.Next)
+
+  class Prev : SwitchInlineCompletionVariantAction(Direction.Prev)
+
+  private class Handler(private val direction: Direction) : EditorWriteActionHandler() {
+    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
+      val session = InlineCompletionSession.getOrNull(editor) ?: return
+      when (direction) {
+        Direction.Next -> session.useNextVariant()
+        Direction.Prev -> session.usePrevVariant()
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      val context = InlineCompletionContext.getOrNull(editor)
+      return context != null && !context.isDisposed && context.startOffset() == caret.offset
+    }
+  }
+
+  protected enum class Direction {
+    Next,
+    Prev
   }
 }
 

@@ -507,6 +507,12 @@
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
         <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
       </action>
+      <action id="NextInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Next">
+        <keyboard-shortcut first-keystroke="alt CLOSE_BRACKET" keymap="$default"/>
+      </action>
+      <action id="PrevInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Prev">
+        <keyboard-shortcut first-keystroke="alt OPEN_BRACKET" keymap="$default"/>
+      </action>
       <separator/>
       <group id="InlineCompletion.Settings" popup="true" internal="true"/>
     </group>

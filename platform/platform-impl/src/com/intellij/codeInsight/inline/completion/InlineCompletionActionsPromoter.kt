@@ -15,6 +15,6 @@ private class InlineCompletionActionsPromoter : ActionPromoter {
       return emptyList()
     }
 
-    return actions.filterIsInstance<InsertInlineCompletionAction>()
+    return actions.filter { it is InsertInlineCompletionAction || it is SwitchInlineCompletionVariantAction }
   }
 }
