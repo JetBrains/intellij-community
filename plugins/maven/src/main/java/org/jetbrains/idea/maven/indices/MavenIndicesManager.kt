@@ -109,6 +109,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
 
+
   suspend fun updateIndexList() {
     try {
       myGavIndices.clear()

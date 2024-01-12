@@ -13,6 +13,7 @@ import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.PathUtilRt
 import com.intellij.util.messages.Topic
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -324,6 +325,11 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
           || it.myState == MavenIndexUpdateState.State.FAILED
         }) return
     }
+  }
+
+  @TestOnly
+  fun getAllGavIndices(): List<MavenGAVIndex> {
+    return inMemoryIndices.values.toImmutableList()
   }
 
   companion object {
