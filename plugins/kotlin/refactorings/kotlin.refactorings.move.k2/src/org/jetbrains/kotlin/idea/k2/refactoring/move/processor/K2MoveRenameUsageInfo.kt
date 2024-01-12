@@ -40,6 +40,19 @@ sealed class K2MoveRenameUsageInfo(
   reference: PsiReference,
   val referencedElement: KtNamedDeclaration
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
+    /**
+     * Internal usages are usages that are inside the moved declaration.
+     * On the contrary, external usages are usages to the moved declaration.
+     * Example, when moving `fooBar`
+     * ```
+     * fun bar() {
+     *   fooBar() // this usage of fooBar is external
+     * }
+     *
+     * fun fooBar() {
+     *   foo() // this usage of foo an internal usage of fooBar
+     * }
+     */
     abstract val isInternal: Boolean
 
     open fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo = this
