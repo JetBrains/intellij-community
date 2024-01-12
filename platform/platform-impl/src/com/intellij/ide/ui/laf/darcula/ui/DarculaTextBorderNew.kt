@@ -14,6 +14,7 @@ import javax.swing.text.JTextComponent
 /**
  * Text border for new UI themes
  */
+// todo remove inheritance from DarculaTextBorder, rename, make public API
 @ApiStatus.Internal
 internal class DarculaTextBorderNew : DarculaTextBorder() {
 

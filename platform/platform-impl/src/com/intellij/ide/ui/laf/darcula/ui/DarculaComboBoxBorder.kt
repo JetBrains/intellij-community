@@ -50,7 +50,7 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
   /**
    * Paints background of combobox. Should take into account shape of the border (like rounded borders and insets)
    */
-  fun paintComboBoxBackground(g: Graphics2D, comboBox: JComboBox<*>, color: Color) {
+  protected fun paintComboBoxBackground(g: Graphics2D, comboBox: JComboBox<*>, color: Color) {
     val r = Rectangle(comboBox.size)
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
     fillInsideComponentBorder(g, r, color)

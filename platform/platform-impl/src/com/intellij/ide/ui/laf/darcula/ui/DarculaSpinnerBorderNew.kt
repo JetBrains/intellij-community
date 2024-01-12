@@ -18,6 +18,7 @@ import javax.swing.plaf.UIResource
 /**
  * Spinner border for new UI themes
  */
+// todo rename, make public API
 @ApiStatus.Internal
 internal class DarculaSpinnerBorderNew : Border, UIResource, ErrorBorderCapable {
 
