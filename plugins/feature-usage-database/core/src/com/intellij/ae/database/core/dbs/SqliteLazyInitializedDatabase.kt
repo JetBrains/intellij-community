@@ -122,6 +122,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
         // not a huge problem, because throttlers manually execute these actions,
         // but might be good to get fixed
         is State.NotInitialized -> {
+          logger.warn("DB is not initialized")
           return null
         }
         is State.Active -> {
