@@ -1,5 +1,9 @@
 <idea-plugin package="org.jetbrains.plugins.github">
 
+  <content>
+    <module name="intellij.vcs.github/tracker"/>
+  </content>
+
   <resource-bundle>messages.GithubBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">

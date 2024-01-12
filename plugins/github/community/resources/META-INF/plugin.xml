@@ -15,12 +15,10 @@
       ]]>
   </description>
 
-  <content>
-    <module name="intellij.vcs.github.community/tracker"/>
-  </content>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
   </dependencies>
 
   <xi:include href="/META-INF/github-core-config.xml" xpointer="xpointer(/idea-plugin/*)"/>
