@@ -18,7 +18,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
@@ -26,6 +25,7 @@ import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -195,6 +195,13 @@ internal class ProjectTypeList(
   }
 
   private fun showInstallPluginPopup(additionalLanguagePlugins: List<LanguagePlugin>) {
+    val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser")) { showInstallPluginDialog() }
+    link.toolTipText = null
+
+    val languagePluginAdvertiserLink = JPanel(BorderLayout())
+    languagePluginAdvertiserLink.border = JBUI.CurrentTheme.Advertiser.border()
+    languagePluginAdvertiserLink.add(link, BorderLayout.WEST)
+
     return JBPopupFactory.getInstance()
       .createPopupChooserBuilder(additionalLanguagePlugins)
       .setRenderer(LanguagePluginRenderer())
@@ -202,10 +209,7 @@ internal class ProjectTypeList(
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering { it.name }
       .setMovable(true)
-      .setAdvertiser(createAdComponent(
-        text = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser"),
-        onHyperLinkActivated = ::showInstallPluginDialog
-      ))
+      .setAdvertiser(languagePluginAdvertiserLink)
       .setResizable(false)
       .setRequestFocus(true)
       .setMinSize(JBUI.size(220, 220))
@@ -213,19 +217,6 @@ internal class ProjectTypeList(
       .setItemChosenCallback(::showInstallPluginDialog)
       .createPopup()
       .show(RelativePoint.getSouthWestOf(languagePluginFooterLink))
-  }
-
-  private fun createAdComponent(
-    text: @NlsContexts.Label String,
-    tooltip: @NlsContexts.Tooltip String? = null,
-    onHyperLinkActivated: () -> Unit
-  ): JComponent {
-    val link = ActionLink(text) { onHyperLinkActivated() }
-    link.toolTipText = tooltip
-    val panel = JPanel(BorderLayout())
-    panel.add(link, BorderLayout.WEST)
-    panel.border = JBUI.CurrentTheme.Advertiser.border()
-    return panel
   }
 
   init {
@@ -251,11 +242,14 @@ internal class ProjectTypeList(
     val scrollPane = JBScrollPane(list)
     scrollPane.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
 
-    languagePluginFooterLink = createAdComponent(
-      text = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.name"),
-      tooltip = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.description"),
-      onHyperLinkActivated = this::showInstallPluginPopup
-    )
+    val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.name")) { showInstallPluginPopup() }
+    link.toolTipText = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.description")
+
+    languagePluginFooterLink = JBPanel<JBPanel<*>>(BorderLayout())
+    languagePluginFooterLink.border = JBUI.CurrentTheme.Advertiser.border()
+    languagePluginFooterLink.withMinimumHeight(JBUI.scale(40))
+    languagePluginFooterLink.withPreferredHeight(JBUI.scale(40))
+    languagePluginFooterLink.add(link, BorderLayout.WEST)
 
     component = JPanel(BorderLayout())
     component.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
