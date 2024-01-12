@@ -507,4 +507,22 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     prevVariant()
     assertData(-1)
   }
+
+  @Test
+  fun `test lookup event when variants are not ready do not clear session`() = myFixture.testInlineCompletion {
+    init(PlainTextFileType.INSTANCE)
+    registerSuggestion {
+      variant {
+        emit(InlineCompletionGrayTextElement("variant"))
+      }
+    }
+    callInlineCompletion()
+    fillLookup("1", "2")
+    createLookup()
+    pickLookupElement("1")
+    hideLookup()
+    provider.computeNextElements(1, await = false)
+    delay()
+    assertInlineRender("variant")
+  }
 }

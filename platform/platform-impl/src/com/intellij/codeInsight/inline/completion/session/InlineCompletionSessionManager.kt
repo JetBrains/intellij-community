@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyp
 import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -97,12 +98,21 @@ internal abstract class InlineCompletionSessionManager {
     }
 
     val success = session.update { variant -> suggestionUpdater.update(event, variant) }
-    return if (success) {
-      check(!session.context.isDisposed)
-      if (session.context.textToInsert().isEmpty()) UpdateSessionResult.Emptied else UpdateSessionResult.Succeeded
+    if (!success) {
+      return UpdateSessionResult.Invalidated
     }
-    else {
-      UpdateSessionResult.Invalidated
+
+    check(!session.context.isDisposed)
+    if (!session.context.textToInsert().isEmpty()) {
+      return UpdateSessionResult.Succeeded
+    }
+
+    val snapshot = session.capture() ?: return UpdateSessionResult.Emptied
+    val variantState = snapshot.activeVariant.state
+    return when (variantState) {
+      InlineCompletionVariant.Snapshot.State.COMPUTED -> UpdateSessionResult.Emptied
+      InlineCompletionVariant.Snapshot.State.INVALIDATED -> error("Incorrect state: variant cannot be invalidated.")
+      else -> UpdateSessionResult.Succeeded
     }
   }
 
