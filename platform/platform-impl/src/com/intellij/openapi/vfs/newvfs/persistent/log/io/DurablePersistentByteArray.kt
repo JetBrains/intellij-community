@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.openapi.diagnostic.debug
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArrayImpl.Companion.LayoutHandler
 import com.intellij.util.io.ResilientFileChannel
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.runSuppressing
 import java.io.Flushable
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -72,15 +71,10 @@ interface DurablePersistentByteArray : AutoCloseable {
         "size=$size must be in 1..${layoutBuilder.maxStateSize}"
       }
       if (path.exists()) {
-        val fileHandler = ResilientFileChannel(path, mode.openOptions)
-        try {
+        ResilientFileChannel(path, mode.openOptions).use { fileHandler ->
           val layout = layoutBuilder.buildLayout(fileHandler, size)
           val (lastState, lastStateIsInSecondInstance) = recoverLastState(fileHandler, layout, size)
           return DurablePersistentByteArrayImpl(path, mode, layout, lastStateIsInSecondInstance, lastState)
-        }
-        catch (e: Throwable) {
-          e.runSuppressing(fileHandler::close)
-          throw e
         }
       }
       else {

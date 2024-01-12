@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -43,7 +43,6 @@ import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Restarter;
-import com.intellij.util.Suppressions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,7 +120,8 @@ public final class ConfigImportHelper {
                                      @NotNull Logger log) {
     try {
       importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log, false);
-    } catch (UnsupportedOperationException e) {
+    }
+    catch (UnsupportedOperationException e) {
       throw new AssertionError("unexpected fail of importConfigs with mustBeAutomaticMigration=false", e);
     }
   }
@@ -141,21 +141,19 @@ public final class ConfigImportHelper {
     log.info("Custom migration option: " + customMigrationOption);
 
     try {
-      importConfigsToImpl(veryFirstStartOnThisComputer,
-                          newConfigDir,
-                          args,
-                          log,
-                          mustBeAutomaticMigration,
-                          customMigrationOption);
-    } catch (UnsupportedOperationException e) {
+      importConfigsToImpl(veryFirstStartOnThisComputer, newConfigDir, args, log, mustBeAutomaticMigration, customMigrationOption);
+    }
+    catch (UnsupportedOperationException e) {
       // return marker if failed
-      Suppressions.runSuppressing(e, () -> {
+      try {
         if (customMigrationOption != null) {
           log.info("Automatic migration has failed, returning the marker back");
           customMigrationOption.writeConfigMarkerFile(newConfigDir);
         }
-        return null;
-      });
+      }
+      catch (Exception ex) {
+        e.addSuppressed(ex);
+      }
       assert mustBeAutomaticMigration;
       throw e;
     }
