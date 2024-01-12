@@ -536,8 +536,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val MAVEN_COMPILER_PROPERTIES: String = """
     <properties>
             <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-            <maven.compiler.source>1.7</maven.compiler.source>
-            <maven.compiler.target>1.7</maven.compiler.target>
+            <maven.compiler.source>11</maven.compiler.source>
+            <maven.compiler.target>11</maven.compiler.target>
     </properties>
     
     """.trimIndent()
