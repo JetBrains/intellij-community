@@ -13,6 +13,7 @@ import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
@@ -199,6 +200,9 @@ private suspend fun doBootstrapOverShellSession(shellProcess: Process, communica
           LOG.debug { "IJent bootstrap shell session stderr: $line" }
           line.clear()
         }
+      }
+      catch (err: IOException) {
+        LOG.debug { "IJent bootstrap shell session got an error: $err" }
       }
       finally {
         if (line.isNotEmpty()) {
