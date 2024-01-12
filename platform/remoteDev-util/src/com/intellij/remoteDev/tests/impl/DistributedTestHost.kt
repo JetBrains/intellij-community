@@ -163,8 +163,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                     }
                   }
                 }
-
-                if (isCurrentThreadEdt() && !app.isHeadlessEnvironment && isNotRdHost) {
+                if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
 
