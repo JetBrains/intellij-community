@@ -67,17 +67,17 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
         if (group.size > 5) {
           var firstIsTaken = true
           var minLength: Int? = group
-                            .mapNotNull { it.parts }
-                            .filter { it.isNotEmpty() && it[0].isConstant && it[0].text != null && it[0].text?.isNotBlank() == true }
-                            .minOfOrNull { it[0].text?.length ?: 0 }
+                            .mapNotNull { messageLog -> messageLog.parts }
+                            .filter { parts -> firstIsText(parts) }
+                            .minOfOrNull { parts -> parts[0].text?.length ?: 0 }
 
 
           if (minLength == null || minLength == 0) {
             firstIsTaken = false
             minLength = group
-                          .mapNotNull { it.parts }
-                          .filter { it.isNotEmpty() && it.last().isConstant && it.last().text != null && it.last().text?.isNotBlank() == true }
-                          .minOfOrNull { it.last().text?.length ?: 0 }
+                          .mapNotNull { messageLog -> messageLog.parts }
+                          .filter { parts -> lastIsText(parts) }
+                          .minOfOrNull { parts -> parts.last().text?.length ?: 0 }
           }
 
           if (minLength == null || minLength == 0) {
@@ -115,6 +115,12 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
 
       return super.visitFile(node)
     }
+
+    private fun firstIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
+      parts.isNotEmpty() && parts[0].isConstant && parts[0].text?.isNotBlank() == true
+
+    private fun lastIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
+      parts.isNotEmpty() && parts.last().isConstant && parts.last().text?.isNotBlank() == true
 
     private fun collectCalls(file: UFile): Set<UCallExpression> {
       val result = mutableSetOf<UCallExpression>()
@@ -279,7 +285,7 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
     //example:
     //"Message: {}"
     //"Message: 1{}"
-    //Parts "Message: " are similar and can be confused
+    //Parts "Message: " are similar and can be confusing
     if (firstIterator.isFirst() && secondIterator.isFirst()) {
       if (firstIterator.current()?.startsWith(secondIterator.current() ?: "") == true) {
         val delta = secondIterator.current()?.length ?: 0
@@ -304,7 +310,7 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
     //example:
     //"{} - response"
     //"{}1 - response"
-    //Parts " - response: " are similar and can be confused
+    //Parts " - response: " are similar and can be confusing
     if (firstIterator.isLast() && secondIterator.isLast()) {
       if (firstIterator.current()?.endsWith(secondIterator.current() ?: "") == true) {
         val delta = secondIterator.current()?.length ?: 0

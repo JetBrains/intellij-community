@@ -27,8 +27,22 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     val availableIntention = myFixture.getAvailableIntention(JavaBundle.message("navigate.to.duplicate.fix"))
     assertNotNull(availableIntention)
     availableIntention?.invoke(project, editor, file)
-    val offset = editor.caretModel.offset
-    assertEquals(321, offset)
+    myFixture.checkResult("""
+     import org.apache.logging.log4j.*;
+     class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        
+        private static void request1(String i) {
+            String msg = "log messages: "  + i;
+            LOG.info(msg);
+        }
+    
+        private static void request2(int i) {
+            String msg = "log messages: " + i;
+            <selection><caret>LOG.info(msg)</selection>;
+        }
+     }
+    """.trimIndent())
   }
 
   fun `test not completed log4j2`() {
