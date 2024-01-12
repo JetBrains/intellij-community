@@ -22,7 +22,7 @@ intellij.terminal
 intellij.textmate
 intellij.toml
 intellij.vcs.git
-intellij.vcs.github
+intellij.vcs.github.community
 intellij.vcs.gitlab
 intellij.vcs.hg
 intellij.vcs.svn
