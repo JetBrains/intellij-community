@@ -12,16 +12,22 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsI
 
 class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPointsHandlerFactory() {
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody? {
-        val psi = analyze(returnExpression) {
-            returnExpression.getReturnTargetSymbol()?.psi
+        val psi = allowAnalysisOnEdt {
+            analyze(returnExpression) {
+                returnExpression.getReturnTargetSymbol()?.psi
+            }
         }
         return psi as? KtDeclarationWithBody
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean {
-        return declaration is KtFunction && analyze(declaration) {
-            utilsIsInlinedArgument(declaration)
+        return declaration is KtFunction && allowAnalysisOnEdt {
+            analyze(declaration) {
+                utilsIsInlinedArgument(declaration)
+            }
         }
     }
 
