@@ -6,11 +6,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Typeface
+import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -28,13 +28,8 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.skia.Typeface
 import org.jetbrains.skiko.DependsOnJBR
-import org.jetbrains.skiko.awt.font.AwtFontManager
-import org.jetbrains.skiko.toSkikoTypefaceOrNull
 import java.awt.Dimension
-import java.awt.Font
 import java.awt.Insets
 import javax.swing.UIManager
 
@@ -158,17 +153,15 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
     keysNotFound(keys.toList(), "Int")
 }
 
-@OptIn(DependsOnJBR::class)
-private val awtFontManager = AwtFontManager()
-
 @DependsOnJBR
-public suspend fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
+public fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     return retrieveTextStyle(fontKey, color = baseColor)
 }
 
+@OptIn(ExperimentalTextApi::class)
 @DependsOnJBR
-public suspend fun retrieveTextStyle(
+public fun retrieveTextStyle(
     key: String,
     color: Color = Color.Unspecified,
     lineHeight: TextUnit = TextUnit.Unspecified,
@@ -182,31 +175,15 @@ public suspend fun retrieveTextStyle(
     val derivedFont = jbFont.let { if (bold) it.asBold() else it.asPlain() }
         .let { if (fontStyle == FontStyle.Italic) it.asItalic() else it }
 
-    val typeface = derivedFont.toSkikoTypefaceOrNull(awtFontManager)
-        ?: Typeface.makeDefault().also {
-            logger.warn(
-                "Unable to convert font ${jbFont.fontName} into a Skiko typeface, " +
-                    "fallback to 'Typeface.makeDefault()'",
-            )
-        }
-
     return TextStyle(
         color = color,
         fontSize = size.takeOrElse { derivedFont.size.sp / UISettingsUtils.getInstance().currentIdeScale },
         fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
         fontStyle = fontStyle,
-        fontFamily = FontFamily(Typeface(typeface)),
-        // todo textDecoration might be defined in the awt theme
+        fontFamily = derivedFont.asComposeFontFamily(),
+        // TODO textDecoration might be defined in the AWT theme
         lineHeight = lineHeight,
     )
-}
-
-@DependsOnJBR
-public fun Font.toFontFamily(): FontFamily {
-    val typeface = runBlocking { toSkikoTypefaceOrNull(awtFontManager) }
-        ?: error("Can't turn $this into a Typeface")
-
-    return FontFamily(Typeface(typeface))
 }
 
 public val JBValue.dp: Dp

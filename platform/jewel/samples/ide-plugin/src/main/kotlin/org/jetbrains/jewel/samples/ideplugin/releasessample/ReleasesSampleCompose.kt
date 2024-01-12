@@ -75,7 +75,6 @@ import kotlinx.datetime.toJavaLocalDate
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
-import org.jetbrains.jewel.bridge.toFontFamily
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.items
@@ -559,8 +558,7 @@ private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
 private fun TextWithLabel(labelText: String, valueText: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(labelText)
-        val fontFamily = JBFont.label().asBold().toFontFamily()
-        Text(valueText, fontFamily = fontFamily, fontWeight = FontWeight.W600)
+        Text(valueText, fontWeight = FontWeight.W600)
     }
 }
 
