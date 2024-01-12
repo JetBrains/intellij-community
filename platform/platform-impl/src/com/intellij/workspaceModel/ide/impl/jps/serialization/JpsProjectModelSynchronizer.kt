@@ -52,6 +52,7 @@ import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.*
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -326,9 +327,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       // add logs
       childActivity = childActivity?.endAndStart("applying loaded changes")
       val description = "Apply JPS storage (iml files)"
-      val sourceFilter = { entitySource: EntitySource ->
-        entitySource is JpsFileEntitySource || entitySource is JpsFileDependentEntitySource || entitySource is CustomModuleEntitySource
-        || entitySource is DummyParentEntitySource
+      val sourceFilter = { entitySource: EntitySource -> entitySource is JpsFileEntitySource // covers all global SDK and libraries
+        || entitySource is JpsFileDependentEntitySource
+        || entitySource is CustomModuleEntitySource || entitySource is DummyParentEntitySource // covers CIDR related entities
+        || entitySource is LegacyCustomLibraryEntitySource // covers custom libraries
       }
       if ((projectEntities.unloadedEntitiesBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
         WorkspaceModel.getInstance(project).internal.updateUnloadedEntities(description) { updater ->
