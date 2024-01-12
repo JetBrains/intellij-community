@@ -23,7 +23,7 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
 
   protected suspend fun InlineCompletionLifecycleTestDSL.assertAllVariants(vararg expected: String) {
     withContext(Dispatchers.EDT) {
-      val session = assertNotNull(InlineCompletionSession.getOrNull(fixture.editor))
+      val session = getSession()
       val sizeRange = assertNotNull(session.capture()?.nonEmptyVariantsRange)
       val size = sizeRange.first
       assertEquals(expected.size, size)
@@ -39,7 +39,7 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
 
   protected suspend fun assertSessionSnapshot(nonEmptyVariants: IntRange, activeIndex: Int, vararg variants: ExpectedVariant) {
     val snapshot = withContext(Dispatchers.EDT) {
-      val session = assertNotNull(InlineCompletionSession.getOrNull(myFixture.editor))
+      val session = getSession()
       assertTrue(session.isActive())
       assertNotNull(session.capture())
     }
@@ -63,6 +63,15 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
     assertFalse(assertNotNull(InlineCompletionSession.getOrNull (myFixture.editor)).isActive())
   }
 
+  protected suspend fun getVariant(index: Int): InlineCompletionVariant.Snapshot {
+    return withContext(Dispatchers.EDT) {
+      val session = getSession()
+      assertTrue(session.isActive())
+      val snapshot = assertNotNull(session.capture())
+      snapshot.variants[index]
+    }
+  }
+
   protected suspend fun InlineCompletionLifecycleTestDSL.typeChars(chars: String) {
     chars.forEach { typeChar(it) }
   }
@@ -77,6 +86,10 @@ internal abstract class InlineCompletionTestCase : BasePlatformTestCase() {
   protected fun <T : Any> assertNotNull(value: T?): T {
     UsefulTestCase.assertNotNull(value)
     return value!!
+  }
+
+  private suspend fun getSession(): InlineCompletionSession {
+    return withContext(Dispatchers.EDT) { assertNotNull(InlineCompletionSession.getOrNull(myFixture.editor)) }
   }
 
   protected class SimpleCompletionContributor : CompletionContributor() {

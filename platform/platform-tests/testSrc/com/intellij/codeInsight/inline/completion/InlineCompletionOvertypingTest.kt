@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipT
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.util.Key
 import kotlinx.coroutines.yield
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -457,5 +458,43 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
 
     insert()
     assertFileContent("1234567<caret>")
+  }
+
+  @Test
+  fun `test data consistent when over typing`() = myFixture.testInlineCompletion {
+    init(PlainTextFileType.INSTANCE)
+    val key = Key.create<Int>("inline.completion.test.key")
+    registerSuggestion {
+      variant { data ->
+        data.putUserData(key, 42)
+        emit(InlineCompletionGrayTextElement("1234"))
+      }
+      variant { data ->
+        data.putUserData(key, 10)
+        emit(InlineCompletionGrayTextElement("123"))
+      }
+    }
+    callInlineCompletion()
+    provider.computeNextElements(2)
+    delay()
+
+    suspend fun assertData(variantIndex: Int, value: Int?) {
+      assertEquals(value, getVariant(variantIndex).data.getUserData(key))
+      assertEquals(value, assertContextExists().getUserData(key))
+    }
+
+    assertData(0, 42)
+
+    typeChar('1')
+    assertData(0, 42)
+    nextVariant()
+    assertData(1, 10)
+    nextVariant()
+    prevVariant()
+    assertData(1, 10)
+    nextVariant()
+    typeChars("23")
+    assertData(0, 42)
+    assertInlineRender("4")
   }
 }

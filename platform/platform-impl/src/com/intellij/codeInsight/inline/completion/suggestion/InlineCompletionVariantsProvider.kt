@@ -162,7 +162,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       currentVariant.addElement(element, elementIndex)
     }
 
-    dataChanged()
+    dataChanged() // It makes sense to update every time because data may be shared
   }
 
   @RequiresEdt
@@ -234,6 +234,8 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       Status.IN_PROGRESS_NON_EMPTY -> Status.COMPLETED_NON_EMPTY
       else -> error("Incorrect state of variant status.")
     }
+
+    dataChanged() // It makes sense to update every time because data may be shared
   }
 
   private fun currentVariantInvalidated() {

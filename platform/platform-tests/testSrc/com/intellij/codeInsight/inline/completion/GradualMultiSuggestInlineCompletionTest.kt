@@ -6,6 +6,8 @@ import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInline
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.Test
@@ -351,6 +353,149 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     insert()
     assertInlineHidden()
     assertFileContent("Another variant 1<caret>")
+  }
+
+  @Test
+  fun `test data transportation`() = myFixture.testInlineCompletion {
+    init(PlainTextFileType.INSTANCE)
+    val key1 = Key.create<Int>("inline.completion.test.key.one")
+    val key2 = Key.create<Int>("inline.completion.test.key.two")
+    registerSuggestion {
+      variant { }
+      variant { data ->
+        data.putUserData(key1, 1)
+        emit(InlineCompletionGrayTextElement("First"))
+        data.putUserData(key1, 2)
+        emit(InlineCompletionGrayTextElement("Second"))
+        withContext(Dispatchers.EDT) { // To make await emit
+          data.putUserData(key1, 3)
+        }
+      }
+      variant { data -> data.putUserData(key1, -1) } // messing
+      variant { data ->
+        data.putUserData(key2, 1)
+        emit(InlineCompletionGrayTextElement("Third"))
+        data.putUserData(key2, 2)
+        emit(InlineCompletionGrayTextElement("Fourth"))
+        withContext(Dispatchers.EDT) {
+          data.putUserData(key2, 3)
+        }
+      }
+      variant { }
+    }
+
+    suspend fun assertDataValue(variantIndex: Int, expectedValue: Int?, key: Key<Int>) {
+      withContext(Dispatchers.EDT) {
+        val data = getVariant(variantIndex).data
+        assertEquals(expectedValue, data.getUserData(key))
+        // Only one key at a time
+        assertNull(data.getUserData(if (key === key1) key2 else key1))
+      }
+    }
+
+    suspend fun assertEmpty(vararg variantIndices: Int) {
+      variantIndices.forEach { assertDataValue(it, null, key1) }
+    }
+
+    suspend fun assertContext(variantIndex: Int) {
+      withContext(Dispatchers.EDT) {
+        val data = getVariant(variantIndex).data
+        val context = assertContextExists()
+        assertEquals(data.getUserData(key1), context.getUserData(key1))
+        assertEquals(data.getUserData(key2), context.getUserData(key2))
+      }
+    }
+
+    callInlineCompletion()
+    provider.computeNextElement()
+    assertEmpty(0, 2, 3, 4)
+    assertDataValue(1, 2, key1) // The provider reaches the next element and stops
+    assertContext(1)
+
+    provider.computeNextElement()
+    assertEmpty(0, 2, 3, 4)
+    assertDataValue(1, 3, key1)
+    assertContext(1)
+
+    provider.computeNextElement()
+    assertEmpty(0, 4)
+    assertDataValue(1, 3, key1)
+    assertDataValue(3, 2, key2)
+    assertDataValue(2, -1, key1)
+    assertContext(1)
+
+    nextVariant()
+    assertEmpty(0, 4)
+    assertDataValue(1, 3, key1)
+    assertDataValue(3, 2, key2)
+    assertContext(3)
+
+    prevVariant()
+    assertContext(1)
+
+    provider.computeNextElement()
+    delay()
+    assertEmpty(0, 4)
+    assertDataValue(1, 3, key1)
+    assertDataValue(3, 3, key2)
+    assertContext(1)
+    nextVariant()
+    prevVariant()
+    prevVariant()
+    assertContext(3)
+    prevVariant()
+    assertContext(1)
+    nextVariant()
+    nextVariant()
+    nextVariant()
+    prevVariant()
+    assertContext(1)
+
+    assertEmpty(0, 4)
+    assertDataValue(1, 3, key1)
+    assertDataValue(2, -1, key1)
+    assertDataValue(3, 3, key2)
+  }
+
+  @Test
+  fun `test shared data between variants`() = myFixture.testInlineCompletion {
+    init(PlainTextFileType.INSTANCE)
+    val key = Key.create<Int>("inline.completion.test.shared.key")
+    val data = UserDataHolderBase()
+    registerSuggestion {
+      variant(data) { currentData ->
+        emit(InlineCompletionGrayTextElement("First"))
+        currentData.putUserData(key, 1)
+        emit(InlineCompletionGrayTextElement("Second"))
+      }
+      variant(data) { currentData ->
+        emit(InlineCompletionGrayTextElement("Third"))
+        currentData.putUserData(key, -1)
+        emit(InlineCompletionGrayTextElement("Fourth"))
+      }
+    }
+
+    suspend fun assertData(value: Int?) {
+      withContext(Dispatchers.EDT) {
+        assertEquals(value, getVariant(0).data.getUserData(key))
+        assertEquals(value, getVariant(1).data.getUserData(key))
+        assertEquals(value, data.getUserData(key))
+        assertEquals(value, assertContextExists().getUserData(key))
+      }
+    }
+
+    callInlineCompletion()
+    provider.computeNextElement()
+    assertData(1)
+    provider.computeNextElements(3)
+    delay()
+    assertData(-1)
+    nextVariant()
+    assertData(-1)
+    nextVariant()
+    assertData(-1)
+    prevVariant()
+    assertData(-1)
   }
 
   // TODO deprecated methods
