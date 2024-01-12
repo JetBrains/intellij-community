@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeighe
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.*
+import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
@@ -484,6 +485,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir/tests", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2ProjectViewTest> {
             model("projectView", pattern = TEST)
+        }
+
+        testClass<AbstractFirFoldingTest> {
+            model("folding/noCollapse")
+            model("folding/checkCollapse", testMethodName = "doSettingsFoldingTest")
         }
     }
 
