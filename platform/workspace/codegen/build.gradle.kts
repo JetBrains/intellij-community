@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.jetbrains.intellij.platform"
-version = "0.0.7"
+version = "0.0.8"
 
 repositories {
   mavenCentral()
@@ -19,9 +19,9 @@ kotlin {
 }
 
 tasks.withType(Jar::class) {
-  manifest {
-    attributes["Codegen-Api-Version"] = version
-  }
+  val resources = sourceSets.main.get().resources
+  File("${resources.srcDirs.first().path}/codegen-api-metadata.json")
+    .writeText("{ \"Codegen-Api-Version\": \"$version\" }")
 }
 
 publishing {
