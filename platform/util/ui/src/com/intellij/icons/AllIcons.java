@@ -736,6 +736,15 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Object = load("json/object.svg", -1268113296, 2);
   }
 
+  public static final class Language {
+    /** 16x16 */ public static final @NotNull Icon GO = load("language/go.svg", 683936688, 2);
+    /** 16x16 */ public static final @NotNull Icon Php = load("language/php.svg", 1115780116, 2);
+    /** 16x16 */ public static final @NotNull Icon Python = load("language/python.svg", 2024105733, 2);
+    /** 16x16 */ public static final @NotNull Icon Ruby = load("language/ruby.svg", -1736610380, 2);
+    /** 16x16 */ public static final @NotNull Icon Rust = load("language/rust.svg", 1109219129, 2);
+    /** 16x16 */ public static final @NotNull Icon Scala = load("language/scala.svg", -2014474853, 2);
+  }
+
   public static final class Linux {
     /** 16x16 */ public static final @NotNull Icon Linux = load("linux/linux.svg", 122737916, 2);
   }
