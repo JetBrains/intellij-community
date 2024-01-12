@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -23,7 +22,10 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.CollectionFactory;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class GlobalInspectionContextBase extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextBase.class);
@@ -383,42 +386,25 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     cleanupElements(project, runnable, Predicates.alwaysTrue(), scope);
   }
 
-  public static void cleanupElements(@NotNull Project project, @Nullable Runnable runnable, Predicate<? super ProblemDescriptor> shouldApplyFix, PsiElement @NotNull ... scope) {
-    List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
-    SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    for (PsiElement element : scope) {
-      elements.add(manager.createSmartPsiElementPointer(element));
-    }
-
-    cleanupElements(project, runnable, elements, shouldApplyFix);
-  }
-
+  /**
+   * Runs code cleanup on the specified scope
+   *
+   * @param project  project from which to use the inspection profile
+   * @param runnable  will be run after completion of the cleanup
+   * @param shouldApplyFix  predicate to filter out fixes
+   * @param scope  the elements to clean up
+   */
   public static void cleanupElements(@NotNull Project project,
                                      @Nullable Runnable runnable,
-                                     List<? extends SmartPsiElementPointer<PsiElement>> elements) {
-    cleanupElements(project, runnable, elements, Predicates.alwaysTrue());
-  }
-
-  private static void cleanupElements(@NotNull Project project,
-                                      @Nullable Runnable runnable,
-                                      List<? extends SmartPsiElementPointer<PsiElement>> elements,
-                                      @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      List<PsiElement> psiElements = new ArrayList<>();
-      for (SmartPsiElementPointer<PsiElement> element : elements) {
-        PsiElement psiElement = element.getElement();
-        if (psiElement != null && psiElement.isPhysical()) {
-          psiElements.add(psiElement);
-        }
-      }
-      if (psiElements.isEmpty()) {
-        return;
-      }
-      GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
-      globalContext.codeCleanup(analysisScope, profile, null, runnable, true, shouldApplyFix);
-    });
+                                     Predicate<? super ProblemDescriptor> shouldApplyFix,
+                                     PsiElement @NotNull ... scope) {
+    List<PsiElement> psiElements = Stream.of(scope).filter(e -> e != null && e.isPhysical()).toList();
+    if (psiElements.isEmpty()) return;
+    GlobalInspectionContextBase globalContext =
+      (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
+    globalContext.codeCleanup(analysisScope, profile, null, runnable, false, shouldApplyFix);
   }
 
   public void close(boolean noSuspiciousCodeFound) {
