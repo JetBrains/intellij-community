@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.util.whenTextChangedFromUi
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
@@ -198,8 +199,12 @@ internal class ProjectTypeList(
     val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser")) { showInstallPluginDialog() }
     link.toolTipText = null
 
-    val languagePluginAdvertiserLink = JPanel(BorderLayout())
+    val languagePluginAdvertiserLink = JBPanel<JBPanel<*>>(BorderLayout())
     languagePluginAdvertiserLink.border = JBUI.CurrentTheme.Advertiser.border()
+    languagePluginAdvertiserLink.foreground = JBUI.CurrentTheme.Advertiser.foreground()
+    languagePluginAdvertiserLink.background = JBUI.CurrentTheme.Advertiser.background()
+    languagePluginAdvertiserLink.withMinimumWidth(JBUI.scale(220))
+    languagePluginAdvertiserLink.withPreferredWidth(JBUI.scale(220))
     languagePluginAdvertiserLink.add(link, BorderLayout.WEST)
 
     return JBPopupFactory.getInstance()
@@ -212,7 +217,6 @@ internal class ProjectTypeList(
       .setAdvertiser(languagePluginAdvertiserLink)
       .setResizable(false)
       .setRequestFocus(true)
-      .setMinSize(JBUI.size(220, 220))
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setItemChosenCallback(::showInstallPluginDialog)
       .createPopup()
@@ -403,14 +407,30 @@ internal class ProjectTypeList(
     }
   }
 
-  private class LanguagePluginRenderer : SimpleListCellRenderer<LanguagePlugin>() {
+  private class LanguagePluginRenderer : GroupedItemsListRenderer<LanguagePlugin>(LanguagePluginRendererDescriptor()) {
 
-    override fun customize(list: JList<out LanguagePlugin>, value: LanguagePlugin, index: Int, selected: Boolean, hasFocus: Boolean) {
-      icon = value.icon
-      text = value.name
-      iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
-      border = JBUI.Borders.empty(JBUI.CurrentTheme.ActionsList.cellPadding())
+    override fun customizeComponent(
+      list: JList<out LanguagePlugin>,
+      value: LanguagePlugin,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean
+    ) {
+      myTextLabel.border = JBUI.Borders.empty(5, 0)
     }
+  }
+
+  private class LanguagePluginRendererDescriptor : ListItemDescriptor<LanguagePlugin> {
+
+    override fun getTextFor(value: LanguagePlugin): String = value.name
+
+    override fun getTooltipFor(value: LanguagePlugin): String? = null
+
+    override fun getIconFor(value: LanguagePlugin): Icon = value.icon
+
+    override fun hasSeparatorAboveOf(value: LanguagePlugin): Boolean = false
+
+    override fun getCaptionAboveOf(value: LanguagePlugin): String? = null
   }
 
   private class LanguagePlugin(
