@@ -16,16 +16,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer;
 import com.intellij.openapi.options.Configurable;
@@ -40,11 +34,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.Gray;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,31 +148,38 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   private void showHint(final Editor editor, final int lineNumber) {
-    final JPanel panel = new JPanel(new BorderLayout());
+    JBColor borderColor = new JBColor(Gray._206, Gray._75);
+    final JPanel panel = new JPanel(new VerticalLayout(0));
+    panel.setBorder(JBUI.Borders.customLine(borderColor));
     Disposable unregisterActionsDisposable = Disposer.newDisposable();
-    panel.add(createActionsToolbar(editor, lineNumber, unregisterActionsDisposable), BorderLayout.NORTH);
+    panel.add(createActionsToolbar(editor, lineNumber, unregisterActionsDisposable));
 
     final LineData lineData = getLineData(lineNumber);
-    final EditorImpl uEditor;
+    final Editor uEditor;
     final String report;
     if (!mySubCoverageActive && (report = getReport(lineData, lineNumber, editor, myCoverageSuite)) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
-      uEditor = (EditorImpl)factory.createEditor(doc, editor.getProject());
-      panel.add(EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false), BorderLayout.CENTER);
-    } else {
+      uEditor = factory.createViewer(doc, editor.getProject(), EditorKind.PREVIEW);
+      var component = EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false);
+      component.setBorder(JBUI.Borders.emptyLeft(8));
+
+      JPanel hintPanel = new JPanel(new BorderLayout());
+      hintPanel.add(component);
+      hintPanel.setBorder(JBUI.Borders.customLine(borderColor, 1, 0, 0, 0));
+      panel.add(hintPanel);
+    }
+    else {
       uEditor = null;
     }
 
-
-    final LightweightHint hint = new LightweightHint(panel){
+    final LightweightHint hint = new LightweightHint(panel) {
       @Override
       public void hide() {
         if (uEditor != null) EditorFactory.getInstance().releaseEditor(uEditor);
         Disposer.dispose(unregisterActionsDisposable);
         super.hide();
-
       }
     };
     int hideFlags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING;
@@ -229,13 +233,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageHintToolbar", group, true);
     toolbar.setTargetComponent(editorComponent);
-    final JComponent toolbarComponent = toolbar.getComponent();
-
-    final Color background = ((EditorEx)editor).getBackgroundColor();
-    final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-    toolbarComponent.setBackground(background);
-    toolbarComponent.setBorder(new ColoredSideBorder(foreground, foreground, lineData == null || lineData.getStatus() == LineCoverage.NONE || mySubCoverageActive ? foreground : null, foreground, 1));
-    return toolbarComponent;
+    return toolbar.getComponent();
   }
 
   public void moveToLine(final int lineNumber, final Editor editor) {
