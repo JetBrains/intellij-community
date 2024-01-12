@@ -507,6 +507,4 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     prevVariant()
     assertData(-1)
   }
-
-  // TODO deprecated methods
 }

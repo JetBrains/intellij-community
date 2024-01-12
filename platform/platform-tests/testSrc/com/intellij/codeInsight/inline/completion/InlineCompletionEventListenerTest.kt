@@ -17,9 +17,8 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipT
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.suggestion.*
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
-import com.intellij.codeInsight.inline.completion.suggestion.build
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -484,8 +483,84 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       hide(FinishType.TYPED, false)
     )
   }
+  
+  @Test
+  fun `test events for custom event handling`() = testListener { 
+    val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+      override fun onLookupEvent(
+        event: InlineCompletionEvent.InlineLookupEvent,
+        variant: InlineCompletionVariant.Snapshot
+      ): InlineCompletionEventBasedSuggestionUpdater.UpdateResult {
+        val itemString = event.event.item?.lookupString ?: return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same
+        if (event !is InlineCompletionEvent.LookupChange || !variant.isActive) {
+          return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same
+        }
+        val snapshot = variant.copy(variant.elements.dropLast(1) + InlineCompletionGrayTextElement(itemString))
+        return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed(snapshot)
+      }
+    }
+    val provider = object : InlineCompletionProvider {
+      override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
+      override val suggestionUpdater = updater
+      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+      override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
+        return InlineCompletionSuggestion.build {
+          variant {
+            emit(InlineCompletionGrayTextElement("first: "))
+            emit(InlineCompletionGrayTextElement("some value"))
+          }
+          variant {
+            emit(InlineCompletionGrayTextElement("second: "))
+            emit(InlineCompletionGrayTextElement("another value"))
+          }
+        }
+      }
+    }
+    InlineCompletionHandler.registerTestHandler(provider, testRootDisposable)
 
-  // TODO test events for lookup and etc
+    callInlineCompletion()
+    delay()
+    expectEvents(
+      request(InlineCompletionEvent.DirectCall::class, InlineCompletionProvider::class),
+      computed(0, "first: ", 0), show(0, "first: ", 0),
+      computed(0, "some value", 1), show(0, "some value", 1),
+      variantComputed(0),
+      computed(1, "second: ", 0), computed(1, "another value", 1),
+      variantComputed(1),
+      completion(null, true)
+    )
+
+    fillLookup("love", "the", "world!")
+    createLookup()
+    assertInlineRender("first: love")
+    expectEvents(
+      change(0, 6),
+      show(0, "first: ", 0), show(0, "love", 1)
+    )
+
+    nextVariant()
+    expectEvents(
+      variantSwitched(0, 1, true),
+      show(1, "second: ", 0), show(1, "another value", 1)
+    )
+    pickLookupElement("world!")
+    assertInlineRender("second: world!")
+    expectEvents(
+      change(1, 7),
+      show(1, "second: ", 0), show(1, "world!", 1)
+    )
+
+    nextVariant()
+    assertInlineRender("first: love")
+    expectEvents(
+      variantSwitched(1, 0, true),
+      show(0, "first: ", 0), show(0, "love", 1)
+    )
+    escape()
+    expectEvents(
+      hide(FinishType.ESCAPE_PRESSED, true)
+    )
+  }
 
   private class TestEventListener : AbstractCoroutineContextElement(Key), InlineCompletionEventListener {
 
