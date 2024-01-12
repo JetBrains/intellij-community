@@ -1095,27 +1095,29 @@ private fun repaintUI(window: Window) {
   }
 }
 
-private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
+private fun applyDensityOnUpdateUi(uiDefaults: UIDefaults) {
   val densityKey = "ui.density"
-  val oldDensityName = defaults.get(densityKey) as? String
+  val oldDensityName = uiDefaults.get(densityKey) as? String
   val newDensity = UISettings.getInstance().uiDensity
   if (oldDensityName == newDensity.name) {
     // re-applying the same density would break HiDPI-scalable values like Tree.rowHeight
     return
   }
 
-  defaults.put(densityKey, newDensity.name)
+  uiDefaults.put(densityKey, newDensity.name)
   if (newDensity == UIDensity.DEFAULT) {
     // Special case: we need to set this one to its default value even in non-compact mode, UNLESS it was already set by the theme.
     // If it's null, it can't be properly patched in patchRowHeight, which looks ugly with larger UI fonts.
-    val vcsLogHeight = defaults.get(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey())
+    val vcsLogHeight = uiDefaults.get(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey())
     // don't want to rely on putIfAbsent here, as UIDefaults is a rather messy combination of multiple hash tables
     if (vcsLogHeight == null) {
-      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
+      uiDefaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
     }
   }
 
   if (newDensity == UIDensity.COMPACT) {
+    val defaults = hashMapOf<String, Any>()
+    // first, initialize default values
     // toolbars
     defaults.put(JBUI.CurrentTheme.Toolbar.horizontalInsetsKey(), cmInsets(2, 4))
     defaults.put(JBUI.CurrentTheme.Toolbar.verticalInsetsKey(), cmInsets(2, 4))
@@ -1190,6 +1192,12 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.fileToolbarInsetsKey(), cmInsets(7, 10))
     defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.gapBetweenBlocksKey(), 4)
     defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.leftRightBlockInsetKey(), 6)
+    // values from the current theme:
+    val compactValues = uiDefaults.asSequence()
+      .filter { (it.key as? String?)?.endsWith(".compact") == true }
+      .associate { (it.key as String).removeSuffix(".compact") to it.value }
+    defaults.putAll(compactValues)
+    uiDefaults.putAll(defaults)
   }
 }
 
