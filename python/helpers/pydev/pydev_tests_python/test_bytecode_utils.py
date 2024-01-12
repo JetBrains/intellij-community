@@ -27,17 +27,43 @@ def function_with_try_except_code():
     return f.__code__
 
 
+@pytest.fixture
+def consecutive_calls():
+    def f():
+        return 1
+
+    def g():
+        return 2
+
+    def h():
+        return 3
+
+    def i():
+        return f() + g() + h()
+
+    return i.__code__
+
+
 def test_candidates_for_inner_decorator(inner_decorator_code):
-    variants = pydevd_bytecode_utils.get_smart_step_into_candidates(inner_decorator_code)
+    variants = pydevd_bytecode_utils.get_smart_step_into_candidates(
+        inner_decorator_code)
     assert len(variants) == 2
     assert variants[0].argval == 'f'
     assert variants[1].argval == '__pow__'
 
 
 def test_candidates_for_function_with_try_except(function_with_try_except_code):
-    variants = pydevd_bytecode_utils.get_smart_step_into_candidates(function_with_try_except_code)
+    variants = pydevd_bytecode_utils.get_smart_step_into_candidates(
+        function_with_try_except_code)
     assert len(variants) == 3
     assert variants[0].argval == '__div__'
     assert variants[1].argval == 'print'
     assert variants[2].argval == 'print'
 
+
+def test_candidates_for_consecutive_calls(consecutive_calls):
+    variants = pydevd_bytecode_utils.get_smart_step_into_candidates(consecutive_calls)
+    assert len(variants) == 3
+    assert variants[0].argval == 'f'
+    assert variants[1].argval == 'g'
+    assert variants[2].argval == 'h'
