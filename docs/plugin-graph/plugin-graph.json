@@ -2259,7 +2259,7 @@
     "id": "I6",
     "name": "intellij.python.docker",
     "n": "i.python.docker",
-    "package": "com.jetbrains.python.docker",
+    "package": "com.intellij.python.docker",
     "sourceModule": "intellij.python.docker",
     "descriptor": "python/python-docker/resources/intellij.python.docker.xml",
     "parent": "che",
