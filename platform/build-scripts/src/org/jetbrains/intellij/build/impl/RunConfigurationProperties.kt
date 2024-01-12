@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -9,6 +9,7 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.name
 
 abstract class RunConfigurationProperties(
   val name: String,
@@ -22,7 +23,7 @@ abstract class RunConfigurationProperties(
     fun findRunConfiguration(projectHome: Path, name: String): Path {
       val file = projectHome.resolve(".idea/runConfigurations/${FileUtil.sanitizeFileName(name)}.xml")
       if (!file.exists()) {
-        throw RuntimeException("Cannot find run configurations: $file doesn't exist")
+        throw RuntimeException("Cannot find run configurations: file '${projectHome.relativize(file)}' does not exist")
       }
       return file
     }
@@ -30,7 +31,7 @@ abstract class RunConfigurationProperties(
     fun getConfiguration(file: Path): XmlElement {
       val root = file.inputStream().use(::readXmlAsModel)
       return root.getChild("configuration")
-             ?: throw RuntimeException("Cannot load configuration from '$file.name': 'configuration' tag is not found")
+             ?: throw RuntimeException("Cannot load configuration from '${file.name}': 'configuration' tag is not found")
     }
 
     fun getConfigurationType(configuration: XmlElement): String {
