@@ -75,9 +75,9 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   /**
-   * @deprecated Use {@link CoverageEnabledConfiguration#CoverageEnabledConfiguration(RunConfigurationBase, CoverageRunner)}
+   * Use {@link CoverageEnabledConfiguration#CoverageEnabledConfiguration(RunConfigurationBase, CoverageRunner)} when only one Runner
+   * is available for this configuration
    */
-  @Deprecated
   public void setCoverageRunner(@Nullable CoverageRunner coverageRunner) {
     myRunnerId = coverageRunner == null ? null : coverageRunner.getId();
     myCachedRunner = coverageRunner;
