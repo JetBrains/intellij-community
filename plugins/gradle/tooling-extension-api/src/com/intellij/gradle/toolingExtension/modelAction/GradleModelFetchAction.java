@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -69,7 +70,6 @@ public class GradleModelFetchAction {
 
     //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
     Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span -> getNestedBuilds(controller, mainGradleBuild));
-    assert nestedBuilds != null;
 
     myTelemetry.runWithSpan("MainBuildAddModels", span -> addModels(controller, mainGradleBuild));
     for (GradleBuild includedBuild : nestedBuilds) {
@@ -245,27 +245,27 @@ public class GradleModelFetchAction {
                                @NotNull Object object,
                                @NotNull Class<?> clazz,
                                @NotNull Span parentSpan) {
-    myModelConverterExecutor.execute(() -> {
-      Object converted = myTelemetry.callWithSpan("ProjectModelConverter", parentSpan, span -> {
-        span.setAttribute("model.class", clazz.getName());
-        return myModelConverter.convert(object);
-      });
-      assert converted != null;
-      myAllModels.addModel(converted, clazz, projectModel);
-    });
+    convertModel(object, clazz, "ProjectModelConverter", parentSpan, converted -> myAllModels.addModel(converted, clazz, projectModel));
   }
 
   private void addBuildModel(@NotNull BuildModel buildModel,
                              @NotNull Object object,
                              @NotNull Class<?> clazz,
                              @NotNull Span parentSpan) {
+    convertModel(object, clazz, "BuildModelConverter", parentSpan, converted -> myAllModels.addModel(converted, clazz, buildModel));
+  }
+
+  private void convertModel(@NotNull Object object,
+                            @NotNull Class<?> clazz,
+                            @NotNull String spanName,
+                            @NotNull Span parentSpan,
+                            @NotNull Consumer<Object> onConvertorEnd) {
     myModelConverterExecutor.execute(() -> {
-      Object converted = myTelemetry.callWithSpan("BuildModelConverter", parentSpan, span -> {
+      Object converted = myTelemetry.callWithSpan(spanName, parentSpan, span -> {
         span.setAttribute("model.class", clazz.getName());
         return myModelConverter.convert(object);
       });
-      assert converted != null;
-      myAllModels.addModel(converted, clazz, buildModel);
+      onConvertorEnd.accept(converted);
     });
   }
 

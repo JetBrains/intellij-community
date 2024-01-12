@@ -55,16 +55,16 @@ public final class GradleOpenTelemetry {
     return getTelemetry().getTracer(INSTRUMENTATION_NAME);
   }
 
-  public <T> @Nullable T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
+  public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
     return callWithSpan(spanName, (ignore) -> {
     }, fn);
   }
 
-  public <T> @Nullable T callWithSpan(@NotNull String spanName, @NotNull Span parentSpan, @NotNull Function<Span, T> fn) {
+  public <T> T callWithSpan(@NotNull String spanName, @NotNull Span parentSpan, @NotNull Function<Span, T> fn) {
     return callWithSpan(spanName, builder -> builder.setParent(Context.current().with(parentSpan)), fn);
   }
 
-  public <T> @Nullable T callWithSpan(@NotNull String spanName,
+  public <T> T callWithSpan(@NotNull String spanName,
                                       @NotNull Consumer<SpanBuilder> configurator,
                                       @NotNull Function<Span, T> fn) {
     SpanBuilder spanBuilder = getTracer()
