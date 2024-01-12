@@ -33,6 +33,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -347,7 +348,7 @@ internal class ProjectTypeList(
         else -> JBUI.Borders.empty(20, 8, 5, 0)
       }
       mySeparatorComponent.setCaptionCentered(false)
-      mySeparatorComponent.font = JBUI.Fonts.smallFont()
+      mySeparatorComponent.font = JBFont.label().deriveFont(JBUI.scale(12))
 
       myNextStepLabel.icon = when (value.group.isPromo) {
         true -> AllIcons.Ultimate.Lock
