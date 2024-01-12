@@ -133,8 +133,30 @@ object ComponentListPanelFactory {
                                panelInitializer: JPanel.() -> Unit = {},
                                gap: Int = 0,
                                componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
+    return createListPanel(parentCs, items, ::VerticalListPanel, panelInitializer, gap, componentFactory)
+  }
+
+  /**
+   * @param T must implement proper equals/hashCode
+   */
+  fun <T : Any> createHorizontal(parentCs: CoroutineScope,
+                                 items: Flow<List<T>>,
+                                 panelInitializer: JPanel.() -> Unit = {},
+                                 gap: Int = 0,
+                                 componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
+    return createListPanel(parentCs, items, ::HorizontalListPanel, panelInitializer, gap, componentFactory)
+  }
+
+  private fun <T : Any> createListPanel(
+    parentCs: CoroutineScope,
+    items: Flow<List<T>>,
+    panelFactory: (Int) -> JPanel,
+    panelInitializer: JPanel.() -> Unit = {},
+    gap: Int = 0,
+    componentFactory: CoroutineScope.(T) -> JComponent
+  ): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
-    val panel = VerticalListPanel(gap).apply(panelInitializer)
+    val panel = panelFactory(gap).apply(panelInitializer)
     val currentList = LinkedList<T>()
 
     fun addComponent(idx: Int, item: T) {

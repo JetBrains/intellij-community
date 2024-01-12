@@ -5,4 +5,5 @@ object CodeReviewReactionsUIUtil {
   const val HORIZONTAL_GAP: Int = 8
   const val BORDER_ROUNDNESS: Int = 14
   const val ROUNDNESS: Int = 12
+  const val BORDER: Int = 3
 }

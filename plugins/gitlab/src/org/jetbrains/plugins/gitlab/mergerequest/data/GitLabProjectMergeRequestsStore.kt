@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -62,6 +63,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
                                              private val api: GitLabApi,
                                              private val glMetadata: GitLabServerMetadata?,
                                              private val projectMapping: GitLabProjectMapping,
+                                             private val currentUser: GitLabUserDTO,
                                              private val tokenRefreshFlow: Flow<Unit>) : GitLabProjectMergeRequestsStore {
 
   private val cs = parentCs.childScope()
@@ -93,7 +95,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .withInitial(iid)
         .map { mrId -> runCatchingUser { loadMergeRequest(mrId) } } // TODO: create from cached details
         .transformConsecutiveSuccesses {
-          mapScoped { mrData -> LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData) }
+          mapScoped { mrData -> LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, currentUser, mrData) }
         }
         .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed

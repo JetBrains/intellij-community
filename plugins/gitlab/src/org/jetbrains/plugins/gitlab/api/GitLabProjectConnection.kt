@@ -33,7 +33,7 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, glMetadata, repo, tokenRefreshFlow)
+  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   override suspend fun close() {

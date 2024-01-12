@@ -130,7 +130,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
     val reactions = HorizontalListPanel().apply {
       bindChildIn(cs, mainNoteVm.mapNotNull { it.reactionsVm }.filterNotNull()) { reactionsVm ->
-        GitLabReactionsComponentFactory.create(reactionsVm)
+        GitLabReactionsComponentFactory.create(this, reactionsVm)
       }
     }
 

@@ -60,7 +60,7 @@ class GitLabNoteViewModelImpl(
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
   override val reactionsVm: GitLabReactionsViewModel? =
-    if (note is GitLabMergeRequestNote) GitLabReactionsViewModelImpl(note.awardEmoji.value, currentUser) else null
+    if (note is GitLabMergeRequestNote) GitLabReactionsViewModelImpl(cs, note, currentUser) else null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)

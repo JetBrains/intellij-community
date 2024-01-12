@@ -54,6 +54,8 @@ interface GitLabMergeRequestNote : GitLabNote {
   val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?>
 
   val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>>
+
+  suspend fun toggleReaction(reaction: GitLabReaction)
 }
 
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
@@ -69,6 +71,7 @@ class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   mr: GitLabMergeRequest,
+  private val currentUser: GitLabUserDTO,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
   noteData: GitLabNoteDTO
 ) : GitLabMergeRequestNote, MutableGitLabNote {
@@ -85,7 +88,7 @@ class MutableGitLabMergeRequestNote(
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteDTO::body)
   override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteDTO::resolved)
-  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs) { dto -> dto.awardEmoji?.nodes ?: emptyList() }
+  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs, GitLabNoteDTO::emojis)
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
@@ -119,8 +122,31 @@ class MutableGitLabMergeRequestNote(
     error("Cannot submit an already submitted note")
   }
 
+  override suspend fun toggleReaction(reaction: GitLabReaction) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        val id = id.gid
+        val awardEmojiTogglePayload = api.graphQL.awardEmojiToggle(id, reaction.name).body()
+        updateEmojisLocally(reaction, awardEmojiTogglePayload)
+      }
+    }
+  }
+
   fun update(item: GitLabNoteDTO) {
     data.value = item
+  }
+
+  private fun updateEmojisLocally(reaction: GitLabReaction, awardEmojiTogglePayload: AwardEmojiTogglePayload) {
+    val updatedEmojis = awardEmoji.value.toMutableList()
+    val awardEmojiResponse = awardEmojiTogglePayload.awardEmoji // HINT: returned value is `null` if toggledOn is `false`
+    if (awardEmojiTogglePayload.toggledOn && awardEmojiResponse != null) {
+      updatedEmojis.add(awardEmojiResponse)
+    }
+    else {
+      updatedEmojis.removeIf { it.name == reaction.name && it.user.id == currentUser.id }
+    }
+
+    data.update { it.copy(emojis = updatedEmojis) }
   }
 
   override fun toString(): String =
@@ -194,6 +220,10 @@ class GitLabMergeRequestDraftNoteImpl(
       }
       mr.reloadDiscussions()
     }
+  }
+
+  override suspend fun toggleReaction(reaction: GitLabReaction) {
+    error("Cannot toggle reaction on draft note")
   }
 
   fun update(item: GitLabMergeRequestDraftNoteRestDTO) {

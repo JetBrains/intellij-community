@@ -54,6 +54,7 @@ class GitLabLazyProject(
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   override val projectMapping: GitLabProjectMapping,
+  private val currentUser: GitLabUserDTO,
   private val tokenRefreshFlow: Flow<Unit>
 ) : GitLabProject {
 
@@ -64,7 +65,7 @@ class GitLabLazyProject(
   private val projectDataReloadSignal = MutableSharedFlow<Unit>()
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, tokenRefreshFlow)
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)
   }
 
   override val labels: SharedFlow<Result<List<GitLabLabelDTO>>> = resultListFlow {

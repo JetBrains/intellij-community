@@ -24,7 +24,8 @@ data class GitLabNoteDTO(
   val system: Boolean,
   @SinceGitLab("13.8") val url: String,
   val userPermissions: UserPermissions,
-  @SinceGitLab("16.1") val awardEmoji: AwardEmojiConnection?
+  @JsonProperty("awardEmoji") @SinceGitLab("16.1") private val awardEmojiConnection: AwardEmojiConnection?,
+  @JsonIgnore val emojis: List<GitLabAwardEmojiDTO> = awardEmojiConnection?.nodes ?: emptyList()
 ) {
   @JsonIgnore val id: GitLabGid = GitLabGidData(_id)
 

@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
@@ -51,6 +52,7 @@ class LoadedGitLabDiscussion(
   private val api: GitLabApi,
   glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
+  private val currentUser: GitLabUserDTO,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val draftNotesEventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
@@ -103,7 +105,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapDataToModel(
         GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, api, mr, noteEvents::emit, note) },
+        { note -> MutableGitLabMergeRequestNote(this, api, mr, currentUser, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes

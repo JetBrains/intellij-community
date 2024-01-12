@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 19)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 20)
 
   /**
    * Server metadata was fetched
@@ -294,6 +294,7 @@ enum class GitLabApiRequestName {
   GQL_GET_PROJECT_WORK_ITEMS,
   GQL_GET_MEMBER_PROJECTS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
+  GQL_AWARD_EMOJI_TOGGLE,
   GQL_CREATE_NOTE,
   GQL_CREATE_DIFF_NOTE,
   GQL_CREATE_REPLY_NOTE,
@@ -321,6 +322,7 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_PROJECT_WORK_ITEMS -> GQL_GET_PROJECT_WORK_ITEMS
       GitLabGQLQuery.GET_MEMBER_PROJECTS -> GQL_GET_MEMBER_PROJECTS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
+      GitLabGQLQuery.AWARD_EMOJI_TOGGLE -> GQL_AWARD_EMOJI_TOGGLE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE
       GitLabGQLQuery.CREATE_DIFF_NOTE -> GQL_CREATE_DIFF_NOTE
       GitLabGQLQuery.CREATE_REPLY_NOTE -> GQL_CREATE_REPLY_NOTE

@@ -83,6 +83,11 @@
       "since": "[2024.1]"
     },
     {
+      "key": "Review.Reaction.Background.Hovered",
+      "description": "Hovered background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
       "key": "Review.Reaction.Background.Pressed",
       "description": "Pressed background of reaction component",
       "since": "[2024.1]"
@@ -90,6 +95,11 @@
     {
       "key": "Review.Reaction.Border",
       "description": "Border color of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Border.Hovered",
+      "description": "Hovered border color of reaction component",
       "since": "[2024.1]"
     },
     {

@@ -98,6 +98,7 @@ internal class LoadedGitLabMergeRequest(
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   private val projectMapping: GitLabProjectMapping,
+  private val currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequestDTO
 ) : GitLabMergeRequest {
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -157,7 +158,7 @@ internal class LoadedGitLabMergeRequest(
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
   private val discussionsContainer =
-    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, glMetadata, projectMapping.repository, this)
+    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, glMetadata, projectMapping.repository, currentUser, this)
 
   init {
     cs.launch {

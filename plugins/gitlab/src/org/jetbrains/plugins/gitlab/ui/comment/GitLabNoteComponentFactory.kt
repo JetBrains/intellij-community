@@ -39,7 +39,7 @@ internal object GitLabNoteComponentFactory {
     val contentPanel = VerticalListPanel(gap = CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
       add(textPanel)
       vm.reactionsVm?.let { reactionsVm ->
-        add(GitLabReactionsComponentFactory.create(reactionsVm))
+        add(GitLabReactionsComponentFactory.create(cs, reactionsVm))
       }
     }
 

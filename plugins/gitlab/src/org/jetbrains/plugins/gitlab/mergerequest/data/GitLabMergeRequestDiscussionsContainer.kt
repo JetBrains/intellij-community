@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -55,6 +56,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
+  private val currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest
 ) : GitLabMergeRequestDiscussionsContainer {
 
@@ -143,7 +145,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
             GitLabDiscussionDTO::id,
             { disc ->
               LoadedGitLabDiscussion(this,
-                                     api, glMetadata, glProject,
+                                     api, glMetadata, glProject, currentUser,
                                      { discussionEvents.emit(it) }, { draftNotesEvents.emit(it) },
                                      mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
             },

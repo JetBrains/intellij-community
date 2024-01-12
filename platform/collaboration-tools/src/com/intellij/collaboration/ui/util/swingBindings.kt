@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
@@ -131,6 +133,22 @@ fun JComponent.bindDisabledIn(scope: CoroutineScope, disabledFlow: Flow<Boolean>
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
       isEnabled = !it
+    }
+  }
+}
+
+fun JComponent.bindBorderIn(scope: CoroutineScope, borderFlow: Flow<Border>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    borderFlow.collect {
+      border = it
+    }
+  }
+}
+
+fun JComponent.bindBackgroundIn(scope: CoroutineScope, backgroundFlow: Flow<Color>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    backgroundFlow.collect {
+      background = it
     }
   }
 }
