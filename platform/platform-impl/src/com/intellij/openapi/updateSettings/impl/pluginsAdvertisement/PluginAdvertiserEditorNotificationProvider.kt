@@ -192,9 +192,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       for (suggestedIde in suggestedIdes) {
-        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)) {
+        panel.createTryUltimateActionLabel(suggestedIde, project) {
           pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
-          tryUltimate(pluginId = null, suggestedIde, project)
         }
       }
 

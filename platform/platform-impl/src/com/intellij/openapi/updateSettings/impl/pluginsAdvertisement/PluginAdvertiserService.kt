@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
@@ -26,6 +27,7 @@ import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.U
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.system.CpuArch
@@ -635,13 +637,32 @@ fun tryUltimate(
   project: Project,
   fusEventSource: FUSEventSource? = null,
 ) {
+  val eventSource = fusEventSource ?: FUSEventSource.EDITOR
   if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
+    eventSource.logTryUltimate(project, pluginId)
     project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
   } else {
-    val eventSource = fusEventSource ?: FUSEventSource.EDITOR
     eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
   }
 }
+
+fun EditorNotificationPanel.createTryUltimateActionLabel(
+  suggestedIde: SuggestedIde,
+  project: Project,
+  pluginId: PluginId? = null,
+  action: (() -> Unit)? = null
+) {
+  val labelName = IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)
+  createActionLabel(labelName) {
+    action?.invoke()
+    val component = findLabelByName(labelName)
+    component?.icon = AllIcons.Actions.Install
+
+    tryUltimate(pluginId, suggestedIde, project)
+    component?.isEnabled = false
+  }
+}
+
 
 private object OsArchMapper {
   const val OS_ARCH_PARAMETER: String = "{type}"

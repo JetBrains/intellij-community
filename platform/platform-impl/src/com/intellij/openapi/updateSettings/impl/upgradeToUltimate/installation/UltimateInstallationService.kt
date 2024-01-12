@@ -34,6 +34,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.ui.EditorNotifications
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.PlatformUtils.isIdeaCommunity
 import com.intellij.util.PlatformUtils.isPyCharmCommunity
@@ -82,8 +83,6 @@ class UltimateInstallationService(
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade"), true) {
-            FUSEventSource.EDITOR.logTryUltimate(project, pluginId)
-            
             if (!suggestedIde.canBeAutoInstalled()) {
               useFallback(pluginId, suggestedIde.defaultDownloadUrl)
               return@withBackgroundProgress
@@ -117,6 +116,9 @@ class UltimateInstallationService(
             useFallback(pluginId, suggestedIde.defaultDownloadUrl)
           }
         }
+      }
+      finally {
+        EditorNotifications.getInstance(project).updateAllNotifications()
       }
     }
   }

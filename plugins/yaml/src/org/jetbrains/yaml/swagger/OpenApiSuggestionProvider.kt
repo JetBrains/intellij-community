@@ -66,13 +66,9 @@ private class OpenApiPluginSuggestion(val project: Project,
     }
     else {
       panel.text = IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", OPENAPI_FILES, suggestedCommercialIde.name)
-
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedCommercialIde.name)) {
-        val pluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
-        tryUltimate(pluginId, suggestedCommercialIde, project)
-      }
+      panel.createTryUltimateActionLabel(suggestedCommercialIde, project, PluginId.getId(OPENAPI_PLUGIN_ID))
     }
-
+    
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
       FUSEventSource.EDITOR.logIgnoreExtension(project)
       dismissPluginSuggestion()

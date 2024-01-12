@@ -44,6 +44,7 @@ import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -326,6 +327,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
   }
+  
+  public @Nullable HyperlinkLabel findLabelByName(@NotNull @Label String text) {
+    var found = Arrays.stream(myLinksPanel.getComponents())
+      .filter(it -> {
+        if (!(it instanceof HyperlinkLabel)) return false;
+        return ((HyperlinkLabel)it).myText.equals(text);
+      })
+      .findFirst();
+
+    return (HyperlinkLabel)found.orElse(null);
+  }
 
   public EditorNotificationPanel text(@NotNull @Label String text) {
     myLabel.setText(text);
@@ -512,6 +524,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       addHyperlinkListener(new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          if (!isEnabled()) return;
           myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
         }
       });
