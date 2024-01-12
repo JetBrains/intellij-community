@@ -301,13 +301,13 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     init(PlainTextFileType.INSTANCE)
     registerSuggestion {
       repeat(2) {
-        variant { emit(InlineCompletionGrayTextElement("Some variant $it")) }
+        variant { _ -> emit(InlineCompletionGrayTextElement("Some variant $it")) }
       }
       repeat(3) {
         variant { }
       }
       repeat(2) {
-        variant { emit(InlineCompletionGrayTextElement("Another variant $it")) }
+        variant { _ -> emit(InlineCompletionGrayTextElement("Another variant $it")) }
       }
       repeat(3) {
         variant { }
@@ -354,7 +354,5 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
   }
 
   // TODO deprecated methods
-  // TODO all builders
-  // TODO test logs
   // TODO test UserDataHolder
 }

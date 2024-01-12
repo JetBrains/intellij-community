@@ -104,7 +104,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
     override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
       return InlineCompletionSuggestion.build {
         variants.forEach {
-          variant {
+          variant { _ ->
             emit(InlineCompletionGrayTextElement(it))
           }
         }

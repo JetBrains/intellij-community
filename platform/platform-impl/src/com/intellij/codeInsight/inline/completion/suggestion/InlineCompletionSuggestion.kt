@@ -32,7 +32,7 @@ interface InlineCompletionSingleSuggestion : InlineCompletionSuggestion {
     // TODO think about signature
     fun build(
       data: UserDataHolderBase = UserDataHolderBase(),
-      buildElements: suspend FlowCollector<InlineCompletionElement>.() -> Unit
+      buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit
     ): InlineCompletionSingleSuggestion {
       return object : InlineCompletionSingleSuggestion {
         override suspend fun getVariant(): InlineCompletionVariant = InlineCompletionVariant.build(data, buildElements)

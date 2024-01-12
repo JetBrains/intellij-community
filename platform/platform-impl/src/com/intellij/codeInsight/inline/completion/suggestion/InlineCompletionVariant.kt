@@ -46,9 +46,9 @@ interface InlineCompletionVariant {
 
     fun build(
       data: UserDataHolderBase = UserDataHolderBase(),
-      buildElements: suspend FlowCollector<InlineCompletionElement>.() -> Unit
+      buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit
     ): InlineCompletionVariant {
-      return Impl(data, flow(buildElements))
+      return Impl(data, flow { buildElements(data) })
     }
 
     fun build(

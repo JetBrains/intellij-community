@@ -18,7 +18,7 @@ interface InlineCompletionSuggestionBuilder {
   @InlineCompletionSuggestionDsl
   suspend fun variant(
     data: UserDataHolderBase = UserDataHolderBase(),
-    buildElements: suspend FlowCollector<InlineCompletionElement>.() -> Unit
+    buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit
   )
 }
 
@@ -27,11 +27,14 @@ private class InlineCompletionSuggestionBuilderImpl : InlineCompletionSuggestion
   private val isBuilt = AtomicBoolean(false)
   private val variants = ContainerUtil.createConcurrentList<InlineCompletionVariant>()
 
-  override suspend fun variant(data: UserDataHolderBase, buildElements: suspend FlowCollector<InlineCompletionElement>.() -> Unit) {
+  override suspend fun variant(
+    data: UserDataHolderBase,
+    buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit
+  ) {
     check(!isBuilt.get()) {
       "Cannot add another variant after a suggestion is already built. Incorrect API usage."
     }
-    variants += InlineCompletionVariant.build(data, buildElements = buildElements)
+    variants += InlineCompletionVariant.build(data, buildElements)
   }
 
   fun build(): InlineCompletionSuggestion {
