@@ -91,6 +91,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCancelled()
+    MavenLog.LOG.debug("Dependency resolution started")
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
@@ -109,6 +110,11 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       updateSnapshots,
       userProperties)
     val problems = MavenResolveResultProblemProcessor.getProblems(results)
+    val problemsExist = !problems.isEmpty
+    if (problemsExist) {
+      MavenLog.LOG.debug(
+        "Dependency resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
+    }
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems)
     val artifactIdToMavenProjects = mavenProjects
       .groupBy { mavenProject -> mavenProject.mavenId.artifactId }
@@ -119,6 +125,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     ParallelRunner.getInstance(myProject).runInParallel(results) {
       doResolve(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
     }
+    MavenLog.LOG.debug("Dependency resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
   }
 
@@ -154,7 +161,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
 
     MavenLog.LOG.debug(
-      "Dependency resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${mavenProjectCandidate.dependencies.size}")
+      "Dependency resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {

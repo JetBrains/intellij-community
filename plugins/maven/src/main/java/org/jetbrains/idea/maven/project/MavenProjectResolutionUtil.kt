@@ -70,11 +70,13 @@ internal class MavenProjectResolutionUtil {
           val projectData = result.projectData
           if (projectData == null) {
             val file = detectPomFile(filesMap, result)
+            MavenLog.LOG.debug("Dependency resolution: projectData is null, file $file")
             if (file != null) {
               val temp: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
               temp.readingProblems.addAll(result.problems)
               temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts)
               readerResults.add(temp)
+              MavenLog.LOG.debug("Dependency resolution: projectData is null, read project")
             }
           }
           else {
