@@ -266,6 +266,10 @@ private fun CoroutineScope.postOpenUiTasks() {
   launch {
     startSystemHealthMonitor()
   }
+
+  launch {
+    FUSProjectHotStartUpMeasurer.startWritingStatistics()
+  }
 }
 
 private suspend fun reportPluginErrors() {
