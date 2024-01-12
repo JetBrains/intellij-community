@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +60,12 @@ public class ClassFinder {
     return null;
   }
 
-  static boolean isSuitableTestClassName(final @NotNull String className, boolean includeUnconventionallyNamedTests) {
+  static boolean isSuitableTestClassName(@NotNull String className, boolean includeUnconventionallyNamedTests) {
     if (!includeUnconventionallyNamedTests) {
       return className.endsWith("Test");
     }
     if (!className.contains("Test") && !className.contains("Suite")) return false;
+    className = StringsKt.substringAfterLast(className, '.', className);
     List<String> names = Arrays.asList(className.split("\\$"));
     Collections.reverse(names);
     for (String name : names) {

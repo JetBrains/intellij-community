@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
@@ -622,8 +622,7 @@ public class TestCaseLoader {
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
   public static boolean isClassNameIncluded(String className) {
-    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
-    if (!ClassFinder.isSuitableTestClassName(classNameWithoutPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
+    if (!ClassFinder.isSuitableTestClassName(className, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
       return false;
     }
     if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
