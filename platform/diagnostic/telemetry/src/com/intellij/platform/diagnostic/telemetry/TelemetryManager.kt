@@ -5,6 +5,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
@@ -58,6 +59,11 @@ interface TelemetryManager {
     @TestOnly
     fun forceSetTelemetryManager(value: TelemetryManager = NoopTelemetryManager()) {
       instance.value = value
+    }
+
+    @TestOnly
+    fun resetGlobalSdk() {
+      GlobalOpenTelemetry.resetForTest()
     }
   }
 

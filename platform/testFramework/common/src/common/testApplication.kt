@@ -16,7 +16,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -109,10 +108,6 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
-  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside open-telemetry-metrics.*.csv)
-  System.setProperty("idea.diagnostic.opentelemetry.file",
-                     PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
-
   enableCoroutineDump()
   JBR.getJstack()?.includeInfoFrom {
     """

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.NoopTelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
@@ -73,19 +72,13 @@ public class PerformanceTestInfo {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
-  /** In case if perf tests don't use Test Application we need to initialize OpenTelemetry without Application */
-  private static void initOpenTelemetryIfNeeded() {
+  private static void initOpenTelemetry() {
     // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
     System.setProperty("idea.diagnostic.opentelemetry.file",
                        PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString());
 
-    var telemetryInstance = TelemetryManager.getInstance();
-
-    var isNoop = telemetryInstance instanceof NoopTelemetryManager;
-    // looks like telemetry manager is properly initialized
-    if (!isNoop) return;
-
     try {
+      TelemetryManager.Companion.resetGlobalSdk();
       var telemetryClazz = Class.forName("com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl");
       var instance = Arrays.stream(telemetryClazz.getDeclaredConstructors())
         .filter((it) -> it.getParameterCount() > 0).findFirst()
@@ -102,7 +95,7 @@ public class PerformanceTestInfo {
   }
 
   PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String launchName) {
-    initOpenTelemetryIfNeeded();
+    initOpenTelemetry();
 
     this.test = test;
     this.expectedMs = expectedMs;
