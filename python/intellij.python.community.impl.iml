@@ -145,6 +145,6 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.commandInterface" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
   </component>
 </module>
