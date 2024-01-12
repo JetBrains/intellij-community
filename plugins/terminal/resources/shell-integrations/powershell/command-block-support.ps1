@@ -44,12 +44,17 @@ function Global:Prompt() {
     $Result = $CommandEndMarker + $CommandFinishedEvent
   }
   else {
+    # For some reason there is no error if I delete the history file, just an empty string returned.
+    # There can be a check for file existence using Test-Path cmdlet, but if I add it, the prompt is failed to initialize.
+    $History = Get-Content -Raw (Get-PSReadlineOption).HistorySavePath
+    $HistoryOSC = Global:__JetBrainsIntellijOSC "command_history;history_string=$(__JetBrainsIntellijEncode $History)"
+
     $Global:__JetBrainsIntellijTerminalInitialized = $true
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
       [Console]::WriteLine("initialized")
     }
     $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized"
-    $Result = $CommandEndMarker + $InitializedEvent
+    $Result = $CommandEndMarker + $HistoryOSC + $InitializedEvent
   }
   return $Result
 }

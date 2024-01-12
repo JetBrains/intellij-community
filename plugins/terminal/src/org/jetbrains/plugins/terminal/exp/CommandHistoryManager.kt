@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.openapi.util.text.Strings
+import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.util.*
 
-class CommandHistoryManager(session: BlockTerminalSession) {
+class CommandHistoryManager(private val session: BlockTerminalSession) {
   private val mutableHistory: MutableSet<String> = Collections.synchronizedSet(LinkedHashSet())
 
   /**
@@ -35,12 +35,8 @@ class CommandHistoryManager(session: BlockTerminalSession) {
     if (mutableHistory.isNotEmpty()) {
       return
     }
-    val escapedHistory = Strings.replace(history, listOf("\r", "\b", "\t", "\u000c"), listOf("\\r", "\\b", "\\t", "\\f"))
-    val unsortedHistory = escapedHistory.split("\n").mapNotNull { row ->
-      // row is in the format <spaces><row_number><spaces><command><spaces>
-      // retrieve command from the row
-      row.trimStart().trimStart { Character.isDigit(it) }.trim().takeIf { it.isNotEmpty() }
-    }
+    val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
+    val unsortedHistory = shellSupport.parseCommandHistory(history)
     // filter repeating items preserving the order
     // start from the end, because the latest commands have a prioritized position
     val historySet = LinkedHashSet<String>()

@@ -27,6 +27,12 @@ interface TerminalShellSupport {
    */
   fun parseAliases(aliasesDefinition: String): Map<String, String> = emptyMap()
 
+  /**
+   * @param history command history in a raw format
+   * @return the list of strings where each string is a shell command from the history
+   */
+  fun parseCommandHistory(history: String): List<String> = emptyList()
+
   companion object {
     val EP_NAME: ExtensionPointName<KeyedLazyInstanceEP<TerminalShellSupport>> =
       ExtensionPointName.create("org.jetbrains.plugins.terminal.shellSupport")

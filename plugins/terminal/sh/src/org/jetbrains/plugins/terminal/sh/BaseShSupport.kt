@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
@@ -61,6 +62,15 @@ abstract class BaseShSupport : TerminalShellSupport {
       .removePrefix("$")
       .removeSurrounding("'")
     return alias to command
+  }
+
+  override fun parseCommandHistory(history: String): List<String> {
+    val escapedHistory = Strings.replace(history, listOf("\r", "\b", "\t", "\u000c"), listOf("\\r", "\\b", "\\t", "\\f"))
+    return escapedHistory.split("\n").mapNotNull { row ->
+      // the row is in the format <spaces><row_number><spaces><command><spaces>
+      // retrieve command from the row
+      row.trimStart().trimStart { Character.isDigit(it) }.trim().takeIf { it.isNotEmpty() }
+    }
   }
 
   companion object {
