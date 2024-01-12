@@ -13,16 +13,14 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.EventDispatcher
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.plugin.getPluginModeDescription
-import org.jetbrains.kotlin.idea.configuration.KotlinPluginKindSwitcherListener
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
-internal class KotlinPluginKindSwitcherController {
+class KotlinPluginKindSwitcherController {
     private val initialValue: KotlinPluginMode = KotlinPluginKindSwitcher.getPluginKindByVmOptions()
     private var chosenKind: KotlinPluginMode = initialValue
 
@@ -34,11 +32,6 @@ internal class KotlinPluginKindSwitcherController {
     private lateinit var pluginTypeChooserPanel: Panel
     private lateinit var currentPluginPanel: Panel
 
-    private val pluginKindChangedDispatcher: EventDispatcher<KotlinPluginKindSwitcherListener> =
-        EventDispatcher.create(
-            KotlinPluginKindSwitcherListener::class.java
-        )
-
     private val productName: @NlsSafe String
         get() = ApplicationNamesInfo.getInstance().fullProductName
 
@@ -49,7 +42,6 @@ internal class KotlinPluginKindSwitcherController {
     fun applyChanges() {
         KotlinPluginKindSwitcher.setPluginKindByVmOptions(chosenKind)
         updatePanels()
-        pluginKindChangedDispatcher.multicaster.kotlinPluginKindChanged(chosenKind)
         if (pluginKindWillBeSwitchedAfterRestart) {
             suggestRestart()
         }

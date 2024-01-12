@@ -7,28 +7,25 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.configuration.KotlinPluginKindSwitcherListener
 import java.time.Duration
 import java.time.Instant
 
-class K2UserTrackerState : BaseState(), KotlinPluginKindSwitcherListener {
+internal const val K2_SINCE_NOT_DEFINED = -1L
 
-    // Unix time seconds
-    var k2UserSince by property(Instant.now().epochSecond) // We don't have any information earlier, so always start from now
+internal enum class PluginModes(val value: String) {
+    UNDEFINED("Undefined"),
+    K1("K1"),
+    K2("K2")
+}
+
+class K2UserTrackerState : BaseState() {
+
+    // Unix time seconds or -1 if not defined
+    var k2UserSince by property(K2_SINCE_NOT_DEFINED)
     /* We need to store that the user saw the survey because the state in com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
     doesn't migrate when updating the IDE */
     var userSawSurvey by property(false)
-    // The following flag is needed to explicitly define that the user has just switched to K1 – we need this state after IDE restart
-    var switchedToK1 by property(false) // If they are on K1 from the beginning, then they didn't switch
-
-    override fun kotlinPluginKindChanged(kotlinPluginMode: KotlinPluginMode) {
-        if (kotlinPluginMode == KotlinPluginMode.K2) {
-            switchedToK1 = false
-            k2UserSince = Instant.now().epochSecond
-        } else if (kotlinPluginMode == KotlinPluginMode.K1) {
-            switchedToK1 = true
-        }
-    }
+    var lastSavedPluginMode by string(PluginModes.UNDEFINED.value)
 }
 
 @State(name = "K2NewUserTracker", storages = [Storage("k2-feedback.xml")])
@@ -41,6 +38,7 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         }
     }
 
+    internal var switchedToK1 = false
     internal var forUnitTests = false
     internal var k2PluginModeForTests = false // Want the test to not depend on a real K1/K2 mode
 
@@ -52,7 +50,22 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         currentState = state
     }
 
+    fun checkIfKotlinPluginModeWasSwitchedOnRestart() {
+        // The user has just switched to K1
+        if (KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K1 && state.lastSavedPluginMode == PluginModes.K2.value) {
+            LOG.debug("Switched to K1")
+            switchedToK1 = true
+        }
+        // The user has just switched to K2
+        if (KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K2 && state.lastSavedPluginMode == PluginModes.K1.value) {
+            LOG.debug("Switched to K2")
+            state.k2UserSince = Instant.now().epochSecond
+        }
+        state.lastSavedPluginMode = KotlinPluginModeProvider.currentPluginMode.name
+    }
+
     internal fun shouldShowK2FeedbackDialog(): Boolean {
+        LOG.debug("State: ${state}")
         if (!Registry.`is`("test.k2.feedback.survey", false)) {
             if (!forUnitTests) {
                 if (ApplicationManager.getApplication().isInternal) return false // Don't show in Nightly builds or in `IDEA (dev build)`
@@ -61,7 +74,7 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         } else {
             state.userSawSurvey = false // We reset this state for manual testing to be able to see the survey more than once
         }
-        if (state.switchedToK1) {
+        if (switchedToK1) {
             return true
         } else {
             val k2Chosen = if (forUnitTests) {
@@ -73,7 +86,11 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
                 LOG.debug("Not showing the K2 feedback dialog because the user doesn't use K2")
                 return false
             } else {
-                val k2UserSince = Instant.ofEpochSecond(state.k2UserSince)
+                // The following condition is needed if a user had always been on K2 even before the survey started
+                if (state.k2UserSince == K2_SINCE_NOT_DEFINED) {
+                    state.k2UserSince = Instant.now().epochSecond
+                }
+                val k2UserSince = Instant.ofEpochSecond(state.k2UserSince) // k2UserSince might be initialized here on the first access
                 val durationSinceK2User = Duration.between(k2UserSince, Instant.now())
 
                 LOG.debug("Duration since user became a K2 Kotlin user: ${durationSinceK2User.toDays()} day(s)")
