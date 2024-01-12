@@ -9,10 +9,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandExecutor;
-import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.*;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
@@ -90,6 +87,25 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     ActionContext context = ActionContext.from(getEditor(), getFile());
     Presentation presentation = action.getPresentation(context);
     assertNull(presentation);
+  }
+
+  public void testImplicitClassNotChoose(){
+    configureFromFileText("A.java", """
+      private static class Neste<caret>d {
+      
+      }
+      
+      void main() {
+          new Nested();
+      }
+      """);
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ModCommand command = action.perform(ActionContext.from(getEditor(), getFile()));
+    if (!(command instanceof ModChooseAction modChooseAction)) {
+      fail("must be chooser");
+      return;
+    }
+    assertSize(1, modChooseAction.actions());
   }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {

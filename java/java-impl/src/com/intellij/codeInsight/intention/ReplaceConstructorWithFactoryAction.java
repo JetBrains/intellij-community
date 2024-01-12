@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -51,7 +50,9 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     if (constructorOrClass == null) return ModCommand.nop();
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
-      .select(PsiClass.class).filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
+      .select(PsiClass.class)
+      .filter(cls -> !(cls instanceof PsiImplicitClass))
+      .filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
       .toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
