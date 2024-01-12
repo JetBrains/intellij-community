@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +56,7 @@ public final class BasicLiteralUtil {
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
       if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
         if (!preserveContent) lines[i] = "";
+        if (lines.length == 1) prefix = indent;
       }
       else if (indent < prefix) prefix = indent;
     }

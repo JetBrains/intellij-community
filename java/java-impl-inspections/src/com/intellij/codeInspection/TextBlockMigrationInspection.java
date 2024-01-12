@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -79,18 +79,17 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
-        boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
-        if (!mySuggestLiteralReplacement && !quickFixOnly) return;
         PsiLiteralExpression literal = getLiteralExpression(expression);
         if (literal == null) return;
         String text = literal.getText();
         int newLineIdx = getNewLineIndex(text, 0);
-        if (newLineIdx != -1 && getNewLineIndex(text, newLineIdx + 1) != -1) {
+        if (mySuggestLiteralReplacement && newLineIdx != -1 && getNewLineIndex(text, newLineIdx + 1) != -1) {
+          boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
           holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  new ReplaceWithTextBlockFix());
         }
-        else if (isOnTheFly && getQuoteIndex(text) != -1) {
+        else if (isOnTheFly) {
           holder.registerProblem(expression, 
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
