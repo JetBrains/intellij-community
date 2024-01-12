@@ -42,7 +42,7 @@ object PluginsInstalledCounterUserActivity : WritableDatabaseBackedCounterUserAc
 }
 
 @Service
-@State(name = "aeInstalledPlugins", storages = [(Storage("aeInstalledPlugins.xml"))])
+@State(name = "aeInstalledPlugins", storages = [(Storage("aeInstalledPlugins.xml", roamingType = RoamingType.DISABLED))])
 class InstalledPluginsPersistentState : PersistentStateComponentWithModificationTracker<InstalledPluginsPersistentState.State> {
   companion object {
     fun getInstance() = service<InstalledPluginsPersistentState>()
