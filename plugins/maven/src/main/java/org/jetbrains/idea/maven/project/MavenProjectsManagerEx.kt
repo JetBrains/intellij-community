@@ -309,16 +309,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         val console = syncConsole
         console.startImport(spec)
         if (MavenUtil.enablePreimport()) {
-          val result = console.runTask(MavenProjectBundle.message("maven.project.preimporting")) {
-            return@runTask MavenProjectPreImporter.getInstance(myProject)
-              .preimport(
-                projectsTree.existingManagedFiles,
-                modelsProvider,
-                importingSettings,
-                generalSettings,
-                !project.isTrusted(),
-                syncActivity)
-          }
+          val result = MavenProjectPreImporter.getInstance(myProject)
+            .preimport(
+              projectsTree.existingManagedFiles,
+              modelsProvider,
+              importingSettings,
+              generalSettings,
+              !project.isTrusted(),
+              syncActivity)
           if (MavenUtil.enablePreimportOnly()) return result.modules
 
           if (!project.isTrusted()) {
