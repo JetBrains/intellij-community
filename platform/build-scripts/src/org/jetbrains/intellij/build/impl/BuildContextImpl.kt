@@ -221,6 +221,9 @@ class BuildContextImpl(
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
     val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
+    // compiled classes are already reused
+    options.pathToCompiledClassesArchivesMetadata = null
+    options.pathToCompiledClassesArchive = null
     options.buildStepsToSkip = this.options.buildStepsToSkip
     options.targetArch = this.options.targetArch
     options.targetOs = this.options.targetOs
