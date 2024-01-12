@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
@@ -13,6 +13,7 @@ import okhttp3.Response
 import okio.IOException
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import java.net.HttpURLConnection
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -22,6 +23,7 @@ import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
 
 private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
@@ -31,7 +33,8 @@ internal fun downloadCompilationCache(serverUrl: String,
                                       toDownload: List<FetchAndUnpackItem>,
                                       client: OkHttpClient,
                                       bufferPool: DirectFixedSizeByteBufferPool,
-                                      saveHash: Boolean): List<FetchAndUnpackItem> {
+                                      downloadedBytes: AtomicLong,
+                                      saveHash: Boolean): List<Throwable> {
   var urlWithPrefix = "$serverUrl/$prefix/"
   // first let's check for initial redirect (mirror selection)
   spanBuilder("mirror selection").useWithScopeBlocking { span ->
@@ -58,39 +61,52 @@ internal fun downloadCompilationCache(serverUrl: String,
   return ForkJoinTask.invokeAll(toDownload.map { item ->
     val url = "${urlWithPrefix}${item.name}/${item.file.fileName}"
     forkJoinTask(spanBuilder("download").setAttribute("name", item.name).setAttribute("url", url)) {
-      client.newCall(Request.Builder()
-                       .url(url)
-                       .build()).execute().use { response ->
-        if (response.isSuccessful) {
-          val digest = sha256()
-          writeFile(item.file, response, bufferPool, url, digest)
-          val computedHash = digestToString(digest)
-          if (computedHash != item.hash) {
-            Span.current().addEvent("hash mismatch", Attributes.of(
-              AttributeKey.stringKey("name"), item.file.name,
-              AttributeKey.stringKey("expected"), item.hash,
-              AttributeKey.stringKey("computed"), computedHash,
-            ))
-            return@forkJoinTask item
+      try {
+        downloadedBytes.getAndAdd(retryWithExponentialBackOff(onException = ::onDownloadException) {
+          client.newCall(Request.Builder().url(url).build()).execute().useSuccessful { response ->
+            val digest = sha256()
+            writeFile(item.file, response, bufferPool, url, digest)
+            val computedHash = digestToString(digest)
+            if (computedHash != item.hash) {
+              throw HashMismatchException("hash mismatch") { span, attempt ->
+                span.addEvent("hash mismatch", Attributes.of(
+                  AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+                  AttributeKey.stringKey("name"), item.file.name,
+                  AttributeKey.stringKey("expected"), item.hash,
+                  AttributeKey.stringKey("computed"), computedHash,
+                ))
+              }
+            }
+            response.body.contentLength()
           }
-        }
-        else {
-          Span.current().addEvent("cannot download", Attributes.of(
-            AttributeKey.stringKey("name"), item.file.name,
-            AttributeKey.stringKey("url"), url,
-            AttributeKey.longKey("statusCode"), response.code.toLong(),
-          ))
-          return@forkJoinTask item
+        })
+        spanBuilder("unpack").setAttribute("name", item.name).useWithScopeBlocking {
+          unpackArchive(item, saveHash)
         }
       }
-
-      spanBuilder("unpack").setAttribute("name", item.name).useWithScopeBlocking {
-        unpackArchive(item, saveHash)
+      catch (e: Throwable) {
+        throw CompilePartDownloadFailedError(item, e)
       }
-      null
     }
-  }).mapNotNull { it.rawResult }
+  }).mapNotNull { it.exception }
 }
+
+private fun onDownloadException(attempt: Int, e: Exception) {
+  spanBuilder("Retrying download with exponential back off").useWithScopeBlocking { span ->
+    if (e is HashMismatchException) {
+      e.eventLogger.invoke(span, attempt)
+    }
+    else {
+      span.addEvent("Attempt failed", Attributes.of(
+        AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+        AttributeKey.stringKey("error"), e.toString()
+      ))
+    }
+  }
+}
+
+internal class CompilePartDownloadFailedError(val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause)
+internal class HashMismatchException(message: String, val eventLogger: (Span, Int) -> Unit) : IOException(message)
 
 internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
   HashMapZipFile.load(item.file).use { zipFile ->

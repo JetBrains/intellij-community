@@ -31,6 +31,7 @@ import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 import kotlin.math.min
 
@@ -337,7 +338,8 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
       val prefix = metadata.prefix
       val serverUrl = metadata.serverUrl
 
-      val failed = if (toDownload.isEmpty()) {
+      val downloadedBytes = AtomicLong()
+      val failed: List<Throwable> = if (toDownload.isEmpty()) {
         emptyList()
       }
       else {
@@ -348,17 +350,15 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
                                    toDownload = toDownload,
                                    client = httpClientWithoutFollowingRedirects,
                                    bufferPool = bufferPool,
+                                   downloadedBytes = downloadedBytes,
                                    saveHash = saveHash)
         }
       }
 
       reportStatisticValue("compile-parts:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
-      val downloadedSuccessfully = toDownload - failed.toSet()
-      val downloadedSuccessfullyBytes = downloadedSuccessfully.sumOf { Files.size(it.file) }
-
-      reportStatisticValue("compile-parts:downloaded:bytes", downloadedSuccessfullyBytes.toString())
-      reportStatisticValue("compile-parts:downloaded:count", downloadedSuccessfully.size.toString())
+      reportStatisticValue("compile-parts:downloaded:bytes", downloadedBytes.get().toString())
+      reportStatisticValue("compile-parts:downloaded:count", (toDownload.size - failed.size).toString())
       reportStatisticValue("compile-parts:failed:count", failed.size.toString())
 
       if (!failed.isEmpty()) {
