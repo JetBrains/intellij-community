@@ -185,6 +185,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   @ApiStatus.Internal
   public boolean needAlignChanges() {
+    if (!aligningViewModeSupported) return false;
     return myAlignedDiffModel.needAlignChanges();
   }
 
