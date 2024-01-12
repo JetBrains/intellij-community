@@ -39,15 +39,15 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 @Internal
-class MavenProjectPreImporter(val project: Project, val coroutineScope: CoroutineScope) {
+class MavenProjectStaticImporter(val project: Project, val coroutineScope: CoroutineScope) {
   private val localRepo = MavenProjectsManager.getInstance(project).localRepository
 
-  suspend fun preimport(rootProjectFiles: List<VirtualFile>,
-                        optionalModelsProvider: IdeModifiableModelsProvider?,
-                        importingSettings: MavenImportingSettings,
-                        generalSettings: MavenGeneralSettings,
-                        reimportExistingFiles: Boolean,
-                        parentActivity: StructuredIdeActivity): PreimportResult {
+  suspend fun syncStatic(rootProjectFiles: List<VirtualFile>,
+                         optionalModelsProvider: IdeModifiableModelsProvider?,
+                         importingSettings: MavenImportingSettings,
+                         generalSettings: MavenGeneralSettings,
+                         reimportExistingFiles: Boolean,
+                         parentActivity: StructuredIdeActivity): PreimportResult {
 
 
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
@@ -56,7 +56,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val scope = coroutineScope.childScope(Dispatchers.IO, false)
 
       val forest = rootProjectFiles.map {
-        scope.preimport(it)
+        scope.syncStatic(it)
       }.awaitAll().filterNotNull()
       if (forest.isEmpty()) return PreimportResult.empty(project)
 
@@ -125,7 +125,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     }
   }
 
-  private fun CoroutineScope.preimport(rootProjectFileOrDir: VirtualFile): Deferred<ProjectTree?> = async {
+  private fun CoroutineScope.syncStatic(rootProjectFileOrDir: VirtualFile): Deferred<ProjectTree?> = async {
 
     val tree = ProjectTree()
 
@@ -502,7 +502,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): MavenProjectPreImporter = project.service()
+    fun getInstance(project: Project): MavenProjectStaticImporter = project.service()
 
     @JvmStatic
     fun setPreimport(value: Boolean) {

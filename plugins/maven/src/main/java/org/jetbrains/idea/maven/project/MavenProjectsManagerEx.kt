@@ -41,7 +41,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
+import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.utils.MavenActivityKey
@@ -309,8 +309,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         val console = syncConsole
         console.startImport(spec)
         if (MavenUtil.enablePreimport()) {
-          val result = MavenProjectPreImporter.getInstance(myProject)
-            .preimport(
+          val result = MavenProjectStaticImporter.getInstance(myProject)
+            .syncStatic(
               projectsTree.existingManagedFiles,
               modelsProvider,
               importingSettings,

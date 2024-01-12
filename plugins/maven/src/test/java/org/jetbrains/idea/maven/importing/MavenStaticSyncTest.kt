@@ -16,7 +16,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
+import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -26,7 +26,7 @@ import org.junit.Test
 import java.io.File
 import java.util.function.Predicate
 
-class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
+class MavenStaticSyncTest : MavenMultiVersionImportingTestCase() {
 
   private lateinit var disposable: Disposable
   override fun setUp() {
@@ -548,8 +548,8 @@ class MavenPreimportingTest : MavenMultiVersionImportingTestCase() {
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {
-      MavenProjectPreImporter.getInstance(project)
-        .preimport(files, null, mavenImporterSettings, mavenGeneralSettings,true, activity)
+      MavenProjectStaticImporter.getInstance(project)
+        .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, activity)
     }
     finally {
       activity.finished()

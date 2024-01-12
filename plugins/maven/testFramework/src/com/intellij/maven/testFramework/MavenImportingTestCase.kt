@@ -49,7 +49,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
+import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -374,8 +374,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (preimportTestMode) {
       val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
       try {
-        MavenProjectPreImporter.getInstance(project)
-          .preimport(files, null, mavenImporterSettings, mavenGeneralSettings, true,  activity)
+        MavenProjectStaticImporter.getInstance(project)
+          .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, activity)
       }
       finally {
         activity.finished()

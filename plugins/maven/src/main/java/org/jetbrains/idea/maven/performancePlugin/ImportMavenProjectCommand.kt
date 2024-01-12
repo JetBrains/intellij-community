@@ -21,7 +21,7 @@ import org.jetbrains.concurrency.toPromise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
+import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {
@@ -49,7 +49,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
             context.message("Import of the project has been started", line)
             val mavenManager = MavenProjectsManager.getInstance(project)
             runBlockingMaybeCancellable {
-              MavenProjectPreImporter.setPreimport(false)
+              MavenProjectStaticImporter.setPreimport(false)
               if (!mavenManager.isMavenizedProject) {
                 val files = mavenManager.collectAllAvailablePomFiles()
                 mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
