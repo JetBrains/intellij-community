@@ -30,7 +30,7 @@ object FUSProjectHotStartUpMeasurer {
 
   enum class ProjectsType {
     Reopened,
-    FromFilesToLoad,
+    FromFilesToLoad, //see com.intellij.idea.IdeStarter.filesToLoad
     FromArgs,
     Unknown
   }
@@ -40,7 +40,7 @@ object FUSProjectHotStartUpMeasurer {
     MultipleProjects,
     NoProjectFound,
     WelcomeScreenShown,
-    OpeningURI,
+    OpeningURI,               //see com.intellij.idea.IdeStarter.uriToOpen
     ApplicationStarter,
     HasOpenedProject
   }
@@ -54,6 +54,10 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private sealed interface Event {
+    /**
+     * It's an event corresponding to a FUS event, which is not a terminal one.
+     * See their list at https://youtrack.jetbrains.com/issue/IJPL-269
+     */
     sealed interface FUSReportableEvent : Event
 
     class SplashBecameVisibleEvent(val time: Long = System.nanoTime()) : Event
