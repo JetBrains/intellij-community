@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.roots.ui
 
-import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleConfigurationEditor
-import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
@@ -19,7 +18,7 @@ class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
         val rootModel = state.rootModel
         val module = rootModel.module
 
-        if (ModuleType.get(module) !is JavaModuleType || module.platform.isJvm()) {
+        if (module.moduleTypeName != ModuleTypeId.JAVA_MODULE || module.platform.isJvm()) {
             return ModuleConfigurationEditor.EMPTY
         }
 

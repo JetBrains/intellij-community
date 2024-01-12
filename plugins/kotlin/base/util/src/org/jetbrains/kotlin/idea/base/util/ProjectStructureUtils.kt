@@ -141,7 +141,7 @@ fun LibraryEx.updateEx(block: (LibraryEx.ModifiableModelEx) -> Unit) {
     }
 }
 
-private val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
+val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
 fun Project.getKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
