@@ -1,20 +1,23 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.turboComplete">
   <id>com.intellij.turboComplete</id>
   <name>Turbo Complete</name>
   <vendor>JetBrains</vendor>
   <category>AI-Powered</category>
 
-  <description>
-    <![CDATA[
-      Experimental approach to speed up code completion.
-      <br><br>
-      The plugin implements a <a href="https://youtrack.jetbrains.com/issue/MLP-17/ML-for-IDE-Performance">new approach</a>
-      to improve code completion's performance perception.
-      Currently, it works only for Kotlin.
-      If you are experiencing problems with code completion, you could disable
-      the plugin.
-    ]]>
-  </description>
+  <description><![CDATA[
+    Experimental approach to speed up code completion.
+    <br><br>
+    The plugin implements a <a href="https://youtrack.jetbrains.com/issue/MLP-17/ML-for-IDE-Performance">new approach</a>
+    to improve code completion's performance perception. Currently, it works only for Kotlin.
+  ]]></description>
+
+  <content>
+    <module name="intellij.turboComplete.languages.kotlin"/>
+  </content>
+
+  <dependencies>
+    <plugin id="com.intellij.completion.ml.ranking"/>
+  </dependencies>
 
   <resource-bundle>messages.TurboComplete</resource-bundle>
 
@@ -67,10 +70,4 @@
     <registryKey key="ml.completion.performance.logDebug" defaultValue="false"
                  description="Log performance pipeline to idea.log"/>
   </extensions>
-
-  <content>
-    <module name="intellij.turboComplete.languages.kotlin"/>
-  </content>
-
-  <depends>com.intellij.completion.ml.ranking</depends>
 </idea-plugin>
