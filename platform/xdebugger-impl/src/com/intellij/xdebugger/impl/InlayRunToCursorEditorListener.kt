@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -67,8 +67,6 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     @JvmStatic
     val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") &&
                                                    !PlatformUtils.isPyCharm()
-
-    val EP_NAME = ExtensionPointName.create<RunToCursorState>("com.intellij.xdebugger.run.to.cursor.state")
   }
 
   private var currentJob: Job? = null
@@ -107,8 +105,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (editor.getEditorKind() != EditorKind.MAIN_EDITOR && e != null) {
       return true
     }
-    val state = EP_NAME.findFirstSafe { it.isApplicable(project) }
-    if (state == null || !state.showInlay(project)) {
+    val runToCursorService = project.service<RunToCursorService>()
+    if (!runToCursorService.shouldShowInlay()) {
       IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = 0
       return true
     }
@@ -134,7 +132,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
 
-    scheduleInlayRunToCursor(editor, lineNumber, state)
+    scheduleInlayRunToCursor(editor, lineNumber)
     return true
   }
 
@@ -162,14 +160,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, state: RunToCursorState) {
+  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int) {
     currentJob?.cancel()
     if (editor !is EditorImpl) return
     coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
       val job = coroutineContext.job
       job.cancelOnDispose(editor.disposable)
       currentJob = job
-      scheduleInlayRunToCursorAsync(editor, lineNumber, state)
+      scheduleInlayRunToCursorAsync(editor, lineNumber)
       currentJob = null
     }
   }
@@ -197,19 +195,20 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, state: RunToCursorState) {
+  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int) {
+    val runToCursorService = project.service<RunToCursorService>()
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    if (state.isAtExecution(project, editor.virtualFile, lineNumber)) {
+    if (runToCursorService.isAtExecution(editor.virtualFile, lineNumber)) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
       val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
       val actions = mutableListOf<AnAction>()
 
-      if (state.canRunToCursor(project, hoverPosition, editor)) {
+      if (runToCursorService.canRunToCursor(hoverPosition, editor)) {
         actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 

@@ -20,7 +20,6 @@
     <extensionPoint name="xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
-    <extensionPoint name="xdebugger.run.to.cursor.state" interface="com.intellij.xdebugger.impl.RunToCursorState" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -108,9 +107,6 @@
 
     <xdebugger.dialog.process.view.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToRemoteProcessViewProvider" />
 
-    <xdebugger.run.to.cursor.state implementation="com.intellij.xdebugger.impl.DefaultRunToCursorState"
-                                   id="default" order="last"/>
-
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
@@ -122,6 +118,9 @@
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
     <advancedSetting id="debugger.inlay.run.to.cursor" default="true"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.impl.RunToCursorService"
+                    serviceImplementation="com.intellij.xdebugger.impl.DefaultRunToCursorService"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
