@@ -87,6 +87,7 @@ class InlineCompletionSession private constructor(
   internal fun update(
     updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
   ): Boolean {
+    check(isActive())
     return checkNotNull(variantsProvider).update(updater)
   }
 

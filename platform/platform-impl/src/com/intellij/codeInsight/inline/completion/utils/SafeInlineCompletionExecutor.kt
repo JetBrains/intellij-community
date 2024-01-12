@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.utils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -43,6 +44,7 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
 
   @RequiresEdt
   fun switchJobSafely(onJob: (InlineCompletionJob) -> Unit, block: suspend CoroutineScope.() -> Unit) {
+    ThreadingAssertions.assertEventDispatchThread()
     if (checkNotCancelled()) {
       return
     }
@@ -67,6 +69,7 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
 
   @TestOnly
   suspend fun awaitAll() {
+    ThreadingAssertions.assertEventDispatchThread()
     val currentTimestamp = lastRequestedJobTimestamp.get()
     while (lastExecutedJobTimestamp.get() < currentTimestamp) {
       yield()

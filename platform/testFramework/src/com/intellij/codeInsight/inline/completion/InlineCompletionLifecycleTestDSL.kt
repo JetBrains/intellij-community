@@ -158,7 +158,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ApiStatus.Experimental
   suspend fun nextVariant() {
     withContext(Dispatchers.EDT) {
-      InlineCompletionSession.getOrNull(fixture.editor)?.useNextVariant()
+      coroutineToIndicator {
+        InlineCompletionSession.getOrNull(fixture.editor)?.useNextVariant()
+      }
     }
   }
 
@@ -166,7 +168,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ApiStatus.Experimental
   suspend fun prevVariant() {
     withContext(Dispatchers.EDT) {
-      InlineCompletionSession.getOrNull(fixture.editor)?.usePrevVariant()
+      coroutineToIndicator {
+        InlineCompletionSession.getOrNull(fixture.editor)?.usePrevVariant()
+      }
     }
   }
 

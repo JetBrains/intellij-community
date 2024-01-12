@@ -404,6 +404,7 @@ class InlineCompletionHandler(
 
   @TestOnly
   suspend fun awaitExecution() {
+    ThreadingAssertions.assertEventDispatchThread()
     executor.awaitAll()
   }
 

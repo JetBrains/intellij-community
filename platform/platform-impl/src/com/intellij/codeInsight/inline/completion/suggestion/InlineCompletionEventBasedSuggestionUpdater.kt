@@ -18,6 +18,8 @@ interface InlineCompletionEventBasedSuggestionUpdater {
   fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult
 
   @ApiStatus.Experimental
+  @RequiresEdt
+  @RequiresBlockingContext
   fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean
 
   sealed interface UpdateResult {
