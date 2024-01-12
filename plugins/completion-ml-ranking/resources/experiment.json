@@ -117,8 +117,8 @@
     },
     {
       "id": "python",
-      "experimentBucketsCount": 8,
-      "includeGroups": [15, 15, 16, 16, 22, 22, 24, 24],
+      "experimentBucketsCount": 4,
+      "includeGroups": [15, 16, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
@@ -141,8 +141,8 @@
     },
     {
       "id": "javascript",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 13, 13, 22, 22, 23, 23, 25, 25 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 13, 22, 23, 25 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -195,8 +195,8 @@
     },
     {
       "id": "css",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 13, 13, 22, 22, 23, 23, 25, 25 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 13, 22, 23, 25 ],
       "shouldLogElementFeatures": false
     }
   ]
