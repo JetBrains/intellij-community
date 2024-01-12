@@ -4,17 +4,13 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.write
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
@@ -25,8 +21,6 @@ import org.junit.Assume
 import java.nio.file.Path
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
-  override fun runInDispatchThread() = false
-
   private var myDir: Path? = null
 
   private val isWorkspaceImport: Boolean
@@ -58,9 +52,8 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
       """.trimIndent())!!
 
     val provider = MavenProjectImportProvider()
-    val module = withContext(Dispatchers.EDT) {
-      importProjectFrom(pom2.getPath(), null, provider)
-    }
+    importProjectFrom(pom2.getPath(), null, provider)
+
     val project2 = module.getProject()
     importMaven(project2, pom2)
     MavenIndicesManager.getInstance(project2).updateIndicesListSync()
