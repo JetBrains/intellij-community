@@ -30,31 +30,39 @@ abstract class SelectionCalculator(private val gateway: IdeaGateway,
 
   private fun doGetSelectionFor(revision: RevisionId, progress: Progress): Block {
     val target = revisions.indexOf(revision)
-    return getSelectionFor(target, target + 1, progress)
+    return getSelectionFor(target, progress)
   }
 
-  private fun getSelectionFor(revisionIndex: Int, totalRevisions: Int, progress: Progress): Block {
+  private fun getSelectionFor(revisionIndex: Int, progress: Progress): Block {
     val cached = cache[revisionIndex]
     if (cached != null) return cached
 
-    val content = getRevisionContent(revisions[revisionIndex])
-    progress.processed(((totalRevisions - revisionIndex) * 100) / totalRevisions)
+    val (lastNonEmptyIndex, lastNonEmptyBlock) = findLastNonEmptyBlock(revisionIndex)
+    var lastBlock = lastNonEmptyBlock
+    for (currentIndex in lastNonEmptyIndex + 1..revisionIndex) {
+      val content = getRevisionContent(revisions[currentIndex])
+      progress.processed((currentIndex + 1) * 100 / (revisionIndex + 1))
 
-    val result = if (content == null) EMPTY_BLOCK
-    else if (revisionIndex == 0) Block(content, fromLine, toLine + 1)
-    else {
-      var nextBlock = EMPTY_BLOCK
-      var i = revisionIndex
-      while (nextBlock === EMPTY_BLOCK && i > 0) {
-        i--
-        nextBlock = getSelectionFor(i, totalRevisions, progress)
+      val result = if (content == null) EMPTY_BLOCK
+      else if (currentIndex == 0) Block(content, fromLine, toLine + 1)
+      else {
+        val nextBlock = lastBlock
+        nextBlock.createPreviousBlock(content)
       }
-      nextBlock.createPreviousBlock(content)
+
+      cache.put(currentIndex, result)
+      if (result != EMPTY_BLOCK) lastBlock = result
     }
 
-    cache.put(revisionIndex, result)
+    return cache[revisionIndex] ?: EMPTY_BLOCK
+  }
 
-    return result
+  private fun findLastNonEmptyBlock(revisionIndex: Int): IndexedValue<Block> {
+    for (index in revisionIndex downTo 0) {
+      val cachedBlock = cache[index]
+      if (cachedBlock != null && cachedBlock != EMPTY_BLOCK) return IndexedValue(index, cachedBlock)
+    }
+    return IndexedValue(-1, EMPTY_BLOCK)
   }
 
   private fun getRevisionContent(revision: RevisionId): String? {
