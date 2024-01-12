@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
@@ -18,6 +18,7 @@ import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
@@ -49,7 +50,7 @@ class ActionsInterpretationHandler(
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
     val files = workspace1.actionsStorage.getActionFiles()
-    for (file in files) {
+    for (file in files.shuffled(FILES_RANDOM)) {
       val fileActions = workspace1.actionsStorage.getActions(file)
       workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
       try {
@@ -76,3 +77,5 @@ class ActionsInterpretationHandler(
     LOG.info("Interpreting actions completed")
   }
 }
+
+private val FILES_RANDOM = Random(42)
