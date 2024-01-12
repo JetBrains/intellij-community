@@ -132,11 +132,6 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
                 val storageAfter = event.storageAfter
                 val changes = event.getChanges<SdkEntity>().ifEmpty { return }
 
-                val outdated: List<Sdk> = changes.asSequence()
-                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
-                    .mapNotNull { it.findSdkBridge(storageBefore) }
-                    .toList()
-
                 changes.asSequence()
                     .mapNotNull(EntityChange<SdkEntity>::newEntity)
                     .mapNotNull { it.findSdkBridge(storageAfter) }
@@ -144,6 +139,11 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
                         updater.checkInvalidSdks()
                         return
                     }
+
+                val outdated: List<Sdk> = changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
+                    .mapNotNull { it.findSdkBridge(storageBefore) }
+                    .toList()
 
                 if (outdated.isNotEmpty()) {
                     updater.checkInvalidSdks(*outdated.toTypedArray())

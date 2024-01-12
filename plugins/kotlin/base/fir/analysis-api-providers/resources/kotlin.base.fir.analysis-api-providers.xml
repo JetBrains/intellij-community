@@ -27,6 +27,8 @@
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$MyDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$SdkChangeListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <dependencies>
