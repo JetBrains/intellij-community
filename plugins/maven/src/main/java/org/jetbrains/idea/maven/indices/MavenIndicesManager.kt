@@ -43,7 +43,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     fun classIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {}
   }
 
-  private val searchIndices = CopyOnWriteArrayList<MavenSearchIndex>();
+  private val mySearchIndices = CopyOnWriteArrayList<MavenSearchIndex>();
   private val myGavIndices = CopyOnWriteArrayList<MavenGAVIndex>();
 
   private val myDownloadListener = MavenIndexServerDownloadListener(this)
@@ -103,24 +103,26 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
 
   fun scheduleUpdateIndicesList(onUpdate: () -> Unit) {
     cs.launch(Dispatchers.IO) {
-      doUpdateIndexList()
+      updateIndexList()
       onUpdate()
     }
   }
 
-  private suspend fun doUpdateIndexList() {
+
+  suspend fun updateIndexList() {
     try {
       myGavIndices.clear()
+      mySearchIndices.clear();
       MavenIndexUtils.getLocalRepository(myProject)?.let {
         myGavIndices.add(MavenSystemIndicesManager.getInstance().getGAVIndexForRepository(it))
-        searchIndices.add(MavenSystemIndicesManager.getInstance().getClassIndexForRepository(it))
+        mySearchIndices.add(MavenSystemIndicesManager.getInstance().getClassIndexForRepository(it))
       }
 
       if (MavenProjectsManager.getInstanceIfCreated(myProject)?.isMavenizedProject == true) {
         val repositories = MavenIndexUtils.getRemoteRepositoriesNoResolve(myProject);
 
-        searchIndices.clear();
-        searchIndices.addAll(repositories.mapNotNull {
+
+        mySearchIndices.addAll(repositories.mapNotNull {
           MavenSystemIndicesManager.getInstance().getClassIndexForRepository(
             MavenRepositoryInfo(it.id, it.name, it.url, RepositoryKind.REMOTE))
         })
@@ -204,12 +206,12 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     if (localIndex is MavenUpdatableIndex) {
       toUpdate.add(localIndex)
     }
-    toUpdate.addAll(searchIndices.filterIsInstance<MavenUpdatableIndex>())
+    toUpdate.addAll(mySearchIndices.filterIsInstance<MavenUpdatableIndex>())
     MavenSystemIndicesManager.getInstance().scheduleUpdateIndexContent(toUpdate, explicit)
   }
 
   fun scheduleUpdateContentLocalClassIndex(explicit: Boolean) {
-    val indexLocal = searchIndices
+    val indexLocal = mySearchIndices
       .filter { it.repository.kind == RepositoryKind.LOCAL }
       .filterIsInstance<MavenUpdatableIndex>()
     if (indexLocal.isNotEmpty()) {
@@ -219,7 +221,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   fun searchForClass(patternForQuery: String?): Set<MavenArtifactInfo> {
-    return searchIndices
+    return mySearchIndices
       .flatMap { it.search(patternForQuery, 50).asSequence() }
       .toSet()
   }
@@ -232,7 +234,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
       it.repository.kind == RepositoryKind.LOCAL
     }.filterIsInstance<MavenUpdatableIndex>()
       .firstOrNull()
-    val localLuceneIndex = searchIndices.filter {
+    val localLuceneIndex = mySearchIndices.filter {
       it.repository.kind == RepositoryKind.LOCAL
     }.filterIsInstance<MavenUpdatableIndex>()
       .firstOrNull()
@@ -259,7 +261,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   internal fun getSearchIndices(): List<MavenSearchIndex> {
-    return ArrayList(searchIndices)
+    return ArrayList(mySearchIndices)
   }
 
   private class MavenIndexServerDownloadListener(private val myManager: MavenIndicesManager) : MavenServerDownloadListener {
