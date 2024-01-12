@@ -167,7 +167,12 @@ class InlineCompletionHandler(
     val context = session.context
 
     val result = Result.runCatching {
-      val variants = request(session.provider, request).getVariants()
+      var variants = request(session.provider, request).getVariants()
+      if (variants.size > InlineCompletionSuggestion.MAX_VARIANTS_NUMBER) {
+        val provider = session.provider
+        LOG.warn("$provider gave too many variants: ${variants.size} > ${InlineCompletionSuggestion.MAX_VARIANTS_NUMBER}.")
+        variants = variants.take(InlineCompletionSuggestion.MAX_VARIANTS_NUMBER)
+      }
       if (variants.isEmpty()) {
         withContext(Dispatchers.EDT) {
           coroutineToIndicator {

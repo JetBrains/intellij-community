@@ -15,7 +15,9 @@ interface InlineCompletionSuggestion {
     override suspend fun getVariants(): List<InlineCompletionVariant> = emptyList()
   }
 
-  companion object
+  companion object {
+    const val MAX_VARIANTS_NUMBER = 20
+  }
 }
 
 interface InlineCompletionSingleSuggestion : InlineCompletionSuggestion {

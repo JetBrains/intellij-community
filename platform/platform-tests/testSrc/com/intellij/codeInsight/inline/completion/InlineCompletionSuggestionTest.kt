@@ -12,14 +12,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(JUnit4::class)
 internal class InlineCompletionSuggestionTest : InlineCompletionTestCase() {
@@ -64,11 +62,16 @@ internal class InlineCompletionSuggestionTest : InlineCompletionTestCase() {
   @Test
   fun `test concurrent variant generation`() = myFixture.testInlineCompletion {
     init(PlainTextFileType.INSTANCE)
-    val variants = 1500
+    val variants = 20
     registerSuggestion {
       coroutineScope {
+        val countdown = AtomicInteger(variants)
         repeat(variants) { iteration ->
           launch {
+            countdown.decrementAndGet()
+            while (countdown.get() != 0) {
+              yield()
+            }
             variant {
               emit(InlineCompletionGrayTextElement(iteration.toString()))
             }
