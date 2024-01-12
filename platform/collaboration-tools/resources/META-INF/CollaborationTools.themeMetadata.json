@@ -76,6 +76,26 @@
       "key": "Review.Avatar.Border.Status.NeedReview",
       "description": "Border color of a reviewer who needs to start a review",
       "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Background",
+      "description": "Background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Background.Pressed",
+      "description": "Pressed background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Border",
+      "description": "Border color of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Border.Pressed",
+      "description": "Pressed border color of reaction component",
+      "since": "[2024.1]"
     }
   ]
 }

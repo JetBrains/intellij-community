@@ -60,7 +60,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(project, this, it, flowOf(true), mr.glProject) }
+    .mapScoped { GitLabNoteViewModelImpl(project, this, it, flowOf(true), currentUser, mr.glProject) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id.toString()
@@ -81,7 +81,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: Flow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, it, flowOf(false), mr.glProject) }
+    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, it, flowOf(false), currentUser, mr.glProject) }
     .modelFlow(cs, LOG)
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy

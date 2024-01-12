@@ -4,13 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -52,6 +52,8 @@ interface MutableGitLabNote : GitLabNote {
 interface GitLabMergeRequestNote : GitLabNote {
   val position: StateFlow<GitLabNotePosition?>
   val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?>
+
+  val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>>
 }
 
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
@@ -65,7 +67,6 @@ private val LOG = logger<GitLabDiscussion>()
 
 class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
-  private val project: Project,
   private val api: GitLabApi,
   mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
@@ -84,6 +85,7 @@ class MutableGitLabMergeRequestNote(
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteDTO::body)
   override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteDTO::resolved)
+  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs) { dto -> dto.awardEmoji?.nodes ?: emptyList() }
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
@@ -145,6 +147,7 @@ class GitLabMergeRequestDraftNoteImpl(
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
+  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = MutableStateFlow(emptyList())
 
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)

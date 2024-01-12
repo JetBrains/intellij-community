@@ -143,7 +143,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
             GitLabDiscussionDTO::id,
             { disc ->
               LoadedGitLabDiscussion(this,
-                                     project, api, glMetadata, glProject,
+                                     api, glMetadata, glProject,
                                      { discussionEvents.emit(it) }, { draftNotesEvents.emit(it) },
                                      mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
             },

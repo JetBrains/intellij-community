@@ -18,10 +18,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDraftNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import java.net.URL
@@ -76,7 +74,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
       initialNotesSize = it.size
     }
   }.mapModelsToViewModels { note ->
-    GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject)
+    GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser, glProject)
   }.combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
       notes.map { NoteItem.Note(it) }
@@ -126,6 +124,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+  override val reactionsVm: GitLabReactionsViewModel? = null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)

@@ -1,3 +1,4 @@
+# <16.1 awardEmoji removed
 fragment note on Note {
   id
   createdAt
@@ -26,15 +27,5 @@ fragment note on Note {
   userPermissions {
     resolveNote
     adminNote
-  }
-
-  awardEmoji {
-    pageInfo {
-      ...pageInfo
-    }
-
-    nodes {
-      ...awardEmoji
-    }
   }
 }

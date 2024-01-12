@@ -16,6 +16,8 @@ import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.net.URL
 import java.util.*
@@ -30,6 +32,7 @@ interface GitLabNoteViewModel {
   val discussionState: Flow<GitLabDiscussionStateContainer>
 
   val actionsVm: GitLabNoteAdminActionsViewModel?
+  val reactionsVm: GitLabReactionsViewModel?
 
   val body: Flow<@Nls String>
   val bodyHtml: Flow<@Nls String>
@@ -42,6 +45,7 @@ class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
   note: GitLabNote,
   isMainNote: Flow<Boolean>,
+  currentUser: GitLabUserDTO,
   glProject: GitLabProjectCoordinates
 ) : GitLabNoteViewModel {
 
@@ -55,6 +59,8 @@ class GitLabNoteViewModelImpl(
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+  override val reactionsVm: GitLabReactionsViewModel? =
+    if (note is GitLabMergeRequestNote) GitLabReactionsViewModelImpl(note.awardEmoji.value, currentUser) else null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)

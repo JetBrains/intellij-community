@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.EditableComponentFactory
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -20,6 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.net.URL
 import javax.swing.JComponent
@@ -32,16 +30,17 @@ internal object GitLabNoteComponentFactory {
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabNoteViewModel,
              place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
-    val textPanel = createTextPanel(cs, vm.bodyHtml, vm.serverUrl)
-
-    val actionsVm = vm.actionsVm
-    val contentPanel = if (actionsVm != null) {
-      EditableComponentFactory.wrapTextComponent(cs, textPanel, actionsVm.editVm) {
+    val textPanel = createTextPanel(cs, vm.bodyHtml, vm.serverUrl).let { panel ->
+      val actionsVm = vm.actionsVm ?: return@let panel
+      EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
         GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
       }
     }
-    else {
-      textPanel
+    val contentPanel = VerticalListPanel(gap = CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
+      add(textPanel)
+      vm.reactionsVm?.let { reactionsVm ->
+        add(GitLabReactionsComponentFactory.create(reactionsVm))
+      }
     }
 
     val actionsPanel = createActions(cs, flowOf(vm), project, place)

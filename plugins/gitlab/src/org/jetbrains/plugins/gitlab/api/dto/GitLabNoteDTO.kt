@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
+import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.GitLabGid
 import org.jetbrains.plugins.gitlab.api.GitLabGidData
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.util.*
 
 @SinceGitLab("12.0")
@@ -21,7 +23,8 @@ data class GitLabNoteDTO(
   @SinceGitLab("13.1") val resolved: Boolean,
   val system: Boolean,
   @SinceGitLab("13.8") val url: String,
-  val userPermissions: UserPermissions
+  val userPermissions: UserPermissions,
+  @SinceGitLab("16.1") val awardEmoji: AwardEmojiConnection?
 ) {
   @JsonIgnore val id: GitLabGid = GitLabGidData(_id)
 
@@ -39,4 +42,7 @@ data class GitLabNoteDTO(
     val resolveNote: Boolean,
     val adminNote: Boolean
   )
+
+  class AwardEmojiConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabAwardEmojiDTO>)
+    : GraphQLConnectionDTO<GitLabAwardEmojiDTO>(pageInfo, nodes)
 }

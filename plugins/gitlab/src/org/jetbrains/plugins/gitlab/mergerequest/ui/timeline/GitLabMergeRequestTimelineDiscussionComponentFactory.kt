@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -127,8 +128,14 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
         }
       }
     }
+    val reactions = HorizontalListPanel().apply {
+      bindChildIn(cs, mainNoteVm.mapNotNull { it.reactionsVm }.filterNotNull()) { reactionsVm ->
+        GitLabReactionsComponentFactory.create(reactionsVm)
+      }
+    }
 
-    val contentPanel = VerticalListPanel().apply {
+    val contentPanel = VerticalListPanel(gap = CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
+      add(reactions)
       add(repliesActionsPanel)
     }
 

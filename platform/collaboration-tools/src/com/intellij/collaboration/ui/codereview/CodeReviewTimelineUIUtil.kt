@@ -15,6 +15,8 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 
 object CodeReviewTimelineUIUtil {
+  const val VERTICAL_GAP: Int = 4
+
   const val VERT_PADDING: Int = 6
   const val HEADER_VERT_PADDING: Int = 20
 

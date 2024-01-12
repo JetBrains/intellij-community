@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -49,7 +48,6 @@ private val LOG = logger<GitLabDiscussion>()
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
-  private val project: Project,
   private val api: GitLabApi,
   glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
@@ -105,7 +103,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapDataToModel(
         GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, project, api, mr, noteEvents::emit, note) },
+        { note -> MutableGitLabMergeRequestNote(this, api, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes

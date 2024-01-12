@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionStateContainer
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
@@ -61,6 +62,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
 
     override val actionsVm: GitLabNoteAdminActionsViewModel? =
       if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+    override val reactionsVm: GitLabReactionsViewModel? = null
 
     override val body: Flow<String> = note.body
     override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
