@@ -56,7 +56,7 @@ class ContainerInlayPresentation(
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     handleMouse(translated) { point ->
-      presentation.mouseClicked(event, point)
+      presentation.mouseMoved(event, point)
     }
   }
 
