@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -242,6 +243,18 @@ public abstract class CoverageEngine {
                                     @Nullable LineData lineData) {
     final int hits = lineData == null ? 0 : lineData.getHits();
     return CoverageBundle.message("hits.title", hits);
+  }
+
+  /**
+   * Content of a brief report which will be shown by click on coverage icon
+   */
+  public String generateBriefReport(@NotNull CoverageSuitesBundle bundle,
+                                    @NotNull Editor editor,
+                                    @NotNull PsiFile psiFile,
+                                    @NotNull TextRange range,
+                                    @Nullable LineData lineData) {
+    int lineNumber = editor.getDocument().getLineNumber(range.getStartOffset());
+    return generateBriefReport(editor, psiFile, lineNumber, range.getStartOffset(), range.getEndOffset(), lineData);
   }
 
   /**

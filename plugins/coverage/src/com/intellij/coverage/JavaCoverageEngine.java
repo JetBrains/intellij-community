@@ -514,25 +514,28 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public String generateBriefReport(@NotNull Editor editor,
+  public String generateBriefReport(@NotNull CoverageSuitesBundle bundle,
+                                    @NotNull Editor editor,
                                     @NotNull PsiFile psiFile,
-                                    int lineNumber,
-                                    int startOffset,
-                                    int endOffset,
+                                    @NotNull TextRange range,
                                     @Nullable LineData lineData) {
-
     if (lineData == null) {
       return CoverageBundle.message("hits.title", 0);
     }
+    // we can only rely on IJ coverage engine in order of branches
+    if (ContainerUtil.exists(bundle.getSuites(), (suite) -> !(suite.getRunner() instanceof IDEACoverageRunner))) {
+      return createDefaultHitsMessage(lineData);
+    }
+
     try {
+      int lineNumber = editor.getDocument().getLineNumber(range.getStartOffset());
       for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
-        String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
+        String report = extension.generateBriefReport(editor, psiFile, lineNumber, range.getStartOffset(), range.getEndOffset(), lineData);
         if (report != null) {
           return report;
         }
       }
 
-      TextRange range = TextRange.create(startOffset, endOffset);
       List<SwitchCoverageExpression> switches = JavaCoveragePsiUtilsKt.getSwitches(psiFile, range);
       List<ConditionCoverageExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
 

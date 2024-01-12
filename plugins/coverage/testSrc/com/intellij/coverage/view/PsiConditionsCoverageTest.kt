@@ -3,7 +3,7 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageLineMarkerRenderer
-import com.intellij.coverage.JavaCoverageEngine
+import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.readAction
@@ -26,16 +26,28 @@ import java.nio.file.Paths
 @RunWith(JUnit4::class)
 class PsiConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
   @Test
-  fun `test conditions hints`() = assertHints("Conditions")
+  fun `test conditions hints`() = assertHints("Conditions", true)
 
   @Test
-  fun `test switches hints`() = assertHints("Switches")
+  fun `test switches hints`() = assertHints("Switches", true)
 
   @Test
-  fun `test comments and parentheses`() = assertHints("CommentsAndParentheses")
+  fun `test comments and parentheses`() = assertHints("CommentsAndParentheses", true)
 
   @Test
-  fun `test all conditions`() = assertHints("AllConditions")
+  fun `test all conditions`() = assertHints("AllConditions", true)
+
+  @Test
+  fun `test jacoco conditions hints`() = assertHints("Conditions", false)
+
+  @Test
+  fun `test jacoco switches hints`() = assertHints("Switches", false)
+
+  @Test
+  fun `test jacoco comments and parentheses`() = assertHints("CommentsAndParentheses", false)
+
+  @Test
+  fun `test jacoco all conditions`() = assertHints("AllConditions", false)
 }
 
 abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
@@ -43,22 +55,23 @@ abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest()
   override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path =
     Paths.get(PluginPathManager.getPluginHomePath("coverage") + "/testData/conditions")
 
-  protected fun assertHints(className: String): Unit = runBlocking {
+  protected fun assertHints(className: String, ij: Boolean = true): Unit = runBlocking {
     assertNoSuites()
     val editor = openEditor(className)
-    val suite = loadSuite()
+    val suite = loadSuite(ij)
     try {
-      val classData = suite.coverageData!!.getClassData(className)
+      val coverageData = suite.coverageData ?: error("Failed to load ProjectData from suite ${suite.presentableName}")
+      val classData = coverageData.getClassData(className) ?: error("ClassData not found: $className\nAvailable classes: ${coverageData.classes.keys.toSortedSet()}")
 
       val actual = buildString {
         for (line in 1..editor.document.lineCount) {
-          val hint = getLineHint(line, editor, classData) ?: continue
+          val hint = getLineHint(line, editor, classData, suite) ?: continue
           val status = classData.getLineData(line).stringStatus
           appendLine("Line ${line} coverage: $status\n$hint")
         }
       }
 
-      val expectedFile = projectDirOrFile.resolve("$className.txt").toFile()
+      val expectedFile = projectDirOrFile.resolve("outputs/${if (ij) "ij" else "jacoco"}/$className.txt").toFile()
       assertEqualsFile(expectedFile, actual)
     }
     finally {
@@ -73,11 +86,14 @@ abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest()
     return findEditor(myProject, className)
   }
 
-  private fun loadSuite() = loadIJSuite(path = projectDirOrFile.resolve("conditions\$All_in_conditions.ic").toString())
+  private fun loadSuite(ij: Boolean) =
+    if (ij) loadIJSuite(path = projectDirOrFile.resolve("conditions\$All_in_conditions.ic").toString(), includeFilters = emptyArray())
+    else loadJaCoCoSuite(path = projectDirOrFile.resolve("conditions\$All_in_conditions.exec").toString(), includeFilters = emptyArray())
 
-  private suspend fun getLineHint(line: Int, editor: EditorImpl, classData: ClassData): String? {
-    val engine = JavaCoverageEngine.getInstance()
-    return readAction { CoverageLineMarkerRenderer.getReport(classData.getLineData(line), line - 1, editor, engine) }
+  private suspend fun getLineHint(line: Int, editor: EditorImpl, classData: ClassData, suite: CoverageSuitesBundle): String? {
+    val lineData = classData.getLineData(line) ?: return null
+    if (lineData.status.toByte() == LineCoverage.NONE) return null
+    return readAction { CoverageLineMarkerRenderer.getReport(lineData, line - 1, editor, suite) }
   }
 }
 

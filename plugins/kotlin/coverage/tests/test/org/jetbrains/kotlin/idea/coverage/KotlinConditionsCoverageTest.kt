@@ -9,17 +9,32 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class KotlinConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
     @Test
-    fun `test kotlin switches hints`() = assertHints("KtSwitches")
+    fun `test kotlin switches hints`() = assertHints("KtSwitches", true)
 
     @Test
-    fun `test kotlin conditions hints`() = assertHints("KtConditions")
+    fun `test kotlin conditions hints`() = assertHints("KtConditions", true)
 
     @Test
-    fun `test kotlin comments and parentheses`() = assertHints("KtCommentsAndParentheses")
+    fun `test kotlin comments and parentheses`() = assertHints("KtCommentsAndParentheses", true)
 
     @Test
-    fun `test kotlin all conditions`() = assertHints("KtAllConditions")
+    fun `test kotlin all conditions`() = assertHints("KtAllConditions", true)
 
     @Test
-    fun `test kotlin nullability`() = assertHints("KtNullability")
+    fun `test kotlin nullability`() = assertHints("KtNullability", true)
+
+    @Test
+    fun `test kotlin jacoco switches hints`() = assertHints("KtSwitches", false)
+
+    @Test
+    fun `test kotlin jacoco conditions hints`() = assertHints("KtConditions", false)
+
+    @Test
+    fun `test kotlin jacoco comments and parentheses`() = assertHints("KtCommentsAndParentheses", false)
+
+    @Test
+    fun `test kotlin jacoco all conditions`() = assertHints("KtAllConditions", false)
+
+    @Test
+    fun `test kotlin jacoco nullability`() = assertHints("KtNullability", false)
 }
