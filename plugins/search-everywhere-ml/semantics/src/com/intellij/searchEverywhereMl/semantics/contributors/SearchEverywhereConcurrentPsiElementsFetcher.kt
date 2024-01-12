@@ -4,6 +4,7 @@ import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.utils.attachPsiPresentation
@@ -68,8 +69,8 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
     return lhsFile != null && rhsFile != null && lhsFile == rhsFile
   }
 
-  override fun FoundItemDescriptor<PsiItemWithSimilarity<*>>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
+  override fun ScoredText.findPriority(): DescriptorPriority {
+    return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
   }
 
   companion object {

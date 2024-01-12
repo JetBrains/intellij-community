@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.util.concurrency.ThreadingAssertions
 
 interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
@@ -14,24 +15,20 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
 
   fun getEmbeddingsStorage(): DiskSynchronizedEmbeddingsStorage<*>
 
-  override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+  override suspend fun search(pattern: String, similarityThreshold: Double?): List<ScoredText> {
     if (pattern.isBlank()) return emptyList()
-    return getEmbeddingsStorage()
-      .searchNeighbours(pattern, itemLimit, similarityThreshold)
-      .flatMap { createItemDescriptors(it.text, it.similarity, pattern) }
+    return getEmbeddingsStorage().searchNeighbours(pattern, itemLimit, similarityThreshold)
   }
 
   override suspend fun streamSearch(pattern: String,
-                                    similarityThreshold: Double?): Sequence<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+                                    similarityThreshold: Double?): Sequence<ScoredText> {
     if (pattern.isBlank()) return emptySequence()
-    return getEmbeddingsStorage()
-      .streamSearchNeighbours(pattern, similarityThreshold)
-      .flatMap { createItemDescriptors(it.text, it.similarity, pattern) }
+    return getEmbeddingsStorage().streamSearchNeighbours(pattern, similarityThreshold)
   }
 
-  private fun createItemDescriptors(name: String,
-                                    similarityScore: Double,
-                                    pattern: String): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+  override suspend fun createItemDescriptors(name: String,
+                                             similarityScore: Double,
+                                             pattern: String): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     ThreadingAssertions.assertReadAccess()
     val shiftedScore = convertCosineSimilarityToInteger(similarityScore)
     return model.getElementsByName(name, false, pattern)
@@ -39,6 +36,6 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
   }
 
   companion object {
-    private const val ITEM_LIMIT = 10
+    private const val ITEM_LIMIT = 50
   }
 }

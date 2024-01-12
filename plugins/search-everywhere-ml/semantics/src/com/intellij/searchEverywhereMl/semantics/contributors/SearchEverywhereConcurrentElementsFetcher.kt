@@ -4,12 +4,11 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.MergeableElement
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.progress.*
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -34,64 +33,64 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                                 knownItems: MutableList<FoundItemDescriptor<I>>,
                                 durationMs: Long): () -> FoundItemDescriptor<E>?
 
-  fun FoundItemDescriptor<I>.findPriority(): DescriptorPriority
+  fun ScoredText.findPriority(): DescriptorPriority
 
   @RequiresBackgroundThread
   fun fetchElementsConcurrently(pattern: String,
                                 progressIndicator: ProgressIndicator,
-                                consumer: Processor<in FoundItemDescriptor<E>>): Unit = runBlockingCancellable {
-    syncSearchSettings()
-    val knownItems = mutableListOf<FoundItemDescriptor<I>>()
+                                consumer: Processor<in FoundItemDescriptor<E>>) {
+    runBlockingCancellable {
+      syncSearchSettings()
+      val knownItems = mutableListOf<FoundItemDescriptor<I>>()
+      val mutex = Mutex()
 
-    val mutex = Mutex()
-    val readyChannel = Channel<Unit>()
-    val standardContributorStartedChannel = Channel<Unit>()
-
-    val searchStart = System.nanoTime()
-    launch {
-      var foundItemsCount = 0
-      val cachedDescriptors = mutableListOf<FoundItemDescriptor<I>>()
-
-      suspend fun iterate() = coroutineScope {
-        val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
-        for (priority in ORDERED_PRIORITIES) {
-          val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
-          else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
-
-          while (iterator.hasNext()) {
-            ensureActive()
-            val descriptor = iterator.next()
-            if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
-              cachedDescriptors.add(descriptor)
-              continue
-            }
-
-            val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
-            mutex.withLock { prepareDescriptor() }?.let {
-              consumer.process(it)
-              foundItemsCount++
-            }
-            if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
+      val standardSearchJob = launch {
+        coroutineToIndicator {
+          defaultFetchElements(pattern, progressIndicator) {
+            val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+            val descriptor = runBlockingCancellable { mutex.withLock { prepareDescriptor() } }
+            consumer.process(descriptor)
           }
-          if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
         }
       }
 
-      standardContributorStartedChannel.receiveCatching()
-      if (useReadAction) readActionBlocking { runBlockingCancellable { iterate() } } else iterate()
-      readyChannel.close()
-    }
+      val searchStart = System.nanoTime()
+      launch {
+        var foundItemsCount = 0
+        val cachedMatches = mutableListOf<ScoredText>()
 
-    coroutineToIndicator {
-      defaultFetchElements(pattern, progressIndicator) {
-        standardContributorStartedChannel.close()
-        val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
-        val descriptor = runBlockingCancellable { mutex.withLock { prepareDescriptor() } }
-        consumer.process(descriptor)
+        suspend fun iterate() {
+          val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
+          if (semanticMatches.isEmpty()) return
+          standardSearchJob.join()
+          for (priority in ORDERED_PRIORITIES) {
+            val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
+            else cachedMatches.filter { it.findPriority() == priority }.iterator()
+
+            while (iterator.hasNext()) {
+              ensureActive()
+              val match = iterator.next()
+              if (priority == DescriptorPriority.HIGH && match.findPriority() != priority) {
+                cachedMatches.add(match)
+                continue
+              }
+
+              for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
+                val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
+                mutex.withLock { prepareDescriptor() }?.let {
+                  consumer.process(it)
+                  foundItemsCount++
+                }
+                if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) return
+              }
+            }
+            if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) return
+          }
+        }
+
+        if (useReadAction) readActionBlocking { runBlockingCancellable { iterate() } } else iterate()
       }
     }
-    standardContributorStartedChannel.close()
-    readyChannel.receiveCatching()
   }
 
   fun syncSearchSettings() {}
