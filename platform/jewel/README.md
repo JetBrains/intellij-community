@@ -225,6 +225,39 @@ Assuming the PainterProvider has a base path of `components/myIcon.svg`, Jewel w
 right path based on the state. If you want to learn more about this system, look at the `PainterHint` interface and its
 implementations.
 
+### Fonts
+To load a system font, you can obtain it by its family name:
+
+```kotlin
+val myFamily = FontFamily("My Family")
+```
+
+If you want to use a font embedded in the JetBrains Runtime, you can use the `EmbeddedFontFamily` API instead:
+
+```kotlin
+import javax.swing.text.StyledEditorKit.FontFamilyAction
+
+// Will return null if no matching font family exists in the JBR
+val myEmbeddedFamily = EmbeddedFontFamily("Embedded family")
+
+// It's recommended to load a fallback family when dealing with embedded familes
+val myFamily = myEmbeddedFamily ?: FontFamily("Fallback family")
+```
+
+You can obtain a `FontFamily` from any `java.awt.Font` — including from `JBFont`s — by using the `asComposeFontFamily()`
+API:
+
+```kotlin
+val myAwtFamily = myFont.asComposeFontFamily()
+
+// This will attempt to resolve the logical AWT font 
+val myLogicalFamily = Font("Dialog").asComposeFontFamily()
+
+// This only works in the IntelliJ Platform, 
+// since JBFont is only available there
+val myLabelFamily = JBFont.label().asComposeFontFamily()
+```
+
 ### Swing interoperability
 
 As this is Compose for Desktop, you get a good degree of interoperability with Swing. To avoid glitches and z-order
