@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -32,6 +18,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -118,7 +105,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString();
     final String afterCaret = docText.subSequence(offset, document.getLineEndOffset(line)).toString();
     final PsiElement lBrace = aClass.getLBrace();
-    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
+    if (!textBeforeCaret.trim().isEmpty() && StringUtil.isEmptyOrSpaces(afterCaret) &&
         (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
@@ -130,7 +117,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     int finalOffset = offset;
     List<? extends GenerationInfo> newMembers = WriteAction.compute(
-      () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members)));
+      () -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+        () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members))));
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 

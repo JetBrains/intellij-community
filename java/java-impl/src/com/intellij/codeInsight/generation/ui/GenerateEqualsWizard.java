@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -11,6 +11,7 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -52,7 +53,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
   public static final class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
-    private final PsiClass myClass;
+    private final @NotNull PsiClass myClass;
 
     private final MemberSelectionPanel myEqualsPanel;
     private final MemberSelectionPanel myHashCodePanel;
@@ -61,7 +62,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     private final HashMap<PsiMember, MemberInfo> myFieldsToNonNull;
     private final List<MemberInfo> myClassFields;
 
-    private JavaGenerateEqualsWizardBuilder(PsiClass aClass, boolean needEquals, boolean needHashCode) {
+    private JavaGenerateEqualsWizardBuilder(@NotNull PsiClass aClass, boolean needEquals, boolean needHashCode) {
       LOG.assertTrue(needEquals || needHashCode);
       myClass = aClass;
       myClassFields = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
@@ -98,10 +99,12 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       }
       myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
-      for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
-        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
-                                    entry.getKey() instanceof PsiField field &&
-                                    NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
+      if (!DumbService.isDumb(myClass.getProject())) {
+        for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
+          entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
+                                      entry.getKey() instanceof PsiField field &&
+                                      NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
+        }
       }
     }
 
@@ -176,7 +179,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   }
 
-  public GenerateEqualsWizard(Project project, PsiClass aClass, boolean needEquals, boolean needHashCode) {
+  public GenerateEqualsWizard(Project project, @NotNull PsiClass aClass, boolean needEquals, boolean needHashCode) {
     super(project, new JavaGenerateEqualsWizardBuilder(aClass, needEquals, needHashCode));
   }
 
@@ -432,11 +435,13 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       final GlobalSearchScope resolveScope = psiClass.getResolveScope();
       final Set<String> names = new LinkedHashSet<>();
 
+      DumbService dumbService = DumbService.getInstance(psiClass.getProject());
       for (TemplateResource resource : templatesManager.getAllTemplates()) {
         final String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
         if (names.add(templateBaseName)) {
           final String className = resource.getClassName();
-          if (className != null && psiFacade.findClass(className, resolveScope) == null) {
+          if (className != null &&
+              dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(className, resolveScope) == null)) {
             invalid.add(templateBaseName);
           }
         }

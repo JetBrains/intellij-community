@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -23,7 +24,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private PsiField[] myEqualsFields;
   private PsiField[] myHashCodeFields;
   private PsiField[] myNonNullFields;
-  private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1]; //cannot return empty array, but this result won't be used anyway
+  private static final PsiElementClassMember<?>[] DUMMY_RESULT = new PsiElementClassMember[1]; //cannot return empty array, but this result won't be used anyway
 
   public GenerateEqualsHandler() {
     super("");
@@ -35,10 +36,12 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     myHashCodeFields = null;
     myNonNullFields = PsiField.EMPTY_ARRAY;
 
-
     GlobalSearchScope scope = aClass.getResolveScope();
-    final PsiMethod equalsMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project, scope));
-    final PsiMethod hashCodeMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature());
+    DumbService dumbService = DumbService.getInstance(project);
+    final PsiMethod equalsMethod = dumbService.computeWithAlternativeResolveEnabled(
+      () -> GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project, scope)));
+    final PsiMethod hashCodeMethod = dumbService.computeWithAlternativeResolveEnabled(
+      () -> GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature()));
 
     boolean needEquals = needToGenerateMethod(equalsMethod);
     boolean needHashCode = needToGenerateMethod(hashCodeMethod);
