@@ -16,6 +16,7 @@ internal object MarketplaceUrls {
 
   const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
   const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
+  const val EXTENSIONS_BACKUP_FILENAME = "pluginsFeatures.json"
 
   private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
     ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')

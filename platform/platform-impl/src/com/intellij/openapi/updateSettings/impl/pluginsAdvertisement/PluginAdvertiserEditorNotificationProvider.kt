@@ -29,16 +29,15 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.time.Duration.Companion.seconds
 
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -142,7 +141,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
           }
         }
         else {
-          // Plugin supporting the pattern is installed and enabled but the current file is reassigned to a different file type
+          // The plugin supporting the pattern is installed and enabled, but the current file is reassigned to a different file type
           return null
         }
       }
@@ -224,9 +223,8 @@ fun getSuggestionData(
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
   return service<PluginAdvertiserExtensionsStateService>()
     .createExtensionDataProvider(project)
-    .requestExtensionData(fileName, fileType)?.let {
-      getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType)
-    }
+    .requestExtensionData(fileName, fileType)
+    ?.let { getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType) }
 }
 
 private fun getSuggestionData(
@@ -302,21 +300,9 @@ internal class AdvertiserInfoUpdateService(
   private val project: Project,
   private val coroutineScope: CoroutineScope
 ) {
-  private val future: Instant = Instant.now().plusSeconds(30)
-
   fun scheduleAdvertiserUpdate(file: VirtualFile) {
     val fileName = file.name
     coroutineScope.launch {
-      val now = Instant.now()
-      if (now.isBefore(future)) {
-        val remainingSeconds = future.minus(now.epochSecond, ChronoUnit.SECONDS).epochSecond
-        if (remainingSeconds > 1) {
-          delay(remainingSeconds.seconds) // no hurry, let's think that the network is really slow anyway
-        }
-      }
-
-      MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()
-
       val extensionsStateService = PluginAdvertiserExtensionsStateService.getInstance()
       var shouldUpdateNotifications = extensionsStateService.updateCache(fileName)
       val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(fileName)
