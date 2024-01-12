@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -118,16 +120,29 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     newPkgName: FqName
 ): List<UsageInfo> {
     val usages = mutableListOf<UsageInfo>()
-    val newName = FqName("${newPkgName.asString()}.$name")
-    TextOccurrencesUtil.findNonCodeUsages(
-        this,
-        resolveScope,
-        fqName?.quoteIfNeeded()?.asString(),
-        searchInCommentsAndStrings,
-        searchForText,
-        newName.asString(),
-        usages
+    fun addNonCodeUsages(oldFqn: String, newFqn: String) {
+        TextOccurrencesUtil.findNonCodeUsages(
+            this,
+            resolveScope,
+            oldFqn,
+            searchInCommentsAndStrings,
+            searchForText,
+            newFqn,
+            usages
+        )
+    }
+
+    fqName?.quoteIfNeeded()?.asString()?.let { currentName ->
+        val newName = "${newPkgName.asString()}.$name"
+        addNonCodeUsages(currentName, newName)
+    }
+
+    val currentJavaFacadeName = StringUtil.getQualifiedName(containingKtFile.javaFileFacadeFqName.asString(), name ?: "")
+    val newJavaFacadeName = StringUtil.getQualifiedName(
+        StringUtil.getQualifiedName(newPkgName.asString(), containingKtFile.javaFileFacadeFqName.shortName().asString()),
+        name ?: ""
     )
+    addNonCodeUsages(currentJavaFacadeName, newJavaFacadeName)
     return usages
 }
 
