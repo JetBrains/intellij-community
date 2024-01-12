@@ -1647,6 +1647,9 @@ public final class BuildManager implements Disposable {
         WinProcess winProcess = new WinProcess((int)processHandler.getProcess().pid());
         winProcess.setPriority(Priority.IDLE);
       }
+      catch (UnsupportedOperationException ignored) {
+        // Process.pid may throw this error. Just ignoring it.
+      }
       catch (Throwable e) {
         LOG.error("Cannot set priority", e);
       }
