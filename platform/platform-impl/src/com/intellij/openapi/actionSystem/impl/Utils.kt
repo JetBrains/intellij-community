@@ -279,10 +279,7 @@ object Utils {
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction,
-                                                   updater.asUpdateSession()) {
-          updater.expandActionGroup(group, group is CompactActionGroup)
-        }
+        updater.expandActionGroup(group, group is CompactActionGroup)
       }
     }
     if (fastTrackTime > 0) {
@@ -358,10 +355,7 @@ object Utils {
       val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
       val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
       updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, false,
-                                                   updater.asUpdateSession()) {
-          updater.expandActionGroup(group, group is CompactActionGroup)
-        }
+        updater.expandActionGroup(group, group is CompactActionGroup)
       }
     }
     finally {

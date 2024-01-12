@@ -258,7 +258,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       if (testDelayMillis > 0) {
         delay(testDelayMillis.toLong())
       }
-      val result = removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled))
+      val result = ActionUpdaterInterceptor.expandActionGroup(
+        presentationFactory, dataContext, place, group, toolbarAction, asUpdateSession()) {
+        removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled))
+      }
       computeOnEdt {
         applyPresentationChanges()
       }
