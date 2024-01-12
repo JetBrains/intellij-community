@@ -1,4 +1,4 @@
-YAML file
+YAML file: InlineMapWithBlockScalarValue.yml
   YAML document
     YAML sequence
       YAML sequence item

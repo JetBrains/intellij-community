@@ -1,4 +1,4 @@
-YAML file
+YAML file: ScalarsWithNewlines.yml
   YAML document
     PsiElement(---)('---')
     PsiWhiteSpace(' ')

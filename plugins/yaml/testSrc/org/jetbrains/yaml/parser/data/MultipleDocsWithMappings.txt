@@ -1,4 +1,4 @@
-YAML file
+YAML file: MultipleDocsWithMappings.yml
   YAML document
     YAML mapping
       YAML key value

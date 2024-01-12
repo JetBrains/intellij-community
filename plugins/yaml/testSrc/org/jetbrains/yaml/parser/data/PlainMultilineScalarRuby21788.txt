@@ -1,4 +1,4 @@
-YAML file
+YAML file: PlainMultilineScalarRuby21788.yml
   YAML document
     YAML mapping
       YAML key value

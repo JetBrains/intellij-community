@@ -1,4 +1,4 @@
-YAML file
+YAML file: a.yml
   PsiComment(comment)('# Ranking of 1998 home runs')
   PsiElement(Eol)('\n')
   YAML document

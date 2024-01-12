@@ -1,4 +1,4 @@
-YAML file
+YAML file: AnsibleRoleElkMain.yml
   YAML document
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
