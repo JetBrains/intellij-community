@@ -381,15 +381,18 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       builder.append("</font>");
     }
 
-    if (getSuspendPolicy() == SuspendPolicy.NONE) {
+    var suspendPolicy = getSuspendPolicy();
+    if (suspendPolicy == SuspendPolicy.NONE) {
       builder.append(separator.get()).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
     }
     else if (getType().isSuspendThreadSupported()) {
-      builder.append(separator.get());
-      //noinspection EnumSwitchStatementWhichMissesCases
-      switch (getSuspendPolicy()) {
-        case ALL -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
-        case THREAD -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
+      var defaultSuspendPolicy = myBreakpointManager.getBreakpointDefaults(getType()).getSuspendPolicy();
+      if (suspendPolicy != defaultSuspendPolicy) {
+        builder.append(separator.get());
+        switch (suspendPolicy) {
+          case ALL -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
+          case THREAD -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
+        }
       }
     }
 
