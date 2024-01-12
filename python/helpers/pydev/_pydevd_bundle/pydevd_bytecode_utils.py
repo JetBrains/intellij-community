@@ -1,13 +1,19 @@
-"""Bytecode analysing utils. Originally added for using in smart step into."""
+"""Bytecode analyzing utils that are primarily used for extracting smart steps into
+variants."""
+
 import dis
 import inspect
 from collections import namedtuple
 
 from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON
 
-__all__ = ["find_last_call_name", "find_last_func_call_order",
-           "get_smart_step_into_candidates"]
+__all__ = [
+    'find_last_call_name',
+    'find_last_func_call_order',
+    'get_smart_step_into_candidates',
+]
 
+# noinspection SpellCheckingInspection
 _LOAD_OPNAMES = {
     'LOAD_BUILD_CLASS',
     'LOAD_CONST',
@@ -19,23 +25,26 @@ _LOAD_OPNAMES = {
     'LOAD_DEREF',
 }
 
+# noinspection SpellCheckingInspection
 _CALL_OPNAMES = {
     'CALL_FUNCTION',
     'CALL_FUNCTION_KW',
 }
 
 if IS_PY3K:
-    for opname in ('LOAD_CLASSDEREF', 'LOAD_METHOD'):
-        _LOAD_OPNAMES.add(opname)
-    for opname in ('CALL_FUNCTION_EX', 'CALL_METHOD'):
-        _CALL_OPNAMES.add(opname)
+    # noinspection SpellCheckingInspection
+    for each_opname in ('LOAD_CLASSDEREF', 'LOAD_METHOD'):
+        _LOAD_OPNAMES.add(each_opname)
+    for each_opname in ('CALL_FUNCTION_EX', 'CALL_METHOD'):
+        _CALL_OPNAMES.add(each_opname)
 else:
     _LOAD_OPNAMES.add('LOAD_LOCALS')
-    for opname in ('CALL_FUNCTION_VAR', 'CALL_FUNCTION_VAR_KW'):
-        _CALL_OPNAMES.add(opname)
+    for each_opname in ('CALL_FUNCTION_VAR', 'CALL_FUNCTION_VAR_KW'):
+        _CALL_OPNAMES.add(each_opname)
 
 _BINARY_OPS = set([opname for opname in dis.opname if opname.startswith('BINARY_')])
 
+# noinspection SpellCheckingInspection
 _BINARY_OP_MAP = {
     'BINARY_POWER': '__pow__',
     'BINARY_MULTIPLY': '__mul__',
@@ -56,7 +65,8 @@ _BINARY_OP_MAP = {
 if not IS_PY3K:
     _BINARY_OP_MAP['BINARY_DIVIDE'] = '__div__'
 
-_UNARY_OPS = set([opname for opname in dis.opname if opname.startswith('UNARY_') and opname != 'UNARY_NOT'])
+_UNARY_OPS = set([opname for opname in dis.opname if opname.startswith('UNARY_')
+                  and opname != 'UNARY_NOT'])
 
 _UNARY_OP_MAP = {
     'UNARY_POSITIVE': '__pos__',
@@ -98,16 +108,19 @@ def _is_make_opname(opname):
     return opname in _MAKE_OPS
 
 
-# Similar to :py:class:`dis._Instruction` but without fields we don't use. Also :py:class:`dis._Instruction`
-# is not available in Python 2.
-Instruction = namedtuple("Instruction", ["opname", "opcode", "arg", "argval", "lineno", "offset"])
+_INSTRUCTION_NAMES = ['opname', 'opcode', 'arg', "argv", 'lineno', "offset"]
+# Similar to :py:class:`dis._Instruction` but without fields we don't use. Also
+# :py:class:`dis._Instruction` is not available in Python 2.
+Instruction = namedtuple('Instruction', _INSTRUCTION_NAMES)
 
 if IS_PY3K:
     long = int
 
 try:
+    # noinspection SpellCheckingInspection,PyUnresolvedReferences,PyProtectedMember
     _unpack_opargs = dis._unpack_opargs
 except AttributeError:
+    # noinspection SpellCheckingInspection
     def _unpack_opargs(code):
         n = len(code)
         i = 0
@@ -124,11 +137,13 @@ except AttributeError:
                 i += 2
                 if op == dis.EXTENDED_ARG:
                     extended_arg = arg * long(65536)
-            yield (offset, op, arg)
+            yield offset, op, arg
 
 
+# noinspection SpellCheckingInspection,PyArgumentList,PyUnresolvedReferences
 def _code_to_name(inst):
-    """If thw instruction's ``argval`` is :py:class:`types.CodeType`, replace it with the name and return the updated instruction.
+    """If thw instruction's ``argval`` is :py:class:`types.CodeType`,
+    replace it with the name and return the updated instruction.
 
     :type inst: :py:class:`Instruction`
     :rtype: :py:class:`Instruction`
@@ -138,13 +153,15 @@ def _code_to_name(inst):
     return inst
 
 
+# noinspection SpellCheckingInspection
 def get_smart_step_into_candidates(code):
-    """Iterate through the bytecode and return a list of instructions which can be smart step into candidates.
+    """Iterate through the bytecode and return a list of instructions which can be
+    smart step into candidates.
 
-    :param code: A code object where we searching for calls.
+    :param code: A code object where we are searching for calls.
     :type code: :py:class:`types.CodeType`
-    :return: list of :py:class:`~Instruction` that represents the objects that were called
-      by one of the Python call instructions.
+    :return: list of :py:class:`~Instruction` that represents the objects that were
+      called by one of the Python call instructions.
     :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
     """
     if not IS_CPYTHON:
@@ -194,7 +211,8 @@ def get_smart_step_into_candidates(code):
                     argval = freevars[arg]
                 stk.append(Instruction(opname, op, arg, argval, lineno, offset))
             elif _is_make_opname(opname):
-                tos = stk.pop()  # qualified name of the function or function code in Python 2
+                tos = stk.pop()  # Qualified name of the function or
+                                 # function code in Python 2.
                 argc = 0
                 if IS_PY3K:
                     stk.pop()  # function code
@@ -211,7 +229,8 @@ def get_smart_step_into_candidates(code):
             elif _is_call_opname(opname):
                 argc = arg  # the number of the function or method arguments
                 if opname == 'CALL_FUNCTION_KW' or not IS_PY3K and opname == 'CALL_FUNCTION_VAR':
-                    stk.pop()  # pop the mapping or iterable with arguments or parameters
+                    stk.pop()  # Pop the mapping or iterable with arguments
+                               # or parameters.
                 elif not IS_PY3K and opname == 'CALL_FUNCTION_VAR_KW':
                     stk.pop()  # pop the mapping with arguments
                     stk.pop()  # pop the iterable with parameters
@@ -231,9 +250,12 @@ def get_smart_step_into_candidates(code):
                 if tos.opname == 'LOAD_BUILD_CLASS':
                     # an internal `CALL_FUNCTION` for building a class
                     continue
-                result.append(tos._replace(offset=offset))  # the actual offset is not when a function was loaded but when it was called
+                # The actual offset is not when a function was loaded but when
+                # it was called.
+                result.append(tos._replace(offset=offset))
         except:
-            err_msg = "Bytecode parsing error at: offset(%d), opname(%s), arg(%d)" % (offset, dis.opname[op], arg)
+            err_msg = ("Bytecode parsing error at: offset(%d), opname(%s), arg(%d)" %
+                       (offset, dis.opname[op], arg))
             raise RuntimeError(err_msg)
     return result
 
@@ -254,7 +276,7 @@ def calculate_smart_step_into_variants(frame, start_line, end_line):
     variants = []
     is_context_reached = False
     code = frame.f_code
-    lasti = frame.f_lasti
+    last_instruction = frame.f_lasti
     for inst in get_smart_step_into_candidates(code):
         if inst.lineno and inst.lineno > end_line:
             break
@@ -262,7 +284,8 @@ def calculate_smart_step_into_variants(frame, start_line, end_line):
             is_context_reached = True
         if not is_context_reached:
             continue
-        variants.append(Variant(inst.argval, inst.offset <= lasti))
+        # noinspection PyUnresolvedReferences
+        variants.append(Variant(inst.argval, inst.offset <= last_instruction))
     return variants
 
 
@@ -292,6 +315,7 @@ def find_last_func_call_order(frame, start_line):
     return call_order
 
 
+# noinspection PyUnresolvedReferences
 def find_last_call_name(frame):
     """Find the name of the last call made in the frame.
 
@@ -303,9 +327,9 @@ def find_last_call_name(frame):
     """
     last_call_name = None
     code = frame.f_code
-    lasti = frame.f_lasti
+    last_instruction = frame.f_lasti
     for inst in get_smart_step_into_candidates(code):
-        if inst.offset > lasti:
+        if inst.offset > last_instruction:
             break
         last_call_name = inst.argval
 
