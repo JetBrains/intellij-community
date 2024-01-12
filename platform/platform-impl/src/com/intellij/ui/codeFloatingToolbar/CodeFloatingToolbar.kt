@@ -304,8 +304,10 @@ class CodeFloatingToolbar(
           if (mouseWasOutsideOfComponent) {
             cancel()
           }
-          blockingContext(Dispatchers.EDT) {
-            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
+          withContext(Dispatchers.EDT) {
+            blockingContext {
+              if (isPopupButton) button.click() else activeMenuPopup?.cancel()
+            }
           }
         }
       }
