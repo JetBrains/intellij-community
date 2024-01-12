@@ -2,6 +2,8 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.python.psi.*
 
 class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
@@ -23,6 +25,15 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     }
     super.visitPyFunction(node)
   }
+
+  override fun visitPyClass(node: PyClass) {
+    codeFragment?.let { file ->
+      val start = node.statementList.startOffset
+      val text = file.text.substring(start, node.endOffset)
+      file.addChild(CodeToken(text, start, CLASS_PROPERTIES))
+    }
+  }
 }
 
 private val METHOD_PROPERTIES = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.UNKNOWN) {}
+private val CLASS_PROPERTIES = SimpleTokenProperties.create(TypeProperty.CLASS, SymbolLocation.UNKNOWN) {}
