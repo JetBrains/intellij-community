@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.plugins.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.HttpRequests
@@ -18,6 +19,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 
+@Service
 class KotlinPluginUpdater : StandalonePluginUpdateChecker(
     KotlinIdePlugin.id,
     PROPERTY_NAME,
