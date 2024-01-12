@@ -100,7 +100,6 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>

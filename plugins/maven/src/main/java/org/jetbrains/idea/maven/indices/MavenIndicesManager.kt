@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -35,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  *
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
+@Service(Service.Level.PROJECT)
 class MavenIndicesManager(private val myProject: Project, private val cs: CoroutineScope) : Disposable {
   interface MavenIndexerListener {
     fun gavIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {}
