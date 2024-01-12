@@ -1,18 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.models
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diff.Block
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.RevisionId
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 abstract class SelectionCalculator(private val gateway: IdeaGateway,
                                    private val revisions: List<RevisionId>,
                                    private val fromLine: Int,
                                    private val toLine: Int) {
-  private val cache: Int2ObjectMap<Block> = Int2ObjectOpenHashMap()
+  private val cache = ConcurrentCollectionFactory.createConcurrentIntObjectMap<Block>()
 
   fun canCalculateFor(revision: RevisionId, progress: Progress): Boolean {
     try {
