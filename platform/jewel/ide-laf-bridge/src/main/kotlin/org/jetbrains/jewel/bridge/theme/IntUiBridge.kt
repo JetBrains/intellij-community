@@ -119,7 +119,7 @@ private val iconsBasePath
     get() = DirProvider().dir()
 
 @OptIn(DependsOnJBR::class)
-internal suspend fun createBridgeThemeDefinition(): ThemeDefinition {
+internal fun createBridgeThemeDefinition(): ThemeDefinition {
     val textStyle = retrieveTextStyle("Label.font", "Label.foreground")
     return createBridgeThemeDefinition(textStyle)
 }
@@ -141,7 +141,7 @@ internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition 
 }
 
 @OptIn(DependsOnJBR::class)
-internal suspend fun createBridgeComponentStyling(
+internal fun createBridgeComponentStyling(
     theme: ThemeDefinition,
 ) =
     createBridgeComponentStyling(

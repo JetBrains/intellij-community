@@ -36,7 +36,7 @@ internal class SwingBridgeService(scope: CoroutineScope) {
         return readThemeData()
     }
 
-    private suspend fun readThemeData(): BridgeThemeData {
+    private fun readThemeData(): BridgeThemeData {
         val themeDefinition = createBridgeThemeDefinition()
         return BridgeThemeData(
             themeDefinition = createBridgeThemeDefinition(),
