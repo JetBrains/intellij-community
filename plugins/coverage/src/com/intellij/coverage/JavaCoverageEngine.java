@@ -419,7 +419,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                 @NotNull final PsiFile sourceFile, @NotNull CoverageSuitesBundle suite) {
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
-      if (javaSuite.isClassFiltered(qualifiedName) || javaSuite.isPackageFiltered(getPackageName(sourceFile))) return true;
+      if (javaSuite.isClassFiltered(qualifiedName)) return true;
     }
     return false;
   }

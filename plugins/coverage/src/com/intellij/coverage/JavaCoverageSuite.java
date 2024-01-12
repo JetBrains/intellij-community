@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtilRt;
@@ -105,21 +106,30 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     mySkipUnloadedClassesAnalysis = skipUnloadedClassesAnalysis;
   }
 
-  public final boolean isClassFiltered(final String classFQName) {
-    return isClassFiltered(classFQName, getFilteredClassNames());
+  public final boolean isClassFiltered(String classFQName) {
+    if (matchesNames(classFQName, getExcludedClassNames())) return false;
+    String packageName = StringUtil.getPackageName(classFQName);
+    if (isSubPackageOf(packageName, getExcludedPackageNames())) return false;
+    String[] filteredPackageNames = getFilteredPackageNames();
+    if (isSubPackageOf(packageName, filteredPackageNames)) return true;
+    if (matchesNames(classFQName, getFilteredClassNames())) return true;
+    return filteredPackageNames.length == 0 && getFilteredClassNames().length == 0;
   }
 
-  public final boolean isPackageFiltered(final String packageFQName) {
-    for (String name : getExcludedPackageNames()) {
-      if (packageFQName.equals(name) || packageFQName.startsWith(name + ".")) return false;
-    }
+  public final boolean isPackageFiltered(String packageFQName) {
+    if (isSubPackageOf(packageFQName, getExcludedPackageNames())) return false;
     final String[] filteredPackageNames = getFilteredPackageNames();
-    for (final String packName : filteredPackageNames) {
+    if (isSubPackageOf(packageFQName, getFilteredPackageNames())) return true;
+    return filteredPackageNames.length == 0 && getFilteredClassNames().length == 0;
+  }
+
+  private static boolean isSubPackageOf(String packageFQName, String[] packages) {
+    for (String packName : packages) {
       if (packName.isEmpty() || PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
         return true;
       }
     }
-    return filteredPackageNames.length == 0 && getFilteredClassNames().length == 0;
+    return false;
   }
 
   public final @NotNull List<PsiPackage> getCurrentSuitePackages(final Project project) {
@@ -197,7 +207,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     }
   }
 
-  public static boolean isClassFiltered(String classFQName, String[] classPatterns) {
+  private static boolean matchesNames(String classFQName, String[] classPatterns) {
     for (String className : classPatterns) {
       if (className.equals(classFQName) || classFQName.startsWith(className) && classFQName.charAt(className.length()) == '$') {
         return true;

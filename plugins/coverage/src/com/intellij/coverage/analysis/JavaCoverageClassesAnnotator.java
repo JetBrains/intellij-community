@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.analysis;
 
-import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.JavaCoverageEngineExtension;
 import com.intellij.coverage.JavaCoverageSuite;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -219,12 +219,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   private boolean isClassExcluded(String fqn) {
-    for (CoverageSuite suite : mySuite.getSuites()) {
-      if (suite instanceof JavaCoverageSuite javaSuite && JavaCoverageSuite.isClassFiltered(fqn, javaSuite.getExcludedClassNames())) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.all(mySuite.getSuites(), suite -> suite instanceof JavaCoverageSuite javaSuite && !javaSuite.isClassFiltered(fqn));
   }
 
   private static Set<VirtualFile> getPackageRoots(Module module, String rootPackageVMName) {

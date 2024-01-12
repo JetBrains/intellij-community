@@ -172,11 +172,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
               String internalName = StringUtil.trimEnd(rootPath.relativize(path).toString(), ".class");
               String fqn = AnalysisUtils.internalNameToFqn(internalName);
-              if (JavaCoverageSuite.isClassFiltered(fqn, suite.getExcludedClassNames()) ||
-                  (!suite.isClassFiltered(fqn) &&
-                   !suite.isPackageFiltered(StringUtil.getPackageName(fqn)))) {
-                return FileVisitResult.CONTINUE;
-              }
+              if (!suite.isClassFiltered(fqn)) return FileVisitResult.CONTINUE;
               File file = path.toFile();
               try {
                 analyzer.analyzeAll(file);
