@@ -861,6 +861,70 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkArgumentMappingSAM(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    fun interface Foo {
+                        fun foo()
+                    }
+
+                    fun uiMethod() {}
+
+                    fun test(foo: Foo) {}
+
+                    fun testLambda() {
+                        te<caret>st { uiMethod() }
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            TestCase.assertNotNull(arg)
+            TestCase.assertTrue(arg is ULambdaExpression)
+            TestCase.assertEquals("Test.Foo", (arg as ULambdaExpression).functionalInterfaceType?.canonicalText)
+        }
+    }
+
+    fun checkArgumentMappingSAM_methodReference(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    fun interface Foo {
+                        fun foo()
+                    }
+
+                    fun uiMethod() {}
+
+                    fun test(foo: Foo) {}
+                    
+                    fun testMethodRef() {
+                      te<caret>st(this::uiMethod)
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            TestCase.assertNotNull(arg)
+            TestCase.assertTrue(arg is UCallableReferenceExpression)
+            TestCase.assertEquals("uiMethod", (arg as UCallableReferenceExpression).callableName)
+        }
+    }
+
     fun checkSyntheticEnumMethods(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
