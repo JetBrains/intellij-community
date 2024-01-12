@@ -82,11 +82,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
-  private val emptyLogger: StatisticsEventLogger by lazy { EmptyStatisticsEventLogger() }
+  private val localLogger: StatisticsEventLogger by lazy { createLocalLogger() }
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
 
   open val logger: StatisticsEventLogger
-    get() = if (isLoggingEnabled()) actualLogger else emptyLogger
+    get() = if (isLoggingEnabled()) actualLogger else localLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
@@ -136,6 +136,14 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
       recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
       throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode
     )
+    Disposer.register(ApplicationManager.getApplication(), logger)
+    return logger
+  }
+
+  private fun createLocalLogger(): StatisticsEventLogger {
+    val eventLogConfiguration = EventLogConfiguration.getInstance()
+
+    val logger = LocalStatisticsFileEventLogger(recorderId, eventLogConfiguration.build, version.toString(), createEventsMergeStrategy())
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
