@@ -128,7 +128,7 @@ private var lastFailedFastTrackCount = 0
  *    A progress icon is shown while expecting the results.
  *
  * 3. Blocking with the ability to unblock via [Utils.runUpdateSessionForInputEvent].
- *    It is only used in **keyborard, mouse, and gesture shortcuts** processing.
+ *    It is only used in **keyboard, mouse, and gesture shortcuts** processing.
  *    It fully blocks the UI while it chooses the action to invoke because the user expects actions
  *    to perform on the exact UI state at the time shortcut is pressed.
  *    In case of a long wait, [PotemkinOverlayProgress] is shown with the ability to cancel the shortcut.
@@ -919,7 +919,7 @@ object Utils {
                                                 factory: PresentationFactory,
                                                 function: suspend (List<AnAction>,
                                                                    suspend (AnAction) -> Presentation,
-                                                                   Map<Presentation, AnActionEvent>) -> T): T? = withContext(
+                                                                   Map<Presentation, AnActionEvent>) -> T): T = withContext(
     CoroutineName("runUpdateSessionForInputEvent")) {
     checkAsyncDataContext(dataContext, place)
     val start = System.nanoTime()

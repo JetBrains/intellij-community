@@ -36,7 +36,7 @@ interface ActionUpdaterInterceptor {
                                                 place: String,
                                                 context: DataContext,
                                                 updateSession: SuspendingUpdateSession,
-                                                original: suspend (List<AnAction>) -> R): R? =
+                                                original: suspend (List<AnAction>) -> R): R =
     original(emptyList())
 
   fun treatDefaultActionGroupAsDynamic(): Boolean = false
@@ -75,7 +75,7 @@ interface ActionUpdaterInterceptor {
                                                          place: String,
                                                          context: DataContext,
                                                          updateSession: SuspendingUpdateSession,
-                                                         noinline original: suspend (List<AnAction>) -> R): R? =
+                                                         noinline original: suspend (List<AnAction>) -> R): R =
       if (isDefaultImpl) original(emptyList())
       else serviceAsync<ActionUpdaterInterceptor>().runUpdateSessionForInputEvent(
         actions, place, context, updateSession, original)
