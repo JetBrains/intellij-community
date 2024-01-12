@@ -22,9 +22,7 @@ internal class DarculaButtonBorder: DarculaButtonPainter() {
     }
 
     JBInsets.removeFrom(r, getBorderInsets(c))
-    val isDefaultButton = DarculaButtonUI.isDefaultButton(c)
-    val outline = if (isDefaultButton) DarculaUIUtil.Outline.defaultButton else DarculaUIUtil.Outline.focus
-    paintComponentBorder(g, r, outline, true, true)
+    paintComponentBorder(g, r, DarculaUIUtil.Outline.focus, true, true)
     return true
   }
 }
