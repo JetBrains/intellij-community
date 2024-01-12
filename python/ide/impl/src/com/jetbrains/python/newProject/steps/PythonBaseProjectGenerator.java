@@ -58,4 +58,9 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
   public @NotNull String getNewProjectPrefix() {
     return "pythonProject";
   }
+
+  @Override
+  public boolean supportsWelcomeScript() {
+    return true;
+  }
 }

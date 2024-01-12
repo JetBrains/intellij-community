@@ -118,7 +118,9 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
       }
       row("") {
         checkBox(message("new.project.git")).bindSelected(createRepository)
-        checkBox(message("new.project.welcome")).bindSelected(createScript)
+        if (projectGenerator.supportsWelcomeScript()) {
+          checkBox(message("new.project.welcome")).bindSelected(createScript)
+        }
       }
 
       panel {
