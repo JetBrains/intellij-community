@@ -215,7 +215,7 @@ public final class PsiAdapter {
      * @return true if it's a Boolean or boolean type.
      */
     public static boolean isBooleanType(PsiElementFactory factory, PsiType type) {
-      return PsiTypes.booleanType().equals(PsiPrimitiveType.getOptionallyUnboxedType(type));
+      return PsiTypes.booleanType().equals(type) || type.equalsToText("java.lang.Boolean");
     }
 
     /**
