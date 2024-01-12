@@ -4,6 +4,7 @@ package com.intellij.platform.ml.embeddings.search.indices
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.platform.ml.embeddings.search.utils.LockedSequenceWrapper
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
@@ -100,8 +101,13 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, limit: Int? = null) :
     return idToEntry.mapValues { it.value.embedding }.findClosest(searchEmbedding, topK, similarityThreshold)
   }
 
-  override fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double?): Sequence<ScoredText> = lock.read {
-    return idToEntry.asSequence().map { it.key to it.value.embedding }.streamFindClose(searchEmbedding, similarityThreshold)
+  override fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double?): Sequence<ScoredText> {
+    return LockedSequenceWrapper(lock::readLock) {
+      this.idToEntry // manually use the receiver here to make sure the property is not captured by reference
+        .asSequence()
+        .map { it.key to it.value.embedding }
+        .streamFindClose(searchEmbedding, similarityThreshold)
+    }
   }
 
   override fun estimateMemoryUsage() = fileManager.embeddingSizeInBytes.toLong() * size
