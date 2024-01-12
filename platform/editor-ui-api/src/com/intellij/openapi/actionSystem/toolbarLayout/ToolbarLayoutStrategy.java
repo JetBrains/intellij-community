@@ -11,7 +11,7 @@ public interface ToolbarLayoutStrategy {
 
   ToolbarLayoutStrategy NOWRAP_STRATEGY = new RightActionsAdjusterStrategyWrapper(new NoWrapLayoutStrategy(false));
   ToolbarLayoutStrategy WRAP_STRATEGY = new RightActionsAdjusterStrategyWrapper(new WrapLayoutStrategy(false));
-  ToolbarLayoutStrategy AUTOLAYOUT_STRATEGY = new RightActionsAdjusterStrategyWrapper(new AutoLayoutStrategy(false));
+  ToolbarLayoutStrategy AUTOLAYOUT_STRATEGY = new RightActionsAdjusterStrategyWrapper(new AutoLayoutStrategy(false, false));
 
   List<Rectangle> calculateBounds(@NotNull ActionToolbar toolbar);
 

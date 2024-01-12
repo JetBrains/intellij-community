@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsContexts
@@ -53,7 +53,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
   private val statusesToolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", statusesActionGroup, false).apply {
     targetComponent = this@CommitDetailsPanel
-    (this as ActionToolbarImpl).setForceShowFirstComponent(true)
+    layoutStrategy = autoLayoutStrategy(showFirst = true)
     component.apply {
       isOpaque = false
       border = JBUI.Borders.empty()

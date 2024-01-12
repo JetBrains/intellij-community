@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -223,7 +224,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     mySearchActionsToolbar = createToolbar(searchToolbar1Actions);
-    mySearchActionsToolbar.setForceShowFirstComponent(true);
+    mySearchActionsToolbar.setLayoutStrategy(ToolbarLayoutUtilKt.autoLayoutStrategy(true));
     mySearchToolbarWrapper.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);

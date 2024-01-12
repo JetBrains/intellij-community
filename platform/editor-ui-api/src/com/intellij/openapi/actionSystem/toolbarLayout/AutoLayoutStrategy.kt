@@ -13,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class AutoLayoutStrategy(private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
+class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
 
   private val expandIcon = AllIcons.Ide.Link
 
@@ -33,6 +33,21 @@ class AutoLayoutStrategy(private val myNoGapMode: Boolean): ToolbarLayoutStrateg
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
     if (toolbar.component.componentCount == 0) return JBUI.emptySize()
     val dimension = Dimension(expandIcon.iconWidth, expandIcon.iconHeight)
+
+    if (myForceShowFirstComponent) {
+      val firstChildSize = toolbar.component.components.firstOrNull { it.isVisible }?.preferredSize
+      firstChildSize?.let { size ->
+        if (toolbar.orientation == SwingConstants.HORIZONTAL) {
+          dimension.width += size.width
+          dimension.height = max(dimension.height, size.height)
+        }
+        else {
+          dimension.height += size.height
+          dimension.width = max(dimension.width, size.width)
+        }
+      }
+    }
+
     JBInsets.addTo(dimension, toolbar.component.insets)
     return dimension
   }

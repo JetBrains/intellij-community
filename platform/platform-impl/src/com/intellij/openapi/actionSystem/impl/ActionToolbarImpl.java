@@ -153,7 +153,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final DefaultActionGroup mySecondaryActions;
   private SecondaryGroupUpdater mySecondaryGroupUpdater;
   private boolean myForceMinimumSize;
-  private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
   private boolean myMinimalMode;
 
@@ -766,9 +765,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   /**
    * By default minimum size is to show chevron only.
    * If this option is {@code true} toolbar shows at least one (the first) component plus chevron (if need)
+   *
+   * @deprecated method is deprecated and going to be removed in future releases. Please use {@link ActionToolbar#setLayoutStrategy(ToolbarLayoutStrategy)} )}
+   * method to set necessary layout for toolbar
    */
+  @Deprecated(since = "2024.1", forRemoval = true)
   public void setForceShowFirstComponent(boolean showFirstComponent) {
-    myForceShowFirstComponent = showFirstComponent;
+    setLayoutStrategy(ToolbarLayoutUtilKt.autoLayoutStrategy(showFirstComponent));
   }
 
   /**

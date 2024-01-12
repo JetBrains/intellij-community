@@ -42,20 +42,5 @@ fun getChildPreferredSize(parent: Container, index: Int): Dimension {
   return if (component.isVisible) component.preferredSize else Dimension()
 }
 
-
-/**
- * Retrieves the layout strategy for the toolbar based on the given policy constant.
- * This method was added primarily to support backward compatibility with Layout Policy constants. It is not intended for use in new code.
- *
- * @param policyConst the policy constant indicating the desired layout strategy
- * @return the layout strategy for the toolbar
- * @throws IllegalArgumentException if the policy constant is invalid
- */
-//fun getLayoutStrategyByConst(@LayoutPolicy policyConst: Int): ToolbarLayoutStrategy {
-//  return when (policyConst) {
-//    ActionToolbar.NOWRAP_LAYOUT_POLICY -> RightActionsAdjusterStrategyWrapper(NoWrapLayoutStrategy())
-//    ActionToolbar.WRAP_LAYOUT_POLICY -> RightActionsAdjusterStrategyWrapper(WrapLayoutStrategy())
-//    ActionToolbar.AUTO_LAYOUT_POLICY -> RightActionsAdjusterStrategyWrapper(AutoLayoutStrategy())
-//    else -> throw IllegalArgumentException("Invalid layout policy constant: $policyConst")
-//  }
-//}
+@JvmOverloads
+fun autoLayoutStrategy(showFirst: Boolean = false, noGap: Boolean = false): ToolbarLayoutStrategy = RightActionsAdjusterStrategyWrapper(AutoLayoutStrategy(showFirst, noGap))
