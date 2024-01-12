@@ -3,7 +3,7 @@ package com.intellij.platform.ml.impl.correctness.autoimport
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.application.ApplicationManager
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 abstract class InspectionBasedImportFixer : ImportFixer {
 
   protected abstract fun getAutoImportInspections(element: PsiElement?): List<LocalInspectionTool>
-  protected abstract fun filterApplicableFixes(fixes: List<LocalQuickFixOnPsiElement>): List<LocalQuickFixOnPsiElement>
+  protected abstract fun filterApplicableFixes(element: PsiElement, fixes: List<LocalQuickFix>): List<LocalQuickFix>
   override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange) {
     val elements = SyntaxTraverser.psiTraverser(file)
       .onRange(suggestionRange)
@@ -31,7 +31,7 @@ abstract class InspectionBasedImportFixer : ImportFixer {
       true -> DaemonProgressIndicator()
     }
 
-    val fixes = InspectionEngine.inspectElements(
+    val problemDescriptors = InspectionEngine.inspectElements(
       getAutoImportInspections(file).map { LocalInspectionToolWrapper(it) },
       file,
       file.textRange,
@@ -40,25 +40,27 @@ abstract class InspectionBasedImportFixer : ImportFixer {
       indicator,
       elements,
       PairProcessor.alwaysTrue()
-    ).values.flatMap { problemDescriptors ->
-      problemDescriptors.flatMap { it.fixes.orEmpty().toList() }
-    }.filterIsInstance<LocalQuickFixOnPsiElement>()
-
-    applyFixes(editor, filterApplicableFixes(fixes))
+    ).values.flatten()
+    applyFixes(editor, problemDescriptors)
   }
 
   fun areFixableByAutoImport(problems: List<ProblemDescriptor>): Boolean {
     return problems.all {
-      val fixes = it.fixes.orEmpty().filterIsInstance<LocalQuickFixOnPsiElement>()
-      filterApplicableFixes(fixes).isNotEmpty()
+      val fixes = it.fixes.orEmpty().filterIsInstance<LocalQuickFix>()
+      filterApplicableFixes(it.psiElement, fixes).isNotEmpty()
     }
   }
 
-  open fun applyFixes(editor: Editor, fixes: List<LocalQuickFixOnPsiElement>) {
-    val fixToApply = fixes.firstOrNull() ?: return // To avoid layering of some import popups on others
+  open fun applyFixes(editor: Editor, problemDescriptors: List<ProblemDescriptor>) {
+    val (descriptor, fixToApply) = problemDescriptors
+                                     .map { it to filterApplicableFixes(it.psiElement, it.fixes.orEmpty().filterIsInstance<LocalQuickFix>()) }
+                                     .map { (descriptor, fixes) -> descriptor to fixes.firstOrNull() }
+                                     .firstOrNull { (_, fix) -> fix != null } ?: return // To avoid layering of some import popups on others
+    if (fixToApply == null) return
     val lastModified = editor.document.modificationStamp
+    val project = editor.project ?: return
     fun action() = ApplicationManager.getApplication().runWriteAction {
-      fixToApply.applyFix()
+      fixToApply.applyFix(project, descriptor)
     }
     ApplicationManager.getApplication().invokeLater(::action, ModalityState.defaultModalityState()) {
       editor.document.modificationStamp != lastModified

@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.mlcompletion.correctness.autoimport
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.platform.ml.impl.correctness.autoimport.InspectionBasedImportFixer
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -14,7 +14,7 @@ class PythonImportFixer : InspectionBasedImportFixer() {
   override fun getAutoImportInspections(element: PsiElement?) =
     PyUnresolvedReferencesInspection.getInstance(element)?.let { listOf(it) } ?: listOf()
 
-  override fun filterApplicableFixes(fixes: List<LocalQuickFixOnPsiElement>): List<AutoImportQuickFix> {
+  override fun filterApplicableFixes(element: PsiElement, fixes: List<LocalQuickFix>): List<LocalQuickFix> {
     val fixesToApply = fixes.filterIsInstance<AutoImportQuickFix>()
       .filter { it.isAvailable }
       .filter {
