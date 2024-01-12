@@ -432,16 +432,16 @@ internal class ProjectTypeList(
 
     private val additionalLanguagePlugins: List<LanguagePlugin> = buildList {
       if (PlatformUtils.isIdeaCommunity()) {
-        add(LanguagePlugin(Language.PYTHON, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.SCALA, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.PYTHON, AllIcons.Language.Python))
+        add(LanguagePlugin(Language.SCALA, AllIcons.Language.Scala))
       }
       else {
-        add(LanguagePlugin(Language.GO, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.PHP, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.PYTHON, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.RUBY, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.RUST, AllIcons.Toolbar.Unknown))
-        add(LanguagePlugin(Language.SCALA, AllIcons.Toolbar.Unknown))
+        add(LanguagePlugin(Language.GO, AllIcons.Language.GO))
+        add(LanguagePlugin(Language.PHP, AllIcons.Language.Php))
+        add(LanguagePlugin(Language.PYTHON, AllIcons.Language.Python))
+        add(LanguagePlugin(Language.RUBY, AllIcons.Language.Ruby))
+        add(LanguagePlugin(Language.RUST, AllIcons.Language.Rust))
+        add(LanguagePlugin(Language.SCALA, AllIcons.Language.Scala))
       }
     }
 
