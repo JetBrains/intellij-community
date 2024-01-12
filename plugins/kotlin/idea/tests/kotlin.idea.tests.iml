@@ -136,5 +136,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.ide" scope="TEST" />
   </component>
 </module>

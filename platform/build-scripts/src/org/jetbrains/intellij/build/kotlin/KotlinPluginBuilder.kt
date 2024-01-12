@@ -54,6 +54,7 @@ object KotlinPluginBuilder {
     "kotlin.base.fe10.obsolete-compat",
     "kotlin.base.fe10.project-structure",
     "kotlin.core",
+    "kotlin.ide",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
     "kotlin.jvm",

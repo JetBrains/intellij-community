@@ -15,7 +15,7 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
-import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplateForTest
+import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 
 /**
  * Command to add Kotlin file to project
@@ -57,7 +57,7 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
 
         ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
             PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScopeBlocking {
-                val createdFile = createKotlinFileFromTemplateForTest(fileName, template, directory)
+                val createdFile = createKotlinFileFromTemplate(fileName, template, directory)
                 createdFile?.let {
                     LOG.info("Created kotlin file\n${createdFile.text}")
                 }

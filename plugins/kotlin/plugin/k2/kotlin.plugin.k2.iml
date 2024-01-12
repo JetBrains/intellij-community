@@ -111,5 +111,6 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
+    <orderEntry type="module" module-name="kotlin.ide" />
   </component>
 </module>

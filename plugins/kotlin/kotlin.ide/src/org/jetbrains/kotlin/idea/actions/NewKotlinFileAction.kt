@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -28,7 +28,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -258,11 +257,7 @@ internal fun createFileFromTemplateWithStat(name: String, template: FileTemplate
     return createKotlinFileFromTemplate(name, template, dir)
 }
 
-@TestOnly
-fun createKotlinFileFromTemplateForTest(name: String, template: FileTemplate, dir: PsiDirectory) =
-    createKotlinFileFromTemplate(name, template, dir)
-
-internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
+fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
     val directorySeparators = when (template.name) {
         "Kotlin File" -> FILE_SEPARATORS
         "Kotlin Worksheet" -> FILE_SEPARATORS
