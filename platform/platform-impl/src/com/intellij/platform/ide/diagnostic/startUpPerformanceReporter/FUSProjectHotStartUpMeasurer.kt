@@ -60,7 +60,7 @@ object FUSProjectHotStartUpMeasurer {
      */
     sealed interface FUSReportableEvent : Event
 
-    class SplashBecameVisibleEvent(val time: Long = System.nanoTime()) : Event
+    class SplashBecameVisibleEvent(val time: Long = System.nanoTime()) : FUSReportableEvent
     class WelcomeScreenEvent(val time: Long = System.nanoTime()) : Event
     class ViolationEvent(val violation: Violation, val time: Long = System.nanoTime()) : Event
     class ProjectTypeReportEvent(val projectsType: ProjectsType) : Event
@@ -103,15 +103,6 @@ object FUSProjectHotStartUpMeasurer {
   private fun reportViolation(violation: Violation) {
     channel.trySend(Event.ViolationEvent(violation))
     channel.close()
-  }
-
-  private fun reportFirstUiShownEvent(splashBecameVisibleTime: Long?, duration: Duration) {
-    if (splashBecameVisibleTime != null) {
-      FIRST_UI_SHOWN_EVENT.log(getDurationFromStart(splashBecameVisibleTime).getValueForFUS(), UIResponseType.Splash)
-    }
-    else {
-      FIRST_UI_SHOWN_EVENT.log(duration.getValueForFUS(), UIResponseType.Frame)
-    }
   }
 
   fun reportWelcomeScreenShown() {
@@ -204,19 +195,26 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private fun applyFrameVisibleEventIfPossible(
+    afterSplash: Boolean,
+    splashBecameVisibleEvent: Event.SplashBecameVisibleEvent?,
     frameBecameVisibleEvent: Event.FrameBecameVisibleEvent?,
-    splashBecameVisibleTime: Long?,
     projectTypeReportEvent: Event.ProjectTypeReportEvent?,
     projectPathReportEvent: Event.ProjectPathReportEvent?,
     isInitialized: Boolean,
     stop: () -> Unit
   ): Event.FUSReportableEvent? {
+    if (!afterSplash && splashBecameVisibleEvent != null &&
+        (frameBecameVisibleEvent == null || splashBecameVisibleEvent.time <= frameBecameVisibleEvent.time)) {
+      FIRST_UI_SHOWN_EVENT.log(getDurationFromStart(splashBecameVisibleEvent.time).getValueForFUS(), UIResponseType.Splash)
+      return splashBecameVisibleEvent
+    }
+
     if (frameBecameVisibleEvent != null) {
       if (!isInitialized) stop()
-      val duration = getDurationFromStart(frameBecameVisibleEvent.time)
-      val durationForFUS = duration.getValueForFUS()
-      reportFirstUiShownEvent(splashBecameVisibleTime, duration)
-
+      val durationForFUS = getDurationFromStart(frameBecameVisibleEvent.time).getValueForFUS()
+      if (!afterSplash) {
+        FIRST_UI_SHOWN_EVENT.log(durationForFUS, UIResponseType.Frame)
+      }
       val projectsType = projectTypeReportEvent?.projectsType ?: ProjectsType.Unknown
       val settingsExist = projectPathReportEvent?.hasSettings
       if (settingsExist == null) {
@@ -234,15 +232,16 @@ object FUSProjectHotStartUpMeasurer {
   private fun reportViolation(
     violation: Violation,
     time: Long,
-    splashBecameVisibleTime: Long?,
     isInitialized: Boolean,
     lastHandledEvent: Event.FUSReportableEvent?,
     stop: () -> Unit
   ) {
-    val duration = getDurationFromStart(time)
-    if (lastHandledEvent == null && isInitialized) {
-      reportFirstUiShownEvent(splashBecameVisibleTime, duration)
-      FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration.getValueForFUS()), VIOLATION.with(violation))
+    val duration = getDurationFromStart(time).getValueForFUS()
+    if ((lastHandledEvent == null || lastHandledEvent is Event.SplashBecameVisibleEvent) && isInitialized) {
+      if (lastHandledEvent == null) {
+        FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame)
+      }
+      FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), VIOLATION.with(violation))
     }
     stop()
   }
@@ -301,7 +300,7 @@ object FUSProjectHotStartUpMeasurer {
     val markupResurrectedFileIds = IntOpenHashSet()
     var lastHandledEvent: Event.FUSReportableEvent? = null
     var isInitialized = false
-    var splashBecameVisibleTime: Long? = null
+    var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null
     var frameBecameVisibleEvent: Event.FrameBecameVisibleEvent? = null
     var frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent? = null
     var projectPathReportEvent: Event.ProjectPathReportEvent? = null
@@ -319,20 +318,21 @@ object FUSProjectHotStartUpMeasurer {
       if (isChannelHandlingStopped) continue
       when (event) {
         Event.IdeStarterStarted -> isInitialized = true
-        is Event.SplashBecameVisibleEvent -> splashBecameVisibleTime = event.time
+        is Event.SplashBecameVisibleEvent -> splashBecameVisibleEvent = event
         is Event.FrameBecameVisibleEvent -> {
           frameBecameVisibleEvent = event
         }
         is Event.WelcomeScreenEvent -> {
           val welcomeScreedDurationForFUS = getDurationFromStart(event.time).getValueForFUS()
-          if (splashBecameVisibleTime == null) {
+          if (splashBecameVisibleEvent == null) {
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(false))
           }
           else {
+            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time).getValueForFUS()
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
-                                     SPLASH_SCREEN_VISIBLE_DURATION.with(getDurationFromStart(splashBecameVisibleTime).getValueForFUS()))
+                                     SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
           }
-          reportViolation(Violation.WelcomeScreenShown, event.time, splashBecameVisibleTime, isInitialized, lastHandledEvent, ::stop)
+          reportViolation(Violation.WelcomeScreenShown, event.time, isInitialized, lastHandledEvent, ::stop)
         }
         is Event.FrameBecameInteractiveEvent -> {
           frameBecameInteractiveEvent = event
@@ -342,7 +342,7 @@ object FUSProjectHotStartUpMeasurer {
         Event.ResetProjectPathEvent -> projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
         is Event.ViolationEvent -> {
-          reportViolation(event.violation, event.time, splashBecameVisibleTime, isInitialized, lastHandledEvent, ::stop)
+          reportViolation(event.violation, event.time, isInitialized, lastHandledEvent, ::stop)
         }
         is Event.FirstEditorEvent -> if (firstEditorEvent == null) firstEditorEvent = event
         is Event.NoMoreEditorsEvent -> if (noEditorEvent == null) noEditorEvent = event
@@ -353,8 +353,12 @@ object FUSProjectHotStartUpMeasurer {
       var proceed = true
       while (proceed) {
         val newLastHandledEvent: Event.FUSReportableEvent? = when (lastHandledEvent) {
-          null -> applyFrameVisibleEventIfPossible(frameBecameVisibleEvent, splashBecameVisibleTime, projectTypeReportEvent,
-                                                   projectPathReportEvent, isInitialized, ::stop)
+          null ->
+            applyFrameVisibleEventIfPossible(false, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
+                                             projectPathReportEvent, isInitialized, ::stop)
+          is Event.SplashBecameVisibleEvent ->
+            applyFrameVisibleEventIfPossible(true, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
+                                             projectPathReportEvent, isInitialized, ::stop)
           is Event.FrameBecameVisibleEvent -> applyFrameInteractiveEventIfPossible(frameBecameInteractiveEvent)
           is Event.FrameBecameInteractiveEvent -> {
             applyEditorEventIfPossible(firstEditorEvent, noEditorEvent, markupResurrectedFileIds, projectPathReportEvent, ::stop)
