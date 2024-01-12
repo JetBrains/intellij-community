@@ -5,7 +5,7 @@
         "python": {
           "psi": {
             "expui": {
-              "python.svg": "icons/com/jetbrains/python/psi/pythonFile.svg"
+              "python.svg": "icons/com/jetbrains/python/parser/pythonFile.svg"
             }
           }
         }

@@ -11,7 +11,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.pip.PypiPackageCache
-import com.jetbrains.python.sdk.icons.PythonSdkIcons
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import org.toml.lang.psi.TOML_STRING_LITERALS
 import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
@@ -32,8 +32,10 @@ class PyprojectPackageCompletionContributor : CompletionContributor() {
       val cache = service<PypiPackageCache>()
       val maxPriority = cache.packages.size
       cache.packages.asSequence()
-        .map { LookupElementBuilder.create(it.lowercase()).withTypeText(PyBundle.message("python.pyproject.package.completion.tail")).withIcon(
-          PythonSdkIcons.Python) }
+        .map {
+          LookupElementBuilder.create(it.lowercase()).withTypeText(PyBundle.message("python.pyproject.package.completion.tail")).withIcon(
+            PythonPsiApiIcons.Python)
+        }
         .mapIndexed { index, lookupElementBuilder ->
           PrioritizedLookupElement.withPriority(lookupElementBuilder, (maxPriority - index).toDouble())
         }

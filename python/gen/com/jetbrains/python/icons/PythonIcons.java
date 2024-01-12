@@ -15,28 +15,8 @@ public final class PythonIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonIcons.class.getClassLoader(), cacheKey, flags);
   }
 
-  public static final class Chameleon {
-    /** 16x16 */ public static final @NotNull Icon Chameleon = load("icons/com/jetbrains/pythonCore/chameleon/chameleon.svg", 1927144371, 0);
-  }
-
   public static final class Cython {
     /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/pythonCore/cython/cythonFile.svg", -1709759022, 0);
-  }
-
-  public static final class Django {
-    /** 13x13 */ public static final @NotNull Icon DjangoLogo = load("icons/com/jetbrains/pythonCore/django/django-logo.svg", -403444033, 2);
-  }
-
-  public static final class Fastapi {
-    /** 16x16 */ public static final @NotNull Icon FastapiLogo = load("icons/com/jetbrains/pythonCore/fastapi/fastapi-logo.svg", -1790650098, 0);
-  }
-
-  public static final class Flask {
-    /** 16x16 */ public static final @NotNull Icon FlaskLogo = load("icons/com/jetbrains/pythonCore/flask/flask-logo.svg", -1772027362, 2);
-  }
-
-  public static final class Pyramid {
-    /** 16x16 */ public static final @NotNull Icon PyramidLogo = load("icons/com/jetbrains/pythonCore/pyramid/pyramid-logo.svg", 323505170, 0);
   }
 
   public static final class Python {
@@ -51,7 +31,6 @@ public final class PythonIcons {
       /** 16x16 */ public static final @NotNull Icon StepIntoMyCode = load("icons/com/jetbrains/pythonCore/python/debug/StepIntoMyCode.svg", -1301661836, 2);
     }
 
-    /** 16x16 */ public static final @NotNull Icon Dotnet = load("icons/com/jetbrains/pythonCore/python/dotnet.svg", -927339199, 0);
     /** 16x16 */ public static final @NotNull Icon ExecuteCurrentStatement = load("icons/com/jetbrains/pythonCore/python/executeCurrentStatement.svg", -43244894, 2);
     /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/pythonCore/python/function.svg", 1027695397, 0);
     /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/pythonCore/python/jython.svg", -359107473, 0);

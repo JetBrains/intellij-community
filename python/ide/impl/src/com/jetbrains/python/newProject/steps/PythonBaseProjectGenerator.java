@@ -10,10 +10,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.newProject.welcome.PyWelcomeGenerator;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.icons.PythonIcons;
-import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +38,9 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
     return panel;
   }
 
-  @Nullable
   @Override
-  public Icon getLogo() {
-    return PythonSdkIcons.Python;
+  public @NotNull Icon getLogo() {
+    return PythonPsiApiIcons.Python;
   }
 
   @Override

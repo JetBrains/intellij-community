@@ -6,6 +6,5 @@
               hashBangs="python"
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>
-    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
   </extensions>
 </idea-plugin>

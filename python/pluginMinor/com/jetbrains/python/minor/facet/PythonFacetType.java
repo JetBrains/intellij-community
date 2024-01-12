@@ -17,9 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.icons.PythonIcons;
-import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +64,7 @@ public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetTyp
 
   @Override
   public Icon getIcon() {
-    return PythonSdkIcons.Python;
+    return  PythonPsiApiIcons.Python;
   }
 
   public static class PythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {

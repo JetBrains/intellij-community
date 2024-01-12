@@ -24,12 +24,12 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProject.steps.PyAddExistingSdkPanel
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import com.jetbrains.python.sdk.pythonSdk
 import java.nio.file.Path
 
@@ -42,7 +42,7 @@ class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = PYTHON
 
-  override val icon = PythonSdkIcons.Python
+  override val icon = PythonPsiApiIcons.Python
 
   override val ordinal = 600
 

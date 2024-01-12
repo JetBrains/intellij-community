@@ -35,11 +35,11 @@ import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
-import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.Component
 import javax.swing.Icon
@@ -66,7 +66,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override fun complete(): Unit = Unit
 
   abstract override val panelName: String
-  override val icon: Icon = PythonSdkIcons.Python
+  override val icon: Icon = PythonPsiApiIcons.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null

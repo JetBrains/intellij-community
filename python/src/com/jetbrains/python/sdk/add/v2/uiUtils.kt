@@ -33,6 +33,7 @@ import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
@@ -41,7 +42,6 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.icons.PythonSdkIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharedFlow
@@ -130,7 +130,7 @@ class PythonNewEnvironmentDialogNavigator {
 internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
   when (sdk) {
     is PyDetectedSdk -> {
-      icon = IconLoader.getTransparentIcon(PythonSdkIcons.Python)
+      icon = IconLoader.getTransparentIcon(PythonPsiApiIcons.Python)
       append(sdk.homePath!!)
       append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
@@ -140,7 +140,7 @@ internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
       append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     else -> {
-      icon = PythonSdkIcons.Python
+      icon = PythonPsiApiIcons.Python
       append(sdk.versionString!!)
       append(" " + sdk.homePath!!, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }

@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -43,10 +44,8 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.icons.PythonSdkIcons;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import com.jetbrains.python.icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -108,7 +107,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public Icon getIcon() {
-    return PythonSdkIcons.Python;
+    return PythonPsiApiIcons.Python;
   }
 
   @NotNull

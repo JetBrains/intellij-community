@@ -48,5 +48,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
+
+    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
   </extensions>
 </idea-plugin>

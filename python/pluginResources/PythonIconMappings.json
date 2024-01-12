@@ -2,13 +2,6 @@
   "icons": {
     "com": {
       "jetbrains": {
-        "python": {
-          "sdk": {
-            "expui": {
-              "python.svg": "icons/com/jetbrains/python/sdk/python.svg"
-            }
-          }
-        },
         "pythonCore": {
           "python": {
             "expui": {
