@@ -7,7 +7,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -331,7 +331,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           universal = true;
         }
         else if (problem.myCode.equals("W391")) {
-          fix = new RemoveTrailingBlankLinesFix();
+          fix = LocalQuickFixAndIntentionActionOnPsiElement.from(new RemoveTrailingBlankLinesFix(), problemElement);
           universal = true;
         }
         else if (problem.myCode.equals("E501")) {
@@ -339,7 +339,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           universal = false;
         }
         else {
-          fix = new ReformatFix();
+          fix = LocalQuickFixAndIntentionActionOnPsiElement.from(new ReformatFix(), problemElement);
           universal = true;
         }
         AnnotationBuilder builder = holder.newAnnotation(severity, message).range(problemRange);
