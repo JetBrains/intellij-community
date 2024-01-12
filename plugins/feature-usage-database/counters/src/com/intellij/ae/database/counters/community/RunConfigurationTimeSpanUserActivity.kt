@@ -100,7 +100,7 @@ internal class RunConfigurationListener : ExecutionListener {
     val id = System.identityHashCode(handler) // not the best ID out there, but it works
 
     when { // should be similar to [isAllowed]
-      env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build ", true) } -> {
+      env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build", true) } -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id)
         }
