@@ -10,6 +10,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.outputStream
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -106,8 +107,10 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   }
 
   fun saveIds(ids: List<String>) = lock.write {
-    idsPath.outputStream().buffered().use { output ->
-      mapper.writer(prettyPrinter).writeValue(output, ids)
+    withNotEnoughSpaceCheck {
+      idsPath.outputStream().buffered().use { output ->
+        mapper.writer(prettyPrinter).writeValue(output, ids)
+      }
     }
   }
 
@@ -115,15 +118,19 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     ensureActive()
     lock.write {
       ensureActive()
-      idsPath.outputStream().use { output ->
-        mapper.writer(prettyPrinter).writeValue(output, ids)
+      withNotEnoughSpaceCheck {
+        idsPath.outputStream().buffered().use { output ->
+          mapper.writer(prettyPrinter).writeValue(output, ids)
+        }
       }
       val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-      embeddingsPath.outputStream().buffered().use { output ->
-        embeddings.forEach { embedding ->
-          ensureActive()
-          embedding.values.forEach {
-            output.write(buffer.putFloat(0, it).array())
+      withNotEnoughSpaceCheck {
+        embeddingsPath.outputStream().buffered().use { output ->
+          embeddings.forEach { embedding ->
+            ensureActive()
+            embedding.values.forEach {
+              output.write(buffer.putFloat(0, it).array())
+            }
           }
         }
       }
@@ -131,6 +138,19 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   }
 
   private fun getIndexOffset(index: Int): Long = index.toLong() * embeddingSizeInBytes
+
+  private fun withNotEnoughSpaceCheck(task: () -> Unit) {
+    try {
+      task()
+    }
+    catch (e: IOException) {
+      if (e.message?.lowercase()?.contains("space") == true) {
+        idsPath.toFile().delete()
+        embeddingsPath.toFile().delete()
+      }
+      else throw e
+    }
+  }
 
   companion object {
     const val DEFAULT_DIMENSIONS = 128
