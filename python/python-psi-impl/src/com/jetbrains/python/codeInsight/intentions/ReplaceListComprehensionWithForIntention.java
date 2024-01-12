@@ -1,24 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStatementListImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAction {
-  @Override
-  @NotNull
-  public String getText() {
-    return PyPsiBundle.message("INTN.replace.list.comprehensions.with.for");
+public final class ReplaceListComprehensionWithForIntention extends PsiUpdateModCommandAction<PsiElement> {
+  ReplaceListComprehensionWithForIntention() {
+    super(PsiElement.class);
   }
 
   @Override
@@ -27,40 +26,41 @@ public final class ReplaceListComprehensionWithForIntention extends PyBaseIntent
     return PyPsiBundle.message("INTN.replace.list.comprehensions.with.for");
   }
 
+
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
     }
 
     PyListCompExpression expression =
-      PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
+      PsiTreeUtil.getTopmostParentOfType(element, PyListCompExpression.class);
     if (expression == null) {
-      return false;
+      return null;
     }
-    if (expression.getComponents().isEmpty()) return false;
+    if (expression.getComponents().isEmpty()) return null;
     PsiElement parent = expression.getParent();
     if (parent instanceof PyAssignmentStatement || parent instanceof PyPrintStatement) {
-      return true;
+      return super.getPresentation(context, element);
     }
-    return false;
+    return null;
   }
 
+
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(
-        file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(element, PyListCompExpression.class);
     if (expression == null) {
       return;
     }
     PsiElement parent = expression.getParent();
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
 
     if (parent instanceof PyAssignmentStatement) {
       final PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
       if (leftExpr == null) return;
       PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                                         leftExpr.getText() + " = []");
+                                                                             leftExpr.getText() + " = []");
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
                                                   leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
 
