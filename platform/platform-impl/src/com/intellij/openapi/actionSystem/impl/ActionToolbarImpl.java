@@ -1456,6 +1456,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
+  public boolean isReservePlaceAutoPopupIcon() {
+    return myReservePlaceAutoPopupIcon && !isInsideNavBar();
+  }
+
+  @Override
   public void setSecondaryActionsTooltip(@NotNull @NlsContexts.Tooltip String secondaryActionsTooltip) {
     mySecondaryActions.getTemplatePresentation().setText(secondaryActionsTooltip);
   }

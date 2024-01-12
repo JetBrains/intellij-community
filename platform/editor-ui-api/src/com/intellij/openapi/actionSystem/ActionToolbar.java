@@ -185,6 +185,8 @@ public interface ActionToolbar {
 
   void setReservePlaceAutoPopupIcon(boolean reserve);
 
+  boolean isReservePlaceAutoPopupIcon();
+
   void setSecondaryActionsTooltip(@NotNull @NlsContexts.Tooltip String secondaryActionsTooltip);
 
   void setSecondaryActionsShortcut(@NotNull String secondaryActionsShortcut);

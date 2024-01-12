@@ -31,8 +31,10 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
   }
 
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
-    if (toolbar.component.componentCount == 0) return JBUI.emptySize()
-    val dimension = Dimension(expandIcon.iconWidth, expandIcon.iconHeight)
+    var childrenCount = toolbar.component.componentCount
+    if (childrenCount == 0) return JBUI.emptySize()
+
+    val dimension = Dimension()
 
     if (myForceShowFirstComponent) {
       val firstChildSize = toolbar.component.components.firstOrNull { it.isVisible }?.preferredSize
@@ -45,6 +47,19 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
           dimension.height += size.height
           dimension.width = max(dimension.width, size.width)
         }
+      }
+      childrenCount--
+    }
+
+    if (childrenCount > 0) {
+      val minimumButtonSize = toolbar.minimumButtonSize
+      if (toolbar.orientation == SwingConstants.HORIZONTAL) {
+        dimension.width += expandIcon.iconWidth
+        dimension.height = max(max(dimension.height, expandIcon.iconHeight), minimumButtonSize.height)
+      }
+      else {
+        dimension.height += expandIcon.iconHeight
+        dimension.width = max(max(dimension.width, expandIcon.iconWidth), minimumButtonSize.width)
       }
     }
 
@@ -60,7 +75,7 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
 
     val res = List(componentCount) { Rectangle() }
 
-    val autoButtonSize = expandIcon.iconWidth
+    val autoButtonSize = if (toolbar.isReservePlaceAutoPopupIcon) Dimension(expandIcon.iconWidth, expandIcon.iconHeight) else Dimension()
     var full = false
 
     val widthToFit: Int = size2Fit.width - insets.left - insets.right
@@ -77,7 +92,7 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
         maxHeight = max(eachBound.height.toDouble(), maxHeight.toDouble()).toInt()
 
         if (!full) {
-          val inside = if (isLast) eachX + eachBound.width <= widthToFit else eachX + eachBound.width + autoButtonSize <= widthToFit
+          val inside = if (isLast) eachX + eachBound.width <= widthToFit else eachX + eachBound.width + autoButtonSize.width <= widthToFit
 
           if (inside) {
             val isSecondaryButton = (eachComp as? JComponent)?.getClientProperty(ActionToolbar.SECONDARY_ACTION_PROPERTY) == true
@@ -122,7 +137,7 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
         val eachBound = Rectangle(getChildPreferredSize(component, i))
         if (!full) {
           val outside = if (i < componentCount - 1) {
-            eachY + eachBound.height + autoButtonSize < heightToFit
+            eachY + eachBound.height + autoButtonSize.height < heightToFit
           }
           else {
             eachY + eachBound.height < heightToFit
