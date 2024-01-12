@@ -56,11 +56,17 @@ class EventLogListenersManager {
     }
   }
 
-  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
+  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?, isFromLocalRecorder: Boolean) {
     val listeners = subscribers[recorderId]
     for (listener in listeners) {
-      listener.onLogEvent(validatedEvent, rawEventId, rawData)
+      if (!isFromLocalRecorder || isLocalAllowed(listener)) {
+        listener.onLogEvent(validatedEvent, rawEventId, rawData)
+      }
     }
+  }
+
+  private fun isLocalAllowed(listener: StatisticsEventLogListener): Boolean {
+    return listener.javaClass.name == "com.intellij.ae.database.core.baseEvents.fus.Listener"
   }
 
   fun subscribe(subscriber: StatisticsEventLogListener, recorderId: String) {
