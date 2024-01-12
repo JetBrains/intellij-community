@@ -17,8 +17,8 @@ interface InlineCompletionEventBasedSuggestionUpdater {
   @RequiresBlockingContext
   fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult
 
-  @ApiStatus.Experimental // TODO naming?
-  fun updateWhenAwaitingVariants(event: InlineCompletionEvent): Boolean
+  @ApiStatus.Experimental
+  fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean
 
   sealed interface UpdateResult {
     class Changed(val snapshot: InlineCompletionVariant.Snapshot) : UpdateResult
@@ -39,7 +39,7 @@ interface InlineCompletionEventBasedSuggestionUpdater {
       }
     }
 
-    override fun updateWhenAwaitingVariants(event: InlineCompletionEvent): Boolean {
+    override fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean {
       return event !is InlineCompletionEvent.DocumentChange
     }
 

@@ -100,7 +100,7 @@ interface InlineCompletionProvider {
   /**
    * @see InlineCompletionOvertyper
    */
-  @Deprecated(message = "TODO") // TODO
+  @Deprecated(message = "TODO") // TODO docs
   val overtyper: InlineCompletionOvertyper
     get() = DefaultInlineCompletionOvertyper()
 

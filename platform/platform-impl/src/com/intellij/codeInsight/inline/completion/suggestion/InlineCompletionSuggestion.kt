@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 
 // TODO docs
-// TODO renaming
 interface InlineCompletionSuggestion {
 
   suspend fun getVariants(): List<InlineCompletionVariant>
@@ -19,7 +18,6 @@ interface InlineCompletionSuggestion {
   companion object
 }
 
-// TODO maybe class, not interface
 interface InlineCompletionSingleSuggestion : InlineCompletionSuggestion {
   suspend fun getVariant(): InlineCompletionVariant
 
@@ -29,7 +27,6 @@ interface InlineCompletionSingleSuggestion : InlineCompletionSuggestion {
 
   companion object {
 
-    // TODO think about signature
     fun build(
       data: UserDataHolderBase = UserDataHolderBase(),
       buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit

@@ -241,10 +241,10 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   private fun currentVariantInvalidated() {
     val newIndex = chooseNewVariantAfterInvalidation()
     if (newIndex == null) {
-      disposeCurrentVariant() // TODO workaround
+      disposeCurrentVariant() // TODO re-write this part when we drop old InlineCompletionOvertyper
     }
     else {
-      useVariant(newIndex, true) // TODO decide on force
+      useVariant(newIndex, true)
     }
   }
 
@@ -361,6 +361,12 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   }
 }
 
+internal interface InlineCompletionPresentableVariant {
+  val index: Int
+
+  val data: UserDataHolderBase
+}
+
 private class InlineCompletionPresentableVariantImpl(
   override val data: UserDataHolderBase,
   override val index: Int,
@@ -401,8 +407,6 @@ private class InlineCompletionVariantState(
     elements.clear()
     job?.cancel()
   }
-
-  // TODO nonEmpty() completed() ....
 
   fun isInvalidated(): Boolean {
     return status == Status.INVALIDATED

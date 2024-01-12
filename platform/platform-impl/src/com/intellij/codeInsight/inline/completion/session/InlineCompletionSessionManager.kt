@@ -90,7 +90,7 @@ internal abstract class InlineCompletionSessionManager {
     val event = request.event
 
     if (!session.isActive()) { // variants are not provided yet
-      return when (suggestionUpdater.updateWhenAwaitingVariants(event)) {
+      return when (suggestionUpdater.updateWhileNoVariants(event)) {
         true -> UpdateSessionResult.Succeeded
         false -> UpdateSessionResult.Invalidated
       }

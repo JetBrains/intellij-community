@@ -28,7 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * @see InlineCompletionProvider.overtyper
  * @see InlineCompletionElementManipulator
  */
-@Deprecated(message = "TODO") // TODO
+@Deprecated(message = "TODO") // TODO docs
 interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdater.Adapter {
 
   // Back compatibility
@@ -119,7 +119,7 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
 @Deprecated(
   message = "Use InlineCompletionEventBasedSuggestionUpdater.Default"
 )
-// TODO
+// TODO docs
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
 
   private val suggestionUpdater

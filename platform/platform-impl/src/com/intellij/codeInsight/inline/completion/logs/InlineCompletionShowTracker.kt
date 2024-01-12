@@ -64,7 +64,6 @@ internal class InlineCompletionShowTracker(
 
   // Usually, only typings (if providers don't override behaviour)
   fun lengthChanged(variantIndex: Int, change: Int) {
-    assert(variantStates.any { it.firstComputed }) // TODO
     variantStates[variantIndex].lengthChange += change
     assert(!showLogSent)
   }
@@ -91,10 +90,10 @@ internal class InlineCompletionShowTracker(
     showLogSent = true
     data.add(ShownEvents.LINES.with(variantStates.map { it.lines }))
     data.add(ShownEvents.LENGTH.with(variantStates.map { it.length }))
-    data.add(ShownEvents.TYPING_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
+    data.add(ShownEvents.LENGTH_CHANGE_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
     data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
     data.add(ShownEvents.FINISH_TYPE.with(finishType))
-    data.add(ShownEvents.SWITCHING_VARIANTS_TIMES.with(switchingVariantsTimes))
+    data.add(ShownEvents.EXPLICIT_SWITCHING_VARIANTS_TIMES.with(switchingVariantsTimes))
 
     if (finishType == FinishType.SELECTED || finishType == FinishType.TYPED) {
       potentiallySelectedIndex?.let {

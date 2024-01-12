@@ -6,7 +6,6 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-// TODO better names
 sealed class InlineCompletionEventType {
 
   // General flow

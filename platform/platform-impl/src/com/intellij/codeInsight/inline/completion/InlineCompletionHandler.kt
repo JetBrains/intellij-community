@@ -186,28 +186,6 @@ class InlineCompletionHandler(
           session.assignVariants(variantsComputer)
         }
       }
-
-      // TODO remove
-
-      //withContext(Dispatchers.EDT) {
-      //  variant.elements.flowOn(Dispatchers.Default)
-      //    .onEmpty {
-      //      coroutineToIndicator {
-      //        trace(InlineCompletionEventType.Empty)
-      //        hide(context, FinishType.EMPTY)
-      //      }
-      //    }
-      //    .onCompletion {
-      //      val data = variant.data
-      //      if (it == null && !data.isUserDataEmpty) {
-      //        data.copyUserDataTo(context)
-      //      }
-      //    }
-      //    .collectIndexed { index, it ->
-      //      ensureActive()
-      //      showInlineElement(it, index, offset, context)
-      //    }
-      //}
     }
 
     val exception = result.exceptionOrNull()
@@ -341,7 +319,6 @@ class InlineCompletionHandler(
               .collect { (elementIndex, element) ->
                 ensureActive()
                 traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
-                // TODO make without coroutineToIndicator
                 coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
                 allVariantsEmpty.set(false)
               }
@@ -389,7 +366,7 @@ class InlineCompletionHandler(
       }
 
       override fun dataChanged() {
-        currentVariant().data.copyUserDataTo(context) // TODO
+        currentVariant().data.copyUserDataTo(context)
       }
 
       override fun dispose() {

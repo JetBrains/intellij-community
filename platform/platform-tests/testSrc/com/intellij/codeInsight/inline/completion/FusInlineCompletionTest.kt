@@ -438,8 +438,8 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertEquals(length, computedData[ShownEvents.LENGTH])
     assertEquals(lines, computedData[ShownEvents.LINES])
     assertEquals(finishType.toString(), computedData[ShownEvents.FINISH_TYPE])
-    assertEquals(typingDuringShow, computedData[ShownEvents.TYPING_DURING_SHOW])
-    assertEquals(switchingVariants, computedData[ShownEvents.SWITCHING_VARIANTS_TIMES])
+    assertEquals(typingDuringShow, computedData[ShownEvents.LENGTH_CHANGE_DURING_SHOW])
+    assertEquals(switchingVariants, computedData[ShownEvents.EXPLICIT_SWITCHING_VARIANTS_TIMES])
     assertEquals(selectedIndex, computedData[ShownEvents.SELECTED_INDEX])
   }
 

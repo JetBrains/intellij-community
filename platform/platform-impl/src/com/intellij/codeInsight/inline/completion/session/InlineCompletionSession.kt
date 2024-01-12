@@ -17,7 +17,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
-// TODO return full info: raw indices, actual indices, what is currently shown
 // TODO docs
 class InlineCompletionSession private constructor(
   editor: Editor,
@@ -84,7 +83,7 @@ class InlineCompletionSession private constructor(
     Disposer.register(this, variantsProvider)
   }
 
-  @RequiresEdt // TODO very confusing dependencies between VariantsProvider, Session, SessionManager and Handler
+  @RequiresEdt
   internal fun update(
     updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
   ): Boolean {

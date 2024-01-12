@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 class InlineCompletionContext internal constructor(
   val editor: Editor,
   val language: Language,
-  internal var expectedStartOffset: Int // TODO it should not be here
+  internal var expectedStartOffset: Int // TODO take out to another place. It should not be here. (Tech debt)
 ) : UserDataHolderBase(), Disposable {
   private val myState = InlineCompletionState().also {
     Disposer.register(this, it)

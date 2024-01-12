@@ -82,14 +82,14 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val PROVIDER = EventFields.Class("provider")
     val LINES = EventFields.IntList("lines")
     val LENGTH = EventFields.IntList("length")
-    val TYPING_DURING_SHOW = EventFields.Int("typing_during_show") // TODO name
+    val LENGTH_CHANGE_DURING_SHOW = EventFields.Int("typing_during_show") // TODO docs
 
     val TIME_TO_SHOW = EventFields.Long("time_to_show")
     val SHOWING_TIME = EventFields.Long("showing_time")
     val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type")
 
-    val SWITCHING_VARIANTS_TIMES = EventFields.Int("switching_variants_times") // TODO name
-    val SELECTED_INDEX = EventFields.Int("selected_index") // TODO
+    val EXPLICIT_SWITCHING_VARIANTS_TIMES = EventFields.Int("explicit_switching_variants_times")
+    val SELECTED_INDEX = EventFields.Int("selected_index")
 
     enum class FinishType {
       SELECTED,
@@ -117,11 +117,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.PROVIDER,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
-    ShownEvents.TYPING_DURING_SHOW,
+    ShownEvents.LENGTH_CHANGE_DURING_SHOW,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.FINISH_TYPE,
-    ShownEvents.SWITCHING_VARIANTS_TIMES,
+    ShownEvents.EXPLICIT_SWITCHING_VARIANTS_TIMES,
     ShownEvents.SELECTED_INDEX
   )
 
