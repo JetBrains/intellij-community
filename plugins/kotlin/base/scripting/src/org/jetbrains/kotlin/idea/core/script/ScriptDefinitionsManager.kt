@@ -41,10 +41,13 @@ import kotlin.script.experimental.host.toScriptSource
  * [ScriptDefinitionsSource]s are registered via extension points either as [ScriptTemplatesProviderAdapter] or [ScriptDefinitionContributor].
  * Their order is crucial because it affects definition search algo.
  *
- * Sometimes resulting definitions order might be inaccurate and doesn't accommodate the user needs. [KotlinScriptingSettings] is a project wide
- * configuration specifying custom definitions order. Besides sorting weights the settings provide enabled/disabled indicator per definition.
+ * In rare exceptional cases, the resulting definitions' order might be inaccurate and doesn't accommodate the user's needs.
+ * The actual matching definition precedes the one that is desired. As a workaround, all methods and properties exposing definitions consider
+ * [KotlinScriptingSettings] - UI-manageable settings defining "correct" order. Explicit [reorderScriptDefinitions] method exists solely for
+ * this purpose.
  *
- * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open` methods.
+ * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open`
+ * methods.
  */
 open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
 
@@ -148,8 +151,11 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
     /**
      * Reorders all known definitions according to the [KotlinScriptingSettings.getScriptDefinitionOrder].
-     * If the order is undefined, the definitions list remains as is.
-     * @return Reordered definitions known by the moment of the method call.
+     *
+     * The method is intended for a narrow range of purposes and should not be used in regular production scenarios.
+     * Among those purposes are testing, troubleshooting and workaround for the case when some definition is preferred to a desired one.
+     *
+     *  @return Reordered definitions known by the moment of the method call.
      */
     fun reorderScriptDefinitions(): List<ScriptDefinition> {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptyList()
