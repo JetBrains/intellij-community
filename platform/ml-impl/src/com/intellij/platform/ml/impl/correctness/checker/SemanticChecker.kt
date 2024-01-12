@@ -50,3 +50,13 @@ abstract class CustomSemanticChecker : SemanticChecker {
                           prefix: String,
                           suggestion: String): List<CorrectnessError>
 }
+
+@ApiStatus.Internal
+abstract class RawSemanticChecker : SemanticChecker {
+  abstract fun findErrors(file: PsiFile,
+                          range: TextRange,
+                          originalFile: PsiFile,
+                          offset: Int,
+                          prefix: String,
+                          suggestion: String): List<CorrectnessError>
+}

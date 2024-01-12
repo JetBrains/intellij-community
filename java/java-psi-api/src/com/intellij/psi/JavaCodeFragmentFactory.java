@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,13 @@ public abstract class JavaCodeFragmentFactory {
    * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows conjunctive type.
    */
   public static final int ALLOW_INTERSECTION = 0x08;
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract JavaCodeFragment createFileCodeFragment(@NotNull String text,
+                                                          @Nullable PsiElement context,
+                                                          boolean isPhysical,
+                                                          String fileName);
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name

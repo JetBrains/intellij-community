@@ -250,6 +250,11 @@ public interface JavaElementType {
                                                                      (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
   );
 
+  IElementType FILE_FRAGMENT = new FileThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
+                                                                     (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
+                                                                     (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
+  );
+
   IElementType EXPRESSION_TEXT = new ExpressionThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
                                                                            (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(
                                                                              level),

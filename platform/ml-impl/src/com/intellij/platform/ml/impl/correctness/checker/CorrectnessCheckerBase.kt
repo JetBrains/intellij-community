@@ -28,6 +28,8 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
 
   private val customSemanticCheckers = semanticCheckers.filterIsInstance<CustomSemanticChecker>()
 
+  private val rawSemanticCheckers = semanticCheckers.filterIsInstance<RawSemanticChecker>()
+
   final override fun checkSemantic(file: PsiFile, suggestion: String, offset: Int, prefix: String): List<CorrectnessError> {
     if (semanticCheckers.isEmpty()) {
       return emptyList()
@@ -41,7 +43,8 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
       .toList()
 
     return findInspectionErrors(fullPsi, elements, file, offset, prefix, suggestion) +
-           findCustomErrors(elements, file, offset, prefix, suggestion)
+           findCustomErrors(elements, file, offset, prefix, suggestion) +
+           findRawErrors(fullPsi, range, file, offset, prefix, suggestion)
   }
 
   private fun findInspectionErrors(fullPsi: PsiFile,
@@ -72,6 +75,17 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
                                suggestion: String): List<CorrectnessError> {
     return customSemanticCheckers.flatMap { analyzer ->
       elements.flatMap { element -> analyzer.findErrors(file, element, offset, prefix, suggestion) }
+    }
+  }
+
+  private fun findRawErrors(file: PsiFile,
+                            range: TextRange,
+                            originalFile: PsiFile,
+                            offset: Int,
+                            prefix: String,
+                            suggestion: String): List<CorrectnessError> {
+    return rawSemanticCheckers.flatMap { analyzer ->
+      analyzer.findErrors(file, range, originalFile, offset, prefix, suggestion)
     }
   }
 }

@@ -134,6 +134,7 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
       JavaElementType.REFERENCE_TEXT,
       JavaElementType.TYPE_WITH_DISJUNCTIONS_TEXT,
       JavaElementType.TYPE_WITH_CONJUNCTIONS_TEXT,
+      JavaElementType.FILE_FRAGMENT,
       JavaElementType.DUMMY_ELEMENT
     );
   }

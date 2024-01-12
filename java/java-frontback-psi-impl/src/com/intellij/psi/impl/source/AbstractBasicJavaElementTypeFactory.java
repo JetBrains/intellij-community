@@ -231,6 +231,8 @@ public abstract class AbstractBasicJavaElementTypeFactory {
 
     public final IElementType TYPE_WITH_CONJUNCTIONS_TEXT;
 
+    public final IElementType FILE_FRAGMENT;
+
     public final IElementType DUMMY_ELEMENT;
 
     public JavaElementTypeContainer(IElementType ANNOTATION_PARAMETER_LIST,
@@ -345,6 +347,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
                                     IElementType REFERENCE_TEXT,
                                     IElementType TYPE_WITH_DISJUNCTIONS_TEXT,
                                     IElementType TYPE_WITH_CONJUNCTIONS_TEXT,
+                                    IElementType FILE_FRAGMENT,
                                     IElementType DUMMY_ELEMENT) {
       this.ANNOTATION_PARAMETER_LIST = ANNOTATION_PARAMETER_LIST;
       this.EXTENDS_LIST = EXTENDS_LIST;
@@ -458,6 +461,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
       this.REFERENCE_TEXT = REFERENCE_TEXT;
       this.TYPE_WITH_DISJUNCTIONS_TEXT = TYPE_WITH_DISJUNCTIONS_TEXT;
       this.TYPE_WITH_CONJUNCTIONS_TEXT = TYPE_WITH_CONJUNCTIONS_TEXT;
+      this.FILE_FRAGMENT = FILE_FRAGMENT;
       this.DUMMY_ELEMENT = DUMMY_ELEMENT;
     }
   }
