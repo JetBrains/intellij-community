@@ -428,9 +428,9 @@
       "since": "2023.2"
     },
     {
-      "key": "Editor.Notification.borderInsetsWithoutStatus",
+      "key": "Editor.Notification.WithoutStatus.borderInsets",
       "description": "Editor notification banner insets without a status icon",
-      "since": "2023.2"
+      "since": "2024.1"
     },
     {
       "key": "Editor.SearchField.borderInsets",
@@ -535,19 +535,19 @@
       "since": "2019.2"
     },
     {
-      "key": "EditorTabs.tabContentInsetsActionsLeft",
+      "key": "EditorTabs.tabContentActionsLeftInsets",
       "description": "Editor tab label insets when the tab actions buttons are on the left",
-      "since": "2023.2"
+      "since": "2024.1"
     },
     {
-      "key": "EditorTabs.tabContentInsetsActionsRight",
+      "key": "EditorTabs.tabContentActionsRightInsets",
       "description": "Editor tab label insets when the tab actions buttons are on the right",
-      "since": "2023.2"
+      "since": "2024.1"
     },
     {
-      "key": "EditorTabs.tabContentInsetsActionsNone",
+      "key": "EditorTabs.tabContentActionsNoneInsets",
       "description": "Editor tab label insets when there are no action buttons",
-      "since": "2023.2"
+      "since": "2024.1"
     },
     {
       "key": "EditorTabs.tabInsets",

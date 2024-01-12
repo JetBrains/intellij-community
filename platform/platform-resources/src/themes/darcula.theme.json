@@ -141,16 +141,28 @@
     "CompletionPopup" :{
       "Advertiser": {
         "background": "#45494a",
-        "foreground": "#808080"
+        "foreground": "#808080",
+        "borderInsets.compact": "2,12,2,8"
       },
       "matchForeground": "#589DF6",
       "selectionBackground": "#113A5C",
       "selectionInactiveBackground": "#515457",
+      "selectionInnerInsets.compact": "0,2,0,2",
       "foreground": "#bbbbbb",
       "nonFocusedState": true
     },
 
-    "ComplexPopup.Header.background" : "#3c3f41",
+    "FindPopup": {
+      "scopesPanelInsets.compact": "1,20,1,20",
+      "bottomPanelInsets.compact": "1,18,1,18"
+    },
+
+    "ComplexPopup": {
+      "Header.background" : "#3c3f41",
+      "Header.insets.compact": "10,20,8,15",
+      "TextField.inputInsets.compact": "4,2,4,2",
+      "innerBorderInsets.compact": "2,3,2,3"
+    },
 
     "Component": {
       "arc": 5,
@@ -197,10 +209,19 @@
 
     "Debugger.EvaluateExpression.background": "#45494A",
 
+    "DebuggerTabs": {
+      "tabHeight.compact": 32,
+      "fontSizeOffset.compact": -1
+    },
+
     "Editor": {
       "background": "#282828",
       "foreground": "#A0A0A0",
-      "SearchField.background" : "#45494a"
+      "SearchField.background" : "#45494a",
+      "SearchField.borderInsets.compact": "3,10,3,8",
+      "SearchToolbar.borderInsets.compact": "0,0,0,0",
+      "ReplaceToolbar.borderInsets.compact": "1,0,1,0",
+      "SearchReplaceModePanel.borderInsets.compact": "3,3,3,3"
     },
 
     "EditorPane": {
@@ -211,12 +232,24 @@
 
     "EditorTabs": {
       "background": "#3c3f41",
-      "underlinedTabBackground": "#4E5254"
+      "underlinedTabBackground": "#4E5254",
+      "tabInsets.compact": "-2,4,-2,4",
+      "verticalTabInsets.compact": "2,8,1,6",
+      "tabContentActionsRightInsets.compact": "0,0,0,0",
+      "tabContentActionsLeftInsets.compact": "0,0,0,0",
+      "tabContentActionsNoneInsets.compact": "0,0,0,0",
+      "fontSizeOffset.compact": -1,
+      "underlineHeight.compact": 3
     },
 
     "Editor.ToolTip" : {
       "background": "#4b4d4d",
       "foreground": "#bfbfbf"
+    },
+
+    "Editor.Notification" : {
+      "borderInsets.compact": "6,12,6,12",
+      "WithoutStatus.borderInsets.compact": "6,16,6,16"
     },
 
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
@@ -299,6 +332,7 @@
     "List": {
       "focusCellHighlightBorder": "1,1,1,1",
       "rowHeight": 20,
+      "rowHeight.compact": 22,
       "UI": "com.intellij.ui.components.WideSelectionListUI"
     },
 
@@ -341,6 +375,7 @@
     },
 
     "NavBar.borderColor": "#515151",
+    "NavBar.Breadcrumbs.itemInsets.compact": "2,2,2,2",
 
     "NewClass": {
       "Panel.background": "#45494a",
@@ -391,10 +426,12 @@
       "background": "#3C3F41",
       "Header.activeBackground": "#4a4e52",
       "Header.inactiveBackground": "#434649",
+      "Header.insets.compact": "8,10,8,10",
       "Toolbar.background": "#3c3f41",
       "Toolbar.borderColor": "#4a4e52",
       "borderColor": "#616161",
-      "inactiveBorderColor": "#565656"
+      "inactiveBorderColor": "#565656",
+      "Advertiser.borderInsets.compact": "4,20,5,20"
     },
 
     "PopupMenu": {
@@ -475,6 +512,7 @@
     "SearchEverywhere": {
       "Advertiser.background": "#45494a",
       "Advertiser.foreground": "#808080",
+      "Advertiser.borderInsets.compact": "4,20,5,20",
       "Header.background": "#45494a",
       "List.separatorColor": "#505050",
       "SearchField.background": "#3c3f41",
@@ -528,7 +566,10 @@
       "background": "panel",
       "LightEditBackground": "#2f475e",
       "borderColor": "#464646",
-      "hoverBackground": "#4c5052"
+      "hoverBackground": "#4c5052",
+      "Widget.widgetInsets.compact": "4,8,3,8",
+      "Breadcrumbs.navBarInsets.compact": "1,0,1,4",
+      "fontSizeOffset.compact": -1
     },
 
     "TabbedPane": {
@@ -543,6 +584,7 @@
       "tabAreaInsets": "0,0,0,0",
       "tabFillStyle": "underline",
       "tabHeight": 32,
+      "tabHeight.compact": 36,
       "tabInsets": "0,12,0,12",
       "tabSelectionHeight": 3,
       "tabsOverlapBorder": true,
@@ -619,6 +661,8 @@
     "ToolWindow": {
       "Header.background": "#3B4754",
       "Header.inactiveBackground": "#3C3F41",
+      "Header.height.compact": 32,
+      "Header.fontSizeOffset.compact": -1,
       "HeaderCloseButton.background": "#3F4146",
       "HeaderTab.selectedBackground": "#313B45",
       "HeaderTab.selectedInactiveBackground": "#343638"
@@ -638,6 +682,7 @@
       "forceFocusedSelectionForeground": true,
       "rightChildIndent": 11,
       "rowHeight": 20,
+      "rowHeight.compact": 22,
       "repaintWholeRow": true,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
     },
@@ -665,11 +710,20 @@
       "Log.Commit.currentBranchBackground": "#3F4749",
       "Log.Commit.Reference.foreground": "#909090",
       "Log.Commit.unmatchedForeground": "#606060",
+      "Log.Commit.rowHeight.compact": 24,
+      "Log.Commit.verticalPadding.compact": 4,
 
       "MarkerPopup.Toolbar.background": "panel",
 
       "RefLabel.backgroundBase": "white",
       "RefLabel.foreground": "#909090"
+    },
+
+    "CombinedDiff": {
+      "mainToolbarInsets.compact": "1,10,1,10",
+      "fileToolbarInsets.compact": "7,10,7,10",
+      "gapBetweenBlocks.compact": 4,
+      "leftRightBlockInset.compact": 6
     },
 
     "Tag": {
@@ -690,7 +744,8 @@
 
     "TitlePane": {
       "background": "panel",
-      "Button.preferredSize": "47,28"
+      "Button.preferredSize": "47,28",
+      "Button.preferredSize.compact": "44,32"
     },
 
     "activeCaption": "#434E60",
@@ -715,6 +770,17 @@
 
     "Toolbar.Floating.background": "#454A4D",
 
+    "ToolBar": {
+      "horizontalToolbarInsets.compact": "2,4,2,4",
+      "verticalToolbarInsets.compact": "2,4,2,4"
+    },
+
+    "StripeToolbar.Button": {
+      "size.compact": "32,32",
+      "iconSize.compact": 16,
+      "iconPadding.compact": "4,4,4,4"
+    },
+
     "Tooltip": {
       "Learning": {
         "background": "#0E62CF",
@@ -732,6 +798,7 @@
     "MainToolbar": {
       "foreground": "#BBBBBB",
       "background": "#3c3f41",
+      "fontSizeOffset.compact": -1,
       "Icon": {
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
@@ -741,7 +808,12 @@
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
-      }
+      },
+      "Button": {
+        "size.compact": "26,26",
+        "iconSize.compact": 16
+      },
+      "Icon.insets.compact": "3,4,3,4"
     },
 
     "Plugins": {
@@ -785,7 +857,12 @@
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028"
+      "pressedBackground": "#00000028",
+      "toolbarHeight.compact": 26,
+      "actionButtonWidth.compact": 26,
+      "toolbarBorderDirectionalGap.compact": 4,
+      "toolbarBorderHeight.compact": 3,
+      "configurationSelectorFontSizeOffset.compact": -1
     },
 
     "MainWindow.FullScreeControl.Background": "#575A5C",

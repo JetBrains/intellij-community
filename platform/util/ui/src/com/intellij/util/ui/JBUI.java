@@ -679,15 +679,15 @@ public final class JBUI {
       }
 
       public static String tabContentInsetsActionsRightKey() {
-        return "EditorTabs.tabContentInsetsActionsRight";
+        return "EditorTabs.tabContentActionsRightInsets";
       }
 
       public static String tabContentInsetsActionsLeftKey() {
-        return "EditorTabs.tabContentInsetsActionsLeft";
+        return "EditorTabs.tabContentActionsLeftInsets";
       }
 
       public static String tabContentInsetsActionsNoneKey() {
-        return "EditorTabs.tabContentInsetsActionsNone";
+        return "EditorTabs.tabContentActionsNoneInsets";
       }
 
       public static @NotNull Color borderColor() {
@@ -823,7 +823,7 @@ public final class JBUI {
         }
 
         static @NotNull String borderInsetsKeyWithoutStatus() {
-          return "Editor.Notification.borderInsetsWithoutStatus";
+          return "Editor.Notification.WithoutStatus.borderInsets";
         }
       }
     }
