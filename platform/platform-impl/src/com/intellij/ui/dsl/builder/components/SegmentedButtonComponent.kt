@@ -39,6 +39,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import javax.swing.JPanel
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 private const val PLACE = "SegmentedButton"
@@ -297,8 +298,9 @@ private class SegmentedButton<T>(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2,
-                     preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2)
+    val height = max(preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2,
+                     JBUI.CurrentTheme.Button.minimumSize().height - JBUIScale.scale(2))
+    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2, height)
   }
 
   override fun actionPerformed(event: AnActionEvent) {
