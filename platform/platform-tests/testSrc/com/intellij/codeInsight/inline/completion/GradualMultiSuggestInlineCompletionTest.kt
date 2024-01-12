@@ -10,9 +10,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(JUnit4::class)
 internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCase() {
@@ -301,6 +303,7 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
   @Test
   fun `test further empty elements do not switch variants`() = myFixture.testInlineCompletion {
     init(PlainTextFileType.INSTANCE)
+    val midpointSync = AtomicBoolean(false) // to avoid flakiness
     registerSuggestion {
       repeat(2) {
         variant { _ -> emit(InlineCompletionGrayTextElement("Some variant $it")) }
@@ -309,7 +312,10 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
         variant { }
       }
       repeat(2) {
-        variant { _ -> emit(InlineCompletionGrayTextElement("Another variant $it")) }
+        variant { _ ->
+          midpointSync.set(true)
+          emit(InlineCompletionGrayTextElement("Another variant $it"))
+        }
       }
       repeat(3) {
         variant { }
@@ -325,6 +331,10 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     assertInlineRender("Some variant 0")
     prevVariant()
     assertInlineRender("Some variant 1")
+
+    while (!midpointSync.get()) {
+      yield()
+    }
 
     assertSessionSnapshot(
       nonEmptyVariants = 2..7,
@@ -499,5 +509,4 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
   }
 
   // TODO deprecated methods
-  // TODO test UserDataHolder
 }

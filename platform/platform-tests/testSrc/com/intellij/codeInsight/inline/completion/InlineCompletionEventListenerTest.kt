@@ -95,7 +95,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     )
   }
 
-  @Test // TODO flaky
+  @Test
   fun `test switching variants`() = testListener {
     init(PlainTextFileType.INSTANCE, "<caret>three")
     registerSuggestion {
@@ -108,9 +108,10 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       variant { }
       variant {
         emit(InlineCompletionGrayTextElement("1"))
+        emit(InlineCompletionSkipTextElement("2"))
       }
       variant {
-        emit(InlineCompletionSkipTextElement("2"))
+        emit(InlineCompletionSkipTextElement("3"))
       }
       variant { }
       variant { }
@@ -128,8 +129,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       variantComputed(1),
       empty(2),
       variantComputed(2),
-      computed(3, "1", 0),
-      variantComputed(3)
+      computed(3, "1", 0)
     )
 
     nextVariant()
@@ -147,11 +147,13 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       variantSwitched(1, 3, true),
       show(3, "1", 0)
     )
-    provider.computeNextElement()
+    provider.computeNextElements(2)
     delay()
 
     expectEvents(
-      computed(4, "2", 0),
+      computed(3, "2", 1), show(3, "2", 1),
+      variantComputed(3),
+      computed(4, "3", 0),
       variantComputed(4),
       empty(5),
       variantComputed(5),
@@ -163,7 +165,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     nextVariant()
     expectEvents(
       variantSwitched(3, 4, true),
-      show(4, "2", 0)
+      show(4, "3", 0)
     )
     nextVariant()
     expectEvents(
