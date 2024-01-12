@@ -5,7 +5,8 @@ if ([string]::IsNullOrEmpty($Env:INTELLIJ_TERMINAL_COMMAND_BLOCKS)) {
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Global:__JetBrainsIntellijEncode([string]$value) {
-  -Join ([System.Text.Encoding]::UTF8.GetBytes($value) | ForEach-Object ToString X2)
+  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($value)
+  return [System.BitConverter]::ToString($Bytes).Replace("-", "")
 }
 
 function Global:__JetBrainsIntellijOSC([string]$body) {
