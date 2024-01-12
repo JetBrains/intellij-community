@@ -241,12 +241,13 @@ fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean
   return true
 }
 
-internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
-                                                root: RootEntry,
-                                                startPath: String,
-                                                changeSets: Set<Long>,
-                                                before: Boolean,
-                                                processor: (Long, String?) -> Boolean) {
+@ApiStatus.Internal
+fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
+                                       root: RootEntry,
+                                       startPath: String,
+                                       changeSets: Set<Long>,
+                                       before: Boolean,
+                                       processor: (Long, String?) -> Boolean) {
   val processContents = fun(changeSetId: Long, path: String): Boolean {
     if (!changeSets.contains(changeSetId)) return true
     val entry = root.findEntry(path)
