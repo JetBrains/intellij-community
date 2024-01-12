@@ -94,6 +94,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("forOnMap.kt")
         public void testForOnMap() throws Exception {
             performTest();
@@ -141,6 +146,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("string.kt")
         public void testString() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
             performTest();
         }
     }

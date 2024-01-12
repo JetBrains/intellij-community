@@ -121,6 +121,7 @@ internal class KotlinForLoopReverseNumbersPostfixTemplate(
 private val INT_CLASS_ID = ClassId.fromString("kotlin/Int")
 
 private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
+    ClassId.fromString("kotlin/Array"),
     ClassId.fromString("kotlin/collections/Iterable"),
     ClassId.fromString("kotlin/collections/Map"),
     ClassId.fromString("kotlin/sequences/Sequence"),
