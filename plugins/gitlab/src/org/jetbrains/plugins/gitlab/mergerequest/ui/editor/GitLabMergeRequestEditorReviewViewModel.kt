@@ -136,7 +136,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       val diffData = parsedChanges.patchesByChange[change]!!
 
       val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
-        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, change, diffData, discussions,
+        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, mergeRequest, change, diffData, discussions,
                                                                  discussionsViewOption, avatarIconsProvider)
         launchNow {
           vm.showDiffRequests.collect {

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -22,9 +23,8 @@ import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.util.Disposer
 import icons.CollaborationToolsIcons
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -34,26 +34,40 @@ import kotlin.properties.Delegates.observable
 /**
  * Draws and handles review controls in gutter
  */
-internal class GitLabMergeRequestReviewControlsGutterRenderer
+@ApiStatus.Internal
+class CodeReviewEditorGutterControlsRenderer
 private constructor(cs: CoroutineScope,
-                    nonCommentableRanges: StateFlow<List<LineRange>>,
-                    private val editor: EditorEx,
-                    private val requestNewDiscussion: (lineIdx: Int) -> Unit)
+                    private val model: CodeReviewEditorGutterControlsModel,
+                    private val editor: EditorEx)
   : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer {
+
+  private var hoveredLogicalLine: Int? = null
+  private var columnHovered: Boolean = false
+
+  private var state: CodeReviewEditorGutterControlsModel.ControlsState? by observable(null) { _, _, newState ->
+    hoveredLogicalLine = null
+    columnHovered = false
+    if (newState != null) {
+      repaintColumn(editor)
+    }
+  }
 
   private val hoverHandler = HoverHandler(editor)
 
   init {
-    cs.launchNow {
-      val areaDisposable = Disposer.newDisposable()
-      editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
-      editor.addEditorMouseListener(hoverHandler)
-      editor.addEditorMouseMotionListener(hoverHandler)
+    val areaDisposable = Disposer.newDisposable()
+    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
+    editor.addEditorMouseListener(hoverHandler)
+    editor.addEditorMouseMotionListener(hoverHandler)
 
+    cs.launchNow {
+      model.gutterControlsState.collect {
+        state = it
+      }
+    }
+    cs.launchNow {
       try {
-        nonCommentableRanges.collect {
-          hoverHandler.nonCommentableRanges = it
-        }
+        awaitCancellation()
       }
       finally {
         editor.removeEditorMouseListener(hoverHandler)
@@ -72,15 +86,15 @@ private constructor(cs: CoroutineScope,
    * Paint comment icons on each line containing discussion renderers
    */
   private fun paintCommentIcons(editor: Editor, g: Graphics, r: Rectangle) {
-    editor.inlayModel
-      .getBlockElementsInRange(0, editor.document.textLength, GitLabMergeRequestDiscussionInlayRenderer::class.java)
-      .map { editor.document.getLineNumber(it.offset) }.forEach { lineIdx ->
+    (state ?: return).linesWithComments.forEach { lineIdx ->
+      if (lineIdx in 0 until editor.document.lineCount) {
         val yRange = EditorUtil.logicalLineToYRange(editor, lineIdx).first
         val lineCenter = yRange.intervalStart() + editor.lineHeight / 2
         val icon = CollaborationToolsIcons.Comment
         val y = lineCenter - icon.iconWidth / 2
         icon.paintIcon(null, g, r.x, y)
       }
+    }
   }
 
   /**
@@ -147,12 +161,12 @@ private constructor(cs: CoroutineScope,
 
   private fun unfoldOrRequestNewDiscussion(lineData: LogicalLineData) {
     val foldedRegion = lineData.foldedRegion
-    if (foldedRegion != null) foldedRegion.unfold() else requestNewDiscussion(lineData.logicalLine)
+    if (foldedRegion != null) foldedRegion.unfold() else model.requestNewComment(lineData.logicalLine)
   }
 
   private fun unfoldOrToggle(lineData: LogicalLineData) {
     val foldedRegion = lineData.foldedRegion
-    if (foldedRegion != null) foldedRegion.unfold() else toggleDiscussions(lineData.discussionRenderers)
+    if (foldedRegion != null) foldedRegion.unfold() else model.toggleComments(lineData.logicalLine)
   }
 
   private fun FoldRegion.unfold() {
@@ -170,21 +184,76 @@ private constructor(cs: CoroutineScope,
     }
   }
 
-  private fun toggleDiscussions(renderers: List<GitLabMergeRequestDiscussionInlayRenderer>) {
-    // probably better to move this to VM, but it's tricky
-    val hideAll = renderers.any { it.isVisible }
-    renderers.forEach {
-      it.isVisible = !hideAll
+  override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.LEFT
+
+  /**
+   * Handles the hover state of the rendered icons
+   * Use [calcHoveredLineData] to acquire a current state
+   */
+  private inner class HoverHandler(private val editor: EditorEx) : EditorMouseListener, EditorMouseMotionListener {
+    fun calcHoveredLineData(): LogicalLineData? {
+      val logicalLine = hoveredLogicalLine?.takeIf { it in 0 until editor.document.lineCount } ?: return null
+      val state = state ?: return null
+      return LogicalLineData(editor, state, logicalLine, columnHovered)
+    }
+
+    override fun mouseMoved(e: EditorMouseEvent) {
+      val line = e.logicalPosition.line.coerceAtLeast(0)
+      val prevLine = if (line != hoveredLogicalLine) hoveredLogicalLine else null
+      if (line in 0 until DiffUtil.getLineCount(editor.document)) {
+        hoveredLogicalLine = line
+      }
+      else {
+        hoveredLogicalLine = null
+      }
+      columnHovered = isIconColumnHovered(editor, e.mouseEvent)
+      if (prevLine != null) {
+        repaintColumn(editor, prevLine)
+      }
+      repaintColumn(editor, e.logicalPosition.line)
+    }
+
+    override fun mouseExited(e: EditorMouseEvent) {
+      repaintColumn(editor, hoveredLogicalLine)
+      hoveredLogicalLine = null
+      columnHovered = false
     }
   }
-
-  override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.LEFT
 
   companion object {
     private const val ICON_AREA_WIDTH = 16
 
+    private fun repaintColumn(editor: EditorEx, line: Int? = null) {
+      val xRange = getIconColumnXRange(editor)
+      val yRange = if (line != null && line > 0) {
+        val y = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
+        y..y + editor.lineHeight
+      }
+      else {
+        0..editor.gutterComponentEx.height
+      }
+      editor.gutterComponentEx.repaint(xRange.first, yRange.first, xRange.last - xRange.first, yRange.last)
+    }
+
+    private fun getIconColumnXRange(editor: EditorEx): IntRange {
+      val iconStart = editor.gutterComponentEx.lineMarkerAreaOffset
+      val iconEnd = iconStart + ICON_AREA_WIDTH
+      return iconStart until iconEnd
+    }
+
+    private fun isIconColumnHovered(editor: EditorEx, e: MouseEvent): Boolean {
+      if (e.component !== editor.gutter) return false
+      val x = convertX(editor, e.x)
+      return x in getIconColumnXRange(editor)
+    }
+
+    private fun convertX(editor: EditorEx, x: Int): Int {
+      if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) return x
+      return editor.gutterComponentEx.width - x
+    }
+
     private class LogicalLineData(
-      editor: EditorEx, nonCommentableRanges: List<LineRange>, val logicalLine: Int, val columnHovered: Boolean
+      editor: EditorEx, state: CodeReviewEditorGutterControlsModel.ControlsState, val logicalLine: Int, val columnHovered: Boolean
     ) {
       private val lineStartOffset = editor.document.getLineStartOffset(logicalLine)
       private val lineEndOffset = editor.document.getLineEndOffset(logicalLine)
@@ -211,110 +280,32 @@ private constructor(cs: CoroutineScope,
         yRange.first..yRange.last + inlaysBelowHeight.coerceAtLeast(0)
       }
 
-      val discussionRenderers: List<GitLabMergeRequestDiscussionInlayRenderer> by lazy {
-        val rangeEnd = foldedRegion?.endOffset ?: lineEndOffset
-        editor.inlayModel.getBlockElementsInRange(lineStartOffset, rangeEnd).mapNotNull {
-          it.renderer as? GitLabMergeRequestDiscussionInlayRenderer
-        }
+      val hasComments: Boolean by lazy {
+        state.linesWithComments.contains(logicalLine)
       }
-
-      val hasComments: Boolean by lazy(discussionRenderers::isNotEmpty)
 
       val commentable: Boolean by lazy {
-        val inCommentableRange = nonCommentableRanges.none { logicalLine in it.start until it.end }
-        inCommentableRange
+        state.isLineCommentable(logicalLine)
       }
     }
 
-    /**
-     * Handles the hover state of the rendered icons
-     * Use [calcHoveredLineData] to acquire a current state
-     */
-    private class HoverHandler(private val editor: EditorEx) : EditorMouseListener, EditorMouseMotionListener {
-      private var hoveredLogicalLine: Int? = null
-      private var columnHovered: Boolean = false
-
-      var nonCommentableRanges: List<LineRange> by observable(emptyList()) { _, _, _ ->
-        hoveredLogicalLine = null
-        columnHovered = false
-        repaintColumn()
-      }
-
-      fun calcHoveredLineData(): LogicalLineData? {
-        val logicalLine = hoveredLogicalLine?.takeIf { it in 0 until editor.document.lineCount } ?: return null
-        return LogicalLineData(editor, nonCommentableRanges, logicalLine, columnHovered)
-      }
-
-      override fun mouseMoved(e: EditorMouseEvent) {
-        val line = e.logicalPosition.line.coerceAtLeast(0)
-        val prevLine = if (line != hoveredLogicalLine) hoveredLogicalLine else null
-        if (line in 0 until DiffUtil.getLineCount(editor.document)) {
-          hoveredLogicalLine = line
+    fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterControlsModel, editor: EditorEx) {
+      cs.launchNow(Dispatchers.Main) {
+        val renderer = CodeReviewEditorGutterControlsRenderer(this, model, editor)
+        val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
+                                                                 DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                                 HighlighterTargetArea.LINES_IN_RANGE).apply {
+          setGreedyToLeft(true)
+          setGreedyToRight(true)
+          setLineMarkerRenderer(renderer)
         }
-        else {
-          hoveredLogicalLine = null
-        }
-        columnHovered = isIconColumnHovered(editor, e.mouseEvent)
-        if (prevLine != null) {
-          repaintColumn(prevLine)
-        }
-        repaintColumn(e.logicalPosition.line)
-      }
-
-      override fun mouseExited(e: EditorMouseEvent) {
-        repaintColumn(hoveredLogicalLine)
-        hoveredLogicalLine = null
-        columnHovered = false
-      }
-
-      private fun repaintColumn(line: Int? = null) {
-        val xRange = getIconColumnXRange(editor)
-        val yRange = if (line != null && line > 0) {
-          val y = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
-          y..y + editor.lineHeight
-        }
-        else {
-          0..editor.gutterComponentEx.height
-        }
-        editor.gutterComponentEx.repaint(xRange.first, yRange.first, xRange.last - xRange.first, yRange.last)
-      }
-
-      private fun isIconColumnHovered(editor: EditorEx, e: MouseEvent): Boolean {
-        if (e.component !== editor.gutter) return false
-        val x = convertX(editor, e.x)
-        return x in getIconColumnXRange(editor)
-      }
-
-      private fun getIconColumnXRange(editor: EditorEx): IntRange {
-        val iconStart = editor.gutterComponentEx.lineMarkerAreaOffset
-        val iconEnd = iconStart + ICON_AREA_WIDTH
-        return iconStart until iconEnd
-      }
-
-      private fun convertX(editor: EditorEx, x: Int): Int {
-        if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) return x
-        return editor.gutterComponentEx.width - x
-      }
-    }
-
-    fun setupIn(cs: CoroutineScope,
-                nonCommentableRanges: StateFlow<List<LineRange>>,
-                editor: EditorEx,
-                requestNewDiscussion: (lineIdx: Int) -> Unit) {
-      val renderer = GitLabMergeRequestReviewControlsGutterRenderer(cs, nonCommentableRanges, editor, requestNewDiscussion)
-      val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
-                                                               DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                               HighlighterTargetArea.LINES_IN_RANGE).apply {
-        setGreedyToLeft(true)
-        setGreedyToRight(true)
-        setLineMarkerRenderer(renderer)
-      }
-      cs.launchNow {
         try {
           awaitCancellation()
         }
         finally {
-          highlighter.dispose()
+          withContext(NonCancellable + ModalityState.any().asContextElement()) {
+            highlighter.dispose()
+          }
         }
       }
     }

@@ -4,23 +4,27 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.diff
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.diff.util.Side
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestEditorCommentsUtil
+import org.jetbrains.plugins.gitlab.mergerequest.util.toLocations
 
 interface GitLabMergeRequestDiffReviewViewModel {
   val isCumulativeChange: Boolean
 
-  val canComment: Flow<Boolean>
-
   val discussions: Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
   val draftDiscussions: Flow<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>
   val newDiscussions: Flow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>>
+  val locationsWithDiscussions: Flow<Set<DiffLineLocation>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 
@@ -29,6 +33,7 @@ interface GitLabMergeRequestDiffReviewViewModel {
 }
 
 internal class GitLabMergeRequestDiffReviewViewModelImpl(
+  mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
@@ -45,8 +50,11 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
     discussionsContainer.draftNotes.map {
       it.map { GitLabMergeRequestDiffDraftNoteViewModel(it, diffData, discussionsViewOption) }
     }
+  override val locationsWithDiscussions: Flow<Set<DiffLineLocation>> = GitLabMergeRequestEditorCommentsUtil
+    .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {
+      it.mapToLocation(diffData, Side.LEFT)
+    }
 
-  override val canComment: Flow<Boolean> = discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
   override val newDiscussions: Flow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>> = discussionsContainer.newDiscussions.map {
     it.mapNotNull { (position, vm) ->
       val location = position.mapToLocation(diffData) ?: return@mapNotNull null

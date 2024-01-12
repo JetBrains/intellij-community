@@ -23,9 +23,13 @@ import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestEditorCommentsUtil
+import org.jetbrains.plugins.gitlab.mergerequest.util.toLines
 
 interface GitLabMergeRequestEditorReviewFileViewModel {
   val originalContent: StateFlow<ComputedResult<CharSequence>?>
@@ -33,6 +37,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 
   val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
   val draftNotes: StateFlow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>
+  val linesWithDiscussions: StateFlow<Set<Int>>
 
   val canComment: StateFlow<Boolean>
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
@@ -50,6 +55,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
+  mergeRequest: GitLabMergeRequest,
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
@@ -80,6 +86,11 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     discussionsContainer.draftNotes.map {
       it.map { GitLabMergeRequestEditorDraftNoteViewModel(it, diffData, discussionsViewOption) }
     }.stateInNow(cs, emptyList())
+  override val linesWithDiscussions: StateFlow<Set<Int>> =
+    GitLabMergeRequestEditorCommentsUtil
+      .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
+        it.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
+      }.stateInNow(cs, emptySet())
 
   override val canComment: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
   override val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =

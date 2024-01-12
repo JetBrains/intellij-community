@@ -24,6 +24,9 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 interface GitLabMergeRequestDiscussionsContainer {
+  val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>>
+  val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>>
+
   val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>>
   val systemNotes: Flow<Result<Collection<GitLabNote>>>
   val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>>
@@ -69,7 +72,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
-  private val nonEmptyDiscussionsData: Flow<Result<List<GitLabDiscussionDTO>>> =
+  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
     reloadRequests.transformLatest { collectNonEmptyDiscussions() }.modelFlow(cs, LOG)
 
   private suspend fun FlowCollector<Result<List<GitLabDiscussionDTO>>>.collectNonEmptyDiscussions() {
@@ -165,7 +168,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private val draftNotesEvents = MutableSharedFlow<GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>>()
 
-  private val draftNotesData = reloadRequests.transformLatest { collectDraftNotes() }.modelFlow(cs, LOG)
+  override val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>> =
+    reloadRequests.transformLatest { collectDraftNotes() }.modelFlow(cs, LOG)
 
   private suspend fun FlowCollector<Result<List<GitLabMergeRequestDraftNoteRestDTO>>>.collectDraftNotes() {
     runCatching {
