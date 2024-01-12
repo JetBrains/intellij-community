@@ -78,7 +78,7 @@ internal class ProjectTypeList(
   }
 
   fun addLanguageGeneratorItem(item: LanguageGeneratorItem) {
-    LOG.debug("Language generator item: $item")
+    LOG.debug("Language generator added: $item")
     val index = model.addLanguageGeneratorItem(item)
     list.selectedIndex = index
   }
@@ -285,39 +285,46 @@ internal class ProjectTypeList(
     }
 
     fun setLanguageGeneratorItems(items: List<LanguageGeneratorItem>) {
-      languageGeneratorItems.clear()
-      languageGeneratorItems.addAll(items)
-      fireContentsChanged(this, 0, languageGeneratorItems.size - 1)
+      setItems(languageGeneratorItems, 0, items)
     }
 
     fun addLanguageGeneratorItem(item: LanguageGeneratorItem): Int {
-      var index = languageGeneratorItems.indexOfFirst { item.wizard.ordinal <= it.wizard.ordinal }
-      if (index < 0) index = 0
-      languageGeneratorItems.add(index, item)
-      fireIntervalAdded(this, index, index)
-      return index
+      return addItem(languageGeneratorItems, 0, item)
     }
 
     fun removeLanguageGeneratorItem(languageName: String) {
-      val index = languageGeneratorItems.indexOfFirst { languageName == it.wizard.name }
-      if (index > 0) {
-        languageGeneratorItems.removeAt(index)
-        fireIntervalRemoved(this, index, index)
-      }
+      removeItem(languageGeneratorItems, 0, languageName)
     }
 
     fun setTemplateGroupItems(items: List<TemplateGroupItem>) {
-      templateGroupItems.clear()
-      templateGroupItems.addAll(items)
-      val prefixSize = languageGeneratorItems.size
-      fireContentsChanged(this, prefixSize, prefixSize + templateGroupItems.size - 1)
+      setItems(templateGroupItems, languageGeneratorItems.size, items)
     }
 
     fun setUserTemplateGroupItems(items: List<UserTemplateGroupItem>) {
-      userTemplateGroupItems.clear()
-      userTemplateGroupItems.addAll(items)
-      val prefixSize = languageGeneratorItems.size + templateGroupItems.size
-      fireContentsChanged(this, prefixSize, prefixSize + userTemplateGroupItems.size - 1)
+      setItems(userTemplateGroupItems, languageGeneratorItems.size + templateGroupItems.size, items)
+    }
+
+    private fun <T : TemplateGroupItem> setItems(collection: MutableList<T>, offset: Int, items: List<T>) {
+      collection.clear()
+      collection.addAll(items)
+      collection.sortBy { it.group }
+      fireContentsChanged(this, offset, offset + collection.size - 1)
+    }
+
+    private fun <T : TemplateGroupItem> addItem(collection: MutableList<T>, offset: Int, item: T): Int {
+      var index = collection.indexOfFirst { it.group <= item.group }
+      if (index < 0) index = 0
+      collection.add(index, item)
+      fireIntervalAdded(this, offset + index, offset + index)
+      return offset + index
+    }
+
+    private fun <T : TemplateGroupItem> removeItem(collection: MutableList<T>, offset: Int, name: String) {
+      val index = collection.indexOfFirst { name == it.group.name }
+      if (index > 0) {
+        collection.removeAt(index)
+        fireIntervalRemoved(this, offset + index, offset + index)
+      }
     }
   }
 
