@@ -22,9 +22,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import kotlin.text.StringsKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -38,7 +38,10 @@ import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyMap;
 
-@ApiStatus.Experimental
+/**
+ * Checks the presence of JVM library classes in {@link Module} and {@link Project} dependencies.
+ * Should be used for short-circuit checks to enable/disable IDE functionality depending on relevant libraries.
+ */
 public final class JavaLibraryUtil {
 
   private JavaLibraryUtil() {
@@ -71,6 +74,7 @@ public final class JavaLibraryUtil {
    * Checks if the passed library class is available in the project. Should be used only with constant class names from a known library.
    * Returns false from dumb mode or if the project is already disposed.
    */
+  @RequiresReadLock
   public static boolean hasLibraryClass(@Nullable Project project, @NotNull String classFqn) {
     if (project == null || project.isDisposed()) return false;
     if (project.isDefault()) return false; // EA-396106
@@ -81,6 +85,7 @@ public final class JavaLibraryUtil {
    * Checks if the passed library class is available in the module. Should be used only with constant class names from a known library.
    * Returns false from dumb mode or if the module is already disposed.
    */
+  @RequiresReadLock
   public static boolean hasLibraryClass(@Nullable Module module, @NotNull String classFqn) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
@@ -114,6 +119,7 @@ public final class JavaLibraryUtil {
     return Result.create(map, JavaLibraryModificationTracker.getInstance(project));
   }
 
+  @RequiresReadLock
   public static boolean hasLibraryJar(@Nullable Project project, @NotNull String mavenCoords) {
     if (project == null || project.isDisposed()) return false;
     if (project.isDefault()) return false; // EA-396106
@@ -121,6 +127,7 @@ public final class JavaLibraryUtil {
     return getProjectLibraries(project).contains(mavenCoords);
   }
 
+  @RequiresReadLock
   public static boolean hasAnyLibraryJar(@Nullable Project project, @NotNull Collection<String> mavenCoords) {
     if (project == null || project.isDisposed()) return false;
     if (project.isDefault()) return false; // EA-396106
@@ -133,6 +140,7 @@ public final class JavaLibraryUtil {
     return false;
   }
 
+  @RequiresReadLock
   public static boolean hasLibraryJar(@Nullable Module module, @NotNull String mavenCoords) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
@@ -140,6 +148,7 @@ public final class JavaLibraryUtil {
     return getModuleLibraries(module).contains(mavenCoords);
   }
 
+  @RequiresReadLock
   public static boolean hasAnyLibraryJar(@Nullable Module module, @NotNull Collection<String> mavenCoords) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
@@ -152,11 +161,14 @@ public final class JavaLibraryUtil {
     return false;
   }
 
+  @RequiresReadLock
   public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords) {
     return getLibraryVersion(module, mavenCoords, null);
   }
 
-  public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords,
+  @RequiresReadLock
+  public static @Nullable String getLibraryVersion(@NotNull Module module,
+                                                   @NotNull String mavenCoords,
                                                    @Nullable Attributes.Name versionAttribute) {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
     if (isUnsupportedBuildSystem(externalSystemId)) {
