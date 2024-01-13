@@ -88,18 +88,7 @@ private fun getProductPropertiesPath(homePath: Path): Path {
   if (customPath != null && customPath.exists()) {
     return customPath
   }
-
-  val projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
-
-  // Handle Rider repository layout
-  if (!projectPropertiesPath.exists() && homePath.parent?.parent?.resolve(".dotnet-products.root.marker")?.exists() == true) {
-    val riderSpecificProjectPropertiesPath = homePath.parent.resolve("ultimate").resolve(PRODUCTS_PROPERTIES_PATH)
-    if (riderSpecificProjectPropertiesPath.exists()) {
-      return riderSpecificProjectPropertiesPath
-    }
-  }
-
-  return projectPropertiesPath
+  return homePath.resolve(PRODUCTS_PROPERTIES_PATH)
 }
 
 private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {

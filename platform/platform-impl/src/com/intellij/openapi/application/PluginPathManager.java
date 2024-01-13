@@ -24,12 +24,7 @@ public final class PluginPathManager {
         "community",
         "community/android",
         "contrib",
-        "CIDR",
-        "../ultimate",
-        "../ultimate/community",
-        "../ultimate/community/android",
-        "../ultimate/contrib",
-        "../ultimate/CIDR");
+        "CIDR");
     private static final List<File> subRepos = findSubRepos();
 
     private static List<File> findSubRepos() {

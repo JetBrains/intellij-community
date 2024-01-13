@@ -706,9 +706,6 @@ public final class PathManager {
       // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
       return homePath + "/../../../community";
     }
-    if (Files.isRegularFile(Paths.get(homePath, "../../.dotnet-products.root.marker"))) {
-      return homePath + "/../ultimate/community";
-    }
     return homePath;
   }
 
