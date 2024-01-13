@@ -61,7 +61,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
     val toolbarComponent = BorderLayoutPanel()
 
-    val filterProgress = if (model.isFilterSupported) {
+    val filterProgress = if (model.isScopeFilterSupported || model.isActivityFilterSupported) {
       val searchField = createSearchField()
       object : ProgressBarLoadingDecorator(searchField, this@ActivityView, 500) {
         override fun isOnTop() = false
@@ -127,7 +127,12 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   val preferredFocusedComponent: JComponent get() = activityList
 
   private fun createSearchField(): SearchTextArea {
-    val searchTextArea = SearchTextArea(JBTextArea(), true)
+    val textArea = JBTextArea()
+    textArea.emptyText.text = if (model.isScopeFilterSupported) LocalHistoryBundle.message("activity.filter.empty.text.fileName")
+    else if (model.isActivityFilterSupported) LocalHistoryBundle.message("activity.filter.empty.text.content")
+    else ""
+
+    val searchTextArea = SearchTextArea(textArea, true)
     searchTextArea.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT), searchTextArea.border))
     object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {

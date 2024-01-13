@@ -59,16 +59,16 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     }
   }
 
-  val isFilterSupported: Boolean
-    get() = activityProvider.isScopeFilterSupported(activityScope) || activityProvider.isActivityFilterSupported(activityScope)
+  internal val isScopeFilterSupported get() = activityProvider.isScopeFilterSupported(activityScope)
+  internal val isActivityFilterSupported get() = activityProvider.isActivityFilterSupported(activityScope)
 
   val isFilterSet: Boolean get() = !scopeFilterFlow.value.isNullOrEmpty() || !activityFilterFlow.value.isNullOrEmpty()
 
   fun setFilter(pattern: String?) {
-    if (activityProvider.isScopeFilterSupported(activityScope)) {
+    if (isScopeFilterSupported) {
       scopeFilterFlow.value = pattern
     }
-    if (activityProvider.isActivityFilterSupported(activityScope)) {
+    if (isActivityFilterSupported) {
       activityFilterFlow.value = pattern
     }
   }
