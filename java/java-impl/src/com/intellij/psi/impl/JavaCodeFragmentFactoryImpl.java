@@ -35,12 +35,6 @@ public final class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
 
   @NotNull
   @Override
-  public JavaCodeFragment createFileCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical, String fileName) {
-    return new PsiCodeFragmentImpl(myProject, JavaElementType.FILE_FRAGMENT, isPhysical, fileName, text, context);
-  }
-
-  @NotNull
-  @Override
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
     return createTypeCodeFragment(text, context, isPhysical, 0);
   }

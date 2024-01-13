@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.tree.ICodeFragmentElementType;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +153,6 @@ public interface BasicJavaElementType {
   IElementType BASIC_MEMBERS = new IElementType("MEMBERS", JavaLanguage.INSTANCE);
 
   IElementType BASIC_STATEMENTS = new IElementType("STATEMENTS", JavaLanguage.INSTANCE);
-  IElementType BASIC_FILE_FRAGMENT = new IElementType("FILE_FRAGMENT", JavaLanguage.INSTANCE);
   IElementType BASIC_EXPRESSION_TEXT = new IElementType("EXPRESSION_TEXT", JavaLanguage.INSTANCE);
   IElementType BASIC_REFERENCE_TEXT = new IElementType("REFERENCE_TEXT", JavaLanguage.INSTANCE);
   IElementType BASIC_TYPE_WITH_DISJUNCTIONS_TEXT = new IElementType("TYPE_WITH_DISJUNCTIONS_TEXT", JavaLanguage.INSTANCE);
@@ -384,17 +382,6 @@ public interface BasicJavaElementType {
                                                 @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
       super("STATEMENTS", builder -> javaThinParser.get().getStatementParser().parseStatements(builder), docLexerFunction, lexerFunction,
             BASIC_STATEMENTS);
-    }
-  }
-
-  @ApiStatus.Experimental
-  class FileThinCodeFragmentElementType extends ThinCodeFragmentElementType {
-
-    public FileThinCodeFragmentElementType(@NotNull Supplier<? extends BasicJavaParser> javaThinParser,
-                                                @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                                @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
-      super("FILE_FRAGMENT", builder -> javaThinParser.get().getFileParser().parse(builder), docLexerFunction, lexerFunction,
-            BASIC_FILE_FRAGMENT);
     }
   }
 
