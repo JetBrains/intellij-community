@@ -586,6 +586,11 @@ public final class FormatterImpl extends FormatterEx
   }
 
   @Override
+  public Indent getIndentEnforcedToChildrenToBeRelativeToMe(Indent.@NotNull Type type, int spaces) {
+    return new IndentImpl(type, false, spaces, false, true, true);
+  }
+
+  @Override
   public Indent getAbsoluteLabelIndent() {
     return myAbsoluteLabelIndent;
   }

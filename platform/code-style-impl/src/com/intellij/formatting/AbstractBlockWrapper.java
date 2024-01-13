@@ -208,7 +208,11 @@ public abstract class AbstractBlockWrapper {
         AbstractBlockWrapper anchorBlock = getAnchorBlock(child, targetBlockStartOffset, alignment);
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
+
       childIndent = CoreFormatterUtil.getIndent(options, child, getStartOffset());
+      if (child.getIndent().isEnforceChildrenToBeRelativeToMe()) {
+        return childIndent.add(child.getNumberOfSymbolsBeforeBlock());
+      }
     }
     else {
       childIndent = new IndentData(0);

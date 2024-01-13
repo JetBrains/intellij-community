@@ -258,6 +258,27 @@ public abstract class Indent {
     return Formatter.getInstance().getSmartIndent(type, relativeToDirectParent);
   }
 
+  /**
+   * Returns an indent instance that specifies that all children should be aligned to this block
+   * and then indented (relative to the block beginning) with specified indent type.
+   * The same effect could be achieved if all children would use relativeToDirectParent.
+   * @param type    indent type
+   * @param spaces  the number of spaces in the indent (if indent type is SPACES)
+   * @return        newly created indent configured in accordance with the given arguments
+   */
+  public static Indent getIndentEnforcedToChildrenToBeRelativeToMe(@NotNull Type type, int spaces) {
+    return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(type, spaces);
+  }
+
+  /**
+   * Returns an indent instance that specifies that all children should be aligned to this block.
+   * The same effect could be achieved if all children would use relativeToDirectParent.
+   * @return        newly created indent configured in accordance with the given arguments
+   */
+  public static Indent getIndentEnforcedToChildrenToBeRelativeToMe() {
+    return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(Type.NONE, 0);
+  }
+
   public static final class Type {
     private final String myName;
 
