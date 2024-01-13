@@ -148,7 +148,7 @@ const val ACTION_ID: String = "CreateAllServicesAndExtensions"
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val servicesWhichRequireEdt = java.util.Set.of(
   "com.intellij.usageView.impl.UsageViewContentManagerImpl",
-  "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
+  "com.intellij.python.scientific.figures.PyPlotToolWindow",
   "com.intellij.analysis.pwa.analyser.PwaServiceImpl",
   "com.intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
 )
