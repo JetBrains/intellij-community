@@ -73,6 +73,15 @@ abstract class SelectionCalculator(private val gateway: IdeaGateway,
 
   protected abstract fun getEntry(revision: RevisionId): Entry?
 
+  fun processContents(processor: (Long, String) -> Boolean) {
+    for ((index, revisionId) in revisions.withIndex()) {
+      val block = getSelectionFor(index, Progress.EMPTY)
+      if (revisionId is RevisionId.ChangeSet) {
+        if (!processor(revisionId.id, block.blockContent)) break
+      }
+    }
+  }
+
   private class ContentIsUnavailableException : RuntimeException()
 
   companion object {

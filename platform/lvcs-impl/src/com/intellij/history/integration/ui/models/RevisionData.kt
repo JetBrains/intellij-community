@@ -67,6 +67,16 @@ fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, r
   return result
 }
 
+fun filterContents(selectionCalculator: SelectionCalculator, filter: String): MutableSet<Long> {
+  val result = mutableSetOf<Long>()
+  selectionCalculator.processContents { id, contents ->
+    if (Thread.currentThread().isInterrupted) return@processContents false
+    if (contents.contains(filter, true)) result.add(id)
+    true
+  }
+  return result
+}
+
 internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<Revision>, before: Boolean,
                                                 processor: PairProcessor<in Revision, in String?>) {
   val revisionMap = revisions.filter { !it.isLabel }.associateBy { it.changeSetId }

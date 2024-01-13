@@ -43,15 +43,21 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (activityFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
-    val path = gateway.getPathOrUrl(fileScope.file)
-    val rootEntry = data.getRootEntry(gateway).copy()
     val filteredIds = mutableSetOf<Long>()
-    facade.processContents(gateway, rootEntry, path, changeSets, before = true) { changeSetId, content ->
-      if (content?.contains(activityFilter, true) == true) {
-        filteredIds.add(changeSetId)
-      }
+    val processor: (Long, String?) -> Boolean = { changeSetId, content ->
+      if (content?.contains(activityFilter, true) == true) filteredIds.add(changeSetId)
       true
     }
+
+    if (fileScope is ActivityScope.Selection) {
+      data.getSelectionCalculator(facade, gateway, fileScope, USE_OLD_CONTENT).processContents(processor)
+    }
+    else {
+      val rootEntry = data.getRootEntry(gateway).copy()
+      val path = gateway.getPathOrUrl(fileScope.file)
+      facade.processContents(gateway, rootEntry, path, changeSets, before = USE_OLD_CONTENT, processor = processor)
+    }
+
     return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
