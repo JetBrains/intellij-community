@@ -104,14 +104,14 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
           parts.addAll(stringExpression.operands)
         }
         else {
-          for (operand in stringExpression.operands) {
+          parts.addAll(stringExpression.operands.flatMap { operand->
             if (isPattern(operand) && operand is UPolyadicExpression) {
-              parts.addAll(operand.operands)
+              operand.operands
             }
             else {
-              parts.add(operand)
+              listOf(operand)
             }
-          }
+          })
         }
       }
 
@@ -173,28 +173,17 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
       //it needs to be customized for Java
       if (isPattern(stringExpression)) return true
 
-      var foundPattern = false
-      for (operand in stringExpression.operands) {
-        if(isPattern(operand)){
-          foundPattern = true
-          continue
-        }
-        if (operand is ULiteralExpression && !operand.getExpressionType().canBeText()) {
-          return false
-        }
-
-        continue
-      }
-      return foundPattern
+      if(stringExpression.operands
+           .any { operand -> operand is ULiteralExpression &&
+                             !operand.getExpressionType().canBeText()}) return false
+      return stringExpression.operands.any { operand-> isPattern(operand) }
     }
-
   }
 }
 
 private fun isPattern(stringExpression: UExpression): Boolean {
   return stringExpression is UPolyadicExpression &&
          stringExpression is UInjectionHost &&
-         stringExpression.lang == Language.findLanguageByID("kotlin") &&
          !stringExpression.operands.all { it is ULiteralExpression }
 }
 
@@ -291,15 +280,15 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
     if (isPattern(polyadicExpression)) {
       return polyadicExpression.operands
     }
-    val result = mutableListOf<UExpression>()
-    for (operand in polyadicExpression.operands) {
-      if (operand is UPolyadicExpression) {
-        result.addAll(flatPatterns(operand))
+    val result = polyadicExpression.operands
+      .flatMap { operand ->
+        if (operand is UPolyadicExpression) {
+          flatPatterns(operand)
+        }
+        else {
+          listOf(operand)
+        }
       }
-      else {
-        result.add(operand)
-      }
-    }
     return result
   }
 
