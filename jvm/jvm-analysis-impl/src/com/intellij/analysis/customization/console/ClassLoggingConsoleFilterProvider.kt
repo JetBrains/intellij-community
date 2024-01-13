@@ -5,12 +5,11 @@ import com.intellij.codeInspection.logging.LoggingUtil
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.java.library.JavaLibraryUtil
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 
@@ -22,14 +21,12 @@ class ClassLoggingConsoleFilterProvider : ConsoleFilterProvider {
     if (DumbService.isDumb(project)) {
       return Filter.EMPTY_ARRAY
     }
-    val modules = ModuleManager.getInstance(project).modules
-    if (modules.none { ModuleTypeId.JAVA_MODULE.equals(ModuleType.get(it).id, ignoreCase = true) }) {
-      return Filter.EMPTY_ARRAY
-    }
-
-    if (!(JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.SLF4J_LOGGER) ||
-          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER) ||
-          JavaPsiFacade.getInstance(project).findClass(LoggingUtil.IDEA_LOGGER, GlobalSearchScope.allScope(project)) != null)) {
+    val hasLoggingSystems = ApplicationManager.getApplication().runReadAction(Computable {
+      JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.SLF4J_LOGGER) ||
+      JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER) ||
+      JavaPsiFacade.getInstance(project).findClass(LoggingUtil.IDEA_LOGGER, GlobalSearchScope.allScope(project)) != null
+    })
+    if (!hasLoggingSystems) {
       return Filter.EMPTY_ARRAY
     }
     return arrayOf(ClassFinderFilter(project, GlobalSearchScope.allScope(project)))
