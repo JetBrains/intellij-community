@@ -123,14 +123,14 @@ fun KotlinMainFunctionDetector.findMainOwner(element: PsiElement): KtDeclaration
         }
     }
 
+    if (hasMain(containingFile)) {
+        return containingFile
+    }
+
     for (descendant in element.descendantsOfType<KtClassOrObject>()) {
         if (hasMain(descendant)) {
             return descendant
         }
-    }
-
-    if (hasMain(containingFile)) {
-        return containingFile
     }
 
     return null

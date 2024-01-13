@@ -34,6 +34,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 private const val RUN_PREFIX = "// RUN:"
+private const val RUN_FILE_PREFIX = "// RUN_FILE:"
 
 @RunWith(JUnit38ClassRunner::class)
 class RunConfigurationTest : AbstractRunConfigurationTest() {
@@ -68,6 +69,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     fun testClassesAndObjects() = checkClasses()
+
+    fun testTopLevelAndObject() = checkClasses()
 
     fun testInJsModule() = checkClasses(Platform.JavaScript)
 
@@ -190,6 +193,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
         val expectedClasses = ArrayList<String>()
         val actualClasses = ArrayList<String>()
+        var expectedFileRun: String? = null
 
         val fileName = "test.kt"
         val testKtVirtualFile = srcDir.findFileByRelativePath(fileName) ?: error("Can't find VirtualFile for $fileName")
@@ -197,25 +201,43 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
         val visitor = object : KtTreeVisitorVoid() {
             override fun visitComment(comment: PsiComment) {
-                val declaration = comment.getStrictParentOfType<KtNamedDeclaration>()!!
+                val declaration = comment.getStrictParentOfType<KtNamedDeclaration>()
                 val text = comment.text ?: return
-                if (!text.startsWith(RUN_PREFIX)) return
+                when {
+                    text.startsWith(RUN_PREFIX) -> {
+                        val expectedClass = text.substring(RUN_PREFIX.length).trim()
+                        if (expectedClass.isNotEmpty()) expectedClasses.add(expectedClass)
+                        check(declaration != null)
 
-                val expectedClass = text.substring(RUN_PREFIX.length).trim()
-                if (expectedClass.isNotEmpty()) expectedClasses.add(expectedClass)
-
-                val dataContext = MapDataContext()
-                dataContext.put(Location.DATA_KEY, PsiLocation(project, declaration))
-                val context = ConfigurationContext.getFromContext(dataContext)
-                val actualClass = (context.configuration?.configuration as? KotlinRunConfiguration)?.runClass
-                if (actualClass != null) {
-                    actualClasses.add(actualClass)
+                        val dataContext = MapDataContext()
+                        dataContext.put(Location.DATA_KEY, PsiLocation(project, declaration))
+                        val context = ConfigurationContext.getFromContext(dataContext)
+                        val actualClass = (context.configuration?.configuration as? KotlinRunConfiguration)?.runClass
+                        if (actualClass != null) {
+                            actualClasses.add(actualClass)
+                        }
+                    }
+                    text.startsWith(RUN_FILE_PREFIX) -> {
+                        val fileRun = text.substring(RUN_FILE_PREFIX.length).trim()
+                        if (fileRun.isNotEmpty()) {
+                            check(expectedFileRun == null) { "The only one `$RUN_FILE_PREFIX` should be declared: `$expectedFileRun`, but `$fileRun`" }
+                            expectedFileRun = fileRun
+                        }
+                    }
                 }
             }
         }
 
         testFile.accept(visitor)
         assertEquals(expectedClasses, actualClasses)
+        expectedFileRun?.let {
+            val dataContext = MapDataContext()
+            dataContext.put(Location.DATA_KEY, PsiLocation(project, testFile))
+            val context = ConfigurationContext.getFromContext(dataContext)
+            val actualFileRun = (context.configuration?.configuration as? KotlinRunConfiguration)?.runClass
+
+            assertEquals(it, actualFileRun)
+        }
     }
 
     private fun createConfigurationFromObject(@Suppress("SameParameterValue") objectFqn: String): KotlinRunConfiguration {
