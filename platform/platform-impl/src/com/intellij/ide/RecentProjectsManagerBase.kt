@@ -466,12 +466,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     disableUpdatingRecentInfo.set(true)
     try {
       if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
-        if (openPaths.size > 1) {
-          //This check may result in false positive,
-          // but it's good enough to removing non-basic scenarios from reporting to FUS
-          FUSProjectHotStartUpMeasurer.openingMultipleProjects()
-        }
-        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.Reopened)
+        FUSProjectHotStartUpMeasurer.reportReopeningProjects(openPaths)
         return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
       }
 
@@ -481,14 +476,15 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           if (isValidProjectPath(path)) Pair(path, entry.value) else null
         }.getOrLogException(LOG)
       }
+
+      FUSProjectHotStartUpMeasurer.reportReopeningProjects(toOpen)
+
       if (toOpen.size == 1) {
         val pair = toOpen.get(0)
         val pathsToOpen = listOf(AbstractMap.SimpleEntry(pair.first.toString(), pair.second))
-        FUSProjectHotStartUpMeasurer.reportProjectType(FUSProjectHotStartUpMeasurer.ProjectsType.Reopened)
         return openOneByOne(pathsToOpen, index = 0, someProjectWasOpened = false)
       }
       else {
-        FUSProjectHotStartUpMeasurer.openingMultipleProjects()
         return openMultiple(toOpen)
       }
     }

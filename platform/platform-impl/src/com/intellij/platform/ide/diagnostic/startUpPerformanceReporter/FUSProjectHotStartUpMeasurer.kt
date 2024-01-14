@@ -109,6 +109,15 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.WelcomeScreenEvent())
   }
 
+  suspend fun reportReopeningProjects(openPaths: List<*>) {
+    if (!isProperContext()) return
+    when (openPaths.size) {
+      0 -> reportViolation(Violation.NoProjectFound)
+      1 -> reportProjectType(ProjectsType.Reopened)
+      else -> reportViolation(Violation.MultipleProjects)
+    }
+  }
+
   suspend fun reportProjectType(projectsType: ProjectsType) {
     if (!isProperContext()) return
     channel.trySend(Event.ProjectTypeReportEvent(projectsType))
