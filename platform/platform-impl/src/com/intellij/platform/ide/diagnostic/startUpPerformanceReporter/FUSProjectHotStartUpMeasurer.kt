@@ -76,7 +76,7 @@ object FUSProjectHotStartUpMeasurer {
 
     class NoMoreEditorsEvent(val time: Long = System.nanoTime()) : Event
     data object ResetProjectPathEvent : Event
-    data object IdeStarterStarted : Event
+    data object IdeStarterStartedEvent : Event
   }
 
   /**
@@ -92,7 +92,7 @@ object FUSProjectHotStartUpMeasurer {
       channel.close()
       return null
     }
-    channel.trySend(Event.IdeStarterStarted)
+    channel.trySend(Event.IdeStarterStartedEvent)
     return MyMarker
   }
 
@@ -200,7 +200,7 @@ object FUSProjectHotStartUpMeasurer {
     frameBecameVisibleEvent: Event.FrameBecameVisibleEvent?,
     projectTypeReportEvent: Event.ProjectTypeReportEvent?,
     projectPathReportEvent: Event.ProjectPathReportEvent?,
-    isInitialized: Boolean,
+    ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
     stop: () -> Unit
   ): Event.FUSReportableEvent? {
     if (!afterSplash && splashBecameVisibleEvent != null &&
@@ -210,7 +210,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     if (frameBecameVisibleEvent != null) {
-      if (!isInitialized) stop()
+      if (ideStarterStartedEvent == null) stop()
       val durationForFUS = getDurationFromStart(frameBecameVisibleEvent.time).getValueForFUS()
       if (!afterSplash) {
         FIRST_UI_SHOWN_EVENT.log(durationForFUS, UIResponseType.Frame)
@@ -232,12 +232,12 @@ object FUSProjectHotStartUpMeasurer {
   private fun reportViolation(
     violation: Violation,
     time: Long,
-    isInitialized: Boolean,
+    ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
     lastHandledEvent: Event.FUSReportableEvent?,
     stop: () -> Unit
   ) {
     val duration = getDurationFromStart(time).getValueForFUS()
-    if ((lastHandledEvent == null || lastHandledEvent is Event.SplashBecameVisibleEvent) && isInitialized) {
+    if ((lastHandledEvent == null || lastHandledEvent is Event.SplashBecameVisibleEvent) && (ideStarterStartedEvent != null)) {
       if (lastHandledEvent == null) {
         FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame)
       }
@@ -299,7 +299,7 @@ object FUSProjectHotStartUpMeasurer {
   suspend fun startWritingStatistics() {
     val markupResurrectedFileIds = IntOpenHashSet()
     var lastHandledEvent: Event.FUSReportableEvent? = null
-    var isInitialized = false
+    var ideStarterStartedEvent: Event.IdeStarterStartedEvent? = null
     var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null
     var frameBecameVisibleEvent: Event.FrameBecameVisibleEvent? = null
     var frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent? = null
@@ -317,7 +317,7 @@ object FUSProjectHotStartUpMeasurer {
     for (event in channel) {
       if (isChannelHandlingStopped) continue
       when (event) {
-        Event.IdeStarterStarted -> isInitialized = true
+        is Event.IdeStarterStartedEvent -> ideStarterStartedEvent = event
         is Event.SplashBecameVisibleEvent -> splashBecameVisibleEvent = event
         is Event.FrameBecameVisibleEvent -> {
           frameBecameVisibleEvent = event
@@ -332,7 +332,7 @@ object FUSProjectHotStartUpMeasurer {
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
                                      SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
           }
-          reportViolation(Violation.WelcomeScreenShown, event.time, isInitialized, lastHandledEvent, ::stop)
+          reportViolation(Violation.WelcomeScreenShown, event.time, ideStarterStartedEvent, lastHandledEvent, ::stop)
         }
         is Event.FrameBecameInteractiveEvent -> {
           frameBecameInteractiveEvent = event
@@ -342,7 +342,7 @@ object FUSProjectHotStartUpMeasurer {
         Event.ResetProjectPathEvent -> projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
         is Event.ViolationEvent -> {
-          reportViolation(event.violation, event.time, isInitialized, lastHandledEvent, ::stop)
+          reportViolation(event.violation, event.time, ideStarterStartedEvent, lastHandledEvent, ::stop)
         }
         is Event.FirstEditorEvent -> if (firstEditorEvent == null) firstEditorEvent = event
         is Event.NoMoreEditorsEvent -> if (noEditorEvent == null) noEditorEvent = event
@@ -355,10 +355,10 @@ object FUSProjectHotStartUpMeasurer {
         val newLastHandledEvent: Event.FUSReportableEvent? = when (lastHandledEvent) {
           null ->
             applyFrameVisibleEventIfPossible(false, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, isInitialized, ::stop)
+                                             projectPathReportEvent, ideStarterStartedEvent, ::stop)
           is Event.SplashBecameVisibleEvent ->
             applyFrameVisibleEventIfPossible(true, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, isInitialized, ::stop)
+                                             projectPathReportEvent, ideStarterStartedEvent, ::stop)
           is Event.FrameBecameVisibleEvent -> applyFrameInteractiveEventIfPossible(frameBecameInteractiveEvent)
           is Event.FrameBecameInteractiveEvent -> {
             applyEditorEventIfPossible(firstEditorEvent, noEditorEvent, markupResurrectedFileIds, projectPathReportEvent, ::stop)
