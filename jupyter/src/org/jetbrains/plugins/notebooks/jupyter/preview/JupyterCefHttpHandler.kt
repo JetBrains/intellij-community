@@ -65,13 +65,12 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     val str = request.uri()
     val fullUri = URI(str).path
     val uri = getFileFromUrl(fullUri) ?: return false
-
-    val readBytes = processInternalLibs(request, uri) ?: return false
+    val readBytes = processInternalLibs(uri) ?: return false
     sendData(readBytes, "$appName/$uri", request, context.channel(), EmptyHttpHeaders.INSTANCE)
     return true
   }
 
-  fun processInternalLibs(request: FullHttpRequest, uri: String): ByteArray? {
+  fun processInternalLibs(uri: String): ByteArray? {
     try {
       val extension = FileUtilRt.getExtension(uri)
       // map files used for debugging
@@ -84,7 +83,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
       return null
     }
     catch (t: Throwable) {
-      thisLogger().info("Cannot process: ${request.uri()}", t)
+      thisLogger().warn("Cannot process: ${uri}", t)
       return null
     }
   }
