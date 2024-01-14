@@ -6,8 +6,8 @@
     <module name="intellij.pycharm.community.ide.impl/training"/>
   </content>
   <projectListeners>
-    <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
-    <listener class="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator" topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+    <listener class="com.intellij.pycharm.community.ide.impl.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+    <listener class="com.intellij.pycharm.community.ide.impl.PySdkFromEnvironmentVariableConfigurator" topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -16,10 +16,10 @@
                         overrides="true"/>
 
     <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PythonContentEntriesConfigurable.display.name"
-                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
@@ -27,75 +27,75 @@
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyDependenciesConfigurable.display.name"
-                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"/>
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
-                            implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
+                            implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
                             order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
 
-    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.PlatformInspectionProfileConfigurator"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PlatformInspectionProfileConfigurator"/>
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PythonModuleTypeManager"
                         overrides="true"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
-    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"
+    <fileStructureGroupRuleProvider implementation="com.intellij.pycharm.community.ide.impl.PyClassGroupingRuleProvider"
                                     order="before py-function"/>
-    <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
+    <diffPreviewProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyDiffPreviewProvider"/>
 
-    <optionsApplicabilityFilter implementation="com.jetbrains.python.PyOptionsApplicabilityFilter"/>
+    <optionsApplicabilityFilter implementation="com.intellij.pycharm.community.ide.impl.PyOptionsApplicabilityFilter"/>
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
-                        serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonOptionsFormFactory"/>
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
-                        serviceImplementation="com.jetbrains.python.PyIdeCommonFragmentsBuilder"/>
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
 
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
-    <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
+    <directoryIndexExcludePolicy implementation="com.intellij.pycharm.community.ide.impl.PyDirectoryIndexExcludePolicy"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.newProject.welcome.PyWelcomeSettings"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.welcome.PyWelcomeCollector"/>
+    <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeSettings"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector"/>
     <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
       bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
-    <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
+    <ignoredFileProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyTemporarilyIgnoredFileProvider"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
-    <defaultToolWindowLayout implementation="com.jetbrains.python.PyToolWindowLayoutProvider" order="last"/>
-    <newUIConfigurable implementation="com.jetbrains.python.configuration.PyExperimentalUIConfigurable"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
+    <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
+    <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
                                       id="requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyEnvironmentYmlSdkConfiguration"
                                       id="environmentYml"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPoetrySdkConfiguration"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
-    <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
-    <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
+    <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
+    <action id="NewDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProject.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

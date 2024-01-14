@@ -14,15 +14,15 @@
   <xi:include href="/META-INF/jupyter-view-only.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.jetbrains.python.PyCharmCorePluginConfigurator"/>
+    <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
                     overrides="true"/>
 
-    <annotator language="Python" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <annotator language="TEXT" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <projectService serviceImplementation="com.jetbrains.python.PyCharmProfessionalAdvertiserSettings"/>
+    <annotator language="Python" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
+    <annotator language="TEXT" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
+    <annotator language="JSON" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
+    <projectService serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiserSettings"/>
   </extensions>
 </idea-plugin>

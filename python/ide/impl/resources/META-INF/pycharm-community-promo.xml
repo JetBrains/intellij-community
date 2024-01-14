@@ -2,39 +2,39 @@
 <idea-plugin>
   <resource-bundle>messages.PyBundle</resource-bundle>
   <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
-    <action class="com.jetbrains.python.promotion.PromoAiCodeCompletion"
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoAiCodeCompletion"
             id="PromoAiCodeCompletion"
             icon="AllIcons.Ultimate.PycharmLock" />
 
-    <action class="com.jetbrains.python.promotion.PromoDataFrameAction"
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDataFrameAction"
             id="PromoDataFrameAction"
             icon="AllIcons.Ultimate.PycharmLock" />
 
-    <action class="com.jetbrains.python.promotion.PromoDockerAction"
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDockerAction"
             id="PromoDockerAction"
             icon="AllIcons.Ultimate.PycharmLock" />
 
-    <action class="com.jetbrains.python.promotion.PromoEndpointsAction"
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoEndpointsAction"
             id="PromoEndpointsAction"
             icon="AllIcons.Ultimate.PycharmLock" />
 
-    <action class="com.jetbrains.python.promotion.PromoPlotsAction"
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoPlotsAction"
             id="PromoPlotsAction"
             icon="AllIcons.Ultimate.PycharmLock" />
 
-    <action id="PromoNewJupyterNotebook" class="com.jetbrains.python.promotion.NewJupyterNotebookFile"
+    <action id="PromoNewJupyterNotebook" class="com.intellij.pycharm.community.ide.impl.promotion.NewJupyterNotebookFile"
             icon="AllIcons.Ultimate.PycharmLock">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
-    <action id="PromoNewJavaScriptFile" class="com.jetbrains.python.promotion.NewJavaScriptFile"
+    <action id="PromoNewJavaScriptFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewJavaScriptFile"
             icon="AllIcons.Ultimate.PycharmLock">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
-    <action id="PromoNewTypeScriptFile" class="com.jetbrains.python.promotion.NewTypeScriptFile"
+    <action id="PromoNewTypeScriptFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewTypeScriptFile"
             icon="AllIcons.Ultimate.PycharmLock">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
-    <action id="PromoNewSqlFile" class="com.jetbrains.python.promotion.NewSqlFile"
+    <action id="PromoNewSqlFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewSqlFile"
             icon="AllIcons.Ultimate.PycharmLock">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
@@ -42,40 +42,40 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <directoryProjectGenerator implementation="com.jetbrains.python.promotion.DjangoPromoProjectGenerator"/>
+    <directoryProjectGenerator implementation="com.intellij.pycharm.community.ide.impl.promotion.DjangoPromoProjectGenerator"/>
 
     <applicationConfigurable id="promo.database"
                              groupId="tools"
-                             provider="com.jetbrains.python.promotion.PromoDatabaseConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoDatabaseConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.database"/>
     <applicationConfigurable id="promo.javascript"
                              groupId="language"
-                             provider="com.jetbrains.python.promotion.PromoJSConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoJSConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.javascript"/>
     <applicationConfigurable id="promo.typescript"
                              groupId="language"
-                             provider="com.jetbrains.python.promotion.PromoTSConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoTSConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.typescript"/>
 
     <applicationConfigurable id="promo.django"
                              groupId="language"
-                             provider="com.jetbrains.python.promotion.PromoDjangoConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoDjangoConfigurableProvider"
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.django"/>
     <applicationConfigurable id="promo.remoteSsh"
                              groupId="tools"
-                             provider="com.jetbrains.python.promotion.PromoRemoteSshConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoRemoteSshConfigurableProvider"
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.remoteSsh"/>
     <applicationConfigurable id="promo.jupyter"
                              groupId="language"
-                             provider="com.jetbrains.python.promotion.PromoJupyterConfigurableProvider"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoJupyterConfigurableProvider"
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.jupyter"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.promotion.PyCharmPromoCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector"/>
   </extensions>
 </idea-plugin>
