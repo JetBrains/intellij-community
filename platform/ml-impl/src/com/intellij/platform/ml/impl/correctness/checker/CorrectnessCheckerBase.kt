@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.impl.correctness.checker
 
 import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
@@ -42,30 +43,9 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
       .onRange(range)
       .toList()
 
-    return findInspectionErrors(fullPsi, elements, file, offset, prefix, suggestion) +
+    return findInspectionErrors(this.toolWrappers, this.toolNameToSemanticChecker, fullPsi, elements, file, offset, prefix, suggestion) +
            findCustomErrors(elements, file, offset, prefix, suggestion) +
            findRawErrors(fullPsi, range, file, offset, prefix, suggestion)
-  }
-
-  private fun findInspectionErrors(fullPsi: PsiFile,
-                                   elements: List<PsiElement>,
-                                   file: PsiFile,
-                                   offset: Int,
-                                   prefix: String,
-                                   suggestion: String): List<CorrectnessError> {
-    return InspectionEngine.inspectElements(
-      toolWrappers,
-      fullPsi,
-      fullPsi.textRange,
-      true,
-      true,
-      ProgressManager.getInstance().progressIndicator,
-      elements,
-      PairProcessor.alwaysTrue()
-    ).flatMap {
-      val semanticChecker = checkNotNull(toolNameToSemanticChecker[it.key.id])
-      semanticChecker.convertInspectionsResults(file, it.value, offset, prefix, suggestion)
-    }
   }
 
   private fun findCustomErrors(elements: List<PsiElement>,
@@ -86,6 +66,31 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
                             suggestion: String): List<CorrectnessError> {
     return rawSemanticCheckers.flatMap { analyzer ->
       analyzer.findErrors(file, range, originalFile, offset, prefix, suggestion)
+    }
+  }
+
+  companion object {
+    fun findInspectionErrors(toolWrappers: List<LocalInspectionToolWrapper>,
+                             toolNameToSemanticChecker: Map<String, InspectionBasedSemanticChecker>,
+                             fullPsi: PsiFile,
+                             elements: List<PsiElement>,
+                             file: PsiFile,
+                             offset: Int,
+                             prefix: String,
+                             suggestion: String): List<CorrectnessError> {
+      return InspectionEngine.inspectElements(
+        toolWrappers,
+        fullPsi,
+        fullPsi.textRange,
+        true,
+        true,
+        ProgressManager.getInstance().progressIndicator,
+        elements,
+        PairProcessor.alwaysTrue()
+      ).flatMap {
+        val semanticChecker = checkNotNull(toolNameToSemanticChecker[it.key.id])
+        semanticChecker.convertInspectionsResults(file, it.value, offset, prefix, suggestion)
+      }
     }
   }
 }
