@@ -54,7 +54,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.idea.community.customization",
     )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
-      .add("intellij.javaFX.community")
+      .addAll(listOf("intellij.javaFX.community", "intellij.ae.database.community"))
       .toMutableList()
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false

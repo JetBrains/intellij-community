@@ -157,6 +157,10 @@ class SqliteConnection(file: Path?, readOnly: Boolean = false) : AutoCloseable {
     executeLifecycle<Unit>(sql.encodeToByteArray(), values) { _, _, _ -> }
   }
 
+  fun affectedRows(): Int {
+    return selectInt("select changes()") ?: 0
+  }
+
   fun interruptAndClose() {
     val db = dbRef.getAndSet(null) ?: return
     // not under lock - as we currently may hold the lock in another thread

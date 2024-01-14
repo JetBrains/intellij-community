@@ -37,6 +37,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     )
     productLayout.bundledPluginModules.add("intellij.python.community.plugin")
     productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
+    productLayout.bundledPluginModules.add("intellij.ae.database.community")
     productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
 
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(

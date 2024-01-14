@@ -1,0 +1,17 @@
+<idea-plugin package="com.intellij.ae.database.core">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.ae.database.fusEventCatcher"
+                    interface="com.intellij.ae.database.core.baseEvents.fus.FusEventCatcher$Factory"
+                    dynamic="false"
+    />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- TODO: current usage is allowed, but will be removed after proper API from FUS team -->
+    <applicationService
+      serviceImplementation="com.intellij.ae.database.core.baseEvents.fus.AddStatisticsEventLogListenerTemporary"
+      preload="true"
+    />
+    <postStartupActivity implementation="com.intellij.ae.database.core.IdServiceTempPreloader"/>
+  </extensions>
+</idea-plugin>
