@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
 private const val BASE_FUS_VERSION = 11
 
-object KotlinGradleFUSCollector : CounterUsagesCollector() {
+internal object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 

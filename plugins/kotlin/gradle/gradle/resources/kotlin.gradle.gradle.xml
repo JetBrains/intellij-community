@@ -67,8 +67,7 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.mpp.ExternalSystemBasedStableModuleNameProvider"/>
 
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLoggingActivity"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
   </extensions>
 

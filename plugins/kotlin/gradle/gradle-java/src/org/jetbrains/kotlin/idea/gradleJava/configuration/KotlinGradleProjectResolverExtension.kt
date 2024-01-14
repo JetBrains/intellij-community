@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
-import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
@@ -144,6 +144,8 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
+    private val LOG = Logger.getInstance(KotlinGradleProjectResolverExtension::class.java)
+
     private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
@@ -411,7 +413,8 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         nextResolver.populateModuleContentRoots(gradleModule, ideModule)
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
-            KotlinGradleFUSLogger.populateGradleUserDir(gradleModel.gradleUserHome)
+            val project = resolverCtx.externalSystemTaskId.findProject()
+            project?.service<KotlinGradleFUSLogger>()?.populateGradleUserDir(gradleModel.gradleUserHome)
 
             val gradleSourceSets = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
             for (gradleSourceSetNode in gradleSourceSets) {
@@ -442,30 +445,26 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         }
     }
 
-    companion object {
-        private val LOG = Logger.getInstance(PsiPrecedences::class.java)
-
-        private fun Logger.logDebugIfEnabled(message: String) {
-            if (isDebugEnabled) debug(message)
-        }
-
-        private fun DataNode<ModuleData>.getSourceSetsMap() =
-            ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
-
-        private val DataNode<out ModuleData>.sourceSetName
-            get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
-
-        private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
-            val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
-            moduleDependencyData.scope = DependencyScope.COMPILE
-            moduleDependencyData.isExported = false
-            moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
-            ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
-        }
-
-        private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
-            Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
-            hashMapOf()
-        )
+    private fun Logger.logDebugIfEnabled(message: String) {
+        if (isDebugEnabled) debug(message)
     }
+
+    private fun DataNode<ModuleData>.getSourceSetsMap() =
+        ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
+
+    private val DataNode<out ModuleData>.sourceSetName
+        get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
+
+    private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
+        val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
+        moduleDependencyData.scope = DependencyScope.COMPILE
+        moduleDependencyData.isExported = false
+        moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
+        ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
+    }
+
+    private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
+        Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
+        hashMapOf()
+    )
 }
