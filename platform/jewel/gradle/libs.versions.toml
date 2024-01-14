@@ -1,5 +1,5 @@
 [versions]
-composeDesktop = "1.6.0-dev1362"
+composeDesktop = "1.6.0-dev1369"
 detekt = "1.23.1"
 dokka = "1.8.20"
 idea232 = "232.10227.8"
