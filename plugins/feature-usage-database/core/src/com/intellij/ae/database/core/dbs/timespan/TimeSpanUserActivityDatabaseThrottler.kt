@@ -84,7 +84,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
         TimeSpanUserActivityDatabaseManualKind.End -> {
           val event = events[activity.toKey(id)]
           if (event == null) {
-            logger.warn("Tried to end activity ${activity.toKey(id)} that wasn't started")
+            logger.info("Tried to end activity ${activity.toKey(id)} that wasn't started")
             null
           }
           else {
