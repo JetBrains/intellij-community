@@ -123,7 +123,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
   }
 
   fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?, v5: Any?, v6: Any?) {
-    assert(paramCount == 5)
+    assert(paramCount == 6)
     batch[batchPosition] = v1
     batch[batchPosition + 1] = v2
     batch[batchPosition + 2] = v3
@@ -206,6 +206,12 @@ object ObjectBinderFactory {
     return ObjectBinder5(batchCountHint)
   }
 
+  inline fun <reified T1, reified T2, reified T3, reified T4, reified T5, reified T6> create6(batchCountHint: Int = 1): ObjectBinder6<T1, T2, T3, T4, T5, T6> {
+    verifyTypes(T1::class.java, T2::class.java, T3::class.java, T4::class.java, T5::class.java, T6::class.java)
+
+    return ObjectBinder6(batchCountHint)
+  }
+
   fun verifyTypes(vararg types: Class<*>) {
     for (type in types) {
       if (!SQLITE_ALLOWED_TYPES.contains(type)) {
@@ -233,4 +239,8 @@ class ObjectBinder4<T1, T2, T3, T4>(batchCountHint: Int) : MyObjectBinder(4, bat
 
 class ObjectBinder5<T1, T2, T3, T4, T5>(batchCountHint: Int) : MyObjectBinder(5, batchCountHint) {
   fun bind(v1: T1, v2: T2, v3: T3, v4: T4, v5: T5) = myBinder.bind(v1, v2, v3, v4, v5)
+}
+
+class ObjectBinder6<T1, T2, T3, T4, T5, T6>(batchCountHint: Int) : MyObjectBinder(6, batchCountHint) {
+  fun bind(v1: T1, v2: T2, v3: T3, v4: T4, v5: T5, v6: T6) = myBinder.bind(v1, v2, v3, v4, v5, v6)
 }
