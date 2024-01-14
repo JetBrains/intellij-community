@@ -106,7 +106,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
     if (getSdk(dataContext)?.isTargetBased() == true) {
       return false
     }
-    PyRunAnythingCollector.Util.logEvent(getLogCommandType())
+    PyRunAnythingCollector.logEvent(getLogCommandType())
 
     RunAnythingCommandProvider.runCommand(workDirectory, helpCommand + " " + commandLine.command, executor, dataContext)
     return true

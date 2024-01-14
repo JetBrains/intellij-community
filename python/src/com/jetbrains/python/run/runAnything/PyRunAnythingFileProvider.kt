@@ -71,7 +71,7 @@ class PyRunAnythingFileProvider : RunAnythingCommandLineProvider() {
       RunManager.getInstance(project).addConfiguration(configuration)
       logAddNew(project, configuration.type.id, ActionPlaces.RUN_ANYTHING_POPUP)
     }
-    PyRunAnythingCollector.Util.logEvent(CommandType.PYTHON)
+    PyRunAnythingCollector.logEvent(CommandType.PYTHON)
 
     ChooseRunConfigurationPopup.ItemWrapper.wrap(dataContext.project, configuration).perform(project, executor, dataContext)
     return true

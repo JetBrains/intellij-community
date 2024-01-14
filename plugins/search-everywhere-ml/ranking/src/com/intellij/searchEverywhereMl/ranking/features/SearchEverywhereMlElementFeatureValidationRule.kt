@@ -5,14 +5,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector
 
-class SearchEverywhereMlElementFeatureValidationRule : CustomValidationRule() {
-  override fun getRuleId(): String {
-    return "mlse_element_feature"
-  }
+internal class SearchEverywhereMlElementFeatureValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "mlse_element_feature"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     if (isThirdPartyValue(data)) return ValidationResultType.THIRD_PARTY
-    return when (SearchEverywhereMLStatisticsCollector.Fields.findElementFeatureByName(data)) {
+    return when (SearchEverywhereMLStatisticsCollector.findElementFeatureByName(data)) {
       null -> ValidationResultType.REJECTED
       else -> ValidationResultType.ACCEPTED
     }

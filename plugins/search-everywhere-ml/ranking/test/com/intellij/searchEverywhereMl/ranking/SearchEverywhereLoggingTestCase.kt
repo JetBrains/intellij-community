@@ -10,8 +10,8 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_RESTARTED
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_FINISHED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent

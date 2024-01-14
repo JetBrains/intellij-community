@@ -7,21 +7,32 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class RenameInplacePopupUsagesCollector : CounterUsagesCollector() {
+internal object RenameInplacePopupUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("rename.inplace.popup", 3)
+  private val GROUP = EventLogGroup("rename.inplace.popup", 3)
 
-    @JvmField val changedOnHide: BooleanEventField = EventFields.Boolean("changedOnHide")
-    @JvmField val linkUsed: BooleanEventField = EventFields.Boolean("linkUsed")
-    @JvmField val searchInCommentsOnHide: BooleanEventField = EventFields.Boolean("search_in_comments_on_hide")
-    @JvmField val searchInTextOccurrencesOnHide: BooleanEventField = EventFields.Boolean("search_in_text_occurrences_on_hide")
-    
+  @JvmField
+  val changedOnHide: BooleanEventField = EventFields.Boolean("changedOnHide")
 
-    @JvmField val show: VarargEventId = GROUP.registerVarargEvent("show", EventFields.InputEvent)
-    @JvmField val hide: VarargEventId = GROUP.registerVarargEvent("hide", searchInCommentsOnHide, searchInTextOccurrencesOnHide)
-    @JvmField val openRenameDialog: VarargEventId = GROUP.registerVarargEvent("openRenameDialog", linkUsed)
-    @JvmField val settingsChanged: VarargEventId = GROUP.registerVarargEvent("settingsChanged", changedOnHide)
-  }
+  @JvmField
+  val linkUsed: BooleanEventField = EventFields.Boolean("linkUsed")
+
+  @JvmField
+  val searchInCommentsOnHide: BooleanEventField = EventFields.Boolean("search_in_comments_on_hide")
+
+  @JvmField
+  val searchInTextOccurrencesOnHide: BooleanEventField = EventFields.Boolean("search_in_text_occurrences_on_hide")
+
+  @JvmField
+  val show: VarargEventId = GROUP.registerVarargEvent("show", EventFields.InputEvent)
+
+  @JvmField
+  val hide: VarargEventId = GROUP.registerVarargEvent("hide", searchInCommentsOnHide, searchInTextOccurrencesOnHide)
+
+  @JvmField
+  val openRenameDialog: VarargEventId = GROUP.registerVarargEvent("openRenameDialog", linkUsed)
+
+  @JvmField
+  val settingsChanged: VarargEventId = GROUP.registerVarargEvent("settingsChanged", changedOnHide)
 }

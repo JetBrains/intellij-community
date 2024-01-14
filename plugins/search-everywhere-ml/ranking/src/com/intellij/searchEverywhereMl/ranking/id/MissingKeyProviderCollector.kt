@@ -1,26 +1,14 @@
 package com.intellij.searchEverywhereMl.ranking.id
 
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.ClassListEventField
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.GROUP
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_ID_LOG_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.KEY_NOT_COMPUTED_EVENT
 import com.intellij.searchEverywhereMl.ranking.id.MissingKeyProviderCollector.report
 
 /**
  * The collector keeps a set of classes for which we failed to compute a key,
  * then, by calling [report] function, the event is logged with this set.
  */
-object MissingKeyProviderCollector : CounterUsagesCollector() {
-  private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
-  private val KEY_NOT_COMPUTED_EVENT = GROUP.registerEvent("key.not.computed",
-                                                           SESSION_ID_LOG_DATA_KEY,
-                                                           CLASSES_WITHOUT_KEY_PROVIDERS_FIELD)
+internal object MissingKeyProviderCollector {
   private val unsupportedClasses = mutableSetOf<Class<*>>()
-
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
 
   fun addMissingProviderForClass(klass: Class<*>) {
     unsupportedClasses.add(klass)

@@ -31,11 +31,11 @@ object PySdkToInstallManager {
     val (installer, release) = installableRelease
     installer.install(release, indicator) {
       PySdkToInstallCollector.logSdkDownload(
-        project, release.version.toString(), PySdkToInstallCollector.Companion.DownloadResult.OK
+        project, release.version.toString(), PySdkToInstallCollector.DownloadResult.OK
       )
     }
     PySdkToInstallCollector.logSdkInstall(
-      project, release.version.toString(), PySdkToInstallCollector.Companion.InstallationResult.OK
+      project, release.version.toString(), PySdkToInstallCollector.InstallationResult.OK
     )
   }
 
@@ -109,8 +109,8 @@ object PySdkToInstallManager {
           project,
           languageLevel.toString(),
           when (it.isNotEmpty()) {
-            true -> PySdkToInstallCollector.Companion.LookupResult.FOUND
-            false -> PySdkToInstallCollector.Companion.LookupResult.NOT_FOUND
+            true -> PySdkToInstallCollector.LookupResult.FOUND
+            false -> PySdkToInstallCollector.LookupResult.NOT_FOUND
           }
         )
       }

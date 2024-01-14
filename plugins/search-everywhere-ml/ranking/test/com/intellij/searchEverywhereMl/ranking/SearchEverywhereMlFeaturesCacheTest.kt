@@ -136,11 +136,11 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     }
     TestCase.assertNotNull(events)
 
-    val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.Fields.FEATURES_DATA_KEY,
+    val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
                                SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.ML_WEIGHT_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.ID_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.CONTRIBUTOR_DATA_KEY)
+                               SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
+                               SearchEverywhereMLStatisticsCollector.ID_KEY,
+                               SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY)
 
     UsefulTestCase.assertOrderedEquals(events?.map {
       it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())["id"]
@@ -158,11 +158,11 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
   private fun assertFeatures(events: List<ObjectEventData>, commonFeatures: List<List<Pair<String, Any>>>?,
                              mlFeatures: List<List<Pair<String, Any>>>?) {
-    val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.Fields.FEATURES_DATA_KEY,
+    val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
                                SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.ML_WEIGHT_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.CONTRIBUTOR_DATA_KEY,
-                               SearchEverywhereMLStatisticsCollector.Fields.ID_KEY)
+                               SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
+                               SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY,
+                               SearchEverywhereMLStatisticsCollector.ID_KEY)
 
     val mappedEvents = events.map {
       it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())

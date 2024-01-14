@@ -1,9 +1,9 @@
 package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.REBUILD_REASON_KEY
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_RESTARTED
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_FINISHED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -53,6 +53,3 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     assertEquals(4, events.size)
   }
 }
-
-
-

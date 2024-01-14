@@ -36,7 +36,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
-  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
+  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector
 
   private val performanceTracker = PerformanceTracker()
 
