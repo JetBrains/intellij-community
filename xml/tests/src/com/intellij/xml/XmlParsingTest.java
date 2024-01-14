@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.lang.*;
@@ -9,12 +9,6 @@ import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -24,14 +18,9 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assume;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -122,6 +111,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testNewParsing12() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("<a><a ajsdg<a></a></a>");
   }
 
@@ -134,10 +124,12 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testNewParsing14() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("<a><a ajsdg = \"\"></a></a>");
   }
 
   public void testNewParsing15() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("<!DOCTYPE a [<!ELEMENT a (a)>]> <a><a ajsdg = \"\"></a></a>");
   }
 
@@ -188,6 +180,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testPerformance1() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestPerformance("pallada.xml", 1000);
   }
 
@@ -216,37 +209,6 @@ public class XmlParsingTest extends ParsingTestCase {
     }
     while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
     LOG.debug("For " + count + " lexemes");
-  }
-
-  public void testReparsePerformance() throws Exception {
-    Assume.assumeTrue("Skip in non XmlParsingTest", getClass() == XmlParsingTest.class);
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
-    final CodeInsightTestFixture fixture = factory.createCodeInsightFixture(builder.getFixture());
-    fixture.setTestDataPath(getXmlParsingTestDataPath() + "psi/xml");
-    fixture.setUp();
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new PsiAwareTextEditorProvider(),
-                                                                            fixture.getTestRootDisposable());
-
-    final Project project = fixture.getProject();
-
-    final PsiFile file = fixture.configureByFile("performance2.xml");
-    assertNotNull(file);
-    transformAllChildren(file.getNode());
-    final Document doc = fixture.getDocument(file);
-    assertNotNull(doc);
-
-    WriteCommandAction.writeCommandAction(project, file).run(
-      () -> PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, () -> {
-        for (int i = 0; i < 10; i++) {
-          final long start = System.nanoTime();
-          doc.insertString(0, "<additional root=\"tag\"/>");
-          PsiDocumentManager.getInstance(project).commitDocument(doc);
-          LOG.debug("Reparsed for: " + (System.nanoTime() - start));
-        }
-      }).assertTiming());
-
-    fixture.tearDown();
   }
 
   public void testXmlDecl() throws Exception {
@@ -287,6 +249,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testDoctype7() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("<?xml version='1.0' encoding='ISO-8859-1' ?>" + "<!DOCTYPE toc SYSTEM 'dtds/ejb-jar_2_0.dtd'>" + "<test>" + "</test>");
   }
 
@@ -384,6 +347,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testEditing9() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("<one> <two a b=\"\"> ashdgjkasgd <aksjhdk></two></one>");
   }
 
@@ -500,6 +464,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testAllWhitespaces() throws Exception {
+    //noinspection SpellCheckingInspection
     doTestXml("""
                 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
                 <Root><page><content><locatieblok><locatie label="Locatie">EXAMPLE</locatie>\u2029<straat label="Straat">EXAMPLE</straat>\u2029<postcode label="Postcode">EXAMPLE</postcode> <plaats label="Plaats">EXAMPLE</plaats>\u2029\u2029<telomschrijving label="Telefoon omschrijving">T.</telomschrijving> <telefoon label="Telefoon">EXAMPLE</telefoon>\u2029\u2029<internet label="Internet">EXAMPLE</internet></locatieblok><naamblok><aanhefnaam label="Aanhef Naam Achternaam">Aanhef Naam Achternaam</aanhefnaam>\u2029<functie label="Functie">Functie</functie>\u2029<mobielomschr label="Mobiel omschrijving">M.</mobielomschr>\t<mobiel label="Mobiel">EXAMPLE</mobiel>\u2029<emailomschr label="Email omschrijving">E.</emailomschr>\t<email label="Email">EXAMPLE</email></naamblok></content></page></Root>
