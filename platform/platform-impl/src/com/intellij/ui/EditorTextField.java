@@ -691,8 +691,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
-                                      myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
+      EditorHighlighter highlighter = ReadAction.compute(() -> {
+        return virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
+               myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
+      });
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 

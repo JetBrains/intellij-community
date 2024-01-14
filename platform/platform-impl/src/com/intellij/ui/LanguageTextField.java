@@ -93,8 +93,9 @@ public class LanguageTextField extends EditorTextField {
       final Project notNullProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
       final PsiFileFactory factory = PsiFileFactory.getInstance(notNullProject);
 
-      final long stamp = LocalTimeCounter.currentTime();
-      final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
+      long stamp = LocalTimeCounter.currentTime();
+      PsiFile psiFile = ReadAction.compute(
+        () -> factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false));
       documentCreator.customizePsiFile(psiFile);
 
       // No need to guess project in getDocument - we already know it
