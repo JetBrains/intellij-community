@@ -464,9 +464,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (element instanceof PsiField && !PsiResolveHelper.getInstance(getProject())
-          .isAccessible((PsiField)element, PsiReferenceExpressionImpl.this, null)) {
-          return true;
+        if (element instanceof PsiField) {
+          PsiClass parentClass = PsiTreeUtil.getParentOfType(PsiReferenceExpressionImpl.this, PsiClass.class);
+          if (!PsiResolveHelper.getInstance(getProject())
+            .isAccessible((PsiField)element, PsiReferenceExpressionImpl.this, parentClass)) {
+            return true;
+          }
         }
         boolean added = myVarNames.add(element.getName());
         return !PsiUtil.isJvmLocalVariable(element) || added;

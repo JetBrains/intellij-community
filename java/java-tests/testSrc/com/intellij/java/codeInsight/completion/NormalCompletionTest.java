@@ -3179,4 +3179,43 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       }
       """);
   }
+
+  public void testOuterVariableNotShadowedByPrivateField2() {
+    // IDEA-340271
+    myFixture.configureByText("Test.java", """
+      class C {
+        class Super {
+          private int variable;
+        }
+        class Use {
+          void test(int variable) {
+            //noinspection ResultOfObjectAllocationIgnored
+            new Super() {
+              void m() {
+                System.out.println(var<caret>);
+              }
+            };
+          }
+        }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+      class C {
+        class Super {
+          private int variable;
+        }
+        class Use {
+          void test(int variable) {
+            //noinspection ResultOfObjectAllocationIgnored
+            new Super() {
+              void m() {
+                System.out.println(variable);
+              }
+            };
+          }
+        }
+      }
+      """);
+  }
 }
