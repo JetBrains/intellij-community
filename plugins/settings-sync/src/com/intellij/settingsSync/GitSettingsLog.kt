@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -11,6 +12,7 @@ import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettings
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
@@ -373,10 +375,18 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
       val addCommand = git.add()
       val pluginJsonPath = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
       if (pluginJsonPath != null) {
+        SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.PLUGINS_JSON)
         val mergedContent = mergePluginJson(pluginJsonPath, ideBranchTip, cloudBranchTip)
         pluginsFile.write(mergedContent)
         addCommand.addFilepattern(pluginJsonPath)
         conflictingFiles -= pluginJsonPath
+      }
+      if (conflictingFiles.isNotEmpty()) {
+        if (conflictingFiles.any { !it.startsWith(PathManager.OPTIONS_DIRECTORY) && !it.startsWith(METAINFO_FOLDER)  })
+          SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.SCHEMES)
+        if (conflictingFiles.any { it.startsWith(PathManager.OPTIONS_DIRECTORY)}) {
+          SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.OPTIONS)
+        }
       }
 
       SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
