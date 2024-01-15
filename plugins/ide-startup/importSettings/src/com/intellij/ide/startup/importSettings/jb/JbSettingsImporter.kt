@@ -47,7 +47,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   // for instance, LaFManager, because the actual theme might be provided by a plugin.
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
-  suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: MutableSet<String>) {
+  suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: Set<String>) {
     if (!categories.contains(SettingsCategory.KEYMAP) && !categories.contains(SettingsCategory.UI)) {
       return
     }
