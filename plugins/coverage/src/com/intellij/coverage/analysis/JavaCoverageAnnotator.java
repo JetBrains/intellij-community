@@ -137,7 +137,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return () -> {
       long timeMs = TimeoutUtil.measureExecutionTime(() -> {
         collectSummaryInfo(suite, project);
-        myStructure = new CoverageClassStructure(project, this);
+        myStructure = new CoverageClassStructure(project, this, suite);
         Disposer.register(this, myStructure);
         dataManager.triggerPresentationUpdate();
       });

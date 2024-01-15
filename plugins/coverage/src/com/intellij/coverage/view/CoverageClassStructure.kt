@@ -3,6 +3,7 @@
 
 package com.intellij.coverage.view
 
+import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.openapi.Disposable
@@ -30,7 +31,8 @@ data class CoverageNodeInfo(val id: String,
 }
 
 
-class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator) : Disposable {
+class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator,
+                             private val suite: CoverageSuitesBundle) : Disposable {
   private val fileStatusManager = FileStatusManager.getInstance(project)
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
@@ -67,17 +69,18 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
 
     hasVCSFilteredChildren = false
     hasFullyCoveredChildren = false
+    val scope = suite.getSearchScope(project)
     val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
       if (hideFullyCovered && counter.isFullyCovered) {
         hasFullyCoveredChildren = true
         null
       }
-      else if (onlyModified && !isModified(fqn)) {
+      else if (onlyModified && !isModified(fqn, scope)) {
         hasVCSFilteredChildren = true
         null
       }
       else {
-        val psiClass = getPsiClass(fqn) ?: return@mapNotNull null
+        val psiClass = getPsiClass(fqn, scope) ?: return@mapNotNull null
         val simpleName = StringUtil.getShortName(fqn)
         CoverageNodeInfo(fqn, simpleName, psiClass, counter)
       }
@@ -156,15 +159,15 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String): Boolean = runReadAction {
-    val psiClass = getPsiClass(className)?.takeIf { it.isValid } ?: return@runReadAction false
+  private fun isModified(className: String, scope: GlobalSearchScope): Boolean = runReadAction {
+    val psiClass = getPsiClass(className, scope)?.takeIf { it.isValid } ?: return@runReadAction false
     val virtualFile = psiClass.containingFile.virtualFile
     val status = fileStatusManager.getStatus(virtualFile)
     return@runReadAction CoverageViewExtension.isModified(status)
   }
 
-  private fun getPsiClass(className: String): PsiNamedElement? = cache.getOrPut(className) {
-    DumbService.getInstance(project).runReadActionInSmartMode(Computable { JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project)) })
+  private fun getPsiClass(className: String, scope: GlobalSearchScope): PsiNamedElement? = cache.getOrPut(className) {
+    DumbService.getInstance(project).runReadActionInSmartMode(Computable { JavaPsiFacade.getInstance(project).findClass(className, scope) })
   }
 
   private fun getPsiPackage(packageName: String): PsiNamedElement? = cache.getOrPut(packageName) {

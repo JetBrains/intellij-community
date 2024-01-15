@@ -22,7 +22,7 @@ import com.intellij.rt.coverage.report.XMLProjectData
 class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
   override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager) = Runnable {
     annotate(suite, dataManager, JavaCoverageInfoCollector(this))
-    myStructure = CoverageClassStructure(project, this)
+    myStructure = CoverageClassStructure(project, this, suite)
     Disposer.register(this, myStructure)
     dataManager.triggerPresentationUpdate()
   }

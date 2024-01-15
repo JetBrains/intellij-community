@@ -1,14 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -164,18 +160,10 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     if (classNames.length > 0) {
       final DumbService dumbService = DumbService.getInstance(project);
       for (final String className : classNames) {
-        ThrowableComputable<PsiClass, RuntimeException> computable = () -> {
-          GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-          RunConfigurationBase<?> configuration = getConfiguration();
-          if (configuration instanceof ModuleBasedConfiguration) {
-            Module module = ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule();
-            if (module != null) {
-              searchScope = GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
-            }
-          }
+        PsiClass aClass = ReadAction.compute(() -> dumbService.computeWithAlternativeResolveEnabled(() -> {
+          GlobalSearchScope searchScope = getSearchScope(project);
           return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), searchScope);
-        };
-        final PsiClass aClass = ReadAction.compute(() -> dumbService.computeWithAlternativeResolveEnabled(computable));
+        }));
         if (aClass != null) {
           classes.add(aClass);
         }

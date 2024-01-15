@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -16,7 +15,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -206,17 +204,14 @@ public class CoverageSuitesBundle {
   }
 
   private GlobalSearchScope getSearchScopeInner(Project project) {
-    Module[] modules = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
-      .map(suite -> ((BaseCoverageSuite)suite).getConfiguration())
-      .filter(configuration -> configuration instanceof ModuleBasedConfiguration)
-      .map(configuration -> ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule())
-      .toArray(Module[]::new);
+    List<GlobalSearchScope> suiteScopes = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
+      .map(suite -> ((BaseCoverageSuite)suite).getSearchScope(project))
+      .filter(Objects::nonNull).toList();
 
-    if (modules.length == 0 || ArrayUtil.find(modules, null) > -1) {
+    if (suiteScopes.size() != mySuites.length) {
       return isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopesCore.projectProductionScope(project);
     }
-
-    return GlobalSearchScope.union(Arrays.stream(modules).map(module -> GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders())).toArray(GlobalSearchScope[]::new));
+    return GlobalSearchScope.union(suiteScopes);
   }
 
   public boolean shouldActivateToolWindow() {
