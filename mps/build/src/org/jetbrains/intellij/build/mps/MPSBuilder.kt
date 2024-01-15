@@ -1,13 +1,14 @@
 package org.jetbrains.intellij.build.mps
 
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.ProprietaryBuildTools
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 class MPSBuilder {
 
@@ -30,28 +31,45 @@ class MPSBuilder {
                     featureUsageStatisticsProperties = listOf(fusp), licenseServerHost = null
             )
 
-            val buildContext = BuildContextImpl.createContextBlocking(
-                BuildDependenciesCommunityRoot(Path.of("$home/community")),
-                Path.of(home),
-                MPSProperties(),
-                buildTools,
-                options
-            )
-
-            val buildTasks = BuildTasks.create(buildContext)
-            buildTasks.compileProjectAndTests(
-                listOf(
-                    "intellij.platform.jps.build",
-                    "intellij.platform.jps.build.tests",
-                    "intellij.platform.jps.model.tests",
-                    "intellij.platform.jps.model.serialization.tests"
+            runBlocking(Dispatchers.Default) {
+                val buildContext = BuildContextImpl.createContext(
+                    BuildDependenciesCommunityRoot(Path.of("$home/community")),
+                    Path.of(home),
+                    MPSProperties(),
+                    buildTools,
+                    options
                 )
-            )
-            buildTasks.buildDistributionsBlocking()
 
-            val jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
-            val jpsArtifactPath = Path.of(jpsArtifactDir)
-            buildContext.notifyArtifactBuilt(jpsArtifactPath)
+                val buildTasks = BuildTasks.create(buildContext)
+                buildTasks.compileProjectAndTests(
+                    listOf(
+                        "intellij.platform.jps.build",
+                        "intellij.platform.jps.build.tests",
+                        "intellij.platform.jps.model.tests",
+                        "intellij.platform.jps.model.serialization.tests"
+                    )
+                )
+                buildTasks.buildDistributions()
+
+                val binDir = buildContext.paths.getDistAll() + "/bin";
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.x64), Path.of("$binDir/linux/amd64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.aarch64), Path.of("$binDir/linux/aarch64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.x64), Path.of("$binDir/mac/amd64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.aarch64), Path.of("$binDir/mac/aarch64"))
+
+                val jpsArtifactDir = "${buildContext.paths.getDistAll()}/lib/jps"
+                val jpsArtifactPath = Path.of(jpsArtifactDir)
+                buildContext.notifyArtifactBuilt(jpsArtifactPath)
+            }
         }
     }
+}
+
+fun copyFileToDir(file: Path, targetDir: Path) {
+    doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
+}
+
+private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+    Files.createDirectories(targetDir)
+    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
 }
