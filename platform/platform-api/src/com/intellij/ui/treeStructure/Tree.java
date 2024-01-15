@@ -58,6 +58,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private Rectangle myLastVisibleRec;
 
   private Dimension myHoldSize;
+
+  private int myAdditionalRowsCount = -1;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
   private ThreeState myHorizontalAutoScrolling = ThreeState.UNSURE;
 
@@ -653,9 +655,59 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  /**
+   * Sets the number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   The extra rows are empty and only displayed to improve readability and reduce clutter
+   *   at the bottom of the tree in case it borders a complex component like a toolbar.
+   * </p>
+   * @param additionalRowsCount the number of extra empty rows (possibly zero), or {@code -1} to use the default value
+   * @see #getAdditionalRowsCount()
+   * @see #getEffectiveAdditionalRowsCount()
+   */
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    int oldValue = myAdditionalRowsCount;
+    myAdditionalRowsCount = additionalRowsCount;
+    firePropertyChange("additionalRowsCount", oldValue, additionalRowsCount);
+  }
+
+  /**
+   * Returns the number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   Note that by default it's set to {@code -1} which means "Use the default value".
+   *   Call {@link #getEffectiveAdditionalRowsCount()} to get the number of rows that will actually be displayed.
+   * </p>
+   * @return the number of extra rows or {@code -1} if the default value is in effect
+   * @see #setAdditionalRowsCount(int)
+   * @see #getEffectiveAdditionalRowsCount()
+   */
+  public int getAdditionalRowsCount() {
+    return myAdditionalRowsCount;
+  }
+
+  /**
+   * Returns the actual number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   The difference between this and {@link #getAdditionalRowsHeight()} is that the latter returns {@code -1}
+   *   if the default value is in effect, while this one returns the actual default value if that's the case.
+   * </p>
+   * @return the number of extra rows
+   * @see #setAdditionalRowsCount(int)
+   * @see #getAdditionalRowsHeight()
+   */
+  public int getEffectiveAdditionalRowsCount() {
+    var result = myAdditionalRowsCount;
+    if (result == -1) {
+      result = Registry.intValue("ide.tree.additional.rows.count", 1, 0, 10);
+    }
+    return result;
+  }
+
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
+
+    size.height += getAdditionalRowsHeight();
 
     if (myHoldSize != null) {
       size.width = Math.max(size.width, myHoldSize.width);
@@ -663,6 +715,36 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     return size;
+  }
+
+  private int getAdditionalRowsHeight() {
+    var additionalRowsCount = getEffectiveAdditionalRowsCount();
+    if (additionalRowsCount == 0) {
+      return 0;
+    }
+    var rowHeight = getDefaultRowHeight();
+    if (rowHeight == 0) {
+      return 0;
+    }
+    var extraHeight = rowHeight * additionalRowsCount;
+    var viewport = ComponentUtil.getViewport(this);
+    var viewportHeight = viewport == null ? 0 : viewport.getHeight();
+    var maximumSensibleExtraHeight = viewportHeight - rowHeight;
+    if (maximumSensibleExtraHeight < 0) {
+      maximumSensibleExtraHeight = 0;
+    }
+    return Math.min(extraHeight, maximumSensibleExtraHeight);
+  }
+
+  private int getDefaultRowHeight() {
+    var result = getRowHeight();
+    if (result <= 0) {
+      result = JBUI.CurrentTheme.Tree.rowHeight();
+    }
+    if (result <= 0) {
+      result = 0;
+    }
+    return result;
   }
 
   @Override
