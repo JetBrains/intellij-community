@@ -52,10 +52,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
 
     protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
       PsiFile file = element.getContainingFile();
-      Document document = file.getViewProvider().getDocument();
-      if (document == null) {
-        return;
-      }
+      Document document = file.getFileDocument();
       final int startOffset = range.getStartOffset();
       final int replaceStartOffset = element.getTextOffset() + startOffset;
       int startTag = range.getEndOffset();

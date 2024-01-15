@@ -25,14 +25,14 @@ public final class UnicodeUnescapeIntention extends MCIntention {
   }
 
   @Override
-  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("unicode.unescape.intention.name");
   }
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
-    final Document document = element.getContainingFile().getViewProvider().getDocument();
+    final Document document = element.getContainingFile().getFileDocument();
     if (!selection.isEmpty()) {
       // does not check if Unicode escape is inside char or string literal (garbage in, garbage out)
       final String text = document.getText(selection);
@@ -153,7 +153,7 @@ public final class UnicodeUnescapeIntention extends MCIntention {
     @Override
     public boolean satisfiedBy(PsiElement element, @NotNull ActionContext context) {
       TextRange selection = context.selection();
-      Document document = element.getContainingFile().getViewProvider().getDocument();
+      Document document = element.getContainingFile().getFileDocument();
       if (!selection.isEmpty()) {
         final int start = selection.getStartOffset();
         final int end = selection.getEndOffset();

@@ -117,16 +117,14 @@ public final class CommentedOutCodeInspection extends BaseInspection {
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
         final PsiFile file = element.getContainingFile();
-        final Document document = file.getViewProvider().getDocument();
-        assert document != null;
+        final Document document = file.getFileDocument();
         Collections.reverse(ranges);
         ranges.forEach(r -> document.deleteString(r.getStartOffset(), r.getStartOffset() + 2));
       }
       else {
         final TextRange range = element.getTextRange();
         final PsiFile file = element.getContainingFile();
-        final Document document = file.getViewProvider().getDocument();
-        assert document != null;
+        final Document document = file.getFileDocument();
         final int start = range.getStartOffset();
         final int end = range.getEndOffset();
         document.deleteString(end - 2, end);

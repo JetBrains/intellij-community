@@ -389,7 +389,7 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
     Icon icon = file.getIcon(0);
-    Document document = file.getViewProvider().getDocument();
+    Document document = file.getFileDocument();
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
     builder.append(getIconChunk(icon, "icon"));

@@ -281,21 +281,14 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     fileContentWithoutKey.append(fileContent.subSequence(0, newOffset));
     fileContentWithoutKey.append(fileContent.subSequence(currentOffset, fileContent.length()));
     PsiFile copyFile = copyFile(file, fileContentWithoutKey);
-    Document copyDocument = copyFile.getViewProvider().getDocument();
-    if (copyDocument == null) {
-      return Conditions.alwaysFalse();
-    }
 
     copyFile = provider.preCheck(copyFile, editor, newOffset);
-    copyDocument = copyFile.getViewProvider().getDocument();
-    if (copyDocument == null) {
-      return Conditions.alwaysFalse();
-    }
+    Document copyDocument = copyFile.getFileDocument();
 
     // The copy document doesn't contain live template key.
     // Register offset translator to make getOriginalElement() work in the copy.
-    Document fileDocument = file.getViewProvider().getDocument();
-    if (fileDocument != null && fileDocument.getTextLength() < currentOffset) {
+    Document fileDocument = file.getFileDocument();
+    if (fileDocument.getTextLength() < currentOffset) {
       LOG.error("File document length (" + fileDocument.getTextLength() + ") is less than offset (" + currentOffset + ")",
                 CoreAttachmentFactory.createAttachment(fileDocument), CoreAttachmentFactory.createAttachment(editor.getDocument()));
     }

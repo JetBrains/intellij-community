@@ -90,7 +90,7 @@ public final class FindDfaProblemCauseFix extends ModCommandQuickFix implements 
   private static @NotNull ModCommand displayProblemCause(@NotNull PsiFile file, @Nullable TrackingRunner.CauseItem root) {
     Project project = file.getProject();
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    Document document = topLevelFile.getViewProvider().getDocument();
+    Document document = topLevelFile.getFileDocument();
     List<CauseWithDepth> causes;
     if (root == null) {
       causes = Collections.emptyList();

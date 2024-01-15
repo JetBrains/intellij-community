@@ -436,8 +436,7 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
       }
 
       private static int getLineNumber(PsiElement element) {
-        final Document document = element.getContainingFile().getViewProvider().getDocument();
-        assert document != null;
+        final Document document = element.getContainingFile().getFileDocument();
         return document.getLineNumber(element.getTextRange().getStartOffset());
       }
     }

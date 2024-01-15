@@ -127,10 +127,7 @@ public final class UnqualifiedInnerClassAccessInspection extends BaseInspection 
       final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
       ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = containingFile.getViewProvider().getDocument();
-      if (document == null) {
-        return;
-      }
+      final Document document = containingFile.getFileDocument();
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       final String text = buildNewText(javaFile, references, containingClass, new StringBuilder()).toString();
       document.replaceString(0, document.getTextLength(), text);

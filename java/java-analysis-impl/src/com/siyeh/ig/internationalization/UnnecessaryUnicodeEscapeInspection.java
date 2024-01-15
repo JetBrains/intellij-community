@@ -82,11 +82,9 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
-      Document document = startElement.getContainingFile().getViewProvider().getDocument();
-      if (document != null) {
-        String replacement = c == '\t' ? "\\t" : String.valueOf(c);
-        document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), replacement);
-      }
+      Document document = startElement.getContainingFile().getFileDocument();
+      String replacement = c == '\t' ? "\\t" : String.valueOf(c);
+      document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), replacement);
     }
   }
 

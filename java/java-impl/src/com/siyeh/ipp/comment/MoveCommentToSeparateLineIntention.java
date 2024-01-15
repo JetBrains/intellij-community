@@ -61,7 +61,7 @@ public final class MoveCommentToSeparateLineIntention extends MCIntention {
     }
     final PsiElement anchor = element;
 
-    final Document document = comment.getContainingFile().getViewProvider().getDocument();
+    final Document document = comment.getContainingFile().getFileDocument();
     final String newline;
     if (whitespace == null) {
       newline = "\n";

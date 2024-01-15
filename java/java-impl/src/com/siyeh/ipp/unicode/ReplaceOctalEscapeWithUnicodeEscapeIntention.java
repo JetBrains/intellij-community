@@ -37,7 +37,7 @@ public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntent
     TextRange selection = context.selection();
     if (!selection.isEmpty()) {
       // does not check if octal escape is inside char or string literal (garbage in, garbage out)
-      final Document document = element.getContainingFile().getViewProvider().getDocument();
+      final Document document = element.getContainingFile().getFileDocument();
       while (selection.getEndOffset() < document.getTextLength()) {
         char nextChar = document.getCharsSequence().charAt(selection.getEndOffset());
         if (nextChar >= '0' && nextChar <= '7') {
@@ -160,7 +160,7 @@ public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntent
       if (!selection.isEmpty()) {
         final int start = selection.getStartOffset();
         final int end = selection.getEndOffset();
-        final String text = element.getContainingFile().getViewProvider().getDocument()
+        final String text = element.getContainingFile().getFileDocument()
           .getCharsSequence().subSequence(start, end).toString();
         return indexOfOctalEscape(text, 1) >= 0;
       }

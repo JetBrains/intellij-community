@@ -95,8 +95,7 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
             final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
             if (indent < 0)  return;
             final String newTextBlockTest = buildNewTextBlockText(text, indent);
-            final Document document = element.getContainingFile().getViewProvider().getDocument();
-            assert document != null;
+            final Document document = element.getContainingFile().getFileDocument();
             final TextRange replaceRange = element.getTextRange();
             document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), newTextBlockTest);
           }
