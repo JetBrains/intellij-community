@@ -212,7 +212,6 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     aeDatabasePlugin("intellij.ae.database.community"),
-    githubPlugin("intellij.vcs.github.community"),
     plugin("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withModule("intellij.terminal.sh")
@@ -841,10 +840,11 @@ object CommunityRepositoryModules {
 
   fun githubPlugin(mainModuleName: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
+      spec.directoryName = "vcs-github"
+      spec.mainJarName = "vcs-github.jar"
       spec.withModules(listOf(
         "intellij.vcs.github"
       ))
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
     }
   }
 

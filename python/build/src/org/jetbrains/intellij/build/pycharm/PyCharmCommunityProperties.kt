@@ -37,16 +37,20 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     productLayout.bundledPluginModules.add("intellij.python.community.plugin")
     productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
     productLayout.bundledPluginModules.add("intellij.ae.database.community")
+    productLayout.bundledPluginModules.add("intellij.vcs.github.community")
     productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
 
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       PluginLayout.plugin(listOf(
         "intellij.pycharm.community.customization",
         "intellij.pycharm.community.ide.impl",
         "intellij.jupyter.viewOnly",
         "intellij.jupyter.core"
       )
-      ))
+      ),
+      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
+    )
+    )
     productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
@@ -77,7 +81,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       init {
         snapName = "pycharm-community"
         snapDescription = "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +
-         "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+                          "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
       }
     }
   }
