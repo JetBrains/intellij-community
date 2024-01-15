@@ -132,6 +132,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
+  /**
+   * Description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., class filters).
+   * Formatted as HTML body.
+   */
   @Nls
   public abstract String getDisplayText(B breakpoint);
 
@@ -225,6 +229,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  /**
+   * Laconic textual description identifying this breakpoint among other ones of the same type.
+   * Usually used in the list of breakpoints.
+   * It is expected to be short.
+   */
   @Nls
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);

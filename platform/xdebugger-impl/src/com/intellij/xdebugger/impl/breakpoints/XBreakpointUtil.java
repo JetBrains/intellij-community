@@ -40,12 +40,18 @@ public final class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
+  /**
+   * The forcibly shortened version of {@link XBreakpointType#getShortText(XBreakpoint)}.
+   */
   @Nls
   public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
     return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
   }
 
+  /**
+   * @see XBreakpointType#getDisplayText(XBreakpoint)
+   */
   @Nls
   public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
     //noinspection unchecked

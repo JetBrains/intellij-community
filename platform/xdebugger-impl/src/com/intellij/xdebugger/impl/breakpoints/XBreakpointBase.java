@@ -365,6 +365,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  /**
+   * Full description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., condition).
+   * Formatted as HTML document.
+   */
   @NotNull
   @Nls
   public String getDescription() {

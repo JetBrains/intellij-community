@@ -194,6 +194,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return mySourcePosition;
   }
 
+  /**
+   * Description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., class filters).
+   * Formatted as HTML body.
+   */
   @NotNull
   @Nls
   public String getDescription() {

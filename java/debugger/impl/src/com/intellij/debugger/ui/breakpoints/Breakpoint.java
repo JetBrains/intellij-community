@@ -154,8 +154,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase<?, ?, ?>)myXBreakpoint).isDisposed();
   }
 
+  /**
+   * Description of breakpoint target
+   * (e.g.,
+   * "Line 20 in Hello.foo()" for line breakpoint,
+   * "foo.Bar.workHard()" for method breakpoint,
+   * ...).
+   */
   public abstract @NlsContexts.Label String getDisplayName();
 
+  /**
+   * Similar to {@link #getDisplayName()} but tries to be more laconic.
+   */
   public String getShortName() {
     return getDisplayName();
   }
