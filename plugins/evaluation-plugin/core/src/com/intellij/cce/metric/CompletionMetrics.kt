@@ -9,8 +9,8 @@ fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
   listOf(
     RecallAtMetric(showByDefault = showByDefault, n = 1),
     RecallAtMetric(showByDefault = showByDefault, n = 5),
-    RecallMetric(showByDefault = showByDefault),
-    Precision(showByDefault = showByDefault),
+    RecallMetric(),
+    Precision(),
     MeanRankMetric(),
     MeanLatencyMetric(),
     SuccessMeanLatencyMetric(),
@@ -19,8 +19,7 @@ fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
     PercentileLatencyMetric(percentile = 80),
     SuccessPercentileLatencyMetric(percentile = 50),
     SuccessPercentileLatencyMetric(percentile = 80),
-    SessionsCountMetric(),
-    SuggestionsCountMetric()
+    SuggestionsCountMetric(),
   )
 
 
@@ -38,7 +37,7 @@ fun createCompletionGolfMetrics(): List<Metric> =
     NavigationsCount(),
     CompletionInvocationsCount(),
     MovesCountNormalised(),
-    PerfectLine(showByDefault = false)
+    PerfectLine(showByDefault = false),
   )
 
 fun createBenchmarkMetrics(): List<Metric> =
@@ -55,7 +54,7 @@ fun createBenchmarkMetrics(): List<Metric> =
     CancelledAtMetric(showByDefault = false, n = 1),
     CancelledAtMetric(showByDefault = false, n = 5),
     MatchedLineLength(),
-    FirstPerfectLineSession()
+    FirstPerfectLineSession(),
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {

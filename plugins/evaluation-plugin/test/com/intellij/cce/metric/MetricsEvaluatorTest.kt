@@ -134,7 +134,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test recall metric`() {
-    val metric = RecallMetric(showByDefault = false)
+    val metric = RecallMetric()
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5)))
     Assertions.assertEquals(0.75, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))

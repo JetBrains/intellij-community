@@ -8,6 +8,7 @@ import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupCompletionStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
+import com.intellij.cce.metric.SessionsCountMetric
 import com.intellij.cce.metric.createBaseCompletionMetrics
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
@@ -21,7 +22,7 @@ class TokenCompletionFeature : EvaluableFeatureBase<CompletionStrategy>("token-c
   override fun getFeatureInvoker(project: Project, language: Language, strategy: CompletionStrategy): FeatureInvoker =
     CompletionActionsInvoker(project, language, strategy)
 
-  override fun getMetrics(): List<Metric> = createBaseCompletionMetrics(showByDefault = true)
+  override fun getMetrics(): List<Metric> = createBaseCompletionMetrics(showByDefault = true) + listOf(SessionsCountMetric())
 
   override fun getStrategySerializer(): StrategySerializer<CompletionStrategy> = CompletionStrategySerializer()
 

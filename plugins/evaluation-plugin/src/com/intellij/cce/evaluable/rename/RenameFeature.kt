@@ -9,6 +9,7 @@ import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.EditSimilarity
 import com.intellij.cce.metric.Metric
+import com.intellij.cce.metric.SessionsCountMetric
 import com.intellij.cce.metric.createBaseCompletionMetrics
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
@@ -24,7 +25,9 @@ class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
 
   override fun getStrategySerializer(): StrategySerializer<RenameStrategy> = RenameStrategySerializer()
 
-  override fun getMetrics(): List<Metric> = listOf(EditSimilarity(showByDefault = true)) + createBaseCompletionMetrics(showByDefault = true)
+  override fun getMetrics(): List<Metric> = listOf(EditSimilarity(showByDefault = true)) +
+                                            createBaseCompletionMetrics(showByDefault = false) +
+                                            listOf(SessionsCountMetric())
 
   override fun getEvaluationSteps(language: Language, strategy: RenameStrategy): List<EvaluationStep> = emptyList()
 }

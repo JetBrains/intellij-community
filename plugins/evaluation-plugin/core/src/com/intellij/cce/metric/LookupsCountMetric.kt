@@ -4,16 +4,17 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-class SessionsCountMetric(override val name: String = "Sessions") : Metric {
+class LookupsCountMetric(override val name: String = "Lookups"): Metric {
   private val sample = Sample()
-  override val description: String = "Number of sessions"
+  override val description: String = "Number of lookups"
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
 
   override fun evaluate(sessions: List<Session>): Double {
-    sample.add(sessions.size.toDouble())
-    return sessions.size.toDouble()
+    val lookupsCount = sessions.sumOf { it.lookups.size.toDouble() }
+    sample.add(lookupsCount)
+    return lookupsCount
   }
 }

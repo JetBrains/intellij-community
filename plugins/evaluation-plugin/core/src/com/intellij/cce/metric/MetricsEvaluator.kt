@@ -23,7 +23,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   fun registerDefaultMetrics() {
     registerMetric(RecallAtMetric(showByDefault = true, n = 1))
     registerMetric(RecallAtMetric(showByDefault = true, n = 5))
-    registerMetric(RecallMetric(showByDefault = true))
+    registerMetric(RecallMetric())
     registerMetric(MeanLatencyMetric())
     registerMetric(MaxLatencyMetric())
     registerMetric(MeanRankMetric())
