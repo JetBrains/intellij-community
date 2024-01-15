@@ -128,7 +128,7 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
     throw e
   }
   catch (e: Throwable) {
-    recordException(e)
+    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
     setStatus(StatusCode.ERROR)
     throw e
   }

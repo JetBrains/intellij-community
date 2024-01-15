@@ -5,6 +5,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
@@ -36,7 +38,7 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
       throw e
     }
     catch (e: Throwable) {
-      span.recordException(e)
+      span.recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
       span.setStatus(StatusCode.ERROR)
       throw e
     }
@@ -108,7 +110,7 @@ inline fun <T> Span.use(operation: (Span) -> T): T {
     throw e
   }
   catch (e: Throwable) {
-    recordException(e)
+    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
     setStatus(StatusCode.ERROR)
     throw e
   }
