@@ -24,6 +24,7 @@ public final class MoveInitializerToConstructorAction extends BaseMoveInitialize
   protected boolean isAvailable(@NotNull PsiField field) {
     if (!super.isAvailable(field)) return false;
     PsiClass containingClass = field.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) return false;
     assert containingClass != null;
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length > 0 && ContainerUtil.all(constructors, c -> c instanceof SyntheticElement)) return false;
