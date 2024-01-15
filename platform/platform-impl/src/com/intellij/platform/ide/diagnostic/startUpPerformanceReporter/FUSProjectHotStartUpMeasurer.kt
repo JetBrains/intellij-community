@@ -378,8 +378,7 @@ object FUSProjectHotStartUpMeasurer {
 
       if (isChannelHandlingStopped) continue
 
-      var proceed = true
-      while (proceed) {
+      while (true) {
         val newLastHandledEvent: Event.FUSReportableEvent? = when (lastHandledEvent) {
           null ->
             applyFrameVisibleEventIfPossible(false, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
@@ -397,7 +396,7 @@ object FUSProjectHotStartUpMeasurer {
           lastHandledEvent = newLastHandledEvent
         }
         else {
-          proceed = false
+          break
         }
       }
     }
