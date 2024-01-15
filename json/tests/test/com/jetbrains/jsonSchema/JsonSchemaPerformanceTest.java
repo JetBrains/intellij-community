@@ -8,15 +8,21 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.junit.Assert;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+
+import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema;
 
 @HardwareAgentRequired
 public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
@@ -25,6 +31,15 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   @Override
   protected String getBasePath() {
     return BASE_PATH;
+  }
+
+  public void testAzureHighlighting() throws IOException {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/azure-schema.json"));
+    registerJsonSchema(myFixture, schemaText, "json", it -> true);
+
+    myFixture.enableInspections(JsonSchemaComplianceInspection.class);
+    myFixture.configureByFile("/azure-file.json");
+    myFixture.testHighlighting(true, false, true);
   }
 
   public void testSwaggerHighlighting() {
