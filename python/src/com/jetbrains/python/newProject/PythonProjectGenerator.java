@@ -207,11 +207,20 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
 
     configureProject(project, baseDir, settings, module, synchronizer);
+    reportStatistics(settings);
+  }
+
+  /**
+   * Report FUS statics on the created project.
+   * Inheritors can override this method to supply customized data for the statistics.
+   */
+  protected void reportStatistics(@NotNull final T settings) {
     var statisticsInfo = settings.getInterpreterInfoForStatistics();
     if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo && settings.getSdk() != null) {
       PythonNewProjectWizardCollector.logPythonNewProjectGenerated(interpreterStatisticsInfo,
                                                                    PyStatisticToolsKt.getVersion(settings.getSdk()),
-                                                                   this.getClass());
+                                                                   this.getClass(),
+                                                                   Collections.emptyList());
     }
   }
 
