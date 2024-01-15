@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk
 
+import com.intellij.driver.sdk.ui.components.UiComponent
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -21,3 +22,8 @@ fun waitFor(
 }
 
 class WaitForException(duration: Duration, errorMessage: String) : IllegalStateException("Timeout($duration): $errorMessage")
+
+fun <T : UiComponent> T.wait(duration: Duration): T {
+  Thread.sleep(duration.inWholeMilliseconds)
+  return this
+}
