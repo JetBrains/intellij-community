@@ -39,10 +39,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.legacy.ApiAdapterUtils;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.SchemaPath;
@@ -58,6 +61,8 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.effectiveBranchOrNull;
 import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.findPropertiesThatMustNotBePresent;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_LANGUAGE_INJECTION;
+import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
 public final class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "builtin";
@@ -204,12 +209,11 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         final Set<String> properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition);
         final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition);
 
-        final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
         final Set<String> forbiddenNames = SetsKt.plus(
           findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties),
           properties
         );
-        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, schemaProperties, knownNames, completionPath);
+        addAllPropertyVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
         addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
         addPropertyNameSchemaVariants(schema);
       }
@@ -252,22 +256,24 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         JsonSchemaObject effectiveBranch = effectiveBranchOrNull(ifThenElse, myProject, object);
         if (effectiveBranch == null) continue;
 
-        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, effectiveBranch.getProperties(), knownNames, completionPath);
+        addAllPropertyVariants(effectiveBranch, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
       }
     }
 
-    private void addAllPropertyVariants(boolean insertComma,
+    private void addAllPropertyVariants(JsonSchemaObject schema,
+                                        boolean insertComma,
                                         boolean hasValue,
                                         Set<String> forbiddenNames,
                                         JsonPropertyAdapter adapter,
-                                        Map<String, JsonSchemaObject> schemaProperties,
                                         Set<String> knownNames,
                                         @Nullable SchemaPath completionPath) {
-      schemaProperties.keySet().stream()
+      ApiAdapterUtils.iteratorAsStream(schema.getPropertyNames())
         .filter(name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
         .forEach(name -> {
           knownNames.add(name);
-          addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma, completionPath);
+          var propertySchema = schema.getPropertyByName(name);
+          assert propertySchema != null;
+          addPropertyVariant(name, propertySchema, hasValue, insertComma, completionPath);
         });
     }
 
@@ -293,7 +299,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         }
       }
       else if (isSurelyValue) {
-        final JsonSchemaType type = schema.guessType();
+        final JsonSchemaType type = guessType(schema);
         suggestSpecialValues(type);
         if (type != null) {
           suggestByType(schema, type);
@@ -318,12 +324,12 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         }
         switch (name) {
           case "required" -> addRequiredPropVariants();
-          case JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants();
+          case X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants();
           case "language" -> {
             JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
             if (parent != null) {
               JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
-              if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
+              if (adapter != null && X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
                 addInjectedLanguageVariants();
               }
             }
@@ -407,7 +413,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       }
     }
 
-    private void suggestValuesForSchemaVariants(List<JsonSchemaObject> list, boolean isSurelyValue) {
+    private void suggestValuesForSchemaVariants(List<? extends JsonSchemaObject> list, boolean isSurelyValue) {
       if (list != null && list.size() > 0) {
         for (JsonSchemaObject schemaObject : list) {
           suggestValues(schemaObject, isSurelyValue);
@@ -468,16 +474,16 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         builder = builder.withTypeText(findFirstSentence(text), true);
       }
       else {
-        String type = jsonSchemaObject.getTypeDescription(true);
+        String type = JsonSchemaObjectReadingUtils.getTypeDescription(jsonSchemaObject, true);
         if (type != null) {
           builder = builder.withTypeText(type, true);
         }
       }
 
-      builder = builder.withIcon(getIcon(jsonSchemaObject.guessType()));
+      builder = builder.withIcon(getIcon(guessType(jsonSchemaObject)));
 
       if (hasSameType(variants)) {
-        final JsonSchemaType type = jsonSchemaObject.guessType();
+        final JsonSchemaType type = guessType(jsonSchemaObject);
         final List<Object> values = jsonSchemaObject.getEnum();
         Object defaultValue = jsonSchemaObject.getDefault();
 
@@ -528,7 +534,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
-      return variants.stream().map(JsonSchemaObject::guessType).filter(Objects::nonNull).distinct().count() <= 1;
+      return variants.stream().map(it -> guessType(it)).filter(Objects::nonNull).distinct().count() <= 1;
     }
 
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
@@ -606,7 +612,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     private @NotNull InsertHandler<LookupElement> createPropertyInsertHandler(@NotNull JsonSchemaObject jsonSchemaObject,
                                                                               final boolean hasValue,
                                                                               boolean insertComma) {
-      JsonSchemaType type = jsonSchemaObject.guessType();
+      JsonSchemaType type = guessType(jsonSchemaObject);
       List<Object> values = jsonSchemaObject.getEnum();
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
       final Object defaultValue = jsonSchemaObject.getDefault();

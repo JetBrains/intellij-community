@@ -28,6 +28,8 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
+import com.jetbrains.jsonSchema.impl.light.legacy.ApiAdapterUtils
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import org.toml.ide.experiments.TomlExperiments
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTableHeader
@@ -73,8 +75,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                     val properties = walker.getPropertyNamesOfParentObject(originalPosition, position)
                     val adapter = walker.getParentPropertyAdapter(checkable)
 
-                    val schemaProperties = schema.properties
-                    addAllPropertyVariants(properties, adapter, schemaProperties, knownNames, originalPosition)
+                    addAllPropertyVariants(schema, properties, adapter, knownNames, originalPosition)
                 }
 
                 if (isName != ThreeState.YES) {
@@ -88,25 +89,25 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
         }
 
         private fun addAllPropertyVariants(
+            schema: JsonSchemaObject,
             properties: Collection<String>,
             adapter: JsonPropertyAdapter?,
-            schemaProperties: Map<String, JsonSchemaObject>,
             knownNames: MutableSet<String>,
             originalPosition: PsiElement
         ) {
-            val variants = schemaProperties.keys.filter { name ->
+            val variants = ApiAdapterUtils.iteratorAsStream(schema.propertyNames).filter { name ->
                 !properties.contains(name) && !knownNames.contains(name) || name == adapter?.name
             }
 
             for (variant in variants) {
                 knownNames.add(variant)
-                val jsonSchemaObject = schemaProperties[variant]
+                val jsonSchemaObject = schema.getPropertyByName(variant)
 
                 if (jsonSchemaObject != null) {
                     // skip basic types keys as they can't be in the table header
                     val isTomlHeader = originalPosition.parentOfType<TomlTableHeader>() != null
 
-                    if (isTomlHeader && jsonSchemaObject.guessType() !in JSON_COMPOUND_TYPES) continue
+                    if (isTomlHeader && JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject) !in JSON_COMPOUND_TYPES) continue
 
                     addPropertyVariant(variant, jsonSchemaObject)
                 }
@@ -120,12 +121,13 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
 
             var description = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject)
             if (description.isNullOrBlank()) {
-                description = jsonSchemaObject.getTypeDescription(true).orEmpty()
+                description = JsonSchemaObjectReadingUtils.getTypeDescription(jsonSchemaObject, true).orEmpty()
             }
 
             val lookupElement = LookupElementBuilder.create(key)
                 .withTypeText(description)
-                .withIcon(getIconForType(jsonSchemaObject.guessType()))
+                .withIcon(getIconForType(
+                    JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject)))
 
             variants.add(lookupElement)
         }
@@ -147,7 +149,8 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                     variants.add(LookupElementBuilder.create(variant))
                 }
             } else if (isSurelyValue && !isInsideStringLiteral) {
-                variants.addAll(suggestValuesByType(schema.guessType()))
+                variants.addAll(suggestValuesByType(
+                    JsonSchemaObjectReadingUtils.guessType(schema)))
             }
         }
 
