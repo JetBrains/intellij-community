@@ -104,7 +104,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = reviewVmHelper.pendingReviewState.asStateFlow()
+  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = reviewVmHelper.pendingReviewState
   override val pendingComments: Flow<Int> = pendingReview.map { it.result?.getOrNull()?.commentsCount ?: 0 }
 
   override val repositoryRestrictions = RepositoryRestrictions(securityService)

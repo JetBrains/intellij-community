@@ -106,3 +106,12 @@ fun GHPRReviewDataProvider.createThreadsRequestsFlow(): Flow<CompletableFuture<L
   send(loadReviewThreads())
   awaitClose { Disposer.dispose(disposable) }
 }
+
+fun GHPRReviewDataProvider.createPendingReviewRequestsFlow(): Flow<CompletableFuture<GHPullRequestPendingReview?>> = callbackFlow {
+  val disposable = Disposer.newDisposable()
+  addPendingReviewListener(disposable) {
+    trySend(loadPendingReview())
+  }
+  send(loadPendingReview())
+  awaitClose { Disposer.dispose(disposable) }
+}
