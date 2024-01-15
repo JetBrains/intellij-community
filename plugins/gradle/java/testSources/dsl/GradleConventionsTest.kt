@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.idea.IJIgnore
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_JAVA_PLUGIN_CONVENTION
@@ -11,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleConventionsTest : GradleCodeInsightTestCase() {
 
+  @IJIgnore(issue = "IDEA-340676")
   @ParameterizedTest
   @AllGradleVersionsSource(DECORATORS, """
     "<caret>docsDir",
