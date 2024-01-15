@@ -110,8 +110,8 @@ private val AKKA_PLACEHOLDERS = object : LoggerTypeSearcher {
 }
 
 private val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
-  override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType {
-    return PlaceholderLoggerType.LOG4J_OLD_STYLE
+  override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
+    return null
   }
 }
 
