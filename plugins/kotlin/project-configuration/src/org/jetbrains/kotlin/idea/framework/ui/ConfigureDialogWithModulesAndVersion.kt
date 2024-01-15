@@ -5,14 +5,17 @@ import com.google.common.io.Closeables
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -204,12 +207,12 @@ class ConfigureDialogWithModulesAndVersion(
     }
 
     companion object {
+
+        private val LOG = Logger.getInstance(ConfigureDialogWithModulesAndVersion::class.java)
+
         private const val MODULES_TO_DISPLAY_SIZE = 2
 
-        internal const val DEFAULT_KOTLIN_VERSION = "1.8.22"
-
-        private const val VERSIONS_LIST_URL =
-            "https://search.maven.org/solrsearch/select?q=g:%22org.jetbrains.kotlin%22+AND+a:%22kotlin-stdlib%22&core=gav&rows=20&wt=json"
+        internal const val DEFAULT_KOTLIN_VERSION = "1.9.22"
 
         @Throws(IOException::class)
         @JvmStatic
@@ -232,7 +235,8 @@ class ConfigureDialogWithModulesAndVersion(
                     eapConnection.disconnect()
                 }
             }
-            val urlConnection = HttpConfigurable.getInstance().openHttpConnection(VERSIONS_LIST_URL)
+            val url = Registry.stringValue("repo.with.kotlin.versions.url")
+            val urlConnection = HttpConfigurable.getInstance().openHttpConnection(url)
             try {
                 val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
                 urlConnection.setConnectTimeout(timeout)
@@ -251,6 +255,12 @@ class ConfigureDialogWithModulesAndVersion(
                 } finally {
                     Closeables.closeQuietly(streamReader)
                 }
+            } catch (e: HttpRequests.HttpStatusException) {
+                LOG.warn("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
+                throw e
+            } catch (e: Exception) {
+                LOG.warn("Error parsing Kotlin versions JSON data: ${e} (URL=${url})", e)
+                throw e
             } finally {
                 urlConnection.disconnect()
             }
