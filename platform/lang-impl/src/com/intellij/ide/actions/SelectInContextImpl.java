@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,6 +158,9 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
     }
     else {
+      if (!EDT.isCurrentThreadEdt()) {
+        return null;
+      }
       return getElementFromStructureViewComponent(project, editor, builder);
     }
   }
