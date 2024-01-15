@@ -6,4 +6,6 @@ interface DependencySearchProvider {
   suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData>
 
   fun isLocal(): Boolean
+
+  val cacheKey: String
 }

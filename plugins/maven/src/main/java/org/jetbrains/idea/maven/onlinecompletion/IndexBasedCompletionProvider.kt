@@ -65,4 +65,5 @@ internal class IndexBasedCompletionProvider(private val myProject: Project) : De
   }
 
   override fun isLocal() = true
+  override val cacheKey = "IndexBasedCompletionProvider" // assuming there's only one IndexBasedCompletionProvider per project
 }

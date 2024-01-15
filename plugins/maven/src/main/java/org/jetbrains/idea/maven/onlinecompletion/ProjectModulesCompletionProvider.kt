@@ -27,4 +27,5 @@ class ProjectModulesCompletionProvider(private val myProject: Project) : Depende
   }
 
   override fun isLocal() = true
+  override val cacheKey = "ProjectModulesCompletionProvider" // assuming there's only one ProjectModulesCompletionProvider per project
 }

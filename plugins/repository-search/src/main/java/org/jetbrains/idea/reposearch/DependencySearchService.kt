@@ -35,7 +35,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   private fun remoteProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { !it.isLocal() }
   private fun localProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { it.isLocal() }
 
-  private data class DeferredCacheKey(val provider: DependencySearchProvider, val cacheKey: String)
+  private data class DeferredCacheKey(val className: String, val providerKey: String, val valueKey: String)
 
 
   override fun dispose() {
@@ -150,7 +150,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
                                          consumer: ResultConsumer,
                                          searchMethod: suspend (DependencySearchProvider, ResultConsumer) -> Unit) {
     val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
-    val existingDeferred = deferredCache.putIfAbsent(DeferredCacheKey(provider, cacheKey), thisNewDeferred)
+    val existingDeferred = deferredCache.putIfAbsent(DeferredCacheKey(provider::class.java.name, provider.cacheKey, cacheKey), thisNewDeferred)
     if (existingDeferred != null && parameters.useCache()) {
       fillResultsFromDeferredCache(existingDeferred, consumer)
       return
@@ -187,15 +187,27 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     }
   }
 
-  private fun fillResultsFromDeferredCache(deferred: Deferred<Collection<RepositoryArtifactData>>, consumer: ResultConsumer) {
-    deferred.invokeOnCompletion {
-      BiConsumer { r: Collection<RepositoryArtifactData>, e: Throwable? ->
-        if (e != null) {
+  private suspend fun fillResultsFromDeferredCache(deferred: Deferred<Collection<RepositoryArtifactData>>, consumer: ResultConsumer) {
+    val searchFinished = AtomicBoolean(false)
+
+    coroutineScope {
+      cs.launch {
+        try {
+          if (deferred.isCompleted) {
+            deferred.getCompleted().forEach(consumer)
+            searchFinished.set(true)
+          }
+        }
+        catch (e: Exception) {
           logWarn("Exception getting data from cache", e)
         }
-        else {
-          r.forEach(consumer)
+      }
+      while (true) {
+        if (searchFinished.get()) {
+          break
         }
+        ensureActive()
+        delay(100)
       }
     }
   }

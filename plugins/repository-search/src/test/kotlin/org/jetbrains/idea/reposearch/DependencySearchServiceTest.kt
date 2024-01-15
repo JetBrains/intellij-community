@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
@@ -100,6 +101,8 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
 
   open class TestSearchProvider : DependencySearchProvider {
 
+    private val _cacheKey = UUID.randomUUID().toString()
+
     override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
       TODO("Not yet implemented")
     }
@@ -111,6 +114,8 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     override fun isLocal(): Boolean {
       TODO("Not yet implemented")
     }
+
+    override val cacheKey = _cacheKey
 
   }
 

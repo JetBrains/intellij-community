@@ -58,6 +58,7 @@ class PackageSearchProvider(
   }
 
   override fun isLocal(): Boolean = false
+  override val cacheKey = "PackageSearchProvider" // assuming there's only one PackageSearchProvider per project
 
   private fun convertApiStandardPackage2RepositoryArtifactData(pkg: ApiStandardPackage): RepositoryArtifactData {
     val items = pkg.versions.map {
