@@ -261,7 +261,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
         LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
         progressIndicator.fraction = 0.1
-        storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2import)
+        storeImportConfig(productInfo.configDirPath, filteredCategories)
         LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         // restart if we install plugins

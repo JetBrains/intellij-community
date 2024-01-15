@@ -36,18 +36,12 @@ private class JbAfterRestartSettingsApplier : ApplicationInitializedListener {
         }
         val oldConfDir = Path.of(configLines[0])
         val options = mutableSetOf<SettingsCategory>()
-        val pluginIds = mutableSetOf<String>()
         configLines[1].split(",").forEach {
           options.add(SettingsCategory.valueOf(it.trim()))
         }
-        if (configLines.size > 2) {
-          configLines[2].split(",").forEach {
-            pluginIds.add(it.trim())
-          }
-        }
         val importer = JbSettingsImporter(oldConfDir, oldConfDir, null)
         withContext(Dispatchers.EDT) {
-          importer.importOptionsAfterRestart(options, pluginIds)
+          importer.importOptionsAfterRestart(options)
         }
       } catch (e: Throwable) {
         JbImportServiceImpl.LOG.warn("An exception occurred while importing $configPathFile", e)
@@ -58,9 +52,6 @@ private class JbAfterRestartSettingsApplier : ApplicationInitializedListener {
 }
 
 internal val configPathFile = PathManager.getConfigDir() / "after_restart_config.txt"
-internal fun storeImportConfig(configDir: Path,
-                               categories: Set<SettingsCategory>,
-                               pluginIds: List<String>?
-                               ) {
-  configPathFile.writeText("$configDir\n${categories.joinToString()}\n${pluginIds?.joinToString() ?: ""}")
+internal fun storeImportConfig(configDir: Path, categories: Set<SettingsCategory>) {
+  configPathFile.writeText("$configDir\n${categories.joinToString()}")
 }
