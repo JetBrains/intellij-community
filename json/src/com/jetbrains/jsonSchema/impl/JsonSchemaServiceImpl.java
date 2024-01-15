@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -417,13 +418,21 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
-    Ref<String> res = Ref.create(null);
-    //noinspection CodeBlock2Expr
-    ApplicationManager.getApplication().runReadAction(() -> {
-      res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
-    });
-    if (res.isNull()) return null;
-    return JsonSchemaVersion.byId(res.get());
+    String schemaPropertyValue;
+    if (Registry.is("json.schema.object.v2")) {
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
+      if (schemaRootOrNull == null) return null;
+      schemaPropertyValue = schemaRootOrNull.getSchema();
+    }
+    else {
+      Ref<String> res = Ref.create(null);
+      //noinspection CodeBlock2Expr
+      ApplicationManager.getApplication().runReadAction(() -> {
+        res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
+      });
+      schemaPropertyValue = res.get();
+    }
+    return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
   }
 
   private boolean hasSchemaSchema(VirtualFile file) {

@@ -196,7 +196,17 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
     @Override
     public @Nullable PsiElement resolveInner() {
-      final String id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);
+      String id = null;
+      if (Registry.is("json.schema.object.v2")) {
+        JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
+          .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
+        if (schemaRootOrNull != null) {
+          id = schemaRootOrNull.resolveId(myText);
+        }
+      }
+      if (id == null)  {
+        id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);
+      }
       if (id == null) return null;
       return resolveForPath(myElement, "#" + id, false);
     }
