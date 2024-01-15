@@ -10,11 +10,14 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import java.time.Duration
 
-class IJShellRuntimeDataProvider(private val session: BlockTerminalSession) : ShellRuntimeDataProvider {
+class IJShellRuntimeDataProvider(
+  private val session: BlockTerminalSession,
+  private val shellCommandExecutor: ShellCommandExecutor
+) : ShellRuntimeDataProvider {
   @Volatile
   private var cachedShellEnv: ShellEnvironment? = null
 
@@ -47,7 +50,7 @@ class IJShellRuntimeDataProvider(private val session: BlockTerminalSession) : Sh
   override suspend fun getFilesFromDirectory(path: String): List<String> {
     var files = filesCache.getIfPresent(path)
     if (files.isNullOrEmpty()) {
-      files = executeCommand(GetFilesCommand(path))
+      files = shellCommandExecutor.executeCommand(GetFilesCommand(path))
     }
     filesCache.put(path, files)
     return files
@@ -56,22 +59,10 @@ class IJShellRuntimeDataProvider(private val session: BlockTerminalSession) : Sh
   override suspend fun getShellEnvironment(): ShellEnvironment? {
     var env = cachedShellEnv
     if (env == null) {
-      env = executeCommand(GetEnvironmentCommand(session))
+      env = shellCommandExecutor.executeCommand(GetEnvironmentCommand(session))
     }
     cachedShellEnv = env
     return env
-  }
-
-  private suspend fun <T> executeCommand(command: DataProviderCommand<T>): T {
-    return if (command.isAvailable(session)) {
-      val rawResult: String = executeCommandBlocking(command)
-      command.parseResult(rawResult)
-    }
-    else command.defaultResult
-  }
-
-  private suspend fun executeCommandBlocking(command: DataProviderCommand<*>): String {
-    return session.commandManager.runGeneratorAsync(command.functionName, command.parameters).await()
   }
 
   private fun clearCaches() {

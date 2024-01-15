@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import com.intellij.testFramework.UsefulTestCase
@@ -12,6 +12,7 @@ import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assume
 import org.junit.Test
@@ -103,7 +104,7 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
   }
 
   private fun <T> executeRuntimeDataRequest(request: suspend (ShellRuntimeDataProvider) -> T): T = runBlocking {
-    val provider = IJShellRuntimeDataProvider(session)
+    val provider = IJShellRuntimeDataProvider(session, ShellCommandExecutorImpl(session))
     val deferred: Deferred<T> = async(Dispatchers.Default) {
       withBackgroundProgress(project, "test", cancellable = true) {
         request(provider)

@@ -9,15 +9,6 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType
 
-internal interface DataProviderCommand<T> {
-  val functionName: String
-  val parameters: List<String>
-  val defaultResult: T
-
-  fun isAvailable(session: BlockTerminalSession): Boolean
-  fun parseResult(result: String): T
-}
-
 internal class GetFilesCommand(path: String) : DataProviderCommand<List<String>> {
   override val functionName: String = "__jetbrains_intellij_get_directory_files"
   override val parameters: List<String> = listOf(path)

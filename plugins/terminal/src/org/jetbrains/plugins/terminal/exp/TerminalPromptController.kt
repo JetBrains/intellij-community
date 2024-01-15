@@ -15,6 +15,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -49,7 +51,9 @@ class TerminalPromptController(
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
     editor.putUserData(BlockTerminalSession.KEY, session)
 
-    val runtimeDataProvider = IJShellRuntimeDataProvider(session)
+    val shellCommandExecutor = ShellCommandExecutorImpl(session)
+    editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
+    val runtimeDataProvider = IJShellRuntimeDataProvider(session, shellCommandExecutor)
     editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)
 
     commandHistoryManager = CommandHistoryManager(session)

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.util.CommandResult
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.assertCommandResult
@@ -104,7 +105,7 @@ class BlockTerminalTest(private val shellPath: Path) {
         val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
         val generatorCommandSent = createCommandSentDeferred(session)
         val envListDeferred: Deferred<ShellEnvironment?> = this.async(Dispatchers.Default) {
-          IJShellRuntimeDataProvider(session).getShellEnvironment()
+          IJShellRuntimeDataProvider(session, ShellCommandExecutorImpl(session)).getShellEnvironment()
         }
         withTimeout(20.seconds) { generatorCommandSent.await() }
         delay((1..50).random().milliseconds) // wait a little to start generator
