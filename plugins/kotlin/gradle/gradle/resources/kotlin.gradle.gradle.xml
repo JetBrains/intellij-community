@@ -28,9 +28,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
 
-    <scripting.support.checker.provider id="GraldeScriptingSupportCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptingSupportCheckerProvider"/>
-
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
 
