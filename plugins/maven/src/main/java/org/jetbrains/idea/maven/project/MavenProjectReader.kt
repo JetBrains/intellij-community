@@ -11,7 +11,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jdom.Element
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
-import org.jetbrains.idea.maven.internal.ReadStatisticsCollector.Companion.getInstance
+import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectResolutionUtil.Companion.resolveProjectSync
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
@@ -564,7 +564,7 @@ class MavenProjectReader(private val myProject: Project) {
   private suspend fun readXml(file: VirtualFile,
                               problems: MutableCollection<MavenProjectProblem>,
                               type: MavenProjectProblem.ProblemType): Element? {
-    getInstance().fileRead(file)
+    ReadStatisticsCollector.getInstance().fileRead(file)
 
     return MavenJDOMUtil.read(file, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {
