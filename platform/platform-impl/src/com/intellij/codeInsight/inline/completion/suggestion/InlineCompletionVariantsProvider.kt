@@ -86,7 +86,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       when (updated) {
         is UpdateResult.Changed -> {
           val newSnapshot = updated.snapshot
-          if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) { // TODO describe in docs
+          if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) {
             val oldText = state.elements.joinToString("") { it.text }
             val newText = newSnapshot.elements.joinToString("") { it.text }
             variantChanged(index, oldText, newText)
@@ -96,7 +96,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
             newSnapshot.data.copyUserDataTo(state.data)
           }
           else {
-            invalidate(index) // TODO describe it in docs
+            invalidate(index)
           }
         }
         UpdateResult.Invalidated -> {

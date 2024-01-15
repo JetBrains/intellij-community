@@ -82,7 +82,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val PROVIDER = EventFields.Class("provider")
     val LINES = EventFields.IntList("lines")
     val LENGTH = EventFields.IntList("length")
-    val LENGTH_CHANGE_DURING_SHOW = EventFields.Int("typing_during_show") // TODO docs
+    val LENGTH_CHANGE_DURING_SHOW = EventFields.Int("typing_during_show")
 
     val TIME_TO_SHOW = EventFields.Long("time_to_show")
     val SHOWING_TIME = EventFields.Long("showing_time")

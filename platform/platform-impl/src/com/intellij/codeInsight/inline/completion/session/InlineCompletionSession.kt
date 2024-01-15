@@ -17,9 +17,17 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
-// TODO docs
+/**
+ * This class defines the lifecycle and rules for a single or multiple instances of inline code completion.
+ * It works in conjunction with an [InlineCompletionProvider] and an [InlineCompletionRequest], which define
+ * the source of completion suggestions and the context of the request respectively.
+ *
+ * An [InlineCompletionSession] is designed to manage the inline completion jobs and variants providers.
+ * It provides ability to navigate through the completion variants, capture the state of these variants,
+ * and verify the active status of the session.
+ */
 class InlineCompletionSession private constructor(
-  editor: Editor,
+  val editor: Editor,
   val provider: InlineCompletionProvider,
   val request: InlineCompletionRequest
 ) : Disposable {
@@ -33,11 +41,30 @@ class InlineCompletionSession private constructor(
     Disposer.register(this, context)
   }
 
+  /**
+   * Checks whether the inline completion session is currently active.
+   *
+   * An inline completion session is considered active if it has an associated
+   * variants from [provider] and [context] in which it is running has not yet been disposed.
+   */
   @RequiresEdt
   fun isActive(): Boolean {
     return variantsProvider != null && !context.isDisposed
   }
 
+  /**
+   * The `capture` method is designed to capture the current state of the inline completion session.
+   *
+   * It aims to capture a snapshot of the inline code completion variants at any given point in time during the session.
+   * The captured information enables us to retrospectively analyze the state of the inline completion session,
+   * specifically around different completion variants provided. For thread-safety reasons, this method must be called on EDT.
+   *
+   * Invoking this method results in the capture of the variants from the associated [provider].
+   * If no variants are currently provided, this method will return `null`, indicating that capturing the session state was not possible.
+   *
+   * @return If a capture was successful, an instance of the [Snapshot] class containing a snapshot of completion variants is returned.
+   *         However, if no variants are provided at the moment, the method will return `null`.
+   */
   @RequiresEdt
   fun capture(): Snapshot? {
     ThreadingAssertions.assertEventDispatchThread()
@@ -45,17 +72,31 @@ class InlineCompletionSession private constructor(
     return Snapshot(variants)
   }
 
+  /**
+   * The method navigates forward through a list of inline completion variants from [provider].
+   *
+   * This method shifts the current focus to the next available variant in the list of inline completion variants.
+   * If it reaches the end of the list, the selection cycles back to the start.
+   *
+   * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
+   */
   @RequiresEdt
   @RequiresBlockingContext
-  @ApiStatus.Experimental
   fun useNextVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.useNextVariant()
   }
 
+  /**
+   * The method navigates backward through a list of inline completion variants from [provider].
+   *
+   * This method shifts the current focus to the previous available variant in the list of inline completion variants.
+   * If it reaches the start of the list, the selection cycles back to the end.
+   *
+   * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
+   */
   @RequiresEdt
   @RequiresBlockingContext
-  @ApiStatus.Experimental
   fun usePrevVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.usePrevVariant()
@@ -91,13 +132,31 @@ class InlineCompletionSession private constructor(
     return checkNotNull(variantsProvider).update(updater)
   }
 
+  /**
+   * Represents information of all the variants, provided by [provider], at any point of time.
+   * If [provider] didn't provide any variants yet, then it's impossible to capture [Snapshot].
+   */
   class Snapshot @ApiStatus.Internal constructor(val variants: List<InlineCompletionVariant.Snapshot>) {
 
+    /**
+     * Information about the variant currently seen by a user.
+     */
     val activeVariant: InlineCompletionVariant.Snapshot = variants.first { it.isActive }
 
+    /**
+     * Total number of the variants provided by [provider].
+     */
     val variantsNumber: Int
       get() = variants.size
 
+    /**
+     * Estimates the number of possibly non-empty variants. A variant is considered as empty if it contains no elements.
+     *
+     * The first value in the range denotes the number of already non-empty variants.
+     *
+     * The second value in the range denotes the number of possibly non-empty variants
+     * (the variants that are already non-empty plus the variants that can be non-empty in the future).
+     */
     val nonEmptyVariantsRange: IntRange = run {
       val forSure = variants.count { !it.isEmpty() }
       val potential = variants.count {

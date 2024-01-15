@@ -49,7 +49,7 @@ internal abstract class InlineCompletionSessionManager {
    * After that, it results in one of [UpdateSessionResult], and calls [onUpdate] with this result.
    *
    * @return `false` if session does not exist.
-   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Succeeded] or [UpdateSessionResult.Changed], meaning that
+   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Succeeded] or [UpdateSessionResult.Emptied], meaning that
    * the update succeeded.
    *
    * @see InlineCompletionOvertyper
@@ -116,7 +116,6 @@ internal abstract class InlineCompletionSessionManager {
     }
   }
 
-  // TODO update docs
   protected enum class UpdateSessionResult {
     Succeeded,
     Invalidated,

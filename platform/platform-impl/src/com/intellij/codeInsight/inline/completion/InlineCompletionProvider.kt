@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.debounce
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
  *   - If some event requires hiding of shown elements, implement [restartOn]
  *   - If you need to do something specific after insertion of provided elements, provide custom [InlineCompletionInsertHandler]
- *   - If some elements are rendered and a user types a new symbol, [overtyper] is used to update rendered elements.
+ *   - If some elements are rendered and a user types a new symbol, [suggestionUpdater] is used to update rendered elements.
  *
  * If you need custom logic, like invoking completion, getting current state or listen for events:
  * - [InlineCompletionHandler] for everything related to actions with inline completion, adding listeners, ect (get for editor via [InlineCompletion.getHandlerOrNull])
@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.debounce
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
  * @see InlineCompletionInsertHandler
- * @see InlineCompletionOvertyper
+ * @see InlineCompletionEventBasedSuggestionUpdater
  * @see InlineCompletionProviderPresentation
  */
 interface InlineCompletionProvider {
@@ -60,13 +60,13 @@ interface InlineCompletionProvider {
   /**
    * Retrieves an inline completion suggestion based on the provided request.
    *
-   * Every suggestion represents only one proposal and might be rendered as streaming using [Flow] (see [InlineCompletionSuggestion.Default])
+   * Suggestion now can return multiple variants,
+   * and they might be rendered as streaming using [Flow].
    *
    * @param request The inline completion request containing information about the event, file, editor, document,
    * startOffset, endOffset, and lookupElement.
-   * @return The inline completion suggestion. Use [InlineCompletionSuggestion.empty] to return empty suggestion
+   * @return The inline completion suggestion. Use [InlineCompletionSuggestion.Empty] to return empty suggestion.
    */
-  // TODO docs
   suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
   /**
@@ -100,11 +100,19 @@ interface InlineCompletionProvider {
   /**
    * @see InlineCompletionOvertyper
    */
-  @Deprecated(message = "TODO") // TODO docs
+  @Deprecated(
+    message = "Use InlineCompletionEventBasedSuggestionUpdater",
+    replaceWith = ReplaceWith("suggestionUpdater")
+  )
   val overtyper: InlineCompletionOvertyper
     get() = DefaultInlineCompletionOvertyper()
 
-  // TODO docs
+  /**
+   * Reacts on [InlineCompletionEvent] while a session exists and update the current suggestions.
+   *
+   * **Since previously there was [overtyper], this property is used if you haven't overridden [overtyper]**.
+   * @see InlineCompletionEventBasedSuggestionUpdater
+   */
   val suggestionUpdater: InlineCompletionEventBasedSuggestionUpdater
     get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
 

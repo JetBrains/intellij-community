@@ -5,15 +5,30 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.flow.FlowCollector
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @DslMarker
 private annotation class InlineCompletionSuggestionDsl
 
-@ApiStatus.Experimental
-// TODO docs
-interface InlineCompletionSuggestionBuilder {
+/**
+ * Used to conveniently build [InlineCompletionSuggestion].
+ * This builder is thread-safe, meaning that you can concurrently add variants.
+ *
+ * Example:
+ * ```kotlin
+ * return InlineCompletionSuggestion.build {
+ *  variant { data ->
+ *    data.putUserData(...)
+ *    emit(...)
+ *    emit(...)
+ *  }
+ *  variant {
+ *    emit(...)
+ *  }
+ * }
+ * ```
+ */
+sealed interface InlineCompletionSuggestionBuilder {
 
   @InlineCompletionSuggestionDsl
   suspend fun variant(
@@ -45,7 +60,6 @@ private class InlineCompletionSuggestionBuilderImpl : InlineCompletionSuggestion
   }
 }
 
-@ApiStatus.Experimental
 suspend fun InlineCompletionSuggestion.Companion.build(
   block: suspend InlineCompletionSuggestionBuilder.() -> Unit
 ): InlineCompletionSuggestion {

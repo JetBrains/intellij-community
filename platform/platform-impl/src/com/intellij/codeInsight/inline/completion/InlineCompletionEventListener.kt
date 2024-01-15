@@ -6,26 +6,55 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+/**
+ * Represents information about what's happening with the inline completion state.
+ *
+ * All the events' constructors are annotated with [ApiStatus.Internal] meaning that you shouldn't create them. The constructors
+ * might be changed in the future.
+ *
+ * This sealed interface might be extended at any point of time. So please, if you have a `when` for [InlineCompletionEventType],
+ * use the `else` branch.
+ */
 sealed class InlineCompletionEventType {
 
   // General flow
 
+  /**
+   * This event is triggered before [InlineCompletionHandler] asks [InlineCompletionProvider] for a suggestion.
+   */
   class Request @ApiStatus.Internal constructor(
     val lastInvocation: Long,
     val request: InlineCompletionRequest,
     val provider: Class<out InlineCompletionProvider>
   ) : InlineCompletionEventType()
 
-  // TODO explain semantics: either no variants, either all are empty. Maybe change name
+  /**
+   * This event is triggered when a provider either returned no variants, either all the returned variants are empty.
+   */
   data object NoVariants : InlineCompletionEventType()
 
+  /**
+   * This event is triggered when all the computations of a suggestion are done.
+   */
   class Completion @ApiStatus.Internal constructor(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
 
+  /**
+   * This event is triggered when a user inserts a non-empty inline completion variant.
+   */
   data object Insert : InlineCompletionEventType()
 
+  /**
+   * This event is triggered when an inline completion session is cleared for any reason (see [finishType]).
+   */
   class Hide @ApiStatus.Internal constructor(val finishType: FinishType, val isCurrentlyDisplaying: Boolean) : InlineCompletionEventType()
 
-  // TODO docs when it triggers
+  /**
+   * This event is triggered in one of the following cases:
+   * * A variant is actually switched using `InlineCompletionSession` (e.g. using shortcuts or UI). Then [explicit] is `true`.
+   * * A variant is switched because a currently used variant was computed and turned out to be empty. It happens only
+   * for the prefix of the variants until one of them is non-empty. Then [explicit] is `false`.
+   * * A currently used variant was invalidated via `InlineCompletionEventBasedSuggestionUpdater`. Then [explicit] is `false`.
+   */
   class VariantSwitched @ApiStatus.Internal constructor(
     val fromVariantIndex: Int,
     val toVariantIndex: Int,
@@ -38,33 +67,57 @@ sealed class InlineCompletionEventType {
     abstract val variantIndex: Int
   }
 
+  /**
+   * This event is triggered when a variant is completely computed.
+   */
   class VariantComputed @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 
+  /**
+   * This event is triggered when an element in a variant is computed. [i] indicates the index of computed element.
+   */
   class Computed @ApiStatus.Internal constructor(
     override val variantIndex: Int,
     val element: InlineCompletionElement,
     val i: Int
   ) : PerVariantEventType()
 
+  /**
+   * This event is triggered when an element is shown:
+   * * The element is computed while a variant is shown.
+   * * A variant is switched and all the elements are shown.
+   * * A variant is updated and all the elements are re-rendered and shown again.
+   */
   class Show @ApiStatus.Internal constructor(
     override val variantIndex: Int,
     val element: InlineCompletionElement,
     val i: Int
   ) : PerVariantEventType()
 
+  /**
+   * This event is triggered when a variant is updated upon some event.
+   * [lengthChange] indicates the difference between the new length of text and the old length.
+   */
   class Change @ApiStatus.Internal constructor(
     override val variantIndex: Int,
     val lengthChange: Int
   ) : PerVariantEventType() {
 
-    @Deprecated(message = "") // TODO
+    @Deprecated(
+      message = "Use lengthChange, because now a variant can be updated not only due typings.",
+      replaceWith = ReplaceWith("lengthChange")
+    )
     val overtypedLength: Int
       get() = lengthChange
   }
 
-  // TODO docs
+  /**
+   * This event is triggered when a variant is invalidated during some update.
+   */
   class Invalidated @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 
+  /**
+   * This event is triggered when a variant is computed and turned out to be completely empty.
+   */
   class Empty @ApiStatus.Internal constructor(override val variantIndex: Int) : PerVariantEventType()
 }
 

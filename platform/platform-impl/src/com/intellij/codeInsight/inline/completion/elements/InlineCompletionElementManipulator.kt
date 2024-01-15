@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.elements
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator.Companion.getApplicable
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * * ... to be continued.
  *
  * @see getApplicable
- * @see InlineCompletionOvertyper
+ * @see InlineCompletionEventBasedSuggestionUpdater
  */
 @ApiStatus.Experimental
 interface InlineCompletionElementManipulator {
@@ -31,7 +31,7 @@ interface InlineCompletionElementManipulator {
    *
    * This method is called only if [isApplicable] returns `true` for [element].
    *
-   * @see InlineCompletionOvertyper
+   * @see InlineCompletionEventBasedSuggestionUpdater
    */
   fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement?
 
