@@ -655,7 +655,8 @@
       "Header.foreground": "#BBBBBB",
       "foreground": "#BFBFBF",
       "codeBackground": "#4C5052",
-      "codeBorderColor": "#FFFFFF"
+      "codeBorderColor": "#6C707E",
+      "imageBorderColor": "#FFFFFF4D"
     },
 
     "ToolWindow": {
