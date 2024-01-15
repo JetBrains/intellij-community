@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.setup
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
@@ -107,6 +108,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     }
   }
 
+  @IJIgnore(issue = "IDEA-341326")
   @Test
   fun `test project kotlin dsl setting generation with groovy-kotlin scripts`() {
     runBlocking {
