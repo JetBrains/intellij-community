@@ -83,7 +83,16 @@ final class PassExecutorService implements Disposable {
   public void dispose() {
     cancelAll(true);
     // some workers could, although idle, still retain some thread references for some time causing leak hunter to frown
-    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+    // call it from BGT to avoid "calling daemon from EDT" assertion
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+    });
+    try {
+      future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
     isDisposed = true;
   }
 
