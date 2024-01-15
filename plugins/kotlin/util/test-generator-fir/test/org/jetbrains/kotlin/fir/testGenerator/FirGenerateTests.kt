@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJ
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
@@ -170,6 +171,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirLiteralTextToKotlinCopyPasteTest> {
             model("copyPaste/plainTextLiteral", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
+        }
+
+        testClass<AbstractFirLiteralKotlinToKotlinCopyPasteTest> {
+            model("copyPaste/literal", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
         }
 
         testClass<AbstractHighLevelQuickFixTest> {
