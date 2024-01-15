@@ -8,7 +8,7 @@ import java.io.File
 
 abstract class AbstractNewJavaToKotlinCopyPasteConversionTest : AbstractJavaToKotlinCopyPasteConversionTest() {
     override val testDataDirectory: File
-        get() = KotlinRoot.DIR.resolve("j2k/new/tests/testData/copyPaste")
+        get() = KotlinRoot.DIR.resolve("j2k/k1.new/tests/testData/copyPaste")
 
     override fun isNewJ2K(): Boolean = true
 }

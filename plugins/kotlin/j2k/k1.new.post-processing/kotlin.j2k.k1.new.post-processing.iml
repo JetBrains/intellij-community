@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.shared" />
-    <orderEntry type="module" module-name="kotlin.j2k.new" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.idea" />

@@ -119,7 +119,7 @@ object KotlinPluginBuilder {
     "kotlin.j2k.k1.new.post-processing",
     "kotlin.j2k.old",
     "kotlin.j2k.old.post-processing",
-    "kotlin.j2k.new",
+    "kotlin.j2k.k1.new",
     "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
