@@ -893,6 +893,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     }
   }
 
+  // ensures path variables are defined
+  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
+  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
   std::string homeDir = GetHomeDir();
   if (!LocateJVM(homeDir)) return 1;
 
@@ -907,10 +910,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 #endif // USE_CEF_SANDBOX
 
   bool instanceActivation = LoadStdString(IDS_INSTANCE_ACTIVATION) == std::string("true");
-
-  // ensures path variables are defined
-  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
-  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
 
   //it's OK to return 0 here, because the control is transferred to the first instance
   if (instanceActivation) {
