@@ -11,7 +11,16 @@ import com.intellij.psi.util.PsiTreeUtil
 class GenerateLogFieldHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val currentElement = file.findElementAt(editor.caretModel.offset)
-    PsiTreeUtil.getTopmostParentOfType(currentElement, PsiClass::class.java)
 
+    val nestedClasses = mutableListOf<PsiClass>()
+
+    var psiClass = PsiTreeUtil.getParentOfType(currentElement, PsiClass::class.java)
+
+
+    while (psiClass != null) {
+      nestedClasses.add(psiClass)
+      psiClass = PsiTreeUtil.getParentOfType(currentElement, PsiClass::class.java)
+    }
   }
+
 }

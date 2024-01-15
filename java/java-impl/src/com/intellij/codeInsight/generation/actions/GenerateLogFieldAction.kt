@@ -4,9 +4,14 @@ package com.intellij.codeInsight.generation.actions
 import com.intellij.codeInsight.generation.GenerateLogFieldHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 
 class GenerateLogFieldAction : BaseGenerateAction(GenerateLogFieldHandler()) {
 
-  override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean = true
+  override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean {
+    val element = file.findElementAt(editor.caretModel.offset)
+    return PsiTreeUtil.getParentOfType(element, PsiClass::class.java) != null
+  }
 }
