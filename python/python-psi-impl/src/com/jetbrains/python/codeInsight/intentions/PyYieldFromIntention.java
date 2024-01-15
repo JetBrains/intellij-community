@@ -19,16 +19,14 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForStatement> {
   PyYieldFromIntention() {
-    super(PsiElement.class);
+    super(PyForStatement.class);
   }
 
   @NotNull
@@ -38,17 +36,14 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PsiEle
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyForStatement element) {
     if (!LanguageLevel.forElement(element.getContainingFile()).isPython2()) {
-      final PyForStatement forLoop = PsiTreeUtil.getParentOfType(element, PyForStatement.class);
-      if (forLoop != null) {
-        final PyTargetExpression forTarget = findSingleForLoopTarget(forLoop);
-        final PyReferenceExpression yieldValue = findSingleYieldValue(forLoop);
-        if (forTarget != null && yieldValue != null) {
-          final String targetName = forTarget.getName();
-          if (targetName != null && targetName.equals(yieldValue.getName())) {
-            return super.getPresentation(context, element);
-          }
+      final PyTargetExpression forTarget = findSingleForLoopTarget(element);
+      final PyReferenceExpression yieldValue = findSingleYieldValue(element);
+      if (forTarget != null && yieldValue != null) {
+        final String targetName = forTarget.getName();
+        if (targetName != null && targetName.equals(yieldValue.getName())) {
+          return super.getPresentation(context, element);
         }
       }
     }
@@ -56,10 +51,8 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PsiEle
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    final PyForStatement forLoop = PsiTreeUtil.getParentOfType(element, PyForStatement.class);
-    if (forLoop != null) {
-      final PyExpression source = forLoop.getForPart().getSource();
+  protected void invoke(@NotNull ActionContext context, @NotNull PyForStatement element, @NotNull ModPsiUpdater updater) {
+      final PyExpression source = element.getForPart().getSource();
       if (source != null) {
         final PyElementGenerator generator = PyElementGenerator.getInstance(context.project());
         final String text = "yield from foo";
@@ -69,11 +62,10 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PsiEle
           final PyExpression yieldValue = ((PyYieldExpression)expr).getExpression();
           if (yieldValue != null) {
             yieldValue.replace(source);
-            forLoop.replace(exprStmt);
+            element.replace(exprStmt);
           }
         }
       }
-    }
   }
 
   @Nullable

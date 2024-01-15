@@ -60,6 +60,29 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
   }
 
 
+  private fun isAvailableForIfStatement(element: PsiElement, statement: PyIfStatement): Boolean {
+    // Checking correct if part
+    val containsConditionErrors =
+      statement.ifPart.condition != null &&
+      statement.ifPart.children
+        .dropWhile { it != statement.ifPart.condition }.drop(1)
+        .takeWhile { it != statement.ifPart.statementList }
+        .any { it is PsiErrorElement }
+    if (containsConditionErrors) {
+      return false
+    }
+
+    // Checking current element nesting
+    val parents = element.parents(false).takeWhile { it != statement }
+
+    if (parents.contains(statement.ifPart.statementList)) {
+      return false
+    }
+
+    val elsePart = statement.elsePart
+    return elsePart == null || !parents.contains(elsePart.statementList)
+  }
+
   override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {
     val conditionalExpression = element.parentsOfType<PyConditionalExpression>().firstOrNull()
     if (conditionalExpression != null) {
@@ -99,29 +122,6 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
     }
 
     throw IncorrectOperationException("Is not a condition")
-  }
-
-  private fun isAvailableForIfStatement(element: PsiElement, statement: PyIfStatement): Boolean {
-    // Checking correct if part
-    val containsConditionErrors =
-      statement.ifPart.condition != null &&
-      statement.ifPart.children
-        .dropWhile { it != statement.ifPart.condition }.drop(1)
-        .takeWhile { it != statement.ifPart.statementList }
-        .any { it is PsiErrorElement }
-    if (containsConditionErrors) {
-      return false
-    }
-
-    // Checking current element nesting
-    val parents = element.parents(false).takeWhile { it != statement }
-
-    if (parents.contains(statement.ifPart.statementList)) {
-      return false
-    }
-
-    val elsePart = statement.elsePart
-    return elsePart == null || !parents.contains(elsePart.statementList)
   }
 
   private fun invertConditional(project: Project, file: PsiFile, expression: PyConditionalExpression) {

@@ -7,7 +7,6 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyPsiBundle;
@@ -25,10 +24,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
 
   PyStringConcatenationToFormatIntention() {
-    super(PsiElement.class);
+    super(PyBinaryExpression.class);
   }
 
   @Override
@@ -39,33 +38,27 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
 
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    PsiElement binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
-
-    if (binaryExpression == null) {
-      return null;
-    }
-
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyBinaryExpression element) {
     if (!(context.file() instanceof PyFile)) {
       return null;
     }
 
-    while (binaryExpression.getParent() instanceof PyBinaryExpression) {
-      binaryExpression = binaryExpression.getParent();
+    while (element.getParent() instanceof PyBinaryExpression pyBinaryExpression) {
+      element = pyBinaryExpression;
     }
 
-    final Collection<PyElementType> operators = getOperators((PyBinaryExpression)binaryExpression);
+    final Collection<PyElementType> operators = getOperators(element);
     for (PyElementType operator : operators) {
       if (operator != PyTokenTypes.PLUS) {
         return null;
       }
     }
 
-    final Collection<PyExpression> expressions = getSimpleExpressions((PyBinaryExpression)binaryExpression);
+    final Collection<PyExpression> expressions = getSimpleExpressions(element);
     if (expressions.isEmpty()) {
       return null;
     }
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(binaryExpression);
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     for (PyExpression expression: expressions) {
       if (expression == null) {
         return null;
@@ -79,18 +72,20 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
         return null;
       }
     }
-    if (LanguageLevel.forElement(binaryExpression).isAtLeast(LanguageLevel.PYTHON27))
+    if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON27))
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.str.format"));
     else
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext actionContext, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyBinaryExpression
-      binaryExpression = PsiTreeUtil.getTopmostParentOfType(element, PyBinaryExpression.class);
+  protected void invoke(@NotNull ActionContext actionContext, @NotNull PyBinaryExpression element, @NotNull ModPsiUpdater updater) {
+    PyBinaryExpression binaryExpression = PsiTreeUtil.getTopmostParentOfType(element, PyBinaryExpression.class);
 
-    if (binaryExpression == null) return;
+    if (binaryExpression == null) {
+      binaryExpression = element;
+    }
+
     final LanguageLevel languageLevel = LanguageLevel.forElement(binaryExpression);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 

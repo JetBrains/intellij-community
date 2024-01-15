@@ -5,8 +5,6 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.ConditionUtil;
 import com.jetbrains.python.psi.PyBinaryExpression;
@@ -15,9 +13,9 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyNegateComparisonIntention() {
-    super(PsiElement.class);
+    super(PyBinaryExpression.class);
   }
 
   @Override
@@ -27,13 +25,12 @@ public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyBinaryExpression element) {
     if (!(context.file() instanceof PyFile)) {
       return null;
     }
 
-    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
-    Pair<String, String> negation = ConditionUtil.findComparisonNegationOperators(binaryExpression);
+    Pair<String, String> negation = ConditionUtil.findComparisonNegationOperators(element);
     if (negation != null) {
       return Presentation.of(PyPsiBundle.message("INTN.negate.comparison", negation.component1(), negation.component2()));
     }
@@ -41,8 +38,7 @@ public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
-    ConditionUtil.negateComparisonExpression(context.project(), context.file(), binaryExpression);
+  protected void invoke(@NotNull ActionContext context, @NotNull PyBinaryExpression element, @NotNull ModPsiUpdater updater) {
+    ConditionUtil.negateComparisonExpression(context.project(), context.file(), element);
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions
 
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -15,7 +14,7 @@ import com.jetbrains.python.psi.PyStatement
 import org.jetbrains.annotations.PropertyKey
 
 abstract class PyConvertImportIntentionAction(
-  @IntentionFamilyName @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) private val intentionText: String
+  @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) private val intentionText: String
 ) : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {
 
   override fun getFamilyName(): String = PyPsiBundle.message(intentionText)

@@ -56,8 +56,7 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
   }
 
   @Nullable
-  private static PyStringElement findConvertibleStringElementUnderCaret(PsiElement element) {
-    if (element == null) return null;
+  private static PyStringElement findConvertibleStringElementUnderCaret(@NotNull PsiElement element) {
     IElementType elementType = element.getNode().getElementType();
     if (!(PyTokenTypes.STRING_NODES.contains(elementType) || PyTokenTypes.FSTRING_TOKENS.contains(elementType))) return null;
     PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
