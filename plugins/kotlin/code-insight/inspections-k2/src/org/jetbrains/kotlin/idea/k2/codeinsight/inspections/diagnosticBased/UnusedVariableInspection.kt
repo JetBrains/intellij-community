@@ -15,10 +15,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.Abstract
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
+import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 
 internal class UnusedVariableInspection
   : AbstractKotlinApplicableInspection<KtNamedDeclaration>(), AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable> {
@@ -35,28 +34,29 @@ internal class UnusedVariableInspection
     override fun getActionFamilyName(): String = KotlinBundle.message("remove.variable")
 
     override fun getActionName(element: KtNamedDeclaration): String =
-        KotlinBundle.message("remove.variable.0", element.name.toString())
+        if (element is KtDestructuringDeclarationEntry) KotlinBundle.message("rename.to.underscore")
+        else KotlinBundle.message("remove.variable.0", element.name.toString())
 
     override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
 
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
 
     context(KtAnalysisSession)
-    private fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
-        val ktProperty = diagnostic.psi as? KtProperty ?: return false
-        val typeReference = ktProperty.typeReference ?: return true
-        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)
-    }
-    context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtNamedDeclaration): Boolean {
         val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
         val suitableDiagnostics = diagnostics.filterIsInstance(getDiagnosticType().java)
         val diagnostic = suitableDiagnostics.firstOrNull() ?: return false
-        return isApplicableByDiagnostic(element, diagnostic)
+        val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return false
+        val typeReference = ktProperty.typeReference ?: return true
+        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)
     }
 
     override fun apply(element: KtNamedDeclaration, project: Project, updater: ModPsiUpdater) {
-        val property = element as? KtProperty ?: return
-        removeProperty(property)
+        if (element is KtDestructuringDeclarationEntry) {
+            renameToUnderscore(element)
+        }
+        else if (element is KtProperty) {
+            removeProperty(element)
+        }
     }
 }

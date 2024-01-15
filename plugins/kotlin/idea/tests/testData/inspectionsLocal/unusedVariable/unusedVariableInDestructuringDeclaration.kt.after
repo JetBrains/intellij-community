@@ -1,7 +1,7 @@
 // "Rename to _" "true"
 fun test(condition: Boolean, foo: Foo) {
     val v = if (condition) {
-        val (<caret>one, two) = foo
+        val (_, two) = foo
         two
     } else {
         null
