@@ -84,7 +84,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.post-processing" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven" scope="TEST" />

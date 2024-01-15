@@ -95,7 +95,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.j2k.post-processing" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="RUNTIME" />
