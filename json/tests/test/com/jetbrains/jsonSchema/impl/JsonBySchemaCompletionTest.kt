@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest
 import org.intellij.lang.annotations.Language
@@ -363,11 +364,11 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
 }"""
     testImpl(schema, "{<caret>}", "\"lint\"", "\"lint2\"")
     Assert.assertEquals(2, myItems.size.toLong())
-    val presentation1 = renderPresentation(myItems[0])
-    Assert.assertEquals("Run code quality tools, e.g. ESLint, TSLint, etc.", presentation1.typeText)
 
-    val presentation2 = renderPresentation(myItems[1])
-    Assert.assertEquals("Run code quality tools.", presentation2.typeText)
+    val actualCompletions = myItems.map { it.lookupString to renderPresentation(it).typeText }.toList()
+    UsefulTestCase.assertSameElements(actualCompletions,
+                                      listOf("\"lint\"" to "Run code quality tools, e.g. ESLint, TSLint, etc.",
+                                             "\"lint2\"" to "Run code quality tools."))
   }
 
   private fun renderPresentation(lookupElement: LookupElement): LookupElementPresentation = LookupElementPresentation().also {

@@ -1,18 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.JsonFileType;
-import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.junit.Assert;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTestBase {
   @Override
@@ -98,13 +93,13 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
   public void testArrayLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
     complete();
-    assertStringItems("1","2","3");
+    assertStringItems("1", "2", "3");
   }
 
   public void testObjectLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
     complete();
-    assertStringItems("\"insideTopObject1\"","\"insideTopObject2\"");
+    assertStringItems("\"insideTopObject1\"", "\"insideTopObject2\"");
   }
 
   public void testOneOfWithNotFilledPropertyValue() throws Exception {
@@ -131,21 +126,32 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
       assertStringItems("\"preserve\"", "\"react\"", "\"react-native\"");
 
       final PsiFile schema = myFixture.getFile().getParent().findFile("Schema.json");
-      final int idx = schema.getText().indexOf("react-native");
-      Assert.assertTrue(idx > 0);
-      PsiElement element = schema.findElementAt(idx);
-      element = element instanceof JsonStringLiteral ? element : PsiTreeUtil.getParentOfType(element, JsonStringLiteral.class);
-      Assert.assertNotNull(element);
-      Assert.assertTrue(element instanceof JsonStringLiteral);
-
-      final PsiFile dummy = PsiFileFactory.getInstance(getProject()).createFileFromText("test.json", JsonFileType.INSTANCE,
-                                                                                    "{\"a\": \"completelyChanged\"}");
-      Assert.assertTrue(dummy instanceof JsonFile);
-      final JsonValue top = ((JsonFile)dummy).getTopLevelValue();
-      final JsonValue newLiteral = ((JsonObject)top).findProperty("a").getValue();
-
-      PsiElement finalElement = element;
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> WriteAction.run(() -> finalElement.replace(newLiteral)));
+      CommandProcessor.getInstance().runUndoTransparentAction(
+        () -> WriteAction.run(
+          () -> {
+            try {
+              schema.getVirtualFile().setBinaryContent(
+                """
+                  {
+                    "properties": {
+                      "jsx": {
+                        "oneOf": [
+                          {"enum": [ "preserve", "react" ]},
+                          {"enum": [ "completelyChanged" ]}
+                        ]
+                      }
+                    }
+                  }
+                  """.getBytes(StandardCharsets.UTF_8));
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        )
+      );
+      VfsUtil.markDirtyAndRefresh(false, false, true, schema.getVirtualFile());
+      schema.getVirtualFile().refresh(false, false);
       complete();
       assertStringItems("\"completelyChanged\"", "\"preserve\"", "\"react\"");
     });

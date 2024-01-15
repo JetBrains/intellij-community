@@ -17,16 +17,17 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.StreamSupport;
 
 public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
@@ -39,18 +40,18 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     final JsonSchemaObject read = getSchemaObject(file);
 
-    Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
-    Assert.assertTrue(read.getDefinitionsMap().containsKey("positiveInteger"));
-    Assert.assertTrue(read.getProperties().containsKey("multipleOf"));
-    Assert.assertTrue(read.getProperties().containsKey("type"));
-    Assert.assertTrue(read.getProperties().containsKey("additionalProperties"));
-    Assert.assertEquals(2, read.getProperties().get("additionalItems").getAnyOf().size());
-    Assert.assertEquals("#", read.getProperties().get("additionalItems").getAnyOf().get(1).getRef());
+    Assert.assertEquals("http://json-schema.org/draft-04/schema", read.getId());
+    Assert.assertNotNull(read.getDefinitionByName("positiveInteger"));
+    Assert.assertNotNull(read.getPropertyByName("multipleOf"));
+    Assert.assertNotNull(read.getPropertyByName("type"));
+    Assert.assertNotNull(read.getPropertyByName("additionalProperties"));
+    Assert.assertEquals(2, read.getPropertyByName("additionalItems").getAnyOf().size());
+    Assert.assertEquals("#", read.getPropertyByName("additionalItems").getAnyOf().get(1).getRef());
 
-    final JsonSchemaObject required = read.getProperties().get("required");
+    final JsonSchemaObject required = read.getPropertyByName("required");
     Assert.assertEquals("#/definitions/stringArray", required.getRef());
 
-    final JsonSchemaObject minLength = read.getProperties().get("minLength");
+    final JsonSchemaObject minLength = read.getPropertyByName("minLength");
     Assert.assertEquals("#/definitions/positiveIntegerDefault0", minLength.getRef());
   }
 
@@ -92,25 +93,26 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     final JsonSchemaObject read = getSchemaObject(file);
-    Assert.assertTrue(read.getDefinitionsMap().get("common").getProperties().containsKey("id"));
+    Assert.assertNotNull(read.getDefinitionByName("common").getPropertyByName("id"));
   }
 
   public void testArrayItemsSchema() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/arrayItemsSchema.json");
     final JsonSchemaObject read = getSchemaObject(file);
-    final Map<String, JsonSchemaObject> properties = read.getProperties();
+    Iterable<String> iterable = () -> read.getPropertyNames();
+    var properties = StreamSupport.stream(iterable.spliterator(), false).toList();
     Assert.assertEquals(1, properties.size());
-    final JsonSchemaObject object = properties.get("color-hex-case");
-    final List<JsonSchemaObject> oneOf = object.getOneOf();
+    final JsonSchemaObject object = read.getPropertyByName("color-hex-case");
+    var oneOf = object.getOneOf();
     Assert.assertEquals(2, oneOf.size());
 
     final JsonSchemaObject second = oneOf.get(1);
-    final List<JsonSchemaObject> list = second.getItemsSchemaList();
+    var list = second.getItemsSchemaList();
     Assert.assertEquals(2, list.size());
 
     final JsonSchemaObject firstItem = list.get(0);
     Assert.assertEquals("#/definitions/lowerUpper", firstItem.getRef());
-    final JsonSchemaObject definition = read.findRelativeDefinition(firstItem.getRef());
+    final JsonSchemaObject definition = JsonSchemaObjectReadingUtils.findRelativeDefinition(read, firstItem.getRef());
     Assert.assertNotNull(definition);
 
     final List<Object> anEnum = definition.getEnum();
