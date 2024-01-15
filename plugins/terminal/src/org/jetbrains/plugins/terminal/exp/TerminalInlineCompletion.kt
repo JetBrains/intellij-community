@@ -62,7 +62,11 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
     val item = lookup.currentItem ?: return null
     val itemPrefix = lookup.itemPattern(item)
     if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {
-      // do not show inline completion if prefix is written in different case in case-sensitive file system
+      // do not show inline completion if a prefix is written in a different case in the case-sensitive file system
+      return null
+    }
+    if (!item.lookupString.startsWith(itemPrefix, ignoreCase = !SystemInfo.isFileSystemCaseSensitive)) {
+      // do not show inline completion if insert string is not match the typed prefix
       return null
     }
     val itemSuffix = item.lookupString.removeRange(0, itemPrefix.length)
