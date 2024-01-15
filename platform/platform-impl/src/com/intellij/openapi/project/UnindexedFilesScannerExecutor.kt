@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
-import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
@@ -55,6 +54,10 @@ class UnindexedFilesScannerExecutor(project: Project)
     }
     else {
       startTaskInDumbMode(task)
+    }
+
+    if (shouldScanInSmartMode() && isSynchronousTaskExecution) {
+      SyncTaskWaiter(project, IndexingBundle.message("progress.indexing.scanning"), isRunning).waitUntilFinished()
     }
   }
 
@@ -118,6 +121,8 @@ class UnindexedFilesScannerExecutor(project: Project)
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
     @JvmStatic
-    fun shouldScanInSmartMode(): Boolean = !isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
+    fun shouldScanInSmartMode(): Boolean = !DumbServiceImpl.isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
+
+    val isSynchronousTaskExecution: Boolean = DumbServiceImpl.isSynchronousTaskExecution
   }
 }
