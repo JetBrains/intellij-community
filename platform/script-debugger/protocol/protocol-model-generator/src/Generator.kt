@@ -92,7 +92,7 @@ internal class Generator(outputDir: String, rootPackage: String, requestClassNam
       }
 
       val domainName = StringUtil.nullize(domain.domain())
-      val filePath = if (domainName != null) "${domainName.toLowerCase()}/$domainName.kt" else "protocol.kt"
+      val filePath = if (domainName != null) "${domainName.lowercase(Locale.getDefault())}/$domainName.kt" else "protocol.kt"
       val fileUpdater = fileSet.createFileUpdater(filePath)
       val out = fileUpdater.out
 
@@ -232,7 +232,8 @@ internal class Generator(outputDir: String, rootPackage: String, requestClassNam
 
 const val READER_INTERFACE_NAME: String = "ProtocolResponseReader"
 
-private val INCLUDED_DOMAINS = arrayOf("Mono", "CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
+private val INCLUDED_DOMAINS = arrayOf("Mono", "Browser", "CSS", "Debugger", "DOM", "Emulation", "Inspector", "Log", "Network", "Page",
+                                       "Runtime", "ServiceWorker",
                                        "Tracing", "Target", "Overlay", "Console", "DOMDebugger", "Profiler", "HeapProfiler", "NodeWorker")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
@@ -245,7 +246,7 @@ fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String 
 
 fun capitalizeFirstChar(s: String): String {
   if (!s.isEmpty() && s.get(0).isLowerCase()) {
-    return s.get(0).toUpperCase() + s.substring(1)
+    return s.get(0).uppercaseChar() + s.substring(1)
   }
   return s
 }
