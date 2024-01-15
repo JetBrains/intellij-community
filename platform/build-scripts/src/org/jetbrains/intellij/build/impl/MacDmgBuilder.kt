@@ -62,7 +62,7 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
       withContext(Dispatchers.IO) {
-        runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit)
+        runProcess(args = listOf("7z", "x", "-snld", "-bd", sitFile.toString()), workingDir = tempSit)
       }
       RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
     }
