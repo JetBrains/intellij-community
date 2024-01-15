@@ -34,7 +34,8 @@
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
 
-      <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
+    <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
+    <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.gradle.configuration.GradleModuleDetector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

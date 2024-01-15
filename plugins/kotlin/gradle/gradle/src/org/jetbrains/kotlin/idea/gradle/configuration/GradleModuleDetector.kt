@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.configuration
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.facet.FacetManager
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.configuration.BuildSystemType
+import org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector
 
-val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
-
-class GradleDetector : BuildSystemTypeDetector {
+class GradleModuleDetector : BuildSystemTypeDetector {
     override fun detectBuildSystemType(module: Module): BuildSystemType? {
         if (module.isGradleModule) {
             if (FacetManager.getInstance(module).allFacets.any { it.name == "Android" }) {
