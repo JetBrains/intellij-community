@@ -45,8 +45,8 @@ public fun TextField(
     readOnly: Boolean = false,
     outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -139,8 +139,8 @@ public fun TextField(
             textStyle = textStyle,
             placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
-            trailingIcon = trailingIcon,
             leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
         )
     }
 }
@@ -152,8 +152,8 @@ private fun TextFieldDecorationBox(
     textStyle: TextStyle,
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
 ) {
     Layout(
         modifier = modifier,
@@ -206,71 +206,72 @@ private fun TextFieldDecorationBox(
             ?.measure(placeholderConstraints)
 
         val width = calculateWidth(
-            trailingPlaceable,
             leadingPlaceable,
+            trailingPlaceable,
             textFieldPlaceable,
-            placeholderPlaceable,
             incomingConstraints,
         )
         val height = calculateHeight(
-            trailingPlaceable,
             leadingPlaceable,
+            trailingPlaceable,
             textFieldPlaceable,
-            placeholderPlaceable,
             incomingConstraints,
         )
 
         layout(width, height) {
-            place(height, width, trailingPlaceable, leadingPlaceable, textFieldPlaceable, placeholderPlaceable)
+            place(
+                height = height,
+                width = width,
+                leadingPlaceable = leadingPlaceable,
+                trailingPlaceable = trailingPlaceable,
+                textFieldPlaceable = textFieldPlaceable,
+                placeholderPlaceable = placeholderPlaceable,
+            )
         }
     }
 }
 
 private fun calculateWidth(
-    trailingPlaceable: Placeable?,
     leadingPlaceable: Placeable?,
+    trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
-    placeholderPlaceable: Placeable?,
     constraints: Constraints,
 ): Int {
-    val middleSection =
-        maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0)
+    val middleSection = textFieldPlaceable.width
     val wrappedWidth =
         middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
 }
 
 private fun calculateHeight(
-    trailingPlaceable: Placeable?,
     leadingPlaceable: Placeable?,
+    trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
-    placeholderPlaceable: Placeable?,
     constraints: Constraints,
 ): Int =
     maxOf(
         textFieldPlaceable.height,
-        placeholderPlaceable?.height ?: 0,
-        trailingPlaceable?.height ?: 0,
         leadingPlaceable?.height ?: 0,
+        trailingPlaceable?.height ?: 0,
         constraints.minHeight,
     )
 
 private fun Placeable.PlacementScope.place(
     height: Int,
     width: Int,
-    trailingPlaceable: Placeable?,
     leadingPlaceable: Placeable?,
+    trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
 ) {
     // placed center vertically and to the end edge horizontally
-    trailingPlaceable?.placeRelative(
-        width - trailingPlaceable.width,
-        Alignment.CenterVertically.align(trailingPlaceable.height, height),
-    )
     leadingPlaceable?.placeRelative(
         0,
         Alignment.CenterVertically.align(leadingPlaceable.height, height),
+    )
+    trailingPlaceable?.placeRelative(
+        width - trailingPlaceable.width,
+        Alignment.CenterVertically.align(trailingPlaceable.height, height),
     )
 
     // placed center vertically

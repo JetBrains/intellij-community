@@ -104,8 +104,8 @@ private fun RowScope.ColumnOne() {
         TextField(
             value = textFieldValue,
             onValueChange = { textFieldValue = it },
-            placeholder = { Text("Write something...") },
             modifier = Modifier.width(200.dp),
+            placeholder = { Text("Write something...") },
         )
 
         var checked by remember { mutableStateOf(false) }
