@@ -27,6 +27,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,6 +37,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -117,7 +121,7 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
         if (overrideDefault) {
           return;
         }
-        accept |= methodsHaveSameReturnTypes(method, superMethod) &&
+        accept |= haveSameReturnTypes(method, superMethod) &&
                   haveSameExceptionSignatures(method, superMethod) &&
                   method.isVarArgs() == superMethod.isVarArgs();
 
@@ -191,21 +195,53 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
     return true;
   }
 
-  public static boolean methodsHaveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
-    final PsiType type1 = method1.getReturnType();
-    if (type1 == null) {
-      return false;
+  public static boolean haveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
+    final PsiSubstitutor substitutor = getSuperSubstitutor(method1, method2);
+    return areTypesEqualAndNotMoreSpecific(substitutor, method1.getReturnType(), method2.getReturnType());
+  }
+
+  public static boolean haveSameParameterTypes(PsiMethod method1, PsiMethod method2){
+    final PsiSubstitutor substitutor = getSuperSubstitutor(method1, method2);
+    PsiParameter[] parameters1 = method1.getParameterList().getParameters();
+    PsiParameter[] parameters2 = method2.getParameterList().getParameters();
+    for (int i = 0; i < parameters1.length; i++) {
+      if (!areTypesEqualAndNotMoreSpecific(substitutor, parameters1[i].getType(), parameters2[i].getType())) return false;
     }
-    final PsiType type2 = method2.getReturnType();
-    if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
-      final PsiClass superClass = method2.getContainingClass();
-      final PsiClass aClass = method1.getContainingClass();
-      if (aClass == null || superClass == null) return false;
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      return type1.equals(substitutor.substitute(type2)) && !(((PsiClassType)type1).resolve() instanceof PsiTypeParameter);
+    return true;
+  }
+
+  private static boolean areTypesEqualAndNotMoreSpecific(PsiSubstitutor substitutor, @Nullable PsiType type1, @Nullable PsiType type2) {
+    if (type1 == null) return false;
+    if (type1 instanceof PsiClassType classType1 && type2 instanceof PsiClassType classType2) {
+      if (substitutor == null) return false;
+      return type1.equals(substitutor.substitute(type2)) && !typeIsMoreSpecific(classType2, classType1);
     }
     else {
       return type1.equals(type2);
     }
+  }
+
+  private static boolean typeIsMoreSpecific(PsiClassType type, PsiClassType bound){
+    PsiType[] typeParameters = type.getParameters();
+    PsiType[] boundParameters = bound.getParameters();
+    if (typeParameters.length > 0) {
+      if (typeParameters.length != boundParameters.length) return false;
+      for (int i = 0; i < typeParameters.length; i++) {
+        if (typeParameters[i] instanceof PsiClassType typeParameter && boundParameters[i] instanceof PsiClassType boundParameter &&
+            typeIsMoreSpecific(typeParameter, boundParameter)) return true;
+      }
+    }
+    if (!(PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter)) return false;
+    return ContainerUtil.exists(bound.getSuperTypes(), boundType -> GenericsUtil.checkNotInBounds(type, boundType, false));
+  }
+
+  public static @Nullable PsiSubstitutor getSuperSubstitutor(PsiMethod method, PsiMethod superMethod) {
+    PsiClass contextClass = method.getContainingClass();
+    PsiClass superClass = superMethod.getContainingClass();
+    if (contextClass == null || superClass == null) return null;
+    PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, contextClass, PsiSubstitutor.EMPTY);
+    MethodSignature contextSignature = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignature superSignature = superMethod.getSignature(classSubstitutor);
+    return MethodSignatureUtil.getSuperMethodSignatureSubstitutor(contextSignature, superSignature);
   }
 }
