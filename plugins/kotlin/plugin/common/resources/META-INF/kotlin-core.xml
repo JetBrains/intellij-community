@@ -179,7 +179,7 @@
     <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider"/>
     <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinExpandNodeProjectViewProvider" order="last, after ClassesTreeStructureProvider"/>
 
-    <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.actions.KotlinQualifiedNameProvider"/>
+    <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.KotlinQualifiedNameProvider"/>
 
     <packageDependencies.visitor
             language="kotlin"
