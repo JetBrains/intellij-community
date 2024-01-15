@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.LafManager
@@ -19,20 +20,16 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.*
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
 import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import java.io.FileInputStream
 import java.io.InputStream
-import java.nio.file.CopyOption
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -182,40 +179,48 @@ class JbSettingsImporter(private val configDirPath: Path,
     val pluginSet = PluginManagerCore.getPluginSet()
     for (mainDescriptor in pluginSet.enabledPlugins + pluginSet.getEnabledModules()) {
       // we don't check classloader for sub descriptors because url set is the same
-      val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
-                              ?: continue
-      scanClassLoader(pluginClassLoader).use { scanResult ->
-        for (classInfo in scanResult.getClassesWithAnnotation(State::class.java.name)) {
-          val stateAnnotation = classInfo.getAnnotationInfo(State::class.java.name) ?: continue
-          val parameterValues = stateAnnotation.getParameterValues(false)
-          val nameValue = parameterValues.find { it.name == "name" } ?: continue
-          val storages = parameterValues.find { it.name == "storages" } ?: continue
-          if (notLoadedComponents.remove(nameValue.value.toString())) {
-            try {
-              val clazz = pluginClassLoader.loadClass(classInfo.name)
-              if (!appServiceClasses.contains(clazz) && !isAppLevelLightService(clazz))
-                continue
-              val psc = ApplicationManager.getApplication().instantiateClass(clazz, mainDescriptor.pluginId)
-              componentStore.initComponent(psc, null, mainDescriptor.pluginId)
-              ApplicationManager.getApplication().getService(clazz)
-              val storage = (storages.value as Array<*>).find {
-                val info = it as AnnotationInfo
-                val deprecated = info.getParameterValues(false).find { pv -> pv.name == "deprecated" }
-                deprecated == null || !(deprecated.value as Boolean)
-              } as? AnnotationInfo ?: continue
-              val file = storage.parameterValues.find { it.name == "value" }?.value
-              LOG.info("Loaded unloaded component ${nameValue.value} from $file")
-            }
-            catch (th: Throwable) {
-              LOG.warn("Cannot init ${nameValue} from ${classInfo.name}: ${th.message}", th)
-            }
-          }
-        }
-      }
+      loadAndInitPluginServices(mainDescriptor, appServiceClasses) { notLoadedComponents.remove(it) }
     }
 
     for (component in notLoadedComponents) {
       LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
+    }
+  }
+
+  private fun loadAndInitPluginServices(
+    mainDescriptor: IdeaPluginDescriptor,
+    appServiceClasses: Set<Class<*>>,
+    loadPredicate: (String) -> Boolean) {
+    val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader ?: return
+    val start = System.currentTimeMillis()
+    scanClassLoader(pluginClassLoader).use { scanResult ->
+      LOG.info("Loaded classes for ${mainDescriptor.pluginId} in ${System.currentTimeMillis() - start}ms")
+      for (classInfo in scanResult.getClassesWithAnnotation(State::class.java.name)) {
+        val stateAnnotation = classInfo.getAnnotationInfo(State::class.java.name) ?: continue
+        val parameterValues = stateAnnotation.getParameterValues(false)
+        val nameValue = parameterValues.find { it.name == "name" } ?: continue
+        val storages = parameterValues.find { it.name == "storages" } ?: continue
+        if (loadPredicate(nameValue.value.toString())) {
+          try {
+            val clazz = pluginClassLoader.loadClass(classInfo.name)
+            if (!appServiceClasses.contains(clazz) && !isAppLevelLightService(clazz))
+              continue
+            val psc = ApplicationManager.getApplication().instantiateClass(clazz, mainDescriptor.pluginId)
+            componentStore.initComponent(psc, null, mainDescriptor.pluginId)
+            ApplicationManager.getApplication().getService(clazz)
+            val storage = (storages.value as Array<*>).find {
+              val info = it as AnnotationInfo
+              val deprecated = info.getParameterValues(false).find { pv -> pv.name == "deprecated" }
+              deprecated == null || !(deprecated.value as Boolean)
+            } as? AnnotationInfo ?: continue
+            val file = storage.parameterValues.find { it.name == "value" }?.value
+            LOG.info("Loaded unloaded component ${nameValue.value} from $file")
+          }
+          catch (th: Throwable) {
+            LOG.warn("Cannot init ${nameValue} from ${classInfo.name}: ${th.message}", th)
+          }
+        }
+      }
     }
   }
 
