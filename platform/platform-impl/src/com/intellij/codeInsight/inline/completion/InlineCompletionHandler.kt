@@ -124,7 +124,7 @@ class InlineCompletionHandler(
     val session = InlineCompletionSession.getOrNull(editor) ?: return
     val context = session.context
     val offset = context.startOffset() ?: return
-    trace(InlineCompletionEventType.Insert)
+    traceBlocking(InlineCompletionEventType.Insert)
 
     val elements = context.state.elements.map { it.element }
     val textToInsert = context.textToInsert()
@@ -145,7 +145,7 @@ class InlineCompletionHandler(
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!context.isDisposed)
-    trace(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
+    traceBlocking(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
 
     InlineCompletionSession.remove(editor)
     sessionManager.sessionRemoved()
@@ -176,7 +176,7 @@ class InlineCompletionHandler(
       if (variants.isEmpty()) {
         withContext(Dispatchers.EDT) {
           coroutineToIndicator {
-            trace(InlineCompletionEventType.NoVariants)
+            traceBlocking(InlineCompletionEventType.NoVariants)
           }
         }
         return@runCatching
@@ -220,7 +220,7 @@ class InlineCompletionHandler(
     if (!context.isDisposed && context.state.elements.isEmpty()) {
       hide(context, FinishType.EMPTY)
     }
-    trace(InlineCompletionEventType.Completion(cause, isActive))
+    traceBlocking(InlineCompletionEventType.Completion(cause, isActive))
   }
 
   /**
@@ -258,7 +258,7 @@ class InlineCompletionHandler(
     request: InlineCompletionRequest
   ): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
-      traceAsync(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
     }
     return provider.getSuggestion(request)
   }
@@ -317,20 +317,20 @@ class InlineCompletionHandler(
           val isSuccess = variantComputing(variantIndex) {
             variant.elements.flowOn(Dispatchers.Default)
               .onEmpty {
-                traceAsync(InlineCompletionEventType.Empty(variantIndex))
+                trace(InlineCompletionEventType.Empty(variantIndex))
                 isEmpty.set(true)
               }
               .withIndex()
               .collect { (elementIndex, element) ->
                 ensureActive()
-                traceAsync(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
+                trace(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
                 coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
                 allVariantsEmpty.set(false)
               }
           }
 
           if (isSuccess) {
-            traceAsync(InlineCompletionEventType.VariantComputed(variantIndex))
+            trace(InlineCompletionEventType.VariantComputed(variantIndex))
           }
 
           if ((!isSuccess || isEmpty.get()) && allVariantsEmpty.get()) {
@@ -338,7 +338,7 @@ class InlineCompletionHandler(
               coroutineToIndicator { forceNextVariant() }
             }
             else {
-              traceAsync(InlineCompletionEventType.NoVariants)
+              trace(InlineCompletionEventType.NoVariants)
             }
           }
         }
@@ -347,7 +347,7 @@ class InlineCompletionHandler(
       override fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
         ThreadingAssertions.assertEventDispatchThread()
         context.renderElement(element, context.expectedStartOffset)
-        trace(InlineCompletionEventType.Show(variantIndex, element, elementIndex))
+        traceBlocking(InlineCompletionEventType.Show(variantIndex, element, elementIndex))
       }
 
       override fun disposeCurrentVariant() {
@@ -357,17 +357,17 @@ class InlineCompletionHandler(
 
       override fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean) {
         ThreadingAssertions.assertEventDispatchThread()
-        trace(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
+        traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
       }
 
       override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
         ThreadingAssertions.assertEventDispatchThread()
-        trace(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+        traceBlocking(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
       }
 
       override fun variantInvalidated(variantIndex: Int) {
         ThreadingAssertions.assertEventDispatchThread()
-        trace(InlineCompletionEventType.Invalidated(variantIndex))
+        traceBlocking(InlineCompletionEventType.Invalidated(variantIndex))
       }
 
       override fun dataChanged() {
@@ -397,14 +397,14 @@ class InlineCompletionHandler(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun trace(event: InlineCompletionEventType) {
+  private fun traceBlocking(event: InlineCompletionEventType) {
     ThreadingAssertions.assertEventDispatchThread()
     eventListeners.getMulticaster().on(event)
   }
 
   @RequiresEdt
-  private suspend fun traceAsync(event: InlineCompletionEventType) {
-    coroutineToIndicator { trace(event) }
+  private suspend fun trace(event: InlineCompletionEventType) {
+    coroutineToIndicator { traceBlocking(event) }
   }
 
   @TestOnly
