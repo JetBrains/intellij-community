@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -94,7 +94,10 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       return;
     }
     final String sourceRootPath = FileUtil.toCanonicalPath(rd.getRootFile().getAbsolutePath());
-    final String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toCanonicalPath(file.getPath()), '/');
+    String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toCanonicalPath(file.getPath()), '/');
+    if (".".equals(relativePath)) {
+      relativePath = file.getName();
+    }
     final String prefix = rd.getPackagePrefix();
 
     final StringBuilder targetPath = new StringBuilder();
