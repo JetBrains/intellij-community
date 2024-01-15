@@ -60,21 +60,40 @@ object FUSProjectHotStartUpMeasurer {
      */
     sealed interface FUSReportableEvent : Event
 
-    class SplashBecameVisibleEvent(val time: Long = System.nanoTime()) : FUSReportableEvent
-    class WelcomeScreenEvent(val time: Long = System.nanoTime()) : Event
-    class ViolationEvent(val violation: Violation, val time: Long = System.nanoTime()) : Event
+    class SplashBecameVisibleEvent : FUSReportableEvent {
+      val time: Long = System.nanoTime()
+    }
+
+    class WelcomeScreenEvent : Event {
+      val time: Long = System.nanoTime()
+    }
+
+    class ViolationEvent(val violation: Violation) : Event {
+      val time: Long = System.nanoTime()
+    }
+
     class ProjectTypeReportEvent(val projectsType: ProjectsType) : Event
     class ProjectPathReportEvent(val hasSettings: Boolean) : Event
-    class FrameBecameVisibleEvent(val time: Long = System.nanoTime()) : FUSReportableEvent
-    class FrameBecameInteractiveEvent(val time: Long = System.nanoTime()) : FUSReportableEvent
+    class FrameBecameVisibleEvent : FUSReportableEvent {
+      val time: Long = System.nanoTime()
+    }
+
+    class FrameBecameInteractiveEvent : FUSReportableEvent {
+      val time: Long = System.nanoTime()
+    }
+
     class MarkupRestoredEvent(val fileId: Int) : Event
     class FirstEditorEvent(
       val sourceOfSelectedEditor: SourceOfSelectedEditor,
-      val file: VirtualFile,
+      val file: VirtualFile
+    ) : Event {
       val time: Long = System.nanoTime()
-    ) : Event
+    }
 
-    class NoMoreEditorsEvent(val time: Long = System.nanoTime()) : Event
+    class NoMoreEditorsEvent : Event {
+      val time: Long = System.nanoTime()
+    }
+
     data object ResetProjectPathEvent : Event
     data object IdeStarterStartedEvent : Event
   }
