@@ -238,7 +238,8 @@
     </group>
 
     <action id="GitLab.Merge.Request.Review.Editor.Show.Diff"
-            class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction">
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction"
+            icon="AllIcons.Actions.Diff">
       <add-to-group group-id="EditorPopupMenu"/>
     </action>
   </actions>

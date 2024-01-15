@@ -7,14 +7,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.util.GitLabBundle.messagePointer
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_OPEN_DIALOG
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 
-class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create.action.title"),
-                                                  messagePointer("snippet.create.action.description"),
-                                                  GitlabIcons.GitLabLogo) {
+class GitLabCreateSnippetAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
 
