@@ -26,7 +26,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 28)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 29)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -39,7 +39,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val BUILD_SYSTEMS = listOf(
     NewProjectWizardConstants.BuildSystem.INTELLIJ, NewProjectWizardConstants.BuildSystem.GRADLE,
     NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT,
-    NewProjectWizardConstants.OTHER
+    NewProjectWizardConstants.BuildSystem.AMPER, NewProjectWizardConstants.OTHER
   )
 
   private val GROOVY_SDKS = listOf(
