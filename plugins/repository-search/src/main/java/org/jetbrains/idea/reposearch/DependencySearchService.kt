@@ -1,7 +1,6 @@
 package org.jetbrains.idea.reposearch
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -10,13 +9,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -24,6 +19,7 @@ import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
@@ -32,7 +28,7 @@ typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class DependencySearchService(private val project: Project) : Disposable {
+class DependencySearchService(private val project: Project, private val cs: CoroutineScope) : Disposable {
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
   private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
   private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<DeferredCacheKey, Deferred<Collection<RepositoryArtifactData>>>()
@@ -148,11 +144,11 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
   }
 
-    private suspend fun performSearchAsync(provider: DependencySearchProvider,
-                                           cacheKey: String,
-                                           parameters: SearchParameters,
-                                           consumer: ResultConsumer,
-                                           searchMethod: suspend (DependencySearchProvider, ResultConsumer) -> Unit) {
+  private suspend fun performSearchAsync(provider: DependencySearchProvider,
+                                         cacheKey: String,
+                                         parameters: SearchParameters,
+                                         consumer: ResultConsumer,
+                                         searchMethod: suspend (DependencySearchProvider, ResultConsumer) -> Unit) {
     val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
     val existingDeferred = deferredCache.putIfAbsent(DeferredCacheKey(provider, cacheKey), thisNewDeferred)
     if (existingDeferred != null && parameters.useCache()) {
@@ -161,19 +157,33 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
 
     val resultSet = RepositoryArtifactDataStorage()
+    val searchFinished = AtomicBoolean(false)
 
-    try {
-      searchMethod(provider) {
-        resultSet.add(it)
-        consumer(it)
+    coroutineScope {
+      cs.launch {
+        try {
+          withContext(Dispatchers.IO) {
+            searchMethod(provider) {
+              resultSet.add(it)
+              consumer(it)
+            }
+          }
+          searchFinished.set(true)
+        }
+        catch (e: Exception) {
+          logWarn("Exception getting data from provider $provider", e)
+        }
+        finally {
+          thisNewDeferred.complete(resultSet.getAll())
+        }
       }
-    }
-    catch (e: Exception) {
-      logWarn("Exception getting data from provider $provider", e)
-    }
-
-    if (!resultSet.isEmpty() && existingDeferred == null) {
-      thisNewDeferred.complete(resultSet.getAll())
+      while (true) {
+        if (searchFinished.get()) {
+          break
+        }
+        ensureActive()
+        delay(100)
+      }
     }
   }
 

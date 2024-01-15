@@ -1,5 +1,6 @@
 package org.jetbrains.idea.reposearch
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -15,7 +16,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
   private lateinit var dependencySearchService: DependencySearchService
   override fun setUp() {
     super.setUp()
-    dependencySearchService = DependencySearchService(project)
+    dependencySearchService = project.service<DependencySearchService>()
     Disposer.register(testRootDisposable, dependencySearchService)
   }
 
