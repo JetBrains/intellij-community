@@ -67,9 +67,11 @@ public final class PsiMethodUtil {
   }
 
   /**
-   * ATTENTION: does not check the method name equals "main"
+   * ATTENTION 1: does not check the method name equals "main"<br>
+   * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
+   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
    *
-   * @param method  the method to check
+   * @param method the method to check
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
   public static boolean isMainMethod(final PsiMethod method) {
@@ -109,7 +111,8 @@ public final class PsiMethodUtil {
         return provider.hasMainMethod(psiClass);
       }
     }
-    return findMainMethod(psiClass.findMethodsByName("main", true), psiClass) != null;
+    final PsiMethod[] mainMethods = psiClass.findMethodsByName("main", true);
+    return findMainMethod(mainMethods, psiClass) != null;
   }
 
   @Nullable
