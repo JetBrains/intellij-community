@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
@@ -20,7 +21,7 @@ public class ReformatFix implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    return Presentation.of(getFamilyName());
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
