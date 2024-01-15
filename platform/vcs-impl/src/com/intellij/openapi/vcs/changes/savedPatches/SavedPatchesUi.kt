@@ -19,10 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.FlowLayout
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTree
+import javax.swing.*
 import javax.swing.border.CompoundBorder
 
 open class SavedPatchesUi(project: Project,
@@ -56,7 +53,9 @@ open class SavedPatchesUi(project: Project,
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
 
     val treePanel = JPanel(BorderLayout())
-    treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
+    val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
+    scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    treePanel.add(scrollPane, BorderLayout.CENTER)
 
     treeChangesSplitter = TwoKeySplitter(isVertical(),
                                          ProportionKey("vcs.saved.patches.changes.splitter.vertical", 0.5f,

@@ -361,5 +361,9 @@ public class LabelPainter {
   public void setOpaque(boolean isOpaque) {
     myIsOpaque = isOpaque;
   }
+
+  public void clear() {
+    myLabels.clear();
+  }
 }
 

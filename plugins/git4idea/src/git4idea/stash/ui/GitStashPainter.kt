@@ -2,14 +2,10 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getBackground
-import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getRowHeight
-import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getTransparentScrollbarWidth
-import com.intellij.util.ui.JBUI
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.RefGroup
@@ -18,66 +14,43 @@ import com.intellij.vcs.log.ui.render.LabelIconCache
 import com.intellij.vcs.log.ui.render.LabelPainter
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.StashInfo
-import git4idea.ui.StashInfo.Companion.branchName
 import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.Graphics2D
+import javax.swing.JPanel
 
-class GitStashPainter(val tree: ChangesTree, private val renderer: ChangesTreeCellRenderer, iconCache: LabelIconCache) :
-  LabelPainter(tree, iconCache), SavedPatchesProvider.PatchObject.Painter {
+class GitStashPainter(val tree: ChangesTree, iconCache: LabelIconCache) : JPanel() {
+  private val labelPainter = LabelPainter(tree, iconCache)
 
-  private val labelRightGap = JBUI.scale(1)
+  private val rightGap get() = UIUtil.getScrollBarWidth()
 
-  private var startLocation: Int = 0
-  private var endLocation: Int = 0
-  private var rowHeight = 0
+  init {
+    isOpaque = false
+    labelPainter.setOpaque(false)
+  }
 
-  fun customise(stashInfo: StashInfo,
-                row: Int,
-                selected: Boolean) {
-    val branchName = stashInfo.branchName
-    if (branchName == null) {
-      clearPainter()
-      return
-    }
-
-    val repository = GitRepositoryManager.getInstance(tree.project).getRepositoryForRootQuick(stashInfo.root)
+  fun customise(branchName: String, root: VirtualFile, row: Int, selected: Boolean) {
+    val repository = GitRepositoryManager.getInstance(tree.project).getRepositoryForRootQuick(root)
     val isCurrentBranch = repository?.currentBranch?.name == branchName
 
     val nodeLocation = TreeUtil.getNodeRowX(tree, row) + tree.insets.left
-    val availableWidth = tree.visibleRect.width - tree.getTransparentScrollbarWidth() -
-                         (nodeLocation - tree.visibleRect.x).coerceAtLeast(0)
+    val availableWidth = tree.width - rightGap - nodeLocation
     val foreground = if (selected) UIUtil.getLabelForeground() else CurrentBranchComponent.TEXT_COLOR
-    customizePainter(tree.getBackground(row, selected), foreground, selected, availableWidth,
-                     listOf(StashRefGroup(branchName, isCurrentBranch)))
-
-    // label coordinates are calculated relative to the node location
-    val labelEndLocation = tree.visibleRect.x + tree.visibleRect.width - nodeLocation
-    val labelStartLocation = labelEndLocation - size.width - labelRightGap - tree.getTransparentScrollbarWidth()
-    customizeLocation(labelStartLocation, labelEndLocation, tree.getRowHeight(renderer))
+    labelPainter.customizePainter(tree.getBackground(row, selected), foreground, selected, availableWidth,
+                                  listOf(StashRefGroup(branchName, isCurrentBranch)))
   }
 
-  private fun customizeLocation(startLocation: Int, endLocation: Int, rowHeight: Int) {
-    this.startLocation = startLocation
-    this.endLocation = endLocation
-    this.rowHeight = rowHeight
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    val g2 = g as? Graphics2D ?: return
+    labelPainter.paint(g2, 0, 0, height)
   }
 
-  private fun clearPainter() {
-    myLabels.clear()
-  }
-
-  override fun paint(g2: Graphics2D) {
-    paint(g2, startLocation, 0, rowHeight)
-
-    if (myLabels.isNotEmpty()) {
-      // paint the space after the label
-      val labelEnd = startLocation + size.width
-      if (labelEnd != endLocation) {
-        g2.color = myBackground
-        g2.fillRect(labelEnd, 0, endLocation - labelEnd, rowHeight)
-      }
-    }
+  override fun getPreferredSize(): Dimension {
+    val dimension = labelPainter.size
+    dimension.width += rightGap
+    return dimension
   }
 
   private class StashRefGroup(private val branchName: @NlsSafe String, private val isCurrent: Boolean) : RefGroup {

@@ -38,6 +38,7 @@ import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
+import git4idea.ui.StashInfo.Companion.branchName
 import git4idea.ui.StashInfo.Companion.subject
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Stream
+import javax.swing.JComponent
 
 class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
   private val iconCache = LabelIconCache()
@@ -193,12 +195,11 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
       } ?: GitBundle.message("stash.editor.diff.preview.empty.title")
     }
 
-    override fun createPainter(tree: ChangesTree,
-                               renderer: ChangesTreeCellRenderer,
-                               row: Int,
-                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter {
-      val painter = GitStashPainter(tree, renderer, iconCache)
-      painter.customise(data, row, selected)
+    override fun getLabelComponent(tree: ChangesTree, row: Int, selected: Boolean): JComponent? {
+      val branchName = data.branchName ?: return null
+
+      val painter = GitStashPainter(tree, iconCache)
+      painter.customise(branchName, data.root, row, selected)
       return painter
     }
   }

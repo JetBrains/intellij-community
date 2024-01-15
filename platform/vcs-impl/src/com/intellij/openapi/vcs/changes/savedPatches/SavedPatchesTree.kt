@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -26,10 +27,10 @@ import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.util.stream.Stream
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
@@ -135,11 +136,10 @@ class SavedPatchesTree(project: Project,
   }
 
   private class MyTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
-    private var painter: SavedPatchesProvider.PatchObject.Painter? = null
+    private val labelWrapper = Wrapper()
 
-    override fun paint(g: Graphics) {
-      super.paint(g)
-      painter?.paint(g as Graphics2D)
+    init {
+      add(labelWrapper, BorderLayout.EAST)
     }
 
     override fun getTreeCellRendererComponent(tree: JTree,
@@ -151,7 +151,7 @@ class SavedPatchesTree(project: Project,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
       val node = value as ChangesBrowserNode<*>
-      painter = customizePainter(tree as ChangesTree, node, row, selected)
+      labelWrapper.setContent(getLabelComponent(tree as ChangesTree, node, row, selected))
       val speedSearch = SpeedSearchSupply.getSupply(tree)
       if (speedSearch != null) {
         val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*>
@@ -165,16 +165,13 @@ class SavedPatchesTree(project: Project,
       return rendererComponent
     }
 
-    private fun customizePainter(tree: ChangesTree,
-                                 node: ChangesBrowserNode<*>,
-                                 row: Int,
-                                 selected: Boolean): SavedPatchesProvider.PatchObject.Painter? {
-      if (tree.expandableItemsHandler.expandedItems.contains(row)) {
-        return null
-      }
-
+    private fun getLabelComponent(tree: ChangesTree,
+                                  node: ChangesBrowserNode<*>,
+                                  row: Int,
+                                  selected: Boolean): JComponent? {
+      if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
       val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return null
-      return patchObject.createPainter(tree, this, row, selected)
+      return patchObject.getLabelComponent(tree, row, selected)
     }
   }
 
