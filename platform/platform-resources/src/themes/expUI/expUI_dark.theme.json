@@ -145,10 +145,10 @@
     },
 
     "ActionButton": {
-      "hoverBackground": "Grey3",
-      "hoverBorderColor": "Grey3",
-      "pressedBackground": "Grey5",
-      "pressedBorderColor": "Grey5",
+      "hoverBackground": "#FFFFFF16",
+      "hoverBorderColor": "#FFFFFF00",
+      "pressedBackground": "#FFFFFF26",
+      "pressedBorderColor": "#FFFFFF00",
       "focusedBorderColor": "Blue6",
       "hoverSeparatorColor": "Grey6"
     },
