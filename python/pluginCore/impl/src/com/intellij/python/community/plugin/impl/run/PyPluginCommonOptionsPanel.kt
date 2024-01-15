@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.run
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.impl.run
 
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
@@ -12,6 +12,7 @@ import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.run.AbstractPyCommonOptionsForm
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JRadioButton

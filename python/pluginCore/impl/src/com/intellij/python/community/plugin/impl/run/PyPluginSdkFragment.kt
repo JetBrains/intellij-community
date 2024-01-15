@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.run
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.impl.run
 
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.ui.CommandLinePanel
@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.ComboBox
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
 import com.jetbrains.python.run.configuration.PySdkComboBox
 import com.jetbrains.python.sdk.PythonSdkUtil

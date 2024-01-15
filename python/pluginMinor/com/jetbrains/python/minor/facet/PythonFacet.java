@@ -20,7 +20,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
 import com.jetbrains.python.facet.LibraryContributingFacet;
-import com.jetbrains.python.facet.PythonFacetUtil;
+import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**

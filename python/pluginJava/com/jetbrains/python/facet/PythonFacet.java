@@ -5,6 +5,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
+import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil;
 import org.jetbrains.annotations.NotNull;
 
 

@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.run
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.impl.run
 
 import com.jetbrains.python.run.EnvFileComponent.Companion.createEnvFilesFragment
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
 import com.jetbrains.python.run.configuration.PyPathMappingsEditorFragment
 import javax.swing.JPanel
