@@ -370,6 +370,7 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     init(PlainTextFileType.INSTANCE)
     val key1 = Key.create<Int>("inline.completion.test.key.one")
     val key2 = Key.create<Int>("inline.completion.test.key.two")
+    val middleSync = AtomicBoolean(false)
     registerSuggestion {
       variant { }
       variant { data ->
@@ -377,19 +378,16 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
         emit(InlineCompletionGrayTextElement("First"))
         data.putUserData(key1, 2)
         emit(InlineCompletionGrayTextElement("Second"))
-        withContext(Dispatchers.EDT) { // To make await emit
-          data.putUserData(key1, 3)
-        }
+        data.putUserData(key1, 3)
       }
       variant { data -> data.putUserData(key1, -1) } // messing
       variant { data ->
         data.putUserData(key2, 1)
+        middleSync.set(true)
         emit(InlineCompletionGrayTextElement("Third"))
         data.putUserData(key2, 2)
         emit(InlineCompletionGrayTextElement("Fourth"))
-        withContext(Dispatchers.EDT) {
-          data.putUserData(key2, 3)
-        }
+        data.putUserData(key2, 3)
       }
       variant { }
     }
@@ -423,8 +421,13 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     assertContext(1)
 
     provider.computeNextElement()
-    assertEmpty(0, 2, 3, 4)
+    while (!middleSync.get()) {
+      yield()
+    }
+    assertEmpty(0, 4)
     assertDataValue(1, 3, key1)
+    assertDataValue(3, 1, key2)
+    assertDataValue(2, -1, key1)
     assertContext(1)
 
     provider.computeNextElement()
