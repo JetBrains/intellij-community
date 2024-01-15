@@ -699,6 +699,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return height;
   }
 
+  /**
+   * The visibility of this method has been changed to private.
+   * It is no longer necessary to override this method to implement a custom toolbar layout.
+   * Instead, consider implementing your own {@link ToolbarLayoutStrategy}.
+   */
   private void calculateBounds() {
     myComponentBounds.clear();
     myComponentBounds.addAll(myLayoutStrategy.calculateBounds(this));
