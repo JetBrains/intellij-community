@@ -30,10 +30,13 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
 import com.intellij.workspaceModel.codegen.engine.*
+import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.io.JsonUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
+import java.io.IOException
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -147,14 +150,14 @@ object CodeWriter {
   }
 
   private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
-    val apiVersionInDevkit = getApiVersionFromManifest(CodeGenerator::class.java)
+    val apiVersionInDevkit = getApiVersionFromJSON(CodeGenerator::class.java)
     val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
 
     if (apiVersionInDevkit == apiVersionFromDownloadedJar) {
       return true
     }
 
-    val message = if (apiVersionFromDownloadedJar == UNKNOWN_CODEGEN_API_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
+    val message = if (apiVersionFromDownloadedJar == CodegenApiVersion.UNKNOWN_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
       DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.newer", apiVersionInDevkit, apiVersionFromDownloadedJar)
     } else {
       DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.older", apiVersionInDevkit, apiVersionFromDownloadedJar)
@@ -169,21 +172,42 @@ object CodeWriter {
     return false
   }
 
+  private fun getApiVersionFromJSON(clazz: Class<*>): String {
+    return getApiVersionFromJarFile(clazz, CodegenApiVersion.JSON_RELATIVE_PATH) { jsonPath ->
+      URL(jsonPath).openStream().reader().use { reader ->
+        val jsonReader = JsonReaderEx(reader.readText())
+        val objects = JsonUtil.nextObject(jsonReader)
+        objects[CodegenApiVersion.ATTRIBUTE_NAME] as? String
+      }
+    }
+  }
+
   private fun getApiVersionFromManifest(clazz: Class<*>): String {
+    return getApiVersionFromJarFile(clazz, CodegenApiVersion.MANIFEST_RELATIVE_PATH) { manifestPath ->
+      URL(manifestPath).openStream().use {
+        val manifest = Manifest(it)
+        val attributes = manifest.mainAttributes
+        attributes.getValue(CodegenApiVersion.ATTRIBUTE_NAME)
+      }
+    }
+  }
+
+  private fun getApiVersionFromJarFile(clazz: Class<*>, relativePathToFile: String, readApiVersionFromFile: (String) -> String?): String {
     val classPath = "${clazz.name.replace(".", "/")}.class"
     val classAbsolutePath = clazz.getResource("${clazz.simpleName}.class")?.toString() // Absolute path is jar path + class path
                             ?: error("Absolute path for the class $clazz was not found")
 
-    val manifestPath = classAbsolutePath.replace(classPath, "META-INF/MANIFEST.MF")
+    val fileAbsolutePath = classAbsolutePath.replace(classPath, relativePathToFile)
 
     val apiVersion: String?
-    URL(manifestPath).openStream().use {
-      val manifest = Manifest(it)
-      val attributes = manifest.mainAttributes
-      apiVersion = attributes.getValue(CODEGEN_API_VERSION_MANIFEST_ATTRIBUTE)
+    try {
+      apiVersion = readApiVersionFromFile(fileAbsolutePath)
+    } catch (e: IOException) {
+      LOG.info("Failed to read codegen-api version from file \"$fileAbsolutePath\": " + e.message)
+      return CodegenApiVersion.UNKNOWN_VERSION
     }
 
-    return apiVersion ?: UNKNOWN_CODEGEN_API_VERSION
+    return apiVersion ?: CodegenApiVersion.UNKNOWN_VERSION
   }
 
   private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean): List<CompiledObjModule> {
@@ -386,10 +410,6 @@ object CodeWriter {
   }
 
 
-  private const val CODEGEN_API_VERSION_MANIFEST_ATTRIBUTE = "Codegen-Api-Version"
-
-  private const val UNKNOWN_CODEGEN_API_VERSION = "unknown version"
-
   private const val GENERATED_REGION_START = "//region generated code"
 
   private const val GENERATED_REGION_END = "//endregion"
@@ -409,6 +429,16 @@ object CodeWriter {
 
   private val VirtualFile.isGeneratedFile: Boolean
     get() = extension == "kt" && GENERATED_FILES.contains(name)
+
+
+  private object CodegenApiVersion {
+    const val JSON_RELATIVE_PATH = "codegen-api-metadata.json"
+    const val MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF"
+
+    const val ATTRIBUTE_NAME = "Codegen-Api-Version"
+
+    const val UNKNOWN_VERSION = "unknown version"
+  }
 
 
   private fun getRelativePathWithoutCommonPrefix(base: String, relative: String): String {
