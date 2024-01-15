@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -451,6 +452,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
     }
   }
 
+  @IJIgnore(issue = "IDEA-340676")
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task execution order`(gradleVersion: GradleVersion) {
