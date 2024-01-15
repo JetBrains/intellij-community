@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.j2k.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

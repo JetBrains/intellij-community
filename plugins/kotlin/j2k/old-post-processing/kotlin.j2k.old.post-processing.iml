@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="kotlin.j2k.common" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.shared" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
   </component>
 </module>

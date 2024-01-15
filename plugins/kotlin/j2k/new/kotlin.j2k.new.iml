@@ -23,6 +23,6 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.j2k.common" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.shared" />
   </component>
 </module>
