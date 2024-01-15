@@ -32,7 +32,10 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
   private fun startUpdate(mavenProjectFile: VirtualFile, forceRead: Boolean): Boolean {
     val projectPath = mavenProjectFile.path
 
-    if (tree.isIgnored(projectPath)) return false
+    if (tree.isIgnored(projectPath)) {
+      MavenLog.LOG.trace("Won't update ignored file $mavenProjectFile")
+      return false
+    }
 
     val previousUpdateRef = Ref<Boolean>()
     updated.compute(mavenProjectFile) { file: VirtualFile?, value: Boolean? ->
@@ -183,6 +186,8 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     // if the file has already been updated, skip subsequent updates
     if (!startUpdate(mavenProjectFile, forceRead)) return
 
+    MavenLog.LOG.trace("Maven tree updater: start update $mavenProjectFile")
+
     val mavenProject = findOrCreateProject(mavenProjectFile)
 
     // we will compare modules and children before and after reading the pom.xml file
@@ -224,6 +229,8 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       )
     }
     updateProjects(childUpdates)
+
+    MavenLog.LOG.trace("Maven tree updater: finish update $mavenProjectFile")
   }
 
   suspend fun updateProjects(specs: List<UpdateSpec>) {
