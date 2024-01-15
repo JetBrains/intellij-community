@@ -37,7 +37,7 @@ private const val RUN_PREFIX = "// RUN:"
 private const val RUN_FILE_PREFIX = "// RUN_FILE:"
 
 @RunWith(JUnit38ClassRunner::class)
-class RunConfigurationTest : AbstractRunConfigurationTest() {
+class RunConfigurationTest : AbstractRunConfigurationBaseTest() {
     fun testDependencyModuleClasspath() {
         configureProject()
         val configuredModule = defaultConfiguredModule

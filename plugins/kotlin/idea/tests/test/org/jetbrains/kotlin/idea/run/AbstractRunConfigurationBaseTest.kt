@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.psi.*
 import java.io.File
 
-abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
+abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
     private companion object {
         const val DEFAULT_MODULE_NAME = "module"
     }

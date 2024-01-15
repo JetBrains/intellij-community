@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfigurationTest() {
+abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfigurationBaseTest() {
     fun testMainInTest() {
         configureProject()
         val configuredModule = defaultConfiguredModule

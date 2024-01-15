@@ -28,7 +28,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
+class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
     private lateinit var mockLibraryFacility: MockLibraryFacility
 
     override fun setUp() {
