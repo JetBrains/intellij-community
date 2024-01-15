@@ -19,8 +19,17 @@ interface InlineCompletionProviderSpecificUsageData {
    * If you write information on every typing and cancellation, it slows down the editor and typing.
    */
   fun getAdditionalInvocationUsageData(descriptor: InvocationDescriptor): List<EventPair<*>> = emptyList()
+
+  /**
+   * Collecting usage data potentially can be used not only for logging,
+   * so in case you want to collect data, but not log it, override this function.
+   */
   fun skipLogging() = false
 
+  /**
+   * Can be useful for getting specific usage data using:
+   *    EP_NAME.findByIdOrFromInstance("some_id") { it.getId() }
+   */
   fun getId(): String
 
   companion object {
