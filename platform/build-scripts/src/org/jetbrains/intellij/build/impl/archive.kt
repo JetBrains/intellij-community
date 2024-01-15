@@ -107,30 +107,31 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
       if (attributes.isDirectory) {
         dirCandidates.add(file)
       }
-      else if (attributes.isSymbolicLink) {
-        val entry = zipArchiveEntry(prefix + startDir.relativize(file).toString().replace('\\', '/'))
-        entry.method = ZipEntry.STORED
-        entry.lastModifiedTime = buildTime
-        entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
-        val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
-        val data = path.toByteArray()
-        entry.size = data.size.toLong()
-        putArchiveEntry(entry)
-        write(data)
-        closeArchiveEntry()
-      }
       else {
-        assert(attributes.isRegularFile)
-
         val relativePath = startDir.relativize(file).toString().replace('\\', '/')
         if (fileFilter != null && !fileFilter(file, relativePath)) {
           continue
         }
 
         val entry = zipArchiveEntry(prefix + relativePath)
-        entry.size = attributes.size()
-        entryCustomizer?.invoke(entry, file, relativePath)
-        writeFileEntry(file, entry, this)
+        if (attributes.isSymbolicLink) {
+          entry.method = ZipEntry.STORED
+          entry.lastModifiedTime = buildTime
+          entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
+          val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
+          val data = path.toByteArray()
+          entry.size = data.size.toLong()
+          putArchiveEntry(entry)
+          write(data)
+          closeArchiveEntry()
+        }
+        else {
+          assert(attributes.isRegularFile)
+
+          entry.size = attributes.size()
+          entryCustomizer?.invoke(entry, file, relativePath)
+          writeFileEntry(file, entry, this)
+        }
       }
     }
   }
