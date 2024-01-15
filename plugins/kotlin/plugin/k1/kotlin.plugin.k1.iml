@@ -150,7 +150,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
-    <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />

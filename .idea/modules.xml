@@ -1399,7 +1399,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.new/kotlin.j2k.k1.new.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.new/kotlin.j2k.k1.new.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.new/tests/kotlin.j2k.k1.new.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.new/tests/kotlin.j2k.k1.new.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old-post-processing/kotlin.j2k.old.post-processing.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old-post-processing/kotlin.j2k.old.post-processing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.old.post-processing/kotlin.j2k.k1.old.post-processing.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.old.post-processing/kotlin.j2k.k1.old.post-processing.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.new.post-processing/kotlin.j2k.k1.new.post-processing.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.new.post-processing/kotlin.j2k.k1.new.post-processing.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" />
