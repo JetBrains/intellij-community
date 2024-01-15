@@ -71,7 +71,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   override fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
-    lateinit var currentVariantResult: UpdateResult
+    var currentVariantResult: UpdateResult? = null
 
     for ((index, state) in variantsStates.withIndex()) {
       if (state.isInvalidated() || state.status == Status.COMPLETED_EMPTY) {
@@ -109,7 +109,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     when (currentVariantResult) {
       is UpdateResult.Changed -> updateCurrentVariant()
       UpdateResult.Invalidated -> currentVariantInvalidated()
-      UpdateResult.Same -> Unit
+      UpdateResult.Same, null -> Unit // TODO verify that `null` is okay
     }
 
     return !variantsStates[currentVariant.index].isInvalidated()
