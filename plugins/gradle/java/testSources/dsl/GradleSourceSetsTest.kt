@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
-import com.intellij.idea.IJIgnore
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
@@ -82,7 +81,6 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
     }
   }
 
-  @IJIgnore(issue = "IDEA-340503")
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test source set via qualified method call`(gradleVersion: GradleVersion, decorator: String) {
