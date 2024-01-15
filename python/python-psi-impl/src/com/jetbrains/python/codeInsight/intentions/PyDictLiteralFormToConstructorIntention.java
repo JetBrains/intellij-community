@@ -6,8 +6,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
@@ -23,44 +21,30 @@ import org.jetbrains.annotations.Nullable;
  * {'a': 3, 'b': 5} -> dict(a=3, b=5)
  * {a: 3, b: 5} -> no transformation
  */
-public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModCommandAction<PyDictLiteralExpression> {
   PyDictLiteralFormToConstructorIntention() {
-    super(PsiElement.class);
+    super(PyDictLiteralExpression.class);
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!(context.file() instanceof PyFile)) {
-      return null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyDictLiteralExpression element) {
+    PyKeyValueExpression[] elements = element.getElements();
+    for (PyKeyValueExpression expression : elements) {
+      PyExpression key = expression.getKey();
+      if (!(key instanceof PyStringLiteralExpression)) return null;
+      String str = ((PyStringLiteralExpression)key).getStringValue();
+      if (PyNames.isReserved(str)) return null;
+
+      if (str.isEmpty() || Character.isDigit(str.charAt(0))) return null;
+      if (!StringUtil.isJavaIdentifier(str)) return null;
     }
-
-    PyDictLiteralExpression dictExpression =
-      PsiTreeUtil.getParentOfType(element, PyDictLiteralExpression.class);
-
-    if (dictExpression != null) {
-      PyKeyValueExpression[] elements = dictExpression.getElements();
-      for (PyKeyValueExpression expression : elements) {
-        PyExpression key = expression.getKey();
-        if (!(key instanceof PyStringLiteralExpression)) return null;
-        String str = ((PyStringLiteralExpression)key).getStringValue();
-        if (PyNames.isReserved(str)) return null;
-
-        if (str.isEmpty() || Character.isDigit(str.charAt(0))) return null;
-        if (!StringUtil.isJavaIdentifier(str)) return null;
-      }
-      return super.getPresentation(context, element);
-    }
-    return null;
+    return super.getPresentation(context, element);
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyDictLiteralExpression dictExpression =
-      PsiTreeUtil.getParentOfType(element, PyDictLiteralExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PyDictLiteralExpression element, @NotNull ModPsiUpdater updater) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
-    if (dictExpression != null) {
-      replaceDictLiteral(dictExpression, elementGenerator);
-    }
+    replaceDictLiteral(element, elementGenerator);
   }
 
   @Override

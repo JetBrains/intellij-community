@@ -5,8 +5,6 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -23,24 +21,18 @@ import org.jetbrains.annotations.Nullable;
  * dict(foo) -> no transformation
  * dict(**foo) -> no transformation
  */
-public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModCommandAction<PyCallExpression> {
   PyDictConstructorToLiteralFormIntention() {
-    super(PsiElement.class);
+    super(PyCallExpression.class);
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext actionContext, @NotNull PsiElement element) {
-    if (!(actionContext.file() instanceof PyFile)) {
-      return null;
-    }
-
-    PyCallExpression expression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-
-    if (expression != null && expression.isCalleeText("dict")) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext actionContext, @NotNull PyCallExpression element) {
+    if (element.isCalleeText("dict")) {
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(actionContext.project(), actionContext.file());
-      PyType type = context.getType(expression);
+      PyType type = context.getType(element);
       if (type != null && type.isBuiltin()) {
-        PyExpression[] argumentList = expression.getArguments();
+        PyExpression[] argumentList = element.getArguments();
         for (PyExpression argument : argumentList) {
           if (!(argument instanceof PyKeywordArgument)) return null;
         }
@@ -57,13 +49,9 @@ public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModC
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyCallExpression expression =
-      PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PyCallExpression element, @NotNull ModPsiUpdater updater) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
-    if (expression != null) {
-      replaceDictConstructor(expression, elementGenerator);
-    }
+    replaceDictConstructor(element, elementGenerator);
   }
 
   private static void replaceDictConstructor(PyCallExpression expression, PyElementGenerator elementGenerator) {

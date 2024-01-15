@@ -5,22 +5,20 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyFlipComparisonIntention() {
-    super(PsiElement.class);
+    super(PyBinaryExpression.class);
   }
 
   private static class Holder {
@@ -36,16 +34,11 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
 
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!(context.file() instanceof PyFile)) {
-      return null;
-    }
-
-    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
-    while (binaryExpression != null) {
-      PyElementType operator = binaryExpression.getOperator();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyBinaryExpression element) {
+    while (element != null) {
+      PyElementType operator = element.getOperator();
       if (operator != null && Holder.FLIPPED_OPERATORS.containsKey(operator)) {
-        String operatorText = binaryExpression.getPsiOperator().getText();
+        String operatorText = element.getPsiOperator().getText();
         String flippedOperatorText = Holder.FLIPPED_OPERATORS.get(operator);
         if (flippedOperatorText.equals(operatorText)) {
           return Presentation.of(PyPsiBundle.message("INTN.flip.comparison", operatorText));
@@ -54,7 +47,7 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
          return Presentation.of(PyPsiBundle.message("INTN.flip.comparison.to.operator", operatorText, flippedOperatorText));
         }
       }
-      binaryExpression = PsiTreeUtil.getParentOfType(binaryExpression, PyBinaryExpression.class);
+      element = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     }
     return null;
   }
@@ -66,18 +59,17 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
-    while (binaryExpression != null) {
-      PyElementType operator = binaryExpression.getOperator();
+  protected void invoke(@NotNull ActionContext context, @NotNull PyBinaryExpression element, @NotNull ModPsiUpdater updater) {
+    while (element != null) {
+      PyElementType operator = element.getOperator();
       if (operator != null && Holder.FLIPPED_OPERATORS.containsKey(operator)) {
         PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
-        binaryExpression.replace(elementGenerator.createBinaryExpression(Holder.FLIPPED_OPERATORS.get(operator),
-                                                                         binaryExpression.getRightExpression(),
-                                                                         binaryExpression.getLeftExpression()));
+        element.replace(elementGenerator.createBinaryExpression(Holder.FLIPPED_OPERATORS.get(operator),
+                                                                         element.getRightExpression(),
+                                                                         element.getLeftExpression()));
         return;
       }
-      binaryExpression = PsiTreeUtil.getParentOfType(binaryExpression, PyBinaryExpression.class);
+      element = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     }
   }
 }

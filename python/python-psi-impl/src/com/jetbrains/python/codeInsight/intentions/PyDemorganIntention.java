@@ -20,7 +20,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -28,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class PyDemorganIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyDemorganIntention() {
-    super(PsiElement.class);
+    super(PyBinaryExpression.class);
   }
 
   @NotNull
@@ -40,29 +39,20 @@ public final class PyDemorganIntention extends PsiUpdateModCommandAction<PsiElem
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!(context.file() instanceof PyFile)) {
-      return null;
-    }
-
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
-    if (expression != null) {
-      final PyElementType op = expression.getOperator();
-      if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
-        return super.getPresentation(context, element);
-      }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyBinaryExpression element) {
+    final PyElementType op = element.getOperator();
+    if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
+      return super.getPresentation(context, element);
     }
     return null;
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
-    assert expression != null;
-    final PyElementType op = expression.getOperator();
+  protected void invoke(@NotNull ActionContext context, @NotNull PyBinaryExpression element, @NotNull ModPsiUpdater updater) {
+    final PyElementType op = element.getOperator();
     assert op != null;
-    final String converted = convertConjunctionExpression(expression, op);
-    replaceExpression(converted, expression);
+    final String converted = convertConjunctionExpression(element, op);
+    replaceExpression(converted, element);
   }
 
   private static void replaceExpression(String newExpression, PyBinaryExpression expression) {
