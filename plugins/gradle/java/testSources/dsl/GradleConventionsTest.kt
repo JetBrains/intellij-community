@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleConventionsTest : GradleCodeInsightTestCase() {
 
-  @IJIgnore(issue = "IDEA-340676")
+  @IJIgnore(issue = "IDEA-340613")
   @ParameterizedTest
   @AllGradleVersionsSource(DECORATORS, """
     "<caret>docsDir",
