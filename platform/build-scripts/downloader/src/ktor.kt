@@ -125,6 +125,7 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
+    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
     throw e
   }
   catch (e: Throwable) {
