@@ -282,8 +282,9 @@ def get_smart_step_into_candidates(code):
                 # it was called.
                 result.append(tos._replace(offset=offset))
         except Exception as e:
-            from six import raise_from
-            raise_from(_BytecodeParsingError(offset, dis.opname[op], arg), e)
+            err = _BytecodeParsingError(offset, dis.opname[op], arg)
+            err.__cause__ = e
+            raise err
     return result
 
 
