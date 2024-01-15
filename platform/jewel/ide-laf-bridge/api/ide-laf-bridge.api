@@ -57,6 +57,12 @@ public abstract interface class org/jetbrains/jewel/bridge/ToolWindowScope {
 	public abstract fun getToolWindow ()Lcom/intellij/openapi/wm/ToolWindow;
 }
 
+public final class org/jetbrains/jewel/bridge/TypographyKt {
+	public static final fun medium (Lorg/jetbrains/jewel/ui/component/Typography;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public static final fun regular (Lorg/jetbrains/jewel/ui/component/Typography;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public static final fun small (Lorg/jetbrains/jewel/ui/component/Typography;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
 public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
 	public static final fun ComponentDataProviderBridge (Ljavax/swing/JComponent;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;

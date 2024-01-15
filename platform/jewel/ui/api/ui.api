@@ -741,6 +741,23 @@ public final class org/jetbrains/jewel/ui/component/TooltipPlacement : androidx/
 	public fun positionProvider-9KIMszo (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 
+public final class org/jetbrains/jewel/ui/component/Typography {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/Typography;
+	public final fun h0TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun h1TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun h2TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun h3TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun h4TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun labelTextSize-5XXgJZs (Landroidx/compose/runtime/Composer;I)J
+	public final fun labelTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
+public final class org/jetbrains/jewel/ui/component/TypographyKt {
+	public static final fun minus-NB67dxo (JJ)J
+	public static final fun plus-NB67dxo (JJ)J
+}
+
 public final class org/jetbrains/jewel/ui/component/styling/ButtonColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ButtonColors$Companion;
