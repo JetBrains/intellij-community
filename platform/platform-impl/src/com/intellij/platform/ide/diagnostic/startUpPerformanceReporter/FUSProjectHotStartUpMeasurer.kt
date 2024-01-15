@@ -32,7 +32,7 @@ object FUSProjectHotStartUpMeasurer {
     Reopened,
     FromFilesToLoad, //see com.intellij.idea.IdeStarter.filesToLoad
     FromArgs,
-    Unknown
+    Unknown,
   }
 
   enum class Violation {
@@ -42,7 +42,7 @@ object FUSProjectHotStartUpMeasurer {
     WelcomeScreenShown,
     OpeningURI,               //see com.intellij.idea.IdeStarter.uriToOpen
     ApplicationStarter,
-    HasOpenedProject
+    HasOpenedProject,
   }
 
   private suspend fun isProperContext(): Boolean {
@@ -432,7 +432,8 @@ class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
 private val GROUP = EventLogGroup("reopen.project.startup.performance", 1)
 
 private enum class UIResponseType {
-  Splash, Frame
+  Splash,
+  Frame,
 }
 
 private val UI_RESPONSE_TYPE = EventFields.Enum("type", UIResponseType::class.java)
@@ -449,7 +450,9 @@ private val FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent("frame.became
 private val FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent("frame.became.interactive", DURATION)
 
 private enum class SourceOfSelectedEditor {
-  TextEditor, UnknownEditor, FoundReadmeFile
+  TextEditor,
+  UnknownEditor,
+  FoundReadmeFile,
 }
 
 private val LOADED_CACHED_MARKUP_FIELD = EventFields.Boolean("loaded_cached_markup")
