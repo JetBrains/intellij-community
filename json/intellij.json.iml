@@ -26,5 +26,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
