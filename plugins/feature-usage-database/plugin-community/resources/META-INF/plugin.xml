@@ -2,7 +2,8 @@
   <id>com.jetbrains.ae.database</id>
   <name>Local Productivity Statistics</name>
   <description><![CDATA[
-  <p>The <i>Local Productivity Statistics</i> plugin gathers local statistics on your machine on how IDE is used.</p>
+  <p>The <i>Local Productivity Statistics</i> plugin gathers local statistics on your machine about how the IDE is used.
+  You will be provided with an overview of your usage at the end of the year.</p>
   <p>For the purpose of Local Productivity Statistics plugin, no data are transferred from your computer,
   and the database is not shared or synchronized with any remote storage or third-party service.
   JetBrains does not have access to your personal data created in the IDEs.
