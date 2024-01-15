@@ -233,23 +233,4 @@ public final class CreateSwitchBranchesUtil {
     }
     return nextLabel;
   }
-
-  /**
-   * Prepares the document for starting the template and returns the editor.
-   *
-   * @param element any element from the document
-   * @return an editor, or null if not found.
-   */
-  public static @Nullable Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (!file.isPhysical()) return null;
-    Project project = file.getProject();
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return null;
-    Document document = editor.getDocument();
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return null;
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    return editor;
-  }
 }
