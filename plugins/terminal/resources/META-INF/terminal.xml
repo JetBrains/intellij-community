@@ -60,6 +60,10 @@
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.completion.TerminalCommandSpecCompletionContributor"
                             order="first, before shShebang, before liveTemplates, after ml_context"/>
+    <completion.contributor language="any"
+                            id="terminalPowerShell"
+                            implementationClass="org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor"
+                            order="first, before terminalCommandSpec"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

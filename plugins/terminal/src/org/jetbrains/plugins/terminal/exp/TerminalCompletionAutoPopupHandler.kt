@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import java.io.File
 
 /**
  * Logic is mostly copied from [com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler].
@@ -31,7 +32,7 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
       return Result.STOP
     }
 
-    if (Character.isLetterOrDigit(charTyped) || charTyped == ' ' || charTyped == '-' || charTyped == '/') {
+    if (Character.isLetterOrDigit(charTyped) || charTyped == ' ' || charTyped == '-' || charTyped == File.separatorChar) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
       return Result.STOP
     }

@@ -18,11 +18,17 @@ function Global:__JetBrainsIntellijOSC([string]$body) {
 }
 
 $Global:__JetBrainsIntellijTerminalInitialized=$false
+$Global:__JetBrainsIntellijGeneratorRunning=$false
 
 $Global:__JetBrainsIntellijOriginalPrompt = $function:Prompt
 
 function Global:Prompt() {
   $Success = $?
+  if ($Global:__JetBrainsIntellijGeneratorRunning) {
+    $Global:__JetBrainsIntellijGeneratorRunning = $false
+    return ""
+  }
+
   $OriginalPrompt = $Global:__JetBrainsIntellijOriginalPrompt.Invoke()
   $Result = ""
   $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
@@ -64,11 +70,35 @@ function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
   [Console]::Clear()
 }
 
+function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Command, [int]$CursorIndex) {
+  $Global:__JetBrainsIntellijGeneratorRunning = $true
+  $Completions = TabExpansion2 -inputScript $Command -cursorColumn $CursorIndex
+  if ($null -ne $Completions) {
+    $CompletionsJson = $Completions | ConvertTo-Json -Compress
+  }
+  else {
+    $CompletionsJson = ""
+  }
+  $CompletionsOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $CompletionsJson)"
+  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
+  if ($CommandEndMarker -eq $null) {
+    $CommandEndMarker = ""
+  }
+  [Console]::Write($CommandEndMarker + $CompletionsOSC)
+}
+
+function Global:__JetBrainsIntellijIsGeneratorCommand([string]$Command) {
+  return $Command -like "__JetBrainsIntellijGetCompletions*"
+}
+
 if (Get-Module -Name PSReadLine) {
   $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
 
   function Global:PSConsoleHostReadLine {
     $OriginalReadLine = $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine.Invoke()
+    if (__JetBrainsIntellijIsGeneratorCommand $OriginalReadLine) {
+      return $OriginalReadLine
+    }
 
     $CurrentDirectory = (Get-Location).Path
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
@@ -78,5 +108,10 @@ if (Get-Module -Name PSReadLine) {
     [Console]::Write($CommandStartedOSC)
     Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft
     return $OriginalReadLine
+  }
+
+  Set-PSReadLineOption -AddToHistoryHandler {
+    param($Command)
+    return -Not (__JetBrainsIntellijIsGeneratorCommand $Command)
   }
 }

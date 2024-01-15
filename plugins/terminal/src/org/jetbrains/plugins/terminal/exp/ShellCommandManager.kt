@@ -90,7 +90,15 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processGeneratorFinishedEvent(event: List<String>) {
     val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
     val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
-    fireGeneratorFinished(requestId, result)
+    if (session.commandBlockIntegration.commandEndMarker != null) {
+      debug { "Received generator_finished event, waiting for command end marker" }
+      ShellCommandEndMarkerListener(session) {
+        fireGeneratorFinished(requestId, result)
+      }
+    }
+    else {
+      fireGeneratorFinished(requestId, result)
+    }
   }
 
   private fun fireInitialized(currentDirectory: String?) {

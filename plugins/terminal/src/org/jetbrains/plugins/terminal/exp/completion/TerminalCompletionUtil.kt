@@ -62,19 +62,21 @@ internal object TerminalCompletionUtil {
 
   private fun ShellArgumentSuggestion.findIcon(): Icon {
     return if (argument.isFilePath() || argument.isFolder()) {
-      getFileIcon(names.first())
+      getFileOrFolderIcon(names.first())
     }
     else TerminalIcons.Other
   }
 
-  private fun getFileIcon(fileName: String): Icon {
+  private fun getFileOrFolderIcon(fileName: String): Icon {
     return if (fileName.endsWith("/") || fileName == "~" || fileName == "-") {
       AllIcons.Nodes.Folder
     }
-    else {
-      val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
-      val fileIcon = fileType.icon ?: TerminalIcons.OtherFile
-      if (fileType is UnknownFileType) TerminalIcons.OtherFile else fileIcon
-    }
+    else getFileIcon(fileName)
+  }
+
+  fun getFileIcon(fileName: String): Icon {
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
+    val fileIcon = fileType.icon ?: TerminalIcons.OtherFile
+    return if (fileType is UnknownFileType) TerminalIcons.OtherFile else fileIcon
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK
@@ -169,11 +170,18 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
-  private class Generator(val name: String, val parameters: List<String>) {
+  private inner class Generator(val name: String, val parameters: List<String>) {
     val requestId: Int = NEXT_REQUEST_ID.incrementAndGet()
     val deferred: CompletableDeferred<String> = CompletableDeferred()
 
-    fun shellCommand(): String = "$name $requestId ${ParametersListUtil.join(parameters)}"
+    fun shellCommand(): String {
+      val joinedParams = when (session.shellIntegration.shellType) {
+        ShellType.POWERSHELL -> parameters.joinToString(" ") { StringUtil.wrapWithDoubleQuote(it) }
+        else -> ParametersListUtil.join(parameters)
+      }
+      return "$name $requestId $joinedParams"
+    }
+
     override fun toString(): String = "Generator($name, parameters=$parameters, requestId=$requestId)"
   }
 
