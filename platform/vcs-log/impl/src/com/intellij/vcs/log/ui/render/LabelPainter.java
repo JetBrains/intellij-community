@@ -53,6 +53,7 @@ public class LabelPainter {
   protected @NotNull Color myBackground = UIUtil.getTableBackground();
   private @Nullable Color myGreyBackground = null;
   private @NotNull Color myForeground = UIUtil.getTableForeground();
+  private boolean myIsOpaque = true;
 
   private boolean myCompact;
   private boolean myLeftAligned;
@@ -274,8 +275,10 @@ public class LabelPainter {
     FontMetrics fontMetrics = g2.getFontMetrics();
     int baseLine = SimpleColoredComponent.getTextBaseLine(fontMetrics, height);
 
-    g2.setColor(myBackground);
-    g2.fillRect(x, y, myWidth, height);
+    if (myIsOpaque) {
+      g2.setColor(myBackground);
+      g2.fillRect(x, y, myWidth, height);
+    }
 
     if (myGreyBackground != null && myCompact) {
       g2.setColor(myGreyBackground);
@@ -348,6 +351,15 @@ public class LabelPainter {
 
   public void setLeftAligned(boolean leftAligned) {
     myLeftAligned = leftAligned;
+  }
+
+  /**
+   * If set to true, painter paints all the pixels, including background pixels, so that the components underneath are not visible.
+   * If set to false, the background is not painted.
+   * @param isOpaque true if all the pixels, including the background, should be painted
+   */
+  public void setOpaque(boolean isOpaque) {
+    myIsOpaque = isOpaque;
   }
 }
 
