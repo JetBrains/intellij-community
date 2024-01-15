@@ -201,13 +201,11 @@ class PyDataView(private val project: Project) : DumbAware {
       content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
     }
-    if (frameAccessor is PyDebugProcess) {
+    else if (frameAccessor is PyDebugProcess) {
       content.icon = AllIcons.Toolwindows.ToolWindowDebugger
       content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", frameAccessor.session.sessionName)
     }
-    // ToDo restore empty text.
-    //  info.setText(PyBundle.message("debugger.data.view.empty.tab"))
-    content.setPreferredFocusableComponent(panel.sliceTextField)
+
     content.setActions(DefaultActionGroup(NewViewerAction(frameAccessor)), "DataView", panel)
     panel.addListener(PyDataViewerPanel.Listener {
       content.displayName = it
