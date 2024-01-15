@@ -166,6 +166,18 @@ def _code_to_name(inst):
     return inst
 
 
+class _BytecodeParsingError(Exception):
+    """Raised when fail of bytecode parsing."""
+    def __init__(self, offset, opname, arg):
+        self.offset = offset
+        self.opname = opname
+        self.arg = arg
+
+    def __str__(self):
+        return "Bytecode parsing error at: offset(%d), opname(%s), arg(%d)" % (
+            self.offset, self.opname, self.arg)
+
+
 def get_smart_step_into_candidates(code):
     """Iterate through the bytecode and return a list of instructions which can be
     smart step into candidates.
@@ -174,7 +186,7 @@ def get_smart_step_into_candidates(code):
     :type code: :py:class:`types.CodeType`
     :return: list of :py:class:`~_Instruction` that represents the objects that were
       called by one of the Python call instructions.
-    :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
+    :raise: :py:class:`_BytecodeParsingError` if failed to parse the bytecode.
     """
     if not IS_CPYTHON:
         # For implementations other than CPython we fall back to simple step into.
@@ -269,10 +281,9 @@ def get_smart_step_into_candidates(code):
                 # The actual offset is not when a function was loaded but when
                 # it was called.
                 result.append(tos._replace(offset=offset))
-        except:
-            err_msg = ("Bytecode parsing error at: offset(%d), opname(%s), arg(%d)" %
-                       (offset, dis.opname[op], arg))
-            raise RuntimeError(err_msg)
+        except Exception as e:
+            from six import raise_from
+            raise_from(_BytecodeParsingError(offset, dis.opname[op], arg), e)
     return result
 
 
