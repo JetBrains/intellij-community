@@ -68,14 +68,22 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   private String filePositionDisplayText(String path, XLineBreakpoint<P> breakpoint) {
     var line = breakpoint.getLine();
     var column = getColumn(breakpoint);
-    if (column == -1 || column == 0) {
+    if (column <= 0) {
       return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
     } else {
       return XDebuggerBundle.message("xbreakpoint.default.display.text.with.column", line + 1, column + 1, path);
     }
   }
 
-  private int getColumn(XLineBreakpoint<P> breakpoint) {
+  /**
+   * Column index (zero-based) of this line breakpoint:
+   * <ul>
+   *   <li><em>positive</em> for inline breakpoints,</li>
+   *   <li><em>zero</em> for regular line breakpoint,</li>
+   *   <li><em>negative</em> if column number is not available.</li>
+   * </ul>
+   */
+  public int getColumn(XLineBreakpoint<P> breakpoint) {
     if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return -1;
 
     return ReadAction.compute(() -> {
