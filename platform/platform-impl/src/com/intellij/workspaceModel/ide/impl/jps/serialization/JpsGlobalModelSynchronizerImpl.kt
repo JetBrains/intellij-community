@@ -87,7 +87,13 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       if (serializer.mainEntityClass == SdkEntity::class.java) {
         assertUnexpectedAdditionalDataModification(entityStorage)
       }
-      serializer.saveEntities(filteredEntities, emptyMap(), entityStorage, contentWriter)
+
+      if (filteredEntities.isEmpty()) {
+        // Remove empty files
+        serializer.deleteObsoleteFile(serializer.fileUrl.url, contentWriter)
+      } else {
+        serializer.saveEntities(filteredEntities, emptyMap(), entityStorage, contentWriter)
+      }
     }
     contentWriter.saveSession()
   }
@@ -153,7 +159,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     return callback
   }
 
-  private fun createSerializers(): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
+  private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
     return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
                                                                      sortedRootTypes,

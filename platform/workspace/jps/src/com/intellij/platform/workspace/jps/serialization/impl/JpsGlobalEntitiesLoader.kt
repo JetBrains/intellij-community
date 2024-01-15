@@ -15,16 +15,16 @@ object JpsGlobalEntitiesSerializers {
 
   fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager,
                                    sortedRootTypes: List<String>,
-                                   createLibSerializer: Boolean): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
-    val serializers = mutableListOf<JpsFileEntitiesSerializer<WorkspaceEntity>>()
+                                   createLibSerializer: Boolean): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
+    val serializers = mutableListOf<JpsFileEntityTypeSerializer<WorkspaceEntity>>()
     if (isSdkBridgeEnabled) {
-      serializers.add(createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntitiesSerializer<WorkspaceEntity>)
+      serializers.add(createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>)
     }
 
     if (createLibSerializer) {
       val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
       val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
-      serializers.add(JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource) as JpsFileEntitiesSerializer<WorkspaceEntity>)
+      serializers.add(JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource) as JpsFileEntityTypeSerializer<WorkspaceEntity>)
     }
 
     return serializers

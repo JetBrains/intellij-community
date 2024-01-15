@@ -52,10 +52,11 @@ private val ELEMENT_HOMEPATH = "homePath"
 const val ELEMENT_ADDITIONAL = "additional"
 
 
-class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntitiesSerializer<SdkEntity> {
+class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntityTypeSerializer<SdkEntity> {
   private val LOG = logger<JpsSdkEntitySerializer>()
   private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
-
+  override val isExternalStorage: Boolean
+    get() = false
   override val internalEntitySource: JpsFileEntitySource
     get() = entitySource
   override val fileUrl: VirtualFileUrl
@@ -185,5 +186,9 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     val element = Element(rootType)
     element.addContent(composite)
     return element
+  }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, SDK_TABLE_COMPONENT_NAME, null)
   }
 }
