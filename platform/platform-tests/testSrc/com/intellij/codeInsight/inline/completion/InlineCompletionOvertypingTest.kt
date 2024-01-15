@@ -135,14 +135,14 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
 
     typeChar('m')
     assertAllVariants(
-      "inus(p1: Int, p2: Int)",
       "ax(p1: Int, p2: Int)",
-      "ain(args: Array<String>)"
+      "ain(args: Array<String>)",
+      "inus(p1: Int, p2: Int)",
     )
 
     assertSessionSnapshot(
       nonEmptyVariants = 3..3,
-      activeIndex = 1,
+      activeIndex = 4,
       ExpectedVariant.computed("ain(", "args: Array<String>)"),
       ExpectedVariant.computed("inus(", "p1: Int, p2: Int)"),
       ExpectedVariant.invalidated(),
@@ -150,14 +150,18 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
       ExpectedVariant.computed("ax(p1: Int, p2: Int)")
     )
 
+    nextVariant()
+    nextVariant()
+    assertInlineRender("inus(p1: Int, p2: Int)")
+
     typeChar('a')
-    assertAllVariants("in(args: Array<String>)", "x(p1: Int, p2: Int)")
-    prevVariant()
-    assertInlineRender("x(p1: Int, p2: Int)")
-    assertFileContent("fun ma<caret>")
+    assertAllVariants("x(p1: Int, p2: Int)", "in(args: Array<String>)")
+    typeChar('i')
+    assertAllVariants("n(args: Array<String>)")
+    assertFileContent("fun mai<caret>")
     insert()
     assertInlineHidden()
-    assertFileContent("fun max(p1: Int, p2: Int)<caret>")
+    assertFileContent("fun main(args: Array<String>)<caret>")
   }
 
   @Test
@@ -433,14 +437,14 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
     assertAllVariants("44444", "34555", "34567", "34333", "34444")
 
     typeChar('3')
-    assertAllVariants("4444", "4555", "4567", "4333")
+    assertAllVariants("4555", "4567", "4333", "4444")
 
     typeChar('4')
-    assertAllVariants("444", "555", "567", "333")
+    assertAllVariants("555", "567", "333", "444")
 
     assertSessionSnapshot(
       nonEmptyVariants = 4..4,
-      activeIndex = 1,
+      activeIndex = 5,
       ExpectedVariant.computed("333"),
       ExpectedVariant.computed("444"),
       ExpectedVariant.invalidated(),
@@ -450,8 +454,11 @@ internal class InlineCompletionOvertypingTest : InlineCompletionTestCase() {
       ExpectedVariant.computed("567")
     )
 
+    nextVariant()
+    assertAllVariants("567", "333", "444", "555")
+
     typeChar('5')
-    assertAllVariants("55", "67")
+    assertAllVariants("67", "55")
 
     typeChar('6')
     assertAllVariants("7")

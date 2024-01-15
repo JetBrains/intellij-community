@@ -299,7 +299,18 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     typeChar('u')
     expectEvents(
       change(0, 1), invalidated(2), change(3, 1), change(4, 1),
-      variantSwitched(2, 0, false),
+      variantSwitched(2, 3, false),
+      show(3, "n start()", 0)
+    )
+
+    nextVariant()
+    expectEvents(
+      variantSwitched(3, 4, true),
+      show(4, "n", 0)
+    )
+    nextVariant()
+    expectEvents(
+      variantSwitched(4, 0, true),
       show(0, "n ", 0), show(0, "main()", 1)
     )
 

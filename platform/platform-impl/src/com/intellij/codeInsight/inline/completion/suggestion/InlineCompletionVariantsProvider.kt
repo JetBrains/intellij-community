@@ -248,15 +248,26 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     }
   }
 
+  /**
+   * Priority:
+   * * Next elements that are non-empty
+   * * Previous elements that are non-empty
+   * * Next elements that are in progress and might be empty
+   */
   private fun chooseNewVariantAfterInvalidation(): Int? {
     val index = currentVariant.index
+    for (i in index + 1 until variantsStates.size) {
+      if (variantsStates[i].status.isPossibleToShow()) {
+        return i
+      }
+    }
     for (i in index - 1 downTo 0) {
       if (variantsStates[i].status.isPossibleToShow()) {
         return i
       }
     }
     for (i in index + 1 until variantsStates.size) {
-      if (variantsStates[i].status.isPossibleToShow() || variantsStates[i].status.isInProgress()) {
+      if (variantsStates[i].status.isInProgress()) {
         return i
       }
     }
