@@ -4,9 +4,7 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
@@ -49,12 +47,13 @@ class JbSettingsImporter(private val configDirPath: Path,
   // for instance, LaFManager, because the actual theme might be provided by a plugin.
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
-  suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>) {
+  suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: MutableSet<String>) {
     if (!categories.contains(SettingsCategory.KEYMAP) && !categories.contains(SettingsCategory.UI)) {
       return
     }
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     withExternalStreamProvider(storageManager) {
+      loadPluginComponents(pluginIds)
       if (categories.contains(SettingsCategory.KEYMAP)) {
         // ensure component is loaded
         KeymapManager.getInstance()
@@ -67,6 +66,15 @@ class JbSettingsImporter(private val configDirPath: Path,
         componentStore.reloadState(LafManagerImpl::class.java)
         componentStore.reloadState(EditorColorsManagerImpl::class.java)
       }
+    }
+  }
+
+  suspend fun loadPluginComponents(downloadedPluginIds: Set<String>) {
+    val pluginSet = PluginManagerCore.getPluginSet()
+    for (mainDescriptor in pluginSet.enabledPlugins) {
+      if (!downloadedPluginIds.contains(mainDescriptor.pluginId.idString))
+        continue
+      loadAndInitPluginServices(mainDescriptor, null, { true }, { _, _ ->})
     }
   }
 
@@ -159,7 +167,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
   }
 
-  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: () -> Unit) {
+  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: suspend () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
 
@@ -169,45 +177,70 @@ class JbSettingsImporter(private val configDirPath: Path,
     saveSettings(ApplicationManager.getApplication(), true)
   }
 
-  private fun loadNotLoadedComponents(componentsToLoad: Collection<String>) {
-    val appServiceClasses = hashSetOf<Class<*>>()
-    (ApplicationManager.getApplication() as ComponentManagerImpl).processAllImplementationClasses { componentClass, _ ->
-      appServiceClasses.add(componentClass)
-    }
+  private suspend fun loadNotLoadedComponents(componentsToLoad: Collection<String>) {
+    val start = System.currentTimeMillis()
     val notLoadedComponents = arrayListOf<String>()
     notLoadedComponents.addAll(componentsToLoad)
+    val foundComponents = hashMapOf<String, Class<*>>()
     val pluginSet = PluginManagerCore.getPluginSet()
-    for (mainDescriptor in pluginSet.enabledPlugins + pluginSet.getEnabledModules()) {
+    val packages = mutableSetOf<String>()
+    val implementations = hashSetOf<Class<*>>()
+    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+    componentManagerImpl.processAllImplementationClasses{clazz, pluginDescriptor ->
+      implementations.add(clazz)
+    }
+    for (descriptor in pluginSet.enabledPlugins + pluginSet.getEnabledModules()) {
       // we don't check classloader for sub descriptors because url set is the same
-      loadAndInitPluginServices(mainDescriptor, appServiceClasses) { notLoadedComponents.remove(it) }
+      if (packages.find { descriptor.pluginId.idString.startsWith(it) } == null) {
+        if (packages.add(descriptor.pluginId.idString))
+          loadAndInitPluginServices(descriptor, implementations, { notLoadedComponents.remove(it) }, {
+            name, clazz -> foundComponents[name] = clazz
+          })
+      }
     }
 
     for (component in notLoadedComponents) {
       LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
     }
+    for (e in foundComponents) {
+      if (ApplicationManager.getApplication().getServiceIfCreated(e.value) == null) {
+        LOG.warn("Can't find service for ${e.key} : ${e.value}")
+      }
+    }
+    LOG.info("Loaded notFoundComponents in ${System.currentTimeMillis() - start} ms")
   }
 
-  private fun loadAndInitPluginServices(
-    mainDescriptor: IdeaPluginDescriptor,
-    appServiceClasses: Set<Class<*>>,
-    loadPredicate: (String) -> Boolean) {
-    val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader ?: return
+  private suspend fun loadAndInitPluginServices(
+    descriptor: IdeaPluginDescriptor,
+    implementations: Set<Class<*>>?,
+    loadPredicate: (String) -> Boolean,
+    loadCallback: (String, Class<*>) -> Unit) {
+    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+    val pluginClassLoader = descriptor.pluginClassLoader ?: return
     val start = System.currentTimeMillis()
     scanClassLoader(pluginClassLoader).use { scanResult ->
-      LOG.info("Loaded classes for ${mainDescriptor.pluginId} in ${System.currentTimeMillis() - start}ms")
+      LOG.info("Loaded classes for ${descriptor.pluginId} in ${System.currentTimeMillis() - start}ms")
       for (classInfo in scanResult.getClassesWithAnnotation(State::class.java.name)) {
         val stateAnnotation = classInfo.getAnnotationInfo(State::class.java.name) ?: continue
         val parameterValues = stateAnnotation.getParameterValues(false)
         val nameValue = parameterValues.find { it.name == "name" } ?: continue
         val storages = parameterValues.find { it.name == "storages" } ?: continue
         if (loadPredicate(nameValue.value.toString())) {
+          val clazz = classInfo.loadClass()
+          val appLevelLightService = isAppLevelLightService(clazz)
           try {
-            val clazz = pluginClassLoader.loadClass(classInfo.name)
-            if (!appServiceClasses.contains(clazz) && !isAppLevelLightService(clazz))
-              continue
-            val psc = ApplicationManager.getApplication().instantiateClass(clazz, mainDescriptor.pluginId)
-            componentStore.initComponent(psc, null, mainDescriptor.pluginId)
-            ApplicationManager.getApplication().getService(clazz)
+            loadCallback.invoke(nameValue.value.toString(), clazz)
+            if (appLevelLightService){
+              componentManagerImpl.getServiceAsync(clazz)
+            } else if (implementations == null || implementations.contains(clazz)) {
+              if (ApplicationManager.getApplication().getService(clazz) == null){
+                if (ApplicationManager.getApplication().getService(clazz.superclass) == null){
+                  LOG.info("Can't find service for ${clazz.name}")
+                } else {
+                  loadCallback.invoke(nameValue.value.toString(), clazz.superclass)
+                }
+              }
+            }
             val storage = (storages.value as Array<*>).find {
               val info = it as AnnotationInfo
               val deprecated = info.getParameterValues(false).find { pv -> pv.name == "deprecated" }
@@ -217,7 +250,7 @@ class JbSettingsImporter(private val configDirPath: Path,
             LOG.info("Loaded unloaded component ${nameValue.value} from $file")
           }
           catch (th: Throwable) {
-            LOG.warn("Cannot init ${nameValue} from ${classInfo.name}: ${th.message}", th)
+            LOG.warn("Cannot init  ${if (appLevelLightService) "Light service" else "App Service" } ${nameValue} from ${classInfo.name}: ${th.message}")
           }
         }
       }
@@ -229,11 +262,11 @@ class JbSettingsImporter(private val configDirPath: Path,
     return serviceAnnotation.value.find { it == Service.Level.APP } != null
   }
 
-  private fun scanClassLoader(pluginClassLoader: PluginClassLoader): ScanResult {
+  private fun scanClassLoader(classLoader: ClassLoader): ScanResult {
     return ClassGraph()
       .enableAnnotationInfo()
       .ignoreParentClassLoaders()
-      .overrideClassLoaders(pluginClassLoader)
+      .overrideClassLoaders(classLoader)
       .scan()
   }
 
