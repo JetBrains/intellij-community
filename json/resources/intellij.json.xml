@@ -182,8 +182,8 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaMapper"
-                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaMapper" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaNestedCompletionsTreeProvider"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"

@@ -166,7 +166,11 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
       final Set<String> knownNames = new HashSet<>();
-      final var nestedCompletionsNode = NestedCompletionsNodeKt.navigate(myRootSchema.getNestedCompletionRoot(), position);
+
+      final var nestedCompletionsNode = NestedCompletionsNodeKt.navigate(
+        JsonSchemaNestedCompletionsTreeProvider.getNestedCompletionsData(myOriginalPosition.getContainingFile()),
+        position
+      );
 
       new JsonSchemaResolver(myProject, myRootSchema, position)
         .resolve()

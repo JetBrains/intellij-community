@@ -2,22 +2,15 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiFile
-import com.jetbrains.jsonSchema.extension.JsonSchemaMapper
-import com.jetbrains.jsonSchema.extension.JsonSchemaMapper.SchemaAndAdditionalCachingDependencies
-import com.jetbrains.jsonSchema.extension.schemaWithoutAdditionalCachingDependencies
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.assertThatSchema
-import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
+import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
 import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 
-class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTestBase() {
+class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBase() {
   fun `test nested completion into property that does not exist yet`() {
     open1ThenOpen2Then3Schema
       .appliedToYamlFile("""
@@ -88,11 +81,11 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           open("foo")
         }
-      }
+      )
       .appliedToYamlFile("""
         arr<caret>
         foo:
@@ -124,13 +117,13 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           open("foo") {
             open("bar")
           }
         }
-      }
+      )
       .appliedToYamlFile("""
         arr<caret>
         foo:
@@ -163,13 +156,13 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         }
       }
     """.trimIndent())
-      .withConfiguration {
-        buildNestedCompletionsRootTree {
+      .withConfiguration(
+        buildNestedCompletionsTree {
           open("nested") {
             open("foo")
           }
         }
-      }
+      )
       .appliedToYamlFile("""
         nested:
           arr<caret>
@@ -256,7 +249,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
     workingFolder.resolve("Schema.json").createTemporarilyWithContent(schemaSetup.schemaJson) {
       workingFolder.resolve("test.yml").createTemporarilyWithContent(yaml) {
         workingFolder.resolve("test_after.yml").createTemporarilyWithContent(expectedResult) {
-          JsonSchemaMapper.EXTENSION_POINT_NAME.maskingExtensions(listOf(schemaSetup.configurator.asSchemaMapper())) {
+          testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
             baseInsertTest(".", "test")
           }
         }
@@ -291,31 +284,19 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
 }
 
 
-private fun <T : Any> ExtensionPointName<T>.maskingExtensions(extensions: List<T>, block: () -> Unit) {
-  val disposable = Disposer.newDisposable()
-  try {
-    (point as ExtensionPointImpl).maskAll(extensions, disposable, false)
-    block()
-  } finally {
-    Disposer.dispose(disposable)
-  }
-}
-
 private inline fun File.createTemporarilyWithContent(content: String, block: () -> Unit) {
   try {
     writeText(content)
     block()
-  } finally {
+  }
+  finally {
     delete()
   }
 }
 
-private fun (JsonSchemaObject.() -> Unit).asSchemaMapper(): JsonSchemaMapper = object : JsonSchemaMapper {
-  override fun map(file: PsiFile, schemaObject: JsonSchemaObject): SchemaAndAdditionalCachingDependencies =
-    schemaWithoutAdditionalCachingDependencies(schemaObject.apply(this@asSchemaMapper))
-}
 
-internal val open1ThenOpen2Then3Schema get() = assertThatSchema("""
+internal val open1ThenOpen2Then3Schema
+  get() = assertThatSchema("""
      {
        "properties": {
          "one": {
@@ -332,10 +313,10 @@ internal val open1ThenOpen2Then3Schema get() = assertThatSchema("""
        }
      }
    """.trimIndent())
-  .withConfiguration {
-    buildNestedCompletionsRootTree {
-      open("one") {
-        open("two")
+    .withConfiguration(
+      buildNestedCompletionsTree {
+        open("one") {
+          open("two")
+        }
       }
-    }
-  }
+    )
