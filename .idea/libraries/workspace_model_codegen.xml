@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="workspace-model-codegen" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.intellij.platform:workspace-model-codegen:0.0.7">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.intellij.platform:workspace-model-codegen:0.0.8">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.7/workspace-model-codegen-0.0.7.jar">
-          <sha256sum>ad5f8efde94d9d1fecc1a07c2e08d30bcbf5f57d1380981d291ecf93223c81fd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.8/workspace-model-codegen-0.0.8.jar">
+          <sha256sum>7fa00d514a14fa90c5ccd14f5800c1f0fee414bf7e00cf066c1f9ba12dc5efd1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.7/workspace-model-codegen-0.0.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.8/workspace-model-codegen-0.0.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
