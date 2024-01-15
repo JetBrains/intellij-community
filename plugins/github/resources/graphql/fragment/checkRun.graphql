@@ -1,6 +1,7 @@
 fragment checkRun on CheckRun {
   name
   conclusion
-  isRequired
+  isRequired(pullRequestNumber: $number) # See: findPullRequestMergeability
+  detailsUrl
   url
 }

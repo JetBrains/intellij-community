@@ -1,6 +1,6 @@
 fragment commitStatusContext on StatusContext {
   context
   state
-  isRequired
+  isRequired(pullRequestNumber: $number) # See: findPullRequestMergeability
   targetUrl
 }

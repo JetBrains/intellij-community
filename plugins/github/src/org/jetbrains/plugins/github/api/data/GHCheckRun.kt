@@ -4,9 +4,10 @@ package org.jetbrains.plugins.github.api.data
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/checkRun.graphql")
-class GHCommitCheckRunStatus(
+class GHCheckRun(
   val name: String,
   val conclusion: GHCommitCheckSuiteConclusion?,
   val isRequired: Boolean,
+  val detailsUrl: String?,
   val url: String
 )

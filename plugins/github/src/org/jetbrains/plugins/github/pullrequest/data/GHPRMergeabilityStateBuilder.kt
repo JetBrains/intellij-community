@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
+import kotlin.collections.buildList
 
 class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val prHtmlUrl: String,
                                    private val mergeabilityData: GHPullRequestMergeabilityData) {
@@ -34,18 +35,18 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       GHPullRequestMergeableState.UNKNOWN -> null
     }
 
-    val ciJobs = mutableListOf<CodeReviewCIJob>()
-    val lastCommit = mergeabilityData.commits.lastOrNull()?.commit
+    val lastCommit = mergeabilityData.commits.nodes.lastOrNull()?.commit
     val contexts = lastCommit?.status?.contexts.orEmpty()
-    contexts.forEach { context ->
-      val status = CodeReviewCIJob(context.context, context.state.toCiState(), context.isRequired, context.targetUrl)
-      ciJobs.add(status)
+    val contextsCI = contexts.map { context ->
+      CodeReviewCIJob(context.context, context.state.toCiState(), context.isRequired, context.targetUrl)
     }
-
-    val checkSuites = lastCommit?.checkSuites.orEmpty()
-    checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }.forEach { checkRun ->
-      val status = CodeReviewCIJob(checkRun.name, checkRun.conclusion.toCiState(), checkRun.isRequired, checkRun.url)
-      ciJobs.add(status)
+    val checkSuites = lastCommit?.checkSuites?.nodes.orEmpty()
+    val checkSuitesCI = checkSuites.flatMap { checkSuite -> checkSuite.checkRuns.nodes }.map { checkRun ->
+      CodeReviewCIJob(checkRun.name, checkRun.conclusion.toCiState(), checkRun.isRequired, checkRun.detailsUrl ?: checkRun.url)
+    }
+    val ciJobs = buildList<CodeReviewCIJob> {
+      contextsCI.forEach(::add)
+      checkSuitesCI.forEach(::add)
     }
 
     val canBeMerged = when {
