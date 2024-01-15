@@ -1817,12 +1817,12 @@ public final class JBUI {
 
       public static @NotNull Color linkUnderline(boolean useContrastColors, boolean isActive, Color defaultActiveColor) {
         if (useContrastColors) {
-          if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineActive", defaultActiveColor);
-          else return JBColor.namedColor("Tooltip.Learning.linkUnderlinePassive", CLEAR);
+          if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineHoveredColor", defaultActiveColor);
+          else return JBColor.namedColor("Tooltip.Learning.linkUnderlineDefaultColor", CLEAR);
         }
         else {
-          if (isActive) return JBColor.namedColor("GotItTooltip.linkUnderlineActive", defaultActiveColor);
-          else return JBColor.namedColor("GotItTooltip.linkUnderlinePassive", CLEAR);
+          if (isActive) return JBColor.namedColor("GotItTooltip.linkUnderlineHoveredColor", defaultActiveColor);
+          else return JBColor.namedColor("GotItTooltip.linkUnderlineDefaultColor", CLEAR);
         }
       }
 

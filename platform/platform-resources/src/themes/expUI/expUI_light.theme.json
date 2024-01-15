@@ -627,8 +627,8 @@
       "codeBackground": "Grey2",
       "codeBorderColor": "Grey6",
       "linkForeground": "Blue8",
-      "linkUnderlineActive": "#Grey9",
-      "linkUnderlinePassive": "FFFFFF00",
+      "linkUnderlineHoveredColor": "Blue8",
+      "linkUnderlineDefaultColor": "FFFFFF00",
       "imageBorderColor": "Grey4",
       "animationBackground": "Grey13",
       "Button": {
@@ -768,8 +768,8 @@
       "stepNumberForeground": "Blue9",
       "codeBorderColor": "#FFFFFF80",
       "linkForeground": "Grey14",
-      "linkUnderlineActive": "#FFFFFF80",
-      "linkUnderlinePassive": "#FFFFFF80",
+      "linkUnderlineHoveredColor": "#FFFFFF80",
+      "linkUnderlineDefaultColor": "#FFFFFF80",
       "Header.foreground": "Grey14",
       "iconFillColor": "Blue6",
       "iconBorderColor": "Grey14"

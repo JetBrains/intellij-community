@@ -121,8 +121,8 @@
       "codeBackground": "Grey14",
       "codeBorderColor": "Grey8",
       "linkForeground": "Blue2",
-      "linkUnderlineActive": "Blue2",
-      "linkUnderlinePassive": "#FFFFFF00",
+      "linkUnderlineHoveredColor": "Blue2",
+      "linkUnderlineDefaultColor": "#FFFFFF00",
       "imageBorderColor": "Grey12",
       "animationBackground": "Grey14",
       "Button": {
