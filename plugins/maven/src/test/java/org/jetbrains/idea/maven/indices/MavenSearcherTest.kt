@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.maven.indices
 
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.junit.Test
 import java.util.*
 
@@ -26,14 +29,20 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   private val COMMONS_IO_VERSIONS = arrayOf("commons-io:commons-io:2.4")
 
   private lateinit var myIndicesFixture: MavenIndicesTestFixture
+  private lateinit var myRepo: MavenRepositoryInfo;
+
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
     myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project)
     myIndicesFixture.setUp()
-    myIndicesFixture.indicesManager.scheduleUpdateContentLocalClassIndex(true)
-    myIndicesFixture.indicesManager.waitForLuceneUpdateCompleted()
+    runBlocking {
+      MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
+      myRepo = MavenIndexUtils.getLocalRepository(project)!!
+      MavenLuceneIndexer.getInstance().update(listOf(myRepo), true)
+      MavenSystemIndicesManager.getInstance().waitAllLuceneUpdatesCompleted()
+    }
   }
 
   @Throws(Exception::class)
@@ -50,7 +59,7 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  fun testClassSearch() {
+  fun testClassSearch() = runBlocking {
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
                              "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1")
@@ -100,8 +109,7 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  fun testArtifactSearch() {
-    if (ignore()) return
+  fun testArtifactSearch() = runBlocking {
     assertArtifactSearchResults("")
     assertArtifactSearchResults("j:j", *(JMOCK_VERSIONS + JUNIT_VERSIONS))
     assertArtifactSearchResults("junit", *JUNIT_VERSIONS)
@@ -117,20 +125,19 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  fun testArtifactSearchDash() {
-    if (ignore()) return
+  fun testArtifactSearchDash() = runBlocking {
     assertArtifactSearchResults("commons", *COMMONS_IO_VERSIONS)
     assertArtifactSearchResults("commons-", *COMMONS_IO_VERSIONS)
     assertArtifactSearchResults("commons-io", *COMMONS_IO_VERSIONS)
   }
 
-  private fun assertClassSearchResults(pattern: String, vararg expected: String) {
+  private suspend fun assertClassSearchResults(pattern: String, vararg expected: String) {
     assertOrderedElementsAreEqual(getClassSearchResults(pattern), *expected)
   }
 
-  private fun getClassSearchResults(pattern: String): List<String> {
+  private suspend fun getClassSearchResults(pattern: String): List<String> {
     val actualArtifacts: MutableList<String> = ArrayList()
-    for (eachResult in MavenClassSearcher().search(project, pattern, 100)) {
+    for (eachResult in MavenLuceneIndexer.getInstance().search(pattern, listOf(myRepo), 100)) {
       val s = StringBuilder(eachResult.className + "(" + eachResult.packageName + ")")
       for (eachVersion in eachResult.searchResults.items) {
         if (s.length > 0) s.append(" ")

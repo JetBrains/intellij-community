@@ -109,25 +109,11 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
 
-
   suspend fun updateIndexList() {
     try {
       myGavIndices.clear()
-      mySearchIndices.clear();
       MavenIndexUtils.getLocalRepository(myProject)?.let {
         myGavIndices.add(MavenSystemIndicesManager.getInstance().getGAVIndexForRepository(it))
-        mySearchIndices.add(MavenSystemIndicesManager.getInstance().getClassIndexForRepository(it))
-      }
-
-      if (MavenProjectsManager.getInstanceIfCreated(myProject)?.isMavenizedProject == true) {
-        val repositories = MavenIndexUtils.getRemoteRepositoriesNoResolve(myProject);
-
-
-        mySearchIndices.addAll(repositories.mapNotNull {
-          MavenSystemIndicesManager.getInstance().getClassIndexForRepository(
-            MavenRepositoryInfo(it.id, it.name, it.url, RepositoryKind.REMOTE))
-        })
-
       }
     }
     catch (e: Exception) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -20,17 +21,11 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
 
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
-    String patternForQuery = preparePattern(pattern);
-
-    Set<MavenArtifactInfo> infos = MavenIndicesManager.getInstance(project).searchForClass(patternForQuery);
-
-    ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternForQuery, maxResult));
-    results.sort(Comparator.comparing(MavenClassSearchResult::getClassName));
-    return results;
+    var repos = MavenIndexUtils.getAllRepositories(project);
+    return MavenLuceneIndexer.getInstance().searchSync(pattern, repos, maxResult);
   }
 
-
-  private static String preparePattern(String pattern) {
+  public static String preparePattern(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().isEmpty()) {
       return "";
@@ -53,7 +48,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
     return newPattern.toString();
   }
 
-  private static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
+  public static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.isEmpty() || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }

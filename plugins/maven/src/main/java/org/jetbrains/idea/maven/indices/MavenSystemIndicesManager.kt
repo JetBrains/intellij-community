@@ -222,10 +222,6 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   }
 
-  @Deprecated("")
-  fun getOrCreateIndices(project: Project): MavenIndices {
-    return getIndexWrapper().getOrCreateIndices(project)
-  }
 
   fun getUpdatingStateSync(project: Project, repository: MavenRepositoryInfo): IndexUpdatingState {
     val status = luceneUpdateStatusMap[repository.url]
