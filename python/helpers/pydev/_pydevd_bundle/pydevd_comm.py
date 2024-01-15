@@ -1479,7 +1479,7 @@ class InternalGetSmartStepIntoVariants(InternalThreadCommand):
     def do_it(self, dbg):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
-            variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, self.start_line, self.end_line)
+            variants = pydevd_bytecode_utils.find_stepping_targets(frame, self.start_line, self.end_line)
             xml = "<xml>"
 
             for name, is_visited in variants:

@@ -13,7 +13,6 @@ __all__ = [
     'get_smart_step_into_candidates',
 ]
 
-# noinspection SpellCheckingInspection
 _LOAD_OPNAMES = {
     'LOAD_BUILD_CLASS',
     'LOAD_CONST',
@@ -25,14 +24,12 @@ _LOAD_OPNAMES = {
     'LOAD_DEREF',
 }
 
-# noinspection SpellCheckingInspection
 _CALL_OPNAMES = {
     'CALL_FUNCTION',
     'CALL_FUNCTION_KW',
 }
 
 if IS_PY3K:
-    # noinspection SpellCheckingInspection
     for each_opname in ('LOAD_CLASSDEREF', 'LOAD_METHOD'):
         _LOAD_OPNAMES.add(each_opname)
     for each_opname in ('CALL_FUNCTION_EX', 'CALL_METHOD'):
@@ -44,7 +41,6 @@ else:
 
 _BINARY_OPS = set([opname for opname in dis.opname if opname.startswith('BINARY_')])
 
-# noinspection SpellCheckingInspection
 _BINARY_OP_MAP = {
     'BINARY_POWER': '__pow__',
     'BINARY_MULTIPLY': '__mul__',
@@ -108,19 +104,36 @@ def _is_make_opname(opname):
     return opname in _MAKE_OPS
 
 
-_INSTRUCTION_NAMES = ['opname', 'opcode', 'arg', "argv", 'lineno', "offset"]
-# Similar to :py:class:`dis._Instruction` but without fields we don't use. Also
-# :py:class:`dis._Instruction` is not available in Python 2.
-Instruction = namedtuple('Instruction', _INSTRUCTION_NAMES)
+# A truncated version of the named tuple from the CPython `dis` module that contains
+# only fields necessary for the extraction of stepping variants.
+_Instruction = namedtuple(
+    "_Instruction",
+    [
+        'opname',
+        'opcode',
+        'arg',
+        'argval',
+        'offset',
+        'starts_line',
+    ],
+    defaults=[None]
+)
+
+_Instruction.opname.__doc__ = "Human readable name for operation"
+_Instruction.opcode.__doc__ = "Numeric code for operation"
+_Instruction.arg.__doc__ = "Numeric argument to operation (if any), otherwise None"
+_Instruction.argval.__doc__ = "Resolved arg value (if known), otherwise same as arg"
+_Instruction.offset.__doc__ = "Start index of operation within bytecode sequence"
+_Instruction.starts_line.__doc__ = \
+    "Line started by this opcode (if any), otherwise None"
 
 if IS_PY3K:
     long = int
 
 try:
-    # noinspection SpellCheckingInspection,PyUnresolvedReferences,PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     _unpack_opargs = dis._unpack_opargs
 except AttributeError:
-    # noinspection SpellCheckingInspection
     def _unpack_opargs(code):
         n = len(code)
         i = 0
@@ -140,27 +153,26 @@ except AttributeError:
             yield offset, op, arg
 
 
-# noinspection SpellCheckingInspection,PyArgumentList,PyUnresolvedReferences
 def _code_to_name(inst):
-    """If thw instruction's ``argval`` is :py:class:`types.CodeType`,
+    """If the instruction's ``argval`` is :py:class:`types.CodeType`,
     replace it with the name and return the updated instruction.
 
-    :type inst: :py:class:`Instruction`
-    :rtype: :py:class:`Instruction`
+    :type inst: :py:class:`_Instruction`
+    :rtype: :py:class:`_Instruction`
     """
     if inspect.iscode(inst.argval):
+        # noinspection PyProtectedMember
         return inst._replace(argval=inst.argval.co_name)
     return inst
 
 
-# noinspection SpellCheckingInspection
 def get_smart_step_into_candidates(code):
     """Iterate through the bytecode and return a list of instructions which can be
     smart step into candidates.
 
     :param code: A code object where we are searching for calls.
     :type code: :py:class:`types.CodeType`
-    :return: list of :py:class:`~Instruction` that represents the objects that were
+    :return: list of :py:class:`~_Instruction` that represents the objects that were
       called by one of the Python call instructions.
     :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
     """
@@ -173,27 +185,30 @@ def get_smart_step_into_candidates(code):
     names = code.co_names
     constants = code.co_consts
     freevars = code.co_freevars
-    lineno = None
+    starts_line = None
     stk = []  # only the instructions related to calls are pushed in the stack
     result = []
 
     for offset, op, arg in _unpack_opargs(code.co_code):
         try:
             if linestarts is not None:
-                lineno = linestarts.get(offset, None) or lineno
+                starts_line = linestarts.get(offset, None) or starts_line
             opname = dis.opname[op]
             argval = None
             if arg is None:
                 if _is_binary_opname(opname):
                     stk.pop()
-                    result.append(Instruction(opname, op, arg, _BINARY_OP_MAP[opname], lineno, offset))
+                    result.append(_Instruction(
+                        opname, op, arg, _BINARY_OP_MAP[opname], offset, starts_line))
                 elif _is_unary_opname(opname):
-                    result.append(Instruction(opname, op, arg, _UNARY_OP_MAP[opname], lineno, offset))
+                    result.append(_Instruction(
+                        opname, op, arg, _UNARY_OP_MAP[opname], offset, starts_line))
             if opname == 'COMPARE_OP':
                 stk.pop()
                 cmp_op = dis.cmp_op[arg]
                 if cmp_op not in ('exception match', 'BAD'):
-                    result.append(Instruction(opname, op, arg, _COMP_OP_MAP[cmp_op], lineno, offset))
+                    result.append(_Instruction(
+                        opname, op, arg, _COMP_OP_MAP[cmp_op], offset, starts_line))
             if _is_load_opname(opname):
                 if opname == 'LOAD_CONST':
                     argval = constants[arg]
@@ -209,10 +224,10 @@ def get_smart_step_into_candidates(code):
                     argval = names[arg]
                 elif opname == 'LOAD_DEREF':
                     argval = freevars[arg]
-                stk.append(Instruction(opname, op, arg, argval, lineno, offset))
+                stk.append(_Instruction(opname, op, arg, argval, starts_line, offset))
             elif _is_make_opname(opname):
-                tos = stk.pop()  # Qualified name of the function or
-                                 # function code in Python 2.
+                # Qualified name of the function or function code in Python 2.
+                tos = stk.pop()
                 argc = 0
                 if IS_PY3K:
                     stk.pop()  # function code
@@ -228,9 +243,10 @@ def get_smart_step_into_candidates(code):
                 stk.append(tos)
             elif _is_call_opname(opname):
                 argc = arg  # the number of the function or method arguments
-                if opname == 'CALL_FUNCTION_KW' or not IS_PY3K and opname == 'CALL_FUNCTION_VAR':
-                    stk.pop()  # Pop the mapping or iterable with arguments
-                               # or parameters.
+                if (opname == 'CALL_FUNCTION_KW' or not IS_PY3K
+                        and opname == 'CALL_FUNCTION_VAR'):
+                    # Pop the mapping or iterable with arguments or parameters.
+                    stk.pop()
                 elif not IS_PY3K and opname == 'CALL_FUNCTION_VAR_KW':
                     stk.pop()  # pop the mapping with arguments
                     stk.pop()  # pop the iterable with parameters
@@ -263,34 +279,27 @@ def get_smart_step_into_candidates(code):
 Variant = namedtuple('Variant', ['name', 'is_visited'])
 
 
-def calculate_smart_step_into_variants(frame, start_line, end_line):
-    """
-    Calculate smart step into variants for the given line range.
-    :param frame:
-    :type frame: :py:class:`types.FrameType`
-    :param start_line:
-    :param end_line:
-    :return: A list of call names from the first to the last.
-    :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
-    """
-    variants = []
+def find_stepping_targets(frame, start_line, end_line):
+    """Find ordered stepping targets list for the given line range."""
+    stepping_targets = []
     is_context_reached = False
     code = frame.f_code
     last_instruction = frame.f_lasti
     for inst in get_smart_step_into_candidates(code):
-        if inst.lineno and inst.lineno > end_line:
+        if inst.starts_line and inst.starts_line > end_line:
             break
-        if not is_context_reached and inst.lineno is not None and inst.lineno >= start_line:
+        if (not is_context_reached and inst.starts_line is not None
+                and inst.starts_line >= start_line):
             is_context_reached = True
         if not is_context_reached:
             continue
-        # noinspection PyUnresolvedReferences
-        variants.append(Variant(inst.argval, inst.offset <= last_instruction))
-    return variants
+        stepping_targets.append(Variant(inst.argval, inst.offset <= last_instruction))
+    return stepping_targets
 
 
 def find_last_func_call_order(frame, start_line):
-    """Find the call order of the last function call between ``start_line`` and last executed instruction.
+    """Find the call order of the last function call between ``start_line``
+    and last executed instruction.
 
     :param frame: A frame inside which we are looking the function call.
     :type frame: :py:class:`types.FrameType`
@@ -307,7 +316,7 @@ def find_last_func_call_order(frame, start_line):
     for inst in get_smart_step_into_candidates(code):
         if inst.offset > lasti:
             break
-        if inst.lineno >= start_line:
+        if inst.starts_line >= start_line:
             name = inst.argval
             call_order = cache.setdefault(name, -1)
             call_order += 1
@@ -315,7 +324,6 @@ def find_last_func_call_order(frame, start_line):
     return call_order
 
 
-# noinspection PyUnresolvedReferences
 def find_last_call_name(frame):
     """Find the name of the last call made in the frame.
 
