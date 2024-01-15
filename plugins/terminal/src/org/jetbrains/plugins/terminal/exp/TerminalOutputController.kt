@@ -186,8 +186,6 @@ class TerminalOutputController(
     val block = outputModel.getLastBlock() ?: error("No active block")
     val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
 
-    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
-
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
     val highlightings = if (block.withPrompt || block.withCommand) {
       output.highlightings.toMutableList().also { highlightings ->
@@ -202,6 +200,8 @@ class TerminalOutputController(
     else output.highlightings
 
     outputModel.putHighlightings(block, highlightings)
+    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
+
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
@@ -224,9 +224,9 @@ class TerminalOutputController(
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
   private fun appendLineToBlock(block: CommandBlock, text: String, highlighting: HighlightingInfo) {
-    editor.document.insertString(block.endOffset, text + "\n")
     val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
     outputModel.putHighlightings(block, existingHighlightings + highlighting)
+    editor.document.insertString(block.endOffset, text + "\n")
   }
 
   /** It is implied that [CommandBlock.prompt] is not null */
