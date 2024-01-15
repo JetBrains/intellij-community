@@ -195,7 +195,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         @Override
         public void visitElement(@NotNull PsiElement element) {
           visited.add(element);
-          super.visitElement(element);
         }
       };
     }
@@ -651,14 +650,12 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       return new JavaElementVisitor() {
         @Override
         public void visitIdentifier(@NotNull PsiIdentifier identifier) {
-          super.visitIdentifier(identifier);
           if (identifier.getText().contains("XXX")) {
             holder.registerProblem(identifier.getContainingFile(),"blah", ProblemHighlightType.WARNING);
           }
         }
       };
     }
-
   }
   public void testFileLevelHighlightingDoesNotDuplicateOnTypingInsideSmallRange() {
     registerInspection(new MyFileLevelInspection());
@@ -687,7 +684,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         return new JavaElementVisitor() {
           @Override
           public void visitIdentifier(@NotNull PsiIdentifier identifier) {
-            super.visitIdentifier(identifier);
             if (identifier.getText().contains("xxx")) {
               holder.registerProblem(identifier.getContainingFile(),"xxx: "+identifier.getText(), ProblemHighlightType.WARNING);
             }
@@ -753,7 +749,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
           @Override
           public void visitField(@NotNull PsiField field) {
             holder.registerProblem(field.getNameIdentifier(), fieldWarningText.get());
-            super.visitField(field);
           }
 
           @Override
