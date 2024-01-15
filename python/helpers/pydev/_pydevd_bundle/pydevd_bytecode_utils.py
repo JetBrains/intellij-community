@@ -292,18 +292,18 @@ Variant = namedtuple('Variant', ['name', 'is_visited'])
 
 
 def find_stepping_targets(frame, start_line, end_line):
-    """Find ordered stepping targets list for the given line range."""
+    """Find the *ordered* stepping targets within the given line range."""
     stepping_targets = []
-    is_context_reached = False
+    is_within_range = False
     code = frame.f_code
     last_instruction = frame.f_lasti
     for inst in get_smart_step_into_candidates(code):
         if inst.starts_line and inst.starts_line > end_line:
             break
-        if (not is_context_reached and inst.starts_line is not None
+        if (not is_within_range and inst.starts_line is not None
                 and inst.starts_line >= start_line):
-            is_context_reached = True
-        if not is_context_reached:
+            is_within_range = True
+        if not is_within_range:
             continue
         stepping_targets.append(Variant(inst.argval, inst.offset <= last_instruction))
     return stepping_targets
