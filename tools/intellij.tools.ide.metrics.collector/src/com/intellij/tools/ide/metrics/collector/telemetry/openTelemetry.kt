@@ -3,7 +3,6 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
-import com.intellij.util.alsoIfNull
 import java.nio.file.Path
 
 const val TOTAL_TEST_TIMER_NAME: String = "test"
@@ -164,13 +163,16 @@ private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): Li
           continue
         }
 
+        result.add(Metric.newCounter(attr.key + "#count", attr.value.size.toLong()))
         result.add(Metric.newDuration(attr.key + "#mean_value", attr.value.average().toLong()))
         result.add(Metric.newDuration(attr.key + "#standard_deviation", attr.value.standardDeviation()))
       }
       val sum = entry.value.sumOf { it.metric.value }
-      val mean = sum / entry.value.size
+      val count = entry.value.size
+      val mean = sum / count
       val standardDeviation = entry.value.map { it.metric.value }.standardDeviation()
       result.add(Metric.newDuration(entry.key, sum))
+      result.add(Metric.newCounter(entry.key + "#count", count.toLong()))
       result.add(Metric.newDuration(entry.key + "#mean_value", mean))
       result.add(Metric.newDuration(entry.key + "#standard_deviation", standardDeviation))
     }
