@@ -154,6 +154,9 @@ object TemplateInlayUtil {
           }
         })
         .createPopup()
+
+      Disposer.register(inlay, popup)
+
       DumbAwareAction
         .create {
           popup.cancel()
