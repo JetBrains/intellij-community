@@ -294,6 +294,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
+        @TestMetadata("safeCallArgument.kt")
+        public void testSafeCallArgument() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/safeCallArgument.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../testData/weighers/basic/expectedType/typeParameter.kt");

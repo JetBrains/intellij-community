@@ -294,6 +294,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
+        @TestMetadata("safeCallArgument.kt")
+        public void testSafeCallArgument() throws Exception {
+            runTest("../../completion/testData/weighers/basic/expectedType/safeCallArgument.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../../completion/testData/weighers/basic/expectedType/typeParameter.kt");
