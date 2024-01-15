@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.da
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getClassNameForCompanionObject
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.effectiveSearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.Empty
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.calculateEffectiveScope

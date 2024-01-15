@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
@@ -509,6 +510,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
         testClass<AbstractK2InplaceRenameTest> {
             model("refactoring/rename/inplace", pattern = KT, flatten = true)
+        }
+        testClass<AbstractFirMultiModuleRenameTest> {
+            model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
         }
     }
 

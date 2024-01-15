@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -89,9 +88,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
 
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
         declaration.expectedDeclarationIfAny()
-
-    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean =
-        declaration.isExpectDeclaration()
 
     override fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean =
         element.hasJavaResolutionFacade()

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -40,8 +41,6 @@ interface KotlinRenameRefactoringSupport {
 
     fun demangleInternalName(mangledName: String): String?
 
-    fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration>
-
     fun liftToExpected(declaration: KtDeclaration): KtDeclaration?
 
     fun getJvmName(element: PsiElement): String?
@@ -52,7 +51,7 @@ interface KotlinRenameRefactoringSupport {
 
     fun withExpectedActuals(classOrObject: KtDeclaration): List<KtDeclaration> {
         val expect = liftToExpected(classOrObject) ?: return listOf(classOrObject)
-        val actuals = actualsForExpected(expect)
+        val actuals = expect.actualsForExpected()
         return listOf(expect) + actuals
     }
 

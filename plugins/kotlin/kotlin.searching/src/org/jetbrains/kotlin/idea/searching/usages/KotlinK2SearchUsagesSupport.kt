@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -80,15 +82,21 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
+        if (declaration is KtParameter) {
+            val function = declaration.ownerFunction as? KtCallableDeclaration ?: return emptySet()
+            val index = function.valueParameters.indexOf(declaration)
+            return actualsForExpected(function, module).mapNotNull { (it as? KtCallableDeclaration)?.valueParameters?.getOrNull(index) }.toSet()
+        }
         return declaration.findAllActualForExpect( runReadAction { module?.let { it.moduleTestsWithDependentsScope } ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
     }
 
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
-        return null
-    }
-
-    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean {
-        return false
+        if (declaration.isExpectDeclaration()) return declaration
+        if (!declaration.hasActualModifier()) return null
+        return analyze(declaration) {
+            val symbol: KtDeclarationSymbol = declaration.getSymbol()
+            (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration) }).firstOrNull()
+        }
     }
 
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {

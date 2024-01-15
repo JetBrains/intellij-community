@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
@@ -22,8 +23,10 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -119,11 +122,13 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
             allRenames[element] = safeNewName
         }
 
-        val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
-        if (declaration != null) {
-            renameRefactoringSupport.liftToExpected(declaration)?.let { expectDeclaration ->
-                allRenames[expectDeclaration] = safeNewName
-                renameRefactoringSupport.actualsForExpected(expectDeclaration).forEach { allRenames[it] = safeNewName }
+        ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+            val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
+            if (declaration != null) {
+                renameRefactoringSupport.liftToExpected(declaration)?.let { expectDeclaration ->
+                    allRenames[expectDeclaration] = safeNewName
+                    expectDeclaration.actualsForExpected().forEach { allRenames[it] = safeNewName }
+                }
             }
         }
     }

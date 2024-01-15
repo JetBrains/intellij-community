@@ -14,8 +14,8 @@ import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains

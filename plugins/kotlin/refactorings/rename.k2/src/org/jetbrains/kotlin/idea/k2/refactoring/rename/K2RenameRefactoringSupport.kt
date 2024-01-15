@@ -23,8 +23,10 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
@@ -87,12 +89,14 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         return if (indexOfDollar >= 0) mangledName.substring(0, indexOfDollar) else null
     }
 
-    override fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration> {
-        notImplementedInK2()
-    }
-
     override fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
-        return null
+        if (declaration is KtParameter) {
+            val function = declaration.ownerFunction as? KtCallableDeclaration ?: return null
+            val index = function.valueParameters.indexOf(declaration)
+            return (liftToExpected(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
+        }
+
+        return if (declaration.isExpectDeclaration()) declaration else declaration.expectedDeclarationIfAny()
     }
 
     override fun getJvmName(element: PsiElement): String? {

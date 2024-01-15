@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -86,8 +87,8 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     private fun substituteForExpectOrActual(element: PsiElement?) =
-        (element?.namedUnwrappedElement as? KtNamedDeclaration)?.let {
-            renameRefactoringSupport.liftToExpected(it)
+        (element?.namedUnwrappedElement as? KtNamedDeclaration)?.let { el ->
+            ActionUtil.underModalProgress(el.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) { renameRefactoringSupport.liftToExpected(el) }
         }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {

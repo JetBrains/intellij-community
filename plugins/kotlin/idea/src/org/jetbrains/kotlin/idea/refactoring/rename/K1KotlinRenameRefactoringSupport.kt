@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
-import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -67,10 +66,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun demangleInternalName(mangledName: String): String? {
         return KotlinTypeMapper.InternalNameMapper.demangleInternalName(mangledName)
-    }
-
-    override fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration> {
-        return declaration.actualsForExpected()
     }
 
     override fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {

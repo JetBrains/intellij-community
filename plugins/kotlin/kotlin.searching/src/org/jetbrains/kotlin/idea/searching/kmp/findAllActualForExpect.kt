@@ -10,7 +10,6 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.idea.searching.kmp.matchesWithActual
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
@@ -38,6 +37,16 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
         return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
             when (declaration) {
                 is KtClassOrObject -> targetDeclaration
+                is KtPrimaryConstructor -> {
+                    if (targetDeclaration is KtClass) {
+                        val primaryConstructor = targetDeclaration.primaryConstructor
+                        if (primaryConstructor?.matchesWithActual(declaration) == true) {
+                            primaryConstructor
+                        } else {
+                            targetDeclaration.secondaryConstructors.find { it.matchesWithActual(declaration) }
+                        }
+                    } else null
+                }
                 is KtNamedDeclaration ->
                     when (targetDeclaration) {
                         is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
