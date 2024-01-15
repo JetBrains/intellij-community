@@ -388,7 +388,9 @@ class MavenProjectsTree(val project: Project) {
       rootProjectsFiles, managedFiles)
     val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
 
-    return updated.plus(deleted)
+    val updateResult = updated.plus(deleted)
+    MavenLog.LOG.debug("Maven tree update result: updated ${updateResult.updated}, deleted ${updateResult.deleted}")
+    return updateResult
   }
 
   @ApiStatus.Internal

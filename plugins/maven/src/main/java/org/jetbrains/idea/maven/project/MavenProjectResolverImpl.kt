@@ -91,7 +91,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCancelled()
-    MavenLog.LOG.debug("Dependency resolution started")
+    MavenLog.LOG.debug("Dependency resolution started: ${mavenProjects.size}")
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))

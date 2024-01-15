@@ -169,7 +169,14 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
 
   private fun findOrCreateProject(f: VirtualFile): MavenProject {
     val mavenProject = tree.findProject(f)
-    return mavenProject ?: MavenProject(f)
+    if (null != mavenProject) {
+      return mavenProject
+    }
+
+    val newMavenProject = MavenProject(f)
+    MavenLog.LOG.debug("Maven tree updater: created new maven project $newMavenProject")
+
+    return newMavenProject
   }
 
   private suspend fun update(mavenProjectFile: VirtualFile, forceRead: Boolean) {
