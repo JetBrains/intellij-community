@@ -100,11 +100,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       configureAdditionalTypes(controller);
       boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
       if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-        onExecuteStart(controller);
+        if (isTracingEnabled()) {
+          getTelemetry().start(myTracingContext);
+        }
+        getTelemetry().runWithSpan("onExecuteStart", __ -> onExecuteStart(controller));
       }
       AllModels allModels = getTelemetry().callWithSpan("doExecute",
-                                                       span -> doExecute(controller, converterExecutor, isProjectsLoadedAction));
-      if (!isProjectsLoadedAction && myAllModels != null) {
+                                                        span -> doExecute(controller, converterExecutor, isProjectsLoadedAction));
+      if (!isProjectsLoadedAction && allModels != null) {
         onExecuteEnd(allModels);
       }
       return allModels;
@@ -125,15 +128,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
    * This method will be called only once, before the first invocation of the method.
    */
   private void onExecuteStart(@NotNull BuildController controller) {
-    if (isTracingEnabled()) {
-      getTelemetry().start(myTracingContext);
-    }
     long startTime = System.currentTimeMillis();
-    myGradleBuild = controller.getBuildModel();
+    myGradleBuild = getTelemetry().callWithSpan("GetBuildModel", __ -> controller.getBuildModel());
     AllModels allModels = new AllModels(myGradleBuild);
     allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
     long startTimeBuildEnv = System.currentTimeMillis();
-    BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
+    BuildEnvironment buildEnvironment = getTelemetry().callWithSpan("GetBuildEnvironment",
+                                                                    __ -> controller.findModel(BuildEnvironment.class));
     allModels.setBuildEnvironment(convert(buildEnvironment));
     allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
     myAllModels = allModels;

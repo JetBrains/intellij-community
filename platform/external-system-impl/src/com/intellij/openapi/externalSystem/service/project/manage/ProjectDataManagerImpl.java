@@ -173,9 +173,11 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         trace.logPerformance("Data import by " + key, System.currentTimeMillis() - startTime);
       }
 
-      for (Runnable postImportTask : postImportTasks) {
-        postImportTask.run();
-      }
+      ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "postImportTasks", span -> {
+        for (Runnable postImportTask : postImportTasks) {
+          postImportTask.run();
+        }
+      });
 
       commit(modelsProvider, project, true, "Imported data", activityId, projectSystemId, Span.current());
       if (indicator != null) {
@@ -194,10 +196,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
     finally {
       if (importSucceeded) {
-        runFinalTasks(project, projectPath, onSuccessImportTasks);
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "runFinalTasks",
+                                                __ -> runFinalTasks(project, projectPath, onSuccessImportTasks));
       }
       else {
-        runFinalTasks(project, projectPath, onFailureImportTasks);
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "runFinalTasks",
+                                                __ -> runFinalTasks(project, projectPath, onFailureImportTasks));
       }
       if (!importSucceeded) {
         dispose(modelsProvider, project, true);
