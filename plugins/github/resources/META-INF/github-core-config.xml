@@ -176,7 +176,8 @@
     </group>
 
     <action id="Github.Break.Api.Requests" internal="true"
-            class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
+            class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"
+            text="Break GitHub API Requests"/>
 
     <action id="Github.PullRequest.Diff.Comment.Create"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
