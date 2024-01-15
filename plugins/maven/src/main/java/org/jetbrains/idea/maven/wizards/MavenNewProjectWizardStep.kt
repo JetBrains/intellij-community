@@ -2,24 +2,24 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.generators.JdkDownloadService
+import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.ValidationInfoBuilder
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenId
@@ -34,16 +34,14 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ParentStep : NewProjectWizardBaseData {
 
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
 
   final override var sdk by sdkProperty
+  final override var sdkDownloadTask by sdkDownloadTaskProperty
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-      sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-        .columns(COLUMNS_MEDIUM)
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+      projectWizardJdkComboBox(sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id)
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -76,12 +74,24 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
+  private fun startJdkDownloadIfNeeded(module: Module) {
+    val sdkDownloadTask = sdkDownloadTask
+    if (sdkDownloadTask is JdkDownloadTask) {
+      // Download the SDK on project creation
+      module.project.service<JdkDownloadService>().downloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
+    }
+  }
+
   protected fun <T : AbstractMavenModuleBuilder> linkMavenProject(project: Project, builder: T, configure: (T) -> Unit = {}): Module? {
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
     builder.isCreatingNewProject = context.isCreatingNewProject
+
+    //if (context.isCreatingNewProject) {
+    //  context.projectJdk = sdk
+    //}
 
     builder.parentProject = parentData
     builder.aggregatorProject = parentData
@@ -91,7 +101,9 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    return setupProjectFromBuilder(project, builder)
+    return setupProjectFromBuilder(project, builder)?.also {
+      startJdkDownloadIfNeeded(it)
+    }
   }
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {
