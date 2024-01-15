@@ -13,7 +13,7 @@ import kotlinx.datetime.LocalDate
 class OnboardingFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "kotlin_onboarding"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 1, 31)
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 3, 15)
     override val requireIdeEAP: Boolean = false
 
     private val suitableIdeVersion = "2023.3"
