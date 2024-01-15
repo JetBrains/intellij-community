@@ -31,9 +31,14 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
   @Override
   public @NotNull StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project) {
     StructureViewModel model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
-    StructureView view = StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
+    var view = createStructureView(fileEditor, project, model);
     Disposer.register(view, model);
     return view;
+  }
+
+  @NotNull
+  public StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project, StructureViewModel model) {
+    return StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
   }
 
   /**
