@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -47,6 +48,8 @@ class SavedPatchesTree(project: Project,
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
+    putClientProperty(RenderingHelper.SHRINK_LONG_SELECTION, true)
+    putClientProperty(RenderingHelper.SHRINK_LONG_RENDERER, true)
 
     treeStateStrategy = SavedPatchesTreeStateStrategy
     isScrollToSelection = false
