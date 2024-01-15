@@ -18,5 +18,4 @@ fun test(a1: A?, a2: A) {
 
 fun notNull(a: A): A = a
 
-/* IGNORE_K2 */
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrapWithSafeLetCallFixFactories$applicator$1

@@ -109,8 +109,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
         configureRegistryAndRun(beforeFileText) {
             withCustomCompilerOptions(beforeFileText, project, module) {
-                loadScriptConfiguration()
-
                 IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
                     val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
 
@@ -199,11 +197,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     }
 
-    private fun loadScriptConfiguration() {
-        val file = myFixture.configureByFile(fileName())
-        ScriptConfigurationManager.getInstance(project).getConfiguration(file as KtFile)
-    }
-
     private fun getPathAccordingToPackage(name: String, text: String): String {
         val packagePath = text.lines().let { list -> list.find { it.trim().startsWith("package") } }
             ?.removePrefix("package")
@@ -233,15 +226,22 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             var fileName = testFile.canonicalFile.name
             val putIntoPackageFolder =
                 InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $FORCE_PACKAGE_FOLDER_DIRECTIVE") != null
-            if (putIntoPackageFolder) {
-                fileName = getPathAccordingToPackage(fileName, contents)
-                myFixture.addFileToProject(fileName, contents)
-                myFixture.configureByFile(fileName)
-            } else {
-                myFixture.configureByText(fileName, contents)
-            }
 
-            runInEdtAndWait { checkForUnexpectedActions() }
+            runInEdtAndWait {
+                if (putIntoPackageFolder) {
+                    fileName = getPathAccordingToPackage(fileName, contents)
+                    myFixture.addFileToProject(fileName, contents)
+                    myFixture.configureByFile(fileName)
+                } else {
+                    myFixture.configureByText(fileName, contents)
+                }
+
+                // The script configuration must not be loaded during highlighting. It should also be loaded as soon as possible, so we run
+                // it together with the fixture's file configuration in the EDT.
+                loadScriptConfiguration(myFixture.file as KtFile)
+
+                checkForUnexpectedActions()
+            }
 
             configExtra(fileText)
 
@@ -295,6 +295,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(myFixture.module, fileText)
             }
         }
+    }
+
+    private fun loadScriptConfiguration(file: KtFile) {
+        ScriptConfigurationManager.getInstance(project).getConfiguration(file)
     }
 
     private fun PsiFile.actionHint(contents: String): ActionHint {

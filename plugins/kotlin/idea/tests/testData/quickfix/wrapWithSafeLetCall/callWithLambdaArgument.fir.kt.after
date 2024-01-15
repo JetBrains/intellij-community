@@ -6,9 +6,9 @@ interface Foo {
 }
 
 fun test(foo: Foo) {
-    foo.f?<caret>.let { bar(it {}) }
+    foo.f?.l<caret>et { bar(it {}) }
 }
 
 fun bar(s: String) {}
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrapWithSafeLetCallFixFactories$applicator$1
