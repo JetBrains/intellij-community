@@ -340,6 +340,8 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
+  scheduleEnableCoroutineDumpAndJstack()
+
   launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
@@ -360,8 +362,6 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
     }
   }
-
-  scheduleEnableCoroutineDumpAndJstack()
 }
 
 private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
@@ -390,8 +390,12 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
   launch {
     span("coroutine debug probes init") {
       try {
-        DebugProbesImpl.enableCreationStackTraces = false
-        DebugProbesImpl.install()
+        if (System.getProperty("idea.enable.coroutine.dump.using.classloader", "false").toBoolean()) {
+          DebugProbesImpl.install()
+        }
+        else {
+          enableCoroutineDump()
+        }
       }
       catch (ignore: NoClassDefFoundError) {
         // if for some reason, the class loader has ByteBuddy in the classpath
