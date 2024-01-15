@@ -90,8 +90,8 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
       if (shiftingExpression.getOperationSign().getTokenType() != JavaTokenType.GTGTGT) return false;
 
       PsiExpression leftSubOperand = shiftingExpression.getLOperand();
-      return EquivalenceChecker.getCanonicalPsiEquivalence()
-               .expressionsAreEquivalent(leftOperand, leftSubOperand) &&
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(leftOperand, leftSubOperand) &&
+             !SideEffectChecker.mayHaveSideEffects(leftOperand) &&
              Objects.equals(32, ExpressionUtils.computeConstantExpression(shiftingExpression.getROperand()));
     }
 
