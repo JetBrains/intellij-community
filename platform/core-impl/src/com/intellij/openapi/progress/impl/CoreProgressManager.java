@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.TracerLevel;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Java11Shim;
 import com.intellij.util.SystemProperties;
@@ -28,7 +29,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -211,13 +211,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         catch (Throwable e) {
           throw new RuntimeException(e);
         }
-        Span span = startProcessSpan(progress);
-        try (Scope ignored = span.makeCurrent()) {
+        TraceKt.useWithScopeBlocking(startProcessSpan(progress), (Span __) -> {
           process.run();
-        }
-        finally {
-          span.end();
-        }
+          return null;
+        });
       }
       finally {
         if (progress != null && progress.isRunning()) {
