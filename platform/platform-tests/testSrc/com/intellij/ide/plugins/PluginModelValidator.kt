@@ -31,6 +31,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.indexing.shared.ultimate.plugin.public",
   "kotlin-ultimate.appcode-kmm.main", /* Used only when running from sources */
   "intellij.javaFX.community",
+  "intellij.ae.database.community",
   "intellij.lightEdit",
   "intellij.webstorm",
   "intellij.cwm.plugin", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
