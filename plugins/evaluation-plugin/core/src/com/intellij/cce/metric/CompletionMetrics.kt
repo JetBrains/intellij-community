@@ -1,9 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
+
+fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
+  listOf(
+    RecallAtMetric(showByDefault = showByDefault, n = 1),
+    RecallAtMetric(showByDefault = showByDefault, n = 5),
+    RecallMetric(showByDefault = showByDefault),
+    Precision(showByDefault = showByDefault),
+    MeanRankMetric(),
+    MeanLatencyMetric(),
+    SuccessMeanLatencyMetric(),
+    MaxLatencyMetric(),
+    PercentileLatencyMetric(percentile = 50),
+    PercentileLatencyMetric(percentile = 80),
+    SuccessPercentileLatencyMetric(percentile = 50),
+    SuccessPercentileLatencyMetric(percentile = 80),
+    SessionsCountMetric(),
+    SuggestionsCountMetric()
+  )
+
 
 fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
@@ -52,6 +71,7 @@ internal abstract class CompletionGolfMetric<T : Number> : Metric {
 internal class MovesCount : CompletionGolfMetric<Int>() {
   override val name = NAME
   override val description: String = "Number of actions to write the file using completion"
+  override val showByDefault: Boolean = true
   override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
@@ -168,6 +188,7 @@ internal class MovesCountNormalised : Metric {
 
   override val name = "Moves Count Normalised"
   override val description: String = "Number of actions to write the file using completion normalized by minimum possible count"
+  override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
@@ -126,7 +126,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test MatchedRatio@3 metric`() {
-    val metric = MatchedRatioAt(false, 3)
+    val metric = MatchedRatioAt(showByDefault = false, n = 3)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoMatchCustom)))
@@ -134,7 +134,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test recall metric`() {
-    val metric = RecallMetric()
+    val metric = RecallMetric(showByDefault = false)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5)))
     Assertions.assertEquals(0.75, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))
