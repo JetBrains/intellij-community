@@ -101,7 +101,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
     final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
     InlineMode mode;
-    if (JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) mode = InlineMode.INLINE_ONE;
+    if (refExpr != null && JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) mode = InlineMode.INLINE_ONE;
     else mode = InlineMode.CHECK_CONFLICTS;
 
     return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, mode);
@@ -109,11 +109,11 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
 
   private static ModCommand doInline(@NotNull ActionContext context,
                                      @NotNull PsiVariable var,
-                                     PsiReferenceExpression refExpr,
+                                     @Nullable PsiReferenceExpression refExpr,
                                      @NotNull InlineMode mode) {
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     List<PsiReferenceExpression> allRefs =
-      mode == InlineMode.INLINE_ONE || block == null ? List.of(refExpr) :
+      refExpr != null && (mode == InlineMode.INLINE_ONE || block == null) ? List.of(refExpr) :
       VariableAccessUtils.getVariableReferences(var, block);
     if (allRefs.isEmpty()) {
       return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
@@ -204,7 +204,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
     boolean simpleInlining = false;
-    if (mode == InlineMode.INLINE_ONE) {
+    if (mode == InlineMode.INLINE_ONE && refExpr != null) {
       refsToInlineList.add(refExpr);
     } else {
       if (defToInline == local.getInitializer()) {

@@ -3,14 +3,13 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -369,6 +368,17 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testVariableInsideResourceList() {
     doTest("Cannot perform refactoring.\n" +
            "Variable is used as resource reference");
+  }
+
+  public void testLocalVariableInThisOnlyMode() {
+    boolean initialSetting = JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS;
+    try {
+      JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = true;
+      doTest();
+    }
+    finally {
+      JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = initialSetting;
+    }
   }
 
   private void doTest() {
