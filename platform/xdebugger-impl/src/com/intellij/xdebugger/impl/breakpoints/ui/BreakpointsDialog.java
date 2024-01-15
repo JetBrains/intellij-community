@@ -60,8 +60,6 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private BreakpointItemsTreeController myTreeController;
 
-  final JLabel temp = new JLabel();
-
   private final MasterController myMasterController = new MasterController() {
     @Override
     public ItemWrapper[] getSelectedItems() {
@@ -70,8 +68,8 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public JLabel getPathLabel() {
-      return temp;
+    public @Nullable JLabel getPathLabel() {
+      return null;
     }
   };
 
