@@ -27,6 +27,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
@@ -111,7 +112,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     myState.reset();
     myBuiltInSchemaIds.drop();
     myAnyChangeCount.incrementAndGet();
-    for (Runnable action: myResetActions) {
+    for (Runnable action : myResetActions) {
       action.run();
     }
     DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -209,7 +210,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
         if (userSchema.isEmpty()) return ContainerUtil.emptyList();
         selected = userSchema.get();
-      } else selected = providers.get(0);
+      }
+      else {
+        selected = providers.get(0);
+      }
       VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
     }
@@ -288,7 +292,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     });
 
-    for (JsonSchemaCatalogEntry schema: schemas) {
+    for (JsonSchemaCatalogEntry schema : schemas) {
       final String url = schema.getUrl();
       if (!processedRemotes.containsKey(url)) {
         final JsonSchemaInfo info = new JsonSchemaInfo(url);
@@ -345,12 +349,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   public @Nullable VirtualFile getLocalSchemaByUrl(String url) {
     return myState.getFiles().stream()
-                  .filter(f -> {
-                     JsonSchemaFileProvider prov = getSchemaProvider(f);
-                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
-                            && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
-                             || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
-                  }).findFirst().orElse(null);
+      .filter(f -> {
+        JsonSchemaFileProvider prov = getSchemaProvider(f);
+        return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
+               && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
+                   || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
+      }).findFirst().orElse(null);
   }
 
   @Override

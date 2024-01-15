@@ -111,11 +111,16 @@ public final class JsonFileResolver {
   }
 
   public static boolean isAbsoluteUrl(@NotNull String path) {
-    return isHttpPath(path) || path.startsWith(JsonSchemaObject.TEMP_URL) || FileUtil.toSystemIndependentName(path).startsWith(JarFileSystem.PROTOCOL_PREFIX);
+    return isHttpPath(path) ||
+           path.startsWith(TEMP_URL) ||
+           FileUtil.toSystemIndependentName(path).startsWith(JarFileSystem.PROTOCOL_PREFIX);
   }
 
+  private static final String MOCK_URL = "mock:///";
+  public static final String TEMP_URL = "temp:///";
+
   public static boolean isTempOrMockUrl(@NotNull String path) {
-    return path.startsWith(JsonSchemaObject.TEMP_URL) || path.startsWith(JsonSchemaObject.MOCK_URL);
+    return path.startsWith(TEMP_URL) || path.startsWith(MOCK_URL);
   }
 
   public static boolean isSchemaUrl(@Nullable String url) {

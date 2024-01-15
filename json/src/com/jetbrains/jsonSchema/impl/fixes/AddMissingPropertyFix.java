@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -36,7 +37,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectRenderingLanguage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaReader2.renderSchemaNode;
 
 public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
   private final JsonValidationError.MissingMultiplePropsIssueData myData;
@@ -153,7 +158,11 @@ public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix
 
   @Contract("null, _ -> null")
   public @Nullable String formatDefaultValue(@Nullable Object defaultValueObject, @NotNull Language targetLanguage) {
-    if (defaultValueObject instanceof JsonNode jsonNode) {
+    if (defaultValueObject instanceof JsonSchemaObject schemaObject) {
+      var renderingLanguage = targetLanguage.is(JsonLanguage.INSTANCE) ? JsonSchemaObjectRenderingLanguage.JSON : JsonSchemaObjectRenderingLanguage.YAML;
+      return renderSchemaNode(schemaObject, renderingLanguage);
+    }
+    else if (defaultValueObject instanceof JsonNode jsonNode) {//todo fix properties tests??
       return convertToYamlIfNeeded(targetLanguage, jsonNode);
     }
     else if (defaultValueObject instanceof String) {
@@ -176,17 +185,14 @@ public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix
     if (language.is(JsonLanguage.INSTANCE))
       jacksonFactory = new JsonFactory();
     else
-      jacksonFactory = new YAMLFactory();
+      jacksonFactory = YAMLFactory.builder()
+        .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+        .build();
 
     try {
-      String exampleInTargetLanguage = new ObjectMapper(jacksonFactory)
+      return new ObjectMapper(jacksonFactory)
         .writerWithDefaultPrettyPrinter()
         .writeValueAsString(jsonNode);
-      // Yaml parser seems to have no setting for disabling dashes at the beginning of a document
-      if (exampleInTargetLanguage.startsWith("---"))
-        return exampleInTargetLanguage.substring("---".length()).trim();
-      else
-        return exampleInTargetLanguage;
     }
     catch (JsonProcessingException e) {
       return null;

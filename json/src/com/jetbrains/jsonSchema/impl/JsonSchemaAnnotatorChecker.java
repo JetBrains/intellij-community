@@ -18,12 +18,16 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.validations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.INSTANCE_OF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.TYPE_OF;
 
 public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
@@ -91,10 +95,10 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
           String propertyName = ((JsonValidationError.ProhibitedPropertyIssueData)error.getIssueData()).propertyName;
           boolean skip = false;
           for (Collection<? extends JsonSchemaObject> objects : excludingSchemas) {
-            Set<String> keys = objects.stream()
+            var propExists = objects.stream()
               .filter(o -> !o.hasOwnExtraPropertyProhibition())
-              .map(o -> o.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toSet());
-            if (keys.contains(propertyName)) skip = true;
+              .anyMatch(obj -> obj.getPropertyByName(propertyName) != null);
+            if (propExists) skip = true;
           }
           if (skip) continue;
         }
@@ -190,13 +194,13 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
       }
     }
     if (!value.isShouldBeIgnored()) {
-      if (schema.hasNumericChecks() && value.isNumberLiteral()) {
+      if (JsonSchemaObjectReadingUtils.hasNumericChecks(schema) && value.isNumberLiteral()) {
         validations.add(NumericValidation.INSTANCE);
       }
-      if (schema.hasStringChecks() && value.isStringLiteral()) {
+      if (JsonSchemaObjectReadingUtils.hasStringChecks(schema) && value.isStringLiteral()) {
         validations.add(StringValidation.INSTANCE);
       }
-      if (schema.hasArrayChecks() && value.isArray()) {
+      if (JsonSchemaObjectReadingUtils.hasArrayChecks(schema) && value.isArray()) {
         validations.add(ArrayValidation.INSTANCE);
       }
       if (hasMinMaxLengthChecks(schema)) {
@@ -207,7 +211,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
           validations.add(ArrayValidation.INSTANCE);
         }
       }
-      if (schema.hasObjectChecks() && value.isObject()) {
+      if (JsonSchemaObjectReadingUtils.hasObjectChecks(schema) && value.isObject()) {
         validations.add(ObjectValidation.INSTANCE);
       }
     }
@@ -338,7 +342,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
       //nothing matches, lets return one of the list so that other heuristics does not match
       return matchTypes.iterator().next();
     }
-    if (!schema.getProperties().isEmpty() && JsonSchemaType._object.equals(input)) return JsonSchemaType._object;
+    if (JsonSchemaObjectReadingUtils.hasProperties(schema) && JsonSchemaType._object.equals(input)) return JsonSchemaType._object;
     return null;
   }
 
@@ -363,7 +367,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     final List<JsonSchemaObject> correct = new SmartList<>();
     for (JsonSchemaObject object : oneOf) {
       // skip it if something JS awaited, we do not process it currently
-      if (object.isShouldValidateAgainstJSType()) continue;
+      if (object.hasChildNode(INSTANCE_OF) || object.hasChildNode(TYPE_OF) ||object.isShouldValidateAgainstJSType()) continue;
 
       final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, myOptions);
       checker.checkByScheme(value, object);

@@ -21,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
@@ -121,7 +124,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         possibleTypes.addAll(schema.getTypeVariants());
       }
       else {
-        final JsonSchemaType guessedType = schema.guessType();
+        final JsonSchemaType guessedType = guessType(schema);
         if (guessedType != null) {
           possibleTypes.add(guessedType);
         }
@@ -143,7 +146,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
+    String schemaType = JsonSchemaObjectReadingUtils.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }

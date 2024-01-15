@@ -15,7 +15,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +80,7 @@ public final class ArrayValidation implements JsonSchemaValidation {
       }
     }
     else if (schema.getItemsSchemaList() != null) {
-      final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();
+      var iterator = schema.getItemsSchemaList().iterator();
       for (JsonValueAdapter arrayValue : list) {
         if (iterator.hasNext()) {
           consumer.checkObjectBySchemaRecordErrors(iterator.next(), arrayValue);

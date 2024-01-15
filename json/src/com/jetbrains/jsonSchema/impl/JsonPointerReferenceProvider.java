@@ -14,6 +14,7 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,6 +32,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +57,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     List<PsiReference> refs = new ArrayList<>();
 
     List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
-    if (fragments.size() != 1)  return PsiReference.EMPTY_ARRAY;
+    if (fragments.size() != 1) return PsiReference.EMPTY_ARRAY;
     Pair<TextRange, String> fragment = fragments.get(0);
     String originalText = element.getText();
     int hash = originalText.indexOf('#');
@@ -168,7 +170,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
     final String normalized = normalizeId(splitter.getRelativePath());
     if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)
-      || !(psiFile instanceof JsonFile)) {
+        || !(psiFile instanceof JsonFile)) {
       return psiFile;
     }
     final List<String> chain = split(normalizeSlashes(normalized));
@@ -247,7 +249,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
           return ((JsonObject)element).getPropertyList().stream()
             .filter(p -> p.getValue() instanceof JsonContainer && (finalPrefix == null || p.getName().startsWith(finalPrefix)))
             .map(p -> LookupElementBuilder.create(p, escapeForJsonPointer(p.getName()))
-            .withIcon(getIcon(p.getValue()))).toArray();
+              .withIcon(getIcon(p.getValue()))).toArray();
         }
         else if (element instanceof JsonArray) {
           List<JsonValue> list = ((JsonArray)element).getValueList();

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_CASE_INSENSITIVE;
+
 public final class EnumValidation implements JsonSchemaValidation {
   public static final EnumValidation INSTANCE = new EnumValidation();
   @Override
@@ -32,7 +34,8 @@ public final class EnumValidation implements JsonSchemaValidation {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue.getDelegate(), schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(propValue.getDelegate()));
-    BiFunction<String, String, Boolean> eq = options.isCaseInsensitiveEnumCheck() || schema.isForceCaseInsensitive()
+    boolean caseInsensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_CASE_INSENSITIVE)) || schema.isForceCaseInsensitive();
+    BiFunction<String, String, Boolean> eq = options.isCaseInsensitiveEnumCheck() || caseInsensitive
                                              ? String::equalsIgnoreCase
                                              : String::equals;
     for (Object object : enumItems) {

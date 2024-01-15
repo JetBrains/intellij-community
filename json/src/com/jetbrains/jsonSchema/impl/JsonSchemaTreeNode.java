@@ -2,6 +2,8 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
+import com.jetbrains.jsonSchema.impl.tree.Operation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,7 @@ public final class JsonSchemaTreeNode {
     myChildren.add(node);
   }
 
-  public void createChildrenFromOperation(@NotNull JsonSchemaVariantsTreeBuilder.Operation operation) {
+  public void createChildrenFromOperation(@NotNull Operation operation) {
     if (!SchemaResolveState.normal.equals(operation.myState)) {
       final JsonSchemaTreeNode node = new JsonSchemaTreeNode(this, null);
       node.myResolveState = operation.myState;
@@ -55,7 +57,7 @@ public final class JsonSchemaTreeNode {
     }
     if (!operation.myOneOfGroup.isEmpty()) {
       for (int i = 0; i < operation.myOneOfGroup.size(); i++) {
-        final List<JsonSchemaObject> group = operation.myOneOfGroup.get(i);
+        var group = operation.myOneOfGroup.get(i);
         final List<JsonSchemaTreeNode> children = convertToNodes(group);
         final int number = i;
         children.forEach(c -> c.myExcludingGroupNumber = number);
@@ -64,7 +66,7 @@ public final class JsonSchemaTreeNode {
     }
   }
 
-  private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
+  private List<JsonSchemaTreeNode> convertToNodes(List<? extends JsonSchemaObject> children) {
     List<JsonSchemaTreeNode> nodes = new ArrayList<>(children.size());
     for (JsonSchemaObject child: children) {
       nodes.add(new JsonSchemaTreeNode(this, child));
@@ -153,7 +155,7 @@ public final class JsonSchemaTreeNode {
       assert mySchema != null;
       sb.append("schema").append("\n");
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
-      else if (!mySchema.getProperties().isEmpty()) {
+      else if (JsonSchemaObjectReadingUtils.hasProperties(mySchema)) {
         sb.append("properties: ");
         sb.append(String.join(", ", mySchema.getProperties().keySet())).append("\n");
       }
