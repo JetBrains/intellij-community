@@ -301,7 +301,7 @@ public abstract class CoverageEngine {
 
   public CoverageLineMarkerRenderer getLineMarkerRenderer(int lineNumber,
                                                           @Nullable final String className,
-                                                          final TreeMap<Integer, LineData> lines,
+                                                          @NotNull final TreeMap<Integer, LineData> lines,
                                                           final boolean coverageByTestApplicable,
                                                           @NotNull final CoverageSuitesBundle coverageSuite,
                                                           final Function<? super Integer, Integer> newToOldConverter,

@@ -261,10 +261,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
           final Object[] lines = fileData.getLines();
           if (lines != null) {
             final Object[] postProcessedLines = engine.postProcessExecutableLines(lines, editor);
-            for (Object lineData : postProcessedLines) {
-              if (lineData instanceof LineData) {
+            for (Object o : postProcessedLines) {
+              if (o instanceof LineData lineData) {
                 if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
-                final int line = ((LineData)lineData).getLineNumber() - 1;
+                final int line = (lineData).getLineNumber() - 1;
                 final int lineNumberInCurrent;
                 if (oldToNewLineMapping != null) {
                   if (!oldToNewLineMapping.containsKey(line)) continue;
@@ -274,7 +274,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
                   // use id mapping
                   lineNumberInCurrent = line;
                 }
-                executableLines.put(line, (LineData)lineData);
+                executableLines.put(line, lineData);
                 classNames.put(line, qualifiedName);
 
                 addHighlighter(markupModel, executableLines, suite, line, lineNumberInCurrent, qualifiedName);
@@ -330,7 +330,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
    */
   @Nullable
   private static RangeHighlighter createBackgroundHighlighter(MarkupModel markupModel,
-                                                              TreeMap<Integer, LineData> executableLines,
+                                                              @NotNull TreeMap<Integer, LineData> executableLines,
                                                               int line, int lineNumberInCurrent) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
@@ -342,7 +342,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   private RangeHighlighter createRangeHighlighter(final MarkupModel markupModel,
-                                                  final TreeMap<Integer, LineData> executableLines,
+                                                  @NotNull final TreeMap<Integer, LineData> executableLines,
                                                   @Nullable final String className,
                                                   final int line,
                                                   final int lineNumberInCurrent,
@@ -435,7 +435,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   protected final void addHighlighter(final MarkupModel markupModel,
-                                      final TreeMap<Integer, LineData> executableLines,
+                                      @NotNull final TreeMap<Integer, LineData> executableLines,
                                       final CoverageSuitesBundle coverageSuite,
                                       final int lineNumber,
                                       final int updatedLineNumber,
