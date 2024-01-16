@@ -8,21 +8,11 @@
   <depends>com.intellij.modules.pycharm.community</depends>
   <depends>com.intellij.modules.python</depends>
 
-  <xi:include href="/META-INF/pycharm-community-customization.xml"/>
+  <xi:include href="/META-INF/pycharm-community-only-customization.xml"/>
+  <xi:include href="/META-INF/pycharm-community-and-pro-customization.xml"/>
   <xi:include href="/META-INF/pycharm-community-promo.xml"/>
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
   <xi:include href="/META-INF/jupyter-view-only.xml"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
 
-    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
-                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
-                    overrides="true"/>
-
-    <annotator language="Python" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
-    <annotator language="TEXT" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
-    <annotator language="JSON" implementationClass="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiser"/>
-    <projectService serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmProfessionalAdvertiserSettings"/>
-  </extensions>
 </idea-plugin>

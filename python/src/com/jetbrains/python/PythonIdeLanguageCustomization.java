@@ -4,12 +4,16 @@ package com.jetbrains.python;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
+// Inherit in the module you are going to use it
+@ApiStatus.Internal
+public abstract class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
+  protected PythonIdeLanguageCustomization() {}
   @NotNull
   @Override
   public List<Language> getPrimaryIdeLanguages() {

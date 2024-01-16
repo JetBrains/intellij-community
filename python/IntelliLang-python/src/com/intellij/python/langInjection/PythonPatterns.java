@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.patterns;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.langInjection;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.patterns.InitialPatternCondition;
@@ -8,10 +8,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.patterns.PyElementPattern;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,8 @@ import java.util.regex.Pattern;
  *
  * @see PlatformPatterns
  */
+
+@ApiStatus.Internal
 public final class PythonPatterns extends PlatformPatterns {
 
   private static final int STRING_LITERAL_LIMIT = 10000;

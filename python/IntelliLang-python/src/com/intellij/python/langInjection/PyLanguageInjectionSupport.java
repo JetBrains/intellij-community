@@ -2,14 +2,15 @@
 package com.intellij.python.langInjection;
 
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.jetbrains.python.patterns.PythonPatterns;
 import com.jetbrains.python.psi.PyElement;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   @NonNls private static final String SUPPORT_ID = "python";
 

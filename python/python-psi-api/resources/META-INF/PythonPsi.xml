@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
-                    interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider"
                     interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"
                     dynamic="true"/>

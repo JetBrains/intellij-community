@@ -1,0 +1,7 @@
+<idea-plugin>
+  <!--Community only, never professional -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
+                        serviceImplementation="com.jetbrains.python.community.CommunityPydevConsoleRunnerFactory"/>
+  </extensions>
+</idea-plugin>

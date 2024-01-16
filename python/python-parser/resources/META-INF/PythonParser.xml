@@ -7,4 +7,9 @@
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
+                    interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

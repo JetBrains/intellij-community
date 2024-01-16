@@ -11,8 +11,9 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
-                        serviceImplementation="com.jetbrains.python.PythonIdeLanguageCustomization"
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
                         overrides="true"/>
 
     <projectConfigurable groupId="project"
@@ -24,7 +25,7 @@
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
-                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
                          groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
@@ -60,9 +61,6 @@
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
 
-    <!-- Console -->
-    <toolWindow id="Python Console" anchor="bottom" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
-                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <directoryIndexExcludePolicy implementation="com.intellij.pycharm.community.ide.impl.PyDirectoryIndexExcludePolicy"/>
 

@@ -7,7 +7,7 @@
     <injectionConfig config="resources/pyInjections.xml"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <patterns.patternClass className="com.jetbrains.python.patterns.PythonPatterns" alias="py"/>
+    <patterns.patternClass className="com.intellij.python.langInjection.PythonPatterns" alias="py"/>
     <multiHostInjector implementation="com.intellij.python.langInjection.PyConfigurationInjector"/>
     <multiHostInjector implementation="com.intellij.python.langInjection.PyTemporaryInjector"/>
   </extensions>

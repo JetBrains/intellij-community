@@ -19,6 +19,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <depends>com.intellij.modules.python-core-capable</depends>
 
   <xi:include href="/META-INF/python-core-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-core-community.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.java</depends>
   <depends optional="true" config-file="python-community-plugin-minor.xml">com.intellij.modules.clion</depends>
@@ -36,8 +37,4 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.reStructuredText"/>
   </content>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
-                        serviceImplementation="com.jetbrains.python.console.PydevConsoleRunnerFactory" />
-  </extensions>
 </idea-plugin>
