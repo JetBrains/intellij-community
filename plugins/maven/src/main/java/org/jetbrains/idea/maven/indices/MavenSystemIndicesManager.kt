@@ -236,7 +236,6 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
         .mapNotNull { MavenIndicesManager.getInstanceIfCreated(it) }
         .forEach {
           existed.addAll(it.getGAVIndices())
-          existed.addAll(it.getSearchIndices())
         }
       existed
     }

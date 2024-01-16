@@ -15,7 +15,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.indices.MavenSearchIndex.IndexListener
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArchetype
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo
+import org.jetbrains.idea.maven.model.RepositoryKind
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -43,7 +46,6 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     fun classIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {}
   }
 
-  private val mySearchIndices = CopyOnWriteArrayList<MavenSearchIndex>();
   private val myGavIndices = CopyOnWriteArrayList<MavenGAVIndex>();
 
   private val myDownloadListener = MavenIndexServerDownloadListener(this)
@@ -193,24 +195,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     if (localIndex is MavenUpdatableIndex) {
       toUpdate.add(localIndex)
     }
-    toUpdate.addAll(mySearchIndices.filterIsInstance<MavenUpdatableIndex>())
     MavenSystemIndicesManager.getInstance().scheduleUpdateIndexContent(toUpdate, explicit)
-  }
-
-  fun scheduleUpdateContentLocalClassIndex(explicit: Boolean) {
-    val indexLocal = mySearchIndices
-      .filter { it.repository.kind == RepositoryKind.LOCAL }
-      .filterIsInstance<MavenUpdatableIndex>()
-    if (indexLocal.isNotEmpty()) {
-      MavenSystemIndicesManager.getInstance().scheduleUpdateIndexContent(indexLocal, explicit)
-    }
-
-  }
-
-  fun searchForClass(patternForQuery: String?): Set<MavenArtifactInfo> {
-    return mySearchIndices
-      .flatMap { it.search(patternForQuery, 50).asSequence() }
-      .toSet()
   }
 
 
@@ -218,10 +203,6 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     MavenIndexUsageCollector.ADD_ARTIFACT_FROM_POM.log(myProject)
 
     val localGavIndex = myGavIndices.filter {
-      it.repository.kind == RepositoryKind.LOCAL
-    }.filterIsInstance<MavenUpdatableIndex>()
-      .firstOrNull()
-    val localLuceneIndex = mySearchIndices.filter {
       it.repository.kind == RepositoryKind.LOCAL
     }.filterIsInstance<MavenUpdatableIndex>()
       .firstOrNull()
@@ -245,10 +226,6 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
 
   internal fun getGAVIndices(): List<MavenGAVIndex> {
     return ArrayList(myGavIndices)
-  }
-
-  internal fun getSearchIndices(): List<MavenSearchIndex> {
-    return ArrayList(mySearchIndices)
   }
 
   private class MavenIndexServerDownloadListener(private val myManager: MavenIndicesManager) : MavenServerDownloadListener {
