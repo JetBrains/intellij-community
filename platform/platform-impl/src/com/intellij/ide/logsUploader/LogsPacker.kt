@@ -31,6 +31,7 @@ import com.intellij.util.io.addFolder
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.FileOutputStream
@@ -61,63 +62,63 @@ object LogsPacker {
   @JvmStatic
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  fun packLogs(project: Project?): Path {
-    getInstance().dumpThreads("", false, false)
+  suspend fun packLogs(project: Project?): Path {
+    return withContext(Dispatchers.IO) {
+      getInstance().dumpThreads("", false, false)
 
-    val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
-    val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
-    val archive = Files.createTempFile("$productName-logs-$date", ".zip")
-
-    try {
-      val additionalFiles = LogProvider.EP.extensionList.flatMap { it.getAdditionalLogFiles(project) }
-      ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
-        ProgressManager.checkCanceled()
-        val logs = PathManager.getLogDir()
-        val caches = PathManager.getSystemDir()
-        if (Files.isSameFile(logs, caches)) {
-          throw IOException("cannot collect logs, because log directory set to be the same as the 'system' one: $logs")
-        }
-        val lf = Logger.getFactory()
-        if (lf is LoggerFactory) {
-          lf.flushHandlers()
-        }
-
-        addAdditionalFilesToZip(additionalFiles, zip)
-
-        ProgressManager.checkCanceled()
-        if (project != null) {
-          val settings = StringBuilder()
-          settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
-          for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensions) {
-            ProgressManager.checkCanceled()
-            settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
+      val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
+      val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
+      val archive = Files.createTempFile("$productName-logs-$date", ".zip")
+      try {
+        val additionalFiles = LogProvider.EP.extensionList.flatMap { it.getAdditionalLogFiles(project) }
+        ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
+          coroutineContext.ensureActive()
+          val logs = PathManager.getLogDir()
+          val caches = PathManager.getSystemDir()
+          if (Files.isSameFile(logs, caches)) {
+            throw IOException("cannot collect logs, because log directory set to be the same as the 'system' one: $logs")
           }
-          zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
-          zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
-        }
-        Files.newDirectoryStream(Path.of(SystemProperties.getUserHome())).use { paths ->
-          for (path in paths) {
-            ProgressManager.checkCanceled()
-            val name = path.fileName.toString()
-            if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
-                path)) {
-              zip.addFolder(name, path)
+          val lf = Logger.getFactory()
+          if (lf is LoggerFactory) {
+            lf.flushHandlers()
+          }
+
+          addAdditionalFilesToZip(additionalFiles, zip)
+
+          coroutineContext.ensureActive()
+          if (project != null) {
+            val settings = StringBuilder()
+            settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
+            for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensions) {
+              coroutineContext.ensureActive()
+              settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
+            }
+            zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
+            zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
+          }
+          Files.newDirectoryStream(Path.of(SystemProperties.getUserHome())).use { paths ->
+            for (path in paths) {
+              coroutineContext.ensureActive()
+              val name = path.fileName.toString()
+              if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
+                  path)) {
+                zip.addFolder(name, path)
+              }
             }
           }
         }
       }
-    }
-    catch (e: IOException) {
-      try {
-        Files.delete(archive)
+      catch (e: IOException) {
+        try {
+          Files.delete(archive)
+        }
+        catch (x: IOException) {
+          e.addSuppressed(x)
+        }
+        throw e
       }
-      catch (x: IOException) {
-        e.addSuppressed(x)
-      }
-      throw e
+      archive
     }
-
-    return archive
   }
 
   @RequiresBackgroundThread
