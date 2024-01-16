@@ -40,7 +40,7 @@ set_target_properties(WinLauncher PROPERTIES
     CXX_STANDARD 14
     MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-set(USE_CEF_SANDBOX "ON")
+# set(USE_CEF_SANDBOX "ON")  Android Studio don't have CEF bundled b/319506377
 if(USE_CEF_SANDBOX)
   # Setup linking with CEF sandbox library
   include("DownloadCEF.cmake")
