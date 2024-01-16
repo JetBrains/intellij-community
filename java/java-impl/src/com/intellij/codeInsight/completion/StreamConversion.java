@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
@@ -192,7 +193,9 @@ final class StreamConversion {
     }
 
     List<Pair<String, PsiType>> result = new ArrayList<>();
-    result.add(Pair.create("toList", listType));
+    if (PsiUtil.getLanguageLevel(qualifier).isLessThan(LanguageLevel.JDK_16)) {
+      result.add(Pair.create("toList", listType));
+    }
     result.add(Pair.create("toUnmodifiableList", listType));
     result.add(Pair.create("toSet", setType));
     result.add(Pair.create("toUnmodifiableSet", setType));
