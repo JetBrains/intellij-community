@@ -58,9 +58,11 @@ internal class ArrayListIjentAbsolutePath private constructor(
     val result = parts.toMutableList()
     for (index in 0..<other.nameCount) {
       val name = other.getName(index).fileName
-      val error = checkFileName(name)
-      if (error != null) return Err(other.toString(), error)
-      result += name
+      if (name.isNotEmpty()) {
+        val error = checkFileName(name)
+        if (error != null) return Err(other.toString(), error)
+        result += name
+      }
     }
     return Ok(ArrayListIjentAbsolutePath(_root, result))
   }
