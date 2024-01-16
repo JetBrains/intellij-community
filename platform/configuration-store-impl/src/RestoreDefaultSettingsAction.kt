@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import java.nio.file.Path
@@ -26,6 +27,7 @@ private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBeha
       ExperimentalUI.getInstance().setNewUIInternal(false, false)
     }
 
+    GlobalWorkspaceModelCache.getInstance()?.invalidateCaches()
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }

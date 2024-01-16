@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
@@ -56,6 +55,10 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     check(saveRequests.tryEmit(Unit))
   }
 
+  override fun invalidateCaches() {
+    Companion.invalidateCaches()
+  }
+
   private suspend fun doCacheSaving() {
     val storage = GlobalWorkspaceModel.getInstance().currentSnapshot
     if (!storage.isConsistent) {
@@ -88,7 +91,5 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       LOG.info("Invalidating global caches by creating $invalidateCachesMarkerFile")
       invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
     }
-
-    fun getInstance(): GlobalWorkspaceModelCache = ApplicationManager.getApplication().service()
   }
 }
