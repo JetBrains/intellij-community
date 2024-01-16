@@ -143,9 +143,6 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
 
     final CoverageEngine engine = suite.getCoverageEngine();
-    if (engine.isInLibraryClasses(myProject, file)) {
-      return;
-    }
     final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiFile));
     if (module != null) {
       if (engine.recompileProjectAndRerunAction(module, suite, () -> CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite))) {

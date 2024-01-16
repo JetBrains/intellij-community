@@ -68,6 +68,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
   }
 
   public synchronized void update() {
+    if (CoverageDataManager.getInstance(myProject).activeSuites().isEmpty()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
     for (VirtualFile openFile : openFiles) {
@@ -115,6 +116,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       CoverageEngine engine = bundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
       if (!engine.acceptedByFilters(psiFile, bundle)) return;
+      if (engine.isInLibraryClasses(editor.getProject(), psiFile.getVirtualFile())) return;
 
       CoverageEditorAnnotator annotator = getOrCreateAnnotator(editor, psiFile, engine);
       annotator.showCoverage(bundle);
