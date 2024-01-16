@@ -7,11 +7,11 @@ import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqu
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -322,7 +322,7 @@ final class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
-        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+        if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
           action = fixReplaceAction(replaceAction);
         }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {

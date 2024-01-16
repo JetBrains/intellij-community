@@ -3,7 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +99,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
    * from passed {@code list} parameter
    */
   private List<? extends SearchEverywhereFoundElementInfo> processFastPassItems(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    if (!Registry.is("search.everywhere.recent.at.top")) return list;
+    if (!AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) return list;
 
     Map<Boolean, Set<SearchEverywhereFoundElementInfo>> map = ContainerUtil.classify(list.iterator(), info -> isFastPassContributor(info.getContributor()));
     Set<SearchEverywhereFoundElementInfo> fastPassItems = map.get(true);

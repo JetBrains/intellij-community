@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ final class MixedListFactory extends SEResultsListFactory {
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (!forceDisableRecentFilesPrioritization) {
-      if (Registry.is("search.everywhere.recent.at.top")) {
+      if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {
         prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
       }
     }
