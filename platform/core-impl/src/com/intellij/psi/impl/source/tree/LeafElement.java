@@ -273,8 +273,9 @@ public abstract class LeafElement extends TreeElement {
   }
 
   static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, @NotNull Logger log) {
-    log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
-                                             + " got: " + (element == null ? null : element.getClass()));
+    if (!clazz.isInstance(element)) {
+      log.error("unexpected psi class. expected: " + clazz + " got: " + (element == null ? null : element.getClass()));
+    }
     //noinspection unchecked
     return (T)element;
   }
