@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.pullrequest.ui.comment
 
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -17,14 +19,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.util.*
 
-interface GHPRTimelineThreadCommentViewModel {
+interface GHPRReviewThreadCommentViewModel {
+  val avatarIconsProvider: GHAvatarIconsProvider
+
   val author: GHActor
   val createdAt: Date
+
+  val isPending: StateFlow<Boolean>
+  val isFirstInResolvedThread: StateFlow<Boolean>
 
   val bodyVm: GHPRReviewCommentBodyViewModel
 
@@ -38,23 +47,30 @@ interface GHPRTimelineThreadCommentViewModel {
   fun delete()
 }
 
-class UpdateableGHPRTimelineThreadCommentViewModel internal constructor(
+internal class UpdateableGHPRReviewThreadCommentViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
-  thread: UpdateableGHPRTimelineThreadViewModel,
-  initialData: GHPullRequestReviewComment
-) : GHPRTimelineThreadCommentViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Timeline Thread Comment View Model"))
+  thread: GHPRReviewThreadViewModel,
+  initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>
+) : GHPRReviewThreadCommentViewModel {
+  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Thread Comment View Model"))
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
+  override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
 
-  private val dataState = MutableStateFlow(initialData)
+  private val initialData = initialDataWithIndex.value
+  private val dataState = MutableStateFlow(initialDataWithIndex)
 
   private val id = initialData.id
   override val author: GHActor = initialData.author ?: dataContext.securityService.ghostUser
   override val createdAt: Date = initialData.createdAt
+
+  override val isPending: StateFlow<Boolean> = dataState.mapState { it.value.state == GHPullRequestReviewCommentState.PENDING }
+  override val isFirstInResolvedThread: StateFlow<Boolean> = dataState.combineState(thread.isResolved) { (index, _), resolved ->
+    index == 0 && resolved
+  }
 
   override val bodyVm: GHPRReviewCommentBodyViewModel =
     GHPRReviewCommentBodyViewModel(cs, project, dataContext, dataProvider, thread.id, id)
@@ -68,7 +84,7 @@ class UpdateableGHPRTimelineThreadCommentViewModel internal constructor(
   override val editVm: StateFlow<CodeReviewTextEditingViewModel?> = _editVm.asStateFlow()
 
   override fun editBody() {
-    val currentText = dataState.value.body
+    val currentText = dataState.value.value.body
     _editVm.update {
       (it ?: EditViewModel(currentText)).apply {
         requestFocus()
@@ -85,11 +101,11 @@ class UpdateableGHPRTimelineThreadCommentViewModel internal constructor(
 
   override fun delete() {
     taskLauncher.launch {
-      reviewData.deleteComment(EmptyProgressIndicator(), dataState.value.id)
+      reviewData.deleteComment(EmptyProgressIndicator(), id)
     }
   }
 
-  fun update(data: GHPullRequestReviewComment) {
+  fun update(data: IndexedValue<GHPullRequestReviewComment>) {
     dataState.value = data
   }
 
@@ -99,13 +115,13 @@ class UpdateableGHPRTimelineThreadCommentViewModel internal constructor(
       submit { text ->
         val updated = reviewData.updateComment(EmptyProgressIndicator(), id, text).await()
         dataState.update {
-          updated
+          it.copy(value = updated)
         }
         stopEditing()
       }
     }
 
-    override fun stopEditing() = this@UpdateableGHPRTimelineThreadCommentViewModel.stopEditing()
+    override fun stopEditing() = this@UpdateableGHPRReviewThreadCommentViewModel.stopEditing()
 
     fun dispose() = cs.cancel()
   }

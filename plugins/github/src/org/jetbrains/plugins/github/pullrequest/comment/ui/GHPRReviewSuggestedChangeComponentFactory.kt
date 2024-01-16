@@ -1,19 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -32,105 +28,99 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.*
 
-internal class GHPRReviewSuggestedChangeComponentFactory(
-  private val project: Project,
-  private val thread: GHPRReviewThreadModel,
-  private val suggestionApplier: GHSuggestedChangeApplier,
-  private val suggestedChangeHelper: GHPRSuggestedChangeHelper
-) {
-  fun create(content: String): JComponent = RoundedPanel(BorderLayout(), 8).apply {
-    isOpaque = false
-    border = JBUI.Borders.compound(JBUI.Borders.empty(EMPTY_GAP, 0), border)
+private const val EMPTY_GAP = 4
 
-    val titleLabel = JBLabel(GithubBundle.message("pull.request.timeline.comment.suggested.changes")).apply {
-      isOpaque = false
-      foreground = UIUtil.getContextHelpForeground()
-    }
+internal object GHPRReviewSuggestedChangeComponentFactory {
+  fun createIn(cs: CoroutineScope, vm: GHPRReviewCommentBodyViewModel, block: GHPRCommentBodyBlock.SuggestedChange): JComponent =
+    RoundedPanel(BorderLayout(), 8).apply {
+      border = JBUI.Borders.compound(JBUI.Borders.empty(EMPTY_GAP, 0), border)
 
-    val applyLocallyAction = ApplyLocallySuggestedChangeAction()
-    val optionButton = JBOptionButton(applyLocallyAction, null).apply {
-      val commitAction = CommitSuggestedChangeAction(this)
-      options = arrayOf(commitAction)
-    }
-
-    val topPanel = JBUI.Panels.simplePanel().apply {
-      border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
-                                     JBUI.Borders.empty(EMPTY_GAP, 2 * EMPTY_GAP))
-      background = JBColor.lazy {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        scheme.defaultBackground
+      val titleLabel = JBLabel(GithubBundle.message("pull.request.timeline.comment.suggested.changes")).apply {
+        isOpaque = false
+        foreground = UIUtil.getContextHelpForeground()
       }
 
-      add(titleLabel, BorderLayout.WEST)
-      if (Registry.`is`("github.suggested.changes.apply")) {
-        add(optionButton, BorderLayout.EAST)
+
+      val topPanel = JBUI.Panels.simplePanel().apply {
+        border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
+                                       JBUI.Borders.empty(EMPTY_GAP, 2 * EMPTY_GAP))
+        background = JBColor.lazy {
+          val scheme = EditorColorsManager.getInstance().globalScheme
+          scheme.defaultBackground
+        }
+
+        add(titleLabel, BorderLayout.WEST)
+        if (Registry.`is`("github.suggested.changes.apply")) {
+          val applyLocallyAction = ApplyLocallySuggestedChangeAction(vm, block)
+          val optionButton = JBOptionButton(applyLocallyAction, null).apply {
+            val commitAction = CommitSuggestedChangeAction(vm, block, this)
+            options = arrayOf(commitAction)
+            applyApplicability(block.applicability)
+          }
+          cs.launchNow {
+            vm.isOnReviewBranch.collect {
+              if (!it) {
+                applyLocallyAction.isEnabled = false
+                optionButton.isEnabled = false
+                optionButton.optionTooltipText =
+                  GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
+              }
+              else {
+                optionButton.applyApplicability(block.applicability)
+              }
+            }
+          }
+          add(optionButton, BorderLayout.EAST)
+        }
       }
+
+      add(topPanel, BorderLayout.NORTH)
+      add(SimpleHtmlPane(block.bodyHtml), BorderLayout.CENTER)
     }
 
-    add(topPanel, BorderLayout.NORTH)
-    add(SimpleHtmlPane(content), BorderLayout.CENTER)
-
-    suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated, thread.isResolved) }
+  private fun JBOptionButton.applyApplicability(applicability: GHPRCommentBodyBlock.SuggestionsApplicability) {
+    isEnabled = applicability == GHPRCommentBodyBlock.SuggestionsApplicability.APPLICABLE
+    action.isEnabled = isEnabled
+    optionTooltipText = when (applicability) {
+      GHPRCommentBodyBlock.SuggestionsApplicability.APPLICABLE -> null
+      GHPRCommentBodyBlock.SuggestionsApplicability.RESOLVED ->
+        GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.resolved")
+      GHPRCommentBodyBlock.SuggestionsApplicability.OUTDATED ->
+        GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.outdated")
+    }
   }
 
-  private fun updateUI(optionButton: JBOptionButton, isCorrectBranch: Boolean, isOutdated: Boolean, isResolved: Boolean) {
-    if (isCorrectBranch && !isOutdated && !isResolved) {
-      optionButton.enableActions()
-      return
-    }
-
-    optionButton.apply {
-      disableActions()
-      optionTooltipText = when {
-        isOutdated -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.outdated")
-        isResolved -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.resolved")
-        else -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
-      }
-    }
-  }
-
-  private inner class ApplyLocallySuggestedChangeAction : AbstractAction(
+  private class ApplyLocallySuggestedChangeAction(
+    private val vm: GHPRReviewCommentBodyViewModel,
+    private val block: GHPRCommentBodyBlock.SuggestedChange
+  ) : AbstractAction(
     GithubBundle.message("pull.request.timeline.comment.suggested.changes.button")
   ) {
     override fun actionPerformed(event: ActionEvent) {
-      object : Task.Backgroundable(
-        project,
-        GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.apply"),
-        true
-      ) {
-        private var applyStatus = ApplyPatchStatus.FAILURE
-
-        override fun run(indicator: ProgressIndicator) {
-          applyStatus = suggestionApplier.applySuggestedChange()
-        }
-
-        override fun onSuccess() {
-          if (applyStatus == ApplyPatchStatus.SUCCESS) {
-            suggestedChangeHelper.resolveThread(thread.id)
-          }
-        }
-      }.queue()
+      block.patch?.let { vm.applySuggestionLocally(it) }
     }
   }
 
-  private inner class CommitSuggestedChangeAction(
+  private class CommitSuggestedChangeAction(
+    private val vm: GHPRReviewCommentBodyViewModel,
+    private val block: GHPRCommentBodyBlock.SuggestedChange,
     private val parent: JComponent
   ) : AbstractAction(GithubBundle.message("pull.request.timeline.comment.suggested.changes.action.commit.name")) {
     override fun actionPerformed(event: ActionEvent) {
+      if (block.patch == null) return
       var cancelRunnable: (() -> Unit)? = null
       val cancelActionListener = ActionListener {
         cancelRunnable?.invoke()
       }
 
-      val container = createPopupComponentContainer(suggestedChangeHelper.suggestedChangeCommitMessageDocument, cancelActionListener)
+      val container = createPopupComponentContainer(vm.project, cancelActionListener)
       val popup = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
         .setFocusable(true)
@@ -143,33 +133,15 @@ internal class GHPRReviewSuggestedChangeComponentFactory(
       popup.showUnderneathOf(parent)
     }
 
-    private fun createPopupComponentContainer(commentDocument: Document, cancelActionListener: ActionListener): ComponentContainer {
-      return object : ComponentContainer {
+    private fun createPopupComponentContainer(project: Project, cancelActionListener: ActionListener): ComponentContainer =
+      object : ComponentContainer {
         private val commitAction = ActionListener {
           if (commitEditor.text.isBlank()) {
             errorLabel.isVisible = true
             return@ActionListener
           }
 
-          object : Task.Backgroundable(
-            project,
-            GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.commit"),
-            true
-          ) {
-            private var commitStatus = ApplyPatchStatus.FAILURE
-
-            override fun run(indicator: ProgressIndicator) {
-              commitStatus = suggestionApplier.commitSuggestedChanges(commitEditor.text)
-            }
-
-            override fun onSuccess() {
-              cancelActionListener.actionPerformed(it)
-              if (commitStatus == ApplyPatchStatus.SUCCESS) {
-                suggestedChangeHelper.resolveThread(thread.id)
-                runWriteAction { commentDocument.setText("") }
-              }
-            }
-          }.queue()
+          vm.commitSuggestion(block.patch!!, commitEditor.text)
         }
 
         private val errorLabel = JBLabel().apply {
@@ -181,7 +153,6 @@ internal class GHPRReviewSuggestedChangeComponentFactory(
 
         private val commitEditor = CommitMessage(project, false, false, true, VcsBundle.message("commit.message.placeholder")).apply {
           editorField.apply {
-            document = commentDocument
             document.addDocumentListener(object : DocumentListener {
               override fun documentChanged(event: DocumentEvent) {
                 errorLabel.isVisible = false
@@ -226,20 +197,5 @@ internal class GHPRReviewSuggestedChangeComponentFactory(
 
         override fun dispose() {}
       }
-    }
-  }
-
-  private fun JBOptionButton.enableActions() {
-    action.isEnabled = true
-    options?.forEach { it.isEnabled = true }
-  }
-
-  private fun JBOptionButton.disableActions() {
-    action.isEnabled = false
-    options?.forEach { it.isEnabled = false }
-  }
-
-  companion object {
-    private const val EMPTY_GAP = 4
   }
 }

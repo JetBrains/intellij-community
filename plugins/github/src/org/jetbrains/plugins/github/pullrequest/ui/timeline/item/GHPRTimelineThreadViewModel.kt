@@ -40,18 +40,20 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentV
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.util.*
 
 interface GHPRTimelineThreadViewModel
-  : CollapsibleTimelineItemViewModel,
+  : GHPRReviewThreadViewModel,
+    CollapsibleTimelineItemViewModel,
     CodeReviewFoldableThreadViewModel,
     CodeReviewResolvableItemViewModel {
   val project: Project
-  val avatarIconsProvider: GHAvatarIconsProvider
   val htmlImageLoader: AsyncHtmlImageLoader
 
-  val id: String
   val author: GHActor
   val createdAt: Date?
 
@@ -61,10 +63,8 @@ interface GHPRTimelineThreadViewModel
   val filePath: String
   val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>>
 
-  val mainCommentVm: StateFlow<GHPRTimelineThreadCommentViewModel?>
-  val replies: StateFlow<List<GHPRTimelineThreadCommentViewModel>>
-
-  val newReplyVm: GHPRNewThreadCommentViewModel
+  val mainCommentVm: StateFlow<GHPRReviewThreadCommentViewModel?>
+  val replies: StateFlow<List<GHPRReviewThreadCommentViewModel>>
 
   /**
    * Show diff for a file this thread belongs to
@@ -107,12 +107,12 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
   }
 
   private val commentsVms = dataState
-    .map { it.comments }
-    .mapDataToModel({ it.id }, { createComment(it) }, { update(it) })
+    .map { it.comments.withIndex() }
+    .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
     .stateIn(cs, SharingStarted.Eagerly, emptyList())
 
-  override val mainCommentVm: StateFlow<GHPRTimelineThreadCommentViewModel> = commentsVms.mapState { it.first() }
-  override val replies: StateFlow<List<GHPRTimelineThreadCommentViewModel>> = commentsVms.mapState { it.drop(1) }
+  override val mainCommentVm: StateFlow<GHPRReviewThreadCommentViewModel> = commentsVms.mapState { it.first() }
+  override val replies: StateFlow<List<GHPRReviewThreadCommentViewModel>> = commentsVms.mapState { it.drop(1) }
 
   override val canChangeResolvedState: StateFlow<Boolean> =
     dataState.mapState { it.viewerCanResolve || it.viewerCanUnresolve }
@@ -232,8 +232,8 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
     return truncatedHunk to anchorRange
   }
 
-  private fun CoroutineScope.createComment(comment: GHPullRequestReviewComment): UpdateableGHPRTimelineThreadCommentViewModel =
-    UpdateableGHPRTimelineThreadCommentViewModel(project, this, dataContext, dataProvider,
+  private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
+    UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
                                                  this@UpdateableGHPRTimelineThreadViewModel, comment)
 
   private fun Collection<RefComparisonChange>.findByFilePath(path: String): RefComparisonChange? {

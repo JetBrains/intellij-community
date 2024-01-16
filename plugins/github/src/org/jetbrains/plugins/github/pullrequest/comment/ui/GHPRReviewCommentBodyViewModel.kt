@@ -118,14 +118,14 @@ class GHPRReviewCommentBodyViewModel internal constructor(
 
       val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(body, thread.filePath, code)
       val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
-      val blocks = GHPRReviewCommentComponentFactory.collectCommentBlocks(content)
+      val blocks = GHPRReviewCommentBodyComponentFactory.collectCommentBlocks(content)
       var suggestionIdx = 0
       blocks.map {
         when (it.commentType) {
-          GHPRReviewCommentComponentFactory.CommentType.COMMENT -> {
+          GHPRReviewCommentBodyComponentFactory.CommentType.COMMENT -> {
             GHPRCommentBodyBlock.HTML(it.content)
           }
-          GHPRReviewCommentComponentFactory.CommentType.SUGGESTED_CHANGE -> {
+          GHPRReviewCommentBodyComponentFactory.CommentType.SUGGESTED_CHANGE -> {
             val suggestion = suggestions.getOrNull(suggestionIdx)
             if (suggestion == null) {
               LOG.warn("Missing suggestion by index $suggestionIdx\nBody:\n$body\n\nContent:\n${it.content}")

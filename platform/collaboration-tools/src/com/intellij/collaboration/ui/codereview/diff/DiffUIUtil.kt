@@ -5,8 +5,11 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.LoadingDiffRequest
+import com.intellij.diff.util.Side
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+
+typealias DiffLineLocation = Pair<Side, Int>
 
 object DiffUIUtil {
   /**

@@ -4,32 +4,32 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.launchNowIn
-import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.build
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
-import com.intellij.collaboration.ui.codereview.comment.*
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-object GHPRTimelineThreadComponentFactory {
+internal object GHPRTimelineThreadComponentFactory {
   fun createIn(cs: CoroutineScope,
                vm: GHPRTimelineThreadViewModel): JComponent =
     VerticalListPanel().apply {
@@ -117,12 +117,12 @@ object GHPRTimelineThreadComponentFactory {
             add(diff)
           }
           else if (collapsed) {
-            val textPane = createCollapsedThreadComment(commentVm)
+            val textPane = createCollapsedThreadCommentBody(commentVm)
             add(textPane)
             add(diff)
           }
           else {
-            val editableText = createFullThreadComment(commentVm)
+            val editableText = GHPRReviewThreadCommentComponentFactory.createCommentBodyIn(this, commentVm)
             add(diff)
             add(editableText)
           }
@@ -149,7 +149,7 @@ object GHPRTimelineThreadComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createCollapsedThreadComment(vm: GHPRTimelineThreadCommentViewModel): JComponent {
+  private fun CoroutineScope.createCollapsedThreadCommentBody(vm: GHPRReviewThreadCommentViewModel): JComponent {
     val cs = this
     val textPane = SimpleHtmlPane().apply {
       foreground = UIUtil.getContextHelpForeground()
@@ -159,19 +159,6 @@ object GHPRTimelineThreadComponentFactory {
         .wrapWithLimitedSize(pane, DimensionRestrictions.LinesHeight(pane, 2, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))
     }
     return textPane
-  }
-
-  private fun CoroutineScope.createFullThreadComment(vm: GHPRTimelineThreadCommentViewModel): JComponent {
-    val cs = this
-    val commentPane = GHPRReviewCommentBodyComponentFactory.createIn(this, vm.bodyVm, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
-    val editableText = EditableComponentFactory.create(cs, commentPane, vm.editVm) { editVm ->
-      val actions = createEditActionsConfig(editVm)
-      CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions).let { pane ->
-        CollaborationToolsUIUtil
-          .wrapWithLimitedSize(pane, DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))
-      }
-    }
-    return editableText
   }
 
   private fun CoroutineScope.createDiff(vm: GHPRTimelineThreadViewModel): JComponent {
@@ -195,87 +182,16 @@ object GHPRTimelineThreadComponentFactory {
 
   private fun CoroutineScope.createRepliesPanel(vm: GHPRTimelineThreadViewModel): JComponent {
     val cs = this@createRepliesPanel
-    val repliesListPanel = ComponentListPanelFactory.createVertical(cs, vm.replies) { commentVm ->
-      createComment(vm, commentVm)
-    }
-
-    val additionalActions = vm.canChangeResolvedState.mapScoped {
-      buildList {
-        if (it) {
-          add(swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
-            vm.changeResolvedState()
-          }.apply {
-            bindEnabledIn(cs, vm.isBusy.inverted())
-            bindTextIn(cs, vm.isResolved.map { CodeReviewCommentUIUtil.getResolveToggleActionText(it) })
-          })
-        }
-      }
-    }.stateIn(cs, SharingStarted.Eagerly, emptyList())
-
-
-    val replyVm = vm.newReplyVm
-    //TODO: pending reply
-    val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(replyVm.submitActionIn(this, CollaborationToolsBundle.message("review.comments.reply.action")) {
-        replyVm.submit()
-      }),
-      additionalActions = additionalActions,
-      cancelAction = MutableStateFlow(null),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
-    )
-
     val componentType = CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY
-    val icon = CommentTextFieldFactory.IconConfig.of(componentType, vm.avatarIconsProvider, replyVm.currentUser.avatarUrl)
-
-    val replyComponent = CodeReviewCommentTextFieldFactory.createIn(this, replyVm, actions, icon).let {
-      CollaborationToolsUIUtil
-        .wrapWithLimitedSize(it, maxWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + componentType.contentLeftShift)
-    }.apply {
-      border = JBUI.Borders.empty(componentType.inputPaddingInsets)
-      //TODO: show resolve when available separately from reply
-      bindVisibilityIn(cs, vm.canCreateReplies)
+    val repliesListPanel = ComponentListPanelFactory.createVertical(cs, vm.replies) { commentVm ->
+      GHPRReviewThreadCommentComponentFactory.createIn(this, commentVm, componentType)
     }
 
+    val replyComponent = GHPRReviewThreadComponentFactory.createThreadReplyComponentIn(cs, vm, componentType)
     return VerticalListPanel().apply {
       add(repliesListPanel)
       add(replyComponent)
       bindVisibilityIn(cs, vm.repliesFolded.inverted())
-    }
-  }
-
-  private fun CoroutineScope.createComment(threadVm: GHPRTimelineThreadViewModel,
-                                           commentVm: GHPRTimelineThreadCommentViewModel): JComponent {
-    val editableText = createFullThreadComment(commentVm)
-    return build(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
-                 { threadVm.avatarIconsProvider.getIcon(commentVm.author.avatarUrl, it) }, editableText) {
-      iconTooltip = commentVm.author.getPresentableName()
-      maxContentWidth = null
-      val titlePanel = CodeReviewTimelineUIUtil.createTitleTextPane(threadVm.author.getPresentableName(),
-                                                                    threadVm.author.url,
-                                                                    threadVm.createdAt)
-      val actionsPanel = createCommentActions(commentVm)
-      withHeader(titlePanel, actionsPanel)
-    }
-  }
-
-  private fun CoroutineScope.createCommentActions(vm: GHPRTimelineThreadCommentViewModel): JComponent {
-    val cs = this
-    return HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      if (vm.canEdit) {
-        add(CodeReviewCommentUIUtil.createEditButton {
-          vm.editBody()
-        }.apply {
-          bindDisabledIn(cs, vm.isBusy)
-        })
-      }
-      if (vm.canDelete) {
-        add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
-          vm.delete()
-        }.apply {
-          bindDisabledIn(cs, vm.isBusy)
-        })
-      }
     }
   }
 }

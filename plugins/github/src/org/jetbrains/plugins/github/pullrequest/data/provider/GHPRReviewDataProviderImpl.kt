@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.Dispatchers
@@ -85,8 +84,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     val future = reviewService.deleteReview(EmptyProgressIndicator(), pullRequestId, reviewId)
     withContext(Dispatchers.Main.immediate) {
       pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->
-        if (pendingReview != null && pendingReview.id == reviewId) throw ProcessCanceledException()
-        else pendingReview
+        if (pendingReview != null && pendingReview.id == reviewId) null else pendingReview
       }
     }
     future.dropReviews().notifyReviews().asDeferred().awaitCancelling()
@@ -156,7 +154,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     pendingReviewRequestValue.overrideProcess(future.handleOnEdt { result, error ->
       if (error != null || (result?.state != GHPullRequestReviewState.PENDING || result.comments.totalCount != 0)) {
         messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
-        throw ProcessCanceledException()
+        resetPendingReview()
       }
       null
     })

@@ -23,8 +23,7 @@
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.github.pullrequest.GHServerVersionsCollector$Initializer"/>
 
-    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffExtension"/>
-    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       id="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"
       implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"
@@ -173,7 +172,7 @@
             text="Break GitHub API Requests"/>
 
     <action id="Github.PullRequest.Diff.Comment.Create"
-            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
+            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRReviewEditorCreateCommentAction">
       <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
       <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>

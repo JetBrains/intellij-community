@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentComponentFactory.CommentBlock
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentComponentFactory.CommentType
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory.CommentBlock
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory.CommentType
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 
-class GHPRReviewCommentComponentFactoryTest {
+class GHPRReviewCommentBodyComponentFactoryTest {
   private val simpleComment = "Some text"
   private val suggestedChangeComment = """
     <code class="language-suggestion">
@@ -116,6 +116,6 @@ class GHPRReviewCommentComponentFactoryTest {
   }
 
   private fun checkCommentBlocks(expected: List<CommentBlock>, testedComment: String) {
-    assertArrayEquals(expected.toTypedArray(), GHPRReviewCommentComponentFactory.collectCommentBlocks(testedComment).toTypedArray())
+    assertArrayEquals(expected.toTypedArray(), GHPRReviewCommentBodyComponentFactory.collectCommentBlocks(testedComment).toTypedArray())
   }
 }

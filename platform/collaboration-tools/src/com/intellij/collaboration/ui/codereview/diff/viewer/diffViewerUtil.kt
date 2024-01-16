@@ -10,10 +10,13 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.Side
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
@@ -118,9 +121,10 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
  * @param I - inlay model
  */
 @ApiStatus.Internal
-fun <I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
+fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
   cs: CoroutineScope,
-  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> CodeReviewEditorModel<I>,
+  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
+  modelKey: Key<M>,
   rendererFactory: CoroutineScope.(I) -> CodeReviewComponentInlayRenderer
 ) {
   val viewer = this
@@ -134,39 +138,54 @@ fun <I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
               { loc -> loc.takeIf { it.first == viewer.side }?.second },
               { lineIdx -> DiffLineLocation(viewer.side, lineIdx) }
             )
-            viewer.editor.controlInlaysIn(currentCs, model.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
-            CodeReviewEditorGutterControlsRenderer.setupIn(currentCs, model, viewer.editor)
+            viewer.editor.installModelIn(currentCs, model, modelKey, rendererFactory)
           }
           is UnifiedDiffViewer -> {
             val model = modelFactory(
-              { (side, lineIdx) -> viewer.transferLineToOneside(side, lineIdx).takeIf { it >= 0 } },
+              { (side, lineIdx) -> viewer.transferLineToOnesideStrict(side, lineIdx).takeIf { it >= 0 } },
               { lineIdx ->
                 val (indices, side) = viewer.transferLineFromOneside(lineIdx)
                 side.select(indices).takeIf { it >= 0 }?.let { side to it }
               }
             )
-            viewer.editor.controlInlaysIn(currentCs, model.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
-            CodeReviewEditorGutterControlsRenderer.setupIn(currentCs, model, viewer.editor)
+            viewer.editor.installModelIn(currentCs, model, modelKey, rendererFactory)
           }
           is TwosideTextDiffViewer -> {
             val modelLeft = modelFactory(
               { (side, lineIdx) -> lineIdx.takeIf { side == Side.LEFT } },
               { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) }
             )
-            viewer.editor1.controlInlaysIn(currentCs, modelLeft.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
-            CodeReviewEditorGutterControlsRenderer.setupIn(currentCs, modelLeft, viewer.editor1)
+            viewer.editor1.installModelIn(currentCs, modelLeft, modelKey, rendererFactory)
 
 
             val modelRight = modelFactory(
               { (side, lineIdx) -> lineIdx.takeIf { side == Side.RIGHT } },
               { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) }
             )
-            viewer.editor2.controlInlaysIn(currentCs, modelRight.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
-            CodeReviewEditorGutterControlsRenderer.setupIn(currentCs, modelRight, viewer.editor2)
+            viewer.editor2.installModelIn(currentCs, modelRight, modelKey, rendererFactory)
           }
         }
       }
 
+    }
+  }
+}
+
+private fun <I : CodeReviewInlayModel, M : CodeReviewEditorModel<I>> EditorEx.installModelIn(
+  cs: CoroutineScope,
+  model: M,
+  modelKey: Key<M>,
+  rendererFactory: CoroutineScope.(I) -> CodeReviewComponentInlayRenderer
+) {
+  controlInlaysIn(cs, model.inlays, CodeReviewInlayModel::key) { rendererFactory(it) }
+  CodeReviewEditorGutterControlsRenderer.setupIn(cs, model, this)
+  cs.launchNow {
+    putUserData(modelKey, model)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      putUserData(modelKey, null)
     }
   }
 }
@@ -192,7 +211,7 @@ private fun <V : DiffViewerBase> V.viewerReadyFlow(
   awaitClose {
     removeListener(listener)
   }
-}.flowOn(Dispatchers.Main)
+}.flowOn(Dispatchers.Main).distinctUntilChanged()
 
 interface DiffMapped {
   val location: Flow<DiffLineLocation?>
