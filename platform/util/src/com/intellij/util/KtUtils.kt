@@ -23,7 +23,7 @@ inline fun <T> runIf(condition: Boolean, block: () -> T): T? = if (condition) bl
   * val result = my().chain() ?: run { log.warn("null result!"); return null }
   * val result = my().chain(); if (result == null) { log.warn("null result!") } else { useNotNull(result) }  
   * if (my().chain() == null) { log.warn("null result!") }
-""")
+""", level = DeprecationLevel.ERROR)
 inline fun <T : Any> T?.alsoIfNull(block: () -> Unit): T? {
   if (this == null) {
     block()
