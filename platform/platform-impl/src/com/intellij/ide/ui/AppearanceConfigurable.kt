@@ -181,7 +181,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
           }
         }
+      }
 
+      group(message("title.accessibility")) {
         row(message("combobox.ide.scale.percent")) {
           val defaultScale = UISettingsUtils.defaultScale(false)
           var resetZoom: Cell<ActionLink>? = null
@@ -215,59 +217,57 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
 
           if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
-            zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
+            comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
           }
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
           }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
         }.topGap(TopGap.SMALL)
-      }
 
-      row {
-        var resetCustomFont: (() -> Unit)? = null
+        row {
+          var resetCustomFont: (() -> Unit)? = null
 
-        val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
-          .gap(RightGap.SMALL)
-          .bindSelected(settings::overrideLafFonts) {
-            NotRoamableUiSettings.getInstance().overrideLafFonts = it
-            if (!it) {
-              getDefaultFont().let { defaultFont ->
-                settings.fontFace = defaultFont.family
-                settings.fontSize = defaultFont.size
+          val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
+            .gap(RightGap.SMALL)
+            .bindSelected(settings::overrideLafFonts) {
+              NotRoamableUiSettings.getInstance().overrideLafFonts = it
+              if (!it) {
+                getDefaultFont().let { defaultFont ->
+                  settings.fontFace = defaultFont.family
+                  settings.fontSize = defaultFont.size
+                }
               }
             }
+            .onChanged { checkbox ->
+              if (!checkbox.isSelected) resetCustomFont?.invoke()
+            }
+
+          val fontFace = cell(FontComboBox())
+            .bind({ it.fontName }, { it, value -> it.fontName = value },
+                  MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
+                                  { settings.fontFace = it }))
+            .enabledIf(useCustomCheckbox.selected)
+            .accessibleName(message("label.font.name"))
+            .component
+
+          val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
+                                          { settings.fontSize = it },
+                                          settings.fontSize)
+            .label(message("label.font.size"))
+            .enabledIf(useCustomCheckbox.selected)
+            .accessibleName(message("label.font.size"))
+            .component
+
+          resetCustomFont = {
+            val defaultFont = getDefaultFont()
+            fontFace.fontName = defaultFont.family
+            val fontSizeValue = defaultFont.size.toString()
+            fontSize.selectedItem = fontSizeValue
+            fontSize.editor.item = fontSizeValue
           }
-          .onChanged { checkbox ->
-            if (!checkbox.isSelected) resetCustomFont?.invoke()
-          }
+        }.topGap(TopGap.SMALL)
 
-        val fontFace = cell(FontComboBox())
-          .bind({ it.fontName }, { it, value -> it.fontName = value },
-                MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
-                                { settings.fontFace = it }))
-          .enabledIf(useCustomCheckbox.selected)
-          .accessibleName(message("label.font.name"))
-          .component
-
-        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
-                                        { settings.fontSize = it },
-                                        settings.fontSize)
-          .label(message("label.font.size"))
-          .enabledIf(useCustomCheckbox.selected)
-          .accessibleName(message("label.font.size"))
-          .component
-
-        resetCustomFont = {
-          val defaultFont = getDefaultFont()
-          fontFace.fontName = defaultFont.family
-          val fontSizeValue = defaultFont.size.toString()
-          fontSize.selectedItem = fontSizeValue
-          fontSize.editor.item = fontSizeValue
-        }
-      }.topGap(TopGap.SMALL)
-
-      group(message("title.accessibility")) {
         row {
           val isOverridden = isSupportScreenReadersOverridden()
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
