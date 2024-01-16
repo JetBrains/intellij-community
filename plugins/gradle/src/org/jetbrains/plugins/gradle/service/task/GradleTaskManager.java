@@ -189,6 +189,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: disabled by registry");
       return false;
     }
+    if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+      LOG.debug("TestLauncher isn't applicable: unsupported execution with remote target");
+      return false;
+    }
     if (!settings.isTestTaskRerun()) {
       LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
       return false;
