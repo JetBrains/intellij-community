@@ -85,11 +85,13 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   fun sendCommandToExecute(shellCommand: String) {
+    // in the IDE we use '\n' line separator, but Windows requires '\r\n'
+    val command = shellCommand.replace("\n", System.lineSeparator())
     lock.withLock {
       if (isCommandRunning) {
-        LOG.warn("Command '$shellCommand' execution is postponed until currently running command is finished")
+        LOG.warn("Command '$command' execution is postponed until currently running command is finished")
       }
-      scheduledCommands.offer(shellCommand)
+      scheduledCommands.offer(command)
     }
     processQueueIfReady()
   }
