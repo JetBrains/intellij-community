@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
+import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleOpenTelemetry;
+import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
 import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtilRt;
@@ -27,8 +29,6 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment;
-import org.jetbrains.plugins.gradle.tooling.telemetry.GradleOpenTelemetry;
-import org.jetbrains.plugins.gradle.tooling.telemetry.GradleTracingContext;
 
 import java.io.Serializable;
 import java.util.*;

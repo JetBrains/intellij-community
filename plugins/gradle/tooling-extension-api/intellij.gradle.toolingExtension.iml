@@ -16,7 +16,5 @@
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="org.codehaus.groovy:groovy-ant" level="project" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
   </component>
 </module>

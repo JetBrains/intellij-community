@@ -1,6 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.modelAction;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.modelAction;
 
+import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleOpenTelemetry;
+import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
+import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import io.opentelemetry.api.trace.Span;
@@ -20,7 +24,6 @@ import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
-import org.jetbrains.plugins.gradle.tooling.telemetry.GradleOpenTelemetry;
 
 import java.io.File;
 import java.util.*;
