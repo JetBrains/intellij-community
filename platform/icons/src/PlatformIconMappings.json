@@ -172,16 +172,6 @@
       "quickfixBulb.svg": "actions/quickfixBulb.svg",
       "quickfixOffBulb.svg": "actions/quickfixOffBulb.svg"
     },
-    "empty.svg": [
-      "nodes/finalMark.svg",
-      "nodes/junitTestMark.svg",
-      "nodes/locked.svg",
-      "nodes/runnableMark.svg",
-      "nodes/shared.svg",
-      "nodes/staticMark.svg",
-      "nodes/symlink.svg",
-      "nodes/tabAlert.svg"
-    ],
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
       "addAny.svg": "fileTypes/addAny.svg",
@@ -625,7 +615,16 @@
       "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg",
-      "webFolder.svg": "nodes/webFolder.svg"
+      "webFolder.svg": "nodes/webFolder.svg",
+      "finalMark.svg": "nodes/finalMark.svg",
+      "junitTestMark.svg": "nodes/junitTestMark.svg",
+      "locked.svg": "nodes/locked.svg",
+      "processMark.svg": "nodes/processMark.svg",
+      "runnableMark.svg": "nodes/runnableMark.svg",
+      "shared.svg": "nodes/shared.svg",
+      "staticMark.svg": "nodes/staticMark.svg",
+      "symlink.svg": "nodes/symlink.svg",
+      "tabAlert.svg": "nodes/tabAlert.svg"
     },
     "objectBrowser": {
       "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
