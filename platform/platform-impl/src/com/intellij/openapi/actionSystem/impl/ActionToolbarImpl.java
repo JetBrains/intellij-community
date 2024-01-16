@@ -800,7 +800,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         maxHeight = Math.max(eachBound.height, maxHeight);
 
         if (!full) {
-          boolean inside = isLast ? eachX + eachBound.width <= widthToFit : eachX + eachBound.width + autoButtonSize <= widthToFit;
+          int reservedSpace = isLast ? 0 : autoButtonSize;
+          int availableWidth = widthToFit - eachX - reservedSpace;
+          boolean inside;
+
+          if (eachBound.width <= availableWidth) {
+            inside = true;
+          }
+          else {
+            Dimension lastFitMinimumSize = eachComp.getMinimumSize();
+            if (lastFitMinimumSize.width > 0 && lastFitMinimumSize.width <= availableWidth) {
+              inside = true;
+              eachBound.width = availableWidth;
+            }
+            else {
+              inside = false;
+            }
+          }
 
           if (inside) {
             if (eachComp == mySecondaryActionsButton) {

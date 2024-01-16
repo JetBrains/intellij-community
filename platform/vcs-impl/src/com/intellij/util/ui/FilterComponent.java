@@ -290,6 +290,13 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
       if (myText == null) return "";
       return myText.get();
     }
+
+    @Override
+    public Dimension getMinimumSize() {
+      Dimension size = super.getMinimumSize();
+      size.width = Math.min(size.width, JBUI.scale(70));
+      return size;
+    }
   }
 
   @Override
