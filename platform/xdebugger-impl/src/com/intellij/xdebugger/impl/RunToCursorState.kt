@@ -4,16 +4,16 @@ package com.intellij.xdebugger.impl
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 
 interface RunToCursorService {
   fun shouldShowInlay(): Boolean
   fun isAtExecution(file: VirtualFile, line: Int): Boolean
-  suspend fun canRunToCursor(position: XSourcePosition, editor: Editor): Boolean
+  suspend fun canRunToCursor(editor: Editor, lineNumber: Int): Boolean
 }
 
 open class DefaultRunToCursorService(protected val project: Project) : RunToCursorService {
@@ -28,8 +28,10 @@ open class DefaultRunToCursorService(protected val project: Project) : RunToCurs
     return position.file == file && position.line == line
   }
 
-  override suspend fun canRunToCursor(position: XSourcePosition, editor: Editor): Boolean {
+  override suspend fun canRunToCursor(editor: Editor, lineNumber: Int): Boolean {
     return readAction {
+      val position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber)
+                          ?: return@readAction false
       val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
       types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
     }

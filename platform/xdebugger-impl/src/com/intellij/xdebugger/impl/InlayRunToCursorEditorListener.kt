@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -205,10 +204,9 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
-      val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
       val actions = mutableListOf<AnAction>()
 
-      if (runToCursorService.canRunToCursor(hoverPosition, editor)) {
+      if (runToCursorService.canRunToCursor(editor, lineNumber)) {
         actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 
