@@ -1,4 +1,4 @@
-package icons;
+package com.intellij.jupyter.core.icons;
 
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;

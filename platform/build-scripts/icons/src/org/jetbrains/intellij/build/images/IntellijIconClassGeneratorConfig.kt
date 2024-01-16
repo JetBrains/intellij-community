@@ -67,6 +67,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons/com/jetbrains/localization",
       )
 
+      "intellij.jupyter.core"-> IntellijIconClassGeneratorModuleConfig(
+        className = "JupyterCoreIcons",
+        packageName = "com.intellij.jupyter.core.icons",
+        iconDirectory = "icons/org.jetbrains.plugins.notebooks.jupyter",
+      )
 
         "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringMvcApiIcons",

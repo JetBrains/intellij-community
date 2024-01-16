@@ -3,7 +3,7 @@
   <xi:include href="/META-INF/jupyter-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <httpRequestHandler id="jupyter-view-only" implementation="org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly.JupyterViewOnlyHandler"/>
-    <fileEditorProvider id="jupyter-view-only-provider" implementation="org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly.JupyterViewOnlyProvider" fileType="Jupyter"/>
+    <httpRequestHandler id="jupyter-view-only" implementation="com.intellij.jupyter.viewOnly.JupyterViewOnlyHandler"/>
+    <fileEditorProvider id="jupyter-view-only-provider" implementation="com.intellij.jupyter.viewOnly.JupyterViewOnlyProvider" fileType="Jupyter"/>
   </extensions>
 </idea-plugin>

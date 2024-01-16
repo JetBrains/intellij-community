@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.notebooks.core.api.lang
+package com.intellij.jupyter.core.lang
 
 import com.intellij.lang.Language
 

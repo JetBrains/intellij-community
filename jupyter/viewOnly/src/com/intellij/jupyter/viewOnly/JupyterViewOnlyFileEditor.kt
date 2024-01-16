@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly
+package com.intellij.jupyter.viewOnly
 
 
 import com.intellij.ide.ui.LafManagerListener
@@ -17,13 +17,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
-import org.jetbrains.plugins.notebooks.jupyter.preview.JupyterCefHttpHandlerBase
-import org.jetbrains.plugins.notebooks.jupyter.preview.addPathSegment
+import com.intellij.jupyter.core.jupyter.preview.JupyterCefHttpHandlerBase
+import com.intellij.jupyter.core.jupyter.preview.addPathSegment
 import java.beans.PropertyChangeListener
 import java.nio.ByteBuffer
 import javax.swing.JComponent

@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.notebooks.jupyter
+package com.intellij.jupyter.core.jupyter
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
-import icons.JupyterCoreIcons
+import com.intellij.jupyter.core.icons.JupyterCoreIcons
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 

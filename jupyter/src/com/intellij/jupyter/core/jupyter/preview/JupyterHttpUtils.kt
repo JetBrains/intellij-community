@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.notebooks.jupyter.preview
+package com.intellij.jupyter.core.jupyter.preview
 
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.ide.BuiltInServerManager
