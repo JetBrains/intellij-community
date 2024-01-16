@@ -20,7 +20,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Use lightweight implementation of JsonSchemaObject" key="json.schema.object.v2"/>
+    <registryKey defaultValue="false" description="Use lightweight implementation of JsonSchemaObject" key="json.schema.object.v2"/>
     <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
