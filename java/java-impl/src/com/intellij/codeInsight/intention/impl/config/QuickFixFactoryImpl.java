@@ -20,6 +20,7 @@ import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
@@ -421,7 +422,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                          null,
                                          true,
                                          false);
-    return new LocalQuickFixAsIntentionAdapter(new RenameFix(), descriptor);
+    return QuickFixWrapper.wrap(descriptor, new RenameFix());
   }
 
   @NotNull
@@ -1128,7 +1129,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     ProblemDescriptor descriptor =
       new ProblemDescriptorBase(duplicateElement, duplicateElement, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null,
                                 false, false);
-    return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
+    return QuickFixWrapper.wrap(descriptor, new UnnecessaryDefaultInspection.DeleteDefaultFix());
   }
 
 
