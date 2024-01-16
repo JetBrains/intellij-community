@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -351,6 +351,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("expui/general/projectWideAnalysisOff.svg", 1505013057, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("expui/general/projectWideAnalysisOn.svg", 103110158, 2);
     /** 28x28 */ public static final @NotNull Icon QuestionDialog = load("expui/general/questionDialog.svg", 2033181276, 2);
+    /** 16x16 */ public static final @NotNull Icon QuestionMark = load("expui/general/questionMark.svg", 111881760, 2);
     /** 16x16 */ public static final @NotNull Icon ReaderMode = load("expui/general/readerMode.svg", 502859390, 2);
     /** 16x16 */ public static final @NotNull Icon Redo = load("expui/general/redo.svg", -765720439, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("expui/general/refresh.svg", 323445437, 2);

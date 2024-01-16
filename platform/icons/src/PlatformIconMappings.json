@@ -407,6 +407,7 @@
       "successDialog.svg": "general/successDialog.svg",
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
+      "questionMark.svg": "general/contextHelp.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
     "graph": {
