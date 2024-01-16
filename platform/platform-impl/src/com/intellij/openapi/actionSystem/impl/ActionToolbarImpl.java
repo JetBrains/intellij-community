@@ -821,14 +821,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           }
           else {
             full = true;
+            myAutoPopupRec = new Rectangle(insets.left + eachX, insets.top, widthToFit - eachX, heightToFit);
+            myFirstOutsideIndex = i;
           }
         }
 
         if (full) {
-          if (myAutoPopupRec == null) {
-            myAutoPopupRec = new Rectangle(insets.left + eachX, insets.top, widthToFit - eachX, heightToFit);
-            myFirstOutsideIndex = i;
-          }
           eachBound.x = Integer.MAX_VALUE;
           eachBound.y = Integer.MAX_VALUE;
         }
@@ -861,14 +859,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           }
           else {
             full = true;
+            myAutoPopupRec = new Rectangle(insets.left, insets.top + eachY, widthToFit, heightToFit - eachY);
+            myFirstOutsideIndex = i;
           }
         }
 
         if (full) {
-          if (myAutoPopupRec == null) {
-            myAutoPopupRec = new Rectangle(insets.left, insets.top + eachY, widthToFit, heightToFit - eachY);
-            myFirstOutsideIndex = i;
-          }
           eachBound.x = Integer.MAX_VALUE;
           eachBound.y = Integer.MAX_VALUE;
         }
