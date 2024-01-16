@@ -1626,6 +1626,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/createFromUsage/createFunction/fromJava/companionMember.before.Main.java");
                 }
 
+                @TestMetadata("libraryFunction.before.Main.java")
+                public void testLibraryFunction() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/fromJava/libraryFunction.before.Main.java");
+                }
+
                 @TestMetadata("nullType.before.Main.java")
                 public void testNullType() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/fromJava/nullType.before.Main.java");

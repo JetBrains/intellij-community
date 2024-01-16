@@ -77,6 +77,11 @@ public abstract class K2MultiFileQuickFixTestGenerated extends AbstractK2MultiFi
             runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromJava/companionMember.before.Main.java");
         }
 
+        @TestMetadata("libraryFunction.before.Main.java")
+        public void testLibraryFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromJava/libraryFunction.before.Main.java");
+        }
+
         @TestMetadata("nullType.before.Main.java")
         public void testNullType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromJava/nullType.before.Main.java");
