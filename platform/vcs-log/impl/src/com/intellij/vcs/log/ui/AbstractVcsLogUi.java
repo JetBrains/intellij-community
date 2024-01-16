@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.ui.navigation.History;
-import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -29,10 +27,10 @@ import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
 
 public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
@@ -98,7 +96,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
 
   @Override
   public <T> void jumpTo(@NotNull T commitId,
-                         @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                         @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                          @NotNull SettableFuture<JumpResult> future,
                          boolean silently,
                          boolean focus) {
@@ -119,14 +117,14 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   }
 
   public <T> void tryJumpTo(@NotNull T commitId,
-                            @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                            @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                             @NotNull SettableFuture<JumpResult> future,
                             boolean focus) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
 
-    int result = rowGetter.fun(myVisiblePack, commitId);
+    int result = rowGetter.apply(myVisiblePack, commitId);
     if (result >= 0) {
       getTable().jumpToRow(result, focus);
       future.set(JumpResult.SUCCESS);
@@ -151,7 +149,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
 
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
-                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
+                                          @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     String message = getCommitNotFoundMessage(commitId, commitExists);
     VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", message);
   }

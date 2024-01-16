@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
@@ -16,6 +15,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.function.BiFunction;
 
 /**
  * A base class to simplify {@link VcsLogUiEx} implementation
@@ -81,7 +81,7 @@ public abstract class VcsLogUiBase implements VcsLogUiEx {
 
   @Override
   public <T> void jumpTo(@NotNull T commitId,
-                         @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                         @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                          @NotNull SettableFuture<JumpResult> future,
                          boolean silently,
                          boolean focus) {

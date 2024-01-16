@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.BiFunction;
 
 /**
  * Use {@link VcsLogUiBase} as a base implementation class
@@ -45,7 +45,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
 
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
-                  @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                  @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                   @NotNull SettableFuture<JumpResult> future,
                   boolean silently,
                   boolean focus);
