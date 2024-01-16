@@ -52,6 +52,7 @@ sealed class K2MoveRenameUsageInfo(
      * fun fooBar() {
      *   foo() // this usage of foo an internal usage of fooBar
      * }
+     * ```
      */
     abstract val isInternal: Boolean
 
@@ -160,8 +161,7 @@ sealed class K2MoveRenameUsageInfo(
 
         override fun retarget(to: KtNamedDeclaration): PsiElement? {
             val element = (element as? KtElement) ?: return element
-            val referencedElement = (to as? KtNamedDeclaration) ?: return element
-            referencedElement.fqName?.let(element.containingKtFile::addImport)
+            to.fqName?.let(element.containingKtFile::addImport)
             return element
         }
     }
@@ -298,7 +298,7 @@ sealed class K2MoveRenameUsageInfo(
                 val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
                 val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
                 if (!newReferencedElement.isValid || newReferencedElement !is KtNamedDeclaration) return@mapNotNull null
-                (usageInfo as? K2MoveRenameUsageInfo)?.refresh(refExpr, newReferencedElement)
+                usageInfo.refresh(refExpr, newReferencedElement)
             }
         }
 
