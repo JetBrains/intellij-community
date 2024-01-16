@@ -163,7 +163,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
       doc.setReadOnly(true);
       uEditor = factory.createViewer(doc, editor.getProject(), EditorKind.PREVIEW);
       var component = EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false);
-      component.setBorder(JBUI.Borders.emptyLeft(8));
+      component.setBorder(JBUI.Borders.empty(4, 8));
 
       JPanel hintPanel = new JPanel(new BorderLayout());
       hintPanel.add(component);

@@ -7,32 +7,24 @@ Hits: 1
 Line 5 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
-
 Line 6 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
-
 Line 8 coverage: PARTIAL
 Hits: 1
 Covered 2/4 branches
-
 Line 9 coverage: PARTIAL
 Hits: 1
 Covered 2/4 branches
-
 Line 11 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
-
 Line 12 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
-
 Line 14 coverage: PARTIAL
 Hits: 1
 Covered 2/4 branches
-
 Line 15 coverage: PARTIAL
 Hits: 1
 Covered 2/4 branches
-

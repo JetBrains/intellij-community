@@ -78,7 +78,7 @@ import java.util.stream.IntStream;
  */
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
-  private static final String indent = "    ";
+  private static final String indent = "  ";
 
   public static JavaCoverageEngine getInstance() {
     return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
@@ -551,7 +551,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                   List<ConditionCoverageExpression> conditions,
                                                   List<SwitchCoverageExpression> switches) {
     StringBuilder buf = new StringBuilder();
-    buf.append(CoverageBundle.message("hits.title", lineData.getHits())).append("\n");
+    buf.append(CoverageBundle.message("hits.title", lineData.getHits()));
     int idx = 0;
     int hits = 0;
 
@@ -579,24 +579,24 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
     if (lineData.getHits() > hits && hits > 0) {
-      buf.append(JavaCoverageBundle.message("report.unknown.outcome", lineData.getHits() - hits));
+      buf.append("\n").append(JavaCoverageBundle.message("report.unknown.outcome", lineData.getHits() - hits));
     }
 
     return buf.toString();
   }
 
   private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, ConditionCoverageExpression expression) {
-    buf.append(indent).append(expression.getExpression()).append("\n");
+    buf.append("\n").append(indent).append(expression.getExpression());
     boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
-    buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits)).append("\n");
+    buf.append("\n").append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
 
     int falseHits = reverse ? jumpData.getTrueHits() : jumpData.getFalseHits();
-    buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits)).append("\n");
+    buf.append("\n").append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits));
   }
 
   private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchCoverageExpression expression, int coverageStatus) {
-    buf.append(indent).append(expression.getExpression()).append("\n");
+    buf.append("\n").append(indent).append(expression.getExpression());
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
       String key = expression.getCases() != null && i < expression.getCases().size()
@@ -604,19 +604,19 @@ public class JavaCoverageEngine extends CoverageEngine {
                    : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
-      buf.append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits).append("\n");
+      buf.append("\n").append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits);
     }
     int defaultHits = switchData.getDefaultHits();
     boolean defaultCausesLinePartiallyCovered = allBranchesHit && coverageStatus != LineCoverage.FULL;
     if (expression.getHasDefault() || defaultCausesLinePartiallyCovered || defaultHits > 0) {
-      buf.append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits).append("\n");
+      buf.append("\n").append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits);
     }
   }
 
   private static @NotNull String createDefaultHitsMessage(@NotNull LineData lineData) {
     BranchData branchData = lineData.getBranchData();
     if (branchData == null) return CoverageBundle.message("hits.title", lineData.getHits());
-    return CoverageBundle.message("branch.coverage.message", lineData.getHits(), branchData.getCoveredBranches(), branchData.getTotalBranches()) + "\n";
+    return CoverageBundle.message("branch.coverage.message", lineData.getHits(), branchData.getCoveredBranches(), branchData.getTotalBranches());
   }
 
   @Override
