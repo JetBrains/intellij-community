@@ -5,15 +5,15 @@ import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.grazie.text.TextProblem
 
 internal class GrazieCustomFixWrapper(problem: TextProblem,
                                       delegate: LocalQuickFix,
                                       descriptor: ProblemDescriptor,
                                       private val index: Int) :
-  IntentionWrapper(if (delegate is IntentionAction) delegate else LocalQuickFixAsIntentionAdapter(delegate, descriptor)),
+  IntentionWrapper(QuickFixWrapper.wrap(descriptor, delegate)),
   Comparable<IntentionAction>
 {
   private val problemFamily: String = GrazieReplaceTypoQuickFix.familyName(problem)
