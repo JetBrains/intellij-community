@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.indices.searcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenClassSearchResult
 import org.jetbrains.idea.maven.indices.MavenClassSearcher
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
@@ -23,7 +24,7 @@ class MavenLuceneIndexer {
   }
 
   fun searchSync(patternForQuery: String, repos: List<MavenRepositoryInfo>, maxResult: Int = 50): List<MavenClassSearchResult> {
-    return runBlockingCancellable {
+    return runBlocking {
       search(patternForQuery, repos, maxResult)
     }
 

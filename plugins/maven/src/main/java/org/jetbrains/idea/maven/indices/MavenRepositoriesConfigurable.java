@@ -7,7 +7,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -16,7 +15,6 @@ import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -88,8 +86,8 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenRepositoryInfo indexToUpdate = getSelectedIndices().stream().findFirst().orElse(null);
-    MavenSystemIndicesManager.getInstance().updateIndexContentSync(indexToUpdate, true, true, new MavenProgressIndicator(null, null));
+    MavenRepositoryInfo repositoryInfo = getSelectedIndices().stream().findFirst().orElse(null);
+    MavenSystemIndicesManager.getInstance().updateIndexContentFromEDT(repositoryInfo);
   }
 
   private List<MavenRepositoryInfo> getSelectedIndices() {

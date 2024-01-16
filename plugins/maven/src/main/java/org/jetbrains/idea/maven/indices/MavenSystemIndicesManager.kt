@@ -6,6 +6,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -325,6 +329,21 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
   @TestOnly
   fun getAllGavIndices(): List<MavenGAVIndex> {
     return inMemoryIndices.values.toImmutableList()
+  }
+
+  fun updateIndexContentFromEDT(repositoryInfo: MavenRepositoryInfo) {
+    val task = object : Task.Backgroundable(null, "Update index", true) {
+      override fun run(indicator: ProgressIndicator) {
+        val mavenIndicator = MavenProgressIndicator(null, indicator, null);
+        runBlockingCancellable {
+          val mavenIndex = getClassIndexForRepository(repositoryInfo);
+          (mavenIndex as? MavenUpdatableIndex)?.updateOrRepair(true, mavenIndicator, true)
+        }
+      }
+    }
+
+    ProgressManager.getInstance().run(task);
+
   }
 
   companion object {
