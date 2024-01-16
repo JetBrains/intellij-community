@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.util.io.Decompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -61,8 +63,10 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
   if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
-      withContext(Dispatchers.IO) {
-        runProcess(args = listOf("7z", "x", "-snld", "-bd", sitFile.toString()), workingDir = tempSit)
+      spanBuilder("extracting ${sitFile.name}").useWithScope(Dispatchers.IO) {
+        Decompressor.Zip(sitFile)
+          .withZipExtensions()
+          .extract(tempSit)
       }
       RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
     }
