@@ -91,32 +91,3 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 }
-
-internal class SwitchToCommitDialogHint(toolWindow: ToolWindowEx, toolbar: ActionToolbar) : ChangesViewContentManagerListener {
-  private val toolwindowGearButton: (ActionToolbar) -> JComponent = { toolbar ->
-    // see com.intellij.openapi.wm.impl.ToolWindowImpl.GearActionGroup / com.intellij.toolWindow.ToolWindowHeader.ShowOptionsAction
-    val gearIcon = if (ExperimentalUI.isNewUI()) AllIcons.Actions.More else AllIcons.General.GearPlain
-    findToolbarActionButton(toolbar) { it.templatePresentation.icon == gearIcon } ?: toolbar.component
-  }
-
-  private val actionToolbarTooltip =
-    ActionToolbarGotItTooltip("changes.view.toolwindow",
-                              if (ExperimentalUI.isNewUI()) message("switch.to.commit.dialog.hint.text.new.ui")
-                              else message("switch.to.commit.dialog.hint.text"),
-                              toolWindow.disposable, toolbar, toolwindowGearButton)
-
-  init {
-    toolWindow.project.messageBus.connect(actionToolbarTooltip.tooltipDisposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)
-  }
-
-  override fun toolWindowMappingChanged() = actionToolbarTooltip.hideHint(true)
-
-  companion object {
-    fun install(project: Project) {
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID) as? ToolWindowEx ?: return
-      val toolbar = toolWindow.decorator.headerToolbar ?: return
-
-      SwitchToCommitDialogHint(toolWindow, toolbar)
-    }
-  }
-}
