@@ -1500,7 +1500,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log)
     l.log.clear()
-    tree.removeManagedFiles(Arrays.asList(projectPom))
+    tree.removeManagedFiles(listOf(projectPom))
     tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
     assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log)
   }

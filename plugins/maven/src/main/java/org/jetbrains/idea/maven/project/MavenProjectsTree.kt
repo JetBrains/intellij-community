@@ -72,7 +72,7 @@ class MavenProjectsTree(val project: Project) {
 
   private val myTimestamps: MutableMap<VirtualFile, MavenProjectTimestamp> = HashMap()
   private val myWorkspaceMap = MavenWorkspaceMap()
-  private val myMavenIdToProjectMapping: MutableMap<MavenId?, MavenProject> = HashMap()
+  private val myMavenIdToProjectMapping: MutableMap<MavenId, MavenProject> = HashMap()
   private val myVirtualFileToProjectMapping: MutableMap<VirtualFile, MavenProject> = HashMap()
   private val myAggregatorToModuleMapping: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap()
   private val myModuleToAggregatorMapping: MutableMap<MavenProject, MavenProject> = HashMap()
@@ -166,9 +166,9 @@ class MavenProjectsTree(val project: Project) {
     resetManagedFilesPathsAndProfiles(newFiles, newProfiles)
   }
 
-  fun removeManagedFiles(files: List<VirtualFile?>?) {
+  fun removeManagedFiles(files: List<VirtualFile>) {
     synchronized(myStateLock) {
-      myManagedFilesPaths.removeAll(MavenUtil.collectPaths(files))
+      myManagedFilesPaths.removeAll(files.map { it.path }.toSet())
     }
   }
 
@@ -320,9 +320,9 @@ class MavenProjectsTree(val project: Project) {
     }
   }
 
-  val availableProfiles: Collection<String>
+  val availableProfiles: Set<String>
     get() {
-      val res: MutableCollection<String> = HashSet()
+      val res = HashSet<String>()
 
       for (each in projects) {
         res.addAll(each.profilesIds)
@@ -473,7 +473,7 @@ class MavenProjectsTree(val project: Project) {
     return isManagedFile(moduleFile.path)
   }
 
-  fun isManagedFile(path: String?): Boolean {
+  private fun isManagedFile(path: String): Boolean {
     synchronized(myStateLock) {
       for (each in myManagedFilesPaths) {
         if (FileUtil.pathsEqual(each, path)) return true
@@ -482,11 +482,11 @@ class MavenProjectsTree(val project: Project) {
     }
   }
 
-  fun isPotentialProject(path: String?): Boolean {
+  fun isPotentialProject(path: String): Boolean {
     if (isManagedFile(path)) return true
 
     for (each in projects) {
-      if (VfsUtilCore.pathEqualsTo(each.file, path!!)) return true
+      if (VfsUtilCore.pathEqualsTo(each.file, path)) return true
       if (each.modulePaths.contains(path)) return true
     }
     return false
@@ -905,7 +905,7 @@ class MavenProjectsTree(val project: Project) {
     myListeners.addAll(other.myListeners)
   }
 
-  fun fireProfilesChanged() {
+  private fun fireProfilesChanged() {
     for (each in myListeners) {
       each.profilesChanged()
     }
@@ -1186,12 +1186,12 @@ class MavenProjectsTree(val project: Project) {
 
     private fun updateExplicitProfiles(explicitProfiles: MutableCollection<String>,
                                        temporarilyRemovedExplicitProfiles: MutableCollection<String>,
-                                       available: Collection<String>) {
-      val removedProfiles: MutableCollection<String> = HashSet(explicitProfiles)
+                                       available: Set<String>) {
+      val removedProfiles = HashSet(explicitProfiles)
       removedProfiles.removeAll(available)
       temporarilyRemovedExplicitProfiles.addAll(removedProfiles)
 
-      val restoredProfiles: MutableCollection<String> = HashSet(temporarilyRemovedExplicitProfiles)
+      val restoredProfiles = HashSet(temporarilyRemovedExplicitProfiles)
       restoredProfiles.retainAll(available)
       temporarilyRemovedExplicitProfiles.removeAll(restoredProfiles)
 
