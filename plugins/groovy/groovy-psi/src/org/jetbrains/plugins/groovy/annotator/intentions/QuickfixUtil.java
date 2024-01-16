@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -158,13 +159,13 @@ public final class QuickfixUtil {
   }
 
   @NotNull
-  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, LocalQuickFix @NotNull [] fixes) {
+  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix @NotNull [] fixes) {
     InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
     // dummy problem descriptor, highlight element is only used
     ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
       highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY
     );
-    return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
+    return ContainerUtil.map(fixes, it -> QuickFixWrapper.wrap(descriptor, it));
   }
 
   public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
