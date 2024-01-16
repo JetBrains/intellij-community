@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterTest
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File

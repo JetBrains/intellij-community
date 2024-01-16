@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.k2.fe10-bindings" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="TEST" />

@@ -13,14 +13,13 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.old" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
