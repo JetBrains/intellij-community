@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -53,8 +53,7 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
     PsiRecordComponent[] components = resolved.getRecordComponents();
     if (components.length == 0) return Collections.emptyList();
     Set<PsiRecordComponent> used = new HashSet<>();
-    List<PsiReferenceExpression> references =
-      VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
     List<List<PsiReferenceExpression>> result = new ArrayList<>();
     for (int i = 0; i < components.length; i++) {
       result.add(new ArrayList<>());
@@ -125,7 +124,7 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
         for (PsiReferenceExpression expression : expressions) {
           PsiLocalVariable variable = getVariableFromInitializer(expression);
           if (variable != null) {
-            var references = VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+            var references = VariableAccessUtils.getVariableReferences(variable);
             for (PsiReferenceExpression ref : references) {
               ExpressionUtils.bindReferenceTo(ref, s);
             }

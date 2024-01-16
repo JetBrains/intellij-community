@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,6 +265,25 @@ public final class VariableAccessUtils {
     return ExpressionUtils.isReferenceTo(expression, variable);
   }
 
+  /**
+   * Finds all references to the specified variable in the declaration scope of the variable,
+   * i.e. everywhere the variable is accessible.
+   * NOTE: this method will only search in the containing file for the variable. This may lead to incorrect results for fields.
+   *
+   * @param variable  the variable to find references for
+   * @return a list of references, empty list if no references were found.
+   */
+  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
+    PsiElement scope = variable instanceof PsiField ? variable.getContainingFile() : PsiUtil.getVariableCodeBlock(variable, null);
+    return getVariableReferences(variable, scope);
+  }
+
+  /**
+   * Finds all references to the specified variable in the specified context.
+   * @param variable  the variable to find references for
+   * @param context  the context to find references in
+   * @return a list of references. When the specified context is {@code null}, the result will always be an empty list.
+   */
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
     List<PsiReferenceExpression> result = new ArrayList<>();
@@ -278,8 +297,7 @@ public final class VariableAccessUtils {
   }
 
   @Contract("_, null -> false")
-  public static boolean variableIsUsed(@NotNull PsiVariable variable,
-                                       @Nullable PsiElement context) {
+  public static boolean variableIsUsed(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     return context != null && VariableUsedVisitor.isVariableUsedIn(variable, context);
   }
 

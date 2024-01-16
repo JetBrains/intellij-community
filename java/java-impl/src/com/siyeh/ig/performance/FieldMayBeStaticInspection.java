@@ -113,7 +113,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
 
     private static boolean isIdentitySensitive(@NotNull PsiField field) {
       if (field.getType() instanceof PsiPrimitiveType) return false;
-      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
+      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(field);
       for (PsiReferenceExpression ref : refs) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
         if (parent instanceof PsiSynchronizedStatement) return true;
