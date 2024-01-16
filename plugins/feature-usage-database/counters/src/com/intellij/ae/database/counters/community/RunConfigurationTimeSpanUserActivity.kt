@@ -36,7 +36,7 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   private var lastBuildAtLock = Mutex()
   private var lastBuildAt = 0L
 
-  internal suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int, timeStart: Long) {
+  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int, timeStart: Long) {
     /**
      * Sometimes [BuildProgressListener] reports events, sometimes [ExecutionListener].
      * Sometimes they both report build events. So if a build event happened within 27ms, we will skip it
@@ -55,7 +55,7 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
 
-  internal suspend fun writeEnd(id: Int) {
+  suspend fun writeEnd(id: Int) {
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.End, null)
   }
 
