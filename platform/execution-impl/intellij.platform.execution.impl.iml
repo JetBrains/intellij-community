@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

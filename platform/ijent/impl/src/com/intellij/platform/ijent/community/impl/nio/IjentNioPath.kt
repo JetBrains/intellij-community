@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs.nio
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Canonicalize
 import com.intellij.platform.ijent.fs.IjentFsResult
 import com.intellij.platform.ijent.fs.IjentPath
+import com.intellij.platform.ijent.fs.getOrThrow
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*

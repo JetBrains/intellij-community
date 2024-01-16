@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs.nio
+package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.ijent.community.impl.nio.FsKind.UNIX
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFsResult
-import com.intellij.platform.ijent.fs.nio.FsKind.UNIX
 import io.kotest.matchers.collections.shouldBeEmpty
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Disabled

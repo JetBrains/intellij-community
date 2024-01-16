@@ -4,7 +4,6 @@ package com.intellij.platform.ijent.fs
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ijent.fs.IjentPathResult.Err
 import com.intellij.platform.ijent.fs.IjentPathResult.Ok
-import com.intellij.platform.ijent.fs.nio.getOrThrow
 
 internal class ArrayListIjentAbsolutePath private constructor(
   private val _root: Root,

@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.platform.ijent.fs.IjentPathResult.Ok
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
 
 @ApiStatus.Experimental
 sealed interface IjentPathResult<P : IjentPath> {
@@ -24,7 +24,7 @@ sealed interface IjentPath {
     @JvmStatic
     fun parse(raw: String, os: Absolute.OS?): IjentPathResult<out IjentPath> =
       when (val absoluteResult = Absolute.parse(raw, os)) {
-        is Ok -> absoluteResult
+        is IjentPathResult.Ok -> absoluteResult
         is IjentPathResult.Err -> Relative.parse(raw)
       }
   }
@@ -223,3 +223,10 @@ sealed interface IjentPath {
     fun toDebugString(): String
   }
 }
+
+@Throws(InvalidPathException::class)
+fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
+  when (this) {
+    is IjentPathResult.Ok -> path
+    is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
+  }

@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs.nio
+package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Err
+import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Ok
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.ListDirectory
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.ListDirectoryWithAttrs
-import com.intellij.platform.ijent.fs.impl.IjentFsResultImpl
-import com.intellij.platform.ijent.fs.nio.MockIjentFileSystemApi.MockResult.Err
-import com.intellij.platform.ijent.fs.nio.MockIjentFileSystemApi.MockResult.Ok
 import kotlinx.coroutines.CoroutineScope
 import java.nio.ByteBuffer
 import kotlin.math.min

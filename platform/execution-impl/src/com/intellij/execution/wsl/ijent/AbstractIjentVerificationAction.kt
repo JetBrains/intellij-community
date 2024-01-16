@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
 package com.intellij.execution.wsl.ijent
 
@@ -19,8 +19,8 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
+import com.intellij.platform.ijent.community.impl.nio.asNioFileSystem
 import com.intellij.platform.ijent.executeProcess
-import com.intellij.platform.ijent.fs.nio.asNioFileSystem
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
