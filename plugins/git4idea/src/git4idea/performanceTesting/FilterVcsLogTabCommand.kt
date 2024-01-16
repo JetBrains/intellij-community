@@ -4,6 +4,10 @@ package git4idea.performanceTesting
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.vcs.log.VcsLogDetailsFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -18,7 +22,7 @@ import kotlinx.coroutines.withContext
 /**
  * This command will filter vcs log tab data by set of filters on the root directory
  * %filterVcsLogTab <user_name>
- * Example - %filterVcsLogTab intellij,Alexander Kass
+ * Example - %filterVcsLogTab -name Alexander Kass -path srs/SomeImpl.java
  */
 class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
@@ -36,14 +40,30 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
     }
 
     withContext(Dispatchers.IO) {
-      val dataManager = logManager.dataManager
-      val userName = extractCommandArgument(PREFIX)
-      val usersFilter = VcsLogFilterObject.fromUserNames(listOf(userName), dataManager)
-      val filterCollection = VcsLogFilterObject.collection(usersFilter)
-      val (dataPack, _) = VcsLogFiltererImpl(dataManager)
-        .filter(dataManager.dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filterCollection, CommitCountStage.ALL)
+      val vcsLogData = logManager.dataManager
+      val (dataPack, _) = VcsLogFiltererImpl(vcsLogData)
+        .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, generateVcsFilter(extractCommandArgument(PREFIX), vcsLogData),
+                CommitCountStage.ALL)
       logger<FilterVcsLogTabCommand>().info("VisibleCommitCount size ${dataPack.visibleGraph.visibleCommitCount}")
       //TODO Report filter result 'dataPack.first.visibleGraph.visibleCommitCount' to CSV in meter style
     }
+  }
+
+  private fun generateVcsFilter(rawParams: String, vcsLogData: VcsLogData): VcsLogFilterCollection {
+    val regex = "-(\\w+)\\s+([\\S]+)".toRegex()
+
+    val matches = regex.findAll(rawParams)
+    val result = mutableListOf<VcsLogDetailsFilter>()
+
+    for (match in matches) {
+      val (key, value) = match.destructured
+
+      when (key) {
+        "name" -> result.add(VcsLogFilterObject.fromUserNames(listOf(value), vcsLogData))
+        "path" -> result.add(VcsLogFilterObject.fromPaths(listOf(LocalFilePath(value, false))))
+      }
+    }
+
+    return VcsLogFilterObject.collection(*result.toTypedArray())
   }
 }
