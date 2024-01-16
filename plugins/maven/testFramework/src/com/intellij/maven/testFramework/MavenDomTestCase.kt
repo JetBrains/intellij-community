@@ -3,6 +3,7 @@ package com.intellij.maven.testFramework
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -255,6 +256,16 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertCompletionVariants(f, LOOKUP_STRING, *expected)
   }
 
+  /**
+   * bypass DependencySearchService cache
+   */
+  protected fun assertCompletionVariantsNoCache(f: VirtualFile,
+                                                lookupElementStringFunction: Function<LookupElement, String?>,
+                                                vararg expected: String?) {
+    val actual = getCompletionVariantsNoCache(f, lookupElementStringFunction)
+    assertUnorderedElementsAreEqual(actual, *expected)
+  }
+
   protected fun assertCompletionVariants(f: VirtualFile,
                                          lookupElementStringFunction: Function<LookupElement, String?>,
                                          vararg expected: String?) {
@@ -296,6 +307,17 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected fun getCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
     val variants = fixture.completeBasic()
+
+    val result: MutableList<String?> = ArrayList()
+    for (each in variants) {
+      result.add(lookupElementStringFunction.apply(each))
+    }
+    return result
+  }
+
+  protected fun getCompletionVariantsNoCache(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
+    configTest(f)
+    val variants = fixture.complete(CompletionType.BASIC, 2)
 
     val result: MutableList<String?> = ArrayList()
     for (each in variants) {

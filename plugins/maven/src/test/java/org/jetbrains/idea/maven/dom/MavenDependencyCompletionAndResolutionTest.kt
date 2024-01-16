@@ -293,10 +293,8 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
       </dependencies>
       """.trimIndent())
 
-    assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1") // DependencySearchService cache hit
-
-    assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2_new:1")
-    assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2_new")
+    assertCompletionVariantsNoCache(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2_new:1")
+    assertCompletionVariantsNoCache(m1, RENDERING_TEXT, "project", "m1", "m2_new")
   }
 
   @Test
@@ -339,8 +337,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                           </dependencies>
                           """.trimIndent())
 
-    assertCompletionVariants(projectPom, RENDERING_TEXT, "m1") // DependencySearchService cache hit
-    assertCompletionVariants(projectPom, RENDERING_TEXT)
+    assertCompletionVariantsNoCache(projectPom, RENDERING_TEXT)
   }
 
   @Test
