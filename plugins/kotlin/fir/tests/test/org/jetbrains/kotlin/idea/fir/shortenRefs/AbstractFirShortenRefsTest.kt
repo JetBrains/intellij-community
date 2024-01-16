@@ -8,7 +8,10 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,23 +30,22 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
         val selection = runReadAction { TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) }
 
+        val strategyName = InTextDirectivesUtils.findStringWithPrefixes(file.text, STRATEGY_DIRECTIVE)
+        val (classShortenStrategy, callableShortenStrategy) = if (strategyName == null) {
+            ShortenStrategy.defaultClassShortenStrategy to ShortenStrategy.defaultCallableShortenStrategy
+        } else {
+            { _: KtClassLikeSymbol -> ShortenStrategy.valueOf(strategyName) } to { _: KtCallableSymbol -> ShortenStrategy.valueOf(strategyName) }
+        }
+
         val shortenings = executeOnPooledThreadInReadAction {
             analyze(file) {
-                if (file.text.contains("// SHORTEN_AND_STAR_IMPORT")) {
-                    collectPossibleReferenceShortenings(file,
-                                                        selection,
-                                                        shortenOptions = ShortenOptions.ALL_ENABLED,
-                                                        classShortenStrategy = { ShortenStrategy.SHORTEN_AND_STAR_IMPORT },
-                                                        callableShortenStrategy = { ShortenStrategy.SHORTEN_AND_STAR_IMPORT })
-                } else if (file.text.contains("// SHORTEN_AND_IMPORT")) {
-                    collectPossibleReferenceShortenings(file,
-                                                        selection,
-                                                        shortenOptions = ShortenOptions.ALL_ENABLED,
-                                                        classShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT },
-                                                        callableShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT })
-                } else {
-                    collectPossibleReferenceShortenings(file, selection, shortenOptions = ShortenOptions.ALL_ENABLED)
-                }
+                collectPossibleReferenceShortenings(
+                    file,
+                    selection,
+                    ShortenOptions.ALL_ENABLED,
+                    classShortenStrategy,
+                    callableShortenStrategy
+                )
             }
         }
 
@@ -70,4 +72,8 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
         get() = Integer.MAX_VALUE
 
     private fun getShorteningResultFile(): File = dataFile().withExtension("txt")
+
+    companion object {
+        const val STRATEGY_DIRECTIVE = "STRATEGY:"
+    }
 }
