@@ -163,7 +163,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           commitAction.run();
           rangesForFormat.set(prepareRangesForFormat.compute());
         }
-        result.set(doReformat(file, rangesForFormat.get()));
+        result.set(doReformat(file, rangesForFormat.get(), processChangedTextOnly));
       });
       return result.get();
     });
@@ -198,7 +198,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return true;
   }
 
-  private boolean doReformat(@NotNull PsiFile file, List<TextRange> ranges) {
+  private boolean doReformat(@NotNull PsiFile file, List<TextRange> ranges, boolean processChangedTextOnly) {
     PsiFile fileToProcess = ensureValid(file);
     if (fileToProcess == null) {
       LOG.warn("Invalid file " + file.getName() + ", skipping reformat");
@@ -218,7 +218,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (LOG.isDebugEnabled()) {
           LOG.debug("explicit reformat for " + file.getName());
         }
-        CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
+        CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges, processChangedTextOnly);
       }
       catch (ProcessCanceledException pce) {
         if (before != null) {

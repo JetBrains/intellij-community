@@ -5,6 +5,7 @@ import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.formatting.*;
+import com.intellij.formatting.service.FormattingService;
 import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
@@ -41,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
+
+import static com.intellij.formatting.service.FormattingServiceUtil.findService;
 
 public class CodeStyleManagerImpl extends CodeStyleManager implements FormattingModeAwareIndentAdjuster {
   private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
@@ -80,6 +84,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   }
 
   @Override
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, boolean processChangedTextOnly)
+    throws IncorrectOperationException {
+    FormatTextRanges formatRanges = new FormatTextRanges();
+    ranges.forEach((range) -> formatRanges.add(range, true));
+    reformatText(file, formatRanges, (myRanges, psiFile) -> isFullRange(myRanges, psiFile) && !processChangedTextOnly);
+  }
+
+  @Override
   public PsiElement reformatRange(@NotNull PsiElement element,
                                   int startOffset,
                                   int endOffset,
@@ -109,7 +121,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     FormatTextRanges formatRanges = new FormatTextRanges();
     ranges.forEach((range) -> formatRanges.add(range, true));
-    reformatText(file, formatRanges);
+    reformatText(file, formatRanges, (myRanges, psiFile) -> isFullRange(myRanges, psiFile));
   }
 
   @Override
@@ -117,11 +129,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
                               @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
     ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
-    reformatText(file, formatRanges);
+    reformatText(file, formatRanges, (ranges, psiFile) -> isFullRange(ranges, psiFile));
+  }
+
+  private static boolean isFullRange(FormatTextRanges ranges, PsiFile psiFile) {
+    return ranges.getRanges().size() == 1 && ranges.getRanges().get(0).getTextRange().equals(psiFile.getTextRange());
   }
 
   private void reformatText(@NotNull PsiFile file,
-                            @NotNull FormatTextRanges ranges) throws IncorrectOperationException
+                            @NotNull FormatTextRanges ranges, BiFunction<FormatTextRanges, PsiFile, Boolean> isFullRange)
+    throws IncorrectOperationException
   {
     if (ranges.isEmpty()) {
       return;
@@ -145,7 +162,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
         removeEndingWhiteSpaceFromEachRange(file, ranges);
       }
 
-      FormattingServiceUtil.formatRanges(file, ranges, false);
+      FormattingServiceUtil.formatRanges(file, ranges, false, isFullRange.apply(ranges, file));
     }
     finally {
       myProject.getMessageBus().syncPublisher(Listener.TOPIC).afterReformatText(file);
