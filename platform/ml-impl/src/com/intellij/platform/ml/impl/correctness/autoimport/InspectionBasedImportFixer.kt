@@ -22,7 +22,7 @@ abstract class InspectionBasedImportFixer : ImportFixer {
 
   protected abstract fun getAutoImportInspections(element: PsiElement?): List<LocalInspectionTool>
   protected abstract fun filterApplicableFixes(element: PsiElement, fixes: List<LocalQuickFix>): List<LocalQuickFix>
-  override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange) {
+  override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange, context: ImportFixer.ImportContext) {
     val elements = SyntaxTraverser.psiTraverser(file)
       .onRange(suggestionRange)
       .toList()

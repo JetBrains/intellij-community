@@ -21,24 +21,11 @@ interface ImportFixer {
   @RequiresReadLock
   @RequiresBackgroundThread
   @RequiresBlockingContext
-  fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange)
-
-  object EMPTY : ImportFixer {
-    override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange) {}
-  }
-}
-
-@ApiStatus.Internal
-interface ContextImportFixer: ImportFixer {
-  @RequiresReadLock
-  @RequiresBackgroundThread
-  @RequiresBlockingContext
   fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange, context: ImportContext)
 
-  override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange) {
-    runAutoImport(file, editor, suggestionRange, ImportContext(null, null))
+  object EMPTY : ImportFixer {
+    override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange, context: ImportContext) {}
   }
-
   data class ImportContext(@NlsContexts.Command val commandName: String?, val commandGroup: Any?)
 }
 
@@ -48,17 +35,12 @@ fun ImportFixer.runAutoImportAsync(scope: CoroutineScope, file: PsiFile, editor:
   val commandProcessor = CommandProcessor.getInstance()
   val currentCommand = commandProcessor.currentCommandName
   val currentCommandGroupId = commandProcessor.currentCommandGroupId
-  val context = ContextImportFixer.ImportContext(currentCommand, currentCommandGroupId)
+  val context = ImportFixer.ImportContext(currentCommand, currentCommandGroupId)
   val autoImportAction = {
     if (!DumbService.getInstance(file.project).isDumb) {
-      if (this is ContextImportFixer) {
         runAutoImport(file, editor, suggestionRange, context)
       }
-      else {
-        runAutoImport(file, editor, suggestionRange)
-      }
     }
-  }
 
   if (ApplicationManager.getApplication().isUnitTestMode) {
     autoImportAction()
