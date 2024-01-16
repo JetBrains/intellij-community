@@ -58,6 +58,14 @@ public final class XBreakpointUtil {
     return breakpoint.getType().getDisplayText(breakpoint);
   }
 
+  /**
+   * @see #getPropertyXMLDescriptions(XBreakpoint)
+   */
+  public static <B extends XBreakpoint> List<@Nls String> getPropertyXMLDescriptions(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getPropertyXMLDescriptions(breakpoint);
+  }
+
   @Nullable
   public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
     return breakpointTypes().filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);

@@ -25,11 +25,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.BreakpointRequest;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
@@ -195,39 +198,45 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   /**
-   * Description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., class filters).
-   * Formatted as HTML body.
+   * @see #getDisplayName()
+   * @deprecated better use {@link Breakpoint#getDisplayName()}
    */
   @NotNull
   @Nls
+  @Deprecated
   public String getDescription() {
-    final StringBuilder buf = new StringBuilder();
-    buf.append(getDisplayName());
+    return getDisplayName();
+  }
+
+  /**
+   * Description lines of Java-specific breakpoint properties, XML formatted.
+   */
+  public List<@Nls String> getPropertyXMLDescriptions() {
+    SmartList<String> res = new SmartList<>();
 
     if (isCountFilterEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
-      buf.append(getCountFilter());
+      res.add(JavaDebuggerBundle.message("breakpoint.property.name.pass.count") + CommonXmlStrings.NBSP
+              + getCountFilter());
     }
     if (isClassFiltersEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
-      ClassFilter[] classFilters = getClassFilters();
-      for (ClassFilter classFilter : classFilters) {
-        buf.append(classFilter.getPattern()).append(" ");
+      StringBuilder buf = new StringBuilder();
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(CommonXmlStrings.NBSP);
+      for (ClassFilter classFilter : getClassFilters()) {
+        buf.append(XmlStringUtil.escapeString(classFilter.getPattern())).append(CommonXmlStrings.NBSP);
       }
+      res.add(buf.toString());
     }
     if (isInstanceFiltersEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters"));
-      InstanceFilter[] instanceFilters = getInstanceFilters();
-      for (InstanceFilter instanceFilter : instanceFilters) {
-        buf.append(instanceFilter.getId()).append(" ");
+      StringBuilder buf = new StringBuilder();
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters")).append(CommonXmlStrings.NBSP);
+      for (InstanceFilter instanceFilter : getInstanceFilters()) {
+        buf.append(instanceFilter.getId()).append(CommonXmlStrings.NBSP);
       }
+      res.add(buf.toString());
     }
-    //noinspection HardCodedStringLiteral
-    return buf.toString();
+    return res;
   }
+
 
   @Override
   public void reload() {
@@ -382,7 +391,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   public String toString() {
     return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
-                                    + getDescription()
+                                    + XmlStringUtil.escapeString(getDisplayName())
                                     + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END);
   }
 }

@@ -433,6 +433,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       builder.append(XBreakpointUtil.getShortText(masterBreakpoint));
     }
 
+    for (@Nls String line : XBreakpointUtil.getPropertyXMLDescriptions(this)) {
+      builder.append(separator.get());
+      builder.append(line);
+    }
+
     builder.append(CommonXmlStrings.BODY_END).append(CommonXmlStrings.HTML_END);
     //noinspection HardCodedStringLiteral
     return builder.toString();

@@ -133,11 +133,22 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
-   * Description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., class filters).
-   * Formatted as HTML body.
+   * Description of breakpoint target
+   * (e.g.,
+   * "Line 20 in Hello.foo()" for line breakpoint,
+   * "foo.Bar.workHard()" for method breakpoint,
+   * ...).
    */
   @Nls
   public abstract String getDisplayText(B breakpoint);
+
+  /**
+   * Description lines of specific breakpoint properties (e.g., class filter for Java line breakpoints),
+   * XML formatted.
+   */
+  public List<@Nls String> getPropertyXMLDescriptions(B breakpoint) {
+    return Collections.emptyList();
+  }
 
   @Nullable 
   public XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
