@@ -1,22 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil;
+import com.jetbrains.python.facet.LibraryContributingFacet;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PythonFacet extends LibraryContributingFacet<PythonFacetConfiguration> {
-  public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<>("python");
+public class JavaPythonFacet extends LibraryContributingFacet<JavaPythonFacetConfiguration> {
+  public static final FacetTypeId<JavaPythonFacet> ID = new FacetTypeId<>("python");
 
-  public PythonFacet(@NotNull final FacetType facetType,
-                     @NotNull final Module module,
-                     @NotNull final String name,
-                     @NotNull final PythonFacetConfiguration configuration,
-                     Facet underlyingFacet) {
+  public JavaPythonFacet(@NotNull final FacetType facetType,
+                         @NotNull final Module module,
+                         @NotNull final String name,
+                         @NotNull final JavaPythonFacetConfiguration configuration,
+                         Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }
 

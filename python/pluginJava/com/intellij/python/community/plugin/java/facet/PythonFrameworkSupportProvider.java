@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
   public PythonFrameworkSupportProvider() {
-    super("Python", PythonFacetType.getInstance().getPresentableName());
+    super("Python", JavaPythonFacetType.getInstance().getPresentableName());
   }
 
   @Override
@@ -37,6 +37,6 @@ public final class PythonFrameworkSupportProvider extends FrameworkSupportProvid
 
   @Override
   public boolean isSupportAlreadyAdded(@NotNull Module module) {
-    return FacetManager.getInstance(module).getFacetsByType(PythonFacetType.getInstance().getId()).size() > 0;
+    return FacetManager.getInstance(module).getFacetsByType(JavaPythonFacetType.getInstance().getId()).size() > 0;
   }
 }

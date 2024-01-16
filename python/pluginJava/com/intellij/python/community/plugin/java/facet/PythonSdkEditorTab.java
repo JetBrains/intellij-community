@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
@@ -61,8 +61,8 @@ public class PythonSdkEditorTab extends FacetEditorTab {
     return mySdkComboBox.getSelectedSdk() != getFacetConfiguration().getSdk();
   }
 
-  private PythonFacetConfiguration getFacetConfiguration() {
-    return ((PythonFacetConfiguration) myEditorContext.getFacet().getConfiguration());
+  private JavaPythonFacetConfiguration getFacetConfiguration() {
+    return ((JavaPythonFacetConfiguration) myEditorContext.getFacet().getConfiguration());
   }
 
   @Override

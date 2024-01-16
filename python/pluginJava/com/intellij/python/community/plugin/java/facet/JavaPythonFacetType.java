@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
@@ -19,22 +19,22 @@ import javax.swing.*;
 import java.util.List;
 
 
-public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
+public final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
 
   @NonNls
   private static final String ID = "Python";
 
-  public static PythonFacetType getInstance() {
-    return findInstance(PythonFacetType.class);
+  public static JavaPythonFacetType getInstance() {
+    return findInstance(JavaPythonFacetType.class);
   }
 
-  public PythonFacetType() {
-    super(PythonFacet.ID, ID, PyBundle.message("python.facet.name"));
+  public JavaPythonFacetType() {
+    super(JavaPythonFacet.ID, ID, PyBundle.message("python.facet.name"));
   }
 
   @Override
-  public PythonFacetConfiguration createDefaultConfiguration() {
-    PythonFacetConfiguration result = new PythonFacetConfiguration();
+  public JavaPythonFacetConfiguration createDefaultConfiguration() {
+    JavaPythonFacetConfiguration result = new JavaPythonFacetConfiguration();
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
     if (sdks.size() > 0) {
       result.setSdk(sdks.get(0));
@@ -43,8 +43,8 @@ public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetCon
   }
 
   @Override
-  public PythonFacet createFacet(@NotNull Module module, String name, @NotNull PythonFacetConfiguration configuration, @Nullable Facet underlyingFacet) {
-    return new PythonFacet(this, module, name, configuration, underlyingFacet);
+  public JavaPythonFacet createFacet(@NotNull Module module, String name, @NotNull JavaPythonFacetConfiguration configuration, @Nullable Facet underlyingFacet) {
+    return new JavaPythonFacet(this, module, name, configuration, underlyingFacet);
   }
 
   @Override

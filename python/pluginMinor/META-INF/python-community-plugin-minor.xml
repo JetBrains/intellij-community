@@ -8,10 +8,10 @@
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
-                         instance="com.jetbrains.python.minor.sdk.PyPluginSdkModuleConfigurable"
+                         instance="com.intellij.python.community.plugin.minor.facet.PyPluginSdkModuleConfigurable"
                          groupWeight="118"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
 
-    <facetType implementation="com.jetbrains.python.minor.facet.PythonFacetType"/>
+    <facetType implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType"/>
   </extensions>
 
 </idea-plugin>

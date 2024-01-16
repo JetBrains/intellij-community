@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -37,7 +37,7 @@ public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigur
   public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel model, @Nullable Library library) {
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel facetModel = facetManager.createModifiableModel();
-    PythonFacet facet = facetManager.createFacet(PythonFacetType.getInstance(), "Python", null);
+    JavaPythonFacet facet = facetManager.createFacet(JavaPythonFacetType.getInstance(), "Python", null);
     facet.getConfiguration().setSdk(mySdkComboBox.getSelectedSdk());
     facetModel.addFacet(facet);
     facetModel.commit();

@@ -15,8 +15,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.search.FileTypeIndex;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.facet.PythonFacet;
-import com.jetbrains.python.facet.PythonFacetType;
+import com.intellij.python.community.plugin.java.facet.JavaPythonFacet;
+import com.intellij.python.community.plugin.java.facet.JavaPythonFacetType;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -117,7 +117,7 @@ public final class PythonPluginCommandLineInspectionProjectConfigurator implemen
       return;
     }
 
-    final PythonFacetType facetType = PythonFacetType.getInstance();
+    final JavaPythonFacetType facetType = JavaPythonFacetType.getInstance();
     int skippedModules = 0;
     for (Module m : ModuleManager.getInstance(project).getModules()) {
       if (ReadAction.compute(() -> !FileTypeIndex.containsFileOfType(PythonFileType.INSTANCE, m.getModuleContentScope()))) {
@@ -133,7 +133,7 @@ public final class PythonPluginCommandLineInspectionProjectConfigurator implemen
 
         invokeLaterOnWriteThreadUnderLock(
           () -> {
-            final PythonFacet addedFacet = facetManager.addFacet(facetType, facetType.getPresentableName(), null);
+            final JavaPythonFacet addedFacet = facetManager.addFacet(facetType, facetType.getPresentableName(), null);
             PySdkExtKt.excludeInnerVirtualEnv(m, addedFacet.getConfiguration().getSdk());
           }
         );

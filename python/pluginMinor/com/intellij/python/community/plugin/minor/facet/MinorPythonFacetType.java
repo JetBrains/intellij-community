@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.minor.facet;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.minor.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
@@ -27,16 +27,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.PythonFacetConfiguration> {
+final class MinorPythonFacetType extends FacetType<MinorPythonFacet, MinorPythonFacetType.PythonFacetConfiguration> {
   @NonNls
   private static final String ID = "Python";
 
-  public static PythonFacetType getInstance() {
-    return findInstance(PythonFacetType.class);
+  public static MinorPythonFacetType getInstance() {
+    return findInstance(MinorPythonFacetType.class);
   }
 
-  public PythonFacetType() {
-    super(PythonFacet.ID, ID, PyBundle.message("python.facet.name"));
+  MinorPythonFacetType() {
+    super(MinorPythonFacet.ID, ID, PyBundle.message("python.facet.name"));
   }
 
   @Override
@@ -50,11 +50,11 @@ public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetTyp
   }
 
   @Override
-  public PythonFacet createFacet(@NotNull Module module,
-                                 String name,
-                                 @NotNull PythonFacetConfiguration configuration,
-                                 @Nullable Facet underlyingFacet) {
-    return new PythonFacet(this, module, name, configuration, underlyingFacet);
+  public MinorPythonFacet createFacet(@NotNull Module module,
+                                      String name,
+                                      @NotNull PythonFacetConfiguration configuration,
+                                      @Nullable Facet underlyingFacet) {
+    return new MinorPythonFacet(this, module, name, configuration, underlyingFacet);
   }
 
   @Override

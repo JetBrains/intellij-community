@@ -7,8 +7,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.languageGenerator implementation="com.jetbrains.python.newProject.PythonNewProjectWizard"/>
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
-    <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
-    <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
+    <facetType implementation="com.intellij.python.community.plugin.java.facet.JavaPythonFacetType"/>
+    <frameworkSupport implementation="com.intellij.python.community.plugin.java.facet.PythonFrameworkSupportProvider"/>
     <projectStructureDetector implementation="com.jetbrains.python.module.PyProjectStructureDetector"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
