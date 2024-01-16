@@ -47,6 +47,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findInSpecifiedPaths);
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
+    myFinders.add(this::findJavaInstalledByMiseJava);
     myFinders.add(this::findJavaInstalledByGradle);
 
     myFinders.add(
@@ -371,6 +372,51 @@ public class JavaHomeFinderBasic {
     // finally, try the usual location in Unix or macOS
     if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
       Path installsDir = getPathInUserHome(".asdf/installs");
+      if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
+    }
+
+    // no chances
+    return null;
+  }
+
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/jdx/mise">mise</a>
+   */
+  private @NotNull Set<String> findJavaInstalledByMiseJava() {
+    Path installsDir = findMiseInstallsDir();
+    if (installsDir == null) return Collections.emptySet();
+    Path javasDir = installsDir.resolve("java");
+    return safeIsDirectory(javasDir) ? scanAll(javasDir, true) : Collections.emptySet();
+  }
+
+  @Nullable
+  private Path findMiseInstallsDir() {
+    // try to use environment variable for custom data directory
+    // https://mise.jdx.dev/configuration.html#mise-data-dir
+    String miseDataDir = mySystemInfo.getEnvironmentVariable("MISE_DATA_DIR");
+    if (miseDataDir != null) {
+      Path primaryDir = mySystemInfo.getPath(miseDataDir);
+      if (safeIsDirectory(primaryDir)) {
+        Path installsDir = primaryDir.resolve("installs");
+        if (safeIsDirectory(installsDir)) return installsDir;
+      }
+    }
+
+    String xdgDataDir = mySystemInfo.getEnvironmentVariable("XDG_DATA_DIR");
+    if (xdgDataDir != null) {
+      Path parentDir = mySystemInfo.getPath(xdgDataDir);
+      if (safeIsDirectory(parentDir)) {
+        Path primaryDir = parentDir.resolve("mise");
+        if (safeIsDirectory(primaryDir)) {
+          Path installsDir = primaryDir.resolve("installs");
+          if (safeIsDirectory(installsDir)) return installsDir;
+        }
+      }
+    }
+
+    // finally, try the usual location in Unix or macOS
+    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+      Path installsDir = getPathInUserHome(".local/share/mise/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
 
