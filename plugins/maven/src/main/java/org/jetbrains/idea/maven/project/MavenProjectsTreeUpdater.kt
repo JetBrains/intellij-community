@@ -37,14 +37,18 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       return false
     }
 
+    // 3 possible states:
+    // null means the file hasn't been updated
+    // false means the file has been updated without force read
+    // true means the file has been updated with force read
     val previousUpdateRef = Ref<Boolean>()
-    updated.compute(mavenProjectFile) { file: VirtualFile?, value: Boolean? ->
+    updated.compute(mavenProjectFile) { _: VirtualFile?, value: Boolean? ->
       previousUpdateRef.set(value)
-      java.lang.Boolean.TRUE == value || forceRead
+      true == value || forceRead
     }
     val previousUpdate = previousUpdateRef.get()
 
-    if ((null != previousUpdate && !forceRead) || (java.lang.Boolean.TRUE == previousUpdate)) {
+    if ((null != previousUpdate && !forceRead) || (true == previousUpdate)) {
       // we already updated this file
       MavenLog.LOG.trace("Has already been updated ($previousUpdate): $mavenProjectFile; forceRead: $forceRead")
       return false
@@ -186,7 +190,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     // if the file has already been updated, skip subsequent updates
     if (!startUpdate(mavenProjectFile, forceRead)) return
 
-    MavenLog.LOG.trace("Maven tree updater: start update $mavenProjectFile")
+    MavenLog.LOG.trace("Maven tree updater: start update $mavenProjectFile, forceRead=$forceRead")
 
     val mavenProject = findOrCreateProject(mavenProjectFile)
 
@@ -230,7 +234,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     }
     updateProjects(childUpdates)
 
-    MavenLog.LOG.trace("Maven tree updater: finish update $mavenProjectFile")
+    MavenLog.LOG.trace("Maven tree updater: finish update $mavenProjectFile, forceRead=$forceRead")
   }
 
   suspend fun updateProjects(specs: List<UpdateSpec>) {
