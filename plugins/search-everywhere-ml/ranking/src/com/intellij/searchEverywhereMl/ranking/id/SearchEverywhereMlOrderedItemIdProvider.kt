@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.id
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.concurrent.atomic.AtomicInteger
 
 internal interface SearchEverywhereMlItemIdProvider {
@@ -17,6 +17,8 @@ internal class SearchEverywhereMlOrderedItemIdProvider(private val onNullKey: (e
   private var idCounter = AtomicInteger(1)
   private val itemToId = hashMapOf<Any, Int>()
 
+
+  @RequiresReadLock
   @Synchronized
   override fun getId(element: Any): Int? {
     val key = ElementKeyForIdProvider.getKeyOrNull(element)
@@ -25,6 +27,6 @@ internal class SearchEverywhereMlOrderedItemIdProvider(private val onNullKey: (e
       return null
     }
 
-    return ReadAction.compute<Int?, Nothing> { itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() } }
+    return itemToId.computeIfAbsent (key) { idCounter.getAndIncrement() }
   }
 }

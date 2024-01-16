@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -85,7 +86,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
         val mlWeight = info.mlWeight
         val mlFeatures: Map<String, Any> = info.mlFeatures.associate { it.field.name to it.data as Any }
 
-        val elementId = searchSession.itemIdProvider.getId(info.element)
+        val elementId = ReadAction.compute<Int?, Nothing> { searchSession.itemIdProvider.getId(info.element) }
         return@map ElementFeatures(
           elementId,
           elementName,

@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
@@ -255,11 +256,13 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private fun mapSelectedIndexToElementId(selectedIndices: IntArray,
                                           elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                           idProvider: SearchEverywhereMlItemIdProvider): List<Int> {
-    return selectedIndices.map { index ->
-      if (index >= elements.lastIndex) return@map -1
+    return ReadAction.compute<List<Int>, Nothing> {
+      selectedIndices.map { index ->
+        if (index >= elements.lastIndex) return@map -1
 
-      val element = elements[index].element
-      return@map idProvider.getId(element) ?: -1
+        val element = elements[index].element
+        return@map idProvider.getId(element) ?: -1
+      }
     }
   }
 

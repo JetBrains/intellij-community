@@ -4,6 +4,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
 import kotlin.math.round
@@ -22,7 +23,7 @@ internal class SearchEverywhereMlFeaturesCache {
         return null
       }
 
-      val elementId = elementIdProvider.getId(it.element)
+      val elementId = ReadAction.compute<Int?, Nothing> { elementIdProvider.getId(it.element) }
 
       val elementCache = buildElementCache(it, shouldLogFeatures, actionManager, contributorFeaturesProvider(it), elementId)
 
