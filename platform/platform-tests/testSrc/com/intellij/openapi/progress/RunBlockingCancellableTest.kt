@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.progressReporterTest
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking

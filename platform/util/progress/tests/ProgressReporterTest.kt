@@ -1,24 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.progress
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.util.progress
 
-import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.durationStep
 import com.intellij.platform.util.progress.impl.ACCEPTABLE_FRACTION_OVERFLOW
 import com.intellij.platform.util.progress.impl.ProgressState
-import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.itemDuration
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
-import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
-import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.init
-import com.intellij.util.containers.tail
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class ProgressReporterTest {
@@ -802,24 +789,4 @@ class ProgressReporterTest {
       }
     }
   }
-}
-
-internal fun progressReporterTest(
-  vararg expectedUpdates: ProgressState,
-  action: suspend CoroutineScope.() -> Unit,
-) = timeoutRunBlocking {
-  val actualUpdates = ContainerUtil.createConcurrentList<ProgressState>()
-  val progressReporter = TextDetailsProgressReporter(this)
-  val collector = launch(Dispatchers.Unconfined + CoroutineName("state collector")) {
-    progressReporter.progressState.collect { state ->
-      actualUpdates.add(state)
-    }
-  }
-  withContext(progressReporter.asContextElement(), action)
-  progressReporter.close()
-  progressReporter.awaitCompletion()
-  collector.cancelAndJoin()
-  assertEquals(ProgressState(null, null, -1.0), actualUpdates.first())
-  assertEquals(ProgressState(null, null, 1.0), actualUpdates.last())
-  assertOrderedEquals(actualUpdates.toList().init().tail(), expectedUpdates.toList())
 }
