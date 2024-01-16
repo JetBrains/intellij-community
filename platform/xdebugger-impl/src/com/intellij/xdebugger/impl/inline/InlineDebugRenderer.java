@@ -136,6 +136,7 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   }
 
   @Override
+  @NotNull
   public SimpleColoredText getPresentation() {
     return myPresentation;
   }

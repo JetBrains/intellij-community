@@ -188,6 +188,7 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     }
   }
 
+  @NotNull
   abstract public SimpleColoredText getPresentation();
 
   private TextAttributes getAttributes(Editor editor) {
