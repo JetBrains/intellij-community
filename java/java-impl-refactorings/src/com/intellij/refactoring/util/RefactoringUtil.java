@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -76,7 +77,16 @@ public final class RefactoringUtil {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (!occurrence.isValid()) return null;
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
-        ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        if (destinationClass instanceof PsiImplicitClass) {
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
+          String name = codeStyleManager.suggestUniqueVariableName(newField.getName(), occurrence, true);
+          if (Strings.areSameInstance(name, newField.getName())) {
+            ref.setQualifierExpression(null);
+          }
+        }
+        else {
+          ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        }
       }
       return IntroduceVariableUtil.replace(occurrence, ref, manager.getProject());
     }
