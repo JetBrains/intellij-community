@@ -408,8 +408,30 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    val result = createOtherRunnersSubgroup(selectedConfiguration, project)
-    addAdditionalActionsToRunConfigurationOptions(project, e, selectedConfiguration, result, true)
+    val result = when {
+      selectedConfiguration != null -> {
+        val exclude = if (RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
+        object : RunConfigurationsComboBoxAction.SelectConfigAction(project, selectedConfiguration) {
+          override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+            val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(configuration, true)
+            return (listOf(additionalGroup) + getDefaultChildren(exclude)).toTypedArray()
+          }
+        }
+      }
+      RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) -> {
+        object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
+          override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+            val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(null, true)
+            return (listOf(additionalGroup) + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
+          }
+        }
+      }
+      else -> object : ActionGroup(), DumbAware {
+        override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+          return arrayOf(AdditionalRunningOptions.getInstance(project).getAdditionalActions(null, true))
+        }
+      }
+    }
     return result
   }
 
@@ -440,28 +462,6 @@ internal val excludeDebug: (Executor) -> Boolean = {
   it.id != ToolWindowId.DEBUG
 }
 
-private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
-  if (runConfiguration != null) {
-    val exclude = if (RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
-    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, exclude)
-  }
-  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
-  }
-  return DefaultActionGroup()
-}
-
-internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
-                                                           e: AnActionEvent,
-                                                           selectedConfiguration: RunnerAndConfigurationSettings?,
-                                                           targetGroup: DefaultActionGroup,
-                                                           isWidget: Boolean) {
-  val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
-  for (action in additionalActions.getChildren(e).reversed()) {
-    targetGroup.add(action, Constraints.FIRST)
-  }
-}
-
 @ApiStatus.Internal
 open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
@@ -474,7 +474,7 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
 
   override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project, e)
+    return createRunConfigurationsActionGroup(project)
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup {
