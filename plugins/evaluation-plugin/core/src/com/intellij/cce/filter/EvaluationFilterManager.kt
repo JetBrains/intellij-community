@@ -12,6 +12,7 @@ object EvaluationFilterManager {
     register(StaticFilterConfiguration())
     register(PackageRegexFilterConfiguration())
     register(FeaturesFilterConfiguration())
+    register(PositionFilterConfiguration())
   }
 
   fun getConfigurationById(id: String): EvaluationFilterConfiguration? = id2Configuration[id]

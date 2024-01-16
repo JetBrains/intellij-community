@@ -20,21 +20,40 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     super.visitPyFile(node)
   }
 
+  private fun String.findNoWhitespaceMiddleIndex(): Int {
+    var start = 0
+    var end = lastIndex
+
+    while (start < end) {
+      if (this[start].isWhitespace()) start++
+      else if (this[end].isWhitespace()) end--
+      else {
+        start++
+        end--
+      }
+    }
+
+    return start
+  }
+
   private fun visitNonEmptyLines(node: PyFile, file: CodeFragment) {
     val document = node.fileDocument
-    val endOffset = node.fileDocument.textLength
     for (line in 0 until document.lineCount) {
-      val lineStartOffset = document.getLineStartOffset(line).let {
+      val lineEnd = document.getLineEndOffset(line)
+      val lineStart = document.getLineStartOffset(line).let {
         var pos = it
-        while (pos < endOffset && document.text[pos].isWhitespace()) pos ++
+        while (pos < lineEnd && document.text[pos].isWhitespace()) pos ++
         pos
       }
-      val lineEndOffset = document.getLineEndOffset(line)
-      if (lineStartOffset >= lineEndOffset) continue
-      val lineText = document.getText(TextRange(lineStartOffset, lineEndOffset))
+      if (lineStart >= lineEnd) continue
+      val lineText = document.getText(TextRange(lineStart, lineEnd))
       if (lineText.isBlank()) continue
 
-      file.addChild(CodeToken(lineText, lineStartOffset, LINE_START))
+      file.addChild(CodeToken(lineText, lineStart, LINE_START))
+
+      val middleStart = lineText.findNoWhitespaceMiddleIndex() + lineStart
+      val lineMiddleText = document.getText(TextRange(middleStart, lineEnd))
+      file.addChild(CodeToken(lineMiddleText, middleStart, LINE_MIDDLE))
     }
   }
 
@@ -61,4 +80,7 @@ private val FUNCTION = SimpleTokenProperties.create(TypeProperty.FUNCTION, Symbo
 private val CLASS = SimpleTokenProperties.create(TypeProperty.CLASS, SymbolLocation.UNKNOWN) {}
 private val LINE_START = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {
   this["position"] = CaretPosition.BEGINNING.name
+}
+private val LINE_MIDDLE = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {
+  this["position"] = CaretPosition.MIDDLE.name
 }
