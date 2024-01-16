@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -26,15 +27,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 class B implements AnnotationBuilder {
   private final @NotNull AnnotationHolderImpl myHolder;
@@ -121,9 +119,13 @@ class B implements AnnotationBuilder {
     }
 
     private void assertLQF() {
-      if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter || fix instanceof ModCommandAction)) {
+      if (!(fix instanceof LocalQuickFix ||
+            fix instanceof ModCommandAction ||
+            fix instanceof QuickFixWrapper ||
+            fix instanceof LocalQuickFixAsIntentionAdapter)) {
         markNotAbandoned();
-        throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix or ModCommandAction to be registered as batch");
+        throw new IllegalArgumentException(
+          "Fix " + fix + " must be instance of LocalQuickFix or ModCommandAction to be registered as batch");
       }
     }
 
@@ -163,7 +165,7 @@ class B implements AnnotationBuilder {
 
   @Override
   public @NotNull FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor) {
-    return new FixB(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor));
+    return new FixB(QuickFixWrapper.wrap(problemDescriptor, fix));
   }
 
   void unresolvedReference(@NotNull PsiReference reference) {
@@ -326,9 +328,14 @@ class B implements AnnotationBuilder {
   }
 
   private static @NotNull LocalQuickFix getLocalQuickFix(@NotNull CommonIntentionAction fix) {
-    return fix instanceof ModCommandAction modCommandAction ? LocalQuickFix.from(modCommandAction) :
-                        fix instanceof LocalQuickFixAsIntentionAdapter adapter ? adapter.getFix() :
-                        (LocalQuickFix)fix;
+    if (fix instanceof ModCommandAction modCommandAction) {
+      return LocalQuickFix.from(modCommandAction);
+    }
+    LocalQuickFix unwrapped = QuickFixWrapper.unwrap(fix);
+    if (unwrapped != null) {
+      return unwrapped;
+    }
+    return (LocalQuickFix)fix;
   }
 
   void assertAnnotationCreated() {
@@ -351,7 +358,7 @@ class B implements AnnotationBuilder {
            ", myCurrentElement=" + myCurrentElement + " (" + myCurrentElement.getClass() + ")" +
            ", myCurrentAnnotator=" + myCurrentAnnotator +
            ", severity=" + severity +
-           ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
+           ", range=" + (range == null ? "(implicit)" + myCurrentElement.getTextRange() : range) +
            omitIfEmpty(afterEndOfLine, "afterEndOfLine") +
            omitIfEmpty(fileLevel, "fileLevel") +
            omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
