@@ -178,26 +178,6 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
       return getUndoOrRedoActionNameAndDescription( false);
     }
 
-    @Override
-    public long getNextUndoNanoTime(@NotNull FileEditor editor) {
-      return -1L;
-    }
-
-    @Override
-    public long getNextRedoNanoTime(@NotNull FileEditor editor) {
-      return -1L;
-    }
-
-    @Override
-    public boolean isNextUndoAskConfirmation(@NotNull FileEditor editor) {
-      return false;
-    }
-
-    @Override
-    public boolean isNextRedoAskConfirmation(@NotNull FileEditor editor) {
-      return false;
-    }
-
     private static @NotNull Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
       if (undo) {
         return Pair.create(

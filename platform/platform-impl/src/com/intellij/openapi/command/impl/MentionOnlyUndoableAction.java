@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
  * Undo action can be available even if this Document is ReadOnly.
  */
 final class MentionOnlyUndoableAction implements UndoableAction {
-  private long myPerformedTimestamp = -1L;
   private final DocumentReference[] myRefs;
 
   MentionOnlyUndoableAction(DocumentReference @NotNull [] refs) {
@@ -33,15 +32,5 @@ final class MentionOnlyUndoableAction implements UndoableAction {
   @Override
   public boolean isGlobal() {
     return false;
-  }
-
-  @Override
-  public long getPerformedNanoTime() {
-    return myPerformedTimestamp;
-  }
-
-  @Override
-  public void setPerformedNanoTime(long l) {
-    myPerformedTimestamp = l;
   }
 }

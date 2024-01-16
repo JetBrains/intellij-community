@@ -33,11 +33,9 @@ class SuggestedRefactoringUndoableAction private constructor(
 
   private val documentReference = DocumentReferenceManager.getInstance().create(document)
 
-  override var performedNanoTime: Long = -1
+  override fun getAffectedDocuments(): Array<DocumentReference> = arrayOf(documentReference)
 
-  override val affectedDocuments: Array<DocumentReference> = arrayOf(documentReference)
-
-  override val isGlobal: Boolean = false
+  override fun isGlobal(): Boolean = false
 
   override fun undo() {
     val document = documentReference.document ?: return

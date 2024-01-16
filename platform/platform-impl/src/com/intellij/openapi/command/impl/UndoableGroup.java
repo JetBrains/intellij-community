@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -353,16 +352,10 @@ final class UndoableGroup implements Dumpable {
     return null;
   }
 
-  @ApiStatus.Experimental
   boolean shouldAskConfirmation(boolean redo) {
     if (shouldAskConfirmationForStartFinishGroup(redo)) return true;
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
-  }
-
-  long getGroupStartPerformedTimestamp() {
-    if (myActions.isEmpty()) return -1L;
-    return Math.min(myActions.get(0).getPerformedNanoTime(), myActions.get(myActions.size() - 1).getPerformedNanoTime());
   }
 
   void invalidateChangeRanges() {

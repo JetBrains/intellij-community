@@ -338,8 +338,6 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
             new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
-            private long myPerformedTimestamp = -1L;
-
             @Override
             public void undo() {
               if (foldRegion.isValid()) {
@@ -362,16 +360,6 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
             @Override
             public boolean isGlobal() {
               return false;
-            }
-
-            @Override
-            public long getPerformedNanoTime() {
-              return myPerformedTimestamp;
-            }
-
-            @Override
-            public void setPerformedNanoTime(long performedTimestamp) {
-              myPerformedTimestamp = performedTimestamp;
             }
           });
         }, targetPsiFile);

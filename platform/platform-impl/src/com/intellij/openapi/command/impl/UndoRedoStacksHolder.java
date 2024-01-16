@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -27,7 +26,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return false;
   }
 
-  @Nullable
+  @NotNull
   UndoableGroup getLastAction(@NotNull Collection<? extends DocumentReference> refs) {
     if (refs.isEmpty()) return myGlobalStack.getLast();
 
