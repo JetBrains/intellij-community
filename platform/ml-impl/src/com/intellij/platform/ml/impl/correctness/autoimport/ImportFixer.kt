@@ -26,7 +26,7 @@ interface ImportFixer {
   object EMPTY : ImportFixer {
     override fun runAutoImport(file: PsiFile, editor: Editor, suggestionRange: TextRange, context: ImportContext) {}
   }
-  data class ImportContext(@NlsContexts.Command val commandName: String?, val commandGroup: Any?)
+  data class ImportContext(@NlsContexts.Command val commandName: String? = null, val commandGroup: Any? = null)
 }
 
 @RequiresBlockingContext
