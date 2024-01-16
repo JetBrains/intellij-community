@@ -7,6 +7,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -898,7 +899,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
 
-      myValue = presentation.getClientProperty(Presentation.PROP_VALUE);
+      myValue = presentation.getClientProperty(ActionUtil.SECONDARY_TEXT);
     }
 
     @Override

@@ -32,10 +32,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,6 +57,9 @@ public final class ActionUtil {
   @ApiStatus.Internal
   public static final Key<Boolean> WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = Key.create("WOULD_BE_ENABLED_IF_NOT_DUMB_MODE");
   private static final Key<Boolean> WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE");
+
+  /** @noinspection removal*/
+  public static final Key<@Nls String> SECONDARY_TEXT = Presentation.PROP_VALUE;
 
   private ActionUtil() {
   }

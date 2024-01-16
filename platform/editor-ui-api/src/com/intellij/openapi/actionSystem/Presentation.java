@@ -5,7 +5,10 @@ import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
@@ -34,56 +37,23 @@ public final class Presentation implements Cloneable {
 
   public static final Supplier<String> NULL_STRING = () -> null;
 
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * value: String
-   */
+  // Property keys for the PropertyChangeListener API
   public static final @NonNls String PROP_TEXT = "text";
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * that includes mnemonic suffix, like "Git(G)"
-   * value: String
-   */
   public static final @NonNls String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
-  /**
-   * value: Integer
-   */
   public static final @NonNls String PROP_MNEMONIC_KEY = "mnemonicKey";
-  /**
-   * value: Integer
-   */
   public static final @NonNls String PROP_MNEMONIC_INDEX = "mnemonicIndex";
-  /**
-   * value: String
-   */
   public static final @NonNls String PROP_DESCRIPTION = "description";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_ICON = "icon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
-  /**
-   * value: Icon
-   */
   public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
-  /**
-   * value: Boolean
-   */
   public static final @NonNls String PROP_VISIBLE = "visible";
-  /**
-   * The actual value is a Boolean.
-   */
   public static final @NonNls String PROP_ENABLED = "enabled";
+  // Do not add Key constants here, especially with PROP_ prefix. Find a better place.
 
-  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
-  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_SUFFIX = Key.create("keyboardShortcutTextSuffix");
+  /** Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SECONDARY_TEXT} instead */
+  @Deprecated(forRemoval = true)
+  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;

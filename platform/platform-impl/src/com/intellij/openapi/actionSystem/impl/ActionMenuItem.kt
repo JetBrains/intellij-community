@@ -124,7 +124,7 @@ class ActionMenuItem internal constructor(action: AnAction,
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
     }
-    val shortcutSuffix = presentation.getClientProperty(Presentation.PROP_KEYBOARD_SHORTCUT_SUFFIX)
+    val shortcutSuffix = presentation.getClientProperty(ActionMenu.KEYBOARD_SHORTCUT_SUFFIX)
     val shortcut = defaultFirstShortcutText
     firstShortcutTextFromPresentation = if (shortcut.isNotEmpty() && !shortcutSuffix.isNullOrEmpty()) {
       shortcut + shortcutSuffix

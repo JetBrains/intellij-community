@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -139,7 +140,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         var description = getVariantDescription(s);
 
         if (description != null) {
-          e.getPresentation().putClientProperty(Presentation.PROP_VALUE, description);
+          e.getPresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, description);
         }
       }
 
@@ -171,7 +172,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+        e.getPresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, getVariantName(mySelectedVariant));
         e.getPresentation().setVisible(isRemovable());
       }
 

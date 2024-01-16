@@ -8,7 +8,11 @@ import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -58,7 +62,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
       @Override
       public void update(@NotNull AnActionEvent e) {
         if (UIThemeLookAndFeelInfoKt.isDefaultForTheme(scheme, LafManager.getInstance().getCurrentUIThemeLookAndFeel())) {
-          e.getPresentation().putClientProperty(Presentation.PROP_VALUE, IdeBundle.message("scheme.theme.default"));
+          e.getPresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, IdeBundle.message("scheme.theme.default"));
         }
       }
     });

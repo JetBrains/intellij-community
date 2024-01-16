@@ -109,6 +109,9 @@ class ActionMenu constructor(private val context: DataContext?,
     @JvmField
     val ALWAYS_VISIBLE: Key<Boolean> = Key.create("ALWAYS_VISIBLE")
 
+    @JvmField
+    val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("keyboardShortcutTextSuffix");
+
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
       return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))

@@ -346,7 +346,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       getTemplatePresentation().setDescription(fragment.getActionHint());
 
       if (fragment.getActionDescription() != null) {
-        getTemplatePresentation().putClientProperty(Presentation.PROP_VALUE, fragment.getActionDescription());
+        getTemplatePresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, fragment.getActionDescription());
       }
     }
 

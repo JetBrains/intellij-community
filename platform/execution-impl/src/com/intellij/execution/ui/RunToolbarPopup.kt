@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.HideableAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -100,7 +101,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
     createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e, pinned) { holdingFilter ->
       holdingFilter && !recents.contains(configuration)
     }.also {
-      it.templatePresentation.putClientProperty(Presentation.PROP_VALUE, folderName)
+      it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, folderName)
     }
   }
   val allConfigurations = DefaultActionGroup()
