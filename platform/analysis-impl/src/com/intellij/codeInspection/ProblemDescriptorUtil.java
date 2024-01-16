@@ -316,12 +316,9 @@ public final class ProblemDescriptorUtil {
     LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
     int i = 0;
     for (Annotation.QuickFixInfo fixInfo : fixInfos) {
-      IntentionAction intentionAction = fixInfo.quickFix;
-      final LocalQuickFix fix;
-      if (intentionAction instanceof LocalQuickFix) {
-        fix = (LocalQuickFix)intentionAction;
-      }
-      else {
+      LocalQuickFix fix = fixInfo.localQuickFix;
+      if (fix == null) {
+        IntentionAction intentionAction = fixInfo.quickFix;
         LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
         if (lqf == null) {
           lqf = new ExternalAnnotatorInspectionVisitor.LocalQuickFixBackedByIntentionAction(intentionAction);

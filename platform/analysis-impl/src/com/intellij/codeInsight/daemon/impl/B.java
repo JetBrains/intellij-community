@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
@@ -13,6 +14,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -24,12 +26,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 class B implements AnnotationBuilder {
   private final @NotNull AnnotationHolderImpl myHolder;
@@ -82,13 +87,13 @@ class B implements AnnotationBuilder {
 
   private class FixB implements FixBuilder {
     final @NotNull
-    IntentionAction fix;
+    CommonIntentionAction fix;
     TextRange range;
     HighlightDisplayKey key;
     Boolean batch;
     Boolean universal;
 
-    FixB(@NotNull IntentionAction fix) {
+    FixB(@NotNull CommonIntentionAction fix) {
       this.fix = fix;
     }
 
@@ -116,9 +121,9 @@ class B implements AnnotationBuilder {
     }
 
     private void assertLQF() {
-      if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter)) {
+      if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter || fix instanceof ModCommandAction)) {
         markNotAbandoned();
-        throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix to be registered as batch");
+        throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix or ModCommandAction to be registered as batch");
       }
     }
 
@@ -297,17 +302,18 @@ class B implements AnnotationBuilder {
     }
     if (fixes != null) {
       for (FixB fb : fixes) {
-        IntentionAction fix = fb.fix;
+        CommonIntentionAction fix = fb.fix;
+        IntentionAction intention = fix.asIntention();
         TextRange finalRange = fb.range == null ? this.range : fb.range;
         if (fb.batch != null && fb.batch) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
         }
         else if (fb.universal != null && fb.universal) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
         else {
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
       }
     }
@@ -319,10 +325,10 @@ class B implements AnnotationBuilder {
     myHolder.annotationCreatedFrom(this);
   }
 
-  private static <T extends IntentionAction & LocalQuickFix>
-  void registerBatchFix(@NotNull Annotation annotation, @NotNull Object fix, @NotNull TextRange range, HighlightDisplayKey key) {
-    //noinspection unchecked
-    annotation.registerBatchFix((T)fix, range, key);
+  private static @NotNull LocalQuickFix getLocalQuickFix(@NotNull CommonIntentionAction fix) {
+    return fix instanceof ModCommandAction modCommandAction ? LocalQuickFix.from(modCommandAction) :
+                        fix instanceof LocalQuickFixAsIntentionAdapter adapter ? adapter.getFix() :
+                        (LocalQuickFix)fix;
   }
 
   void assertAnnotationCreated() {
@@ -396,17 +402,18 @@ class B implements AnnotationBuilder {
     }
     if (fixes != null) {
       for (FixB fb : fixes) {
-        IntentionAction fix = fb.fix;
+        CommonIntentionAction fix = fb.fix;
+        IntentionAction intention = fix.asIntention();
         TextRange finalRange = fb.range == null ? this.range : fb.range;
         if (fb.batch != null && fb.batch) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
         }
         else if (fb.universal != null && fb.universal) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
         else {
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
       }
     }

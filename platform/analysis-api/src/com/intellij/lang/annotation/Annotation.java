@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,12 +55,18 @@ public final class Annotation implements Segment {
 
   public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
+    public final @Nullable LocalQuickFix localQuickFix; 
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
     QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
+      this(fix, ObjectUtils.tryCast(fix, LocalQuickFix.class), range, key);
+    }
+
+    QuickFixInfo(@NotNull IntentionAction fix, @Nullable LocalQuickFix localQuickFix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
+      this.localQuickFix = localQuickFix;
       textRange = range;
     }
 
@@ -137,7 +144,7 @@ public final class Annotation implements Segment {
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
-    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
+    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), fix, range, key));
   }
 
   /**
@@ -174,13 +181,18 @@ public final class Annotation implements Segment {
    */
   @Deprecated
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
+    registerBatchFix(fix, fix, range, key);
+  }
+
+  @Deprecated
+  public void registerBatchFix(@NotNull IntentionAction action, @NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
 
     List<QuickFixInfo> fixes = myBatchFixes;
     if (fixes == null) {
       myBatchFixes = fixes = new ArrayList<>();
     }
-    fixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(action, fix, range, key));
   }
 
   /**
