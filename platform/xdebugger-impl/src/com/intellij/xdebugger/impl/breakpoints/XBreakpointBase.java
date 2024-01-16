@@ -376,6 +376,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
     LineSeparator separator = new LineSeparator(builder);
     builder.append(StringUtil.escapeXmlEntities(XBreakpointUtil.getDisplayText(this)));
+    var prePropertiesLen = builder.length();
 
     String errorMessage = getErrorMessage();
     if (!StringUtil.isEmpty(errorMessage)) {
@@ -436,6 +437,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     for (@Nls String line : XBreakpointUtil.getPropertyXMLDescriptions(this)) {
       builder.append(separator.get());
       builder.append(line);
+    }
+
+    if (prePropertiesLen == builder.length()) {
+      builder.append(separator.get());
+      builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.edit.hint"));
     }
 
     builder.append(CommonXmlStrings.BODY_END).append(CommonXmlStrings.HTML_END);
