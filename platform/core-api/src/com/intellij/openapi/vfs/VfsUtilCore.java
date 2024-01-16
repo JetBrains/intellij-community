@@ -423,7 +423,7 @@ public class VfsUtilCore {
    */
   public static byte @NotNull [] loadNBytes(@NotNull VirtualFile virtualFile, int maxLength) throws IOException {
     try (InputStream stream = virtualFile.getInputStream()) {
-      byte[] buffer = new byte[Math.min(maxLength, (int)virtualFile.getLength())];
+      byte[] buffer = new byte[(int)Math.min(maxLength, virtualFile.getLength())];
       byte[] bom = virtualFile.getBOM();
       int o = 0;
       if (bom != null) {
