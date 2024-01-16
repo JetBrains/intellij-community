@@ -24,6 +24,7 @@
               "sciView.svg": "icons/com/jetbrains/pythonCore/python/DataView.svg",
               "ssh.svg": "icons/com/jetbrains/pythonCore/python/ssh.svg",
               "templateRoot.svg": "icons/com/jetbrains/pythonCore/python/templateRoot.svg",
+              "vagrant.svg": "icons/com/jetbrains/pythonCore/python/vagrant.svg",
               "virtualEnv.svg": "icons/com/jetbrains/pythonCore/python/virtualenv.svg"
             }
           }

@@ -35,6 +35,7 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/pythonCore/python/function.svg", 1027695397, 0);
     /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/pythonCore/python/jython.svg", -359107473, 0);
     /** 16x16 */ public static final @NotNull Icon NumPy = load("icons/com/jetbrains/pythonCore/python/numPy.svg", 205590373, 2);
+    /** 16x16 */ public static final @NotNull Icon Origami = load("icons/com/jetbrains/pythonCore/python/origami.svg", 81945933, 2);
     /** 16x16 */ public static final @NotNull Icon Pandas = load("icons/com/jetbrains/pythonCore/python/pandas.svg", -1188443833, 2);
     /** 16x16 */ public static final @NotNull Icon Polars = load("icons/com/jetbrains/pythonCore/python/polars.svg", 1700660876, 2);
     /** 16x16 */ public static final @NotNull Icon Pycharm = load("icons/com/jetbrains/pythonCore/python/pycharm.svg", -2022691497, 0);
