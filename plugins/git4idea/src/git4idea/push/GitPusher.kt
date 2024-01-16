@@ -7,6 +7,7 @@ import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
@@ -77,10 +78,22 @@ class GitPusher(
         null
       }
 
+      val actions = runBlockingCancellable {
+        GitPushNotificationCustomizer.EP_NAME.getExtensions(project).flatMap { extension ->
+          pushResult.results.flatMap { (gitRepository, pushRepoResult) ->
+            extension.getActions(gitRepository, pushRepoResult, customParams)
+          }
+        }
+      }
+
       ApplicationManager.getApplication().invokeLater {
         val multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot()
-        GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData, customParams)
-          .notify(project)
+        val notification = GitPushResultNotification.create(
+          project, pushResult, pushOperation, multiRepoProject, notificationData, customParams
+        )
+
+        actions.forEach { action -> notification.addAction(action) }
+        notification.notify(project)
       }
     }
   }

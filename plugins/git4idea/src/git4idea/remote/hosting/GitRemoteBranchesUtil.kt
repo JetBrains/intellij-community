@@ -53,6 +53,12 @@ object GitRemoteBranchesUtil {
   private fun findLocalBranchTrackingRemote(repository: GitRepository, branch: GitRemoteBranch): GitLocalBranch? =
     repository.branchTrackInfos.find { it.remoteBranch == branch }?.localBranch
 
+  fun findCurrentRemoteBranch(gitRepo: GitRepository, remote: GitRemote): String? {
+    val currentBranch = gitRepo.currentBranch ?: return null
+    return gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
+      ?.remoteBranch?.nameForRemoteOperations
+  }
+
   suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository,
                                            remote: HostedGitRepositoryRemote,
                                            remoteBranch: String,

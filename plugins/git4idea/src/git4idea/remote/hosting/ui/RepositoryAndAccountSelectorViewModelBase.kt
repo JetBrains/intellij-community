@@ -95,4 +95,9 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
       }
     }
   }
+
+  override fun selectRepoAndAccount(projectMapping: M, account: A) {
+    repoSelectionState.value = projectMapping
+    accountSelectionState.value = account
+  }
 }

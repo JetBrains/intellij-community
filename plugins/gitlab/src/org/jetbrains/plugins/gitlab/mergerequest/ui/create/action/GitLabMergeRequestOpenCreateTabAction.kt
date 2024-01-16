@@ -9,9 +9,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.GitlabIcons
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
@@ -46,10 +49,19 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
 }
 
 // NOTE: no need to register in plugin.xml
-internal class GitLabMergeRequestOpenCreateTabNotificationAction : NotificationAction(
+internal class GitLabMergeRequestOpenCreateTabNotificationAction(
+  private val project: Project,
+  private val projectMapping: GitLabProjectMapping,
+  private val account: GitLabAccount
+) : NotificationAction(
   GitLabBundle.message("merge.request.create.notification.action.text")
 ) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+    val twVm = project.service<GitLabToolWindowViewModel>()
+    val selectorVm = twVm.selectorVm.value ?: error("Tool window has not been initialized")
+    selectorVm.selectRepoAndAccount(projectMapping, account)
+    selectorVm.submitSelection()
+
     openCreationTab(e, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
   }
 }

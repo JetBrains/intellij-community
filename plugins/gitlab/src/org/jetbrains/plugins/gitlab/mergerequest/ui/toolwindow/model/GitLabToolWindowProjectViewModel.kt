@@ -58,8 +58,6 @@ private constructor(parentCs: CoroutineScope,
   val connectionId: String = connection.id
   override val projectName: @Nls String = connection.repo.repository.projectPath.name
 
-  val defaultBranch: Deferred<String> = connection.projectData.defaultBranch
-
   private val mergeRequestsVms = Caffeine.newBuilder().build<String, SharedFlow<Result<GitLabMergeRequestViewModels>>> { iid ->
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {

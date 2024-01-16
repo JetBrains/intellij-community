@@ -104,6 +104,7 @@
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
+    <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationCustomizer"/>
   </extensions>
 
   <actions>
@@ -242,12 +243,6 @@
     </action>
   </actions>
 
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationListener"
-              topic="git4idea.push.GitPushListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
-  </projectListeners>
   <applicationListeners>
     <listener class="org.jetbrains.plugins.gitlab.util.GitLabRegistryValueListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>

@@ -858,6 +858,10 @@
     <extensionPoint interface="git4idea.annotate.GitAnnotationPerformanceListener" name="gitAnnotationPerformanceListener" dynamic="true"/>
     <extensionPoint interface="git4idea.annotate.GitAnnotationProvider$GitRawAnnotationProvider" name="gitRawAnnotationProvider"
                     dynamic="true" area="IDEA_PROJECT"/>
+    <extensionPoint interface="git4idea.push.GitPushNotificationCustomizer"
+                    name="gitPushNotificationCustomizer"
+                    dynamic="true"
+                    area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <projectListeners>
