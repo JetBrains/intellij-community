@@ -65,6 +65,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof LocalQuickFixAsIntentionAdapter adapter) {
       return adapter.getFix();
     }
+    if (action instanceof LocalQuickFixOnPsiElementAsIntentionAdapter adapter) {
+      return adapter.getFix();
+    }
     if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }

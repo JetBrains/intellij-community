@@ -3,20 +3,28 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction {
+public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction, ReportingClassSubstitutor {
   private final @NotNull LocalQuickFixOnPsiElement myFix;
 
   public LocalQuickFixOnPsiElementAsIntentionAdapter(@NotNull LocalQuickFixOnPsiElement fix) {
     myFix = fix;
+  }
+
+  @ApiStatus.Internal
+  public LocalQuickFixOnPsiElement getFix() {
+    return myFix;
   }
 
   @Override
@@ -53,6 +61,11 @@ public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements Intent
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     LocalQuickFixOnPsiElement newFix = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFixOnPsiElement.class);
     return newFix == null ? null : newFix == myFix ? this : new LocalQuickFixOnPsiElementAsIntentionAdapter(newFix);
+  }
+
+  @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myFix);
   }
 }
 
