@@ -14,11 +14,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Paths
 
 internal class GradleSettingsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -40,6 +42,11 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     // project settings
     for (projectSettings in gradleSettings.linkedProjectsSettings) {
       collectGradleProjectSettingsMetrics(usages, project, projectSettings)
+    }
+
+    // gradle.properties
+    for (projectSettings in gradleSettings.linkedProjectsSettings) {
+      collectGradlePropertiesMetrics(usages, project, projectSettings.externalProjectPath)
     }
 
     return usages
@@ -94,11 +101,20 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(IDEA_SPECIFIC_CONFIGURATION_USED.metric(hasNonEmptyIntellijConfig))
   }
 
+  private fun collectGradlePropertiesMetrics(usages: MutableSet<MetricEvent>, project: Project, externalProjectPath: String) {
+    val gradleProperties = GradlePropertiesFile.getProperties(project, Paths.get(externalProjectPath))
+
+    val parallel = gradleProperties.parallel
+    if (parallel != null) {
+      usages.add(GRADLE_PROPERTY_PARALLEL.metric(parallel.value))
+    }
+  }
+
   private fun anonymizeGradleVersion(version: GradleVersion): String {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  private val GROUP = EventLogGroup("build.gradle.state", 6)
+  private val GROUP = EventLogGroup("build.gradle.state", 7)
   private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
   private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
   private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -124,4 +140,6 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
   private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
   private val GRADLE_DOWNLOAD_DEPENDENCY_SOURCES = GROUP.registerEvent("gradleDownloadDependencySources", EventFields.Enabled)
   private val GRADLE_PARALLEL_MODEL_FETCH = GROUP.registerEvent("gradleParallelModelFetch", EventFields.Enabled)
+
+  private val GRADLE_PROPERTY_PARALLEL = GROUP.registerEvent("org.gradle.parallel", EventFields.Enabled)
 }
