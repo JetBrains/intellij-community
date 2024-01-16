@@ -482,6 +482,10 @@ public final class ExpUiIcons {
 
   public static final class Nodes {
     /** 16x16 */ public static final @NotNull Icon AbstractException = load("expui/nodes/abstractException.svg", 557846383, 2);
+    /** 16x16 */ public static final @NotNull Icon AccessLocal = load("expui/nodes/accessLocal.svg", -1034596711, 2);
+    /** 16x16 */ public static final @NotNull Icon AccessPrivate = load("expui/nodes/accessPrivate.svg", 1833439018, 2);
+    /** 16x16 */ public static final @NotNull Icon AccessProtected = load("expui/nodes/accessProtected.svg", -493043417, 2);
+    /** 16x16 */ public static final @NotNull Icon AccessPublic = load("expui/nodes/accessPublic.svg", 1093710900, 2);
     /** 16x16 */ public static final @NotNull Icon Alias = load("expui/nodes/alias.svg", 1470484632, 2);
     /** 16x16 */ public static final @NotNull Icon Annotation = load("expui/nodes/annotation.svg", -1910019441, 2);
     /** 16x16 */ public static final @NotNull Icon AnnotationFolder = load("expui/nodes/annotationFolder.svg", -1736489656, 2);
