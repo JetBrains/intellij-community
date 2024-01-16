@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.DocumentUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
@@ -61,6 +63,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     return LookupElementBuilder.create(value)
       .withPresentableText(presentableText ?: value)
       .withIcon(getIconForItem(this))
+      .surroundingQuotesAware()
   }
 
   private fun getIconForItem(item: CompletionItem): Icon {
@@ -73,6 +76,40 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
         TerminalCompletionUtil.getFileIcon(fileName)
       }
       else -> TerminalIcons.Other
+    }
+  }
+
+  /**
+   * For example, when completing file names with spaces PowerShell surround the full path with single quotes, like '.\Documents\My Videos'.
+   * In this case, we need to place the caret before the closing quote instead of after it.
+   * For example,
+   * Before completion: .\Documents\<caret>
+   * After completion: '.\Documents\My Videos'<caret>
+   * With fix: '.\Documents\My Videos<caret>'
+   *
+   * Also, if there is already a quote after the inserted quoted string, we need to remove one of the quotes.
+   * For example,
+   * Before completion: '.\Documents\<caret>'
+   * After completion: '.\Documents\My Videos<caret>''
+   * With fix: '.\Documents\My Videos<caret>'
+   *
+   * @return the [LookupElementBuilder] with insert handler that takes into account the cases described above
+   */
+  private fun LookupElementBuilder.surroundingQuotesAware(): LookupElementBuilder {
+    if (lookupString.length < 2) return this
+    val delimiters = listOf('\'', '\"')
+    val delimiter = delimiters.firstOrNull { lookupString.first() == it && lookupString.last() == it }
+                    ?: return this
+    return withInsertHandler { context, item ->
+      insertHandler?.handleInsert(context, item)
+      val document = context.editor.document
+      val endOffset = context.tailOffset
+      context.editor.caretModel.moveToOffset(endOffset - 1)
+      if (endOffset < document.textLength && document.getText(TextRange.create(endOffset, endOffset + 1)) == delimiter.toString()) {
+        DocumentUtil.writeInRunUndoTransparentAction {
+          document.deleteString(endOffset, endOffset + 1)
+        }
+      }
     }
   }
 

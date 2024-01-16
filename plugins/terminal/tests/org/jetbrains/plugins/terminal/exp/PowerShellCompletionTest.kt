@@ -24,6 +24,7 @@ import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -84,13 +85,11 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
 
   @Test
   fun `Complete files`() {
-    val tempDirectory = createTempDirectory().apply {
+    val tempDirectory = createTempDir().apply {
       createFile("file.txt")
       createDirectory("dir")
       createFile(".hidden")
     }
-    Disposer.register(testRootDisposable) { tempDirectory.deleteRecursively() }
-
     val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
     val expected = tempDirectory.listDirectoryEntries().map { it.absolutePathString() }
     assertSameCompletions(completions, expected)
@@ -131,6 +130,30 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     assertCompletionsContain(completions, "Equals(")
   }
 
+  @Test
+  fun `Insert directory name with spaces`() {
+    val dirName = "Dir with spaces"
+    val tempDirectory = createTempDir().apply {
+      createDirectory(dirName)
+      createFile("someFile.txt")
+    }
+    val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
+    assertFalse("Completions are null or empty", completions.isNullOrEmpty())
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName<caret>'")
+  }
+
+  @Test
+  fun `Do not insert additional quote`() {
+    val dirName = "Dir with spaces"
+    val tempDirectory = createTempDir().apply {
+      createDirectory(dirName)
+      createFile("someFile.txt")
+    }
+    val completions = getCompletionsForCommand("ls '$tempDirectory\\<caret>'")
+    assertFalse("Completions are null or empty", completions.isNullOrEmpty())
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName<caret>'")
+  }
+
   private fun getCompletionsForCommand(command: String): List<String>? {
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
@@ -147,5 +170,17 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
   private fun assertSameCompletions(completions: List<String>?, expected: List<String>) {
     assertNotNull("Completions list is null", completions)
     assertSameElements("Expected $expected, but was: $completions", completions!!, expected)
+  }
+
+  private fun selectItemAndCheckResult(itemText: String, expectedText: String) {
+    myFixture.lookup.currentItem = myFixture.lookupElements!!.find { it.lookupString.contains(itemText) }
+    myFixture.finishLookup('\n')
+    myFixture.checkResult(expectedText)
+  }
+
+  private fun createTempDir(): Path {
+    return createTempDirectory().also {
+      Disposer.register(testRootDisposable) { it.deleteRecursively() }
+    }
   }
 }
