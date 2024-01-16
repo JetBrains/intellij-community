@@ -40,16 +40,16 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
   }
 
   protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile?) {
-    myTree!!.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
-    myTree!!.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
+    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected suspend fun update(file: VirtualFile) {
-    myTree!!.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
+    tree.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected suspend fun deleteProject(file: VirtualFile) {
-    myTree!!.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
+    tree.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
   }
 
   @Throws(IOException::class)
@@ -112,7 +112,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     val progressReporter = object : RawProgressReporter {}
     runBlockingMaybeCancellable {
       resolver.resolve(listOf(mavenProject),
-                       myTree!!,
+                       tree,
                        generalSettings,
                        embeddersManager,
                        progressReporter,
