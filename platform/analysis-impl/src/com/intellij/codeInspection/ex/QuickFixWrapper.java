@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -55,8 +55,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   /**
-   * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)}
-   * @return a {@link LocalQuickFix} wrapped inside that action; null if the action was not created via {@link QuickFixWrapper}
+   * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)} or one of the adapter classes.
+   * @return a {@link LocalQuickFix} wrapped inside that action; null if the action does not contain a {@link LocalQuickFix} object
    */
   public static @Nullable LocalQuickFix unwrap(@NotNull CommonIntentionAction action) {
     if (action instanceof QuickFixWrapper wrapper) {
