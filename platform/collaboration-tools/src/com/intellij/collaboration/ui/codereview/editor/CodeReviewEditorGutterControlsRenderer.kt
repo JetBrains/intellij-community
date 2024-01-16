@@ -225,31 +225,34 @@ private constructor(cs: CoroutineScope,
 
     private fun repaintColumn(editor: EditorEx, line: Int? = null) {
       val xRange = getIconColumnXRange(editor)
-      val yRange = if (line != null && line > 0) {
-        val y = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
-        y..y + editor.lineHeight
+      val yStart: Int
+      val yHeight: Int
+      if (line != null && line > 0) {
+        yStart = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
+        yHeight = editor.lineHeight
       }
       else {
-        0..editor.gutterComponentEx.height
+        yStart = 0
+        yHeight = editor.gutterComponentEx.height
       }
-      editor.gutterComponentEx.repaint(xRange.first, yRange.first, xRange.last - xRange.first, yRange.last)
+      editor.gutterComponentEx.repaint(xRange.first, yStart, xRange.last - xRange.first, yHeight)
     }
 
     private fun getIconColumnXRange(editor: EditorEx): IntRange {
-      val iconStart = editor.gutterComponentEx.lineMarkerAreaOffset
+      val gutter = editor.gutterComponentEx
+      val iconStart = if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
+        gutter.lineMarkerAreaOffset
+      }
+      else {
+        gutter.width - gutter.lineMarkerAreaOffset - ICON_AREA_WIDTH
+      }
       val iconEnd = iconStart + ICON_AREA_WIDTH
-      return iconStart until iconEnd
+      return iconStart..iconEnd
     }
 
     private fun isIconColumnHovered(editor: EditorEx, e: MouseEvent): Boolean {
       if (e.component !== editor.gutter) return false
-      val x = convertX(editor, e.x)
-      return x in getIconColumnXRange(editor)
-    }
-
-    private fun convertX(editor: EditorEx, x: Int): Int {
-      if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) return x
-      return editor.gutterComponentEx.width - x
+      return e.x in getIconColumnXRange(editor)
     }
 
     private class LogicalLineData(
