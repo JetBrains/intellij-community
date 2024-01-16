@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -1743,10 +1744,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.warn("Can't find root[#" + rootId + "]");
       return;
     }
-    // 'name' == rootPath in case of roots that are not archives
-    // but for archives e.g. jars it will be just name and this method will be unsuccessful (IDEA-341011)
-    String rootPath = vfsPeer.getName(rootId);
-    ensureRootCached(rootPath, missedRootUrlRef.get());
+
+    ensureRootCached(getRootPath(missedRootUrlRef.get(), vfsPeer.getName(rootId)), missedRootUrlRef.get());
+  }
+
+  /**
+   * rootName == rootPath in case of roots that are not archives
+   * but for archives e.g. jars rootName will be just name (see {@link PersistentFSImpl#findRoot})
+   * so we need to extract path from url (IDEA-341011)
+   * Path should not end with '!' because then '!' won't be stripped and file won't be found (see {@link ArchiveFileSystem#findLocalByRootPath})
+   */
+  @NotNull
+  private static String getRootPath(@NotNull String rootUrl, @NotNull String rootName) {
+    NewVirtualFileSystem fs = detectFileSystem(rootUrl, rootName);
+    if (fs instanceof ArchiveFileSystem) {
+      String path = VirtualFileManager.extractPath(rootUrl);
+      return StringUtil.trimEnd(path, "!");
+    }
+    return rootName;
   }
 
   @VisibleForTesting
