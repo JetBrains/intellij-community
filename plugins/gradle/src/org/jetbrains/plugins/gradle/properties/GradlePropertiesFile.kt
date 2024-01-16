@@ -16,6 +16,7 @@ const val GRADLE_CACHE_DIR_NAME = ".gradle"
 const val GRADLE_PROPERTIES_FILE_NAME = "gradle.properties"
 const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
+const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
 
 object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
 
@@ -81,15 +82,20 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
     val javaHomeProperty = javaHome?.let { Property(it, propertiesPath.toString()) }
     val logLevel = properties.getProperty(GRADLE_LOGGING_LEVEL_PROPERTY)
     val logLevelProperty = logLevel?.let { Property(it, propertiesPath.toString()) }
-    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty)
+    val parallel = properties.getProperty(GRADLE_PARALLEL_PROPERTY)?.toBoolean()
+    val parallelProperty = parallel?.let { Property(it, propertiesPath.toString()) }
+    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty, parallelProperty)
   }
 
   private fun mergeGradleProperties(most: GradleProperties, other: GradleProperties): GradleProperties {
     return when {
       most is EMPTY -> other
       other is EMPTY -> most
-      else -> GradlePropertiesImpl(most.javaHomeProperty ?: other.javaHomeProperty,
-                                   most.gradleLoggingLevel ?: other.gradleLoggingLevel)
+      else -> GradlePropertiesImpl(
+        most.javaHomeProperty ?: other.javaHomeProperty,
+        most.gradleLoggingLevel ?: other.gradleLoggingLevel,
+        most.parallel ?: other.parallel
+      )
     }
   }
 }

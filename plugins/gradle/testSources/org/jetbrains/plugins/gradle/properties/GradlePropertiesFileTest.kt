@@ -11,6 +11,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     GradleProperties.EMPTY.run {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
+      Assertions.assertNull(parallel)
     }
   }
 
@@ -26,6 +27,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     assertGradlePropertiesFile {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
+      Assertions.assertNull(parallel)
     }
   }
 
@@ -38,6 +40,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     assertGradlePropertiesFile {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
+      Assertions.assertNull(parallel)
     }
   }
 
@@ -46,12 +49,15 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     createGradlePropertiesFile {
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "javaHome")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "info")
+      setProperty(GRADLE_PARALLEL_PROPERTY, "true")
     }
     assertGradlePropertiesFile {
       Assertions.assertEquals("javaHome", javaHomeProperty?.value)
       Assertions.assertEquals(gradlePropertiesPath, javaHomeProperty?.location)
       Assertions.assertEquals("info", gradleLoggingLevel?.value)
       Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
+      Assertions.assertEquals(true, parallel?.value)
+      Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
     }
   }
 
@@ -61,6 +67,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       setProperty("another.property.1", "value1")
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "value2")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "value3")
+      setProperty(GRADLE_PARALLEL_PROPERTY, "true")
       setProperty("another.property.2", "value4")
     }
     assertGradlePropertiesFile {
@@ -68,6 +75,8 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertEquals(gradlePropertiesPath, javaHomeProperty?.location)
       Assertions.assertEquals("value3", gradleLoggingLevel?.value)
       Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
+      Assertions.assertEquals(true, parallel?.value)
+      Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
     }
   }
 }

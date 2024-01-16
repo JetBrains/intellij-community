@@ -5,5 +5,6 @@ import org.jetbrains.plugins.gradle.properties.models.Property
 
 data class GradlePropertiesImpl(
   override val javaHomeProperty: Property<String>?,
-  override val gradleLoggingLevel: Property<String>?
+  override val gradleLoggingLevel: Property<String>?,
+  override val parallel: Property<Boolean>?
 ) : GradleProperties
