@@ -282,6 +282,26 @@ mod tests {
     }
 
     #[test]
+    fn reporting_vm_creation_panics() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+
+        let jvm_message = "Initial heap size set to a larger value than the maximum heap size";
+        let jvm_message_present = result.stderr.find(jvm_message);
+        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
+
+        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+    }
+
+    #[test]
     fn crash_log_creation() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let crash_log_path = test.project_dir.join("_jvm_error.log");
