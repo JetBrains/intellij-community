@@ -789,7 +789,8 @@
         "spanBackground": "#0250B0",
         "spanForeground": "#F5F5F5",
         "foreground": "#F5F5F5",
-        "stepNumberForeground": "#6A9DDE"
+        "stepNumberForeground": "#6A9DDE",
+        "secondaryActionForeground": "#6A9DDE"
       },
       "Actions.background": "#43474a",
       "background": "#3c3f41",

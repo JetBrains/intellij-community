@@ -1171,7 +1171,8 @@
       "spanBackground": "#0D5CBD",
       "spanForeground": "#F5F5F5",
       "foreground": "#F5F5F5",
-      "stepNumberForeground": "#6CA6ED"
+      "stepNumberForeground": "#6CA6ED",
+      "secondaryActionForeground": "#6CA6ED"
     },
 
     "TipOfTheDay": {

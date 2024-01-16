@@ -537,7 +537,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
       val secondaryButton = secondaryButtonText?.let { buttonText: @Nls String ->
         val link = ActionLink(buttonText)
-        link.foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors)
+        link.foreground = JBUI.CurrentTheme.GotItTooltip.secondaryActionForeground(useContrastColors)
         link.isFocusable = requestFocus
         if (requestFocus) {
           link.pressOnEnter()

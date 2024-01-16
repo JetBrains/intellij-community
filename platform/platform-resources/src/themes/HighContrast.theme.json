@@ -490,6 +490,7 @@
       "spanForeground": "#000000",
       "foreground": "#FFFFFF",
       "stepNumberForeground": "#FFFFFF",
+      "secondaryActionForeground": "#FFFFFF",
       "iconFillColor": "#35538F",
       "iconBorderColor": "#FFFFFF"
     },

@@ -1815,6 +1815,14 @@ public final class JBUI {
         return base;
       }
 
+      public static @NotNull Color secondaryActionForeground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.secondaryActionForeground", foreground(false));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.secondaryActionForeground", base);
+        }
+        return base;
+      }
+
       public static @NotNull Color linkUnderline(boolean useContrastColors, boolean isActive, Color defaultActiveColor) {
         if (useContrastColors) {
           if (isActive) return JBColor.namedColor("Tooltip.Learning.linkUnderlineHoveredColor", defaultActiveColor);

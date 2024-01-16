@@ -114,6 +114,7 @@
       "borderColor": "Grey14",
       "foreground": "Grey1",
       "stepForeground": "Grey7",
+      "secondaryActionForeground": "Grey7",
       "Header.foreground": "Grey1",
       "shortcutForeground": "Grey1",
       "shortcutBackground": "Grey11",
