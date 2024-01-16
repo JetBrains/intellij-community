@@ -99,6 +99,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStringLiterals() { doTest(false); }
   public void testStaticInInner() { doTest(false); }
   public void testStaticInInnerJava16() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
+  public void testStaticAccessViaInstanceForImplicitClasses() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
   public void testInvalidExpressions() { doTest(false); }
   public void testIllegalVoidType() { doTest(false); }
   public void testIllegalType() { doTest(false); }

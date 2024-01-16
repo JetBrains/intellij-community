@@ -68,7 +68,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
     //don't report warnings on compilation errors
     PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
     if (containingClass != null && containingClass.isInterface()) return;
-    if (containingClass instanceof PsiAnonymousClass) return;
+    if (containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiImplicitClass) return;
 
     String description = JavaErrorBundle.message("static.member.accessed.via.instance.reference",
                                                  JavaHighlightUtil.formatType(qualifierExpression.getType()),

@@ -476,6 +476,9 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiReferenceExpression createReferenceExpression(@NotNull PsiClass aClass) throws IncorrectOperationException {
     String text;
+    if (aClass instanceof PsiImplicitClass) {
+      throw new IncorrectOperationException("Cannot create reference to implicitly declared class");
+    }
     if (aClass instanceof PsiAnonymousClass) {
       text = ((PsiAnonymousClass)aClass).getBaseClassType().getPresentableText();
     }

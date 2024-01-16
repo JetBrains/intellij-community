@@ -7,7 +7,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -104,7 +107,7 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
     if (!(element instanceof PsiMember member)) return;
 
     PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null || containingClass instanceof PsiAnonymousClass) return;
+    if (containingClass == null || containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiImplicitClass) return;
     Project project = member.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiExpression qualifierExpression = ref.getQualifierExpression();
