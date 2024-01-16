@@ -82,7 +82,7 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
           protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
                                             @NotNull PopupFactoryImpl.ActionItem actionItem,
                                             boolean isSelected) {
-            myButtonsSeparator.setVisible(false);
+            myButtonSeparator.setVisible(false);
             AnAction action = actionItem.getAction();
             Presentation presentation = factory.getPresentation(action);
             String qualifiedName = presentation.getClientProperty(CopyPathProvider.QUALIFIED_NAME);

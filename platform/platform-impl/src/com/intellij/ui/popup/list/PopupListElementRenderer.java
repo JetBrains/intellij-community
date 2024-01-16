@@ -31,6 +31,7 @@ import java.util.Collections;
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   public static final Key<@NlsSafe String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
+
   protected final ListPopupImpl myPopup;
   private @Nullable JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
@@ -39,14 +40,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   protected JPanel myButtonPane;
   protected JComponent myMainPane;
-  protected JComponent myButtonsSeparator;
+  protected JComponent myButtonSeparator;
   protected JComponent myIconBar;
 
   private final PopupInlineActionsSupport myInlineActionsSupport;
 
-  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
+  private final UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
-  public PopupListElementRenderer(final ListPopupImpl aPopup) {
+  public PopupListElementRenderer(@NotNull ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(E value) {
@@ -183,8 +184,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     JPanel right = new JPanel(new GridBagLayout());
 
-    myButtonsSeparator = createButtonsSeparator();
-    left.add(myButtonsSeparator, BorderLayout.EAST);
+    myButtonSeparator = createButtonsSeparator();
+    left.add(myButtonSeparator, BorderLayout.EAST);
 
     if (myIconBar != null) {
       left.add(myIconBar, BorderLayout.WEST);
@@ -296,7 +297,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       int expectedRightInset = leftRightInset * 2;
       if (hasNextIcon || hasInlineButtons) {
-        expectedRightInset -= myButtonsSeparator.getPreferredSize().width;
+        expectedRightInset -= myButtonSeparator.getPreferredSize().width;
       }
       if (myShortcutLabel != null) {
         //noinspection UseDPIAwareBorders
@@ -407,7 +408,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (!extraButtons.isEmpty()) {
-      myButtonsSeparator.setVisible(true);
+      myButtonSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
       Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
       // We ONLY need to update the tooltip if there's an active inline action button.
@@ -420,11 +421,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     }
     else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){
-      myButtonsSeparator.setVisible(false);
+      myButtonSeparator.setVisible(false);
       myButtonPane.add(Box.createHorizontalStrut(InlineActionsUtilKt.buttonWidth()), gb.next());
     }
     else {
-      myButtonsSeparator.setVisible(false);
+      myButtonSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
     }
 
