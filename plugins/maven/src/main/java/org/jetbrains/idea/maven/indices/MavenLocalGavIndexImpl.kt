@@ -80,7 +80,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
       progress.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
     }
     finally {
-      MavenLog.LOG.warn(
+      MavenLog.LOG.info(
         "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
       activity.finished {
         listOf(
