@@ -35,6 +35,17 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(HAS_GRADLE_PROJECT.metric(true))
 
     // global settings
+    collectGradleSettingsMetrics(usages, gradleSettings)
+
+    // project settings
+    for (projectSettings in gradleSettings.linkedProjectsSettings) {
+      collectGradleProjectSettingsMetrics(usages, project, projectSettings)
+    }
+
+    return usages
+  }
+
+  private fun collectGradleSettingsMetrics(usages: MutableSet<MetricEvent>, gradleSettings: GradleSettings) {
     usages.add(OFFLINE_WORK.metric(gradleSettings.isOfflineWork))
     usages.add(HAS_CUSTOM_SERVICE_DIRECTORY_PATH.metric(!gradleSettings.serviceDirectoryPath.isNullOrBlank()))
     usages.add(HAS_CUSTOM_GRADLE_VM_OPTIONS.metric(!gradleSettings.gradleVmOptions.isNullOrBlank()))
@@ -42,47 +53,45 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(gradleSettings.storeProjectFilesExternally))
     usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(gradleSettings.isDownloadSources))
     usages.add(GRADLE_PARALLEL_MODEL_FETCH.metric(gradleSettings.isParallelModelFetch))
+  }
 
-    // project settings
-    for (setting in gradleSettings.linkedProjectsSettings) {
-      val projectPath = setting.externalProjectPath
-      usages.add(IS_USE_QUALIFIED_MODULE_NAMES.metric(setting.isUseQualifiedModuleNames))
-      usages.add(CREATE_MODULE_PER_SOURCE_SET.metric(setting.isResolveModulePerSourceSet))
-      val distributionType = setting.distributionType
-      if (distributionType != null) {
-        usages.add(DISTRIBUTION_TYPE.metric(distributionType))
-      }
-
-      usages.add(IS_COMPOSITE_BUILDS.metric(setting.compositeBuild != null))
-      usages.add(DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION.metric(setting.isDisableWrapperSourceDistributionNotification))
-
-      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsageFields.getJreType(setting.gradleJvm)))
-      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, setting.gradleJvm)))
-
-      val gradleVersion = setting.resolveGradleVersion()
-      if (gradleVersion.isSnapshot) {
-        usages.add(GRADLE_VERSION.metric(anonymizeGradleVersion(gradleVersion.baseVersion) + ".SNAPSHOT"))
-      }
-      else {
-        usages.add(GRADLE_VERSION.metric(anonymizeGradleVersion(gradleVersion)))
-      }
-
-      usages.add(DELEGATE_BUILD_RUN.metric(GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath)))
-      usages.add(PREFERRED_TEST_RUNNER.metric(GradleProjectSettings.getTestRunner(project, projectPath)))
-
-      val hasNonEmptyIntellijConfig = ProjectDataManager
-                                        .getInstance()
-                                        .getExternalProjectData(project, GradleConstants.SYSTEM_ID, projectPath)
-                                        ?.externalProjectStructure
-                                        ?.let { dataNode ->
-                                          ExternalSystemApiUtil.findFirstRecursively(dataNode) { it.key == ProjectKeys.CONFIGURATION }
-                                        }
-                                        ?.let { it.data as? ConfigurationDataImpl }
-                                        ?.let { it.jsonString.length > 2 } ?: false
-
-      usages.add(IDEA_SPECIFIC_CONFIGURATION_USED.metric(hasNonEmptyIntellijConfig))
+  private fun collectGradleProjectSettingsMetrics(usages: MutableSet<MetricEvent>, project: Project, setting: GradleProjectSettings) {
+    val projectPath = setting.externalProjectPath
+    usages.add(IS_USE_QUALIFIED_MODULE_NAMES.metric(setting.isUseQualifiedModuleNames))
+    usages.add(CREATE_MODULE_PER_SOURCE_SET.metric(setting.isResolveModulePerSourceSet))
+    val distributionType = setting.distributionType
+    if (distributionType != null) {
+      usages.add(DISTRIBUTION_TYPE.metric(distributionType))
     }
-    return usages
+
+    usages.add(IS_COMPOSITE_BUILDS.metric(setting.compositeBuild != null))
+    usages.add(DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION.metric(setting.isDisableWrapperSourceDistributionNotification))
+
+    usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsageFields.getJreType(setting.gradleJvm)))
+    usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, setting.gradleJvm)))
+
+    val gradleVersion = setting.resolveGradleVersion()
+    if (gradleVersion.isSnapshot) {
+      usages.add(GRADLE_VERSION.metric(anonymizeGradleVersion(gradleVersion.baseVersion) + ".SNAPSHOT"))
+    }
+    else {
+      usages.add(GRADLE_VERSION.metric(anonymizeGradleVersion(gradleVersion)))
+    }
+
+    usages.add(DELEGATE_BUILD_RUN.metric(GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath)))
+    usages.add(PREFERRED_TEST_RUNNER.metric(GradleProjectSettings.getTestRunner(project, projectPath)))
+
+    val hasNonEmptyIntellijConfig = ProjectDataManager
+                                      .getInstance()
+                                      .getExternalProjectData(project, GradleConstants.SYSTEM_ID, projectPath)
+                                      ?.externalProjectStructure
+                                      ?.let { dataNode ->
+                                        ExternalSystemApiUtil.findFirstRecursively(dataNode) { it.key == ProjectKeys.CONFIGURATION }
+                                      }
+                                      ?.let { it.data as? ConfigurationDataImpl }
+                                      ?.let { it.jsonString.length > 2 } ?: false
+
+    usages.add(IDEA_SPECIFIC_CONFIGURATION_USED.metric(hasNonEmptyIntellijConfig))
   }
 
   private fun anonymizeGradleVersion(version: GradleVersion): String {
