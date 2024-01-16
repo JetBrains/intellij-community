@@ -4,9 +4,9 @@ package com.intellij.lang.annotation;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -55,7 +55,7 @@ public final class Annotation implements Segment {
 
   public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
-    public final @Nullable LocalQuickFix localQuickFix; 
+    public final @Nullable LocalQuickFix localQuickFix;
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
@@ -144,7 +144,7 @@ public final class Annotation implements Segment {
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
-    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), fix, range, key));
+    myQuickFixes.add(new QuickFixInfo(QuickFixWrapper.wrap(problemDescriptor, fix), fix, range, key));
   }
 
   /**
