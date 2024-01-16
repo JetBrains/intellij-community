@@ -115,17 +115,8 @@ _Instruction = namedtuple(
         'argval',
         'offset',
         'starts_line',
-    ],
-    defaults=[None]
+    ]
 )
-
-_Instruction.opname.__doc__ = "Human readable name for operation"
-_Instruction.opcode.__doc__ = "Numeric code for operation"
-_Instruction.arg.__doc__ = "Numeric argument to operation (if any), otherwise None"
-_Instruction.argval.__doc__ = "Resolved arg value (if known), otherwise same as arg"
-_Instruction.offset.__doc__ = "Start index of operation within bytecode sequence"
-_Instruction.starts_line.__doc__ = \
-    "Line started by this opcode (if any), otherwise None"
 
 if IS_PY3K:
     long = int
