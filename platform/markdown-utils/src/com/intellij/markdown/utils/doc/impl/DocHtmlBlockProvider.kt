@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.utils.doc
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.markdown.utils.doc.impl
 
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import org.intellij.markdown.lexer.Compat.assert
 import org.intellij.markdown.parser.LookaheadText
 import org.intellij.markdown.parser.MarkerProcessor
@@ -10,7 +11,7 @@ import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 import org.intellij.markdown.parser.markerblocks.impl.HtmlBlockMarkerBlock
 
-internal class DocHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.StateInfo> {
+internal object DocHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(pos: LookaheadText.Position,
                                   productionHolder: ProductionHolder,
                                   stateInfo: MarkerProcessor.StateInfo): List<MarkerBlock> {
@@ -47,27 +48,22 @@ internal class DocHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.StateI
     return -1
   }
 
-  companion object {
+  /** see {@link http://spec.commonmark.org/0.21/#html-blocks}
+   *
+   * nulls mean "Next line should be blank"
+   * */
+  private val OPEN_CLOSE_REGEXES: List<Pair<Regex, Regex?>> = listOf(
+    Pair(Regex("<(?:script|pre|style)(?: |>|$)", RegexOption.IGNORE_CASE),
+         Regex("</(?:script|style|pre)>", RegexOption.IGNORE_CASE)),
+    Pair(Regex("<!--"), Regex("-->")),
+    Pair(Regex("<\\?"), Regex("\\?>")),
+    Pair(Regex("<![A-Z]"), Regex(">")),
+    Pair(Regex("<!\\[CDATA\\["), Regex("]]>")),
+    Pair(Regex("</?(?:${DocMarkdownToHtmlConverter.ACCEPTABLE_BLOCK_TAGS.joinToString("|")})(?: |/?>|$)", RegexOption.IGNORE_CASE), null)
+  )
 
-    /** see {@link http://spec.commonmark.org/0.21/#html-blocks}
-     *
-     * nulls mean "Next line should be blank"
-     * */
-    @JvmField
-    val OPEN_CLOSE_REGEXES: List<Pair<Regex, Regex?>> = listOf(
-      Pair(Regex("<(?:script|pre|style)(?: |>|$)", RegexOption.IGNORE_CASE),
-           Regex("</(?:script|style|pre)>", RegexOption.IGNORE_CASE)),
-      Pair(Regex("<!--"), Regex("-->")),
-      Pair(Regex("<\\?"), Regex("\\?>")),
-      Pair(Regex("<![A-Z]"), Regex(">")),
-      Pair(Regex("<!\\[CDATA\\["), Regex("]]>")),
-      Pair(Regex("</?(?:${DocMarkdownToHtmlConverter.ACCEPTABLE_BLOCK_TAGS.joinToString("|")})(?: |/?>|$)", RegexOption.IGNORE_CASE), null)
-    )
+  private val FIND_START_REGEX = Regex(
+    "^(${OPEN_CLOSE_REGEXES.joinToString(separator = "|", transform = { "(${it.first.pattern})" })})"
+  )
 
-    @JvmField
-    val FIND_START_REGEX = Regex(
-      "^(${OPEN_CLOSE_REGEXES.joinToString(separator = "|", transform = { "(${it.first.pattern})" })})"
-    )
-
-  }
 }

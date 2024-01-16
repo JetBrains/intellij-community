@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.utils.doc
 
+import com.intellij.markdown.utils.doc.impl.DocFlavourDescriptor
+import com.intellij.markdown.utils.doc.impl.DocTagRenderer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -10,32 +12,17 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.markdown.IElementType
-import org.intellij.markdown.MarkdownTokenTypes.Companion.CODE_FENCE_CONTENT
-import org.intellij.markdown.MarkdownTokenTypes.Companion.HTML_TAG
-import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.ast.getTextInNode
-import org.intellij.markdown.flavours.commonmark.CommonMarkMarkerProcessor
-import org.intellij.markdown.flavours.gfm.GFMConstraints
-import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
-import org.intellij.markdown.html.DUMMY_ATTRIBUTES_CUSTOMIZER
-import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.html.HtmlGenerator.DefaultTagRenderer
-import org.intellij.markdown.html.HtmlGenerator.HtmlGeneratingVisitor
-import org.intellij.markdown.parser.*
-import org.intellij.markdown.parser.constraints.CommonMarkdownConstraints
-import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
-import org.intellij.markdown.parser.markerblocks.providers.HtmlBlockProvider
+import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
-import java.net.URI
 import java.util.regex.Pattern
 
 object DocMarkdownToHtmlConverter {
   private val LOG = Logger.getInstance(DocMarkdownToHtmlConverter::class.java)
 
   private val TAG_START_OR_CLOSE_PATTERN: Pattern = Pattern.compile("(<)/?(\\w+)[> ]")
-  private val TAG_PATTERN: Pattern = Pattern.compile("^</?([a-z][a-z-_0-9]*)[^>]*>$", Pattern.CASE_INSENSITIVE)
+  internal val TAG_PATTERN: Pattern = Pattern.compile("^</?([a-z][a-z-_0-9]*)[^>]*>$", Pattern.CASE_INSENSITIVE)
   private val SPLIT_BY_LINE_PATTERN: Pattern = Pattern.compile("\n|\r|\r\n")
   private const val FENCED_CODE_BLOCK = "```"
 
@@ -64,7 +51,7 @@ object DocMarkdownToHtmlConverter {
       ))
     }
 
-  private val ACCEPTABLE_TAGS: Set<CharSequence> = CollectionFactory.createCharSequenceSet(false)
+  internal val ACCEPTABLE_TAGS: Set<CharSequence> = CollectionFactory.createCharSequenceSet(false)
     .apply {
       addAll(ACCEPTABLE_BLOCK_TAGS)
       addAll(listOf( // Content sectioning
@@ -196,10 +183,10 @@ object DocMarkdownToHtmlConverter {
 
   private fun performConversion(text: @Nls String): @NlsSafe String? {
     try {
-      val flavour = DocumentationFlavourDescriptor()
+      val flavour = DocFlavourDescriptor()
       val parsedTree = MarkdownParser(flavour).parse(embeddedHtmlType, text, true)
       return HtmlGenerator(text, parsedTree, flavour, false)
-        .generateHtml(DocumentationTagRenderer(text))
+        .generateHtml(DocTagRenderer(text))
     }
     catch (e: Exception) {
       LOG.warn(e.message, e)
@@ -253,86 +240,4 @@ object DocMarkdownToHtmlConverter {
     get() = "margin: 0; border: 1px solid; border-color: #" + ColorUtil
       .toHex(UIUtil.getTooltipSeparatorColor()) + "; border-spacing: 0; border-collapse: collapse;vertical-align: baseline;"
 
-  private class DocumentationMarkerProcessor(productionHolder: ProductionHolder,
-                                             constraintsBase: CommonMarkdownConstraints) : CommonMarkMarkerProcessor(productionHolder,
-                                                                                                                     constraintsBase) {
-    override fun getMarkerBlockProviders(): List<MarkerBlockProvider<StateInfo>> =
-      super.getMarkerBlockProviders().filter { it !is HtmlBlockProvider } + DocHtmlBlockProvider()
-  }
-
-  private class DocumentationFlavourDescriptor : GFMFlavourDescriptor() {
-    override val markerProcessorFactory: MarkerProcessorFactory
-      get() = object : MarkerProcessorFactory {
-        override fun createMarkerProcessor(productionHolder: ProductionHolder): MarkerProcessor<*> =
-          DocumentationMarkerProcessor(productionHolder, GFMConstraints.BASE)
-      }
-
-    override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
-      val result = HashMap(super.createHtmlGeneratingProviders(linkMap, baseURI))
-      result[HTML_TAG] = SanitizingTagGeneratingProvider()
-      return result
-    }
-  }
-
-  private class SanitizingTagGeneratingProvider : GeneratingProvider {
-    override fun processNode(visitor: HtmlGeneratingVisitor, text: String, node: ASTNode) {
-      val nodeText = node.getTextInNode(text)
-      val matcher = TAG_PATTERN.matcher(nodeText)
-      if (matcher.matches()) {
-        val tagName = matcher.group(1)
-        if (StringUtil.equalsIgnoreCase(tagName, "div")) {
-          visitor.consumeHtml(nodeText.subSequence(0, matcher.start(1)))
-          visitor.consumeHtml("span")
-          visitor.consumeHtml(nodeText.subSequence(matcher.end(1), nodeText.length))
-          return
-        }
-        if (ACCEPTABLE_TAGS.contains(tagName)) {
-          visitor.consumeHtml(nodeText)
-          return
-        }
-      }
-      visitor.consumeHtml(StringUtil.escapeXmlEntities(nodeText.toString()))
-    }
-  }
-
-  private class DocumentationTagRenderer(private val wholeText: String)
-    : DefaultTagRenderer(DUMMY_ATTRIBUTES_CUSTOMIZER, false) {
-
-    override fun openTag(node: ASTNode, tagName: CharSequence,
-                         vararg attributes: CharSequence?,
-                         autoClose: Boolean): CharSequence {
-      if (tagName.contentEquals("p", true)) {
-        val first = node.children.firstOrNull()
-        if (first != null && first.type === HTML_TAG) {
-          val text = first.getTextInNode(wholeText)
-          val matcher = TAG_PATTERN.matcher(text)
-          if (matcher.matches()) {
-            val nestedTag = matcher.group(1)
-            if (ACCEPTABLE_BLOCK_TAGS.contains(nestedTag)) {
-              return ""
-            }
-          }
-        }
-      }
-      if (tagName.contentEquals("code", true) && node.type === CODE_FENCE_CONTENT) {
-        return ""
-      }
-      return super.openTag(node, convertTag(tagName), *attributes, autoClose = autoClose)
-    }
-
-    override fun closeTag(tagName: CharSequence): CharSequence {
-      if (tagName.contentEquals("p", true)) return ""
-      return super.closeTag(convertTag(tagName))
-    }
-
-    private fun convertTag(tagName: CharSequence): CharSequence {
-      if (tagName.contentEquals("strong", true)) {
-        return "b"
-      }
-      else if (tagName.contentEquals("em", true)) {
-        return "i"
-      }
-      return tagName
-    }
-  }
 }
