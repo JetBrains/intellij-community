@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -119,7 +119,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1329,6 +1330,7 @@ public final class BuildManager implements Disposable {
     int listenPort = ensureListening(cmdLine.getListenAddress());
 
     boolean profileWithYourKit = false;
+    boolean isAgentpathSet = false;
     String userDefinedHeapSize = null;
     final List<String> userAdditionalOptionsList = new SmartList<>();
     final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
@@ -1347,6 +1349,9 @@ public final class BuildManager implements Disposable {
           //noinspection SpellCheckingInspection
           if (option.startsWith("-Dprofiling.mode=") && !option.equals("-Dprofiling.mode=false")) {
             profileWithYourKit = true;
+          }
+          if (option.startsWith("-agentpath:")) {
+            isAgentpathSet = true;
           }
           userAdditionalOptionsList.add(option);
         }
@@ -1439,25 +1444,29 @@ public final class BuildManager implements Disposable {
     }
 
     if (profileWithYourKit) {
-      YourKitProfilerService service = null;
-      try {
-        service = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
-        if (service == null) {
-          throw new IOException("Performance Plugin is missing or disabled");
+      YourKitProfilerService service = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
+      if (service != null) {
+        try {
+          service.copyYKLibraries(hostWorkingDirectory);
         }
-        service.copyYKLibraries(hostWorkingDirectory);
+        catch (IOException e) {
+          LOG.warn("Failed to copy YK libraries", e);
+        }
+        @SuppressWarnings("SpellCheckingInspection")
+        final StringBuilder parameters = new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
+        final String buildSnapshotPath = System.getProperty("build.snapshots.path");
+        if (buildSnapshotPath != null) {
+          parameters.append(",dir=").append(buildSnapshotPath);
+        }
+        cmdLine.addParameter(parameters.toString());
+        showSnapshotNotificationAfterFinish(project);
       }
-      catch (IOException e) {
-        LOG.warn("Failed to copy YK libraries", e);
+      else {
+        LOG.warn("Performance Plugin is missing or disabled; skipping YJP agent configuration");
+        if (isAgentpathSet) {
+          showSnapshotNotificationAfterFinish(project);
+        }
       }
-      @SuppressWarnings("SpellCheckingInspection")
-      final StringBuilder parameters = new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
-      final String buildSnapshotPath = System.getProperty("build.snapshots.path");
-      if (buildSnapshotPath != null) {
-        parameters.append(",dir=").append(buildSnapshotPath);
-      }
-      cmdLine.addParameter(parameters.toString());
-      showSnapshotNotificationAfterFinish(project);
     }
 
     // debugging
