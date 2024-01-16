@@ -117,6 +117,7 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="zip-signer" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="library" name="icu4j" level="project" />
