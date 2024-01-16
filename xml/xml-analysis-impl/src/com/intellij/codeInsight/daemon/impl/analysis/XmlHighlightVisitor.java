@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
@@ -475,7 +476,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           for (LocalQuickFix fix : fixes) {
             ProblemDescriptor descriptor = manager.createProblemDescriptor(value, description, fix,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
-            builder.registerFix(new LocalQuickFixAsIntentionAdapter(fix, descriptor), null, null, null, null);
+            builder.registerFix(QuickFixWrapper.wrap(descriptor, fix), null, null, null, null);
           }
         }
       }
