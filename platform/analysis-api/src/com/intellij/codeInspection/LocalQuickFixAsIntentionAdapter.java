@@ -16,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.codeInspection.ex.QuickFixWrapper} instead
+ */
+@Deprecated
 public class LocalQuickFixAsIntentionAdapter implements IntentionAction, CustomizableIntentionAction, ReportingClassSubstitutor {
   private final LocalQuickFix myFix;
   private final @NotNull ProblemDescriptor myProblemDescriptor;

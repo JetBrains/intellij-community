@@ -14,7 +14,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction {
+/**
+ * @deprecated use {@link com.intellij.codeInspection.ex.QuickFixWrapper} instead
+ */
+@Deprecated
 public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction, ReportingClassSubstitutor {
   private final @NotNull LocalQuickFixOnPsiElement myFix;
 
