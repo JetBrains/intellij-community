@@ -1017,7 +1017,8 @@ public final class ExpressionUtils {
         reference.resolve() instanceof PsiLocalVariable variable &&
         !(variable instanceof PsiResourceVariable)) {
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
+      if (initializer != null && 
+          List.of(reference).equals(VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null)))) {
         return initializer;
       }
     }
