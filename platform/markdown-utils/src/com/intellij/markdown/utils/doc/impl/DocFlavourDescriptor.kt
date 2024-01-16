@@ -2,6 +2,7 @@
 package com.intellij.markdown.utils.doc.impl
 
 import org.intellij.markdown.IElementType
+import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.flavours.commonmark.CommonMarkMarkerProcessor
 import org.intellij.markdown.flavours.gfm.GFMConstraints
@@ -26,6 +27,8 @@ internal class DocFlavourDescriptor : GFMFlavourDescriptor() {
   override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
     val result = HashMap(super.createHtmlGeneratingProviders(linkMap, baseURI))
     result[MarkdownTokenTypes.HTML_TAG] = DocSanitizingTagGeneratingProvider()
+    result[MarkdownElementTypes.CODE_FENCE] = DocCodeFenceGeneratingProvider()
+    result[MarkdownElementTypes.CODE_SPAN] = DocCodeSpanGeneratingProvider()
     return result
   }
 

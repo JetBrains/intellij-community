@@ -92,7 +92,7 @@ object DocMarkdownToHtmlConverter {
             }
           }
           // create table only if we've successfully read the formats line
-          if (!ContainerUtil.isEmpty<String?>(tableFormats)) {
+          if (!ContainerUtil.isEmpty(tableFormats)) {
             val parts = splitTableCols(processedLine)
             if (isTableHeaderSeparator(parts)) continue
             processedLine = getProcessedRow(isInTable, parts, tableFormats)

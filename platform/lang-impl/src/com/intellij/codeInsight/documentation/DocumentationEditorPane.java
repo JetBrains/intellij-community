@@ -77,7 +77,8 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES)
+      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES,
+                                    Extensions.INLINE_VIEW_EX)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     addDocumentationPaneDefaultCssRules(editorKit);
 
