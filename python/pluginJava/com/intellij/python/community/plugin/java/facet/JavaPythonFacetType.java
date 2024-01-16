@@ -8,9 +8,9 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.module.PythonModuleType;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-
+@ApiStatus.Internal
 public final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
 
   @NonNls

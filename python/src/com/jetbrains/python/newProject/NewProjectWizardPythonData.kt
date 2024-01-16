@@ -34,22 +34,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import java.nio.file.Path
 
 /**
- * A wizard for creating new pure-Python projects in IntelliJ.
- *
- * It suggests creating a new Python virtual environment for your new project to follow Python best practices.
- */
-class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
-
-  override val name = PYTHON
-
-  override val icon = PythonPsiApiIcons.Python
-
-  override val ordinal = 600
-
-  override fun createStep(parent: NewProjectWizardStep): NewProjectWizardStep = NewPythonProjectStep(parent)
-}
-
-/**
  * Data for sharing among the steps of the new Python project wizard.
  */
 interface NewProjectWizardPythonData : NewProjectWizardBaseData {

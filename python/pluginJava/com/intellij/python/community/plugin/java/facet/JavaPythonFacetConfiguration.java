@@ -12,9 +12,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 
 
-class JavaPythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
+@ApiStatus.Internal
+public class JavaPythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
   private static final String SDK_NAME = "sdkName";
 
   @Override

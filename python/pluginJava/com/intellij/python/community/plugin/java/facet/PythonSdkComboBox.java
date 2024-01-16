@@ -16,10 +16,10 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 
-public class PythonSdkComboBox extends ComboboxWithBrowseButton {
+class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
 
-  public PythonSdkComboBox() {
+  PythonSdkComboBox() {
     getComboBox().setRenderer(new PySdkListCellRenderer());
     addActionListener(new ActionListener() {
       @Override

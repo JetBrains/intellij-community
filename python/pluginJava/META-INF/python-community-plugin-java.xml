@@ -5,24 +5,24 @@
   <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <newProjectWizard.languageGenerator implementation="com.jetbrains.python.newProject.PythonNewProjectWizard"/>
-    <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
+    <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>
+    <moduleType id="PYTHON_MODULE" implementationClass="com.intellij.python.community.plugin.java.facet.PythonModuleType"/>
     <facetType implementation="com.intellij.python.community.plugin.java.facet.JavaPythonFacetType"/>
     <frameworkSupport implementation="com.intellij.python.community.plugin.java.facet.PythonFrameworkSupportProvider"/>
-    <projectStructureDetector implementation="com.jetbrains.python.module.PyProjectStructureDetector"/>
-    <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
+    <projectStructureDetector implementation="com.intellij.python.community.plugin.java.facet.PyProjectStructureDetector"/>
+    <moduleConfigurationEditorProvider implementation="com.intellij.python.community.plugin.java.facet.PythonModuleConfigurationEditorProvider"/>
+    <completion.contributor language="Python" implementationClass="com.intellij.python.community.plugin.java.psi.impl.PyConstructorArgumentCompletionContributor"/>
     <!-- Console folding for Jython only, thus it's located in intellij.python.plugin only -->
     <stacktrace.fold substring="*sys-package-mgr*:"/>
-    <sdkEditorAdditionalOptionsProvider implementation="com.jetbrains.python.PythonSdkEditorAdditionalOptionsProvider"/>
+    <sdkEditorAdditionalOptionsProvider implementation="com.intellij.python.community.plugin.java.PythonSdkEditorAdditionalOptionsProvider"/>
 
-    <commandLineInspectionProjectConfigurator implementation="com.jetbrains.python.inspections.PythonPluginCommandLineInspectionProjectConfigurator"/>
+    <commandLineInspectionProjectConfigurator implementation="com.intellij.python.community.plugin.java.inspections.PythonPluginCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
-    <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
-    <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
-    <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
+    <importResolver implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportResolver"/>
+    <typeProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaTypeProvider"/>
+    <pySuperMethodsSearch implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
+    <importCandidateProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportCandidateProvider"/>
   </extensions>
 </idea-plugin>

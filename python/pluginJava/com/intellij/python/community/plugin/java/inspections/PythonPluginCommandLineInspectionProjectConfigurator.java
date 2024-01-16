@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.inspections;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.inspections;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.python.community.plugin.java.facet.JavaPythonFacetConfiguration;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.intellij.python.community.plugin.java.facet.JavaPythonFacet;
